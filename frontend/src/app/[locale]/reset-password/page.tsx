@@ -127,7 +127,7 @@ function ResetPasswordForm() {
         <AuthNavbar />
         <main className="flex-1 bg-[var(--color-surface-page)] flex items-center justify-center">
           <div className="text-center">
-            <p className="text-[#6B7280] mb-4">{t("noEmail")}</p>
+            <p className="text-[var(--color-text-secondary)] mb-4">{t("noEmail")}</p>
             <Link
               href={`/${locale}/forgot-password`}
               className="text-[var(--color-primary)] hover:underline font-medium"
@@ -166,7 +166,7 @@ function ResetPasswordForm() {
                 {/* Back link */}
                 <Link
                   href={`/${locale}/forgot-password`}
-                  className="inline-flex items-center gap-1 text-sm text-[#6B7280] hover:text-[#1F2937] mb-6 transition-colors"
+                  className="inline-flex items-center gap-1 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-6 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   {t("back")}
@@ -193,7 +193,7 @@ function ResetPasswordForm() {
                   {/* OTP Code Input */}
                   <div className="flex flex-col gap-1.5">
                     <label
-                      className="font-medium text-[#0a0a0a]"
+                      className="font-medium text-[var(--color-text-primary)]"
                       style={{ fontSize: "14px", lineHeight: "20px" }}
                     >
                       {t("codeLabel")}
@@ -236,7 +236,7 @@ function ResetPasswordForm() {
                   <div className="flex flex-col gap-1.5 w-full">
                     <label
                       htmlFor="newPassword"
-                      className="font-medium text-[#0a0a0a]"
+                      className="font-medium text-[var(--color-text-primary)]"
                       style={{ fontSize: "14px", lineHeight: "20px" }}
                     >
                       {t("newPassword")}
@@ -272,7 +272,7 @@ function ResetPasswordForm() {
                   <div className="flex flex-col gap-1.5 w-full">
                     <label
                       htmlFor="confirmPassword"
-                      className="font-medium text-[#0a0a0a]"
+                      className="font-medium text-[var(--color-text-primary)]"
                       style={{ fontSize: "14px", lineHeight: "20px" }}
                     >
                       {t("confirmPassword")}

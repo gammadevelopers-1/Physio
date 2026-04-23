@@ -142,7 +142,7 @@ const CourseAssistantsSuggestPanel = ({
   return (
     <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-[#1F2937]">
+        <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
           {t("taPanel.title")}
         </h3>
         {unassignedTAs.length > 0 && (
@@ -186,11 +186,11 @@ const CourseAssistantsSuggestPanel = ({
       {showDropdown && (
         <div className="mb-4 p-3 bg-[#F9FAFB] rounded-lg border border-[var(--color-border)]">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-[#4B5563]">
+            <p className="text-sm font-medium text-[var(--color-text-secondary)]">
               {t("taPanel.selectTA")}
             </p>
             <button onClick={() => setShowDropdown(false)}>
-              <X className="w-4 h-4 text-[#6B7280]" />
+              <X className="w-4 h-4 text-[var(--color-text-secondary)]" />
             </button>
           </div>
           <div className="space-y-1 max-h-48 overflow-y-auto">
@@ -199,11 +199,11 @@ const CourseAssistantsSuggestPanel = ({
                 key={ta.id}
                 onClick={() => handleSuggest(ta.id)}
                 disabled={suggesting}
-                className="w-full flex items-center justify-between px-3 py-2 text-sm text-[#1F2937] hover:bg-white rounded-lg transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-between px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-white rounded-lg transition-colors disabled:opacity-50"
               >
                 <span>
                   {ta.firstName} {ta.lastName}{" "}
-                  <span className="text-[#6B7280]">({ta.email})</span>
+                  <span className="text-[var(--color-text-secondary)]">({ta.email})</span>
                 </span>
                 {suggesting && (
                   <Loader2 className="w-4 h-4 animate-spin text-[var(--color-primary-dark)]" />
@@ -220,7 +220,7 @@ const CourseAssistantsSuggestPanel = ({
           <div className="w-6 h-6 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : tas.length === 0 ? (
-        <p className="text-sm text-[#6B7280] text-center py-4">
+        <p className="text-sm text-[var(--color-text-secondary)] text-center py-4">
           {t("taPanel.noTAs")}
         </p>
       ) : (
@@ -231,10 +231,10 @@ const CourseAssistantsSuggestPanel = ({
               className="flex items-center justify-between px-3 py-2.5 bg-[#F9FAFB] rounded-lg"
             >
               <div>
-                <p className="text-sm font-medium text-[#1F2937]">
+                <p className="text-sm font-medium text-[var(--color-text-primary)]">
                   {ta.firstName} {ta.lastName}
                 </p>
-                <p className="text-xs text-[#6B7280]">{ta.email}</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">{ta.email}</p>
               </div>
               <div className="flex items-center gap-2">
                 <span

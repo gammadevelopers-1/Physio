@@ -148,7 +148,7 @@ const StudentCourseDetailContent = () => {
       case "absent": return { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: t("courseDetail.statusAbsent") };
       case "late": return { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("courseDetail.statusLate") };
       case "excused": return { bg: "bg-[#EFF6FF]", text: "text-[#3B82F6]", label: t("courseDetail.statusExcused") };
-      default: return { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: status };
+      default: return { bg: "bg-[#F3F4F6]", text: "text-[var(--color-text-secondary)]", label: status };
     }
   };
 
@@ -184,7 +184,7 @@ const StudentCourseDetailContent = () => {
               {/* Back Link */}
               <Link
                 href={`/${locale}/dashboard/student/courses`}
-                className="inline-flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#1F2937] mb-4 transition-colors"
+                className="inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-4 transition-colors"
               >
                 <BackIcon className="w-4 h-4" />
                 {t("courseDetail.backToCourses")}
@@ -192,11 +192,11 @@ const StudentCourseDetailContent = () => {
 
               {loading ? (
                 <div className="flex items-center justify-center py-16">
-                  <Loader2 className="w-8 h-8 text-[#9CA3AF] animate-spin" />
+                  <Loader2 className="w-8 h-8 text-[var(--color-text-secondary)] animate-spin" />
                 </div>
               ) : error || !data ? (
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
-                  <p className="text-[#6B7280]">
+                  <p className="text-[var(--color-text-secondary)]">
                     {error || t("courseDetail.notFound")}
                   </p>
                 </div>
@@ -216,24 +216,24 @@ const StudentCourseDetailContent = () => {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <BookOpen className="w-10 h-10 text-[#9CA3AF]" />
+                            <BookOpen className="w-10 h-10 text-[var(--color-text-secondary)]" />
                           </div>
                         )}
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <h1 className="text-lg sm:text-xl font-bold text-[#1F2937] mb-2">
+                        <h1 className="text-lg sm:text-xl font-bold text-[var(--color-text-primary)] mb-2">
                           {isRTL && data.course.titleAr
                             ? data.course.titleAr
                             : data.course.title}
                         </h1>
 
-                        <p className="text-sm text-[#6B7280] mb-3">
+                        <p className="text-sm text-[var(--color-text-secondary)] mb-3">
                           {data.course.instructorName}
                         </p>
 
                         {/* Quick Info */}
-                        <div className="flex flex-wrap gap-3 text-xs text-[#6B7280]">
+                        <div className="flex flex-wrap gap-3 text-xs text-[var(--color-text-secondary)]">
                           {data.course.deliveryType && (
                             <span className="flex items-center gap-1">
                               <Video className="w-3.5 h-3.5" />
@@ -259,10 +259,10 @@ const StudentCourseDetailContent = () => {
                         {/* Progress */}
                         <div className="mt-3">
                           <div className="flex items-center justify-between text-xs mb-1">
-                            <span className="text-[#6B7280]">
+                            <span className="text-[var(--color-text-secondary)]">
                               {t("courseDetail.progress")}
                             </span>
-                            <span className="font-medium text-[#1F2937]">
+                            <span className="font-medium text-[var(--color-text-primary)]">
                               {data.enrollment.progress}%
                             </span>
                           </div>
@@ -304,10 +304,10 @@ const StudentCourseDetailContent = () => {
                   {/* Course Description / Learning Objectives */}
                   {(data.course.description || data.course.descriptionAr) && (
                     <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
-                      <h3 className="text-sm font-semibold text-[#1F2937] mb-3">
+                      <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
                         {t("courseDetail.aboutCourse")}
                       </h3>
-                      <p className="text-sm text-[#4B5563] whitespace-pre-wrap leading-relaxed">
+                      <p className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap leading-relaxed">
                         {isRTL && data.course.descriptionAr
                           ? data.course.descriptionAr
                           : data.course.description}
@@ -324,10 +324,10 @@ const StudentCourseDetailContent = () => {
                           <BookOpen className="w-5 h-5 text-[#002D87]" />
                         </div>
                         <div>
-                          <p className="text-xs text-[#6B7280]">
+                          <p className="text-xs text-[var(--color-text-secondary)]">
                             {t("courseDetail.modules")}
                           </p>
-                          <p className="text-lg font-semibold text-[#1F2937]">
+                          <p className="text-lg font-semibold text-[var(--color-text-primary)]">
                             {data.modules.filter((m) => m.isCompleted).length}/
                             {data.modules.length}
                           </p>
@@ -357,10 +357,10 @@ const StudentCourseDetailContent = () => {
                             />
                           </div>
                           <div>
-                            <p className="text-xs text-[#6B7280]">
+                            <p className="text-xs text-[var(--color-text-secondary)]">
                               {t("courseDetail.attendance")}
                             </p>
-                            <p className="text-lg font-semibold text-[#1F2937]">
+                            <p className="text-lg font-semibold text-[var(--color-text-primary)]">
                               {data.attendanceSummary
                                 ? `${data.attendanceSummary.attended}/${data.attendanceSummary.total}`
                                 : "0/0"}
@@ -389,17 +389,17 @@ const StudentCourseDetailContent = () => {
                           <ClipboardCheck className="w-5 h-5 text-[#D4A520]" />
                         </div>
                         <div>
-                          <p className="text-xs text-[#6B7280]">
+                          <p className="text-xs text-[var(--color-text-secondary)]">
                             {t("courseDetail.assessments")}
                           </p>
-                          <p className="text-lg font-semibold text-[#1F2937]">
+                          <p className="text-lg font-semibold text-[var(--color-text-primary)]">
                             {data.assessmentSummary
                               ? `${data.assessmentSummary.completed}/${data.assessmentSummary.total}`
                               : `${data.assessments.length}`}
                           </p>
                           {data.assessmentSummary &&
                             data.assessmentSummary.completed > 0 && (
-                              <p className="text-xs text-[#6B7280]">
+                              <p className="text-xs text-[var(--color-text-secondary)]">
                                 {t("courseDetail.averageScore", {
                                   score: Math.round(
                                     data.assessmentSummary.averageScore
@@ -418,10 +418,10 @@ const StudentCourseDetailContent = () => {
                           <Users className="w-5 h-5 text-[#16A34A]" />
                         </div>
                         <div>
-                          <p className="text-xs text-[#6B7280]">
+                          <p className="text-xs text-[var(--color-text-secondary)]">
                             {t("courseDetail.status")}
                           </p>
-                          <p className="text-lg font-semibold text-[#1F2937] capitalize">
+                          <p className="text-lg font-semibold text-[var(--color-text-primary)] capitalize">
                             {data.enrollment.status === "active"
                               ? t("myCourses.inProgress")
                               : data.enrollment.status === "completed"
@@ -534,12 +534,12 @@ const StudentCourseDetailContent = () => {
 
                   {/* Modules List */}
                   <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
-                    <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-4">
+                    <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                       {t("courseDetail.courseModules")}
                     </h2>
 
                     {data.modules.length === 0 ? (
-                      <p className="text-sm text-[#6B7280] py-4 text-center">
+                      <p className="text-sm text-[var(--color-text-secondary)] py-4 text-center">
                         {t("courseDetail.noModules")}
                       </p>
                     ) : (
@@ -560,18 +560,18 @@ const StudentCourseDetailContent = () => {
                                     </div>
                                   ) : (
                                     <div className="w-8 h-8 rounded-full bg-[#F3F4F6] flex items-center justify-center flex-shrink-0">
-                                      <span className="text-xs font-medium text-[#4B5563]">
+                                      <span className="text-xs font-medium text-[var(--color-text-secondary)]">
                                         {index + 1}
                                       </span>
                                     </div>
                                   )}
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-[#1F2937] truncate">
+                                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                                       {isRTL && module.titleAr
                                         ? module.titleAr
                                         : module.title}
                                     </p>
-                                    <div className="flex items-center gap-3 text-xs text-[#6B7280]">
+                                    <div className="flex items-center gap-3 text-xs text-[var(--color-text-secondary)]">
                                       {module.type && (
                                         <span className="capitalize">
                                           {module.type}
@@ -595,8 +595,8 @@ const StudentCourseDetailContent = () => {
                                         href={`/${locale}/dashboard/student/courses/${courseId}/assessment/${ma.id}`}
                                         className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[#F9FAFB] transition-colors"
                                       >
-                                        <ClipboardCheck className="w-3.5 h-3.5 text-[#6B7280] flex-shrink-0" />
-                                        <span className="text-xs text-[#374151] flex-1 truncate">{ma.title}</span>
+                                        <ClipboardCheck className="w-3.5 h-3.5 text-[var(--color-text-secondary)] flex-shrink-0" />
+                                        <span className="text-xs text-[var(--color-text-secondary)] flex-1 truncate">{ma.title}</span>
                                         <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
                                           ma.type === "assignment" ? "bg-amber-50 text-amber-700" : ma.type === "exam" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-blue-700"
                                         }`}>
@@ -628,19 +628,19 @@ const StudentCourseDetailContent = () => {
                         className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-[#F9FAFB] transition-colors rounded-xl"
                       >
                         <div className="flex items-center gap-3">
-                          <h2 className="text-base sm:text-lg font-semibold text-[#1F2937]">
+                          <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)]">
                             {t("courseDetail.attendanceHistory")}
                           </h2>
-                          <span className="text-xs text-[#6B7280]">
+                          <span className="text-xs text-[var(--color-text-secondary)]">
                             {data.attendanceSummary
                               ? `${data.attendanceSummary.attended}/${data.attendanceSummary.total} (${data.attendanceSummary.percentage}%)`
                               : ""}
                           </span>
                         </div>
                         {showAttendanceHistory ? (
-                          <ChevronUp className="w-5 h-5 text-[#6B7280]" />
+                          <ChevronUp className="w-5 h-5 text-[var(--color-text-secondary)]" />
                         ) : (
-                          <ChevronDown className="w-5 h-5 text-[#6B7280]" />
+                          <ChevronDown className="w-5 h-5 text-[var(--color-text-secondary)]" />
                         )}
                       </button>
 
@@ -651,8 +651,8 @@ const StudentCourseDetailContent = () => {
                             const marker = data.attendanceRecords.find((r: any) => (r as any).markedByName);
                             if (!marker) return null;
                             return (
-                              <div className="flex items-center gap-3 px-4 sm:px-6 py-2 bg-[#FAFAFA] text-[10px] text-[#9CA3AF] border-b border-[var(--color-border)]">
-                                <span>Marked by: <span className="font-medium text-[#6B7280]">{(marker as any).markedByName}</span> ({(marker as any).markedByRole === "TEACHING_ASSISTANT" ? "TA" : (marker as any).markedByRole === "INSTRUCTOR" ? "Instructor" : (marker as any).markedByRole || "System"})</span>
+                              <div className="flex items-center gap-3 px-4 sm:px-6 py-2 bg-[#FAFAFA] text-[10px] text-[var(--color-text-secondary)] border-b border-[var(--color-border)]">
+                                <span>Marked by: <span className="font-medium text-[var(--color-text-secondary)]">{(marker as any).markedByName}</span> ({(marker as any).markedByRole === "TEACHING_ASSISTANT" ? "TA" : (marker as any).markedByRole === "INSTRUCTOR" ? "Instructor" : (marker as any).markedByRole || "System"})</span>
                               </div>
                             );
                           })()}
@@ -663,10 +663,10 @@ const StudentCourseDetailContent = () => {
                               <div key={record.sessionId} className="px-4 sm:px-6 py-3">
                                 <div className="flex items-center gap-3">
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-[#1F2937] truncate">
+                                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                                       {record.sessionTitle}
                                     </p>
-                                    <div className="flex flex-wrap items-center gap-3 text-xs text-[#6B7280] mt-1">
+                                    <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--color-text-secondary)] mt-1">
                                       <span className="flex items-center gap-1">
                                         <Calendar className="w-3 h-3" />
                                         {formatDate(record.scheduledAt)}
@@ -711,7 +711,7 @@ const StudentCourseDetailContent = () => {
                   {/* Upcoming Sessions (hidden for self-paced) */}
                   {data.course.deliveryType !== "self-paced" && upcomingSessions.length > 0 && (
                     <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
-                      <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-4">
+                      <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("courseDetail.upcomingSessions")}
                       </h2>
 
@@ -729,10 +729,10 @@ const StudentCourseDetailContent = () => {
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-[#1F2937]">
+                              <p className="text-sm font-medium text-[var(--color-text-primary)]">
                                 {session.title}
                               </p>
-                              <div className="flex flex-wrap gap-3 text-xs text-[#6B7280] mt-1">
+                              <div className="flex flex-wrap gap-3 text-xs text-[var(--color-text-secondary)] mt-1">
                                 <span className="flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
                                   {formatDate(session.scheduledAt)}
@@ -762,7 +762,7 @@ const StudentCourseDetailContent = () => {
                                 </button>
                               )}
                               {session.venueAddress && (
-                                <p className="mt-1 text-xs text-[#6B7280]">
+                                <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
                                   <MapPin className="w-3 h-3 inline mr-1" />
                                   {session.venueAddress}
                                 </p>
@@ -777,7 +777,7 @@ const StudentCourseDetailContent = () => {
                   {/* Past Sessions — hidden for self-paced */}
                   {data.course.deliveryType !== "self-paced" && completedSessions.length > 0 && (
                     <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
-                      <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-4">
+                      <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("courseDetail.pastSessions")} ({completedSessions.length})
                       </h2>
 
@@ -799,10 +799,10 @@ const StudentCourseDetailContent = () => {
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-[#6B7280]">
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                                 {session.title}
                               </p>
-                              <div className="flex flex-wrap gap-3 text-xs text-[#9CA3AF] mt-1">
+                              <div className="flex flex-wrap gap-3 text-xs text-[var(--color-text-secondary)] mt-1">
                                 <span className="flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
                                   {formatDate(session.scheduledAt)}
@@ -841,18 +841,18 @@ const StudentCourseDetailContent = () => {
                   {/* Missed/Rescheduled Lectures — hidden for self-paced */}
                   {data.course.deliveryType !== "self-paced" && inactiveSessions.length > 0 && (
                     <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
-                      <h2 className="text-base sm:text-lg font-semibold text-[#6B7280] mb-4">
+                      <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-secondary)] mb-4">
                         Cancelled / Rescheduled Lectures
                       </h2>
                       <div className="space-y-3">
                         {inactiveSessions.map((session) => (
                           <div key={session.id} className="flex items-start gap-3 p-3 rounded-lg border border-[var(--color-border)] bg-[#F9FAFB]">
                             <div className="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center flex-shrink-0">
-                              <XCircle className="w-5 h-5 text-[#9CA3AF]" />
+                              <XCircle className="w-5 h-5 text-[var(--color-text-secondary)]" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-[#6B7280]">{session.title}</p>
-                              <div className="flex flex-wrap gap-3 text-xs text-[#9CA3AF] mt-1">
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">{session.title}</p>
+                              <div className="flex flex-wrap gap-3 text-xs text-[var(--color-text-secondary)] mt-1">
                                 <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{formatDate(session.scheduledAt)}</span>
                                 <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
                                   session.status === "cancelled" ? "bg-[#FEE2E2] text-[#EF4444]"
@@ -870,7 +870,7 @@ const StudentCourseDetailContent = () => {
                   {/* Assessments */}
                   {data.assessments.length > 0 && (
                     <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
-                      <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-4">
+                      <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("courseDetail.assessments")}
                       </h2>
 
@@ -899,13 +899,13 @@ const StudentCourseDetailContent = () => {
                             ) : isExpiredAssignment ? (
                               <AlertTriangle className="w-5 h-5 text-[#EA580C] flex-shrink-0" />
                             ) : (
-                              <Circle className="w-5 h-5 text-[#9CA3AF] flex-shrink-0" />
+                              <Circle className="w-5 h-5 text-[var(--color-text-secondary)] flex-shrink-0" />
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className={`text-sm font-medium ${isFailed ? "text-[#DC2626]" : "text-[#1F2937]"}`}>
+                              <p className={`text-sm font-medium ${isFailed ? "text-[#DC2626]" : "text-[var(--color-text-primary)]"}`}>
                                 {assessment.title}
                               </p>
-                              <div className="flex items-center gap-3 text-xs text-[#6B7280] mt-0.5">
+                              <div className="flex items-center gap-3 text-xs text-[var(--color-text-secondary)] mt-0.5">
                                 <span className="capitalize">
                                   {assessment.type}
                                 </span>
@@ -929,7 +929,7 @@ const StudentCourseDetailContent = () => {
                             {assessment.submission ? (
                               <div className="flex items-center gap-3 flex-shrink-0">
                                 <div className="text-right">
-                                  <p className={`text-sm font-semibold ${isFailed ? "text-[#DC2626]" : "text-[#1F2937]"}`}>
+                                  <p className={`text-sm font-semibold ${isFailed ? "text-[#DC2626]" : "text-[var(--color-text-primary)]"}`}>
                                     {assessment.submission.score != null
                                       ? `${assessment.submission.score}/${assessment.submission.totalMarks}`
                                       : "—"}
@@ -1004,25 +1004,25 @@ const StudentCourseDetailContent = () => {
           />
           <div className="relative bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto scrollbar-hide">
             <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
-              <h2 className="text-lg font-semibold text-[#1F2937]">
+              <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {t("courseDetail.viewRecording")}
               </h2>
               <button
                 onClick={() => setRecordingsModalSession(null)}
                 className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-[#6B7280]" />
+                <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
             </div>
 
             {recordingsLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-[#6B7280]" />
+                <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />
               </div>
             ) : recordings.length === 0 ? (
               <div className="py-12 text-center">
                 <Film className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
-                <p className="text-sm text-[#6B7280]">
+                <p className="text-sm text-[var(--color-text-secondary)]">
                   {t("courseDetail.noRecordings")}
                 </p>
               </div>
@@ -1051,14 +1051,14 @@ const StudentCourseDetailContent = () => {
                             href={rec.downloadUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
                           >
                             <Download className="w-3 h-3" />
                           </a>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-[#6B7280]">
+                    <div className="flex items-center gap-4 text-xs text-[var(--color-text-secondary)]">
                       <span>
                         {t("courseDetail.duration")}:{" "}
                         {formatRecordingDuration(rec.recordingStart, rec.recordingEnd)}
@@ -1075,7 +1075,7 @@ const StudentCourseDetailContent = () => {
             <div className="flex items-center justify-end p-4 border-t border-[var(--color-border)]">
               <button
                 onClick={() => setRecordingsModalSession(null)}
-                className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
               >
                 {t("courseDetail.backToCourses").includes("Back") ? "Close" : "إغلاق"}
               </button>
@@ -1093,18 +1093,18 @@ const StudentCourseDetailContent = () => {
                 <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
                   <AlertTriangle className="w-5 h-5 text-red-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-[#1F2937]">
+                <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                   {t("courseDetail.dropConfirmTitle")}
                 </h3>
               </div>
-              <p className="text-sm text-[#6B7280] mb-6">
+              <p className="text-sm text-[var(--color-text-secondary)] mb-6">
                 {t("courseDetail.dropConfirmMessage")}
               </p>
               <div className="flex gap-3 justify-end">
                 <button
                   onClick={() => setShowDropConfirm(false)}
                   disabled={dropping}
-                  className="px-4 py-2 text-sm font-medium text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                  className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
                 >
                   {t("courseDetail.cancel")}
                 </button>

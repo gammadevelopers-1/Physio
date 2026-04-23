@@ -34,13 +34,13 @@ import type { ModuleMaterial } from "@/types/student-dashboard";
 function getModuleIcon(type: string, isCompleted?: boolean) {
   if (isCompleted) return { Icon: CheckCircle2, color: "text-[#16A34A]" };
   switch (type) {
-    case "video":   return { Icon: Video,        color: "text-[#4B5563]" };
+    case "video":   return { Icon: Video,        color: "text-[var(--color-text-secondary)]" };
     case "document":
-    case "pdf":     return { Icon: FileText,     color: "text-[#4B5563]" };
-    case "image":   return { Icon: ImageIcon,    color: "text-[#4B5563]" };
-    case "quiz":    return { Icon: ClipboardList, color: "text-[#4B5563]" };
-    case "mixed":   return { Icon: Layers,       color: "text-[#4B5563]" };
-    default:        return { Icon: BookOpen,     color: "text-[#4B5563]" };
+    case "pdf":     return { Icon: FileText,     color: "text-[var(--color-text-secondary)]" };
+    case "image":   return { Icon: ImageIcon,    color: "text-[var(--color-text-secondary)]" };
+    case "quiz":    return { Icon: ClipboardList, color: "text-[var(--color-text-secondary)]" };
+    case "mixed":   return { Icon: Layers,       color: "text-[var(--color-text-secondary)]" };
+    default:        return { Icon: BookOpen,     color: "text-[var(--color-text-secondary)]" };
   }
 }
 
@@ -74,10 +74,10 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
           <FileText className="w-8 h-8 text-[#002D87]" />
         </div>
         <div>
-          <p className="text-sm font-medium text-[#1F2937] mb-1">
+          <p className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
             {material.title}
           </p>
-          <p className="text-xs text-[#6B7280]">
+          <p className="text-xs text-[var(--color-text-secondary)]">
             This file type cannot be previewed in the browser.
           </p>
         </div>
@@ -97,7 +97,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
     <div className="relative">
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-[#F9FAFB] rounded-lg z-10">
-          <Loader2 className="w-6 h-6 text-[#9CA3AF] animate-spin" />
+          <Loader2 className="w-6 h-6 text-[var(--color-text-secondary)] animate-spin" />
         </div>
       )}
       <embed
@@ -112,7 +112,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
           href={material.fileUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[#4B5563] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
         >
           <ExternalLink className="w-4 h-4" />
           Open in tab
@@ -146,7 +146,7 @@ function ImageViewer({ material }: { material: ModuleMaterial }) {
         href={material.fileUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="absolute top-3 end-3 inline-flex items-center gap-1 px-3 py-1.5 bg-white/90 rounded-lg text-xs text-[#1F2937] opacity-0 group-hover:opacity-100 transition-opacity shadow"
+        className="absolute top-3 end-3 inline-flex items-center gap-1 px-3 py-1.5 bg-white/90 rounded-lg text-xs text-[var(--color-text-primary)] opacity-0 group-hover:opacity-100 transition-opacity shadow"
       >
         <Maximize2 className="w-3 h-3" />
         Full size
@@ -281,7 +281,7 @@ const CourseLearningContent = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#9CA3AF] animate-spin" />
+        <Loader2 className="w-8 h-8 text-[var(--color-text-secondary)] animate-spin" />
       </div>
     );
   }
@@ -290,7 +290,7 @@ const CourseLearningContent = () => {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
         <div className="text-center">
-          <p className="text-[#6B7280] mb-4">{error || t("courseDetail.notFound")}</p>
+          <p className="text-[var(--color-text-secondary)] mb-4">{error || t("courseDetail.notFound")}</p>
           <Link
             href={`/${locale}/dashboard/student/courses`}
             className="text-sm text-[#002D87] hover:underline"
@@ -309,8 +309,8 @@ const CourseLearningContent = () => {
     <div className="min-h-screen bg-[#F9FAFB]" dir={isRTL ? "rtl" : "ltr"}>
       {/* Locked module toast */}
       {lockedToast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 bg-[#1F2937] text-white text-sm rounded-xl shadow-lg">
-          <Lock className="w-4 h-4 text-[#9CA3AF]" />
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 bg-[var(--color-text-primary)] text-white text-sm rounded-xl shadow-lg">
+          <Lock className="w-4 h-4 text-[var(--color-text-secondary)]" />
           Complete the previous module to unlock this one
         </div>
       )}
@@ -324,20 +324,20 @@ const CourseLearningContent = () => {
               className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
               aria-label={tA("back")}
             >
-              <BackIcon className="w-5 h-5 text-[#4B5563]" />
+              <BackIcon className="w-5 h-5 text-[var(--color-text-secondary)]" />
             </Link>
             <div>
-              <h1 className="text-sm sm:text-base font-semibold text-[#1F2937] line-clamp-1">
+              <h1 className="text-sm sm:text-base font-semibold text-[var(--color-text-primary)] line-clamp-1">
                 {isRTL && data.course.titleAr ? data.course.titleAr : data.course.title}
               </h1>
-              <p className="text-xs text-[#6B7280]">
+              <p className="text-xs text-[var(--color-text-secondary)]">
                 {data.enrollment.progress}% {t("courseDetail.complete")}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="hidden sm:inline text-xs font-medium text-[#4B5563]">
+            <span className="hidden sm:inline text-xs font-medium text-[var(--color-text-secondary)]">
               {data.enrollment.progress}%
             </span>
             <div className="hidden sm:block w-32 h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
@@ -351,7 +351,7 @@ const CourseLearningContent = () => {
               className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors lg:hidden"
               aria-label={tA("toggleModules")}
             >
-              <BookOpen className="w-5 h-5 text-[#4B5563]" />
+              <BookOpen className="w-5 h-5 text-[var(--color-text-secondary)]" />
             </button>
           </div>
         </div>
@@ -366,7 +366,7 @@ const CourseLearningContent = () => {
           style={{ maxHeight: "calc(100vh - 57px)", position: "sticky", top: 57 }}
         >
           <div className="p-4">
-            <h2 className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-3">
+            <h2 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide mb-3">
               {t("learning.courseContent")}
             </h2>
 
@@ -409,11 +409,11 @@ const CourseLearningContent = () => {
                   >
                     {/* Step indicator */}
                     <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5
-                      bg-[#F3F4F6] text-[10px] font-semibold text-[#6B7280]">
+                      bg-[#F3F4F6] text-[10px] font-semibold text-[var(--color-text-secondary)]">
                       {module.isCompleted ? (
                         <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
                       ) : isLocked ? (
-                        <Lock className="w-3 h-3 text-[#9CA3AF]" />
+                        <Lock className="w-3 h-3 text-[var(--color-text-secondary)]" />
                       ) : (
                         <span className={isActive ? "text-[#002D87]" : ""}>{index + 1}</span>
                       )}
@@ -422,19 +422,19 @@ const CourseLearningContent = () => {
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm leading-snug ${
                         isLocked
-                          ? "text-[#9CA3AF]"
+                          ? "text-[var(--color-text-secondary)]"
                           : isActive
                             ? "font-semibold text-[#002D87]"
                             : module.isCompleted
-                              ? "text-[#6B7280]"
-                              : "font-medium text-[#1F2937]"
+                              ? "text-[var(--color-text-secondary)]"
+                              : "font-medium text-[var(--color-text-primary)]"
                       } line-clamp-2`}>
                         {isRTL && module.titleAr ? module.titleAr : module.title}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
                         <ModuleIcon className={`w-3 h-3 ${isActive && !module.isCompleted ? "text-[#002D87]" : iconColor}`} />
                         {module.durationMinutes && (
-                          <span className="flex items-center gap-0.5 text-[11px] text-[#9CA3AF]">
+                          <span className="flex items-center gap-0.5 text-[11px] text-[var(--color-text-secondary)]">
                             <Clock className="w-3 h-3" />
                             {module.durationMinutes}m
                           </span>
@@ -465,7 +465,7 @@ const CourseLearningContent = () => {
               {/* Module Header */}
               <div className="mb-5">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs text-[#6B7280]">
+                  <span className="text-xs text-[var(--color-text-secondary)]">
                     {t("learning.module")} {currentIndex + 1} / {sortedModules.length}
                   </span>
                   {currentModule.isCompleted && (
@@ -475,7 +475,7 @@ const CourseLearningContent = () => {
                     </span>
                   )}
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
+                <h2 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
                   {isRTL && currentModule.titleAr ? currentModule.titleAr : currentModule.title}
                 </h2>
               </div>
@@ -495,7 +495,7 @@ const CourseLearningContent = () => {
                           className={`flex items-center gap-1.5 px-4 py-3 text-sm whitespace-nowrap border-b-2 transition-colors ${
                             activeMaterialIdx === idx
                               ? "border-[#002D87] text-[#002D87] font-medium"
-                              : "border-transparent text-[#6B7280] hover:text-[#1F2937]"
+                              : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                           }`}
                         >
                           <Icon className="w-3.5 h-3.5" />
@@ -510,7 +510,7 @@ const CourseLearningContent = () => {
                 <div className="p-5 sm:p-6">
                   {materialsLoading ? (
                     <div className="flex items-center justify-center py-16">
-                      <Loader2 className="w-7 h-7 text-[#9CA3AF] animate-spin" />
+                      <Loader2 className="w-7 h-7 text-[var(--color-text-secondary)] animate-spin" />
                     </div>
                   ) : materials.length === 0 ? (
                     currentModule.type === "quiz" ? (
@@ -518,22 +518,22 @@ const CourseLearningContent = () => {
                         <div className="w-16 h-16 bg-[#FFFBEB] rounded-2xl flex items-center justify-center mb-4">
                           <ClipboardList className="w-8 h-8 text-[#D4A520]" />
                         </div>
-                        <h3 className="text-base font-semibold text-[#1F2937] mb-1">
+                        <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">
                           {t("learning.takeAssessment")}
                         </h3>
-                        <p className="text-sm text-[#6B7280]">
+                        <p className="text-sm text-[var(--color-text-secondary)]">
                           Complete the assessment for this module.
                         </p>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-14 text-center">
                         <div className="w-16 h-16 bg-[#F3F4F6] rounded-2xl flex items-center justify-center mb-4">
-                          <BookOpen className="w-8 h-8 text-[#9CA3AF]" />
+                          <BookOpen className="w-8 h-8 text-[var(--color-text-secondary)]" />
                         </div>
-                        <h3 className="text-base font-semibold text-[#1F2937] mb-1">
+                        <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">
                           {t("learning.noMaterials")}
                         </h3>
-                        <p className="text-sm text-[#6B7280]">
+                        <p className="text-sm text-[var(--color-text-secondary)]">
                           No content has been published for this module yet.
                         </p>
                       </div>
@@ -544,8 +544,8 @@ const CourseLearningContent = () => {
                       {materials.length === 1 && (
                         <div className="flex items-center gap-2 mb-4">
                           {(() => { const { Icon, color } = getModuleIcon(activeMaterial.type); return <Icon className={`w-4 h-4 ${color}`} />; })()}
-                          <h3 className="text-sm font-semibold text-[#1F2937]">{activeMaterial.title}</h3>
-                          <span className="ms-auto text-[11px] px-2 py-0.5 bg-[#F3F4F6] rounded-full text-[#6B7280] capitalize">
+                          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{activeMaterial.title}</h3>
+                          <span className="ms-auto text-[11px] px-2 py-0.5 bg-[#F3F4F6] rounded-full text-[var(--color-text-secondary)] capitalize">
                             {typeBadge(activeMaterial.type)}
                           </span>
                         </div>
@@ -603,7 +603,7 @@ const CourseLearningContent = () => {
                   <button
                     onClick={goToPrevModule}
                     disabled={currentIndex === 0}
-                    className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-xl hover:bg-[#F9FAFB] transition-colors disabled:opacity-40 text-sm text-[#4B5563]"
+                    className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-xl hover:bg-[#F9FAFB] transition-colors disabled:opacity-40 text-sm text-[var(--color-text-secondary)]"
                     aria-label={tA("previousModule")}
                   >
                     {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
@@ -612,7 +612,7 @@ const CourseLearningContent = () => {
                   <button
                     onClick={goToNextModule}
                     disabled={currentIndex === sortedModules.length - 1}
-                    className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-xl hover:bg-[#F9FAFB] transition-colors disabled:opacity-40 text-sm text-[#4B5563]"
+                    className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-xl hover:bg-[#F9FAFB] transition-colors disabled:opacity-40 text-sm text-[var(--color-text-secondary)]"
                     aria-label={tA("nextModule")}
                   >
                     Next
@@ -623,7 +623,7 @@ const CourseLearningContent = () => {
             </div>
           ) : (
             <div className="flex items-center justify-center h-full">
-              <p className="text-[#6B7280]">{t("learning.noModules")}</p>
+              <p className="text-[var(--color-text-secondary)]">{t("learning.noModules")}</p>
             </div>
           )}
         </main>

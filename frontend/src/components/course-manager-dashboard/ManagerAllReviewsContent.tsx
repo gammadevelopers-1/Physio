@@ -269,10 +269,10 @@ export default function ManagerAllReviewsContent() {
             <div className="flex-1 min-w-0">
               {/* Header */}
               <div className="mb-6">
-                <h1 className="text-2xl font-bold text-[#06080b]">
+                <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
                   {isRTL ? "مراجعات الطلاب" : "Student Reviews"}
                 </h1>
-                <p className="text-sm text-[#6B7280] mt-1">
+                <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                   {isRTL
                     ? "راجع ووافق على المراجعات قبل نشرها على صفحات الدورة العامة"
                     : "Review and approve feedback before it appears on public course pages"}
@@ -288,15 +288,15 @@ export default function ManagerAllReviewsContent() {
                       onClick={() => setTab(ti.key)}
                       className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                         tab === ti.key
-                          ? "bg-[#1F2937] text-white"
-                          : "text-[#374151] hover:bg-[#F3F4F6]"
+                          ? "bg-[var(--color-text-primary)] text-white"
+                          : "text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
                       }`}
                     >
                       {ti.label}
                       {ti.count !== undefined && ti.count > 0 && (
                         <span
                           className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                            tab === ti.key ? "bg-white/20" : "bg-[var(--color-border)] text-[#374151]"
+                            tab === ti.key ? "bg-white/20" : "bg-[var(--color-border)] text-[var(--color-text-secondary)]"
                           }`}
                         >
                           {ti.count}
@@ -311,7 +311,7 @@ export default function ManagerAllReviewsContent() {
               <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-4">
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="relative flex-1 min-w-[200px]">
-                    <Search className={`w-4 h-4 text-[#9CA3AF] absolute top-2.5 ${isRTL ? "right-3" : "left-3"}`} />
+                    <Search className={`w-4 h-4 text-[var(--color-text-secondary)] absolute top-2.5 ${isRTL ? "right-3" : "left-3"}`} />
                     <input
                       type="text"
                       value={searchInput}
@@ -324,7 +324,7 @@ export default function ManagerAllReviewsContent() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-[#6B7280]">{isRTL ? "الدورة:" : "Course:"}</span>
+                    <span className="text-xs font-medium text-[var(--color-text-secondary)]">{isRTL ? "الدورة:" : "Course:"}</span>
                     <select
                       value={courseFilter}
                       onChange={(e) => setCourseFilter(e.target.value)}
@@ -342,7 +342,7 @@ export default function ManagerAllReviewsContent() {
                   {/* Publish filter only makes sense on "All" — on Pending it's always unpublished; on Approved/Rejected the per-row badge already shows state */}
                   {tab === "all" && (
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-[#6B7280]">{isRTL ? "النشر:" : "Published:"}</span>
+                      <span className="text-xs font-medium text-[var(--color-text-secondary)]">{isRTL ? "النشر:" : "Published:"}</span>
                       <select
                         value={publishedFilter}
                         onChange={(e) => setPublishedFilter(e.target.value as typeof publishedFilter)}
@@ -356,7 +356,7 @@ export default function ManagerAllReviewsContent() {
                   )}
 
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-[#6B7280]">{isRTL ? "الترتيب:" : "Sort:"}</span>
+                    <span className="text-xs font-medium text-[var(--color-text-secondary)]">{isRTL ? "الترتيب:" : "Sort:"}</span>
                     <select
                       value={sort}
                       onChange={(e) => setSort(e.target.value as SortOption)}
@@ -375,14 +375,14 @@ export default function ManagerAllReviewsContent() {
               <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
                 {loading ? (
                   <div className="flex items-center justify-center py-16">
-                    <Loader2 className="w-6 h-6 animate-spin text-[#6B7280]" />
+                    <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />
                   </div>
                 ) : reviews.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
                     <div className="w-14 h-14 rounded-xl bg-[#F3F4F6] flex items-center justify-center mb-3">
-                      <Star className="w-7 h-7 text-[#9CA3AF]" />
+                      <Star className="w-7 h-7 text-[var(--color-text-secondary)]" />
                     </div>
-                    <p className="text-sm text-[#6B7280]">
+                    <p className="text-sm text-[var(--color-text-secondary)]">
                       {isRTL ? "لا توجد مراجعات مطابقة" : "No reviews match your filters"}
                     </p>
                   </div>
@@ -396,7 +396,7 @@ export default function ManagerAllReviewsContent() {
                           <div className="flex items-start justify-between gap-3 mb-2">
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap mb-1">
-                                <p className="text-sm font-semibold text-[#1F2937]">{r.studentName}</p>
+                                <p className="text-sm font-semibold text-[var(--color-text-primary)]">{r.studentName}</p>
                                 {statusBadge(r.moderationStatus)}
                                 {r.isPublished ? (
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700">
@@ -412,11 +412,11 @@ export default function ManagerAllReviewsContent() {
                               </div>
                               <Link
                                 href={`/${locale}/dashboard/manager/courses/${r.courseId}`}
-                                className="text-xs text-[#6B7280] hover:text-[#3B82F6] hover:underline truncate inline-block max-w-full"
+                                className="text-xs text-[var(--color-text-secondary)] hover:text-[#3B82F6] hover:underline truncate inline-block max-w-full"
                               >
                                 {courseTitle}
                               </Link>
-                              <p className="text-xs text-[#9CA3AF]">{formatDate(r.createdAt)}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)]">{formatDate(r.createdAt)}</p>
                             </div>
                             <div className="flex items-center gap-0.5 flex-shrink-0">
                               {[1, 2, 3, 4, 5].map((s) => (
@@ -428,14 +428,14 @@ export default function ManagerAllReviewsContent() {
                             </div>
                           </div>
                           {r.reviewText && (
-                            <p dir="auto" className="text-sm text-[#374151] whitespace-pre-line line-clamp-3 mb-3">
+                            <p dir="auto" className="text-sm text-[var(--color-text-secondary)] whitespace-pre-line line-clamp-3 mb-3">
                               {r.reviewText}
                             </p>
                           )}
                           <div className="flex items-center gap-2 flex-wrap">
                             <button
                               onClick={() => setModal(r)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[#374151] hover:bg-[#F3F4F6]"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
                             >
                               <Eye className="w-3.5 h-3.5" />
                               {isRTL ? "عرض" : "View"}
@@ -464,7 +464,7 @@ export default function ManagerAllReviewsContent() {
                               <button
                                 onClick={() => handleTogglePublish(r)}
                                 disabled={isBusy}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[#374151] hover:bg-[#F3F4F6] disabled:opacity-60"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] disabled:opacity-60"
                               >
                                 {r.isPublished ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                                 {r.isPublished
@@ -494,7 +494,7 @@ export default function ManagerAllReviewsContent() {
                 {/* Pagination */}
                 {!loading && reviews.length > 0 && totalPages > 1 && (
                   <div className="flex items-center justify-between mt-6 pt-4 border-t border-[var(--color-border)]">
-                    <p className="text-xs text-[#6B7280]">
+                    <p className="text-xs text-[var(--color-text-secondary)]">
                       {isRTL ? `صفحة ${page} من ${totalPages} · ${total} نتيجة` : `Page ${page} of ${totalPages} · ${total} result${total === 1 ? "" : "s"}`}
                     </p>
                     <div className={`flex items-center gap-1 ${isRTL ? "flex-row-reverse" : ""}`}>
@@ -507,13 +507,13 @@ export default function ManagerAllReviewsContent() {
                       </button>
                       {pageNumbers().map((p, i) =>
                         p === "..." ? (
-                          <span key={`d-${i}`} className="px-2 text-xs text-[#9CA3AF]">…</span>
+                          <span key={`d-${i}`} className="px-2 text-xs text-[var(--color-text-secondary)]">…</span>
                         ) : (
                           <button
                             key={p}
                             onClick={() => fetchReviews(p)}
                             className={`min-w-[28px] h-7 px-2 text-xs font-medium rounded ${
-                              p === page ? "bg-[#1F2937] text-white" : "text-[#374151] hover:bg-[#F3F4F6]"
+                              p === page ? "bg-[var(--color-text-primary)] text-white" : "text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
                             }`}
                           >
                             {p}
@@ -547,15 +547,15 @@ export default function ManagerAllReviewsContent() {
             <div className="p-5 border-b border-[var(--color-border)] flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-2">
-                  <h3 className="text-base font-semibold text-[#1F2937]">{modal.studentName}</h3>
+                  <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{modal.studentName}</h3>
                   {statusBadge(modal.moderationStatus)}
                 </div>
-                <p className="text-sm text-[#6B7280] truncate">
+                <p className="text-sm text-[var(--color-text-secondary)] truncate">
                   {isRTL && modal.courseTitleAr ? modal.courseTitleAr : modal.courseTitle}
                 </p>
               </div>
               <button onClick={() => setModal(null)} className="p-1 rounded hover:bg-[#F3F4F6]">
-                <X className="w-5 h-5 text-[#6B7280]" />
+                <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
             </div>
             <div className="p-5 space-y-3">
@@ -565,11 +565,11 @@ export default function ManagerAllReviewsContent() {
                 ))}
               </div>
               {modal.reviewText ? (
-                <p dir="auto" className="text-sm text-[#1F2937] whitespace-pre-line">{modal.reviewText}</p>
+                <p dir="auto" className="text-sm text-[var(--color-text-primary)] whitespace-pre-line">{modal.reviewText}</p>
               ) : (
-                <p className="text-sm text-[#9CA3AF] italic">{isRTL ? "لا يوجد نص" : "No text"}</p>
+                <p className="text-sm text-[var(--color-text-secondary)] italic">{isRTL ? "لا يوجد نص" : "No text"}</p>
               )}
-              <div className="text-xs text-[#6B7280] space-y-0.5 pt-3 border-t border-[var(--color-border)]">
+              <div className="text-xs text-[var(--color-text-secondary)] space-y-0.5 pt-3 border-t border-[var(--color-border)]">
                 <p>{isRTL ? `تاريخ الإرسال: ${formatDate(modal.createdAt)}` : `Submitted: ${formatDate(modal.createdAt)}`}</p>
                 {modal.reviewedAt && (
                   <p>{isRTL ? `تاريخ المراجعة: ${formatDate(modal.reviewedAt)}` : `Reviewed: ${formatDate(modal.reviewedAt)}`}</p>
@@ -598,11 +598,11 @@ export default function ManagerAllReviewsContent() {
               <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
                 <Trash2 className="w-5 h-5 text-red-600" />
               </div>
-              <h3 className="text-base font-semibold text-[#1F2937]">
+              <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                 {isRTL ? "حذف المراجعة" : "Delete Review"}
               </h3>
             </div>
-            <p className="text-sm text-[#6B7280] mb-5">
+            <p className="text-sm text-[var(--color-text-secondary)] mb-5">
               {isRTL
                 ? "هل أنت متأكد من حذف هذه المراجعة؟ لا يمكن التراجع عن هذا الإجراء."
                 : "Are you sure you want to delete this review? This action cannot be undone."}
@@ -610,7 +610,7 @@ export default function ManagerAllReviewsContent() {
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]"
               >
                 {isRTL ? "إلغاء" : "Cancel"}
               </button>

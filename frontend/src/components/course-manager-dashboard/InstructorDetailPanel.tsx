@@ -112,10 +112,10 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
         <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--color-border)] bg-gradient-to-r from-[#F9FAFB] to-white">
           <div className="flex items-center gap-2">
             <GraduationCap className="w-5 h-5 text-[var(--color-primary-dark)]" />
-            <h2 className="text-lg font-semibold text-[#1F2937]">{t("instructorDetail.title")}</h2>
+            <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("instructorDetail.title")}</h2>
           </div>
           <button onClick={handleClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
-            <X className="w-5 h-5 text-[#6B7280]" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
 
@@ -149,8 +149,8 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                     <span className="text-xl font-bold text-white">{getInitials()}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-bold text-[#1F2937] truncate">{getName()}</h3>
-                    <div className="flex items-center gap-1.5 mt-1 text-sm text-[#6B7280]">
+                    <h3 className="text-xl font-bold text-[var(--color-text-primary)] truncate">{getName()}</h3>
+                    <div className="flex items-center gap-1.5 mt-1 text-sm text-[var(--color-text-secondary)]">
                       <Mail className="w-3.5 h-3.5" />
                       <span className="truncate">{data.instructor.email}</span>
                     </div>
@@ -166,14 +166,14 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                     <p className={`text-2xl font-bold ${getRateColor(data.completionRate)}`}>
                       {data.completionRate}%
                     </p>
-                    <p className="text-[11px] text-[#6B7280] mt-1">{t("instructorDetail.completionRate")}</p>
+                    <p className="text-[11px] text-[var(--color-text-secondary)] mt-1">{t("instructorDetail.completionRate")}</p>
                   </div>
                   <div className={`rounded-xl p-4 text-center border ${getRateBg(data.attendanceRate)} border-transparent`}>
                     <BarChart3 className="w-5 h-5 text-[#3B82F6] mx-auto mb-1.5" />
                     <p className={`text-2xl font-bold ${getRateColor(data.attendanceRate)}`}>
                       {data.attendanceRate}%
                     </p>
-                    <p className="text-[11px] text-[#6B7280] mt-1">{t("instructorDetail.attendanceRate")}</p>
+                    <p className="text-[11px] text-[var(--color-text-secondary)] mt-1">{t("instructorDetail.attendanceRate")}</p>
                   </div>
                 </div>
 
@@ -181,26 +181,26 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                 <div className="grid grid-cols-3 gap-3 mt-3">
                   <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[var(--color-border)]">
                     <BookOpen className="w-4 h-4 text-[var(--color-primary-dark)] mx-auto mb-1" />
-                    <p className="text-xl font-bold text-[#1F2937]">{data.coursesCount}</p>
-                    <p className="text-[10px] text-[#6B7280]">{t("instructorDetail.courses")}</p>
+                    <p className="text-xl font-bold text-[var(--color-text-primary)]">{data.coursesCount}</p>
+                    <p className="text-[10px] text-[var(--color-text-secondary)]">{t("instructorDetail.courses")}</p>
                   </div>
                   <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[var(--color-border)]">
                     <Users className="w-4 h-4 text-[var(--color-primary-dark)] mx-auto mb-1" />
-                    <p className="text-xl font-bold text-[#1F2937]">{data.totalStudents}</p>
-                    <p className="text-[10px] text-[#6B7280]">{t("instructorDetail.students")}</p>
+                    <p className="text-xl font-bold text-[var(--color-text-primary)]">{data.totalStudents}</p>
+                    <p className="text-[10px] text-[var(--color-text-secondary)]">{t("instructorDetail.students")}</p>
                   </div>
                   <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[var(--color-border)]">
                     <Calendar className="w-4 h-4 text-[var(--color-primary-dark)] mx-auto mb-1" />
-                    <p className="text-xl font-bold text-[#1F2937]">{data.sessions.total}</p>
-                    <p className="text-[10px] text-[#6B7280]">{t("instructorDetail.lectures")}</p>
+                    <p className="text-xl font-bold text-[var(--color-text-primary)]">{data.sessions.total}</p>
+                    <p className="text-[10px] text-[var(--color-text-secondary)]">{t("instructorDetail.lectures")}</p>
                   </div>
                 </div>
 
                 {/* Lectures Progress */}
                 <div className="mt-5 bg-[#F9FAFB] rounded-xl p-4 border border-[var(--color-border)]">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-semibold text-[#1F2937]">{t("instructorDetail.lectures")}</h4>
-                    <span className="text-xs font-medium text-[#6B7280]">
+                    <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">{t("instructorDetail.lectures")}</h4>
+                    <span className="text-xs font-medium text-[var(--color-text-secondary)]">
                       {data.sessions.completed}/{data.sessions.total} ({sessionPercent}%)
                     </span>
                   </div>
@@ -214,22 +214,22 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
 
                 {/* Content Quality */}
                 <div className="mt-4 bg-[#F9FAFB] rounded-xl p-4 border border-[var(--color-border)]">
-                  <h4 className="text-sm font-semibold text-[#1F2937] mb-3">{t("instructorDetail.contentQuality")}</h4>
+                  <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">{t("instructorDetail.contentQuality")}</h4>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
-                      <span className="text-sm font-semibold text-[#1F2937]">{data.contentQuality.approved}</span>
-                      <span className="text-xs text-[#6B7280]">{t("instructorDetail.approved")}</span>
+                      <span className="text-sm font-semibold text-[var(--color-text-primary)]">{data.contentQuality.approved}</span>
+                      <span className="text-xs text-[var(--color-text-secondary)]">{t("instructorDetail.approved")}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <XCircle className="w-4 h-4 text-[#EF4444]" />
-                      <span className="text-sm font-semibold text-[#1F2937]">{data.contentQuality.rejected}</span>
-                      <span className="text-xs text-[#6B7280]">{t("instructorDetail.rejected")}</span>
+                      <span className="text-sm font-semibold text-[var(--color-text-primary)]">{data.contentQuality.rejected}</span>
+                      <span className="text-xs text-[var(--color-text-secondary)]">{t("instructorDetail.rejected")}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Clock className="w-4 h-4 text-[#F59E0B]" />
-                      <span className="text-sm font-semibold text-[#1F2937]">{data.contentQuality.pending}</span>
-                      <span className="text-xs text-[#6B7280]">{t("instructorDetail.pending")}</span>
+                      <span className="text-sm font-semibold text-[var(--color-text-primary)]">{data.contentQuality.pending}</span>
+                      <span className="text-xs text-[var(--color-text-secondary)]">{t("instructorDetail.pending")}</span>
                     </div>
                   </div>
                   {contentTotal > 0 && (
@@ -244,25 +244,25 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                 {/* Assigned Courses */}
                 <div className="mt-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-semibold text-[#1F2937]">
+                    <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
                       {t("instructorDetail.courses")}
                     </h4>
-                    <span className="text-xs text-[#6B7280] bg-[#F3F4F6] px-2 py-0.5 rounded-full">
+                    <span className="text-xs text-[var(--color-text-secondary)] bg-[#F3F4F6] px-2 py-0.5 rounded-full">
                       {data.courses.length}
                     </span>
                   </div>
                   <div className="max-h-[200px] overflow-y-auto space-y-2 rounded-xl border border-[var(--color-border)] p-2 bg-[#FAFAFA]">
                     {data.courses.map((course) => (
                       <div key={course.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-[#F3F4F6] hover:border-[var(--color-border)] transition-colors">
-                        <span className="text-sm text-[#1F2937] truncate flex-1 me-3">{course.title}</span>
+                        <span className="text-sm text-[var(--color-text-primary)] truncate flex-1 me-3">{course.title}</span>
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${
                           course.status === "active"
                             ? "bg-[#D1FAE5] text-[#065F46]"
                             : course.status === "draft"
-                            ? "bg-[#F3F4F6] text-[#6B7280]"
+                            ? "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
                             : course.status === "completed"
                             ? "bg-[#EFF6FF] text-[#3B82F6]"
-                            : "bg-[#F3F4F6] text-[#6B7280]"
+                            : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
                         }`}>
                           {t(`coursesPage.status.${course.status}` as Parameters<typeof t>[0])}
                         </span>
@@ -271,7 +271,7 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                     {data.courses.length === 0 && (
                       <div className="py-6 text-center">
                         <BookOpen className="w-6 h-6 text-[var(--color-border)] mx-auto mb-2" />
-                        <p className="text-sm text-[#6B7280]">{t("instructorDetail.noCourses")}</p>
+                        <p className="text-sm text-[var(--color-text-secondary)]">{t("instructorDetail.noCourses")}</p>
                       </div>
                     )}
                   </div>

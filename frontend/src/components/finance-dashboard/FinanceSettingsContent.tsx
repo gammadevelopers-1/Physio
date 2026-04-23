@@ -114,7 +114,7 @@ const FinanceSettingsContent = () => {
                           className={`px-3 py-2.5 text-xs sm:text-sm font-medium relative transition-colors whitespace-nowrap flex items-center gap-1 ${
                             activeTab === tab.key
                               ? "text-[var(--color-primary)]"
-                              : "text-[#6B7280] hover:text-[#374151]"
+                              : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                           }`}
                         >
                           <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -133,7 +133,7 @@ const FinanceSettingsContent = () => {
                   {/* Payment Gateways */}
                   {activeTab === "gateways" && (
                     <div>
-                      <h3 className="text-base font-semibold text-[#111827] mb-4">
+                      <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("settingsPage.gateways.title")}
                       </h3>
                       <div className="space-y-4">
@@ -147,7 +147,7 @@ const FinanceSettingsContent = () => {
                                     <CreditCard className="w-5 h-5 text-white" />
                                   </div>
                                   <div>
-                                    <p className="text-sm font-semibold text-[#111827]">{gw.name}</p>
+                                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">{gw.name}</p>
                                     <div className="flex items-center gap-2 mt-0.5">
                                       {enabled ? (
                                         <span className="flex items-center gap-1 text-[11px] font-medium text-[#16A34A]">
@@ -179,7 +179,7 @@ const FinanceSettingsContent = () => {
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
-                                  <label className="block text-[12px] text-[#6B7280] mb-1">{t("settingsPage.gateways.apiKey")}</label>
+                                  <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">{t("settingsPage.gateways.apiKey")}</label>
                                   <input
                                     type="password"
                                     defaultValue="sk_live_••••••••••••"
@@ -188,7 +188,7 @@ const FinanceSettingsContent = () => {
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-[12px] text-[#6B7280] mb-1">{t("settingsPage.gateways.secretKey")}</label>
+                                  <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">{t("settingsPage.gateways.secretKey")}</label>
                                   <input
                                     type="password"
                                     defaultValue="pk_live_••••••••••••"
@@ -197,7 +197,7 @@ const FinanceSettingsContent = () => {
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-[12px] text-[#6B7280] mb-1">{t("settingsPage.gateways.merchantId")}</label>
+                                  <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">{t("settingsPage.gateways.merchantId")}</label>
                                   <input
                                     type="text"
                                     defaultValue="MID-12345678"
@@ -220,25 +220,25 @@ const FinanceSettingsContent = () => {
                   {/* Currency Settings */}
                   {activeTab === "currency" && (
                     <div>
-                      <h3 className="text-base font-semibold text-[#111827] mb-4">
+                      <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("settingsPage.currency.title")}
                       </h3>
                       <div className="max-w-md space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">{t("settingsPage.currency.primaryCurrency")}</label>
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.currency.primaryCurrency")}</label>
                           <select className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
                             <option>{t("settingsPage.currency.sar")}</option>
                           </select>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">{t("settingsPage.currency.displayFormat")}</label>
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.currency.displayFormat")}</label>
                           <select className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
                             <option>{t("currencyFormats.sarFirst")}</option>
                             <option>{t("currencyFormats.sarLast")}</option>
                           </select>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">{t("settingsPage.currency.decimalPlaces")}</label>
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.currency.decimalPlaces")}</label>
                           <select className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
                             <option>2</option>
                             <option>0</option>
@@ -255,13 +255,13 @@ const FinanceSettingsContent = () => {
                   {/* Tax Configuration */}
                   {activeTab === "tax" && (
                     <div>
-                      <h3 className="text-base font-semibold text-[#111827] mb-4">
+                      <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("settingsPage.tax.title")}
                       </h3>
                       <div className="max-w-md space-y-4">
                         <div className="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
                           <div>
-                            <p className="text-sm font-medium text-[#111827]">{t("settingsPage.tax.vatEnabled")}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("settingsPage.tax.vatEnabled")}</p>
                           </div>
                           <button
                             onClick={() => setVatEnabled(!vatEnabled)}
@@ -271,7 +271,7 @@ const FinanceSettingsContent = () => {
                           </button>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">{t("settingsPage.tax.vatRate")}</label>
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.tax.vatRate")}</label>
                           <input
                             type="number"
                             value={vatRate}
@@ -281,7 +281,7 @@ const FinanceSettingsContent = () => {
                         </div>
                         <div className="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
                           <div>
-                            <p className="text-sm font-medium text-[#111827]">{t("settingsPage.tax.taxInclusive")}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("settingsPage.tax.taxInclusive")}</p>
                           </div>
                           <button
                             onClick={() => setTaxInclusive(!taxInclusive)}
@@ -291,7 +291,7 @@ const FinanceSettingsContent = () => {
                           </button>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">{t("settingsPage.tax.taxNumber")}</label>
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.tax.taxNumber")}</label>
                           <input
                             type="text"
                             value={taxNumber}
@@ -310,12 +310,12 @@ const FinanceSettingsContent = () => {
                   {/* Refund Policy */}
                   {activeTab === "refundPolicy" && (
                     <div>
-                      <h3 className="text-base font-semibold text-[#111827] mb-4">
+                      <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("settingsPage.refundPolicy.title")}
                       </h3>
                       <div className="max-w-md space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">{t("settingsPage.refundPolicy.fullRefundDays")}</label>
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.refundPolicy.fullRefundDays")}</label>
                           <input
                             type="number"
                             value={fullRefundDays}
@@ -324,7 +324,7 @@ const FinanceSettingsContent = () => {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">{t("settingsPage.refundPolicy.partialRefundDays")}</label>
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.refundPolicy.partialRefundDays")}</label>
                           <input
                             type="number"
                             value={partialRefundDays}
@@ -333,7 +333,7 @@ const FinanceSettingsContent = () => {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">{t("settingsPage.refundPolicy.partialRefundPercent")}</label>
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.refundPolicy.partialRefundPercent")}</label>
                           <input
                             type="number"
                             value={partialRefundPercent}
@@ -342,7 +342,7 @@ const FinanceSettingsContent = () => {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">{t("settingsPage.refundPolicy.bnplDeduction")}</label>
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.refundPolicy.bnplDeduction")}</label>
                           <input
                             type="number"
                             value={bnplDeduction}
@@ -351,7 +351,7 @@ const FinanceSettingsContent = () => {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">{t("settingsPage.refundPolicy.adminFee")}</label>
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.refundPolicy.adminFee")}</label>
                           <input
                             type="number"
                             value={adminFee}
@@ -360,7 +360,7 @@ const FinanceSettingsContent = () => {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">{t("settingsPage.refundPolicy.autoApproveBelow")}</label>
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.refundPolicy.autoApproveBelow")}</label>
                           <input
                             type="number"
                             value={autoApproveBelow}

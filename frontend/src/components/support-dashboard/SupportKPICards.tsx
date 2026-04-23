@@ -49,7 +49,7 @@ const SupportKPICards = ({ data }: SupportKPICardsProps) => {
       icon: ClipboardList,
       iconBg: "bg-[#EFF6FF]",
       iconColor: "text-[#3B82F6]",
-      metaColor: "text-[#6B7280]",
+      metaColor: "text-[var(--color-text-secondary)]",
     },
     {
       id: "avgResponseTime",
@@ -70,7 +70,7 @@ const SupportKPICards = ({ data }: SupportKPICardsProps) => {
       icon: RotateCcw,
       iconBg: "bg-[#FFEDD5]",
       iconColor: "text-[#EA580C]",
-      metaColor: "text-[#6B7280]",
+      metaColor: "text-[var(--color-text-secondary)]",
     },
     {
       id: "csatScore",
@@ -91,7 +91,7 @@ const SupportKPICards = ({ data }: SupportKPICardsProps) => {
       icon: ShieldCheck,
       iconBg: "bg-[#EDE9FE]",
       iconColor: "text-[#8B5CF6]",
-      metaColor: "text-[#6B7280]",
+      metaColor: "text-[var(--color-text-secondary)]",
     },
     {
       id: "escalatedTickets",
@@ -121,8 +121,8 @@ const SupportKPICards = ({ data }: SupportKPICardsProps) => {
               <Icon className={`w-5 h-5 ${card.iconColor}`} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-[#6B7280] mb-0.5">{card.label}</p>
-              <p className="text-xl font-bold text-[#111827]">{card.value}</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">{card.label}</p>
+              <p className="text-xl font-bold text-[var(--color-text-primary)]">{card.value}</p>
               <div className="flex items-center gap-1 mt-1">
                 {card.trendIcon === "down" && (
                   <TrendingDown className="w-3 h-3 text-[#16A34A]" />

@@ -76,23 +76,23 @@ const NotificationsPanel = ({
 
   return (
     <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-      <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+      <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
         {t("activity.title")}
       </h2>
 
       {loading ? (
         <div className="flex items-center justify-center py-8">
-          <div className="w-6 h-6 border-2 border-[var(--color-border)] border-t-[#9CA3AF] rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-[var(--color-border)] border-t-[var(--color-text-secondary)] rounded-full animate-spin" />
         </div>
       ) : activities.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8">
           <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
-            <Activity className="w-6 h-6 text-[#9CA3AF]" />
+            <Activity className="w-6 h-6 text-[var(--color-text-secondary)]" />
           </div>
-          <h3 className="text-sm font-medium text-[#1F2937] mb-1">
+          <h3 className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
             {t("activity.noActivityTitle")}
           </h3>
-          <p className="text-xs text-[#6B7280] text-center max-w-[200px]">
+          <p className="text-xs text-[var(--color-text-secondary)] text-center max-w-[200px]">
             {t("activity.noActivityDescription")}
           </p>
         </div>
@@ -126,18 +126,18 @@ const NotificationsPanel = ({
                       <ActivityIcon
                         className={`w-3.5 h-3.5 flex-shrink-0 ${config.iconColor}`}
                       />
-                      <span className="text-xs font-medium text-[#1F2937] truncate">
+                      <span className="text-xs font-medium text-[var(--color-text-primary)] truncate">
                         {t(`activity.${config.key}`)}
                       </span>
                     </div>
-                    <span className="text-[10px] text-[#9CA3AF] whitespace-nowrap flex-shrink-0">
+                    <span className="text-[10px] text-[var(--color-text-secondary)] whitespace-nowrap flex-shrink-0">
                       {relativeTime(item.timestamp)}
                     </span>
                   </div>
-                  <p className="text-xs text-[#6B7280] mt-0.5 line-clamp-1">
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 line-clamp-1">
                     {item.title}
                   </p>
-                  <p className="text-[10px] text-[#9CA3AF] line-clamp-1">
+                  <p className="text-[10px] text-[var(--color-text-secondary)] line-clamp-1">
                     {item.courseTitle}
                   </p>
                 </div>

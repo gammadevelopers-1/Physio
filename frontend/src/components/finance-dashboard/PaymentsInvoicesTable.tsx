@@ -77,7 +77,7 @@ const PaymentsInvoicesTable = ({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-5 py-4 border-b border-[#F3F4F6] gap-3">
         <div className="flex items-center gap-2">
           <CreditCard className="w-5 h-5 text-[var(--color-primary)]" />
-          <h3 className="text-base font-semibold text-[#111827]">
+          <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t("paymentsTable.title")}
           </h3>
         </div>
@@ -95,7 +95,7 @@ const PaymentsInvoicesTable = ({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
+            className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-white focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
           >
             <option value="all">{t("paymentsTable.filters.allStatus")}</option>
             <option value="paid">{t("paymentsTable.filters.paid")}</option>
@@ -107,7 +107,7 @@ const PaymentsInvoicesTable = ({
           <select
             value={gatewayFilter}
             onChange={(e) => setGatewayFilter(e.target.value)}
-            className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
+            className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-white focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
           >
             <option value="all">
               {t("paymentsTable.filters.allGateways")}
@@ -119,7 +119,7 @@ const PaymentsInvoicesTable = ({
           </select>
           <div className="flex-1 relative">
             <Search
-              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
             />
             <input
               type="text"
@@ -138,37 +138,37 @@ const PaymentsInvoicesTable = ({
           <thead>
             <tr className="border-b border-[var(--color-border)]">
               <th
-                className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}
+                className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
               >
                 {t("paymentsTable.columns.invoice")}
               </th>
               <th
-                className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}
+                className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
               >
                 {t("paymentsTable.columns.date")}
               </th>
               <th
-                className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}
+                className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
               >
                 {t("paymentsTable.columns.customer")}
               </th>
               <th
-                className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}
+                className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}
               >
                 {t("paymentsTable.columns.course")}
               </th>
               <th
-                className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}
+                className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
               >
                 {t("paymentsTable.columns.amount")}
               </th>
               <th
-                className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase hidden lg:table-cell ${isRTL ? "text-right" : "text-left"}`}
+                className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden lg:table-cell ${isRTL ? "text-right" : "text-left"}`}
               >
                 {t("paymentsTable.columns.gateway")}
               </th>
               <th
-                className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}
+                className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
               >
                 {t("paymentsTable.columns.status")}
               </th>
@@ -186,16 +186,16 @@ const PaymentsInvoicesTable = ({
                     {tx.invoiceNumber}
                   </span>
                 </td>
-                <td className="py-3 px-4 text-[13px] text-[#4B5563]">
+                <td className="py-3 px-4 text-[13px] text-[var(--color-text-secondary)]">
                   {tx.date}
                 </td>
-                <td className="py-3 px-4 text-[13px] text-[#374151] font-medium">
+                <td className="py-3 px-4 text-[13px] text-[var(--color-text-secondary)] font-medium">
                   {tx.customer}
                 </td>
-                <td className="py-3 px-4 text-[13px] text-[#4B5563] hidden md:table-cell">
+                <td className="py-3 px-4 text-[13px] text-[var(--color-text-secondary)] hidden md:table-cell">
                   {tx.course}
                 </td>
-                <td className="py-3 px-4 text-[13px] font-semibold text-[#111827]">
+                <td className="py-3 px-4 text-[13px] font-semibold text-[var(--color-text-primary)]">
                   {tx.amount}
                 </td>
                 <td className="py-3 px-4 hidden lg:table-cell">
@@ -220,7 +220,7 @@ const PaymentsInvoicesTable = ({
                           openActionId === tx.id ? null : tx.id
                         )
                       }
-                      className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[#F9FAFB] text-[#6B7280] hover:text-[#374151] transition-colors"
+                      className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[#F9FAFB] text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] transition-colors"
                     >
                       <MoreVertical className="w-3.5 h-3.5" />
                     </button>
@@ -228,15 +228,15 @@ const PaymentsInvoicesTable = ({
                       <div
                         className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-20 ${isRTL ? "left-0" : "right-0"}`}
                       >
-                        <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB] transition-colors">
+                        <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors">
                           <Eye className="w-3.5 h-3.5" />
                           {t("paymentsTable.actions.view")}
                         </button>
-                        <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB] transition-colors">
+                        <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors">
                           <Download className="w-3.5 h-3.5" />
                           {t("paymentsTable.actions.download")}
                         </button>
-                        <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB] transition-colors">
+                        <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors">
                           <Send className="w-3.5 h-3.5" />
                           {t("paymentsTable.actions.resend")}
                         </button>
@@ -259,7 +259,7 @@ const PaymentsInvoicesTable = ({
       {/* Pagination */}
       {showPagination && (
         <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3 border-t border-[#F3F4F6] gap-3">
-          <p className="text-[13px] text-[#6B7280]">
+          <p className="text-[13px] text-[var(--color-text-secondary)]">
             {t("paymentsTable.pagination.showing", {
               from: 1,
               to: filteredTransactions.length,
@@ -267,11 +267,11 @@ const PaymentsInvoicesTable = ({
             })}
           </p>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+            <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
               <ChevronLeft className="w-4 h-4" />
               {t("paymentsTable.pagination.previous")}
             </button>
-            <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+            <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
               {t("paymentsTable.pagination.next")}
               <ChevronRight className="w-4 h-4" />
             </button>

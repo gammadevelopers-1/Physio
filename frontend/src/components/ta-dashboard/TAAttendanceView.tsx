@@ -51,8 +51,8 @@ const getStatusColor = (status: AttendanceStatus) => {
     case "absent": return "bg-[#FEE2E2] text-[#EF4444]";
     case "late": return "bg-[#FEF3C7] text-[#D97706]";
     case "excused": return "bg-[#EFF6FF] text-[#3B82F6]";
-    case "unmarked": return "bg-[#F3F4F6] text-[#9CA3AF]";
-    default: return "bg-[#F3F4F6] text-[#6B7280]";
+    case "unmarked": return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+    default: return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
   }
 };
 
@@ -308,11 +308,11 @@ const TAAttendanceView = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button onClick={onBack} className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors">
-            <ArrowLeft className="w-5 h-5 text-[#4B5563]" />
+            <ArrowLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-[#1F2937]">{t("attendance.title")}</h1>
-            {sessionTitle && <p className="text-xs text-[#6B7280]">{sessionTitle}</p>}
+            <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{t("attendance.title")}</h1>
+            {sessionTitle && <p className="text-xs text-[var(--color-text-secondary)]">{sessionTitle}</p>}
           </div>
         </div>
       </div>
@@ -359,10 +359,10 @@ const TAAttendanceView = ({
                 <div className="px-4 pb-3 space-y-1.5">
                   {syncResult.details.filter((d) => d.action !== "skipped" || d.reason !== "host").map((d, i) => (
                     <div key={i} className="flex items-center gap-2 text-[10px]">
-                      {d.action === "skipped" ? <XCircle className="w-3 h-3 text-[#9CA3AF] shrink-0" /> : <CheckCircle className="w-3 h-3 text-[#16A34A] shrink-0" />}
-                      <span className={d.action === "skipped" ? "text-[#9CA3AF]" : "text-[#374151]"}>{d.name || d.email}</span>
+                      {d.action === "skipped" ? <XCircle className="w-3 h-3 text-[var(--color-text-secondary)] shrink-0" /> : <CheckCircle className="w-3 h-3 text-[#16A34A] shrink-0" />}
+                      <span className={d.action === "skipped" ? "text-[var(--color-text-secondary)]" : "text-[var(--color-text-secondary)]"}>{d.name || d.email}</span>
                       {d.action !== "skipped" && d.joinTime && (
-                        <span className="text-[#6B7280]">
+                        <span className="text-[var(--color-text-secondary)]">
                           {new Date(d.joinTime).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}
                           {d.leaveTime && ` – ${new Date(d.leaveTime).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}`}
                           {d.durationMinutes > 0 && ` (${d.durationMinutes} min)`}
@@ -377,7 +377,7 @@ const TAAttendanceView = ({
 
           {/* Summary */}
           <div className="flex items-center gap-4 px-4 py-3 border-b border-[var(--color-border)] bg-[#F9FAFB] flex-wrap">
-            <span className="text-xs font-medium text-[#6B7280]">{t("attendance.summary")}:</span>
+            <span className="text-xs font-medium text-[var(--color-text-secondary)]">{t("attendance.summary")}:</span>
             <span className="text-xs text-[#16A34A]">{presentCount} {t("attendance.present")}</span>
             <span className="text-xs text-[#EF4444]">{absentCount} {t("attendance.absent")}</span>
           </div>
@@ -385,8 +385,8 @@ const TAAttendanceView = ({
           {/* Bulk actions / lock banner */}
           {isVerifiedReadOnly ? (
             <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--color-border)] bg-[#F9FAFB]">
-              <Lock className="w-3.5 h-3.5 text-[#9CA3AF]" />
-              <span className="text-xs text-[#6B7280]">
+              <Lock className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
+              <span className="text-xs text-[var(--color-text-secondary)]">
                 {attendanceLocked
                   ? (locale === "ar" ? "تم قفل الحضور نهائياً" : "Attendance is finalized & locked")
                   : isPostSession && isZoomSession && hasUnmatched
@@ -396,7 +396,7 @@ const TAAttendanceView = ({
             </div>
           ) : (
             <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--color-border)]">
-              <span className="text-xs font-medium text-[#6B7280]">Mark All:</span>
+              <span className="text-xs font-medium text-[var(--color-text-secondary)]">Mark All:</span>
               {statusOptions.map((status) => (
                 <button
                   key={status}
@@ -413,13 +413,13 @@ const TAAttendanceView = ({
           {records.length > 0 && (
             <div className="px-4 py-2 border-b border-[var(--color-border)]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t("attendance.searchPlaceholder")}
-                  className="w-full pl-10 pr-4 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] bg-white focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20"
+                  className="w-full pl-10 pr-4 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20"
                 />
               </div>
             </div>
@@ -430,8 +430,8 @@ const TAAttendanceView = ({
             const marker = records.find((r) => r.markedByName);
             if (!marker) return null;
             return (
-              <div className="flex items-center gap-3 px-4 py-2 border-b border-[var(--color-border)] bg-[#FAFAFA] text-[10px] text-[#9CA3AF]">
-                <span>Marked by: <span className="font-medium text-[#6B7280]">{marker.markedByName}</span> ({marker.markedByRole === "TEACHING_ASSISTANT" ? "TA" : marker.markedByRole === "INSTRUCTOR" ? "Instructor" : marker.markedByRole || "System"})</span>
+              <div className="flex items-center gap-3 px-4 py-2 border-b border-[var(--color-border)] bg-[#FAFAFA] text-[10px] text-[var(--color-text-secondary)]">
+                <span>Marked by: <span className="font-medium text-[var(--color-text-secondary)]">{marker.markedByName}</span> ({marker.markedByRole === "TEACHING_ASSISTANT" ? "TA" : marker.markedByRole === "INSTRUCTOR" ? "Instructor" : marker.markedByRole || "System"})</span>
                 {marker.updatedAt && (
                   <span>Last updated: {new Date(marker.updatedAt).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}</span>
                 )}
@@ -442,7 +442,7 @@ const TAAttendanceView = ({
           {/* Student list */}
           <div className="max-h-[400px] overflow-y-auto divide-y divide-[var(--color-border)]">
             {filteredRecords.length === 0 ? (
-              <div className="text-center py-8 text-sm text-[#6B7280]">{t("attendance.noRecords")}</div>
+              <div className="text-center py-8 text-sm text-[var(--color-text-secondary)]">{t("attendance.noRecords")}</div>
             ) : (
               filteredRecords.map((record) => {
                 const currentStatus = localStatuses[record.studentId] || "absent";
@@ -450,12 +450,12 @@ const TAAttendanceView = ({
                   <div key={record.studentId} className="px-4 py-3 space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-[#1F2937]">
+                        <p className="text-sm font-medium text-[var(--color-text-primary)]">
                           {record.studentFirstName} {record.studentLastName}
                         </p>
-                        <p className="text-xs text-[#6B7280]">{record.studentEmail}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">{record.studentEmail}</p>
                         {record.studentScfhsNumber && (
-                          <p className="text-[10px] text-[#9CA3AF] font-mono">{record.studentScfhsNumber}</p>
+                          <p className="text-[10px] text-[var(--color-text-secondary)] font-mono">{record.studentScfhsNumber}</p>
                         )}
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -467,7 +467,7 @@ const TAAttendanceView = ({
                             className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
                               currentStatus === status
                                 ? `${getStatusColor(status)} ring-2 ring-offset-1 ring-current`
-                                : "bg-[#F3F4F6] text-[#9CA3AF] hover:bg-[var(--color-border)]"
+                                : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
                             } ${isVerifiedReadOnly ? "cursor-default opacity-70" : ""}`}
                           >
                             {t(`attendance.${status}`)}
@@ -478,12 +478,12 @@ const TAAttendanceView = ({
 
                     {/* Notes */}
                     {record.note && attendanceLocked && (
-                      <p className="text-xs text-[#6B7280] italic">Note: {record.note}</p>
+                      <p className="text-xs text-[var(--color-text-secondary)] italic">Note: {record.note}</p>
                     )}
 
                     {/* Zoom timing data */}
                     {(record.joinedAt || record.leftAt) && (
-                      <div className="flex items-center gap-3 text-[11px] text-[#9CA3AF]">
+                      <div className="flex items-center gap-3 text-[11px] text-[var(--color-text-secondary)]">
                         {record.joinedAt && (
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
@@ -545,7 +545,7 @@ const TAAttendanceView = ({
                           <Users className="w-3 h-3 text-[#D97706]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="text-xs font-medium text-[#374151] truncate block">
+                          <span className="text-xs font-medium text-[var(--color-text-secondary)] truncate block">
                             {p.zoomUserEmail}
                             {selectedStudent && (
                               <span className="text-[#16A34A] font-medium">
@@ -553,7 +553,7 @@ const TAAttendanceView = ({
                               </span>
                             )}
                           </span>
-                          <span className="text-[10px] text-[#9CA3AF]">{formatTime(p.timestamp)}</span>
+                          <span className="text-[10px] text-[var(--color-text-secondary)]">{formatTime(p.timestamp)}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 ps-8">
@@ -561,7 +561,7 @@ const TAAttendanceView = ({
                           value={manualAssignments[p.zoomUserEmail] || ""}
                           onChange={(e) => setManualAssignments((prev) => ({ ...prev, [p.zoomUserEmail]: e.target.value }))}
                           disabled={attendanceLocked}
-                          className="flex-1 px-2 py-1.5 text-xs border border-[var(--color-border)] rounded-lg bg-white text-[#374151] disabled:opacity-50"
+                          className="flex-1 px-2 py-1.5 text-xs border border-[var(--color-border)] rounded-lg bg-white text-[var(--color-text-secondary)] disabled:opacity-50"
                         >
                           <option value="">{locale === "ar" ? "اختر طالب" : "Select student"}</option>
                           {records.filter((r) => !markedStudentIds.has(r.studentId)).map((r) => (
@@ -589,7 +589,7 @@ const TAAttendanceView = ({
           <div className="flex items-center justify-between p-4 border-t border-[var(--color-border)]">
             <div />
             <div className="flex items-center gap-3">
-              <button onClick={onBack} className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors">
+              <button onClick={onBack} className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
                 {attendanceLocked ? "Close" : "Back"}
               </button>
               {/* Save (live sessions) */}

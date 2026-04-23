@@ -64,7 +64,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
                 ) : (
                   <ChevronRight size={14} className="text-[#525252]" />
                 )}
-                <span className="text-[#0a0a0a] text-[14px]">{breadcrumb}</span>
+                <span className="text-[var(--color-text-primary)] text-[14px]">{breadcrumb}</span>
               </div>
             )}
 
@@ -72,7 +72,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
               <div className="max-w-[663px]">
                 {heroTitle && (
                   <h1
-                    className="font-semibold text-[#06080B] tracking-[-0.24px] leading-none mb-6 text-[32px] md:text-[48px]"
+                    className="font-semibold text-[var(--color-text-primary)] tracking-[-0.24px] leading-none mb-6 text-[32px] md:text-[48px]"
                     style={{ fontFamily: "'DM Sans', sans-serif" }}
                   >
                     {heroTitle}
@@ -80,7 +80,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
                 )}
                 {heroDescription && (
                   <p
-                    className="text-[#06080B] leading-7 mb-6"
+                    className="text-[var(--color-text-primary)] leading-7 mb-6"
                     style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
                   >
                     {heroDescription}
@@ -122,7 +122,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
                   )}
                   {nelcTitle && (
                     <h2
-                      className="font-semibold text-[#06080B] text-center"
+                      className="font-semibold text-[var(--color-text-primary)] text-center"
                       style={{ fontSize: "var(--typeface-font-styles-heading-h2)" }}
                     >
                       {nelcTitle}
@@ -130,7 +130,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
                   )}
                   {(nelcDescription || nelcLicenseNumber) && (
                     <p
-                      className="text-[#06080B] text-center leading-7"
+                      className="text-[var(--color-text-primary)] text-center leading-7"
                       style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
                     >
                       {nelcDescription}
@@ -163,7 +163,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
                   )}
                   {scfhsTitle && (
                     <h2
-                      className="font-semibold text-[#06080B] text-center"
+                      className="font-semibold text-[var(--color-text-primary)] text-center"
                       style={{ fontSize: "var(--typeface-font-styles-heading-h2)" }}
                     >
                       {scfhsTitle}
@@ -171,7 +171,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
                   )}
                   {(scfhsDescription || scfhsAccreditationNumber) && (
                     <p
-                      className="text-[#06080B] text-center leading-7"
+                      className="text-[var(--color-text-primary)] text-center leading-7"
                       style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
                     >
                       {scfhsDescription}
@@ -234,7 +234,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
           <div className="max-w-[1312px] mx-auto">
             {claimCMETitle && (
               <h2
-                className="font-semibold text-[#06080B] text-center tracking-[-0.24px] leading-none mb-8 text-[32px] md:text-[48px]"
+                className="font-semibold text-[var(--color-text-primary)] text-center tracking-[-0.24px] leading-none mb-8 text-[32px] md:text-[48px]"
                 style={{ fontFamily: "'DM Sans', sans-serif" }}
               >
                 {claimCMETitle}
@@ -266,13 +266,13 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
                         </div>
                       )}
                       <h3
-                        className="font-semibold text-[#06080B] text-center"
+                        className="font-semibold text-[var(--color-text-primary)] text-center"
                         style={{ fontSize: "var(--typeface-font-styles-heading-h5)" }}
                       >
                         {step.title}
                       </h3>
                       {step.description && (
-                        <p className="text-[#4A4C4F] text-[14px] text-center leading-5 w-[251px]">
+                        <p className="text-[var(--color-text-secondary)] text-[14px] text-center leading-5 w-[251px]">
                           {step.description}
                         </p>
                       )}

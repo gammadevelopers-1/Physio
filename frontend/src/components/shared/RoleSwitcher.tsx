@@ -64,7 +64,7 @@ export function RoleSwitcherDropdownItems({ onSwitch }: { onSwitch?: () => void 
   return (
     <>
       <div className="border-t border-[var(--outline-subtle)] my-1" />
-      <p className="px-4 py-1.5 text-xs font-medium text-[#9CA3AF] text-start">
+      <p className="px-4 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] text-start">
         {t("switchDashboard")}
       </p>
       {otherRoles.map((role) => {
@@ -131,7 +131,7 @@ export function RoleSwitcherMobileSection({ onSwitch }: { onSwitch?: () => void 
     <>
       <div className="border-t border-[var(--outline-subtle)] my-2" />
       <div className="py-2">
-        <p className="px-3 py-2 text-xs font-medium text-[#9CA3AF] uppercase flex items-center gap-1.5">
+        <p className="px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)] uppercase flex items-center gap-1.5">
           <ArrowLeftRight className="w-3.5 h-3.5" />
           {t("switchDashboard")}
         </p>

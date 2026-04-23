@@ -183,8 +183,8 @@ const TANavbar = () => {
                 <Image src={avatar || "/images/default-avatar.png"} alt={name} width={40} height={40} className="object-cover w-full h-full" unoptimized={!!avatar} />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#1F2937]">{name}</p>
-                <p className="text-xs text-[#6B7280]">{tDashboard("title")}</p>
+                <p className="text-sm font-medium text-[var(--color-text-primary)]">{name}</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">{tDashboard("title")}</p>
               </div>
             </div>
 
@@ -195,8 +195,8 @@ const TANavbar = () => {
                 const isActive = isActiveRoute(item.href);
                 return (
                   <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)} aria-current={isActive ? "page" : undefined}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive ? "bg-[#FFF8E6] text-[var(--color-primary-dark)]" : "text-[#4B5563] hover:bg-[#F9FAFB]"}`}>
-                    <Icon className={`w-5 h-5 ${isActive ? "text-[var(--color-primary-dark)]" : "text-[#6B7280]"}`} />
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive ? "bg-[#FFF8E6] text-[var(--color-primary-dark)]" : "text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"}`}>
+                    <Icon className={`w-5 h-5 ${isActive ? "text-[var(--color-primary-dark)]" : "text-[var(--color-text-secondary)]"}`} />
                     <span className={`text-sm ${isActive ? "font-medium" : ""}`}>{item.label}</span>
                   </Link>
                 );
@@ -208,16 +208,16 @@ const TANavbar = () => {
 
             {/* Site Navigation Links */}
             <div className="py-2">
-              <p className="px-3 py-2 text-xs font-medium text-[#9CA3AF] uppercase">
+              <p className="px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)] uppercase">
                 {t("home")}
               </p>
-              <Link href={`/${locale}`} className="flex items-center gap-3 px-3 py-2.5 text-[#4B5563] hover:bg-[#F9FAFB] rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link href={`/${locale}`} className="flex items-center gap-3 px-3 py-2.5 text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                 <span className="text-sm">{t("home")}</span>
               </Link>
-              <Link href={`/${locale}/courses`} className="flex items-center gap-3 px-3 py-2.5 text-[#4B5563] hover:bg-[#F9FAFB] rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link href={`/${locale}/courses`} className="flex items-center gap-3 px-3 py-2.5 text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                 <span className="text-sm">{t("courses")}</span>
               </Link>
-              <Link href={`/${locale}/about`} className="flex items-center gap-3 px-3 py-2.5 text-[#4B5563] hover:bg-[#F9FAFB] rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link href={`/${locale}/about`} className="flex items-center gap-3 px-3 py-2.5 text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                 <span className="text-sm">{t("about")}</span>
               </Link>
             </div>

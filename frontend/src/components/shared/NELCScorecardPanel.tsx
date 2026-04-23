@@ -83,7 +83,7 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
   if (loading) {
     return (
       <div className="flex items-center justify-center py-6">
-        <Loader2 className="w-5 h-5 animate-spin text-[#6B7280]" />
+        <Loader2 className="w-5 h-5 animate-spin text-[var(--color-text-secondary)]" />
       </div>
     );
   }
@@ -112,7 +112,7 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-[#6366F1]" />
-            <h3 className="text-sm font-semibold text-[#1F2937]">{t("title")}</h3>
+            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{t("title")}</h3>
           </div>
           <div className="flex items-center gap-2">
             <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${overallCfg.bg} ${overallCfg.text}`}>
@@ -120,16 +120,16 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
               {scorecard.overallScore}%
             </div>
             {panelOpen ? (
-              <ChevronUp className="w-4 h-4 text-[#9CA3AF]" />
+              <ChevronUp className="w-4 h-4 text-[var(--color-text-secondary)]" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-[#9CA3AF]" />
+              <ChevronDown className="w-4 h-4 text-[var(--color-text-secondary)]" />
             )}
           </div>
         </div>
 
         {/* Progress bar */}
         <div className="mt-3">
-          <div className="flex justify-between text-xs text-[#6B7280] mb-1">
+          <div className="flex justify-between text-xs text-[var(--color-text-secondary)] mb-1">
             <span>{t("categoriesPassed", { passed: passedCount, total: totalCount })}</span>
             <span className={`font-medium ${overallCfg.text}`}>{statusLabels[scorecard.overallStatus]}</span>
           </div>
@@ -167,14 +167,14 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
                   <CatIcon className={`w-3.5 h-3.5 ${cfg.text}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#1F2937] truncate">{t.has(`cat_${cat.category}`) ? t(`cat_${cat.category}`) : cat.label}</p>
-                  <p className="text-xs text-[#9CA3AF]">{t("checks", { passed: passedChecks, total: cat.checks.length })}</p>
+                  <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{t.has(`cat_${cat.category}`) ? t(`cat_${cat.category}`) : cat.label}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{t("checks", { passed: passedChecks, total: cat.checks.length })}</p>
                 </div>
                 <StatusIcon className={`w-4 h-4 flex-shrink-0 ${cfg.text}`} />
                 {isExpanded ? (
-                  <ChevronUp className="w-4 h-4 text-[#9CA3AF] flex-shrink-0" />
+                  <ChevronUp className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
                 ) : (
-                  <ChevronDown className="w-4 h-4 text-[#9CA3AF] flex-shrink-0" />
+                  <ChevronDown className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
                 )}
               </button>
 
@@ -190,8 +190,8 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
                       >
                         <CheckIcon className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${checkCfg.text}`} />
                         <div className="min-w-0">
-                          <p className="text-xs font-medium text-[#374151]">{t.has(`rule_${check.rule}`) ? t(`rule_${check.rule}`) : check.rule}</p>
-                          <p className="text-xs text-[#6B7280]">{check.detail}</p>
+                          <p className="text-xs font-medium text-[var(--color-text-secondary)]">{t.has(`rule_${check.rule}`) ? t(`rule_${check.rule}`) : check.rule}</p>
+                          <p className="text-xs text-[var(--color-text-secondary)]">{check.detail}</p>
                         </div>
                       </div>
                     );

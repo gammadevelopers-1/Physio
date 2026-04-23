@@ -120,7 +120,7 @@ function EligibilityChecklist({
 
   return (
     <div className="mt-3 p-3 bg-[#F9FAFB] rounded-lg">
-      <p className="text-xs font-medium text-[#4B5563] mb-2">
+      <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-2">
         {t("certifications.eligibilityTitle")}
       </p>
       <div className="space-y-1.5">
@@ -132,7 +132,7 @@ function EligibilityChecklist({
               <XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
             )}
             <span
-              className={item.met ? "text-[#374151]" : "text-[#9CA3AF]"}
+              className={item.met ? "text-[var(--color-text-secondary)]" : "text-[var(--color-text-secondary)]"}
             >
               {item.label}
             </span>
@@ -185,7 +185,7 @@ function CertificateCard({
 
         {/* Course Title */}
         <h3
-          className={`text-sm sm:text-base font-semibold text-[#1F2937] mb-1 sm:mb-2 text-start`}
+          className={`text-sm sm:text-base font-semibold text-[var(--color-text-primary)] mb-1 sm:mb-2 text-start`}
         >
           {isRTL && certificate.courseTitleAr
             ? certificate.courseTitleAr
@@ -194,7 +194,7 @@ function CertificateCard({
 
         {/* Date */}
         <p
-          className={`text-xs sm:text-sm text-[#6B7280] mb-3 text-start`}
+          className={`text-xs sm:text-sm text-[var(--color-text-secondary)] mb-3 text-start`}
         >
           {isApproved
             ? t("certifications.issuedOn", {
@@ -237,7 +237,7 @@ function CertificateCard({
                 <p className="text-[10px] sm:text-xs text-[#D4A520] mb-0.5">
                   {t("certifications.accreditedBy")}
                 </p>
-                <p className="text-xs sm:text-sm text-[#1F2937] font-medium truncate">
+                <p className="text-xs sm:text-sm text-[var(--color-text-primary)] font-medium truncate">
                   NELC
                 </p>
               </div>
@@ -248,7 +248,7 @@ function CertificateCard({
               <button
                 onClick={() => onDownload(certificate.id)}
                 disabled={downloading}
-                className="flex items-center justify-center gap-2 flex-1 py-2 sm:py-2.5 border border-[var(--color-border)] rounded-lg text-xs sm:text-sm font-medium text-[#1F2937] text-center hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                className="flex items-center justify-center gap-2 flex-1 py-2 sm:py-2.5 border border-[var(--color-border)] rounded-lg text-xs sm:text-sm font-medium text-[var(--color-text-primary)] text-center hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
               >
                 {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                 {t("certifications.downloadCertificate")}
@@ -260,7 +260,7 @@ function CertificateCard({
                     toast.success(t("certifications.linkCopied"));
                   });
                 }}
-                className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 border border-[var(--color-border)] rounded-lg text-xs sm:text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 border border-[var(--color-border)] rounded-lg text-xs sm:text-sm font-medium text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors"
                 title={t("certifications.shareCertificate")}
               >
                 <Link2 className="w-4 h-4" />
@@ -292,7 +292,7 @@ function CertificateCard({
         {isPending && (
           <>
             <EligibilityChecklist certificate={certificate} t={t} />
-            <p className="mt-3 text-xs text-[#6B7280] text-center">
+            <p className="mt-3 text-xs text-[var(--color-text-secondary)] text-center">
               {t("certifications.pendingMessage")}
             </p>
           </>
@@ -312,7 +312,7 @@ function CertificateCard({
               </div>
             )}
             <EligibilityChecklist certificate={certificate} t={t} />
-            <p className="mt-3 text-xs text-[#6B7280] text-center">
+            <p className="mt-3 text-xs text-[var(--color-text-secondary)] text-center">
               {t("certifications.rejectedMessage")}
             </p>
           </>
@@ -332,7 +332,7 @@ function CertificateCard({
               </div>
             )}
             <EligibilityChecklist certificate={certificate} t={t} />
-            <p className="mt-3 text-xs text-[#6B7280] text-center">
+            <p className="mt-3 text-xs text-[var(--color-text-secondary)] text-center">
               {t("certifications.heldMessage")}
             </p>
           </>
@@ -356,7 +356,7 @@ function CertificateCard({
                 </div>
               </div>
             </div>
-            <p className="mt-3 text-xs text-[#6B7280] text-center">
+            <p className="mt-3 text-xs text-[var(--color-text-secondary)] text-center">
               {t("certifications.revokedMessage")}
             </p>
           </>
@@ -418,7 +418,7 @@ const CertificationsContent = () => {
             <MobileSidebar user={userData} />
 
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937] mb-4 sm:mb-6">
+              <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] mb-4 sm:mb-6">
                 {t("certifications.title")}
               </h1>
 
@@ -432,15 +432,15 @@ const CertificationsContent = () => {
                 ) : certificates.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 sm:py-16">
                     <EmptyStateIllustration variant="certificates" className="mb-2" />
-                    <h3 className="text-sm sm:text-base font-medium text-[#1F2937] mb-1">
+                    <h3 className="text-sm sm:text-base font-medium text-[var(--color-text-primary)] mb-1">
                       {t("certifications.noCertificatesTitle")}
                     </h3>
-                    <p className="text-xs sm:text-sm text-[#6B7280] mb-4 sm:mb-6 text-center px-4">
+                    <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mb-4 sm:mb-6 text-center px-4">
                       {t("certifications.noCertificatesDescription")}
                     </p>
                     <Link
                       href={`/${locale}/courses`}
-                      className="px-5 py-2 sm:px-6 sm:py-2.5 border border-[var(--color-border)] text-[#1F2937] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                      className="px-5 py-2 sm:px-6 sm:py-2.5 border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
                     >
                       {t("certifications.viewCourses")}
                     </Link>

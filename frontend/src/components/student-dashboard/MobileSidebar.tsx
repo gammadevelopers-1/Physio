@@ -174,7 +174,7 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
           className={`absolute top-4 ${isRTL ? "left-4" : "right-4"} w-8 h-8 flex items-center justify-center`}
           aria-label="Close menu"
         >
-          <X className="w-6 h-6 text-[#6B7280]" />
+          <X className="w-6 h-6 text-[var(--color-text-secondary)]" />
         </button>
 
         <div className="p-4 pt-14 flex flex-col gap-4">
@@ -214,10 +214,10 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
                     <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`} role="menu">
                       <button
                         onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
                         role="menuitem"
                       >
-                        <Upload className="w-4 h-4 text-[#4B5563]" />
+                        <Upload className="w-4 h-4 text-[var(--color-text-secondary)]" />
                         {t("settings.uploadPhoto")}
                       </button>
                       {user.avatar && (
@@ -235,14 +235,14 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
                 </div>
               </div>
 
-              <h3 className="text-lg font-semibold text-[#1F2937]">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {user.name}
               </h3>
-              <p className="text-sm text-[#6B7280] mb-2">{user.email}</p>
+              <p className="text-sm text-[var(--color-text-secondary)] mb-2">{user.email}</p>
 
               <div className="flex items-center gap-1.5 px-3 py-1 bg-[#F3F4F6] rounded-full">
                 <Coins className="w-4 h-4 text-[#D4A520]" />
-                <span className="text-sm text-[#4B5563]">
+                <span className="text-sm text-[var(--color-text-secondary)]">
                   {user.points} {t("sidebar.points")}
                 </span>
               </div>
@@ -251,10 +251,10 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
             {/* Profile Completion */}
             <div className="mt-6">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-[#4B5563]">
+                <span className="text-sm text-[var(--color-text-secondary)]">
                   {t("sidebar.profileCompletion")}
                 </span>
-                <span className="text-sm font-medium text-[#1F2937]">
+                <span className="text-sm font-medium text-[var(--color-text-primary)]">
                   {user.profileCompletion}%
                 </span>
               </div>
@@ -291,7 +291,7 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
             {/* View Profile Button */}
             <Link
               href={`/${locale}/dashboard/student/settings`}
-              className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors text-center block"
+              className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors text-center block"
             >
               {t("sidebar.viewProfile")}
             </Link>
@@ -313,11 +313,11 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                       active
                         ? "bg-[#F0F7FF] text-[#002D87]"
-                        : "text-[#4B5563] hover:bg-[#F9FAFB]"
+                        : "text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
                     }`}
                   >
                     <Icon
-                      className={`w-5 h-5 ${active ? "text-[#002D87]" : "text-[#6B7280]"}`}
+                      className={`w-5 h-5 ${active ? "text-[#002D87]" : "text-[var(--color-text-secondary)]"}`}
                     />
                     <span className={`text-sm ${active ? "font-medium" : ""}`}>
                       {item.label}

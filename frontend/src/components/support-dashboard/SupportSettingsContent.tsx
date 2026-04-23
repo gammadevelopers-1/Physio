@@ -141,7 +141,7 @@ const SupportSettingsContent = () => {
                           className={`px-3 py-2.5 text-xs sm:text-sm font-medium relative transition-colors whitespace-nowrap flex items-center gap-1 ${
                             activeTab === tab.key
                               ? "text-[var(--color-primary)]"
-                              : "text-[#6B7280] hover:text-[#374151]"
+                              : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                           }`}
                         >
                           <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -160,20 +160,20 @@ const SupportSettingsContent = () => {
                   {/* SLA Targets */}
                   {activeTab === "sla" && (
                     <div>
-                      <h3 className="text-base font-semibold text-[#111827] mb-4">
+                      <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("settingsPage.sla.title")}
                       </h3>
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead>
                             <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
-                              <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`py-3 px-5 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                                 {t("settingsPage.sla.priority")}
                               </th>
-                              <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`py-3 px-5 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                                 {t("settingsPage.sla.firstResponseTarget")}
                               </th>
-                              <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`py-3 px-5 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                                 {t("settingsPage.sla.resolutionTarget")}
                               </th>
                             </tr>
@@ -193,7 +193,7 @@ const SupportSettingsContent = () => {
                                     onChange={(e) => setHighFRT(Number(e.target.value))}
                                     className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
-                                  <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
+                                  <span className="text-[13px] text-[var(--color-text-secondary)]">{t("settingsPage.sla.hours")}</span>
                                 </div>
                               </td>
                               <td className="py-3 px-5">
@@ -204,7 +204,7 @@ const SupportSettingsContent = () => {
                                     onChange={(e) => setHighResolution(Number(e.target.value))}
                                     className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
-                                  <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
+                                  <span className="text-[13px] text-[var(--color-text-secondary)]">{t("settingsPage.sla.hours")}</span>
                                 </div>
                               </td>
                             </tr>
@@ -222,7 +222,7 @@ const SupportSettingsContent = () => {
                                     onChange={(e) => setMedFRT(Number(e.target.value))}
                                     className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
-                                  <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
+                                  <span className="text-[13px] text-[var(--color-text-secondary)]">{t("settingsPage.sla.hours")}</span>
                                 </div>
                               </td>
                               <td className="py-3 px-5">
@@ -233,7 +233,7 @@ const SupportSettingsContent = () => {
                                     onChange={(e) => setMedResolution(Number(e.target.value))}
                                     className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
-                                  <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
+                                  <span className="text-[13px] text-[var(--color-text-secondary)]">{t("settingsPage.sla.hours")}</span>
                                 </div>
                               </td>
                             </tr>
@@ -251,7 +251,7 @@ const SupportSettingsContent = () => {
                                     onChange={(e) => setLowFRT(Number(e.target.value))}
                                     className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
-                                  <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
+                                  <span className="text-[13px] text-[var(--color-text-secondary)]">{t("settingsPage.sla.hours")}</span>
                                 </div>
                               </td>
                               <td className="py-3 px-5">
@@ -262,7 +262,7 @@ const SupportSettingsContent = () => {
                                     onChange={(e) => setLowResolution(Number(e.target.value))}
                                     className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
-                                  <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
+                                  <span className="text-[13px] text-[var(--color-text-secondary)]">{t("settingsPage.sla.hours")}</span>
                                 </div>
                               </td>
                             </tr>
@@ -279,7 +279,7 @@ const SupportSettingsContent = () => {
                   {/* Auto-Assignment */}
                   {activeTab === "assignment" && (
                     <div>
-                      <h3 className="text-base font-semibold text-[#111827] mb-4">
+                      <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("settingsPage.assignment.title")}
                       </h3>
                       <div className="space-y-4">
@@ -308,10 +308,10 @@ const SupportSettingsContent = () => {
                                     )}
                                   </div>
                                   <div>
-                                    <p className={`text-sm font-semibold ${isActive ? "text-[var(--color-primary)]" : "text-[#111827]"}`}>
+                                    <p className={`text-sm font-semibold ${isActive ? "text-[var(--color-primary)]" : "text-[var(--color-text-primary)]"}`}>
                                       {rule.title}
                                     </p>
-                                    <p className="text-[12px] text-[#6B7280] mt-0.5">
+                                    <p className="text-[12px] text-[var(--color-text-secondary)] mt-0.5">
                                       {rule.description}
                                     </p>
                                   </div>
@@ -343,7 +343,7 @@ const SupportSettingsContent = () => {
                   {activeTab === "macros" && (
                     <div>
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-base font-semibold text-[#111827]">
+                        <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                           {t("settingsPage.macros.title")}
                         </h3>
                         <button className="flex items-center gap-1.5 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
@@ -357,18 +357,18 @@ const SupportSettingsContent = () => {
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <p className="text-sm font-semibold text-[#111827]">{macro.name}</p>
+                                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">{macro.name}</p>
                                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#EFF6FF] text-[#3B82F6]">
                                     {macro.category}
                                   </span>
                                 </div>
-                                <p className="text-[13px] text-[#6B7280] line-clamp-2">{macro.content}</p>
+                                <p className="text-[13px] text-[var(--color-text-secondary)] line-clamp-2">{macro.content}</p>
                               </div>
                               <div className="flex items-center gap-2 flex-shrink-0">
-                                <button className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors">
+                                <button className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors">
                                   <Pencil className="w-4 h-4" />
                                 </button>
-                                <button className="p-2 text-[#6B7280] hover:text-[#DC2626] hover:bg-[#FEE2E2] rounded-lg transition-colors">
+                                <button className="p-2 text-[var(--color-text-secondary)] hover:text-[#DC2626] hover:bg-[#FEE2E2] rounded-lg transition-colors">
                                   <Trash2 className="w-4 h-4" />
                                 </button>
                               </div>
@@ -386,15 +386,15 @@ const SupportSettingsContent = () => {
                   {/* Notifications */}
                   {activeTab === "notifications" && (
                     <div>
-                      <h3 className="text-base font-semibold text-[#111827] mb-4">
+                      <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("settingsPage.notifications.title")}
                       </h3>
                       <div className="space-y-4">
                         <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-medium text-[#111827]">{t("settingsPage.notifications.email")}</p>
-                              <p className="text-[12px] text-[#6B7280] mt-0.5">{t("settingsPage.notifications.emailDesc")}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("settingsPage.notifications.email")}</p>
+                              <p className="text-[12px] text-[var(--color-text-secondary)] mt-0.5">{t("settingsPage.notifications.emailDesc")}</p>
                             </div>
                             <button
                               onClick={() => setEmailNotif(!emailNotif)}
@@ -407,8 +407,8 @@ const SupportSettingsContent = () => {
                         <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-medium text-[#111827]">{t("settingsPage.notifications.sms")}</p>
-                              <p className="text-[12px] text-[#6B7280] mt-0.5">{t("settingsPage.notifications.smsDesc")}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("settingsPage.notifications.sms")}</p>
+                              <p className="text-[12px] text-[var(--color-text-secondary)] mt-0.5">{t("settingsPage.notifications.smsDesc")}</p>
                             </div>
                             <button
                               onClick={() => setSmsNotif(!smsNotif)}
@@ -421,8 +421,8 @@ const SupportSettingsContent = () => {
                         <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-medium text-[#111827]">{t("settingsPage.notifications.whatsapp")}</p>
-                              <p className="text-[12px] text-[#6B7280] mt-0.5">{t("settingsPage.notifications.whatsappDesc")}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("settingsPage.notifications.whatsapp")}</p>
+                              <p className="text-[12px] text-[var(--color-text-secondary)] mt-0.5">{t("settingsPage.notifications.whatsappDesc")}</p>
                             </div>
                             <button
                               onClick={() => setWhatsappNotif(!whatsappNotif)}
@@ -444,7 +444,7 @@ const SupportSettingsContent = () => {
                   {activeTab === "categories" && (
                     <div>
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-base font-semibold text-[#111827]">
+                        <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                           {t("settingsPage.categories.title")}
                         </h3>
                         <button className="flex items-center gap-1.5 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
@@ -456,16 +456,16 @@ const SupportSettingsContent = () => {
                         <table className="w-full">
                           <thead>
                             <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
-                              <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`py-3 px-5 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                                 {t("settingsPage.categories.name")}
                               </th>
-                              <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`py-3 px-5 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>
                                 {t("settingsPage.categories.description")}
                               </th>
-                              <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`py-3 px-5 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                                 {t("settingsPage.categories.tickets")}
                               </th>
-                              <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              <th className={`py-3 px-5 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                                 {t("settingsPage.categories.actions")}
                               </th>
                             </tr>
@@ -473,15 +473,15 @@ const SupportSettingsContent = () => {
                           <tbody>
                             {categories.map((category, index) => (
                               <tr key={index} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
-                                <td className="py-3 px-5 text-[13px] font-medium text-[#111827]">{category.name}</td>
-                                <td className="py-3 px-5 text-[13px] text-[#6B7280] hidden md:table-cell">{category.description}</td>
-                                <td className="py-3 px-5 text-[13px] font-semibold text-[#111827]">{category.tickets}</td>
+                                <td className="py-3 px-5 text-[13px] font-medium text-[var(--color-text-primary)]">{category.name}</td>
+                                <td className="py-3 px-5 text-[13px] text-[var(--color-text-secondary)] hidden md:table-cell">{category.description}</td>
+                                <td className="py-3 px-5 text-[13px] font-semibold text-[var(--color-text-primary)]">{category.tickets}</td>
                                 <td className="py-3 px-5">
                                   <div className="flex items-center gap-2">
-                                    <button className="p-1.5 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors">
+                                    <button className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors">
                                       <Pencil className="w-3.5 h-3.5" />
                                     </button>
-                                    <button className="p-1.5 text-[#6B7280] hover:text-[#DC2626] hover:bg-[#FEE2E2] rounded-lg transition-colors">
+                                    <button className="p-1.5 text-[var(--color-text-secondary)] hover:text-[#DC2626] hover:bg-[#FEE2E2] rounded-lg transition-colors">
                                       <Trash2 className="w-3.5 h-3.5" />
                                     </button>
                                   </div>

@@ -85,7 +85,7 @@ const MobileCourseCard = ({
 
         {/* Title */}
         <p
-          className={`text-[#06080b] font-semibold w-[161px] z-10 leading-normal ${isRTL ? "text-right ml-auto" : "text-left"}`}
+          className={`text-[var(--color-text-primary)] font-semibold w-[161px] z-10 leading-normal ${isRTL ? "text-right ml-auto" : "text-left"}`}
           style={{
             fontSize: "var(--typeface-font-styles-heading-h5, 18px)",
           }}
@@ -109,7 +109,7 @@ const MobileCourseCard = ({
 
         {/* Bottom row */}
         <div className="flex items-center justify-between w-full z-10">
-          <div className="flex items-center gap-2 bg-[#0b0f17] rounded-full px-3 py-1">
+          <div className="flex items-center gap-2 bg-[var(--color-text-primary)] rounded-full px-3 py-1">
             <DeliveryIcon
               className="w-4 h-4 text-white"
               strokeWidth={1.5}
@@ -124,7 +124,7 @@ const MobileCourseCard = ({
             className={`flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
               isFree
                 ? "bg-green-100 text-green-700"
-                : "bg-[#f9fbfd] text-[#0b0f17]"
+                : "bg-[#f9fbfd] text-[var(--color-text-primary)]"
             }`}
           >
             {isFree ? t("card.free") : `${price} SAR`}
@@ -138,26 +138,26 @@ const MobileCourseCard = ({
       >
         <div className="flex items-center gap-1 bg-[#f4f4f5] rounded-lg px-2 py-1">
           <Calendar
-            className="w-4 h-4 text-[#4a4c4f]"
+            className="w-4 h-4 text-[var(--color-text-secondary)]"
             strokeWidth={1.5}
           />
-          <span className="text-[#4a4c4f] text-sm leading-5">
+          <span className="text-[var(--color-text-secondary)] text-sm leading-5">
             {formattedDate}
           </span>
         </div>
         <div className="flex items-center gap-1 bg-[#f4f4f5] rounded-lg px-2 py-1">
-          <Clock className="w-4 h-4 text-[#4a4c4f]" strokeWidth={1.5} />
-          <span className="text-[#4a4c4f] text-sm leading-5">
+          <Clock className="w-4 h-4 text-[var(--color-text-secondary)]" strokeWidth={1.5} />
+          <span className="text-[var(--color-text-secondary)] text-sm leading-5">
             {hoursLabel}
           </span>
         </div>
         {(course.sessionCount ?? 0) > 0 && (
           <div className="flex items-center gap-1 bg-[#f4f4f5] rounded-lg px-2 py-1">
             <Video
-              className="w-4 h-4 text-[#4a4c4f]"
+              className="w-4 h-4 text-[var(--color-text-secondary)]"
               strokeWidth={1.5}
             />
-            <span className="text-[#4a4c4f] text-sm leading-5">
+            <span className="text-[var(--color-text-secondary)] text-sm leading-5">
               {course.sessionCount} {t("card.sessions")}
             </span>
           </div>
@@ -166,7 +166,7 @@ const MobileCourseCard = ({
 
       {/* Description */}
       <p
-        className={`text-[#06080b] text-base leading-6 w-full line-clamp-2 ${isRTL ? "text-right" : "text-left"}`}
+        className={`text-[var(--color-text-primary)] text-base leading-6 w-full line-clamp-2 ${isRTL ? "text-right" : "text-left"}`}
       >
         {description}
       </p>
@@ -186,28 +186,28 @@ const MobileCourseCard = ({
       {/* Instructor, Rating & CTA */}
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
-          <span className="text-[#4a4c4f] text-sm truncate max-w-[100px]">
+          <span className="text-[var(--color-text-secondary)] text-sm truncate max-w-[100px]">
             {course.instructorName}
           </span>
           {course.avgRating > 0 && (
             <div className="flex items-center gap-0.5">
               <Star className="w-3.5 h-3.5 text-[#F59E0B] fill-[#F59E0B]" />
-              <span className="text-xs text-[#4a4c4f]">
+              <span className="text-xs text-[var(--color-text-secondary)]">
                 {course.avgRating.toFixed(1)}
               </span>
             </div>
           )}
           {(course.enrolledCount ?? 0) > 0 && (
             <div className="flex items-center gap-0.5">
-              <Users className="w-3 h-3 text-[#9CA3AF]" />
-              <span className="text-[10px] text-[#9CA3AF]">
+              <Users className="w-3 h-3 text-[var(--color-text-secondary)]" />
+              <span className="text-[10px] text-[var(--color-text-secondary)]">
                 {course.enrolledCount}
               </span>
             </div>
           )}
         </div>
 
-        <span className="flex items-center gap-2 h-10 px-5 py-2 bg-[#0b0f17] text-white rounded-xl text-sm font-medium group-hover:bg-[#1a1f2e] transition-colors">
+        <span className="flex items-center gap-2 h-10 px-5 py-2 bg-[var(--color-text-primary)] text-white rounded-xl text-sm font-medium group-hover:bg-[var(--color-text-primary)] transition-colors">
           <span>{t("card.viewDetails")}</span>
           {isRTL ? (
             <ArrowLeft

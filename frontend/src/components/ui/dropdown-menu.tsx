@@ -44,7 +44,7 @@ const DropdownMenuItem = React.forwardRef<
       "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       danger
         ? "text-[#EF4444] hover:bg-[#FEF2F2] focus:bg-[#FEF2F2]"
-        : "text-[#374151] hover:bg-[#F3F4F6] focus:bg-[#F3F4F6]",
+        : "text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] focus:bg-[#F3F4F6]",
       className
     )}
     {...props}

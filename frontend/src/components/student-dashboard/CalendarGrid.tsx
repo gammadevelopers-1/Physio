@@ -122,9 +122,9 @@ const CalendarGrid = ({
             className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
             aria-label={t("calendarPage.previousMonth")}
           >
-            <PrevIcon className="w-5 h-5 text-[#4B5563]" />
+            <PrevIcon className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
-          <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] min-w-[180px] text-center">
+          <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] min-w-[180px] text-center">
             {monthYearLabel}
           </h2>
           <button
@@ -132,7 +132,7 @@ const CalendarGrid = ({
             className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
             aria-label={t("calendarPage.nextMonth")}
           >
-            <NextIcon className="w-5 h-5 text-[#4B5563]" />
+            <NextIcon className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
 
@@ -149,7 +149,7 @@ const CalendarGrid = ({
         {dayHeaders.map((day, i) => (
           <div
             key={i}
-            className="text-center text-xs font-medium text-[#6B7280] py-2"
+            className="text-center text-xs font-medium text-[var(--color-text-secondary)] py-2"
           >
             {day}
           </div>
@@ -183,8 +183,8 @@ const CalendarGrid = ({
                     : isToday
                       ? "ring-2 ring-[#002D87] text-[#002D87] font-medium"
                       : isCurrentMonth
-                        ? "text-[#1F2937]"
-                        : "text-[#9CA3AF]"
+                        ? "text-[var(--color-text-primary)]"
+                        : "text-[var(--color-text-secondary)]"
                 }`}
               >
                 {day.getDate()}
@@ -210,27 +210,27 @@ const CalendarGrid = ({
       <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-[#F3F4F6]">
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-blue-500" />
-          <span className="text-[10px] text-[#6B7280]">{t("calendarPage.legendZoom")}</span>
+          <span className="text-[10px] text-[var(--color-text-secondary)]">{t("calendarPage.legendZoom")}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-green-500" />
-          <span className="text-[10px] text-[#6B7280]">{t("calendarPage.legendOnsite")}</span>
+          <span className="text-[10px] text-[var(--color-text-secondary)]">{t("calendarPage.legendOnsite")}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-purple-500" />
-          <span className="text-[10px] text-[#6B7280]">{t("calendarPage.legendHybrid")}</span>
+          <span className="text-[10px] text-[var(--color-text-secondary)]">{t("calendarPage.legendHybrid")}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-red-500" />
-          <span className="text-[10px] text-[#6B7280]">{t("calendarPage.legendAssessment")}</span>
+          <span className="text-[10px] text-[var(--color-text-secondary)]">{t("calendarPage.legendAssessment")}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-orange-500" />
-          <span className="text-[10px] text-[#6B7280]">{t("calendarPage.legendAssignment")}</span>
+          <span className="text-[10px] text-[var(--color-text-secondary)]">{t("calendarPage.legendAssignment")}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-emerald-400" />
-          <span className="text-[10px] text-[#6B7280]">{t("calendarPage.legendCompleted")}</span>
+          <span className="text-[10px] text-[var(--color-text-secondary)]">{t("calendarPage.legendCompleted")}</span>
         </div>
       </div>
     </div>

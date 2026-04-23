@@ -160,12 +160,12 @@ const BottomNav = () => {
         <div
           className={`flex items-center justify-between px-4 pb-4 border-b border-[var(--color-border)] ${isRTL ? "flex-row-reverse" : ""}`}
         >
-          <h2 className="text-lg font-semibold text-[#06080b]">{t("menu")}</h2>
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("menu")}</h2>
           <button
             onClick={() => setIsDrawerOpen(false)}
             className="p-2 rounded-full hover:bg-[#F4F4F5] transition-colors"
           >
-            <X className="w-5 h-5 text-[#71717A]" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
 
@@ -177,7 +177,7 @@ const BottomNav = () => {
           {/* Platform Section */}
           <div className="py-4 border-b border-[var(--color-border)]">
             <h3
-              className={`text-sm font-semibold text-[#71717A] mb-3 ${isRTL ? "text-right" : "text-left"}`}
+              className={`text-sm font-semibold text-[var(--color-text-secondary)] mb-3 ${isRTL ? "text-right" : "text-left"}`}
             >
               {t("platform")}
             </h3>
@@ -187,7 +187,7 @@ const BottomNav = () => {
                   key={index}
                   href={link.href}
                   onClick={handleLinkClick}
-                  className={`flex items-center justify-between py-3 text-[#06080b] hover:bg-[#F4F4F5] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
+                  className={`flex items-center justify-between py-3 text-[var(--color-text-primary)] hover:bg-[#F4F4F5] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
                 >
                   <span className="text-base">{link.label}</span>
                   <ChevronIcon className="w-5 h-5 text-[#A1A1AA]" />
@@ -199,7 +199,7 @@ const BottomNav = () => {
           {/* Organization Section */}
           <div className="py-4 border-b border-[var(--color-border)]">
             <h3
-              className={`text-sm font-semibold text-[#71717A] mb-3 ${isRTL ? "text-right" : "text-left"}`}
+              className={`text-sm font-semibold text-[var(--color-text-secondary)] mb-3 ${isRTL ? "text-right" : "text-left"}`}
             >
               {t("organization")}
             </h3>
@@ -209,7 +209,7 @@ const BottomNav = () => {
                   key={index}
                   href={link.href}
                   onClick={handleLinkClick}
-                  className={`flex items-center justify-between py-3 text-[#06080b] hover:bg-[#F4F4F5] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
+                  className={`flex items-center justify-between py-3 text-[var(--color-text-primary)] hover:bg-[#F4F4F5] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
                 >
                   <span className="text-base">{link.label}</span>
                   <ChevronIcon className="w-5 h-5 text-[#A1A1AA]" />
@@ -221,7 +221,7 @@ const BottomNav = () => {
           {/* Support Section */}
           <div className="py-4">
             <h3
-              className={`text-sm font-semibold text-[#71717A] mb-3 ${isRTL ? "text-right" : "text-left"}`}
+              className={`text-sm font-semibold text-[var(--color-text-secondary)] mb-3 ${isRTL ? "text-right" : "text-left"}`}
             >
               {t("support")}
             </h3>
@@ -231,7 +231,7 @@ const BottomNav = () => {
                   key={index}
                   href={link.href}
                   onClick={handleLinkClick}
-                  className={`flex items-center justify-between py-3 text-[#06080b] hover:bg-[#F4F4F5] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
+                  className={`flex items-center justify-between py-3 text-[var(--color-text-primary)] hover:bg-[#F4F4F5] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
                 >
                   <span className="text-base">{link.label}</span>
                   <ChevronIcon className="w-5 h-5 text-[#A1A1AA]" />

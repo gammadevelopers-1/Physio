@@ -55,7 +55,7 @@ const SecurityHealthWidget = ({
       case "critical":
         return "bg-[var(--functional-red-600)]";
       default:
-        return "bg-[#9CA3AF]";
+        return "bg-[var(--color-text-secondary)]";
     }
   };
 
@@ -69,7 +69,7 @@ const SecurityHealthWidget = ({
       case "critical":
         return "text-[var(--functional-red-600)]";
       default:
-        return "text-[#9CA3AF]";
+        return "text-[var(--color-text-secondary)]";
     }
   };
 
@@ -141,7 +141,7 @@ const SecurityHealthWidget = ({
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <Shield className="w-5 h-5 text-[#002D87]" />
-          <h3 className="text-lg font-semibold text-[#1F2937]">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("securityHealth.title")}
           </h3>
         </div>
@@ -158,7 +158,7 @@ const SecurityHealthWidget = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Security Column */}
         <div>
-          <h4 className="text-sm font-semibold text-[#6B7280] uppercase mb-3">
+          <h4 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase mb-3">
             {t("securityHealth.security")}
           </h4>
           <div className="space-y-3">
@@ -170,14 +170,14 @@ const SecurityHealthWidget = ({
                   className="flex items-center justify-between py-2 border-b border-[#F3F4F6] last:border-b-0"
                 >
                   <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4 text-[#6B7280]" />
-                    <span className="text-sm text-[#4B5563]">{item.label}</span>
+                    <Icon className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                    <span className="text-sm text-[var(--color-text-secondary)]">{item.label}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span
                       className={`w-2 h-2 rounded-full ${getStatusColor(item.status)}`}
                     />
-                    <span className="text-sm font-medium text-[#1F2937]">
+                    <span className="text-sm font-medium text-[var(--color-text-primary)]">
                       {item.value}
                     </span>
                   </div>
@@ -189,7 +189,7 @@ const SecurityHealthWidget = ({
 
         {/* System Column */}
         <div>
-          <h4 className="text-sm font-semibold text-[#6B7280] uppercase mb-3">
+          <h4 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase mb-3">
             {t("securityHealth.system")}
           </h4>
           <div className="space-y-3">
@@ -201,8 +201,8 @@ const SecurityHealthWidget = ({
                   className="flex items-center justify-between py-2 border-b border-[#F3F4F6] last:border-b-0"
                 >
                   <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4 text-[#6B7280]" />
-                    <span className="text-sm text-[#4B5563]">{item.label}</span>
+                    <Icon className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                    <span className="text-sm text-[var(--color-text-secondary)]">{item.label}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span

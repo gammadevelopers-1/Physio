@@ -48,7 +48,7 @@ const ContentReviewQueue = ({
     image: { icon: ImageIcon, bg: "bg-[#D1FAE5]", color: "text-[#10B981]" },
     quiz: { icon: HelpCircle, bg: "bg-[#FFEDD5]", color: "text-[#F97316]" },
   };
-  const defaultTypeIcon = { icon: File, bg: "bg-[#F3F4F6]", color: "text-[#6B7280]" };
+  const defaultTypeIcon = { icon: File, bg: "bg-[#F3F4F6]", color: "text-[var(--color-text-secondary)]" };
 
   return (
     <div className="bg-white rounded-xl border border-[var(--color-border)]">
@@ -57,7 +57,7 @@ const ContentReviewQueue = ({
         <div className="w-8 h-8 bg-[#FEF3C7] rounded-lg flex items-center justify-center">
           <ClipboardList className="w-4 h-4 text-[#D4A520]" />
         </div>
-        <h3 className="text-[15px] font-semibold text-[#1F2937]">
+        <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
           {t("contentReview.title")}
         </h3>
         <span className="bg-[#EF4444] text-white text-[11px] font-semibold px-2 py-0.5 rounded-full ms-auto">
@@ -84,10 +84,10 @@ const ContentReviewQueue = ({
                   <typeConfig.icon className={`w-4 h-4 ${typeConfig.color}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-[#1F2937] truncate">
+                  <p className="text-[13px] font-medium text-[var(--color-text-primary)] truncate">
                     {item.title}
                   </p>
-                  <p className="text-[11px] text-[#6B7280] truncate">
+                  <p className="text-[11px] text-[var(--color-text-secondary)] truncate">
                     {item.courseName} • {item.submittedBy}
                   </p>
                 </div>
@@ -119,7 +119,7 @@ const ContentReviewQueue = ({
                 </button>
                 <button
                   onClick={() => onPreview(item.id)}
-                  className="py-1.5 px-2 bg-[#F3F4F6] text-[#4B5563] text-[11px] font-medium rounded-md hover:bg-[var(--color-border)] transition-colors"
+                  className="py-1.5 px-2 bg-[#F3F4F6] text-[var(--color-text-secondary)] text-[11px] font-medium rounded-md hover:bg-[var(--color-border)] transition-colors"
                   aria-label={tA("preview")}
                 >
                   <Eye className="w-3.5 h-3.5" />

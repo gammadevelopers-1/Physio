@@ -86,9 +86,9 @@ const TAAssessmentSubmissionsView = ({
           onClick={onBack}
           className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors"
         >
-          <ArrowLeft className="w-5 h-5 text-[#4B5563]" />
+          <ArrowLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
-        <h1 className="text-2xl font-bold text-[#1F2937]">
+        <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
           {t("submissions.title")}
         </h1>
       </div>
@@ -106,8 +106,8 @@ const TAAssessmentSubmissionsView = ({
         </div>
       ) : submissions.length === 0 ? (
         <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
-          <FileText className="w-12 h-12 text-[#9CA3AF] mx-auto mb-3" />
-          <p className="text-[#6B7280]">{t("submissions.noSubmissions")}</p>
+          <FileText className="w-12 h-12 text-[var(--color-text-secondary)] mx-auto mb-3" />
+          <p className="text-[var(--color-text-secondary)]">{t("submissions.noSubmissions")}</p>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
@@ -115,16 +115,16 @@ const TAAssessmentSubmissionsView = ({
             <table className="w-full">
               <thead>
                 <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
-                  <th className="text-left px-4 py-3 text-sm font-medium text-[#4B5563]">
+                  <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">
                     {t("submissions.studentName")}
                   </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-[#4B5563]">
+                  <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">
                     {t("submissions.studentId")}
                   </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-[#4B5563]">
+                  <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">
                     {t("submissions.submittedAt")}
                   </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-[#4B5563]">
+                  <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">
                     {t("submissions.score")}
                   </th>
                 </tr>
@@ -139,32 +139,32 @@ const TAAssessmentSubmissionsView = ({
                         className={`border-b border-[var(--color-border)] last:border-b-0 ${hasContent ? "cursor-pointer hover:bg-[#F9FAFB]" : ""}`}
                         onClick={() => hasContent && setExpandedId(isExpanded ? null : submission.id)}
                       >
-                        <td className="px-4 py-3 text-sm text-[#1F2937]">
+                        <td className="px-4 py-3 text-sm text-[var(--color-text-primary)]">
                           <span className="flex items-center gap-2">
                             {hasContent && (
-                              isExpanded ? <ChevronUp className="w-4 h-4 text-[#6B7280]" /> : <ChevronDown className="w-4 h-4 text-[#6B7280]" />
+                              isExpanded ? <ChevronUp className="w-4 h-4 text-[var(--color-text-secondary)]" /> : <ChevronDown className="w-4 h-4 text-[var(--color-text-secondary)]" />
                             )}
                             {submission.studentFirstName} {submission.studentLastName}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm text-[#6B7280]">
+                        <td className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">
                           {submission.studentEmail}
                         </td>
-                        <td className="px-4 py-3 text-sm text-[#6B7280]">
+                        <td className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">
                           {formatDateTime(submission.submittedAt)}
                         </td>
                         <td className="px-4 py-3 text-sm">
                           {submission.score !== null ? (
-                            <span className="font-medium text-[#1F2937]">
+                            <span className="font-medium text-[var(--color-text-primary)]">
                               {submission.score}/{submission.totalMarks}
                               {submission.percentage !== null && (
-                                <span className="text-[#6B7280] ml-1">
+                                <span className="text-[var(--color-text-secondary)] ml-1">
                                   ({submission.percentage}%)
                                 </span>
                               )}
                             </span>
                           ) : (
-                            <span className="text-[#9CA3AF] italic">
+                            <span className="text-[var(--color-text-secondary)] italic">
                               {t("submissions.scoreHidden")}
                             </span>
                           )}
@@ -176,12 +176,12 @@ const TAAssessmentSubmissionsView = ({
                             <div className="space-y-3">
                               {submission.answers && submission.answers.length > 0 && (
                                 <div>
-                                  <p className="text-xs font-medium text-[#4B5563] mb-2">{t("submissions.answers")}</p>
+                                  <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-2">{t("submissions.answers")}</p>
                                   <div className="space-y-2">
                                     {submission.answers.map((a, idx) => (
                                       <div key={idx} className="bg-white rounded-lg border border-[var(--color-border)] px-3 py-2">
-                                        <p className="text-xs text-[#6B7280] mb-1">Q{idx + 1}</p>
-                                        <p className="text-sm text-[#1F2937]">{a.answer || "—"}</p>
+                                        <p className="text-xs text-[var(--color-text-secondary)] mb-1">Q{idx + 1}</p>
+                                        <p className="text-sm text-[var(--color-text-primary)]">{a.answer || "—"}</p>
                                       </div>
                                     ))}
                                   </div>
@@ -189,7 +189,7 @@ const TAAssessmentSubmissionsView = ({
                               )}
                               {submission.submissionFiles && submission.submissionFiles.length > 0 && (
                                 <div>
-                                  <p className="text-xs font-medium text-[#4B5563] mb-2">{t("submissions.files")}</p>
+                                  <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-2">{t("submissions.files")}</p>
                                   <div className="space-y-1">
                                     {submission.submissionFiles.map((f, idx) => (
                                       <a

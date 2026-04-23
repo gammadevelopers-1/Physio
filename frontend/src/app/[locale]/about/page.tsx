@@ -296,7 +296,7 @@ export default async function AboutPage({
                         {f.title}
                       </h3>
                       {f.description && (
-                        <p className="text-[#4A4C4F] text-[14px] font-normal leading-[20px] w-[251px] lg:w-auto">
+                        <p className="text-[var(--color-text-secondary)] text-[14px] font-normal leading-[20px] w-[251px] lg:w-auto">
                           {f.description}
                         </p>
                       )}

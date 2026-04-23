@@ -331,7 +331,7 @@ const TADashboardContent = ({
 
   const renderHome = () => (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-[#1F2937]">{t("home.title")}</h1>
+      <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{t("home.title")}</h1>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -348,8 +348,8 @@ const TADashboardContent = ({
                 <Icon className={`w-6 h-6 ${card.iconColor}`} />
               </div>
               <div>
-                <p className="text-sm text-[#6B7280]">{card.label}</p>
-                <p className="text-2xl font-bold text-[#1F2937]">
+                <p className="text-sm text-[var(--color-text-secondary)]">{card.label}</p>
+                <p className="text-2xl font-bold text-[var(--color-text-primary)]">
                   {loading ? "—" : card.value}
                 </p>
               </div>
@@ -364,7 +364,7 @@ const TADashboardContent = ({
         <div className="lg:col-span-2 space-y-6">
           {/* Today's Sessions */}
           <div>
-            <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+            <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
               {t("home.todaysSessions")}
             </h2>
 
@@ -374,8 +374,8 @@ const TADashboardContent = ({
               </div>
             ) : todaySessions.length === 0 ? (
               <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
-                <Calendar className="w-12 h-12 text-[#9CA3AF] mx-auto mb-3" />
-                <p className="text-[#6B7280]">{t("home.noSessions")}</p>
+                <Calendar className="w-12 h-12 text-[var(--color-text-secondary)] mx-auto mb-3" />
+                <p className="text-[var(--color-text-secondary)]">{t("home.noSessions")}</p>
               </div>
             ) : (
               <div className="grid gap-4">
@@ -386,10 +386,10 @@ const TADashboardContent = ({
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
-                        <h3 className="text-base font-semibold text-[#1F2937]">
+                        <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                           {session.title}
                         </h3>
-                        <p className="text-sm text-[#6B7280] mt-0.5">
+                        <p className="text-sm text-[var(--color-text-secondary)] mt-0.5">
                           {session.courseName}
                         </p>
                       </div>
@@ -403,7 +403,7 @@ const TADashboardContent = ({
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-4 text-sm text-[#6B7280] mb-4">
+                    <div className="flex items-center gap-4 text-sm text-[var(--color-text-secondary)] mb-4">
                       <span className="flex items-center gap-1.5">
                         {getTypeIcon(session.type)}
                         {session.type}
@@ -437,7 +437,7 @@ const TADashboardContent = ({
                         session.status === "completed") && (
                         <button
                           onClick={() => handleViewAttendance(session.id, { scheduledAt: session.scheduledAt, durationMinutes: session.durationMinutes, title: session.title, type: session.type, status: session.status, courseId: session.courseId, zoomLink: session.zoomLink })}
-                          className="inline-flex items-center gap-2 px-4 py-2 border border-[var(--color-border)] text-[#1F2937] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] transition-colors"
+                          className="inline-flex items-center gap-2 px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] transition-colors"
                         >
                           <Eye className="w-4 h-4" />
                           {t("sessions.viewAttendance")}
@@ -482,7 +482,7 @@ const TADashboardContent = ({
           <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-semibold text-[#1F2937]">
+                <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                   {t("home.notifications.title")}
                 </h3>
                 {unreadCount > 0 && (
@@ -503,7 +503,7 @@ const TADashboardContent = ({
                   )}
                   <button
                     onClick={handleClearAll}
-                    className="text-[11px] text-[#6B7280] hover:text-[#EF4444] font-medium transition-colors"
+                    className="text-[11px] text-[var(--color-text-secondary)] hover:text-[#EF4444] font-medium transition-colors"
                   >
                     {t("home.notifications.clearAll")}
                   </button>
@@ -514,12 +514,12 @@ const TADashboardContent = ({
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-6">
                 <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
-                  <Bell className="w-6 h-6 text-[#9CA3AF]" />
+                  <Bell className="w-6 h-6 text-[var(--color-text-secondary)]" />
                 </div>
-                <h4 className="text-sm font-medium text-[#1F2937] mb-1">
+                <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
                   {t("home.notifications.noNotificationsTitle")}
                 </h4>
-                <p className="text-xs text-[#6B7280] text-center max-w-[200px]">
+                <p className="text-xs text-[var(--color-text-secondary)] text-center max-w-[200px]">
                   {t("home.notifications.noNotificationsDescription")}
                 </p>
               </div>
@@ -535,19 +535,19 @@ const TADashboardContent = ({
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
-                      <h4 className="text-sm font-medium text-[#1F2937] leading-tight">
+                      <h4 className="text-sm font-medium text-[var(--color-text-primary)] leading-tight">
                         {notification.title}
                       </h4>
                       {!notification.isRead && (
                         <span className="w-2 h-2 rounded-full bg-[#3B82F6] flex-shrink-0 mt-1.5" />
                       )}
                     </div>
-                    <p className="text-xs text-[#6B7280] leading-relaxed line-clamp-2">
+                    <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed line-clamp-2">
                       {notification.message}
                     </p>
                     <div className="flex items-center gap-1 mt-1.5">
-                      <Clock className="w-3 h-3 text-[#9CA3AF]" />
-                      <span className="text-[11px] text-[#9CA3AF]">
+                      <Clock className="w-3 h-3 text-[var(--color-text-secondary)]" />
+                      <span className="text-[11px] text-[var(--color-text-secondary)]">
                         {formatRelativeDate(notification.createdAt)}
                       </span>
                     </div>
@@ -560,7 +560,7 @@ const TADashboardContent = ({
           {/* Upcoming Sessions Widget */}
           <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-semibold text-[#1F2937]">
+              <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                 {t("home.upcomingSessions.title")}
               </h3>
               <Link
@@ -574,9 +574,9 @@ const TADashboardContent = ({
             {upcomingSessions.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-6">
                 <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
-                  <Calendar className="w-6 h-6 text-[#9CA3AF]" />
+                  <Calendar className="w-6 h-6 text-[var(--color-text-secondary)]" />
                 </div>
-                <p className="text-xs text-[#6B7280] text-center">
+                <p className="text-xs text-[var(--color-text-secondary)] text-center">
                   {t("home.upcomingSessions.noUpcoming")}
                 </p>
               </div>
@@ -588,17 +588,17 @@ const TADashboardContent = ({
                     className="p-3 bg-[#F9FAFB] rounded-lg border border-transparent hover:border-[var(--color-border)] transition-colors"
                   >
                     <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <h4 className="text-sm font-medium text-[#1F2937] leading-tight">
+                      <h4 className="text-sm font-medium text-[var(--color-text-primary)] leading-tight">
                         {session.title}
                       </h4>
                       <span className="flex-shrink-0">
                         {getTypeIcon(session.type)}
                       </span>
                     </div>
-                    <p className="text-xs text-[#6B7280] mb-1.5">
+                    <p className="text-xs text-[var(--color-text-secondary)] mb-1.5">
                       {session.courseName}
                     </p>
-                    <div className="flex items-center gap-1 text-xs text-[#9CA3AF]">
+                    <div className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)]">
                       <Calendar className="w-3 h-3" />
                       <span>
                         {formatDate(session.scheduledAt)} &middot;{" "}
@@ -614,7 +614,7 @@ const TADashboardContent = ({
           {/* My Courses Quick View */}
           <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-semibold text-[#1F2937]">
+              <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                 {t("home.coursesOverview.title")}
               </h3>
               <Link
@@ -628,9 +628,9 @@ const TADashboardContent = ({
             {courses.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-6">
                 <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
-                  <BookOpen className="w-6 h-6 text-[#9CA3AF]" />
+                  <BookOpen className="w-6 h-6 text-[var(--color-text-secondary)]" />
                 </div>
-                <p className="text-xs text-[#6B7280] text-center">
+                <p className="text-xs text-[var(--color-text-secondary)] text-center">
                   {t("home.coursesOverview.noCourses")}
                 </p>
               </div>
@@ -642,7 +642,7 @@ const TADashboardContent = ({
                     className="p-3 bg-[#F9FAFB] rounded-lg border border-transparent hover:border-[var(--color-border)] transition-colors"
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
-                      <h4 className="text-sm font-medium text-[#1F2937] leading-tight">
+                      <h4 className="text-sm font-medium text-[var(--color-text-primary)] leading-tight">
                         {course.courseTitle}
                       </h4>
                       <span
@@ -653,7 +653,7 @@ const TADashboardContent = ({
                     </div>
                     {(course.instructorFirstName ||
                       course.instructorLastName) && (
-                      <p className="text-xs text-[#9CA3AF]">
+                      <p className="text-xs text-[var(--color-text-secondary)]">
                         {`${course.instructorFirstName || ""} ${course.instructorLastName || ""}`.trim()}
                       </p>
                     )}

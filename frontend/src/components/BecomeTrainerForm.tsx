@@ -237,7 +237,7 @@ const FileUpload = ({
         ) : (
           <>
             <div className="w-12 h-12 rounded-full bg-[var(--color-surface-page)] flex items-center justify-center">
-              <CloudUpload className="w-6 h-6 text-[#6B7280]" strokeWidth={1.5} />
+              <CloudUpload className="w-6 h-6 text-[var(--color-text-secondary)]" strokeWidth={1.5} />
             </div>
             <div className="text-center">
               <span className="text-sm text-[#002D87] font-medium">{clickToUploadLabel || t("resume.clickToUpload")}</span>
@@ -670,7 +670,7 @@ const BecomeTrainerForm = ({
       <section className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)] mx-auto mb-4" />
-          <p className="text-[#6B7280]">Loading...</p>
+          <p className="text-[var(--color-text-secondary)]">Loading...</p>
         </div>
       </section>
     );
@@ -685,8 +685,8 @@ const BecomeTrainerForm = ({
       <section className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
         <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
           <AlertCircle className="w-12 h-12 text-[var(--color-primary)] mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-[#1F2937] mb-2">{tt("loginRequired", "Login Required")}</h2>
-          <p className="text-[#6B7280] mb-6">{tt("loginRequiredDesc", "You need to sign in to submit a trainer application.")}</p>
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-2">{tt("loginRequired", "Login Required")}</h2>
+          <p className="text-[var(--color-text-secondary)] mb-6">{tt("loginRequiredDesc", "You need to sign in to submit a trainer application.")}</p>
           <Link
             href={`/${locale}/signin?redirect=/${locale}/become-trainer`}
             className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white rounded-xl font-medium hover:bg-[#8b6a3d] transition-colors"
@@ -704,8 +704,8 @@ const BecomeTrainerForm = ({
       <section className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
         <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
           <CheckCircle2 className="w-12 h-12 text-[#16A34A] mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-[#1F2937] mb-2">{tt("alreadyTrainer", "You're Already a Trainer!")}</h2>
-          <p className="text-[#6B7280] mb-6">{tt("alreadyTrainerDesc", "You already have the Instructor role.")}</p>
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-2">{tt("alreadyTrainer", "You're Already a Trainer!")}</h2>
+          <p className="text-[var(--color-text-secondary)] mb-6">{tt("alreadyTrainerDesc", "You already have the Instructor role.")}</p>
           <button
             onClick={() => switchRole("INSTRUCTOR")}
             className="inline-block px-6 py-3 bg-[#002D87] text-white rounded-xl font-medium hover:bg-[#001A52] transition-colors"
@@ -724,10 +724,10 @@ const BecomeTrainerForm = ({
       <section className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
         <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
           <Clock className="w-12 h-12 text-[#F59E0B] mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-[#1F2937] mb-2">
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-2">
             {status === "PENDING" ? tt("pendingApplication", "Application Under Review") : tt("moreInfoNeeded", "Additional Information Needed")}
           </h2>
-          <p className="text-[#6B7280] mb-2">
+          <p className="text-[var(--color-text-secondary)] mb-2">
             {status === "PENDING"
               ? tt("pendingApplicationDesc", "Your application is being reviewed. We'll notify you once a decision is made.")
               : tt("moreInfoNeededDesc", "The reviewer has requested more information about your application.")}
@@ -737,7 +737,7 @@ const BecomeTrainerForm = ({
               <strong>{tt("reviewerNote", "Reviewer note")}:</strong> {existingApplication.reviewNote}
             </div>
           )}
-          <p className="text-xs text-[#9CA3AF] mb-4">
+          <p className="text-xs text-[var(--color-text-secondary)] mb-4">
             {tt("submittedOn", "Submitted on")}: {new Date(existingApplication.createdAt).toLocaleDateString()}
           </p>
           <Link
@@ -757,8 +757,8 @@ const BecomeTrainerForm = ({
       <section className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
         <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
           <CheckCircle2 className="w-12 h-12 text-[#16A34A] mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-[#1F2937] mb-2">{tt("submitSuccess", "Application Submitted!")}</h2>
-          <p className="text-[#6B7280] mb-6">{tt("submitSuccessDesc", "We'll review your application and notify you within a few business days.")}</p>
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-2">{tt("submitSuccess", "Application Submitted!")}</h2>
+          <p className="text-[var(--color-text-secondary)] mb-6">{tt("submitSuccessDesc", "We'll review your application and notify you within a few business days.")}</p>
           <Link
             href={`/${locale}/dashboard/student/applications`}
             className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white rounded-xl font-medium hover:bg-[#8b6a3d] transition-colors"
@@ -812,7 +812,7 @@ const BecomeTrainerForm = ({
                       {formData.photoPreview ? (
                         <Image src={formData.photoPreview} alt="Profile" width={48} height={48} className="object-cover w-full h-full" />
                       ) : (
-                        <ImageIcon className="w-5 h-5 text-[#9CA3AF]" strokeWidth={1.5} />
+                        <ImageIcon className="w-5 h-5 text-[var(--color-text-secondary)]" strokeWidth={1.5} />
                       )}
                     </div>
                     <button
@@ -1084,7 +1084,7 @@ const BecomeTrainerForm = ({
                     {formData.photoPreview ? (
                       <Image src={formData.photoPreview} alt="Profile" width={48} height={48} className="object-cover w-full h-full" />
                     ) : (
-                      <ImageIcon className="w-5 h-5 text-[#9CA3AF]" strokeWidth={1.5} />
+                      <ImageIcon className="w-5 h-5 text-[var(--color-text-secondary)]" strokeWidth={1.5} />
                     )}
                   </div>
                 </div>

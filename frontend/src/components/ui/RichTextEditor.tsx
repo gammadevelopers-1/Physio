@@ -85,7 +85,7 @@ export function RichTextEditor({
       disabled={disabled}
       title={title}
       className={`p-1.5 rounded hover:bg-[#F3F4F6] transition-colors ${
-        isActive ? "bg-[var(--color-border)] text-[#1F2937]" : "text-[#6B7280]"
+        isActive ? "bg-[var(--color-border)] text-[var(--color-text-primary)]" : "text-[var(--color-text-secondary)]"
       } disabled:opacity-40 disabled:cursor-not-allowed`}
     >
       {children}
@@ -180,7 +180,7 @@ export function RichTextEditor({
 
       {/* Editor */}
       <div
-        className="text-sm text-[#1F2937] tiptap-content"
+        className="text-sm text-[var(--color-text-primary)] tiptap-content"
         style={{ minHeight }}
         onClick={() => editor.chain().focus().run()}
       >
@@ -192,7 +192,7 @@ export function RichTextEditor({
         .tiptap-content .ProseMirror p.is-editor-empty:first-child::before {
           content: attr(data-placeholder);
           float: left;
-          color: #9ca3af;
+          color: var(--color-text-secondary);
           pointer-events: none;
           height: 0;
         }
@@ -228,7 +228,7 @@ export function RichTextEditor({
           border-left: 3px solid var(--color-border);
           padding-left: 1rem;
           margin: 0.5em 0;
-          color: #6b7280;
+          color: var(--color-text-secondary);
           font-style: italic;
         }
         .tiptap-content .ProseMirror[dir="rtl"] ul,

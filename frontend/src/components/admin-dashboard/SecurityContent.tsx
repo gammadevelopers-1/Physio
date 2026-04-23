@@ -73,10 +73,10 @@ const SecurityContent = () => {
             <div className="flex-1 min-w-0">
               {/* Page Header */}
               <div className="mb-6">
-                <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
                   {t("securityPage.title")}
                 </h1>
-                <p className="text-sm text-[#6B7280] mt-1">
+                <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                   {t("securityPage.subtitle")}
                 </p>
               </div>
@@ -87,40 +87,40 @@ const SecurityContent = () => {
                   <div className="flex items-center gap-2 mb-2">
                     <Lock className="w-5 h-5 text-[#D97706]" />
                   </div>
-                  <p className="text-2xl font-bold text-[#1F2937]">{stats.failedLogins24h}</p>
-                  <p className="text-xs text-[#6B7280]">{t("securityPage.stats.failedLogins")}</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.failedLogins24h}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{t("securityPage.stats.failedLogins")}</p>
                 </div>
 
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Ban className="w-5 h-5 text-[#DC2626]" />
                   </div>
-                  <p className="text-2xl font-bold text-[#1F2937]">{stats.ipsBlocked}</p>
-                  <p className="text-xs text-[#6B7280]">{t("securityPage.stats.ipsBlocked")}</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.ipsBlocked}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{t("securityPage.stats.ipsBlocked")}</p>
                 </div>
 
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Users className="w-5 h-5 text-[#3B82F6]" />
                   </div>
-                  <p className="text-2xl font-bold text-[#1F2937]">{stats.activeSessions}</p>
-                  <p className="text-xs text-[#6B7280]">{t("securityPage.stats.activeSessions")}</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.activeSessions}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{t("securityPage.stats.activeSessions")}</p>
                 </div>
 
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <KeyRound className="w-5 h-5 text-[#16A34A]" />
                   </div>
-                  <p className="text-2xl font-bold text-[#1F2937]">{stats.twoFaAdoption}%</p>
-                  <p className="text-xs text-[#6B7280]">{t("securityPage.stats.twoFa")}</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.twoFaAdoption}%</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{t("securityPage.stats.twoFa")}</p>
                 </div>
 
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Shield className="w-5 h-5 text-[#8B5CF6]" />
                   </div>
-                  <p className="text-2xl font-bold text-[#1F2937]">{stats.securityScore}%</p>
-                  <p className="text-xs text-[#6B7280]">{t("securityPage.stats.score")}</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.securityScore}%</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{t("securityPage.stats.score")}</p>
                 </div>
               </div>
 
@@ -134,7 +134,7 @@ const SecurityContent = () => {
                       className={`px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
                         activeTab === tab
                           ? "text-[#002D87] border-b-2 border-[#002D87]"
-                          : "text-[#6B7280] hover:text-[#1F2937]"
+                          : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                       }`}
                     >
                       {t(`securityPage.tabs.${tab}`)}
@@ -147,7 +147,7 @@ const SecurityContent = () => {
                     <div className="space-y-6">
                       {/* Security Alerts */}
                       <div>
-                        <h3 className="text-base font-semibold text-[#1F2937] mb-4">
+                        <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">
                           {t("securityPage.alerts")}
                         </h3>
                         <div className="space-y-3">
@@ -174,7 +174,7 @@ const SecurityContent = () => {
 
                       {/* OWASP Compliance */}
                       <div>
-                        <h3 className="text-base font-semibold text-[#1F2937] mb-4">
+                        <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">
                           {t("securityPage.owaspCompliance")}
                         </h3>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -192,26 +192,26 @@ const SecurityContent = () => {
                   {activeTab === "logins" && (
                     <div>
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-base font-semibold text-[#1F2937]">
+                        <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                           {t("securityPage.failedLoginAttempts")}
                         </h3>
                       </div>
                       <table className="w-full">
                         <thead className="bg-[#F9FAFB]">
                           <tr>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("securityPage.table.user")}
                             </th>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("securityPage.table.ip")}
                             </th>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("securityPage.table.attempts")}
                             </th>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("securityPage.table.time")}
                             </th>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("securityPage.table.actions")}
                             </th>
                           </tr>
@@ -219,14 +219,14 @@ const SecurityContent = () => {
                         <tbody>
                           {mockFailedLogins.map((login) => (
                             <tr key={login.id} className="border-b border-[#F3F4F6]">
-                              <td className="px-4 py-4 text-sm text-[#1F2937]">{login.user}</td>
-                              <td className="px-4 py-4 text-sm text-[#6B7280] font-mono">{login.ip}</td>
+                              <td className="px-4 py-4 text-sm text-[var(--color-text-primary)]">{login.user}</td>
+                              <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)] font-mono">{login.ip}</td>
                               <td className="px-4 py-4">
                                 <span className={`px-2 py-1 text-xs font-medium rounded ${login.attempts >= 5 ? "bg-[#FEE2E2] text-[#DC2626]" : "bg-[#FEF3C7] text-[#D97706]"}`}>
                                   {login.attempts}
                                 </span>
                               </td>
-                              <td className="px-4 py-4 text-sm text-[#6B7280]">{login.time}</td>
+                              <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)]">{login.time}</td>
                               <td className="px-4 py-4">
                                 <button className="text-sm text-[#DC2626] hover:underline">
                                   {t("securityPage.actions.blockIp")}
@@ -242,7 +242,7 @@ const SecurityContent = () => {
                   {activeTab === "blocked" && (
                     <div>
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-base font-semibold text-[#1F2937]">
+                        <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                           {t("securityPage.blockedIps")}
                         </h3>
                         <button className="flex items-center gap-2 px-3 py-2 text-sm text-[#002D87] border border-[#002D87] rounded-lg hover:bg-[#F0F7FF]">
@@ -253,19 +253,19 @@ const SecurityContent = () => {
                       <table className="w-full">
                         <thead className="bg-[#F9FAFB]">
                           <tr>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("securityPage.table.ip")}
                             </th>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("securityPage.table.reason")}
                             </th>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("securityPage.table.type")}
                             </th>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("securityPage.table.blockedAt")}
                             </th>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("securityPage.table.actions")}
                             </th>
                           </tr>
@@ -273,14 +273,14 @@ const SecurityContent = () => {
                         <tbody>
                           {mockBlockedIPs.map((ip) => (
                             <tr key={ip.id} className="border-b border-[#F3F4F6]">
-                              <td className="px-4 py-4 text-sm text-[#1F2937] font-mono">{ip.ip}</td>
-                              <td className="px-4 py-4 text-sm text-[#6B7280]">{ip.reason}</td>
+                              <td className="px-4 py-4 text-sm text-[var(--color-text-primary)] font-mono">{ip.ip}</td>
+                              <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)]">{ip.reason}</td>
                               <td className="px-4 py-4">
-                                <span className={`px-2 py-1 text-xs font-medium rounded ${ip.type === "auto" ? "bg-[#DBEAFE] text-[#1D4ED8]" : "bg-[#F3F4F6] text-[#6B7280]"}`}>
+                                <span className={`px-2 py-1 text-xs font-medium rounded ${ip.type === "auto" ? "bg-[#DBEAFE] text-[#1D4ED8]" : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"}`}>
                                   {ip.type}
                                 </span>
                               </td>
-                              <td className="px-4 py-4 text-sm text-[#6B7280]">{ip.blockedAt}</td>
+                              <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)]">{ip.blockedAt}</td>
                               <td className="px-4 py-4">
                                 <button className="text-sm text-[#16A34A] hover:underline">
                                   {t("securityPage.actions.unblock")}
@@ -296,7 +296,7 @@ const SecurityContent = () => {
                   {activeTab === "sessions" && (
                     <div>
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-base font-semibold text-[#1F2937]">
+                        <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                           {t("securityPage.activeSessions")}
                         </h3>
                         <button className="flex items-center gap-2 px-3 py-2 text-sm text-[#DC2626] border border-[#DC2626] rounded-lg hover:bg-[#FEE2E2]">
@@ -307,19 +307,19 @@ const SecurityContent = () => {
                       <table className="w-full">
                         <thead className="bg-[#F9FAFB]">
                           <tr>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("securityPage.table.user")}
                             </th>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("securityPage.table.device")}
                             </th>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("securityPage.table.ip")}
                             </th>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("securityPage.table.lastActive")}
                             </th>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("securityPage.table.actions")}
                             </th>
                           </tr>
@@ -327,10 +327,10 @@ const SecurityContent = () => {
                         <tbody>
                           {mockActiveSessions.map((session) => (
                             <tr key={session.id} className="border-b border-[#F3F4F6]">
-                              <td className="px-4 py-4 text-sm text-[#1F2937]">{session.user}</td>
-                              <td className="px-4 py-4 text-sm text-[#6B7280]">{session.device}</td>
-                              <td className="px-4 py-4 text-sm text-[#6B7280] font-mono">{session.ip}</td>
-                              <td className="px-4 py-4 text-sm text-[#6B7280]">{session.lastActive}</td>
+                              <td className="px-4 py-4 text-sm text-[var(--color-text-primary)]">{session.user}</td>
+                              <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)]">{session.device}</td>
+                              <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)] font-mono">{session.ip}</td>
+                              <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)]">{session.lastActive}</td>
                               <td className="px-4 py-4">
                                 <button className="text-sm text-[#DC2626] hover:underline">
                                   {t("securityPage.actions.terminate")}

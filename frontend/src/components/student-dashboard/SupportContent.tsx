@@ -169,20 +169,20 @@ function TicketRow({
         <div className="flex items-center gap-2 mb-1 flex-wrap">
           <StatusBadge status={ticket.status} t={t} />
           <PriorityBadge priority={ticket.priority} t={t} />
-          <span className="text-[10px] text-[#9CA3AF]">
+          <span className="text-[10px] text-[var(--color-text-secondary)]">
             {t(`supportPage.category_${ticket.category}` as Parameters<typeof t>[0])}
           </span>
         </div>
-        <h3 className="text-sm font-medium text-[#1F2937] truncate">
+        <h3 className="text-sm font-medium text-[var(--color-text-primary)] truncate">
           {ticket.subject}
         </h3>
         {courseTitle && (
-          <p className="text-xs text-[#6B7280] mt-0.5 truncate">
+          <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 truncate">
             {courseTitle}
           </p>
         )}
         <div className="flex items-center gap-2 mt-1">
-          <p className="text-[10px] text-[#9CA3AF]">
+          <p className="text-[10px] text-[var(--color-text-secondary)]">
             {new Date(ticket.createdAt).toLocaleDateString(
               isRTL ? "ar-SA" : "en-US",
               { year: "numeric", month: "short", day: "numeric" },
@@ -192,7 +192,7 @@ function TicketRow({
         </div>
       </div>
       <ChevronRight
-        className={`w-4 h-4 text-[#9CA3AF] flex-shrink-0 ${isRTL ? "rotate-180" : ""}`}
+        className={`w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0 ${isRTL ? "rotate-180" : ""}`}
       />
     </button>
   );
@@ -281,7 +281,7 @@ function CreateTicketForm({
   return (
     <form onSubmit={handleSubmit} dir={isRTL ? "rtl" : "ltr"}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base sm:text-lg font-semibold text-[#1F2937]">
+        <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)]">
           {t("supportPage.newTicket")}
         </h2>
         <button
@@ -289,7 +289,7 @@ function CreateTicketForm({
           onClick={onCancel}
           className="p-1 hover:bg-gray-100 rounded"
         >
-          <X className="w-5 h-5 text-[#6B7280]" />
+          <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
 
@@ -302,7 +302,7 @@ function CreateTicketForm({
       <div className="space-y-4">
         {/* Category */}
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("supportPage.category")}
           </label>
           <select
@@ -321,7 +321,7 @@ function CreateTicketForm({
         {/* Related Course */}
         {enrolledCourses.length > 0 && (
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
               {t("supportPage.relatedCourse")}
             </label>
             <select
@@ -341,7 +341,7 @@ function CreateTicketForm({
 
         {/* Priority */}
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("supportPage.priority")}
           </label>
           <div className="flex gap-2">
@@ -353,7 +353,7 @@ function CreateTicketForm({
                 className={`flex-1 py-2 text-xs sm:text-sm font-medium rounded-lg border transition-colors ${
                   priority === p
                     ? "border-[#002D87] bg-[#002D87] text-white"
-                    : "border-[var(--color-border)] text-[#374151] hover:bg-gray-50"
+                    : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-gray-50"
                 }`}
               >
                 {t(`supportPage.priority_${p}` as Parameters<typeof t>[0])}
@@ -364,7 +364,7 @@ function CreateTicketForm({
 
         {/* Subject */}
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("supportPage.subject")}
           </label>
           <input
@@ -380,7 +380,7 @@ function CreateTicketForm({
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("supportPage.description")}
           </label>
           <textarea
@@ -392,23 +392,23 @@ function CreateTicketForm({
             className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent resize-none"
             required
           />
-          <p className="text-xs text-[#9CA3AF] mt-1 text-right">
+          <p className="text-xs text-[var(--color-text-secondary)] mt-1 text-right">
             {description.length}/2000
           </p>
         </div>
 
         {/* File Attachment */}
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("supportPage.attachment")}
           </label>
           {attachmentFile ? (
             <div className="flex items-center gap-2 p-2.5 border border-[var(--color-border)] rounded-lg bg-[#F9FAFB]">
-              <Paperclip className="w-4 h-4 text-[#6B7280] flex-shrink-0" />
-              <span className="text-sm text-[#374151] truncate flex-1">
+              <Paperclip className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
+              <span className="text-sm text-[var(--color-text-secondary)] truncate flex-1">
                 {attachmentFile.name}
               </span>
-              <span className="text-xs text-[#9CA3AF] flex-shrink-0">
+              <span className="text-xs text-[var(--color-text-secondary)] flex-shrink-0">
                 {(attachmentFile.size / 1024).toFixed(0)} KB
               </span>
               <button
@@ -416,13 +416,13 @@ function CreateTicketForm({
                 onClick={() => setAttachmentFile(null)}
                 className="p-0.5 hover:bg-gray-200 rounded flex-shrink-0"
               >
-                <X className="w-3.5 h-3.5 text-[#6B7280]" />
+                <X className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
               </button>
             </div>
           ) : (
             <label className="flex items-center gap-2 p-2.5 border border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
-              <Paperclip className="w-4 h-4 text-[#9CA3AF]" />
-              <span className="text-sm text-[#9CA3AF]">
+              <Paperclip className="w-4 h-4 text-[var(--color-text-secondary)]" />
+              <span className="text-sm text-[var(--color-text-secondary)]">
                 {t("supportPage.attachFile")}
               </span>
               <span className="text-xs text-[var(--color-border)] ml-auto">
@@ -485,7 +485,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
     <div dir={isRTL ? "rtl" : "ltr"}>
       {/* Search */}
       <div className="relative mb-4">
-        <Search className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? "right-3" : "left-3"} w-4 h-4 text-[#9CA3AF]`} />
+        <Search className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? "right-3" : "left-3"} w-4 h-4 text-[var(--color-text-secondary)]`} />
         <input
           type="text"
           value={searchQuery}
@@ -499,7 +499,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
       <div className="flex flex-wrap gap-2 mb-4">
         <button
           onClick={() => setActiveCategory("all")}
-          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === "all" ? "bg-[#002D87] text-white" : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[var(--color-border)]"}`}
+          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === "all" ? "bg-[#002D87] text-white" : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"}`}
         >
           {t("supportPage.faq.allCategories")}
         </button>
@@ -507,7 +507,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === cat ? "bg-[#002D87] text-white" : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[var(--color-border)]"}`}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === cat ? "bg-[#002D87] text-white" : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"}`}
           >
             {t(`supportPage.category_${cat}` as Parameters<typeof t>[0])}
           </button>
@@ -518,7 +518,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
       {filtered.length === 0 ? (
         <div className="text-center py-8">
           <HelpCircle className="w-10 h-10 text-[var(--color-border)] mx-auto mb-2" />
-          <p className="text-sm text-[#6B7280]">{t("supportPage.faq.noResults")}</p>
+          <p className="text-sm text-[var(--color-text-secondary)]">{t("supportPage.faq.noResults")}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -529,15 +529,15 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
                 className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-[#F9FAFB] transition-colors"
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-[#F3F4F6] text-[#6B7280] flex-shrink-0">
+                  <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-[#F3F4F6] text-[var(--color-text-secondary)] flex-shrink-0">
                     {t(`supportPage.category_${item.category}` as Parameters<typeof t>[0])}
                   </span>
-                  <span className="text-sm font-medium text-[#1F2937] truncate">{item.question}</span>
+                  <span className="text-sm font-medium text-[var(--color-text-primary)] truncate">{item.question}</span>
                 </div>
-                <ChevronDown className={`w-4 h-4 text-[#9CA3AF] flex-shrink-0 transition-transform ${expandedIndex === index ? "rotate-180" : ""}`} />
+                <ChevronDown className={`w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0 transition-transform ${expandedIndex === index ? "rotate-180" : ""}`} />
               </button>
               {expandedIndex === index && (
-                <div className="px-4 pb-3 text-sm text-[#4B5563] border-t border-[var(--color-border)] pt-3">
+                <div className="px-4 pb-3 text-sm text-[var(--color-text-secondary)] border-t border-[var(--color-border)] pt-3">
                   {item.answer}
                 </div>
               )}
@@ -563,7 +563,7 @@ function VideoTutorials({ t, locale }: { t: ReturnType<typeof useTranslations>; 
 
   return (
     <div dir={isRTL ? "rtl" : "ltr"}>
-      <p className="text-sm text-[#6B7280] mb-4">{t("supportPage.tutorials.description")}</p>
+      <p className="text-sm text-[var(--color-text-secondary)] mb-4">{t("supportPage.tutorials.description")}</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {TUTORIAL_ITEMS.map((tutorial) => (
           <div key={tutorial.key} className="border border-[var(--color-border)] rounded-xl overflow-hidden hover:shadow-md transition-shadow">
@@ -573,16 +573,16 @@ function VideoTutorials({ t, locale }: { t: ReturnType<typeof useTranslations>; 
               <span className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/60 text-white text-[10px] font-medium rounded">
                 {tutorial.duration}
               </span>
-              <span className="absolute top-2 left-2 px-2 py-0.5 bg-amber-400 text-[#1F2937] text-[10px] font-semibold rounded">
+              <span className="absolute top-2 left-2 px-2 py-0.5 bg-amber-400 text-[var(--color-text-primary)] text-[10px] font-semibold rounded">
                 {t("supportPage.tutorials.comingSoon")}
               </span>
             </div>
             {/* Info */}
             <div className="p-3">
-              <h3 className="text-sm font-medium text-[#1F2937] mb-1">
+              <h3 className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
                 {t(`supportPage.tutorials.${tutorial.key}_title` as Parameters<typeof t>[0])}
               </h3>
-              <p className="text-xs text-[#6B7280] line-clamp-2">
+              <p className="text-xs text-[var(--color-text-secondary)] line-clamp-2">
                 {t(`supportPage.tutorials.${tutorial.key}_desc` as Parameters<typeof t>[0])}
               </p>
             </div>
@@ -647,7 +647,7 @@ const SupportContent = () => {
             <div className="flex-1 min-w-0">
               {/* Header */}
               <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
                   {t("supportPage.title")}
                 </h1>
                 {!showForm && (
@@ -678,7 +678,7 @@ const SupportContent = () => {
                       className={`flex items-center gap-1.5 px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors -mb-[1px] ${
                         mainTab === tab.key
                           ? "border-[#002D87] text-[#002D87]"
-                          : "border-transparent text-[#6B7280] hover:text-[#374151]"
+                          : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -717,7 +717,7 @@ const SupportContent = () => {
                           className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
                             statusFilter === tab.key
                               ? "bg-[#002D87] text-white"
-                              : "text-[#6B7280] hover:bg-gray-100"
+                              : "text-[var(--color-text-secondary)] hover:bg-gray-100"
                           }`}
                         >
                           {t(tab.label as Parameters<typeof t>[0])}
@@ -737,15 +737,15 @@ const SupportContent = () => {
                     ) : ticketsList.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-10 sm:py-16">
                         <EmptyStateIllustration variant="tickets" className="mb-2" />
-                        <h3 className="text-sm sm:text-base font-medium text-[#1F2937] mb-1">
+                        <h3 className="text-sm sm:text-base font-medium text-[var(--color-text-primary)] mb-1">
                           {t("supportPage.noTicketsTitle")}
                         </h3>
-                        <p className="text-xs sm:text-sm text-[#6B7280] mb-4 sm:mb-6 text-center px-4">
+                        <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mb-4 sm:mb-6 text-center px-4">
                           {t("supportPage.noTicketsDescription")}
                         </p>
                         <button
                           onClick={() => setShowForm(true)}
-                          className="flex items-center gap-1.5 px-5 py-2 border border-[var(--color-border)] text-[#1F2937] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                          className="flex items-center gap-1.5 px-5 py-2 border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
                         >
                           <Plus className="w-4 h-4" />
                           {t("supportPage.createFirst")}

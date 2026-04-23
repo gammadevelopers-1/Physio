@@ -37,14 +37,14 @@ const NELCContent = ({ strapiData }: { strapiData?: NELCPage | null }) => {
                     <div className="flex flex-col gap-6">
                       {heroTitle && (
                         <h1
-                          className="font-semibold text-[#06080B] tracking-[-0.15px] md:tracking-[-0.24px] leading-none text-[30px] md:text-[48px]"
+                          className="font-semibold text-[var(--color-text-primary)] tracking-[-0.15px] md:tracking-[-0.24px] leading-none text-[30px] md:text-[48px]"
                           style={{ fontFamily: "'DM Sans', sans-serif" }}
                         >
                           {heroTitle}
                         </h1>
                       )}
                       {heroDescription && (
-                        <p className="text-[#06080B] leading-7 text-[18px] md:text-[20px]">
+                        <p className="text-[var(--color-text-primary)] leading-7 text-[18px] md:text-[20px]">
                           {heroDescription}
                         </p>
                       )}
@@ -61,11 +61,11 @@ const NELCContent = ({ strapiData }: { strapiData?: NELCPage | null }) => {
                         >
                           <div className="w-1 self-stretch bg-[var(--color-border-subtle)] rounded" />
                           <div className="flex flex-col">
-                            <span className="font-medium text-[#06080B] text-[14px] leading-5">
+                            <span className="font-medium text-[var(--color-text-primary)] text-[14px] leading-5">
                               {badge.label}
                             </span>
                             {badge.value && (
-                              <span className="text-[#4A4C4F] text-[12px] leading-4">
+                              <span className="text-[var(--color-text-secondary)] text-[12px] leading-4">
                                 {badge.value}
                               </span>
                             )}
@@ -103,14 +103,14 @@ const NELCContent = ({ strapiData }: { strapiData?: NELCPage | null }) => {
               <div className="flex flex-col items-center gap-4 mb-10 max-w-[768px] mx-auto">
                 {complianceTitle && (
                   <h2
-                    className="font-semibold text-[#06080B] text-center tracking-[-0.15px] md:tracking-[-0.24px] leading-none text-[30px] md:text-[48px]"
+                    className="font-semibold text-[var(--color-text-primary)] text-center tracking-[-0.15px] md:tracking-[-0.24px] leading-none text-[30px] md:text-[48px]"
                     style={{ fontFamily: "'DM Sans', sans-serif" }}
                   >
                     {complianceTitle}
                   </h2>
                 )}
                 {complianceDescription && (
-                  <p className="text-[#06080B] text-center leading-7 text-[18px] md:text-[20px]">
+                  <p className="text-[var(--color-text-primary)] text-center leading-7 text-[18px] md:text-[20px]">
                     {complianceDescription}
                   </p>
                 )}
@@ -140,11 +140,11 @@ const NELCContent = ({ strapiData }: { strapiData?: NELCPage | null }) => {
                       <div
                         className={`bg-[var(--color-surface-page)] rounded-[16px] p-4 min-h-[140px] md:h-[140px] w-[285px] md:w-[317px] ${imageUrl ? "-mt-24" : ""} relative z-10 flex flex-col gap-[10px] items-center text-center shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]`}
                       >
-                        <h3 className="font-semibold text-[#06080B] text-[18px] md:text-[20px]">
+                        <h3 className="font-semibold text-[var(--color-text-primary)] text-[18px] md:text-[20px]">
                           {card.title}
                         </h3>
                         {card.description && (
-                          <p className="text-[#06080B] text-[16px] leading-6">
+                          <p className="text-[var(--color-text-primary)] text-[16px] leading-6">
                             {card.description}
                           </p>
                         )}

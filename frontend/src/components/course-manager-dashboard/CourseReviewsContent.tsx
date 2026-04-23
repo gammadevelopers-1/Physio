@@ -130,16 +130,16 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
               <div className="mb-6">
                 <Link
                   href={`/${locale}/dashboard/manager/courses/${courseId}`}
-                  className={`inline-flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#1F2937] transition-colors mb-3 ${isRTL ? "flex-row-reverse" : ""}`}
+                  className={`inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors mb-3 ${isRTL ? "flex-row-reverse" : ""}`}
                 >
                   <Arrow className="w-4 h-4" />
                   {isRTL ? "العودة إلى الدورة" : "Back to Course"}
                 </Link>
-                <h1 className="text-2xl font-bold text-[#06080b]">
+                <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
                   {isRTL ? "مراجعات الطلاب" : "Student Reviews"}
                 </h1>
                 {courseTitle && (
-                  <p className="text-sm text-[#6B7280] mt-1 truncate">{courseTitle}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1 truncate">{courseTitle}</p>
                 )}
               </div>
 
@@ -147,9 +147,9 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
               <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <p className="text-xs text-[#6B7280] mb-1">{isRTL ? "متوسط التقييم" : "Average rating"}</p>
+                    <p className="text-xs text-[var(--color-text-secondary)] mb-1">{isRTL ? "متوسط التقييم" : "Average rating"}</p>
                     <div className="flex items-center gap-2">
-                      <span className="text-3xl font-bold text-[#06080b]">{avgRating.toFixed(1)}</span>
+                      <span className="text-3xl font-bold text-[var(--color-text-primary)]">{avgRating.toFixed(1)}</span>
                       <div className="flex items-center gap-0.5">
                         {[1, 2, 3, 4, 5].map((s) => (
                           <Star
@@ -159,7 +159,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                         ))}
                       </div>
                     </div>
-                    <p className="text-xs text-[#6B7280] mt-1">
+                    <p className="text-xs text-[var(--color-text-secondary)] mt-1">
                       {isRTL ? `${totalRatings} مراجعة` : `${totalRatings} ${totalRatings === 1 ? "review" : "reviews"}`}
                     </p>
                   </div>
@@ -169,11 +169,11 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                       const pct = (c / maxDist) * 100;
                       return (
                         <div key={s} className="flex items-center gap-2 text-xs">
-                          <span className="w-6 text-[#6B7280]">{s}★</span>
+                          <span className="w-6 text-[var(--color-text-secondary)]">{s}★</span>
                           <div className="flex-1 h-2 bg-[#F3F4F6] rounded-full overflow-hidden">
                             <div className="h-full bg-[#FBBF24]" style={{ width: `${pct}%` }} />
                           </div>
-                          <span className="w-10 text-end text-[#6B7280] tabular-nums">{c}</span>
+                          <span className="w-10 text-end text-[var(--color-text-secondary)] tabular-nums">{c}</span>
                         </div>
                       );
                     })}
@@ -186,7 +186,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                 <div className="flex flex-wrap items-center gap-3">
                   {/* Search */}
                   <div className="relative flex-1 min-w-[200px]">
-                    <Search className={`w-4 h-4 text-[#9CA3AF] absolute top-2.5 ${isRTL ? "right-3" : "left-3"}`} />
+                    <Search className={`w-4 h-4 text-[var(--color-text-secondary)] absolute top-2.5 ${isRTL ? "right-3" : "left-3"}`} />
                     <input
                       type="text"
                       value={searchInput}
@@ -202,7 +202,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
 
                   {/* Sort */}
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-[#6B7280]">{isRTL ? "الترتيب:" : "Sort:"}</span>
+                    <span className="text-xs font-medium text-[var(--color-text-secondary)]">{isRTL ? "الترتيب:" : "Sort:"}</span>
                     <select
                       value={sort}
                       onChange={(e) => setSort(e.target.value as SortOption)}
@@ -221,7 +221,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                   <button
                     onClick={() => setStarFilter(null)}
                     className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                      starFilter === null ? "bg-[#1F2937] text-white" : "bg-[#F3F4F6] text-[#374151] hover:bg-[var(--color-border)]"
+                      starFilter === null ? "bg-[var(--color-text-primary)] text-white" : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
                     }`}
                   >
                     {isRTL ? "الكل" : "All"} ({totalRatings})
@@ -234,7 +234,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                         onClick={() => setStarFilter(starFilter === s ? null : s)}
                         disabled={c === 0}
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                          starFilter === s ? "bg-[#FBBF24] text-white" : "bg-[#F3F4F6] text-[#374151] hover:bg-[var(--color-border)]"
+                          starFilter === s ? "bg-[#FBBF24] text-white" : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
                         }`}
                       >
                         {s} <Star className="w-3 h-3 fill-current" /> ({c})
@@ -248,14 +248,14 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
               <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
                 {loading ? (
                   <div className="flex items-center justify-center py-16">
-                    <Loader2 className="w-6 h-6 animate-spin text-[#6B7280]" />
+                    <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />
                   </div>
                 ) : reviews.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
                     <div className="w-14 h-14 rounded-xl bg-[#F3F4F6] flex items-center justify-center mb-3">
-                      <Star className="w-7 h-7 text-[#9CA3AF]" />
+                      <Star className="w-7 h-7 text-[var(--color-text-secondary)]" />
                     </div>
-                    <p className="text-sm text-[#6B7280]">
+                    <p className="text-sm text-[var(--color-text-secondary)]">
                       {totalRatings === 0
                         ? (t("courseDetail.noReviewsYet") || (isRTL ? "لا توجد مراجعات بعد" : "No reviews yet"))
                         : (isRTL ? "لا توجد مراجعات مطابقة للفلاتر" : "No reviews match your filters")}
@@ -267,8 +267,8 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                       <div key={r.id} className="border border-[var(--color-border)] rounded-lg p-4 bg-[#FAFAFA]">
                         <div className="flex items-start justify-between mb-2 gap-3">
                           <div>
-                            <p className="text-sm font-medium text-[#1F2937]">{r.studentName}</p>
-                            <p className="text-xs text-[#9CA3AF]">{formatDate(r.createdAt)}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{r.studentName}</p>
+                            <p className="text-xs text-[var(--color-text-secondary)]">{formatDate(r.createdAt)}</p>
                           </div>
                           <div className="flex items-center gap-0.5 flex-shrink-0">
                             {[1, 2, 3, 4, 5].map((s) => (
@@ -280,7 +280,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                           </div>
                         </div>
                         {r.reviewText && (
-                          <p dir="auto" className="text-sm text-[#374151] whitespace-pre-line">{r.reviewText}</p>
+                          <p dir="auto" className="text-sm text-[var(--color-text-secondary)] whitespace-pre-line">{r.reviewText}</p>
                         )}
                       </div>
                     ))}
@@ -290,7 +290,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                 {/* Pagination */}
                 {!loading && reviews.length > 0 && totalPages > 1 && (
                   <div className="flex items-center justify-between mt-6 pt-4 border-t border-[var(--color-border)]">
-                    <p className="text-xs text-[#6B7280]">
+                    <p className="text-xs text-[var(--color-text-secondary)]">
                       {isRTL
                         ? `صفحة ${page} من ${totalPages}`
                         : `Page ${page} of ${totalPages}`}
@@ -306,13 +306,13 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                       </button>
                       {pageNumbers().map((p, i) =>
                         p === "..." ? (
-                          <span key={`d-${i}`} className="px-2 text-xs text-[#9CA3AF]">…</span>
+                          <span key={`d-${i}`} className="px-2 text-xs text-[var(--color-text-secondary)]">…</span>
                         ) : (
                           <button
                             key={p}
                             onClick={() => fetchReviews(p)}
                             className={`min-w-[28px] h-7 px-2 text-xs font-medium rounded ${
-                              p === page ? "bg-[#1F2937] text-white" : "text-[#374151] hover:bg-[#F3F4F6]"
+                              p === page ? "bg-[var(--color-text-primary)] text-white" : "text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
                             }`}
                           >
                             {p}

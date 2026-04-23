@@ -65,7 +65,7 @@ const NELCComplianceOverviewWidget = ({
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <FileText className="w-5 h-5 text-[#002D87]" />
-          <h3 className="text-lg font-semibold text-[#1F2937]">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("compliance.title")}
           </h3>
         </div>
@@ -91,7 +91,7 @@ const NELCComplianceOverviewWidget = ({
         >
           {data.percentage}%
         </p>
-        <p className="text-sm text-[#6B7280] mt-1">
+        <p className="text-sm text-[var(--color-text-secondary)] mt-1">
           {t("compliance.overallCompliance")}
         </p>
       </div>
@@ -118,19 +118,19 @@ const NELCComplianceOverviewWidget = ({
       <div className="flex items-center justify-center gap-6 mb-6">
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-[#16A34A]" />
-          <span className="text-sm text-[#6B7280]">
+          <span className="text-sm text-[var(--color-text-secondary)]">
             {data.passed} {t("compliance.pass")}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-[#F59E0B]" />
-          <span className="text-sm text-[#6B7280]">
+          <span className="text-sm text-[var(--color-text-secondary)]">
             {data.review} {t("compliance.review")}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-[#EF4444]" />
-          <span className="text-sm text-[#6B7280]">
+          <span className="text-sm text-[var(--color-text-secondary)]">
             {data.failed} {t("compliance.fail")}
           </span>
         </div>
@@ -143,7 +143,7 @@ const NELCComplianceOverviewWidget = ({
             key={area.id}
             className="flex items-center justify-between py-2 border-b border-[#F3F4F6] last:border-b-0"
           >
-            <span className="text-sm text-[#4B5563]">{area.name}</span>
+            <span className="text-sm text-[var(--color-text-secondary)]">{area.name}</span>
             {getStatusBadge(area.status)}
           </div>
         ))}

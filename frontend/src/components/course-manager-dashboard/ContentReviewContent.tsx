@@ -334,7 +334,7 @@ const ContentReviewContent = () => {
         <div className="bg-[#F9FAFB] min-h-screen flex items-center justify-center">
           <div className="text-center">
             <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
-            <p className="text-sm text-[#6B7280] mb-4">{error}</p>
+            <p className="text-sm text-[var(--color-text-secondary)] mb-4">{error}</p>
             <button
               onClick={refetch}
               className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg"
@@ -363,8 +363,8 @@ const ContentReviewContent = () => {
             <div className="flex-1 min-w-0">
               {/* Header */}
               <div className="mb-6">
-                <h1 className="text-2xl font-bold text-[#1F2937]">{t("contentReviewPage.title")}</h1>
-                <p className="text-sm text-[#6B7280] mt-1">{t("contentReviewPage.subtitle")}</p>
+                <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{t("contentReviewPage.title")}</h1>
+                <p className="text-sm text-[var(--color-text-secondary)] mt-1">{t("contentReviewPage.subtitle")}</p>
               </div>
 
               {/* Stats Cards — 4 cards */}
@@ -374,8 +374,8 @@ const ContentReviewContent = () => {
                     <Clock className="w-5 h-5 text-[#F59E0B]" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-[#1F2937]">{stats.pending}</p>
-                    <p className="text-xs text-[#6B7280]">{t("contentReviewPage.stats.pending")}</p>
+                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.pending}</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">{t("contentReviewPage.stats.pending")}</p>
                   </div>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-3">
@@ -383,8 +383,8 @@ const ContentReviewContent = () => {
                     <MessageSquare className="w-5 h-5 text-[#D97706]" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-[#1F2937]">{stats.changesRequested}</p>
-                    <p className="text-xs text-[#6B7280]">{t("contentReviewPage.stats.changesRequested")}</p>
+                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.changesRequested}</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">{t("contentReviewPage.stats.changesRequested")}</p>
                   </div>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-3">
@@ -392,8 +392,8 @@ const ContentReviewContent = () => {
                     <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-[#1F2937]">{stats.approved}</p>
-                    <p className="text-xs text-[#6B7280]">{t("contentReviewPage.stats.approved")}</p>
+                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.approved}</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">{t("contentReviewPage.stats.approved")}</p>
                   </div>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-3">
@@ -401,8 +401,8 @@ const ContentReviewContent = () => {
                     <XCircle className="w-5 h-5 text-[#EF4444]" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-[#1F2937]">{stats.rejected}</p>
-                    <p className="text-xs text-[#6B7280]">{t("contentReviewPage.stats.rejected")}</p>
+                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.rejected}</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">{t("contentReviewPage.stats.rejected")}</p>
                   </div>
                 </div>
               </div>
@@ -410,19 +410,19 @@ const ContentReviewContent = () => {
               {/* Search + Filter */}
               <div className="flex flex-col sm:flex-row gap-3 mb-6">
                 <div className="relative flex-1">
-                  <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]`} />
+                  <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]`} />
                   <input
                     type="text"
                     placeholder={t("contentReviewPage.searchPlaceholder")}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none`}
+                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none`}
                   />
                 </div>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("contentReviewPage.filters.allStatus")}</option>
                   <option value="pending_review">{t("contentReviewPage.filters.pending")}</option>
@@ -433,7 +433,7 @@ const ContentReviewContent = () => {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("contentReviewPage.filters.allTypes")}</option>
                   <option value="video">{t("contentReviewPage.filters.video")}</option>
@@ -443,7 +443,7 @@ const ContentReviewContent = () => {
                 <select
                   value={courseFilter}
                   onChange={(e) => setCourseFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("contentReviewPage.filters.allCourses")}</option>
                   {courses.map((course) => (
@@ -456,12 +456,12 @@ const ContentReviewContent = () => {
               {commentId && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                   <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
-                    <h3 className="text-lg font-semibold text-[#1F2937] mb-2">
+                    <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
                       {commentAction === "reject"
                         ? t("contentReviewPage.rejectTitle")
                         : t("contentReviewPage.requestChangesTitle")}
                     </h3>
-                    <p className="text-sm text-[#6B7280] mb-4">
+                    <p className="text-sm text-[var(--color-text-secondary)] mb-4">
                       {commentAction === "reject"
                         ? t("contentReviewPage.rejectDesc")
                         : t("contentReviewPage.requestChangesDesc")}
@@ -471,12 +471,12 @@ const ContentReviewContent = () => {
                       onChange={(e) => setCommentText(e.target.value)}
                       placeholder={t("contentReviewPage.commentPlaceholder")}
                       rows={4}
-                      className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none resize-none"
+                      className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none resize-none"
                     />
                     <div className="flex justify-end gap-3 mt-4">
                       <button
                         onClick={() => { setCommentId(null); setCommentText(""); }}
-                        className="px-4 py-2 text-sm text-[#6B7280] hover:text-[#1F2937] transition-colors"
+                        className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
                       >
                         {t("contentReviewPage.cancel")}
                       </button>
@@ -525,7 +525,7 @@ const ContentReviewContent = () => {
                     </button>
                     <button
                       onClick={() => setSelectedIds(new Set())}
-                      className="px-3 py-1.5 text-[#6B7280] text-xs font-medium hover:text-[#1F2937] transition-colors"
+                      className="px-3 py-1.5 text-[var(--color-text-secondary)] text-xs font-medium hover:text-[var(--color-text-primary)] transition-colors"
                     >
                       {t("contentReviewPage.clearSelection")}
                     </button>
@@ -537,14 +537,14 @@ const ContentReviewContent = () => {
               {filtered.length === 0 ? (
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <FileText className="w-8 h-8 text-[#9CA3AF]" />
+                    <FileText className="w-8 h-8 text-[var(--color-text-secondary)]" />
                   </div>
-                  <h3 className="text-lg font-semibold text-[#1F2937] mb-2">
+                  <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
                     {items.length === 0
                       ? t("contentReviewPage.emptyTitle")
                       : t("contentReviewPage.noContent")}
                   </h3>
-                  <p className="text-sm text-[#6B7280] max-w-md mx-auto">
+                  <p className="text-sm text-[var(--color-text-secondary)] max-w-md mx-auto">
                     {items.length === 0
                       ? t("contentReviewPage.emptyDesc")
                       : t("contentReviewPage.noContentDesc")}
@@ -572,17 +572,17 @@ const ContentReviewContent = () => {
                               className="w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
                             />
                           </th>
-                          <th className="px-1 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase"></th>
-                          <th className="px-3 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">
+                          <th className="px-1 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase"></th>
+                          <th className="px-3 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                             {t("contentReviewPage.tableContent")}
                           </th>
-                          <th className="px-3 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">
+                          <th className="px-3 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                             {t("contentReviewPage.tableCourse")}
                           </th>
-                          <th className="px-3 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase hidden sm:table-cell">
+                          <th className="px-3 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase hidden sm:table-cell">
                             {t("contentReviewPage.submittedOn")}
                           </th>
-                          <th className="px-3 py-3 text-end text-xs font-semibold text-[#6B7280] uppercase">
+                          <th className="px-3 py-3 text-end text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                             {t("contentReviewPage.tableActions")}
                           </th>
                         </tr>
@@ -618,9 +618,9 @@ const ContentReviewContent = () => {
                                 </td>
                                 <td className="px-1 py-3">
                                   {isExpanded ? (
-                                    <ChevronDown className="w-4 h-4 text-[#6B7280]" />
+                                    <ChevronDown className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                   ) : (
-                                    <ChevronRight className={`w-4 h-4 text-[#6B7280] ${isRTL ? "rotate-180" : ""}`} />
+                                    <ChevronRight className={`w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "rotate-180" : ""}`} />
                                   )}
                                 </td>
                                 <td className="px-3 py-3">
@@ -632,7 +632,7 @@ const ContentReviewContent = () => {
                                     </div>
                                     <div className="min-w-0">
                                       <div className="flex items-center gap-2">
-                                        <p className="text-sm font-medium text-[#1F2937] truncate">
+                                        <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                                           {item.title}
                                         </p>
                                         {isChangesRequested && (
@@ -655,7 +655,7 @@ const ContentReviewContent = () => {
                                         )}
                                       </div>
                                       <div className="flex items-center gap-2 mt-0.5">
-                                        <p className="text-xs text-[#9CA3AF]">
+                                        <p className="text-xs text-[var(--color-text-secondary)]">
                                           {item.type.toUpperCase()} {formatSize(item.fileSize) && `• ${formatSize(item.fileSize)}`} {instructorName && `• ${instructorName}`}
                                         </p>
                                         {item.wcagStatus && item.wcagStatus !== "pending" && (
@@ -683,12 +683,12 @@ const ContentReviewContent = () => {
                                   </div>
                                 </td>
                                 <td className="px-3 py-3">
-                                  <p className="text-sm text-[#4B5563] truncate">
+                                  <p className="text-sm text-[var(--color-text-secondary)] truncate">
                                     {item.courseTitle}
                                   </p>
                                 </td>
                                 <td className="px-3 py-3 hidden sm:table-cell">
-                                  <p className="text-xs text-[#6B7280] whitespace-nowrap">{formatDate(item.createdAt)}</p>
+                                  <p className="text-xs text-[var(--color-text-secondary)] whitespace-nowrap">{formatDate(item.createdAt)}</p>
                                 </td>
                                 <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                                   {canAct ? (
@@ -704,7 +704,7 @@ const ContentReviewContent = () => {
                                         ) : (
                                           <CheckCircle2 className="w-4 h-4" />
                                         )}
-                                        <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 px-2 py-1 bg-[#1F2937] text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                        <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 px-2 py-1 bg-[var(--color-text-primary)] text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                           {t("contentReviewPage.approve")}
                                         </span>
                                       </button>
@@ -715,7 +715,7 @@ const ContentReviewContent = () => {
                                         title={t("contentReviewPage.requestChanges")}
                                       >
                                         <MessageSquare className="w-4 h-4" />
-                                        <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 px-2 py-1 bg-[#1F2937] text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                        <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 px-2 py-1 bg-[var(--color-text-primary)] text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                           {t("contentReviewPage.requestChanges")}
                                         </span>
                                       </button>
@@ -726,13 +726,13 @@ const ContentReviewContent = () => {
                                         title={t("contentReviewPage.reject")}
                                       >
                                         <XCircle className="w-4 h-4" />
-                                        <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 px-2 py-1 bg-[#1F2937] text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                        <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 px-2 py-1 bg-[var(--color-text-primary)] text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                           {t("contentReviewPage.reject")}
                                         </span>
                                       </button>
                                     </div>
                                   ) : (
-                                    <span className="text-xs text-[#9CA3AF]">—</span>
+                                    <span className="text-xs text-[var(--color-text-secondary)]">—</span>
                                   )}
                                 </td>
                               </tr>
@@ -758,7 +758,7 @@ const ContentReviewContent = () => {
                                         if (details.length === 0) return null;
                                         return (
                                           <div className="mb-4">
-                                            <h4 className="text-sm font-semibold text-[#1F2937] mb-2">{t("contentReviewPage.wcagChecks")}</h4>
+                                            <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">{t("contentReviewPage.wcagChecks")}</h4>
                                             <div className="space-y-1.5">
                                               {details.map((d, i) => (
                                                 <div key={i} className="flex items-start gap-2 text-xs">
@@ -768,8 +768,8 @@ const ContentReviewContent = () => {
                                                     <XCircle className="w-4 h-4 text-[#EF4444] flex-shrink-0 mt-0.5" />
                                                   )}
                                                   <div>
-                                                    <span className="font-medium text-[#374151]">{translateLabel(d.label, isRTL)}</span>
-                                                    <span className="text-[#6B7280]"> — {translateDetail(d.detail, isRTL)}</span>
+                                                    <span className="font-medium text-[var(--color-text-secondary)]">{translateLabel(d.label, isRTL)}</span>
+                                                    <span className="text-[var(--color-text-secondary)]"> — {translateDetail(d.detail, isRTL)}</span>
                                                   </div>
                                                 </div>
                                               ))}
@@ -779,14 +779,14 @@ const ContentReviewContent = () => {
                                       } catch { return null; }
                                     })()}
 
-                                    <h4 className="text-sm font-semibold text-[#1F2937] mb-3">
+                                    <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
                                       {t("contentReviewPage.complianceChecklist")}
                                     </h4>
 
                                     {isChecklistLoading ? (
                                       <div className="flex items-center gap-2 py-4">
                                         <Loader2 className="w-4 h-4 text-[#3B82F6] animate-spin" />
-                                        <span className="text-sm text-[#6B7280]">
+                                        <span className="text-sm text-[var(--color-text-secondary)]">
                                           {t("contentReviewPage.loadingChecklist")}
                                         </span>
                                       </div>
@@ -803,7 +803,7 @@ const ContentReviewContent = () => {
                                                   : "bg-[#EF4444]"
                                             }`}
                                           />
-                                          <span className="text-sm font-medium text-[#4B5563]">
+                                          <span className="text-sm font-medium text-[var(--color-text-secondary)]">
                                             {checklist.passedCount}/{checklist.totalChecks} {t("contentReviewPage.checksPassed")}
                                           </span>
                                         </div>
@@ -822,10 +822,10 @@ const ContentReviewContent = () => {
                                               <XCircle className="w-5 h-5 text-[#EF4444] flex-shrink-0 mt-0.5" />
                                             )}
                                             <div className="min-w-0 flex-1">
-                                              <p className="text-sm font-medium text-[#1F2937]">
+                                              <p className="text-sm font-medium text-[var(--color-text-primary)]">
                                                 {CHECK_LABEL_KEYS[check.rule] ? t(`contentReviewPage.checkLabels.${CHECK_LABEL_KEYS[check.rule]}`) : check.rule}
                                               </p>
-                                              <p className="text-xs text-[#6B7280] mt-0.5">
+                                              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
                                                 {translateDetail(check.detail, isRTL)}
                                               </p>
                                             </div>
@@ -833,7 +833,7 @@ const ContentReviewContent = () => {
                                         ))}
                                       </div>
                                     ) : (
-                                      <p className="text-sm text-[#9CA3AF] py-2">
+                                      <p className="text-sm text-[var(--color-text-secondary)] py-2">
                                         {t("contentReviewPage.checklistUnavailable")}
                                       </p>
                                     )}
@@ -849,7 +849,7 @@ const ContentReviewContent = () => {
                   {totalPages > 1 && (
                     <div className="flex items-center justify-center gap-2 p-4 border-t border-[var(--color-border)]">
                       <button disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm disabled:opacity-50">←</button>
-                      <span className="text-sm text-[#6B7280]">{currentPage} / {totalPages}</span>
+                      <span className="text-sm text-[var(--color-text-secondary)]">{currentPage} / {totalPages}</span>
                       <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm disabled:opacity-50">→</button>
                     </div>
                   )}

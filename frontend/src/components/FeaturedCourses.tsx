@@ -55,7 +55,7 @@ const FeaturedCourses = ({ sectionData }: FeaturedCoursesProps) => {
         {(title || description) && (
           <div className="hidden xl:flex items-end justify-between w-full">
             <div className="flex-1 flex flex-col items-center justify-center max-w-[768px] mx-auto">
-              <div className="flex flex-col gap-[16px] items-center text-center text-black w-full">
+              <div className="flex flex-col gap-[16px] items-center text-center text-[var(--color-text-primary)] w-full">
                 {title && (
                   <h2
                     className="font-semibold leading-none tracking-[-0.24px] w-full"
@@ -76,7 +76,7 @@ const FeaturedCourses = ({ sectionData }: FeaturedCoursesProps) => {
 
         {/* Section Title - Mobile/Tablet */}
         {(title || description) && (
-          <div className="flex xl:hidden flex-col gap-4 items-center text-center text-black w-full">
+          <div className="flex xl:hidden flex-col gap-4 items-center text-center text-[var(--color-text-primary)] w-full">
             {title && (
               <h2
                 className="font-semibold leading-none tracking-[-0.15px] w-full"

@@ -105,7 +105,7 @@ const PaymentsContent = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#374151] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
                     <Download className="w-4 h-4" />
                     {t("paymentsPage.exportTransactions")}
                   </button>
@@ -125,10 +125,10 @@ const PaymentsContent = () => {
                         <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                       </div>
                       <div>
-                        <p className="text-xs text-[#6B7280] font-medium">
+                        <p className="text-xs text-[var(--color-text-secondary)] font-medium">
                           {stat.label}
                         </p>
-                        <p className="text-xl font-bold text-[#111827]">
+                        <p className="text-xl font-bold text-[var(--color-text-primary)]">
                           {stat.value}
                         </p>
                         <div className="flex items-center gap-1 mt-0.5">

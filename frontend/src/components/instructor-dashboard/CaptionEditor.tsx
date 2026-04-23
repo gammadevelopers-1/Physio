@@ -112,10 +112,10 @@ export default function CaptionEditor({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
           <div>
-            <h3 className="text-lg font-semibold text-[#1F2937]">{t("captions.title")}</h3>
-            <p className="text-sm text-[#6B7280] truncate max-w-[400px]">{materialTitle}</p>
+            <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("captions.title")}</h3>
+            <p className="text-sm text-[var(--color-text-secondary)] truncate max-w-[400px]">{materialTitle}</p>
           </div>
-          <button onClick={onClose} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg">
+          <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -124,14 +124,14 @@ export default function CaptionEditor({
         <div className="flex border-b border-[var(--color-border)]">
           <button
             onClick={() => setTab("editor")}
-            className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${tab === "editor" ? "text-[#3B82F6] border-b-2 border-[#3B82F6]" : "text-[#6B7280] hover:text-[#374151]"}`}
+            className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${tab === "editor" ? "text-[#3B82F6] border-b-2 border-[#3B82F6]" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"}`}
           >
             <FileText className="w-4 h-4 inline me-1.5" />
             {t("captions.editorTab")}
           </button>
           <button
             onClick={() => setTab("upload")}
-            className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${tab === "upload" ? "text-[#3B82F6] border-b-2 border-[#3B82F6]" : "text-[#6B7280] hover:text-[#374151]"}`}
+            className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${tab === "upload" ? "text-[#3B82F6] border-b-2 border-[#3B82F6]" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"}`}
           >
             <Upload className="w-4 h-4 inline me-1.5" />
             {t("captions.uploadTab")}
@@ -147,11 +147,11 @@ export default function CaptionEditor({
           ) : tab === "editor" ? (
             <div className="space-y-3">
               {entries.length === 0 && (
-                <p className="text-sm text-[#9CA3AF] text-center py-8">{t("captions.noCaptions")}</p>
+                <p className="text-sm text-[var(--color-text-secondary)] text-center py-8">{t("captions.noCaptions")}</p>
               )}
               {entries.map((entry, i) => (
                 <div key={i} className="flex gap-2 items-start p-3 bg-[#F9FAFB] rounded-lg">
-                  <div className="flex-shrink-0 text-xs text-[#9CA3AF] w-6 pt-2">{i + 1}</div>
+                  <div className="flex-shrink-0 text-xs text-[var(--color-text-secondary)] w-6 pt-2">{i + 1}</div>
                   <div className="flex-1 space-y-2">
                     <div className="flex gap-2">
                       <input
@@ -161,7 +161,7 @@ export default function CaptionEditor({
                         className="w-[130px] px-2 py-1.5 border border-[var(--color-border)] rounded text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
                         placeholder="00:00:00.000"
                       />
-                      <span className="text-[#9CA3AF] text-xs pt-1.5">&rarr;</span>
+                      <span className="text-[var(--color-text-secondary)] text-xs pt-1.5">&rarr;</span>
                       <input
                         type="text"
                         value={entry.endTime}
@@ -179,7 +179,7 @@ export default function CaptionEditor({
                   </div>
                   <button
                     onClick={() => removeEntry(i)}
-                    className="flex-shrink-0 p-1.5 text-[#9CA3AF] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded transition-colors"
+                    className="flex-shrink-0 p-1.5 text-[var(--color-text-secondary)] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -196,7 +196,7 @@ export default function CaptionEditor({
           ) : (
             <div className="flex flex-col items-center justify-center py-12">
               <Upload className="w-12 h-12 text-[var(--color-border)] mb-4" />
-              <p className="text-sm text-[#6B7280] mb-4">{t("captions.uploadDesc")}</p>
+              <p className="text-sm text-[var(--color-text-secondary)] mb-4">{t("captions.uploadDesc")}</p>
               <label className="px-4 py-2.5 bg-[#3B82F6] text-white rounded-lg text-sm font-medium hover:bg-[#2563EB] cursor-pointer">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin inline me-1.5" /> : <Upload className="w-4 h-4 inline me-1.5" />}
                 {t("captions.selectFile")}
@@ -209,7 +209,7 @@ export default function CaptionEditor({
                   disabled={saving}
                 />
               </label>
-              <p className="text-xs text-[#9CA3AF] mt-2">{t("captions.acceptedFormats")}</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-2">{t("captions.acceptedFormats")}</p>
             </div>
           )}
         </div>
@@ -217,7 +217,7 @@ export default function CaptionEditor({
         {/* Footer */}
         {tab === "editor" && (
           <div className="flex justify-end gap-2 p-4 border-t border-[var(--color-border)]">
-            <button onClick={onClose} className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]">
+            <button onClick={onClose} className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
               {t("captions.cancel")}
             </button>
             <button

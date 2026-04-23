@@ -146,11 +146,11 @@ const SupportReportsContent = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#374151] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
                     <FileSpreadsheet className="w-4 h-4" />
                     {t("reportsPage.exportExcel")}
                   </button>
-                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#374151] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
                     <Download className="w-4 h-4" />
                     {t("reportsPage.exportPdf")}
                   </button>
@@ -175,10 +175,10 @@ const SupportReportsContent = () => {
                       <div className={`w-10 h-10 ${report.iconBg} rounded-lg flex items-center justify-center mb-3`}>
                         <Icon className={`w-5 h-5 ${report.iconColor}`} />
                       </div>
-                      <p className={`text-sm font-semibold ${isSelected ? "text-[var(--color-primary)]" : "text-[#111827]"}`}>
+                      <p className={`text-sm font-semibold ${isSelected ? "text-[var(--color-primary)]" : "text-[var(--color-text-primary)]"}`}>
                         {report.title}
                       </p>
-                      <p className="text-[12px] text-[#6B7280] mt-0.5">{report.description}</p>
+                      <p className="text-[12px] text-[var(--color-text-secondary)] mt-0.5">{report.description}</p>
                     </button>
                   );
                 })}
@@ -187,16 +187,16 @@ const SupportReportsContent = () => {
               {/* Filters */}
               <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5 mb-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <Filter className="w-4 h-4 text-[#6B7280]" />
-                  <h3 className="text-sm font-semibold text-[#111827]">{t("reportsPage.filters.title")}</h3>
+                  <Filter className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                  <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{t("reportsPage.filters.title")}</h3>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div>
-                    <label className="block text-[12px] text-[#6B7280] mb-1">{t("reportsPage.filters.period")}</label>
+                    <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">{t("reportsPage.filters.period")}</label>
                     <select
                       value={period}
                       onChange={(e) => setPeriod(e.target.value)}
-                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[var(--color-primary)]"
+                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-white focus:outline-none focus:border-[var(--color-primary)]"
                     >
                       <option value="thisWeek">{t("reportsPage.filters.thisWeek")}</option>
                       <option value="lastWeek">{t("reportsPage.filters.lastWeek")}</option>
@@ -206,11 +206,11 @@ const SupportReportsContent = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[12px] text-[#6B7280] mb-1">{t("reportsPage.filters.groupBy")}</label>
+                    <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">{t("reportsPage.filters.groupBy")}</label>
                     <select
                       value={groupBy}
                       onChange={(e) => setGroupBy(e.target.value)}
-                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[var(--color-primary)]"
+                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-white focus:outline-none focus:border-[var(--color-primary)]"
                     >
                       <option value="byCategory">{t("reportsPage.filters.byCategory")}</option>
                       <option value="byAgent">{t("reportsPage.filters.byAgent")}</option>
@@ -230,7 +230,7 @@ const SupportReportsContent = () => {
               {/* Report Results */}
               <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
                 <div className="px-5 py-4 border-b border-[#F3F4F6]">
-                  <h3 className="text-base font-semibold text-[#111827]">
+                  <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                     {reportTypes.find((r) => r.key === selectedReport)?.title}
                   </h3>
                 </div>
@@ -299,7 +299,7 @@ const SupportReportsContent = () => {
                       ))}
                     </svg>
                   </div>
-                  <div className="flex justify-between mt-2 text-xs text-[#6B7280] px-1">
+                  <div className="flex justify-between mt-2 text-xs text-[var(--color-text-secondary)] px-1">
                     {reportChartLabels.map((label, index) => (
                       <span key={index} className="text-center">{label}</span>
                     ))}
@@ -311,20 +311,20 @@ const SupportReportsContent = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
-                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.category")}</th>
-                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.tickets")}</th>
-                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.avgResponse")}</th>
-                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.avgResolution")}</th>
-                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.satisfaction")}</th>
+                        <th className={`py-3 px-5 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.category")}</th>
+                        <th className={`py-3 px-5 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.tickets")}</th>
+                        <th className={`py-3 px-5 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.avgResponse")}</th>
+                        <th className={`py-3 px-5 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.avgResolution")}</th>
+                        <th className={`py-3 px-5 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.satisfaction")}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {mockReportData.map((item, index) => (
                         <tr key={index} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
-                          <td className="py-3 px-5 text-[13px] font-medium text-[#111827]">{item.name}</td>
-                          <td className="py-3 px-5 text-[13px] font-semibold text-[#111827]">{item.tickets}</td>
-                          <td className="py-3 px-5 text-[13px] text-[#6B7280] hidden md:table-cell">{item.avgResponse}</td>
-                          <td className="py-3 px-5 text-[13px] text-[#6B7280] hidden md:table-cell">{item.avgResolution}</td>
+                          <td className="py-3 px-5 text-[13px] font-medium text-[var(--color-text-primary)]">{item.name}</td>
+                          <td className="py-3 px-5 text-[13px] font-semibold text-[var(--color-text-primary)]">{item.tickets}</td>
+                          <td className="py-3 px-5 text-[13px] text-[var(--color-text-secondary)] hidden md:table-cell">{item.avgResponse}</td>
+                          <td className="py-3 px-5 text-[13px] text-[var(--color-text-secondary)] hidden md:table-cell">{item.avgResolution}</td>
                           <td className="py-3 px-5">
                             <span className="text-[13px] font-semibold text-[#16A34A]">
                               {item.satisfaction}

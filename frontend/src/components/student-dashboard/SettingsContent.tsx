@@ -86,7 +86,7 @@ function ButtonGroup({
           className={`px-4 py-2 text-sm rounded-lg border transition-colors min-h-[44px] ${
             value === opt.value
               ? "bg-[#002D87] text-white border-[#002D87]"
-              : "bg-white text-[#1F2937] border-[var(--color-border)] hover:border-[#002D87]"
+              : "bg-white text-[var(--color-text-primary)] border-[var(--color-border)] hover:border-[#002D87]"
           }`}
         >
           {opt.label}
@@ -98,7 +98,7 @@ function ButtonGroup({
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-base font-semibold text-[#1F2937] mb-4">{children}</h3>
+    <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">{children}</h3>
   );
 }
 
@@ -114,9 +114,9 @@ function SettingRow({
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3 border-b border-[#F3F4F6] last:border-0">
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-[#1F2937]">{label}</p>
+        <p className="text-sm font-medium text-[var(--color-text-primary)]">{label}</p>
         {description && (
-          <p className="text-xs text-[#6B7280] mt-0.5">{description}</p>
+          <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{description}</p>
         )}
       </div>
       <div className="flex-shrink-0">{children}</div>
@@ -298,7 +298,7 @@ function PreferencesTab({
         <SettingRow label={t("settings.exportData")}>
           <button
             disabled
-            className="flex items-center gap-2 px-4 py-2 text-sm border border-[var(--color-border)] rounded-lg text-[#9CA3AF] cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 text-sm border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] cursor-not-allowed"
             title={t("settings.comingSoon")}
           >
             <Download className="w-4 h-4" />
@@ -309,7 +309,7 @@ function PreferencesTab({
         <SettingRow label={t("settings.deleteAccount")}>
           <button
             disabled
-            className="flex items-center gap-2 px-4 py-2 text-sm border border-red-200 rounded-lg text-[#9CA3AF] cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 text-sm border border-red-200 rounded-lg text-[var(--color-text-secondary)] cursor-not-allowed"
             title={t("settings.comingSoon")}
           >
             <Trash2 className="w-4 h-4" />
@@ -366,14 +366,14 @@ function NotificationsTab({
 
         {/* Header row */}
         <div className="flex items-center gap-4 pb-3 mb-1 border-b border-[var(--color-border)]">
-          <div className="flex-1 text-sm font-medium text-[#6B7280]" />
-          <div className="w-16 text-center text-xs font-medium text-[#6B7280]">
+          <div className="flex-1 text-sm font-medium text-[var(--color-text-secondary)]" />
+          <div className="w-16 text-center text-xs font-medium text-[var(--color-text-secondary)]">
             {t("settings.emailNotifications")}
           </div>
-          <div className="w-16 text-center text-xs font-medium text-[#9CA3AF]">
+          <div className="w-16 text-center text-xs font-medium text-[var(--color-text-secondary)]">
             {t("settings.smsWhatsapp")}
           </div>
-          <div className="w-16 text-center text-xs font-medium text-[#9CA3AF]">
+          <div className="w-16 text-center text-xs font-medium text-[var(--color-text-secondary)]">
             {t("settings.inApp")}
           </div>
         </div>
@@ -384,7 +384,7 @@ function NotificationsTab({
             key={nt.emailField}
             className="flex items-center gap-4 py-3 border-b border-[#F3F4F6] last:border-0"
           >
-            <div className="flex-1 text-sm text-[#1F2937]">
+            <div className="flex-1 text-sm text-[var(--color-text-primary)]">
               {t(nt.labelKey)}
             </div>
             <div className="w-16 flex justify-center">
@@ -406,7 +406,7 @@ function NotificationsTab({
       {/* Reminder Timing */}
       <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
         <SectionHeading>{t("settings.reminderTiming")}</SectionHeading>
-        <p className="text-sm text-[#6B7280] mb-4">
+        <p className="text-sm text-[var(--color-text-secondary)] mb-4">
           {t("settings.reminderTimingDesc")}
         </p>
         <ButtonGroup
@@ -575,7 +575,7 @@ const SettingsContent = () => {
 
             <div className="flex-1 min-w-0">
               <h1
-                className={`text-xl sm:text-2xl font-bold text-[#1F2937] mb-4 sm:mb-6 ${isRTL ? "text-right" : ""}`}
+                className={`text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] mb-4 sm:mb-6 ${isRTL ? "text-right" : ""}`}
               >
                 {t("settings.title")}
               </h1>
@@ -590,8 +590,8 @@ const SettingsContent = () => {
                     onClick={() => setActiveTab(tab.key)}
                     className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                       activeTab === tab.key
-                        ? "bg-white text-[#1F2937] shadow-sm"
-                        : "text-[#6B7280] hover:text-[#1F2937]"
+                        ? "bg-white text-[var(--color-text-primary)] shadow-sm"
+                        : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                     }`}
                   >
                     {tab.icon}
@@ -641,9 +641,9 @@ const SettingsContent = () => {
                             <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`}>
                               <button
                                 onClick={() => { settingsAvatarRef.current?.click(); setAvatarMenuOpen(false); }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
                               >
-                                <Upload className="w-4 h-4 text-[#4B5563]" />
+                                <Upload className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                 {t("settings.uploadPhoto")}
                               </button>
                               {userData.avatar && (
@@ -665,7 +665,7 @@ const SettingsContent = () => {
                       <div>
                         <label
                           htmlFor="student-first-name"
-                          className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
+                          className={`block text-sm font-medium text-[var(--color-text-primary)] mb-2 ${isRTL ? "text-right" : ""}`}
                         >
                           {t("settings.firstName")}
                         </label>
@@ -676,13 +676,13 @@ const SettingsContent = () => {
                           value={formData.firstName}
                           onChange={handleInputChange}
                           aria-label={t("settings.firstName")}
-                          className={`w-full px-4 py-2.5 bg-[#F3F4F6] border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                          className={`w-full px-4 py-2.5 bg-[#F3F4F6] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                         />
                       </div>
                       <div>
                         <label
                           htmlFor="student-last-name"
-                          className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
+                          className={`block text-sm font-medium text-[var(--color-text-primary)] mb-2 ${isRTL ? "text-right" : ""}`}
                         >
                           {t("settings.lastName")}
                         </label>
@@ -693,7 +693,7 @@ const SettingsContent = () => {
                           value={formData.lastName}
                           onChange={handleInputChange}
                           aria-label={t("settings.lastName")}
-                          className={`w-full px-4 py-2.5 bg-[#F3F4F6] border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                          className={`w-full px-4 py-2.5 bg-[#F3F4F6] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                         />
                       </div>
                     </div>
@@ -703,7 +703,7 @@ const SettingsContent = () => {
                   <div className="mb-4">
                     <label
                       htmlFor="student-email"
-                      className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
+                      className={`block text-sm font-medium text-[var(--color-text-primary)] mb-2 ${isRTL ? "text-right" : ""}`}
                     >
                       {t("settings.email")}
                     </label>
@@ -714,7 +714,7 @@ const SettingsContent = () => {
                       value={formData.email}
                       readOnly
                       aria-label={t("settings.email")}
-                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] bg-gray-50 cursor-not-allowed ${isRTL ? "text-right" : ""}`}
+                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-gray-50 cursor-not-allowed ${isRTL ? "text-right" : ""}`}
                     />
                   </div>
 
@@ -722,7 +722,7 @@ const SettingsContent = () => {
                   <div className="mb-4">
                     <label
                       htmlFor="student-scfhs-number"
-                      className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
+                      className={`block text-sm font-medium text-[var(--color-text-primary)] mb-2 ${isRTL ? "text-right" : ""}`}
                     >
                       {t("settings.scfhsNumber")}
                     </label>
@@ -734,7 +734,7 @@ const SettingsContent = () => {
                       onChange={handleInputChange}
                       aria-label={t("settings.scfhsNumber")}
                       placeholder={t("settings.scfhsPlaceholder")}
-                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                     />
                   </div>
 
@@ -742,7 +742,7 @@ const SettingsContent = () => {
                   <div className="mb-4">
                     <label
                       htmlFor="student-national-id"
-                      className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
+                      className={`block text-sm font-medium text-[var(--color-text-primary)] mb-2 ${isRTL ? "text-right" : ""}`}
                     >
                       {t("settings.nationalId")}
                     </label>
@@ -753,7 +753,7 @@ const SettingsContent = () => {
                       value={formData.nationalId}
                       onChange={handleInputChange}
                       aria-label={t("settings.nationalId")}
-                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                     />
                   </div>
 
@@ -761,7 +761,7 @@ const SettingsContent = () => {
                   <div className="mb-4">
                     <label
                       htmlFor="student-nationality"
-                      className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
+                      className={`block text-sm font-medium text-[var(--color-text-primary)] mb-2 ${isRTL ? "text-right" : ""}`}
                     >
                       {t("settings.nationality")}
                     </label>
@@ -771,7 +771,7 @@ const SettingsContent = () => {
                         type="button"
                         onClick={() => setNationalityOpen(!nationalityOpen)}
                         aria-label={t("settings.nationality")}
-                        className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent flex items-center justify-between ${isRTL ? "flex-row-reverse" : ""}`}
+                        className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent flex items-center justify-between ${isRTL ? "flex-row-reverse" : ""}`}
                       >
                         <span
                           className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
@@ -785,7 +785,7 @@ const SettingsContent = () => {
                             t("settings.selectNationality")}
                         </span>
                         <ChevronDown
-                          className={`w-5 h-5 text-[#6B7280] transition-transform ${nationalityOpen ? "rotate-180" : ""}`}
+                          className={`w-5 h-5 text-[var(--color-text-secondary)] transition-transform ${nationalityOpen ? "rotate-180" : ""}`}
                         />
                       </button>
                       {nationalityOpen && (
@@ -799,7 +799,7 @@ const SettingsContent = () => {
                               onClick={() =>
                                 handleNationalitySelect(nationality.value)
                               }
-                              className={`w-full px-4 py-2.5 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"} ${formData.nationality === nationality.value ? "bg-[#F3F4F6]" : ""}`}
+                              className={`w-full px-4 py-2.5 text-sm text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"} ${formData.nationality === nationality.value ? "bg-[#F3F4F6]" : ""}`}
                             >
                               {t(nationality.labelKey)}
                             </button>
@@ -813,7 +813,7 @@ const SettingsContent = () => {
                   <div className="mb-4">
                     <label
                       htmlFor="student-gender"
-                      className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
+                      className={`block text-sm font-medium text-[var(--color-text-primary)] mb-2 ${isRTL ? "text-right" : ""}`}
                     >
                       {t("settings.gender")}
                     </label>
@@ -823,7 +823,7 @@ const SettingsContent = () => {
                         type="button"
                         onClick={() => setGenderOpen(!genderOpen)}
                         aria-label={t("settings.gender")}
-                        className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent flex items-center justify-between ${isRTL ? "flex-row-reverse" : ""}`}
+                        className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent flex items-center justify-between ${isRTL ? "flex-row-reverse" : ""}`}
                       >
                         <span>
                           {formData.gender
@@ -835,7 +835,7 @@ const SettingsContent = () => {
                             : t("settings.selectGender")}
                         </span>
                         <ChevronDown
-                          className={`w-5 h-5 text-[#6B7280] transition-transform ${genderOpen ? "rotate-180" : ""}`}
+                          className={`w-5 h-5 text-[var(--color-text-secondary)] transition-transform ${genderOpen ? "rotate-180" : ""}`}
                         />
                       </button>
                       {genderOpen && (
@@ -847,7 +847,7 @@ const SettingsContent = () => {
                               key={gender.value}
                               type="button"
                               onClick={() => handleGenderSelect(gender.value)}
-                              className={`w-full px-4 py-2.5 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"} ${formData.gender === gender.value ? "bg-[#F3F4F6]" : ""}`}
+                              className={`w-full px-4 py-2.5 text-sm text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"} ${formData.gender === gender.value ? "bg-[#F3F4F6]" : ""}`}
                             >
                               {t(gender.labelKey)}
                             </button>
@@ -861,7 +861,7 @@ const SettingsContent = () => {
                   <div className="mb-4">
                     <label
                       htmlFor="student-dob"
-                      className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
+                      className={`block text-sm font-medium text-[var(--color-text-primary)] mb-2 ${isRTL ? "text-right" : ""}`}
                     >
                       {t("settings.dob")}
                     </label>
@@ -874,10 +874,10 @@ const SettingsContent = () => {
                         onChange={handleInputChange}
                         placeholder="DD/MM/YYYY"
                         aria-label={t("settings.dob")}
-                        className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right pr-4 pl-10" : "pr-10"}`}
+                        className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right pr-4 pl-10" : "pr-10"}`}
                       />
                       <Calendar
-                        className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[#6B7280] ${isRTL ? "left-3" : "right-3"}`}
+                        className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-secondary)] ${isRTL ? "left-3" : "right-3"}`}
                       />
                     </div>
                   </div>
@@ -886,7 +886,7 @@ const SettingsContent = () => {
                   <div className="mb-6">
                     <label
                       htmlFor="student-biography"
-                      className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
+                      className={`block text-sm font-medium text-[var(--color-text-primary)] mb-2 ${isRTL ? "text-right" : ""}`}
                     >
                       {t("settings.biography")}
                     </label>
@@ -897,7 +897,7 @@ const SettingsContent = () => {
                       onChange={handleInputChange}
                       rows={4}
                       aria-label={t("settings.biography")}
-                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent resize-none ${isRTL ? "text-right" : ""}`}
+                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent resize-none ${isRTL ? "text-right" : ""}`}
                     />
                   </div>
 

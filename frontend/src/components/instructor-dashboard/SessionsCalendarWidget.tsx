@@ -214,16 +214,16 @@ const SessionsCalendarWidget = ({
 
         <div className="px-2 py-1.5">
           {/* Title + status */}
-          <p className={`text-[11px] font-semibold leading-tight truncate ${isCompleted || isCancelled ? "text-[#6B7280]" : "text-[#1F2937]"}`}>
+          <p className={`text-[11px] font-semibold leading-tight truncate ${isCompleted || isCancelled ? "text-[var(--color-text-secondary)]" : "text-[var(--color-text-primary)]"}`}>
             {session.title}
           </p>
 
           {/* Time */}
-          <p className="text-[10px] text-[#6B7280] mt-0.5">{session.time}</p>
+          <p className="text-[10px] text-[var(--color-text-secondary)] mt-0.5">{session.time}</p>
 
           {/* Meta row */}
           <div className="flex items-center gap-2 mt-1">
-            <span className="flex items-center gap-0.5 text-[9px] text-[#9CA3AF]">
+            <span className="flex items-center gap-0.5 text-[9px] text-[var(--color-text-secondary)]">
               <Users className="w-2.5 h-2.5" />
               {session.enrolled}
             </span>
@@ -260,7 +260,7 @@ const SessionsCalendarWidget = ({
             )}
             <button
               onClick={(e) => { e.stopPropagation(); onAttendance?.(session.id); }}
-              className="p-1 border border-[var(--color-border)] rounded text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+              className="p-1 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
               title={t("sessionsCalendar.attendance")}
             >
               <ClipboardCheck className="w-3 h-3" />
@@ -268,7 +268,7 @@ const SessionsCalendarWidget = ({
             {isScheduled && (
               <button
                 onClick={(e) => { e.stopPropagation(); onShareMaterials?.(session.id); }}
-                className="p-1 border border-[var(--color-border)] rounded text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                className="p-1 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
                 title={t("sessionsCalendar.shareMaterials")}
               >
                 <Upload className="w-3 h-3" />
@@ -286,24 +286,24 @@ const SessionsCalendarWidget = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border-b border-[var(--color-border)] gap-3">
         <div className="flex items-center gap-2">
           <Calendar className="w-5 h-5 text-[#3B82F6]" />
-          <h2 className="text-base sm:text-lg font-semibold text-[#1F2937]">
+          <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)]">
             {t("sessionsCalendar.title")}
           </h2>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigateWeek("prev")}
-            className="p-1.5 sm:p-2 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+            className="p-1.5 sm:p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
             aria-label="Previous week"
           >
             {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
-          <span className="text-sm font-medium text-[#374151] min-w-[120px] text-center">
+          <span className="text-sm font-medium text-[var(--color-text-secondary)] min-w-[120px] text-center">
             {headerDate}
           </span>
           <button
             onClick={() => navigateWeek("next")}
-            className="p-1.5 sm:p-2 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+            className="p-1.5 sm:p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
             aria-label="Next week"
           >
             {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -334,7 +334,7 @@ const SessionsCalendarWidget = ({
                 >
                   <p
                     className={`text-xs font-medium ${
-                      day.isToday ? "text-[#3B82F6]" : "text-[#6B7280]"
+                      day.isToday ? "text-[#3B82F6]" : "text-[var(--color-text-secondary)]"
                     }`}
                   >
                     {t(`sessionsCalendar.days.${dayKeys[index]}`)}
@@ -343,7 +343,7 @@ const SessionsCalendarWidget = ({
                     className={`text-lg font-bold ${
                       day.isToday
                         ? "text-[#3B82F6] bg-[#3B82F6] text-white w-8 h-8 rounded-full flex items-center justify-center mx-auto"
-                        : "text-[#1F2937]"
+                        : "text-[var(--color-text-primary)]"
                     }`}
                   >
                     {day.dayNumber}
@@ -359,7 +359,7 @@ const SessionsCalendarWidget = ({
                   {/* Empty state for day */}
                   {sessionsByDay[day.dayIndex]?.length === 0 && (
                     <div className="text-center py-4">
-                      <p className="text-[10px] text-[#9CA3AF]">
+                      <p className="text-[10px] text-[var(--color-text-secondary)]">
                         {t("sessionsCalendar.noSessions")}
                       </p>
                     </div>
@@ -390,14 +390,14 @@ const SessionsCalendarWidget = ({
                 >
                   <p
                     className={`text-xs font-medium ${
-                      day.isToday ? "text-[#3B82F6]" : "text-[#6B7280]"
+                      day.isToday ? "text-[#3B82F6]" : "text-[var(--color-text-secondary)]"
                     }`}
                   >
                     {t(`sessionsCalendar.days.${dayKeys[index]}`)}
                   </p>
                   <p
                     className={`text-base font-bold ${
-                      day.isToday ? "text-[#3B82F6]" : "text-[#1F2937]"
+                      day.isToday ? "text-[#3B82F6]" : "text-[var(--color-text-primary)]"
                     }`}
                   >
                     {day.dayNumber}
@@ -418,7 +418,7 @@ const SessionsCalendarWidget = ({
                   {/* Empty state */}
                   {sessionsByDay[day.dayIndex]?.length === 0 && (
                     <div className="flex items-center justify-center h-full">
-                      <p className="text-[10px] text-[#9CA3AF] text-center">
+                      <p className="text-[10px] text-[var(--color-text-secondary)] text-center">
                         {t("sessionsCalendar.noSessions")}
                       </p>
                     </div>
@@ -433,23 +433,23 @@ const SessionsCalendarWidget = ({
         <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-[var(--color-border)] flex-wrap">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-[#EFF6FF] border border-[#BFDBFE]" />
-            <span className="text-xs text-[#6B7280]">
+            <span className="text-xs text-[var(--color-text-secondary)]">
               {t("sessionsCalendar.zoomSession")}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-[#F0FDF4] border border-[#BBF7D0]" />
-            <span className="text-xs text-[#6B7280]">
+            <span className="text-xs text-[var(--color-text-secondary)]">
               {t("sessionsCalendar.onsiteSession")}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-[#DCFCE7] border border-[#BBF7D0]" />
-            <span className="text-xs text-[#6B7280]">Completed</span>
+            <span className="text-xs text-[var(--color-text-secondary)]">Completed</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-[#FEF2F2] border border-[#FECACA]" />
-            <span className="text-xs text-[#6B7280]">Live</span>
+            <span className="text-xs text-[var(--color-text-secondary)]">Live</span>
           </div>
         </div>
       </div>

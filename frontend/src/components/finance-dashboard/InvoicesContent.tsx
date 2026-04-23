@@ -94,7 +94,7 @@ const InvoicesContent = () => {
     issued: "bg-[#EFF6FF] text-[#3B82F6]",
     paid: "bg-[#DCFCE7] text-[#16A34A]",
     overdue: "bg-[#FEE2E2] text-[#DC2626]",
-    draft: "bg-[#F3F4F6] text-[#6B7280]",
+    draft: "bg-[#F3F4F6] text-[var(--color-text-secondary)]",
   };
 
   const tabs = [
@@ -162,8 +162,8 @@ const InvoicesContent = () => {
                         <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                       </div>
                       <div>
-                        <p className="text-xs text-[#6B7280] font-medium">{stat.label}</p>
-                        <p className="text-xl font-bold text-[#111827]">{stat.value}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)] font-medium">{stat.label}</p>
+                        <p className="text-xl font-bold text-[var(--color-text-primary)]">{stat.value}</p>
                       </div>
                     </div>
                   );
@@ -182,8 +182,8 @@ const InvoicesContent = () => {
                           onClick={() => setActiveTab(tab.key)}
                           className={`px-3 py-1.5 text-[13px] font-medium rounded-md transition-colors ${
                             activeTab === tab.key
-                              ? "bg-white text-[#111827] shadow-sm"
-                              : "text-[#6B7280] hover:text-[#374151]"
+                              ? "bg-white text-[var(--color-text-primary)] shadow-sm"
+                              : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                           }`}
                         >
                           {tab.label}
@@ -191,7 +191,7 @@ const InvoicesContent = () => {
                       ))}
                     </div>
                     <div className="relative w-full sm:w-auto">
-                      <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`} />
+                      <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`} />
                       <input
                         type="text"
                         value={searchQuery}
@@ -208,12 +208,12 @@ const InvoicesContent = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-[var(--color-border)]">
-                        <th className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.invoice")}</th>
-                        <th className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.date")}</th>
-                        <th className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.customer")}</th>
-                        <th className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.course")}</th>
-                        <th className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.amount")}</th>
-                        <th className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.status")}</th>
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.invoice")}</th>
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.date")}</th>
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.customer")}</th>
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.course")}</th>
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.amount")}</th>
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.status")}</th>
                         <th className="py-3 px-4 w-10"></th>
                       </tr>
                     </thead>
@@ -223,10 +223,10 @@ const InvoicesContent = () => {
                           <td className="py-3 px-4">
                             <span className="text-[13px] font-medium text-[var(--color-primary)]">{inv.invoiceNumber}</span>
                           </td>
-                          <td className="py-3 px-4 text-[13px] text-[#4B5563]">{inv.date}</td>
-                          <td className="py-3 px-4 text-[13px] text-[#374151] font-medium">{inv.customer}</td>
-                          <td className="py-3 px-4 text-[13px] text-[#4B5563] hidden md:table-cell">{inv.course}</td>
-                          <td className="py-3 px-4 text-[13px] font-semibold text-[#111827]">{inv.amount}</td>
+                          <td className="py-3 px-4 text-[13px] text-[var(--color-text-secondary)]">{inv.date}</td>
+                          <td className="py-3 px-4 text-[13px] text-[var(--color-text-secondary)] font-medium">{inv.customer}</td>
+                          <td className="py-3 px-4 text-[13px] text-[var(--color-text-secondary)] hidden md:table-cell">{inv.course}</td>
+                          <td className="py-3 px-4 text-[13px] font-semibold text-[var(--color-text-primary)]">{inv.amount}</td>
                           <td className="py-3 px-4">
                             <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${statusStyles[inv.status]}`}>
                               {t(`invoicesPage.statuses.${inv.status}`)}
@@ -236,21 +236,21 @@ const InvoicesContent = () => {
                             <div className="relative">
                               <button
                                 onClick={() => setOpenActionId(openActionId === inv.id ? null : inv.id)}
-                                className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[#F9FAFB] text-[#6B7280]"
+                                className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[#F9FAFB] text-[var(--color-text-secondary)]"
                               >
                                 <MoreVertical className="w-3.5 h-3.5" />
                               </button>
                               {openActionId === inv.id && (
                                 <div className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-20 ${isRTL ? "left-0" : "right-0"}`}>
-                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB]">
+                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
                                     <Eye className="w-3.5 h-3.5" />
                                     {t("paymentsTable.actions.view")}
                                   </button>
-                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB]">
+                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
                                     <Download className="w-3.5 h-3.5" />
                                     {t("invoicesPage.downloadPdf")}
                                   </button>
-                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB]">
+                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
                                     <Send className="w-3.5 h-3.5" />
                                     {t("invoicesPage.resendEmail")}
                                   </button>
@@ -266,15 +266,15 @@ const InvoicesContent = () => {
 
                 {/* Pagination */}
                 <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3 border-t border-[#F3F4F6] gap-3">
-                  <p className="text-[13px] text-[#6B7280]">
+                  <p className="text-[13px] text-[var(--color-text-secondary)]">
                     {t("paymentsTable.pagination.showing", { from: 1, to: filteredInvoices.length, total: filteredInvoices.length })}
                   </p>
                   <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">
+                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">
                       <ChevronLeft className="w-4 h-4" />
                       {t("paymentsTable.pagination.previous")}
                     </button>
-                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">
+                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">
                       {t("paymentsTable.pagination.next")}
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -286,17 +286,17 @@ const InvoicesContent = () => {
               <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <Clock className="w-5 h-5 text-[#EA580C]" />
-                  <h3 className="text-base font-semibold text-[#111827]">{t("invoicesPage.agingReport")}</h3>
+                  <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{t("invoicesPage.agingReport")}</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {agingData.map((item, index) => (
                     <div key={index} className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
                       <div className="flex items-center gap-2 mb-2">
                         <div className={`w-2.5 h-2.5 rounded-full ${item.color}`} />
-                        <p className="text-[12px] text-[#6B7280] font-medium">{item.label}</p>
+                        <p className="text-[12px] text-[var(--color-text-secondary)] font-medium">{item.label}</p>
                       </div>
-                      <p className="text-lg font-bold text-[#111827]">{item.count} {t("invoicesLabel")}</p>
-                      <p className="text-[13px] text-[#6B7280]">{item.amount}</p>
+                      <p className="text-lg font-bold text-[var(--color-text-primary)]">{item.count} {t("invoicesLabel")}</p>
+                      <p className="text-[13px] text-[var(--color-text-secondary)]">{item.amount}</p>
                     </div>
                   ))}
                 </div>

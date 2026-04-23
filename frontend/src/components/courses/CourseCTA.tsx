@@ -27,14 +27,14 @@ const CourseCTA = ({
       <div className="max-w-[800px] mx-auto px-4 text-center">
         {title && (
           <h2
-            className="font-semibold text-[#06080b] mb-4"
+            className="font-semibold text-[var(--color-text-primary)] mb-4"
             style={{ fontSize: "clamp(24px, 5vw, 36px)" }}
           >
             {title}
           </h2>
         )}
         {description && (
-          <p className="text-[#4a4c4f] text-base lg:text-lg mb-8 max-w-[600px] mx-auto">
+          <p className="text-[var(--color-text-secondary)] text-base lg:text-lg mb-8 max-w-[600px] mx-auto">
             {description}
           </p>
         )}

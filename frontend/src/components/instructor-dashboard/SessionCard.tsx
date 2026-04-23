@@ -56,7 +56,7 @@ const SessionCard = ({
     live: { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: t("sessions.statusLive") },
     ended: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessions.statusEnded") },
     completed: { bg: "bg-[#DCFCE7]", text: "text-[#22C55E]", label: t("sessions.statusCompleted") },
-    cancelled: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: t("sessions.statusCancelled") || "Cancelled" },
+    cancelled: { bg: "bg-[#F3F4F6]", text: "text-[var(--color-text-secondary)]", label: t("sessions.statusCancelled") || "Cancelled" },
     missed: { bg: "bg-[#FEF2F2]", text: "text-[#EF4444]", label: t("sessions.statusMissed") },
     rescheduled: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessions.statusRescheduled") },
   };
@@ -99,7 +99,7 @@ const SessionCard = ({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className={`text-sm font-semibold truncate ${isCompleted || isInactive ? "text-[#6B7280]" : "text-[#1F2937]"}`}>
+            <h3 className={`text-sm font-semibold truncate ${isCompleted || isInactive ? "text-[var(--color-text-secondary)]" : "text-[var(--color-text-primary)]"}`}>
               {session.title}
             </h3>
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${badge.bg} ${badge.text}`}>
@@ -117,7 +117,7 @@ const SessionCard = ({
               </span>
             )}
           </div>
-          <div className="flex items-center gap-3 text-xs text-[#6B7280]">
+          <div className="flex items-center gap-3 text-xs text-[var(--color-text-secondary)]">
             <span className="flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
               {session.time}
@@ -173,7 +173,7 @@ const SessionCard = ({
           {!isInactive && (
             <button
               onClick={onAttendance}
-              className="p-1.5 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+              className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
               aria-label={t("sessions.attendance")}
             >
               <ClipboardCheck className="w-3.5 h-3.5" />
@@ -183,7 +183,7 @@ const SessionCard = ({
           {(isScheduled || isLive) && (
             <button
               onClick={onShare}
-              className="p-1.5 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+              className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
               aria-label={t("sessions.shareMaterials")}
             >
               <Upload className="w-3.5 h-3.5" />

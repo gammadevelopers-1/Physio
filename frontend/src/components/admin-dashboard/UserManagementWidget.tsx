@@ -25,7 +25,7 @@ const UserManagementWidget = ({ users }: UserManagementWidgetProps) => {
   const getRoleBadgeStyle = (role: string) => {
     switch (role) {
       case "admin":
-        return "bg-[#1F2937] text-white";
+        return "bg-[var(--color-text-primary)] text-white";
       case "instructor":
         return "bg-[#DBEAFE] text-[#1D4ED8]";
       case "student":
@@ -33,7 +33,7 @@ const UserManagementWidget = ({ users }: UserManagementWidgetProps) => {
       case "manager":
         return "bg-[#EDE9FE] text-[#7C3AED]";
       default:
-        return "bg-[#F3F4F6] text-[#6B7280]";
+        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -46,14 +46,14 @@ const UserManagementWidget = ({ users }: UserManagementWidgetProps) => {
       case "pending":
         return "bg-[#FEF3C7] text-[#D97706]";
       default:
-        return "bg-[#F3F4F6] text-[#6B7280]";
+        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
     }
   };
 
   const getAvatarBgColor = (role: string) => {
     switch (role) {
       case "admin":
-        return "bg-[#1F2937]";
+        return "bg-[var(--color-text-primary)]";
       case "instructor":
         return "bg-[#3B82F6]";
       case "student":
@@ -61,7 +61,7 @@ const UserManagementWidget = ({ users }: UserManagementWidgetProps) => {
       case "manager":
         return "bg-[#8B5CF6]";
       default:
-        return "bg-[#9CA3AF]";
+        return "bg-[var(--color-text-secondary)]";
     }
   };
 
@@ -71,7 +71,7 @@ const UserManagementWidget = ({ users }: UserManagementWidgetProps) => {
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <Users className="w-5 h-5 text-[#002D87]" />
-          <h3 className="text-lg font-semibold text-[#1F2937]">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("userManagement.title")}
           </h3>
         </div>
@@ -90,17 +90,17 @@ const UserManagementWidget = ({ users }: UserManagementWidgetProps) => {
           <thead>
             <tr className="border-b border-[var(--color-border)]">
               <th
-                className={`py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}
+                className={`py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
               >
                 {t("userManagement.user")}
               </th>
               <th
-                className={`py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}
+                className={`py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
               >
                 {t("userManagement.role")}
               </th>
               <th
-                className={`py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}
+                className={`py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
               >
                 {t("userManagement.status")}
               </th>
@@ -121,7 +121,7 @@ const UserManagementWidget = ({ users }: UserManagementWidgetProps) => {
                         {user.initials}
                       </span>
                     </div>
-                    <span className="text-sm font-medium text-[#1F2937]">
+                    <span className="text-sm font-medium text-[var(--color-text-primary)]">
                       {user.name}
                     </span>
                   </div>

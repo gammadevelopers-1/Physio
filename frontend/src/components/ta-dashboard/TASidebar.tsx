@@ -132,10 +132,10 @@ const TASidebar = () => {
                 <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`} role="menu">
                   <button
                     onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
                     role="menuitem"
                   >
-                    <Upload className="w-4 h-4 text-[#4B5563]" />
+                    <Upload className="w-4 h-4 text-[var(--color-text-secondary)]" />
                     {t("sidebar.uploadPhoto")}
                   </button>
                   {avatar && (
@@ -154,8 +154,8 @@ const TASidebar = () => {
           </div>
 
           {/* Name and Email */}
-          <h3 className="text-lg font-semibold text-[#1F2937]">{name}</h3>
-          <p className="text-sm text-[#6B7280] mb-2">{email}</p>
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{name}</h3>
+          <p className="text-sm text-[var(--color-text-secondary)] mb-2">{email}</p>
 
           {/* Role Badge */}
           <div className="px-3 py-1 bg-[#FFF8E6] rounded-full">
@@ -168,7 +168,7 @@ const TASidebar = () => {
         {/* View Profile Button */}
         <Link
           href={`/${locale}/dashboard/teaching-assistant/settings`}
-          className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors text-center block"
+          className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors text-center block"
         >
           {t("sidebar.viewProfile")}
         </Link>
@@ -189,11 +189,11 @@ const TASidebar = () => {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                   active
                     ? "bg-[#FFF8E6] text-[var(--color-primary-dark)]"
-                    : "text-[#4B5563] hover:bg-[#F9FAFB]"
+                    : "text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
                 }`}
               >
                 <Icon
-                  className={`w-5 h-5 ${active ? "text-[var(--color-primary-dark)]" : "text-[#6B7280]"}`}
+                  className={`w-5 h-5 ${active ? "text-[var(--color-primary-dark)]" : "text-[var(--color-text-secondary)]"}`}
                 />
                 <span className={`text-sm ${active ? "font-medium" : ""}`}>
                   {item.label}

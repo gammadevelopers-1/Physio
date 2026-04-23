@@ -393,7 +393,7 @@ const NELCComplianceCenterContent = () => {
         <div className="bg-[#F9FAFB] min-h-screen flex items-center justify-center">
           <div className="text-center">
             <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
-            <p className="text-sm text-[#6B7280] mb-4">{error}</p>
+            <p className="text-sm text-[var(--color-text-secondary)] mb-4">{error}</p>
             <button
               onClick={refetch}
               className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg"
@@ -423,8 +423,8 @@ const NELCComplianceCenterContent = () => {
               {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
-                  <h1 className="text-2xl font-bold text-[#1F2937]">{t("nelc.title")}</h1>
-                  <p className="text-sm text-[#6B7280] mt-1">
+                  <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{t("nelc.title")}</h1>
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                     {t("nelc.subtitle")}
                   </p>
                 </div>
@@ -434,19 +434,19 @@ const NELCComplianceCenterContent = () => {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
                   <p className="text-3xl font-bold text-[#3B82F6]">{overallPercentage}%</p>
-                  <p className="text-xs text-[#6B7280] mt-1">{t("nelc.overallCompliance")}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("nelc.overallCompliance")}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
                   <p className="text-3xl font-bold text-[#22C55E]">{totals.passed}</p>
-                  <p className="text-xs text-[#6B7280] mt-1">{t("nelc.passed")}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("nelc.passed")}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
                   <p className="text-3xl font-bold text-[#F59E0B]">{totals.review}</p>
-                  <p className="text-xs text-[#6B7280] mt-1">{t("nelc.review")}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("nelc.review")}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
                   <p className="text-3xl font-bold text-[#EF4444]">{totals.failed}</p>
-                  <p className="text-xs text-[#6B7280] mt-1">{t("nelc.failed")}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("nelc.failed")}</p>
                 </div>
               </div>
 
@@ -454,19 +454,19 @@ const NELCComplianceCenterContent = () => {
               {/* Search + Filter */}
               <div className="flex flex-col sm:flex-row gap-3 mb-6">
                 <div className="relative flex-1">
-                  <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]`} />
+                  <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]`} />
                   <input
                     type="text"
                     placeholder={t("catalog.searchPlaceholder")}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none`}
+                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none`}
                   />
                 </div>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("catalog.allStatus")}</option>
                   <option value="passed">{t("nelc.passed")}</option>
@@ -476,7 +476,7 @@ const NELCComplianceCenterContent = () => {
                 <select
                   value={deliveryFilter}
                   onChange={(e) => setDeliveryFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("sessionsPage.allTypes")}</option>
                   <option value="zoom">{t("coursesPage.delivery.zoom")}</option>
@@ -490,10 +490,10 @@ const NELCComplianceCenterContent = () => {
               {filtered.length === 0 ? (
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <ShieldCheck className="w-8 h-8 text-[#9CA3AF]" />
+                    <ShieldCheck className="w-8 h-8 text-[var(--color-text-secondary)]" />
                   </div>
-                  <h3 className="text-lg font-semibold text-[#1F2937] mb-2">{t("nelc.noCourses")}</h3>
-                  <p className="text-sm text-[#6B7280]">
+                  <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">{t("nelc.noCourses")}</h3>
+                  <p className="text-sm text-[var(--color-text-secondary)]">
                     {courses.length === 0
                       ? t("nelc.noCoursesDesc")
                       : t("nelc.adjustFilter")}
@@ -505,19 +505,19 @@ const NELCComplianceCenterContent = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
-                          <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">
+                          <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                             {t("nelc.vcCourse")}
                           </th>
-                          <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase hidden md:table-cell">
+                          <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase hidden md:table-cell">
                             {t("nelc.vcInstructor")}
                           </th>
-                          <th className="px-4 py-3 text-center text-xs font-semibold text-[#6B7280] uppercase">
+                          <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                             {t("nelc.vcStatus")}
                           </th>
-                          <th className="px-4 py-3 text-center text-xs font-semibold text-[#6B7280] uppercase hidden sm:table-cell">
+                          <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--color-text-secondary)] uppercase hidden sm:table-cell">
                             {t("nelc.vcComplianceChecks")}
                           </th>
-                          <th className="px-4 py-3 text-center text-xs font-semibold text-[#6B7280] uppercase w-10">
+                          <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--color-text-secondary)] uppercase w-10">
                             &nbsp;
                           </th>
                         </tr>
@@ -540,12 +540,12 @@ const NELCComplianceCenterContent = () => {
                                 }}
                               >
                                 <td className="px-4 py-3">
-                                  <p className="text-sm font-medium text-[#1F2937]">
+                                  <p className="text-sm font-medium text-[var(--color-text-primary)]">
                                     {course.courseTitle}
                                   </p>
                                 </td>
                                 <td className="px-4 py-3 hidden md:table-cell">
-                                  <p className="text-sm text-[#4B5563]">{course.instructorName}</p>
+                                  <p className="text-sm text-[var(--color-text-secondary)]">{course.instructorName}</p>
                                 </td>
                                 <td className="px-4 py-3 text-center">
                                   <span
@@ -558,17 +558,17 @@ const NELCComplianceCenterContent = () => {
                                 <td className="px-4 py-3 text-center hidden sm:table-cell">
                                   <div className="flex items-center justify-center gap-1.5 text-xs">
                                     <span className="text-[#22C55E] font-medium">{course.summary.passed}</span>
-                                    <span className="text-[#9CA3AF]">/</span>
+                                    <span className="text-[var(--color-text-secondary)]">/</span>
                                     <span className="text-[#F59E0B] font-medium">{course.summary.review}</span>
-                                    <span className="text-[#9CA3AF]">/</span>
+                                    <span className="text-[var(--color-text-secondary)]">/</span>
                                     <span className="text-[#EF4444] font-medium">{course.summary.failed}</span>
                                   </div>
                                 </td>
                                 <td className="px-4 py-3 text-center">
                                   {isExpanded ? (
-                                    <ChevronUp className="w-4 h-4 text-[#6B7280]" />
+                                    <ChevronUp className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                   ) : (
-                                    <ChevronDown className="w-4 h-4 text-[#6B7280]" />
+                                    <ChevronDown className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                   )}
                                 </td>
                               </tr>
@@ -578,7 +578,7 @@ const NELCComplianceCenterContent = () => {
                                     {scorecardLoading[course.courseId] ? (
                                       <div className="flex items-center gap-2 py-6 justify-center">
                                         <Loader2 className="w-4 h-4 text-[#3B82F6] animate-spin" />
-                                        <span className="text-sm text-[#6B7280]">{t("nelc.loadingScorecard")}</span>
+                                        <span className="text-sm text-[var(--color-text-secondary)]">{t("nelc.loadingScorecard")}</span>
                                       </div>
                                     ) : scorecards[course.courseId] ? (
                                       <>
@@ -587,7 +587,7 @@ const NELCComplianceCenterContent = () => {
                                           <div className="text-2xl font-bold text-[#3B82F6]">
                                             {scorecards[course.courseId].overallScore}%
                                           </div>
-                                          <span className="text-sm text-[#6B7280]">{t("nelc.overallScore")}</span>
+                                          <span className="text-sm text-[var(--color-text-secondary)]">{t("nelc.overallScore")}</span>
                                         </div>
 
                                         {/* 7 Category Cards */}
@@ -614,7 +614,7 @@ const NELCComplianceCenterContent = () => {
                                                     <CatIcon className={`w-4 h-4 ${catConfig.text}`} />
                                                   </div>
                                                   <div className="flex-1 min-w-0">
-                                                    <p className="text-xs font-semibold text-[#1F2937] truncate">
+                                                    <p className="text-xs font-semibold text-[var(--color-text-primary)] truncate">
                                                       {translateCategoryLabel(cat.label, isRTL)}
                                                     </p>
                                                     <span className={`inline-flex items-center gap-1 text-[10px] font-medium ${catConfig.text}`}>
@@ -623,9 +623,9 @@ const NELCComplianceCenterContent = () => {
                                                     </span>
                                                   </div>
                                                   {isCatExpanded ? (
-                                                    <ChevronUp className="w-3.5 h-3.5 text-[#9CA3AF]" />
+                                                    <ChevronUp className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
                                                   ) : (
-                                                    <ChevronDown className="w-3.5 h-3.5 text-[#9CA3AF]" />
+                                                    <ChevronDown className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
                                                   )}
                                                 </div>
 
@@ -638,10 +638,10 @@ const NELCComplianceCenterContent = () => {
                                                         <div key={check.rule} className="flex items-start gap-2">
                                                           <ChkIcon className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${chkConfig.text}`} />
                                                           <div className="min-w-0">
-                                                            <p className="text-xs font-medium text-[#1F2937]">
+                                                            <p className="text-xs font-medium text-[var(--color-text-primary)]">
                                                               {translateRule(check.rule, isRTL)}
                                                             </p>
-                                                            <p className="text-[10px] text-[#6B7280]">{translateNelcDetail(check.detail, isRTL)}</p>
+                                                            <p className="text-[10px] text-[var(--color-text-secondary)]">{translateNelcDetail(check.detail, isRTL)}</p>
                                                           </div>
                                                         </div>
                                                       );
@@ -654,12 +654,12 @@ const NELCComplianceCenterContent = () => {
                                         </div>
                                       </>
                                     ) : (
-                                      <p className="text-sm text-[#9CA3AF] py-4 text-center">{t("nelc.scorecardUnavailable")}</p>
+                                      <p className="text-sm text-[var(--color-text-secondary)] py-4 text-center">{t("nelc.scorecardUnavailable")}</p>
                                     )}
 
                                     {/* Export Evidence button */}
                                     <div className="flex justify-end items-center gap-3">
-                                      <span className="text-xs text-[#9CA3AF]" title={t("nelc.bundleContents")}>
+                                      <span className="text-xs text-[var(--color-text-secondary)]" title={t("nelc.bundleContents")}>
                                         {t("nelc.bundleContentsShort")}
                                       </span>
                                       <button
@@ -693,15 +693,15 @@ const NELCComplianceCenterContent = () => {
                       <button
                         onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
-                        className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <ChevronLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
                       </button>
-                      <span className="px-3 py-1 text-sm text-[#374151]">{currentPage} / {totalPages}</span>
+                      <span className="px-3 py-1 text-sm text-[var(--color-text-secondary)]">{currentPage} / {totalPages}</span>
                       <button
                         onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage >= totalPages}
-                        className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <ChevronRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
                       </button>
@@ -715,17 +715,17 @@ const NELCComplianceCenterContent = () => {
                   {vcLoading ? (
                     <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                       <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin mx-auto mb-3" />
-                      <p className="text-sm text-[#6B7280]">{t("dashboard.loading")}</p>
+                      <p className="text-sm text-[var(--color-text-secondary)]">{t("dashboard.loading")}</p>
                     </div>
                   ) : filteredVc.length === 0 ? (
                     <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                       <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Video className="w-8 h-8 text-[#9CA3AF]" />
+                        <Video className="w-8 h-8 text-[var(--color-text-secondary)]" />
                       </div>
-                      <h3 className="text-lg font-semibold text-[#1F2937] mb-2">
+                      <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
                         {t("nelc.noVirtualClasses")}
                       </h3>
-                      <p className="text-sm text-[#6B7280]">
+                      <p className="text-sm text-[var(--color-text-secondary)]">
                         {virtualClasses.length === 0
                           ? t("nelc.noVirtualClassesDesc")
                           : t("nelc.adjustFilter")}
@@ -737,25 +737,25 @@ const NELCComplianceCenterContent = () => {
                         <table className="w-full">
                           <thead>
                             <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
-                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                 {t("nelc.vcSession")}
                               </th>
-                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase hidden md:table-cell">
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase hidden md:table-cell">
                                 {t("nelc.vcCourse")}
                               </th>
-                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase hidden lg:table-cell">
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase hidden lg:table-cell">
                                 {t("nelc.vcInstructor")}
                               </th>
-                              <th className="px-4 py-3 text-center text-xs font-semibold text-[#6B7280] uppercase">
+                              <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                 {t("nelc.vcType")}
                               </th>
-                              <th className="px-4 py-3 text-center text-xs font-semibold text-[#6B7280] uppercase hidden sm:table-cell">
+                              <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--color-text-secondary)] uppercase hidden sm:table-cell">
                                 {t("nelc.vcZoom")}
                               </th>
-                              <th className="px-4 py-3 text-center text-xs font-semibold text-[#6B7280] uppercase">
+                              <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                 {t("nelc.vcStatus")}
                               </th>
-                              <th className="px-4 py-3 text-center text-xs font-semibold text-[#6B7280] uppercase w-10">
+                              <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--color-text-secondary)] uppercase w-10">
                                 &nbsp;
                               </th>
                             </tr>
@@ -775,8 +775,8 @@ const NELCComplianceCenterContent = () => {
                                     }
                                   >
                                     <td className="px-4 py-3">
-                                      <p className="text-sm font-medium text-[#1F2937]">{vc.sessionTitle}</p>
-                                      <p className="text-xs text-[#6B7280]">
+                                      <p className="text-sm font-medium text-[var(--color-text-primary)]">{vc.sessionTitle}</p>
+                                      <p className="text-xs text-[var(--color-text-secondary)]">
                                         {vc.scheduledAt
                                           ? formatDateHijri(vc.scheduledAt, calendarFormat, { locale })
                                           : "—"}{" "}
@@ -784,13 +784,13 @@ const NELCComplianceCenterContent = () => {
                                       </p>
                                     </td>
                                     <td className="px-4 py-3 hidden md:table-cell">
-                                      <p className="text-sm text-[#4B5563]">{vc.courseTitle}</p>
+                                      <p className="text-sm text-[var(--color-text-secondary)]">{vc.courseTitle}</p>
                                     </td>
                                     <td className="px-4 py-3 hidden lg:table-cell">
-                                      <p className="text-sm text-[#4B5563]">{vc.instructorName}</p>
+                                      <p className="text-sm text-[var(--color-text-secondary)]">{vc.instructorName}</p>
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                      <span className="inline-flex items-center gap-1 text-xs font-medium text-[#4B5563]">
+                                      <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-text-secondary)]">
                                         {vc.type === "zoom" ? (
                                           <Video className="w-3.5 h-3.5 text-[#2D8CFF]" />
                                         ) : (
@@ -815,7 +815,7 @@ const NELCComplianceCenterContent = () => {
                                         </span>
                                         <span
                                           className={`inline-flex items-center gap-1 text-xs ${
-                                            vc.hasRecording ? "text-[#22C55E]" : "text-[#9CA3AF]"
+                                            vc.hasRecording ? "text-[#22C55E]" : "text-[var(--color-text-secondary)]"
                                           }`}
                                         >
                                           {vc.hasRecording ? (
@@ -837,16 +837,16 @@ const NELCComplianceCenterContent = () => {
                                     </td>
                                     <td className="px-4 py-3 text-center">
                                       {isExpanded ? (
-                                        <ChevronUp className="w-4 h-4 text-[#6B7280]" />
+                                        <ChevronUp className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                       ) : (
-                                        <ChevronDown className="w-4 h-4 text-[#6B7280]" />
+                                        <ChevronDown className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                       )}
                                     </td>
                                   </tr>
                                   {isExpanded && (
                                     <tr>
                                       <td colSpan={7} className="px-4 py-3 bg-[#F9FAFB]">
-                                        <h4 className="text-sm font-semibold text-[#1F2937] mb-3">
+                                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
                                           {t("nelc.vcComplianceChecks")}
                                         </h4>
                                         <div className="space-y-2">
@@ -862,10 +862,10 @@ const NELCComplianceCenterContent = () => {
                                                   className={`w-4 h-4 mt-0.5 flex-shrink-0 ${checkConfig.text}`}
                                                 />
                                                 <div>
-                                                  <p className="text-sm font-medium text-[#1F2937]">
+                                                  <p className="text-sm font-medium text-[var(--color-text-primary)]">
                                                     {translateRule(check.rule, isRTL)}
                                                   </p>
-                                                  <p className="text-xs text-[#6B7280]">{translateNelcDetail(check.detail, isRTL)}</p>
+                                                  <p className="text-xs text-[var(--color-text-secondary)]">{translateNelcDetail(check.detail, isRTL)}</p>
                                                 </div>
                                               </div>
                                             );

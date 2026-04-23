@@ -35,7 +35,7 @@ const FavouritesContent = () => {
       case "completed":
         return "text-[#16A34A]";
       default:
-        return "text-[#6B7280]";
+        return "text-[var(--color-text-secondary)]";
     }
   };
 
@@ -59,7 +59,7 @@ const FavouritesContent = () => {
             {/* Main Content */}
             <div className="flex-1 min-w-0">
               {/* Page Title */}
-              <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937] mb-4 sm:mb-6">
+              <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] mb-4 sm:mb-6">
                 {t("favourites.title")}
               </h1>
 
@@ -70,12 +70,12 @@ const FavouritesContent = () => {
                   // Empty State
                   <div className="flex flex-col items-center justify-center py-10 sm:py-16">
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3 sm:mb-4">
-                      <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-[#9CA3AF]" />
+                      <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--color-text-secondary)]" />
                     </div>
-                    <h3 className="text-sm sm:text-base font-medium text-[#1F2937] mb-1">
+                    <h3 className="text-sm sm:text-base font-medium text-[var(--color-text-primary)] mb-1">
                       {t("favourites.noFavouritesTitle")}
                     </h3>
-                    <p className="text-xs sm:text-sm text-[#6B7280] mb-4 sm:mb-6 text-center px-4">
+                    <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mb-4 sm:mb-6 text-center px-4">
                       {t("favourites.noFavouritesDescription")}
                     </p>
                     <Link
@@ -115,7 +115,7 @@ const FavouritesContent = () => {
 
                         {/* Course Info */}
                         <div className="p-3 sm:p-4">
-                          <h3 className="text-xs sm:text-sm font-semibold text-[#1F2937] mb-2 line-clamp-2">
+                          <h3 className="text-xs sm:text-sm font-semibold text-[var(--color-text-primary)] mb-2 line-clamp-2">
                             {course.title}
                           </h3>
 
@@ -128,7 +128,7 @@ const FavouritesContent = () => {
                             >
                               {getStatusLabel(course.status)}
                             </span>
-                            <span className="text-[10px] sm:text-xs text-[#6B7280]">
+                            <span className="text-[10px] sm:text-xs text-[var(--color-text-secondary)]">
                               {course.progress}%
                             </span>
                           </div>
@@ -144,7 +144,7 @@ const FavouritesContent = () => {
                           {/* View Course Button */}
                           <Link
                             href={`/${locale}/dashboard/student/courses/${course.id}`}
-                            className="block w-full py-1.5 sm:py-2 border border-[var(--color-border)] rounded-lg text-xs sm:text-sm font-medium text-[#1F2937] text-center hover:bg-[#F9FAFB] transition-colors"
+                            className="block w-full py-1.5 sm:py-2 border border-[var(--color-border)] rounded-lg text-xs sm:text-sm font-medium text-[var(--color-text-primary)] text-center hover:bg-[#F9FAFB] transition-colors"
                           >
                             {t("favourites.viewCourse")}
                           </Link>

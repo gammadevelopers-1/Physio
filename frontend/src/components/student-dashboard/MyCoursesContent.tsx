@@ -135,16 +135,16 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
       >
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-[#1F2937]">{t("myCourses.reviewTitle")}</h3>
+            <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("myCourses.reviewTitle")}</h3>
             <button onClick={onClose} className="p-1 hover:bg-[#F3F4F6] rounded">
-              <X className="w-5 h-5 text-[#6B7280]" />
+              <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
             </button>
           </div>
 
-          <p className="text-sm text-[#6B7280] mb-4 truncate">{courseTitle}</p>
+          <p className="text-sm text-[var(--color-text-secondary)] mb-4 truncate">{courseTitle}</p>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-[#374151] mb-2">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
               {t("myCourses.reviewStarsLabel")} *
             </label>
             <div className="flex gap-1">
@@ -164,7 +164,7 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
             </div>
           </div>
           <div className="mb-6">
-            <label className="block text-sm font-medium text-[#374151] mb-2">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
               {t("myCourses.reviewTextLabel")}
             </label>
             <textarea
@@ -176,13 +176,13 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
               placeholder={t("myCourses.reviewTextPlaceholder")}
               className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
             />
-            <p className="text-xs text-[#9CA3AF] mt-1">{reviewText.length} / 2000</p>
+            <p className="text-xs text-[var(--color-text-secondary)] mt-1">{reviewText.length} / 2000</p>
           </div>
           <div className="flex justify-end gap-3">
             <button
               onClick={onClose}
               disabled={submitting}
-              className="px-4 py-2 text-sm font-medium text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+              className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
             >
               {t("courseDetail.cancel")}
             </button>
@@ -287,7 +287,7 @@ const MyCoursesContent = () => {
     return {
       label: t("myCourses.viewDetails"),
       href: `/${locale}/dashboard/student/courses/${course.id}`,
-      className: "bg-[#1F2937] text-white hover:bg-[#111827]",
+      className: "bg-[var(--color-text-primary)] text-white hover:bg-[var(--color-text-primary)]",
       icon: BookOpen,
       showCertificate: course.enrollmentStatus === "completed" && (
         course.deliveryType === "self-paced" || course.deliveryType === "blended"
@@ -311,14 +311,14 @@ const MyCoursesContent = () => {
             <MobileSidebar user={userData} />
 
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937] mb-4 sm:mb-6">
+              <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] mb-4 sm:mb-6">
                 {t("myCourses.title")}
               </h1>
 
               <OfflineBanner />
 
               <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
-                <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-4">
+                <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                   {t("myCourses.recentCourses")}
                 </h2>
 
@@ -332,8 +332,8 @@ const MyCoursesContent = () => {
                       aria-selected={activeTab === tab.key}
                       className={`px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
                         activeTab === tab.key
-                          ? "bg-[#1F2937] text-white"
-                          : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[var(--color-border)]"
+                          ? "bg-[var(--color-text-primary)] text-white"
+                          : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
                       }`}
                     >
                       {tab.label}
@@ -349,7 +349,7 @@ const MyCoursesContent = () => {
                 ) : filteredCourses.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 sm:py-16">
                     <EmptyStateIllustration variant="courses" className="mb-2" />
-                    <h3 className="text-sm sm:text-base font-medium text-[#1F2937] mb-1">
+                    <h3 className="text-sm sm:text-base font-medium text-[var(--color-text-primary)] mb-1">
                       {activeTab === "completed"
                         ? t("myCourses.noCompletedTitle")
                         : activeTab === "dropped"
@@ -358,7 +358,7 @@ const MyCoursesContent = () => {
                             ? t("myCourses.noInProgressTitle")
                             : t("myCourses.noCoursesTitle")}
                     </h3>
-                    <p className="text-xs sm:text-sm text-[#6B7280] mb-4 sm:mb-6 text-center px-4">
+                    <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mb-4 sm:mb-6 text-center px-4">
                       {activeTab === "completed"
                         ? t("myCourses.noCompletedDescription")
                         : activeTab === "dropped"
@@ -458,7 +458,7 @@ const MyCoursesContent = () => {
                           {/* Course Info */}
                           <div className="p-3 sm:p-4 flex flex-col flex-1">
                             {/* Title */}
-                            <h3 className="text-xs sm:text-sm font-semibold text-[#1F2937] mb-2 line-clamp-2">
+                            <h3 className="text-xs sm:text-sm font-semibold text-[var(--color-text-primary)] mb-2 line-clamp-2">
                               {isRTL && course.titleAr
                                 ? course.titleAr
                                 : course.title}
@@ -475,7 +475,7 @@ const MyCoursesContent = () => {
                                 />
                               ) : (
                                 <div className="w-5 h-5 rounded-full bg-[var(--color-border)] flex items-center justify-center">
-                                  <span className="text-[8px] font-medium text-[#6B7280]">
+                                  <span className="text-[8px] font-medium text-[var(--color-text-secondary)]">
                                     {course.instructorName
                                       ?.split(" ")
                                       .map((n) => n[0])
@@ -485,7 +485,7 @@ const MyCoursesContent = () => {
                                   </span>
                                 </div>
                               )}
-                              <span className="text-[10px] sm:text-xs text-[#6B7280] truncate">
+                              <span className="text-[10px] sm:text-xs text-[var(--color-text-secondary)] truncate">
                                 {course.instructorName}
                               </span>
                             </div>
@@ -495,10 +495,10 @@ const MyCoursesContent = () => {
                               <div
                                 className={`flex items-center justify-between text-[10px] sm:text-xs mb-1 ${isRTL ? "flex-row-reverse" : ""}`}
                               >
-                                <span className="text-[#6B7280]">
+                                <span className="text-[var(--color-text-secondary)]">
                                   {t("myCourses.modulesCompleted", { completed: completedModules, total: course.totalModules })}
                                 </span>
-                                <span className="font-medium text-[#1F2937]">
+                                <span className="font-medium text-[var(--color-text-primary)]">
                                   {course.progress}%
                                 </span>
                               </div>
@@ -538,7 +538,7 @@ const MyCoursesContent = () => {
 
                               {/* Last Accessed */}
                               {course.lastAccessedAt && (
-                                <span className="flex items-center gap-1 text-[#9CA3AF]">
+                                <span className="flex items-center gap-1 text-[var(--color-text-secondary)]">
                                   <Clock className="w-3 h-3" />
                                   {relativeTime(course.lastAccessedAt)}
                                 </span>
@@ -613,18 +613,18 @@ const MyCoursesContent = () => {
                 <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
                   <AlertTriangle className="w-5 h-5 text-red-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-[#1F2937]">
+                <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                   {t("courseDetail.dropConfirmTitle")}
                 </h3>
               </div>
-              <p className="text-sm text-[#6B7280] mb-6">
+              <p className="text-sm text-[var(--color-text-secondary)] mb-6">
                 {t("courseDetail.dropConfirmMessage")}
               </p>
               <div className="flex gap-3 justify-end">
                 <button
                   onClick={() => setDropCourseId(null)}
                   disabled={dropping}
-                  className="px-4 py-2 text-sm font-medium text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                  className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
                 >
                   {t("courseDetail.cancel")}
                 </button>

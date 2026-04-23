@@ -64,7 +64,7 @@ const InstructorsManagementWidget = ({
           <div className="w-8 h-8 bg-[#FEF3C7] rounded-lg flex items-center justify-center">
             <Users className="w-4 h-4 text-[#D4A520]" />
           </div>
-          <h3 className="text-[15px] font-semibold text-[#1F2937]">
+          <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
             {t("instructors.title")}
           </h3>
         </div>
@@ -79,18 +79,18 @@ const InstructorsManagementWidget = ({
       <div className="flex items-center gap-3 px-4 sm:px-5 py-3 border-b border-[var(--color-border)]">
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
-          <span className="text-xs text-[#6B7280]">{t("instructors.available")}</span>
-          <span className="text-xs font-semibold text-[#1F2937]">{statusCounts.available}</span>
+          <span className="text-xs text-[var(--color-text-secondary)]">{t("instructors.available")}</span>
+          <span className="text-xs font-semibold text-[var(--color-text-primary)]">{statusCounts.available}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-[#F97316]" />
-          <span className="text-xs text-[#6B7280]">{t("instructors.busy")}</span>
-          <span className="text-xs font-semibold text-[#1F2937]">{statusCounts.busy}</span>
+          <span className="text-xs text-[var(--color-text-secondary)]">{t("instructors.busy")}</span>
+          <span className="text-xs font-semibold text-[var(--color-text-primary)]">{statusCounts.busy}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-[#EF4444]" />
-          <span className="text-xs text-[#6B7280]">{t("instructors.overloaded")}</span>
-          <span className="text-xs font-semibold text-[#1F2937]">{statusCounts.overloaded}</span>
+          <span className="text-xs text-[var(--color-text-secondary)]">{t("instructors.overloaded")}</span>
+          <span className="text-xs font-semibold text-[var(--color-text-primary)]">{statusCounts.overloaded}</span>
         </div>
       </div>
 
@@ -111,10 +111,10 @@ const InstructorsManagementWidget = ({
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-medium text-[#1F2937] truncate">
+                <p className="text-[13px] font-medium text-[var(--color-text-primary)] truncate">
                   {instructor.name}
                 </p>
-                <p className="text-[11px] text-[#6B7280]">
+                <p className="text-[11px] text-[var(--color-text-secondary)]">
                   {instructor.assignedCourses} {t("instructors.courses")} • {instructor.hoursPerWeek} {t("instructors.hrsWeek")}
                 </p>
                 {/* Load Bar */}

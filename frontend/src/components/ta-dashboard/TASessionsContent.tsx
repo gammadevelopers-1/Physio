@@ -206,7 +206,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
       case "live": return "bg-[#EF4444]";
       case "ended": return "bg-[#D97706]";
       case "completed": return "bg-[#22C55E]";
-      case "cancelled": return "bg-[#9CA3AF]";
+      case "cancelled": return "bg-[var(--color-text-secondary)]";
       default: return "bg-[#3B82F6]";
     }
   };
@@ -220,7 +220,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
       <div key={session.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-sm font-semibold text-[#1F2937] truncate">{session.title}</h3>
+            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] truncate">{session.title}</h3>
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${getStatusBadge(session.status)}`}>
               {session.status === "live" && (
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse mr-1" />
@@ -228,8 +228,8 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
               {t(`sessions.${session.status}`)}
             </span>
           </div>
-          <p className="text-xs text-[#6B7280] mb-1.5">{session.courseName}</p>
-          <div className="flex flex-wrap items-center gap-3 text-xs text-[#6B7280]">
+          <p className="text-xs text-[var(--color-text-secondary)] mb-1.5">{session.courseName}</p>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--color-text-secondary)]">
             <span className="flex items-center gap-1">
               {getTypeIcon(session.type)}
               {session.type}
@@ -265,7 +265,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
           {(session.status === "live" || session.status === "ended" || session.status === "completed") && (
             <button
               onClick={() => onViewAttendance(session.id, { scheduledAt: session.scheduledAt, durationMinutes: session.durationMinutes, title: session.title, type: session.type, status: session.status, courseId: session.courseId, zoomLink: session.zoomLink })}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[var(--color-border)] text-[#1F2937] rounded-lg text-xs font-medium hover:bg-[#F9FAFB] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-lg text-xs font-medium hover:bg-[#F9FAFB] transition-colors"
             >
               <Eye className="w-3.5 h-3.5" />
               {t("sessions.viewAttendance")}
@@ -274,7 +274,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
           {session.assessmentId && (
             <button
               onClick={() => onViewSubmissions(session.assessmentId!)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[var(--color-border)] text-[#1F2937] rounded-lg text-xs font-medium hover:bg-[#F9FAFB] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-lg text-xs font-medium hover:bg-[#F9FAFB] transition-colors"
             >
               <FileText className="w-3.5 h-3.5" />
               {t("sessions.viewSubmissions")}
@@ -289,13 +289,13 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
   const renderSessionGroup = (groupTitle: string, groupSessions: AssignedSession[]) => (
     <div className="bg-white rounded-xl border border-[var(--color-border)]">
       <div className="p-4 border-b border-[var(--color-border)]">
-        <h2 className="text-base font-semibold text-[#1F2937]">
+        <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
           {groupTitle}
-          <span className="ml-2 text-xs font-normal text-[#6B7280]">({groupSessions.length})</span>
+          <span className="ml-2 text-xs font-normal text-[var(--color-text-secondary)]">({groupSessions.length})</span>
         </h2>
       </div>
       {groupSessions.length === 0 ? (
-        <div className="p-8 text-center text-sm text-[#6B7280]">
+        <div className="p-8 text-center text-sm text-[var(--color-text-secondary)]">
           {t("sessions.noSessions")}
         </div>
       ) : (
@@ -311,8 +311,8 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#1F2937]">{t("sessions.title")}</h1>
-          <p className="text-sm text-[#6B7280] mt-1">{t("sessions.subtitle") || "View your assigned training lectures"}</p>
+          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{t("sessions.title")}</h1>
+          <p className="text-sm text-[var(--color-text-secondary)] mt-1">{t("sessions.subtitle") || "View your assigned training lectures"}</p>
         </div>
         <div className="flex items-center gap-3">
           {/* View Toggle */}
@@ -322,7 +322,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 viewMode === "list"
                   ? "btn-gold text-white"
-                  : "text-[#6B7280] hover:text-[#1F2937]"
+                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
               }`}
             >
               <List className="w-4 h-4" />
@@ -333,7 +333,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 viewMode === "calendar"
                   ? "btn-gold text-white"
-                  : "text-[#6B7280] hover:text-[#1F2937]"
+                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
               }`}
             >
               <Calendar className="w-4 h-4" />
@@ -345,7 +345,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-1.5 text-sm text-[#6B7280]">
+        <div className="flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)]">
           <Filter className="w-4 h-4" />
           {t("sessions.filters") || "Filter"}:
         </div>
@@ -401,7 +401,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-8 h-8 animate-spin text-[#6B7280]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--color-text-secondary)]" />
         </div>
       )}
 
@@ -423,35 +423,35 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
               onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))}
               className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
             >
-              <ChevronLeft className="w-5 h-5 text-[#6B7280]" />
+              <ChevronLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />
             </button>
-            <h2 className="text-lg font-semibold text-[#1F2937]">
+            <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
               {monthNames[calendarDate.getMonth()]} {calendarDate.getFullYear()}
             </h2>
             <button
               onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))}
               className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
             >
-              <ChevronRight className="w-5 h-5 text-[#6B7280]" />
+              <ChevronRight className="w-5 h-5 text-[var(--color-text-secondary)]" />
             </button>
           </div>
 
           {/* Legend */}
           <div className="flex items-center gap-4 px-4 py-2 border-b border-[var(--color-border)] bg-[#F9FAFB]">
-            <span className="flex items-center gap-1.5 text-xs text-[#6B7280]">
+            <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
               <span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" />
               {t("sessions.scheduled")}
             </span>
-            <span className="flex items-center gap-1.5 text-xs text-[#6B7280]">
+            <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
               <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
               {t("sessions.live")}
             </span>
-            <span className="flex items-center gap-1.5 text-xs text-[#6B7280]">
+            <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
               <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E]" />
               {t("sessions.completed")}
             </span>
-            <span className="flex items-center gap-1.5 text-xs text-[#6B7280]">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#9CA3AF]" />
+            <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
+              <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-text-secondary)]" />
               {t("sessions.cancelled") || "Cancelled"}
             </span>
           </div>
@@ -460,7 +460,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
           <div className="grid grid-cols-7">
             {/* Day Headers */}
             {dayNames.map((day) => (
-              <div key={day} className="p-3 text-center text-xs font-medium text-[#6B7280] border-b border-[var(--color-border)]">
+              <div key={day} className="p-3 text-center text-xs font-medium text-[var(--color-text-secondary)] border-b border-[var(--color-border)]">
                 {day}
               </div>
             ))}
@@ -484,7 +484,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
                 >
                   <span
                     className={`inline-flex items-center justify-center w-7 h-7 text-sm ${
-                      isToday ? "bg-[#3B82F6] text-white rounded-full font-semibold" : "text-[#1F2937]"
+                      isToday ? "bg-[#3B82F6] text-white rounded-full font-semibold" : "text-[var(--color-text-primary)]"
                     }`}
                   >
                     {day}
@@ -497,11 +497,11 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
                         title={`${session.title} - ${formatSessionTime(session.scheduledAt, locale)}`}
                       >
                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${getCalendarDotColor(session.status)}`} />
-                        <span className="truncate text-[#374151]">{session.title}</span>
+                        <span className="truncate text-[var(--color-text-secondary)]">{session.title}</span>
                       </div>
                     ))}
                     {daySessions.length > 2 && (
-                      <div className="text-[10px] text-[#6B7280] px-1.5">
+                      <div className="text-[10px] text-[var(--color-text-secondary)] px-1.5">
                         +{daySessions.length - 2} {t("sessions.more") || "more"}
                       </div>
                     )}
@@ -516,8 +516,8 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
       {/* Empty state when no sessions at all */}
       {!loading && sessions.length === 0 && (
         <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
-          <Search className="w-12 h-12 text-[#9CA3AF] mx-auto mb-3" />
-          <p className="text-[#6B7280]">{t("sessions.noSessions")}</p>
+          <Search className="w-12 h-12 text-[var(--color-text-secondary)] mx-auto mb-3" />
+          <p className="text-[var(--color-text-secondary)]">{t("sessions.noSessions")}</p>
         </div>
       )}
     </div>

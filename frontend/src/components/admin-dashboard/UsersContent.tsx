@@ -171,17 +171,17 @@ function CreateUserModal({
             <div className="w-10 h-10 rounded-full bg-[#002D87] flex items-center justify-center">
               <UserPlus className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-lg font-semibold text-[#1F2937]">Create New User</h2>
+            <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Create New User</h2>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg">
-            <X className="w-5 h-5 text-[#6B7280]" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">First Name *</label>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">First Name *</label>
               <input
                 type="text"
                 value={form.firstName}
@@ -191,7 +191,7 @@ function CreateUserModal({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">Last Name *</label>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Last Name *</label>
               <input
                 type="text"
                 value={form.lastName}
@@ -203,7 +203,7 @@ function CreateUserModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">Email *</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Email *</label>
             <input
               type="email"
               value={form.email}
@@ -214,7 +214,7 @@ function CreateUserModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">Password *</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Password *</label>
             <input
               type="password"
               value={form.password}
@@ -226,7 +226,7 @@ function CreateUserModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">Phone</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Phone</label>
             <input
               type="tel"
               value={form.phone}
@@ -236,7 +236,7 @@ function CreateUserModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">Role *</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Role *</label>
             <select
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value })}
@@ -254,7 +254,7 @@ function CreateUserModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
+              className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
             >
               Cancel
             </button>
@@ -338,22 +338,22 @@ function EditUserModal({
               <Edit className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-[#1F2937]">Edit User</h2>
-              <p className="text-xs text-[#6B7280]">{user.email}</p>
+              <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Edit User</h2>
+              <p className="text-xs text-[var(--color-text-secondary)]">{user.email}</p>
               {user.lastLoginIp && (
-                <p className="text-xs text-[#9CA3AF]">Last IP: {user.lastLoginIp}</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">Last IP: {user.lastLoginIp}</p>
               )}
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg">
-            <X className="w-5 h-5 text-[#6B7280]" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">First Name *</label>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">First Name *</label>
               <input
                 type="text"
                 value={form.firstName}
@@ -363,7 +363,7 @@ function EditUserModal({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">Last Name *</label>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Last Name *</label>
               <input
                 type="text"
                 value={form.lastName}
@@ -375,7 +375,7 @@ function EditUserModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">Phone</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Phone</label>
             <input
               type="tel"
               value={form.phone}
@@ -385,7 +385,7 @@ function EditUserModal({
           </div>
 
           <div className="flex items-center justify-between py-2">
-            <span className="text-sm font-medium text-[#374151]">Active</span>
+            <span className="text-sm font-medium text-[var(--color-text-secondary)]">Active</span>
             <button
               type="button"
               onClick={() => setForm({ ...form, isActive: !form.isActive })}
@@ -402,7 +402,7 @@ function EditUserModal({
           </div>
 
           <div className="flex items-center justify-between py-2">
-            <span className="text-sm font-medium text-[#374151]">Verified</span>
+            <span className="text-sm font-medium text-[var(--color-text-secondary)]">Verified</span>
             <button
               type="button"
               onClick={() => setForm({ ...form, isVerified: !form.isVerified })}
@@ -422,7 +422,7 @@ function EditUserModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
+              className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
             >
               Cancel
             </button>
@@ -483,10 +483,10 @@ function DeleteUserModal({
           <div className="w-10 h-10 rounded-full bg-[#FEE2E2] flex items-center justify-center">
             <Trash2 className="w-5 h-5 text-[#DC2626]" />
           </div>
-          <h2 className="text-lg font-semibold text-[#1F2937]">Delete User</h2>
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Delete User</h2>
         </div>
 
-        <p className="text-sm text-[#4B5563] mb-2">
+        <p className="text-sm text-[var(--color-text-secondary)] mb-2">
           Are you sure you want to delete <strong>{getUserName(user)}</strong>?
         </p>
         <p className="text-xs text-[#DC2626] mb-6">
@@ -496,7 +496,7 @@ function DeleteUserModal({
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
+            className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
           >
             Cancel
           </button>
@@ -596,7 +596,7 @@ function ManageRolesModal({
     switch (role.toLowerCase()) {
       case "admin":
       case "super_admin":
-        return "bg-[#1F2937] text-white";
+        return "bg-[var(--color-text-primary)] text-white";
       case "instructor":
         return "bg-[#DBEAFE] text-[#1D4ED8]";
       case "student":
@@ -610,7 +610,7 @@ function ManageRolesModal({
       case "support":
         return "bg-[#DBEAFE] text-[#2563EB]";
       default:
-        return "bg-[#F3F4F6] text-[#6B7280]";
+        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -623,18 +623,18 @@ function ManageRolesModal({
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-[#1F2937]">Manage Roles</h2>
-              <p className="text-xs text-[#6B7280]">{getUserName(user)}</p>
+              <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Manage Roles</h2>
+              <p className="text-xs text-[var(--color-text-secondary)]">{getUserName(user)}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg">
-            <X className="w-5 h-5 text-[#6B7280]" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
 
         {/* Current Roles */}
         <div className="mb-6">
-          <p className="text-sm font-medium text-[#374151] mb-3">Current Roles</p>
+          <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-3">Current Roles</p>
           <div className="space-y-2">
             {userRoles.map((role) => (
               <div
@@ -677,7 +677,7 @@ function ManageRolesModal({
                       </button>
                       <button
                         onClick={() => setConfirmingRemoveRole(null)}
-                        className="text-xs text-[#6B7280] hover:underline"
+                        className="text-xs text-[var(--color-text-secondary)] hover:underline"
                       >
                         Cancel
                       </button>
@@ -700,7 +700,7 @@ function ManageRolesModal({
         {/* Add Role */}
         {availableRoles.length > 0 && (
           <div>
-            <p className="text-sm font-medium text-[#374151] mb-3">Add Role</p>
+            <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-3">Add Role</p>
             <div className="flex flex-wrap gap-2">
               {availableRoles.map((role) => (
                 <button
@@ -720,7 +720,7 @@ function ManageRolesModal({
         <div className="mt-6">
           <button
             onClick={onClose}
-            className="w-full h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
+            className="w-full h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
           >
             Close
           </button>
@@ -822,7 +822,7 @@ const UsersContent = () => {
     switch (role.toLowerCase()) {
       case "admin":
       case "super_admin":
-        return "bg-[#1F2937] text-white";
+        return "bg-[var(--color-text-primary)] text-white";
       case "instructor":
         return "bg-[#DBEAFE] text-[#1D4ED8]";
       case "student":
@@ -836,7 +836,7 @@ const UsersContent = () => {
       case "support":
         return "bg-[#DBEAFE] text-[#2563EB]";
       default:
-        return "bg-[#F3F4F6] text-[#6B7280]";
+        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -849,9 +849,9 @@ const UsersContent = () => {
       case "pending":
         return "bg-[#FEF3C7] text-[#D97706]";
       case "inactive":
-        return "bg-[#F3F4F6] text-[#6B7280]";
+        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
       default:
-        return "bg-[#F3F4F6] text-[#6B7280]";
+        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -859,7 +859,7 @@ const UsersContent = () => {
     switch (role.toLowerCase()) {
       case "admin":
       case "super_admin":
-        return "bg-[#1F2937]";
+        return "bg-[var(--color-text-primary)]";
       case "instructor":
         return "bg-[#3B82F6]";
       case "student":
@@ -873,7 +873,7 @@ const UsersContent = () => {
       case "support":
         return "bg-[#2563EB]";
       default:
-        return "bg-[#9CA3AF]";
+        return "bg-[var(--color-text-secondary)]";
     }
   };
 
@@ -911,10 +911,10 @@ const UsersContent = () => {
               {/* Page Header */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
+                  <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
                     {t("usersPage.title")}
                   </h1>
-                  <p className="text-sm text-[#6B7280] mt-1">
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                     {t("usersPage.subtitle")}
                   </p>
                 </div>
@@ -930,16 +930,16 @@ const UsersContent = () => {
               {/* Stats Cards */}
               <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
-                  <p className="text-2xl font-bold text-[#1F2937]">{stats.total}</p>
-                  <p className="text-sm text-[#6B7280]">{t("usersPage.stats.total")}</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.total}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{t("usersPage.stats.total")}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[#16A34A]">{stats.active}</p>
-                  <p className="text-sm text-[#6B7280]">{t("usersPage.stats.active")}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{t("usersPage.stats.active")}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[#DC2626]">{stats.suspended}</p>
-                  <p className="text-sm text-[#6B7280]">{t("usersPage.stats.suspended")}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{t("usersPage.stats.suspended")}</p>
                 </div>
               </div>
 
@@ -947,7 +947,7 @@ const UsersContent = () => {
               <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-1 relative">
-                    <Search className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`} />
+                    <Search className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`} />
                     <input
                       type="text"
                       placeholder={t("usersPage.searchPlaceholder")}
@@ -960,7 +960,7 @@ const UsersContent = () => {
                   <select
                     value={roleFilter}
                     onChange={(e) => setRoleFilter(e.target.value)}
-                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
+                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
                   >
                     <option value="all">{t("usersPage.filters.allRoles")}</option>
                     <option value="admin">{t("userManagement.roles.admin")}</option>
@@ -975,7 +975,7 @@ const UsersContent = () => {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
+                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
                   >
                     <option value="all">{t("usersPage.filters.allStatus")}</option>
                     <option value="active">{t("userManagement.statuses.active")}</option>
@@ -983,7 +983,7 @@ const UsersContent = () => {
                     <option value="suspended">{t("userManagement.statuses.suspended")}</option>
                   </select>
 
-                  <button className="flex items-center gap-2 px-4 h-10 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB] transition-colors">
+                  <button className="flex items-center gap-2 px-4 h-10 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors">
                     <Download className="w-4 h-4" />
                     {t("usersPage.export")}
                   </button>
@@ -994,7 +994,7 @@ const UsersContent = () => {
               {isLoadingUsers && (
                 <div className="bg-white rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center">
                   <Loader2 className="w-8 h-8 animate-spin text-[#002D87] mb-3" />
-                  <p className="text-sm text-[#6B7280]">Loading users...</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">Loading users...</p>
                 </div>
               )}
 
@@ -1021,25 +1021,25 @@ const UsersContent = () => {
                     <table className="w-full">
                       <thead className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
                         <tr>
-                          <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                          <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                             {t("usersPage.table.user")}
                           </th>
-                          <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                          <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                             {t("usersPage.table.role")}
                           </th>
-                          <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                          <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                             {t("usersPage.table.status")}
                           </th>
-                          <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                          <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                             {t("usersPage.table.lastLogin")}
                           </th>
-                          <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase hidden lg:table-cell ${isRTL ? "text-right" : "text-left"}`}>
+                          <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase hidden lg:table-cell ${isRTL ? "text-right" : "text-left"}`}>
                             {t("usersPage.table.lastIp")}
                           </th>
-                          <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                          <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                             {t("usersPage.table.created")}
                           </th>
-                          <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                          <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                             {t("usersPage.table.actions")}
                           </th>
                         </tr>
@@ -1056,10 +1056,10 @@ const UsersContent = () => {
                                     <span className="text-sm font-medium text-white">{getInitials(user)}</span>
                                   </div>
                                   <div className="min-w-0">
-                                    <p className="text-sm font-medium text-[#1F2937] truncate">{getUserName(user)}</p>
-                                    <p className="text-xs text-[#6B7280] truncate">{user.email}</p>
+                                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{getUserName(user)}</p>
+                                    <p className="text-xs text-[var(--color-text-secondary)] truncate">{user.email}</p>
                                     {user.scfhsNumber && (
-                                      <p className="text-[10px] text-[#9CA3AF] font-mono truncate">{user.scfhsNumber}</p>
+                                      <p className="text-[10px] text-[var(--color-text-secondary)] font-mono truncate">{user.scfhsNumber}</p>
                                     )}
                                   </div>
                                 </div>
@@ -1074,13 +1074,13 @@ const UsersContent = () => {
                                   {t(`userManagement.statuses.${status}`)}
                                 </span>
                               </td>
-                              <td className="px-4 py-4 text-sm text-[#6B7280] whitespace-nowrap">
+                              <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)] whitespace-nowrap">
                                 {formatRelativeTime(user.lastLoginAt)}
                               </td>
-                              <td className="px-4 py-4 text-sm text-[#6B7280] whitespace-nowrap hidden lg:table-cell">
+                              <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)] whitespace-nowrap hidden lg:table-cell">
                                 {user.lastLoginIp || "—"}
                               </td>
-                              <td className="px-4 py-4 text-sm text-[#6B7280] whitespace-nowrap">
+                              <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)] whitespace-nowrap">
                                 {formatDate(user.createdAt)}
                               </td>
                               <td className="px-4 py-4">
@@ -1092,7 +1092,7 @@ const UsersContent = () => {
                                     }}
                                     className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
                                   >
-                                    <MoreVertical className="w-4 h-4 text-[#6B7280]" />
+                                    <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                   </button>
 
                                   {openDropdownId === user.id && (
@@ -1102,7 +1102,7 @@ const UsersContent = () => {
                                           setEditingUser(user);
                                           setOpenDropdownId(null);
                                         }}
-                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F9FAFB]"
+                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
                                       >
                                         <Edit className="w-4 h-4" />
                                         {t("usersPage.actions.edit")}
@@ -1112,7 +1112,7 @@ const UsersContent = () => {
                                           setManagingRolesUser(user);
                                           setOpenDropdownId(null);
                                         }}
-                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F9FAFB]"
+                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
                                       >
                                         <Shield className="w-4 h-4" />
                                         Manage Roles
@@ -1122,7 +1122,7 @@ const UsersContent = () => {
                                           setViewingDevicesUser(user);
                                           setOpenDropdownId(null);
                                         }}
-                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F9FAFB]"
+                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
                                       >
                                         <Smartphone className="w-4 h-4" />
                                         Trusted Devices
@@ -1164,7 +1164,7 @@ const UsersContent = () => {
 
                   {users.length === 0 && (
                     <div className="py-12 text-center">
-                      <p className="text-[#6B7280]">{t("usersPage.noUsers")}</p>
+                      <p className="text-[var(--color-text-secondary)]">{t("usersPage.noUsers")}</p>
                     </div>
                   )}
                 </div>
@@ -1172,7 +1172,7 @@ const UsersContent = () => {
                 {/* Pagination */}
                 {pagination.totalPages > 1 && (
                   <div className="flex items-center justify-between mt-4">
-                    <p className="text-sm text-[#6B7280]">
+                    <p className="text-sm text-[var(--color-text-secondary)]">
                       Showing {(currentPage - 1) * 10 + 1} to {Math.min(currentPage * 10, pagination.total)} of {pagination.total} users
                     </p>
                     <div className="flex items-center gap-2">
@@ -1188,14 +1188,14 @@ const UsersContent = () => {
                         .map((p, idx, arr) => (
                           <span key={p}>
                             {idx > 0 && arr[idx - 1] !== p - 1 && (
-                              <span className="px-1 text-[#6B7280]">...</span>
+                              <span className="px-1 text-[var(--color-text-secondary)]">...</span>
                             )}
                             <button
                               onClick={() => setCurrentPage(p)}
                               className={`w-8 h-8 text-sm rounded-lg ${
                                 p === currentPage
                                   ? "bg-[#002D87] text-white"
-                                  : "border border-[var(--color-border)] hover:bg-[#F9FAFB] text-[#4B5563]"
+                                  : "border border-[var(--color-border)] hover:bg-[#F9FAFB] text-[var(--color-text-secondary)]"
                               }`}
                             >
                               {p}

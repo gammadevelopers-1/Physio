@@ -164,9 +164,9 @@ const Testimonials = ({ testimonials: strapiTestimonials = [], sectionData }: Te
                 className="p-3 bg-[#f9fbfd] border border-[var(--outline-subtle)] rounded-full hover:bg-gray-100 transition-colors"
               >
                 {isRTL ? (
-                  <ArrowRight className="w-4 h-4 text-[#0b0f17]" strokeWidth={1.5} />
+                  <ArrowRight className="w-4 h-4 text-[var(--color-text-primary)]" strokeWidth={1.5} />
                 ) : (
-                  <ArrowLeft className="w-4 h-4 text-[#0b0f17]" strokeWidth={1.5} />
+                  <ArrowLeft className="w-4 h-4 text-[var(--color-text-primary)]" strokeWidth={1.5} />
                 )}
               </button>
               <button
@@ -174,9 +174,9 @@ const Testimonials = ({ testimonials: strapiTestimonials = [], sectionData }: Te
                 className="p-3 bg-[#f9fbfd] border border-[var(--outline-subtle)] rounded-full hover:bg-gray-100 transition-colors"
               >
                 {isRTL ? (
-                  <ArrowLeft className="w-4 h-4 text-[#0b0f17]" strokeWidth={1.5} />
+                  <ArrowLeft className="w-4 h-4 text-[var(--color-text-primary)]" strokeWidth={1.5} />
                 ) : (
-                  <ArrowRight className="w-4 h-4 text-[#0b0f17]" strokeWidth={1.5} />
+                  <ArrowRight className="w-4 h-4 text-[var(--color-text-primary)]" strokeWidth={1.5} />
                 )}
               </button>
             </div>
@@ -189,7 +189,7 @@ const Testimonials = ({ testimonials: strapiTestimonials = [], sectionData }: Te
         <div className="flex flex-col gap-5 items-center justify-center max-w-full w-full">
           {/* Section Title */}
           {(title || description) && (
-            <div className="flex flex-col gap-6 items-center justify-center text-center text-black w-full">
+            <div className="flex flex-col gap-6 items-center justify-center text-center text-[var(--color-text-primary)] w-full">
               {title && (
                 <h2
                   className="font-semibold leading-none tracking-[-0.15px] w-full"
@@ -215,7 +215,7 @@ const Testimonials = ({ testimonials: strapiTestimonials = [], sectionData }: Te
               className={`flex flex-col gap-16 overflow-hidden ${isRTL ? "items-start text-right" : "items-start"}`}
             >
               <p
-                className="text-black font-semibold"
+                className="text-[var(--color-text-primary)] font-semibold"
                 style={{
                   fontSize: "var(--typeface-font-styles-heading-h5)",
                 }}
@@ -224,7 +224,7 @@ const Testimonials = ({ testimonials: strapiTestimonials = [], sectionData }: Te
               </p>
 
               <div
-                className="flex flex-col text-black items-start"
+                className="flex flex-col text-[var(--color-text-primary)] items-start"
               >
                 <p
                   className="font-semibold"

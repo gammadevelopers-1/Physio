@@ -71,7 +71,7 @@ const CatalogOverviewWidget = ({
     { label: t("catalog.active"), count: statusCounts.active, color: "#22C55E" },
     { label: t("catalog.preparing"), count: statusCounts.preparing, color: "#F59E0B" },
     { label: t("catalog.completed"), count: statusCounts.completed, color: "#3B82F6" },
-    { label: t("catalog.archived"), count: statusCounts.archived, color: "#9CA3AF" },
+    { label: t("catalog.archived"), count: statusCounts.archived, color: "var(--color-text-secondary)" },
   ].filter((d) => d.count > 0);
 
   const total = donutData.reduce((sum, d) => sum + d.count, 0);
@@ -129,7 +129,7 @@ const CatalogOverviewWidget = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Donut Chart — Status Distribution */}
             <div>
-              <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-3">
+              <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
                 {t("catalog.statusDistribution")}
               </p>
               <div className="flex items-center gap-6">
@@ -142,7 +142,7 @@ const CatalogOverviewWidget = ({
                     ))
                   )}
                   <circle cx="50" cy="50" r="24" fill="white" />
-                  <text x="50" y="50" textAnchor="middle" dominantBaseline="central" className="text-xs font-bold" fill="#1F2937" fontSize="14">
+                  <text x="50" y="50" textAnchor="middle" dominantBaseline="central" className="text-xs font-bold" fill="var(--color-text-primary)" fontSize="14">
                     {total}
                   </text>
                 </svg>
@@ -150,8 +150,8 @@ const CatalogOverviewWidget = ({
                   {donutData.map((d, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
-                      <span className="text-xs text-[#374151]">{d.label}</span>
-                      <span className="text-xs font-medium text-[#1F2937]">{d.count}</span>
+                      <span className="text-xs text-[var(--color-text-secondary)]">{d.label}</span>
+                      <span className="text-xs font-medium text-[var(--color-text-primary)]">{d.count}</span>
                     </div>
                   ))}
                 </div>
@@ -160,7 +160,7 @@ const CatalogOverviewWidget = ({
 
             {/* Bar Chart — Enrollment by Delivery Type */}
             <div>
-              <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-3">
+              <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
                 {t("catalog.enrollmentByCategory")}
               </p>
               <div className="space-y-2">
@@ -176,10 +176,10 @@ const CatalogOverviewWidget = ({
                   return (
                     <div key={i}>
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-xs text-[#374151] truncate max-w-[120px]">
+                        <span className="text-xs text-[var(--color-text-secondary)] truncate max-w-[120px]">
                           {deliveryLabel} ({cat.courseCount})
                         </span>
-                        <span className="text-xs font-medium text-[#1F2937]">
+                        <span className="text-xs font-medium text-[var(--color-text-primary)]">
                           {cat.capacity > 0 ? `${cat.enrolled}/${cat.capacity}` : `${cat.enrolled}`}
                         </span>
                       </div>
@@ -193,7 +193,7 @@ const CatalogOverviewWidget = ({
                   );
                 })}
                 {categoryEnrollment.length === 0 && (
-                  <p className="text-xs text-[#9CA3AF]">—</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">—</p>
                 )}
               </div>
             </div>
@@ -283,7 +283,7 @@ const CatalogOverviewWidget = ({
                       </span>
                     </div>
                   ) : (
-                    <span className="text-sm text-[#9CA3AF]">--</span>
+                    <span className="text-sm text-[var(--color-text-secondary)]">--</span>
                   )}
                 </td>
               </tr>

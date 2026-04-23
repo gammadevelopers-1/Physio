@@ -94,12 +94,12 @@ export default function UserDevicesModal({ user, onClose }: UserDevicesModalProp
                 <span className="text-sm font-medium text-white">{getInitials(user)}</span>
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-[#1F2937]">{getUserName(user)}</h2>
-                <p className="text-xs text-[#6B7280]">{t("trustedDevices.title")}</p>
+                <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{getUserName(user)}</h2>
+                <p className="text-xs text-[var(--color-text-secondary)]">{t("trustedDevices.title")}</p>
               </div>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg">
-              <X className="w-5 h-5 text-[#6B7280]" />
+              <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
             </button>
           </div>
 
@@ -124,7 +124,7 @@ export default function UserDevicesModal({ user, onClose }: UserDevicesModalProp
           <div className="mt-6">
             <button
               onClick={onClose}
-              className="w-full h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
+              className="w-full h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
             >
               Close
             </button>

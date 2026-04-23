@@ -101,7 +101,7 @@ function SignInForm() {
                   <div className="flex flex-col gap-1.5 w-full">
                     <label
                       htmlFor="email"
-                      className="font-medium text-[#0a0a0a]"
+                      className="font-medium text-[var(--color-text-primary)]"
                       style={{ fontSize: "14px", lineHeight: "20px" }}
                     >
                       {t("form.email")}
@@ -126,14 +126,14 @@ function SignInForm() {
                     <div className="flex items-center justify-between w-full">
                       <label
                         htmlFor="password"
-                        className="font-medium text-[#0a0a0a]"
+                        className="font-medium text-[var(--color-text-primary)]"
                         style={{ fontSize: "14px", lineHeight: "20px" }}
                       >
                         {t("form.password")}
                       </label>
                       <Link
                         href={`/${locale}/forgot-password`}
-                        className="font-medium text-[#06080b] hover:underline"
+                        className="font-medium text-[var(--color-text-primary)] hover:underline"
                         style={{ fontSize: "14px" }}
                       >
                         {t("form.forgotPassword")}
@@ -182,7 +182,7 @@ function SignInForm() {
                       )}
                     </button>
                     <span
-                      className="font-medium text-[#414651]"
+                      className="font-medium text-[var(--color-text-secondary)]"
                       style={{ fontSize: "14px", lineHeight: "20px" }}
                     >
                       {t("form.rememberMe")}

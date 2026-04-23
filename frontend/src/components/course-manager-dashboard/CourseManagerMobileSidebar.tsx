@@ -188,7 +188,7 @@ const CourseManagerMobileSidebar = ({
           className={`absolute top-4 ${isRTL ? "left-4" : "right-4"} w-8 h-8 flex items-center justify-center`}
           aria-label="Close menu"
         >
-          <X className="w-6 h-6 text-[#6B7280]" />
+          <X className="w-6 h-6 text-[var(--color-text-secondary)]" />
         </button>
 
         <div className="p-4 pt-14 flex flex-col gap-4">
@@ -228,10 +228,10 @@ const CourseManagerMobileSidebar = ({
                     <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`} role="menu">
                       <button
                         onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
                         role="menuitem"
                       >
-                        <Upload className="w-4 h-4 text-[#4B5563]" />
+                        <Upload className="w-4 h-4 text-[var(--color-text-secondary)]" />
                         {t("sidebar.uploadPhoto")}
                       </button>
                       {manager.avatar && (
@@ -249,10 +249,10 @@ const CourseManagerMobileSidebar = ({
                 </div>
               </div>
 
-              <h3 className="text-lg font-semibold text-[#1F2937]">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {manager.name}
               </h3>
-              <p className="text-sm text-[#6B7280] mb-2">{manager.email}</p>
+              <p className="text-sm text-[var(--color-text-secondary)] mb-2">{manager.email}</p>
 
               <div className="flex items-center gap-1.5 px-3 py-1 bg-[#EDE9FE] rounded-full">
                 <Briefcase className="w-4 h-4 text-[#8B5CF6]" />
@@ -265,16 +265,16 @@ const CourseManagerMobileSidebar = ({
             {/* Stats Row */}
             <div className="mt-6 flex justify-around py-4 border-t border-[var(--color-border)]">
               <div className="text-center">
-                <p className="text-xl font-bold text-[#1F2937]">{manager.totalCourses}</p>
-                <p className="text-xs text-[#6B7280]">{t("sidebar.courses")}</p>
+                <p className="text-xl font-bold text-[var(--color-text-primary)]">{manager.totalCourses}</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.courses")}</p>
               </div>
               <div className="text-center">
-                <p className="text-xl font-bold text-[#1F2937]">{manager.totalEnrollments}</p>
-                <p className="text-xs text-[#6B7280]">{t("kpi.totalEnrollments")}</p>
+                <p className="text-xl font-bold text-[var(--color-text-primary)]">{manager.totalEnrollments}</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">{t("kpi.totalEnrollments")}</p>
               </div>
               <div className="text-center">
-                <p className="text-xl font-bold text-[#1F2937]">{manager.totalInstructors}</p>
-                <p className="text-xs text-[#6B7280]">{t("sidebar.instructors")}</p>
+                <p className="text-xl font-bold text-[var(--color-text-primary)]">{manager.totalInstructors}</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.instructors")}</p>
               </div>
             </div>
 
@@ -282,7 +282,7 @@ const CourseManagerMobileSidebar = ({
             <Link
               href={`/${locale}/dashboard/manager/settings`}
               onClick={() => setIsOpen(false)}
-              className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors text-center block"
+              className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors text-center block"
             >
               {t("sidebar.viewProfile")}
             </Link>
@@ -304,11 +304,11 @@ const CourseManagerMobileSidebar = ({
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                       active
                         ? "bg-[#F0F7FF] text-[#002D87]"
-                        : "text-[#4B5563] hover:bg-[#F9FAFB]"
+                        : "text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
                     }`}
                   >
                     <Icon
-                      className={`w-5 h-5 ${active ? "text-[#002D87]" : "text-[#6B7280]"}`}
+                      className={`w-5 h-5 ${active ? "text-[#002D87]" : "text-[var(--color-text-secondary)]"}`}
                     />
                     <span className={`text-sm flex-1 ${active ? "font-medium" : ""}`}>
                       {item.label}

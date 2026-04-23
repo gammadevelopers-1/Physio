@@ -195,7 +195,7 @@ const AllTicketsContent = () => {
     inProgress: "bg-[#FEF9C3] text-[#EAB308]",
     waiting: "bg-[#FFEDD5] text-[#F97316]",
     resolved: "bg-[#DCFCE7] text-[#22C55E]",
-    closed: "bg-[#F3F4F6] text-[#6B7280]",
+    closed: "bg-[#F3F4F6] text-[var(--color-text-secondary)]",
   };
 
   const filteredTickets = tickets.filter((ticket) => {
@@ -264,10 +264,10 @@ const AllTicketsContent = () => {
                         <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                       </div>
                       <div>
-                        <p className="text-xs text-[#6B7280] font-medium">
+                        <p className="text-xs text-[var(--color-text-secondary)] font-medium">
                           {stat.label}
                         </p>
-                        <p className="text-xl font-bold text-[#111827]">
+                        <p className="text-xl font-bold text-[var(--color-text-primary)]">
                           {stat.value}
                         </p>
                       </div>
@@ -287,8 +287,8 @@ const AllTicketsContent = () => {
                         onClick={() => setActiveTab(tab.key)}
                         className={`px-4 py-1.5 text-[13px] font-medium rounded-md transition-colors flex items-center gap-2 whitespace-nowrap ${
                           activeTab === tab.key
-                            ? "bg-white text-[#111827] shadow-sm"
-                            : "text-[#6B7280] hover:text-[#374151]"
+                            ? "bg-white text-[var(--color-text-primary)] shadow-sm"
+                            : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                         }`}
                       >
                         {tab.label}
@@ -296,7 +296,7 @@ const AllTicketsContent = () => {
                           className={`text-[11px] px-1.5 py-0.5 rounded-full ${
                             activeTab === tab.key
                               ? "bg-[var(--color-primary)] text-white"
-                              : "bg-[var(--color-border)] text-[#6B7280]"
+                              : "bg-[var(--color-border)] text-[var(--color-text-secondary)]"
                           }`}
                         >
                           {tab.count}
@@ -313,7 +313,7 @@ const AllTicketsContent = () => {
                     <select
                       value={categoryFilter}
                       onChange={(e) => setCategoryFilter(e.target.value)}
-                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[#374151] focus:outline-none focus:border-[var(--color-primary)] bg-white"
+                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-primary)] bg-white"
                     >
                       <option value="all">
                         {t("allTicketsPage.filters.allCategories")}
@@ -339,7 +339,7 @@ const AllTicketsContent = () => {
                     <select
                       value={priorityFilter}
                       onChange={(e) => setPriorityFilter(e.target.value)}
-                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[#374151] focus:outline-none focus:border-[var(--color-primary)] bg-white"
+                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-primary)] bg-white"
                     >
                       <option value="all">
                         {t("allTicketsPage.filters.allPriorities")}
@@ -358,7 +358,7 @@ const AllTicketsContent = () => {
                     {/* Search Input */}
                     <div className="relative flex-1 w-full sm:w-auto">
                       <Search
-                        className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                        className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                       />
                       <input
                         type="text"
@@ -383,42 +383,42 @@ const AllTicketsContent = () => {
                     <thead>
                       <tr className="border-b border-[var(--color-border)]">
                         <th
-                          className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}
+                          className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
                         >
                           {t("allTicketsPage.columns.ticketId")}
                         </th>
                         <th
-                          className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}
+                          className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
                         >
                           {t("allTicketsPage.columns.subject")}
                         </th>
                         <th
-                          className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}
+                          className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
                         >
                           {t("allTicketsPage.columns.customer")}
                         </th>
                         <th
-                          className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}
+                          className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}
                         >
                           {t("allTicketsPage.columns.category")}
                         </th>
                         <th
-                          className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}
+                          className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
                         >
                           {t("allTicketsPage.columns.priority")}
                         </th>
                         <th
-                          className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}
+                          className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
                         >
                           {t("allTicketsPage.columns.status")}
                         </th>
                         <th
-                          className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase hidden lg:table-cell ${isRTL ? "text-right" : "text-left"}`}
+                          className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden lg:table-cell ${isRTL ? "text-right" : "text-left"}`}
                         >
                           {t("allTicketsPage.columns.assignedTo")}
                         </th>
                         <th
-                          className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}
+                          className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}
                         >
                           {t("allTicketsPage.columns.date")}
                         </th>
@@ -439,24 +439,24 @@ const AllTicketsContent = () => {
                           </td>
                           {/* Subject */}
                           <td className="py-3 px-4">
-                            <span className="text-[13px] font-medium text-[#111827]">
+                            <span className="text-[13px] font-medium text-[var(--color-text-primary)]">
                               {ticket.subject}
                             </span>
                           </td>
                           {/* Customer */}
                           <td className="py-3 px-4">
                             <div>
-                              <p className="text-[13px] text-[#374151] font-medium">
+                              <p className="text-[13px] text-[var(--color-text-secondary)] font-medium">
                                 {ticket.customer}
                               </p>
-                              <p className="text-[11px] text-[#9CA3AF]">
+                              <p className="text-[11px] text-[var(--color-text-secondary)]">
                                 {ticket.email}
                               </p>
                             </div>
                           </td>
                           {/* Category */}
                           <td className="py-3 px-4 hidden md:table-cell">
-                            <span className="bg-[#F3F4F6] text-[#4B5563] text-[10px] px-2 py-0.5 rounded-md font-medium">
+                            <span className="bg-[#F3F4F6] text-[var(--color-text-secondary)] text-[10px] px-2 py-0.5 rounded-md font-medium">
                               {t(
                                 `allTicketsPage.filters.categories.${ticket.category}`
                               )}
@@ -484,13 +484,13 @@ const AllTicketsContent = () => {
                           </td>
                           {/* Assigned To */}
                           <td className="py-3 px-4 hidden lg:table-cell">
-                            <span className="text-[13px] text-[#4B5563]">
+                            <span className="text-[13px] text-[var(--color-text-secondary)]">
                               {ticket.assignee || "--"}
                             </span>
                           </td>
                           {/* Date */}
                           <td className="py-3 px-4 hidden md:table-cell">
-                            <span className="text-[13px] text-[#6B7280]">
+                            <span className="text-[13px] text-[var(--color-text-secondary)]">
                               {ticket.date}
                             </span>
                           </td>
@@ -505,7 +505,7 @@ const AllTicketsContent = () => {
                                       : ticket.id
                                   )
                                 }
-                                className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[#F9FAFB] text-[#6B7280]"
+                                className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[#F9FAFB] text-[var(--color-text-secondary)]"
                               >
                                 <MoreVertical className="w-3.5 h-3.5" />
                               </button>
@@ -513,11 +513,11 @@ const AllTicketsContent = () => {
                                 <div
                                   className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[160px] z-20 ${isRTL ? "left-0" : "right-0"}`}
                                 >
-                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB]">
+                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
                                     <Eye className="w-3.5 h-3.5" />
                                     {t("allTicketsPage.actions.view")}
                                   </button>
-                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB]">
+                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
                                     <UserPlus className="w-3.5 h-3.5" />
                                     {t("allTicketsPage.actions.assign")}
                                   </button>
@@ -537,7 +537,7 @@ const AllTicketsContent = () => {
 
                 {/* Pagination */}
                 <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3 border-t border-[#F3F4F6] gap-3">
-                  <p className="text-[13px] text-[#6B7280]">
+                  <p className="text-[13px] text-[var(--color-text-secondary)]">
                     {t("allTicketsPage.pagination.showing", {
                       from: 1,
                       to: filteredTickets.length,
@@ -545,11 +545,11 @@ const AllTicketsContent = () => {
                     })}
                   </p>
                   <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">
+                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">
                       <ChevronLeft className="w-4 h-4" />
                       {t("allTicketsPage.pagination.previous")}
                     </button>
-                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">
+                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">
                       {t("allTicketsPage.pagination.next")}
                       <ChevronRight className="w-4 h-4" />
                     </button>

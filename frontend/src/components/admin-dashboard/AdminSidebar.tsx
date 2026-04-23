@@ -184,11 +184,11 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
           </div>
 
           {/* Name and Email */}
-          <h3 className="text-lg font-semibold text-[#1F2937]">{admin.name}</h3>
-          <p className="text-sm text-[#6B7280] mb-2">{admin.email}</p>
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{admin.name}</h3>
+          <p className="text-sm text-[var(--color-text-secondary)] mb-2">{admin.email}</p>
 
           {/* Role Badge */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1F2937] rounded-full">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-text-primary)] rounded-full">
             <Crown className="w-4 h-4 text-[#D4A520]" />
             <span className="text-sm font-medium text-white">
               {t("sidebar.superAdmin")}
@@ -199,25 +199,25 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
         {/* Stats Row */}
         <div className="mt-6 flex justify-around py-4 border-t border-[var(--color-border)]">
           <div className="text-center">
-            <p className="text-xl font-bold text-[#1F2937]">
+            <p className="text-xl font-bold text-[var(--color-text-primary)]">
               {admin.totalUsers.toLocaleString()}
             </p>
-            <p className="text-xs text-[#6B7280]">{t("sidebar.users")}</p>
+            <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.users")}</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-[#1F2937]">
+            <p className="text-xl font-bold text-[var(--color-text-primary)]">
               {admin.totalCourses}
             </p>
-            <p className="text-xs text-[#6B7280]">{t("sidebar.courses")}</p>
+            <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.courses")}</p>
           </div>
           <div className="text-center">
             <p className="text-xl font-bold text-[#16A34A]">{admin.uptime}%</p>
-            <p className="text-xs text-[#6B7280]">{t("sidebar.uptime")}</p>
+            <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.uptime")}</p>
           </div>
         </div>
 
         {/* View Profile Button */}
-        <button className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors">
+        <button className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors">
           {t("sidebar.viewProfile")}
         </button>
       </div>
@@ -236,11 +236,11 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                   active
                     ? "bg-[#F0F7FF] text-[#002D87]"
-                    : "text-[#4B5563] hover:bg-[#F9FAFB]"
+                    : "text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
                 }`}
               >
                 <Icon
-                  className={`w-5 h-5 ${active ? "text-[#002D87]" : "text-[#6B7280]"}`}
+                  className={`w-5 h-5 ${active ? "text-[#002D87]" : "text-[var(--color-text-secondary)]"}`}
                 />
                 <span className={`text-sm flex-1 ${active ? "font-medium" : ""}`}>
                   {item.label}

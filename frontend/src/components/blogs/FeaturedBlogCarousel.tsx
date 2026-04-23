@@ -117,7 +117,7 @@ const FeaturedBlogCarousel = ({ posts, isRTL }: FeaturedBlogCarouselProps) => {
             className={`h-2 rounded-full transition-all ${
               index === i
                 ? "w-8 bg-[var(--gold-gold-500)]"
-                : "w-2 bg-[var(--color-border)] hover:bg-[#9CA3AF]"
+                : "w-2 bg-[var(--color-border)] hover:bg-[var(--color-text-secondary)]"
             }`}
           />
         ))}

@@ -70,9 +70,9 @@ const statusBadge = (status: string) => {
     live: "bg-[#FEF3C7] text-[#D97706]",
     completed: "bg-[#DCFCE7] text-[#22C55E]",
     cancelled: "bg-[#FEE2E2] text-[#EF4444]",
-    ended: "bg-[#F3F4F6] text-[#6B7280]",
+    ended: "bg-[#F3F4F6] text-[var(--color-text-secondary)]",
   };
-  return map[status] || "bg-[#F3F4F6] text-[#6B7280]";
+  return map[status] || "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
 };
 
 const sessionTypeIcon = (type: string) => {
@@ -154,14 +154,14 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
             <div className="flex-1 min-w-0">
               <Link
                 href={`/${locale}/dashboard/teaching-assistant/courses`}
-                className="inline-flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#1F2937] mb-4 transition-colors"
+                className="inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-4 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
                 {t("courseDetail.backToCourses")}
               </Link>
               <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
                 <AlertTriangle className="w-10 h-10 text-[#F59E0B] mx-auto mb-3" />
-                <p className="text-[#6B7280] mb-4">{error}</p>
+                <p className="text-[var(--color-text-secondary)] mb-4">{error}</p>
                 <button
                   onClick={fetchData}
                   className="px-4 py-2 bg-[#3B82F6] text-white text-sm rounded-lg hover:bg-[#2563EB]"
@@ -176,7 +176,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
             <div className="flex-1 min-w-0">
               <Link
                 href={`/${locale}/dashboard/teaching-assistant/courses`}
-                className="inline-flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#1F2937] mb-4 transition-colors"
+                className="inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-4 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
                 {t("courseDetail.backToCourses")}
@@ -207,12 +207,12 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                             ? "bg-[#FEF3C7] text-[#D4A520]"
                             : course.status === "completed"
                             ? "bg-[#EFF6FF] text-[#3B82F6]"
-                            : "bg-[#F3F4F6] text-[#6B7280]"
+                            : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
                         }`}
                       >
                         {t(`courses.status.${course.status}`)}
                       </span>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/90 rounded-md text-xs font-medium text-[#374151]">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/90 rounded-md text-xs font-medium text-[var(--color-text-secondary)]">
                         {deliveryIcon}
                         {t(`courses.delivery.${course.deliveryType}`)}
                       </span>
@@ -229,8 +229,8 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                         <Users className="w-5 h-5 text-[#3B82F6]" />
                       </div>
                       <div>
-                        <p className="text-lg font-bold text-[#1F2937]">{enrollments.length}</p>
-                        <p className="text-xs text-[#6B7280]">{t("courseDetail.students")}</p>
+                        <p className="text-lg font-bold text-[var(--color-text-primary)]">{enrollments.length}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.students")}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -238,10 +238,10 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                         <Calendar className="w-5 h-5 text-[#D4A520]" />
                       </div>
                       <div>
-                        <p className="text-lg font-bold text-[#1F2937]">
+                        <p className="text-lg font-bold text-[var(--color-text-primary)]">
                           {sessions.filter((s) => s.status === "completed").length}/{sessions.length}
                         </p>
-                        <p className="text-xs text-[#6B7280]">{t("courseDetail.sessions")}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.sessions")}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -249,12 +249,12 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                         <BarChart3 className="w-5 h-5 text-[#22C55E]" />
                       </div>
                       <div>
-                        <p className="text-lg font-bold text-[#1F2937]">
+                        <p className="text-lg font-bold text-[var(--color-text-primary)]">
                           {enrollments.length > 0
                             ? Math.round(enrollments.reduce((sum, e) => sum + e.progress, 0) / enrollments.length)
                             : 0}%
                         </p>
-                        <p className="text-xs text-[#6B7280]">{t("courseDetail.completion")}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.completion")}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -262,10 +262,10 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                         <Clock className="w-5 h-5 text-[#9333EA]" />
                       </div>
                       <div>
-                        <p className="text-lg font-bold text-[#1F2937]">
+                        <p className="text-lg font-bold text-[var(--color-text-primary)]">
                           {formatDuration(course.startDate, course.endDate)}
                         </p>
-                        <p className="text-xs text-[#6B7280]">{t("courseDetail.duration")}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.duration")}</p>
                       </div>
                     </div>
                   </div>
@@ -282,7 +282,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                       role="tab"
                       aria-selected={activeTab === tab.id}
                       className={`px-5 py-3.5 text-sm font-medium whitespace-nowrap relative transition-colors ${
-                        activeTab === tab.id ? "text-[#3B82F6]" : "text-[#6B7280] hover:text-[#374151]"
+                        activeTab === tab.id ? "text-[#3B82F6]" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                       }`}
                     >
                       {tab.label}
@@ -298,37 +298,37 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                   {activeTab === "overview" && (
                     <div className="space-y-6">
                       <div>
-                        <h3 className="text-base font-semibold text-[#1F2937] mb-2">{t("courseDetail.description")}</h3>
-                        <p className="text-sm text-[#6B7280] leading-relaxed whitespace-pre-wrap">
+                        <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-2">{t("courseDetail.description")}</h3>
+                        <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap">
                           {courseDescription || t("courseDetail.noDescription")}
                         </p>
                       </div>
                       <div>
-                        <h3 className="text-base font-semibold text-[#1F2937] mb-3">{t("courseDetail.courseInfo")}</h3>
+                        <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">{t("courseDetail.courseInfo")}</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                           <div className="p-4 bg-[#F9FAFB] rounded-lg">
-                            <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.deliveryTypeLabel")}</p>
-                            <p className="text-sm font-medium text-[#1F2937] capitalize">{t(`courses.delivery.${course.deliveryType}`)}</p>
+                            <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.deliveryTypeLabel")}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-primary)] capitalize">{t(`courses.delivery.${course.deliveryType}`)}</p>
                           </div>
                           <div className="p-4 bg-[#F9FAFB] rounded-lg">
-                            <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.statusLabel")}</p>
-                            <p className="text-sm font-medium text-[#1F2937] capitalize">{t(`courses.status.${course.status}`)}</p>
+                            <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.statusLabel")}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-primary)] capitalize">{t(`courses.status.${course.status}`)}</p>
                           </div>
                           <div className="p-4 bg-[#F9FAFB] rounded-lg">
-                            <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.maxEnrollmentLabel")}</p>
-                            <p className="text-sm font-medium text-[#1F2937]">{course.maxEnrollment || "—"}</p>
+                            <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.maxEnrollmentLabel")}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{course.maxEnrollment || "—"}</p>
                           </div>
                           <div className="p-4 bg-[#F9FAFB] rounded-lg">
-                            <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.startDate")}</p>
-                            <p className="text-sm font-medium text-[#1F2937]">{formatDate(course.startDate)}</p>
+                            <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.startDate")}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{formatDate(course.startDate)}</p>
                           </div>
                           <div className="p-4 bg-[#F9FAFB] rounded-lg">
-                            <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.endDate")}</p>
-                            <p className="text-sm font-medium text-[#1F2937]">{formatDate(course.endDate)}</p>
+                            <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.endDate")}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{formatDate(course.endDate)}</p>
                           </div>
                           <div className="p-4 bg-[#F9FAFB] rounded-lg">
-                            <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.enrollmentCount")}</p>
-                            <p className="text-sm font-medium text-[#1F2937]">
+                            <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.enrollmentCount")}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">
                               {enrollments.length}{course.maxEnrollment ? ` / ${course.maxEnrollment}` : ""}
                             </p>
                           </div>
@@ -338,7 +338,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                       {/* Modules list (read-only) */}
                       {course.modules && course.modules.length > 0 && (
                         <div>
-                          <h3 className="text-base font-semibold text-[#1F2937] mb-3">{t("courseDetail.tabs.modules")}</h3>
+                          <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">{t("courseDetail.tabs.modules")}</h3>
                           <div className="space-y-2">
                             {course.modules.map((mod, idx) => (
                               <div
@@ -349,7 +349,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                                   {idx + 1}
                                 </span>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-[#1F2937] truncate">
+                                  <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                                     {locale === "ar" && mod.titleAr ? mod.titleAr : mod.title}
                                   </p>
                                 </div>
@@ -367,23 +367,23 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                       {enrollments.length === 0 ? (
                         <div className="text-center py-10">
                           <Users className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
-                          <p className="text-sm text-[#6B7280]">{t("courseDetail.noStudents")}</p>
+                          <p className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.noStudents")}</p>
                         </div>
                       ) : (
                         <div className="overflow-x-auto">
                           <table className="w-full">
                             <thead>
                               <tr className="border-b border-[var(--color-border)]">
-                                <th className="text-left px-4 py-3 text-xs font-medium text-[#6B7280] uppercase">
+                                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase">
                                   {t("courseDetail.name")}
                                 </th>
-                                <th className="text-left px-4 py-3 text-xs font-medium text-[#6B7280] uppercase">
+                                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase">
                                   {t("courseDetail.email")}
                                 </th>
-                                <th className="text-left px-4 py-3 text-xs font-medium text-[#6B7280] uppercase">
+                                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase">
                                   {t("courseDetail.progress")}
                                 </th>
-                                <th className="text-left px-4 py-3 text-xs font-medium text-[#6B7280] uppercase">
+                                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase">
                                   {t("courseDetail.status")}
                                 </th>
                               </tr>
@@ -391,10 +391,10 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                             <tbody>
                               {enrollments.map((e) => (
                                 <tr key={e.id} className="border-b border-[#F3F4F6]">
-                                  <td className="px-4 py-3 text-sm text-[#1F2937]">
+                                  <td className="px-4 py-3 text-sm text-[var(--color-text-primary)]">
                                     {[e.studentFirstName, e.studentLastName].filter(Boolean).join(" ") || "—"}
                                   </td>
-                                  <td className="px-4 py-3 text-sm text-[#6B7280]">{e.studentEmail}</td>
+                                  <td className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">{e.studentEmail}</td>
                                   <td className="px-4 py-3">
                                     <div className="flex items-center gap-2">
                                       <div className="w-20 h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
@@ -403,7 +403,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                                           style={{ width: `${e.progress}%` }}
                                         />
                                       </div>
-                                      <span className="text-xs text-[#6B7280]">{e.progress}%</span>
+                                      <span className="text-xs text-[var(--color-text-secondary)]">{e.progress}%</span>
                                     </div>
                                   </td>
                                   <td className="px-4 py-3">
@@ -413,7 +413,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                                           ? "bg-[#DCFCE7] text-[#22C55E]"
                                           : e.status === "completed"
                                           ? "bg-[#EFF6FF] text-[#3B82F6]"
-                                          : "bg-[#F3F4F6] text-[#6B7280]"
+                                          : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
                                       }`}
                                     >
                                       {e.status}
@@ -434,7 +434,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                       {sessions.length === 0 ? (
                         <div className="text-center py-10">
                           <Calendar className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
-                          <p className="text-sm text-[#6B7280]">{t("courseDetail.noSessions")}</p>
+                          <p className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.noSessions")}</p>
                         </div>
                       ) : (
                         <div className="space-y-3">
@@ -450,8 +450,8 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                                     {sessionTypeIcon(session.type)}
                                   </div>
                                   <div className="min-w-0">
-                                    <p className="text-sm font-medium text-[#1F2937] truncate">{session.title}</p>
-                                    <p className="text-xs text-[#6B7280]">
+                                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{session.title}</p>
+                                    <p className="text-xs text-[var(--color-text-secondary)]">
                                       {formatSessionDate(session.scheduledAt)} &bull;{" "}
                                       {formatSessionTime(session.scheduledAt, session.durationMinutes)} &bull;{" "}
                                       {session.durationMinutes} min

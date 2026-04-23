@@ -179,7 +179,7 @@ function SignUpForm() {
                     <div className="flex flex-col gap-1.5 flex-1">
                       <label
                         htmlFor="firstName"
-                        className="font-medium text-[#0a0a0a]"
+                        className="font-medium text-[var(--color-text-primary)]"
                         style={{ fontSize: "14px", lineHeight: "20px" }}
                       >
                         {t("form.firstName")} *
@@ -201,7 +201,7 @@ function SignUpForm() {
                     <div className="flex flex-col gap-1.5 flex-1">
                       <label
                         htmlFor="lastName"
-                        className="font-medium text-[#0a0a0a]"
+                        className="font-medium text-[var(--color-text-primary)]"
                         style={{ fontSize: "14px", lineHeight: "20px" }}
                       >
                         {t("form.lastName")} *
@@ -226,10 +226,10 @@ function SignUpForm() {
                   <div className="flex flex-col gap-1.5 w-full">
                     <label
                       htmlFor="scfhsNumber"
-                      className="font-medium text-[#0a0a0a]"
+                      className="font-medium text-[var(--color-text-primary)]"
                       style={{ fontSize: "14px", lineHeight: "20px" }}
                     >
-                      {t("form.scfhsNumber")} <span className="text-[#9CA3AF] font-normal text-xs">({t("form.optional")})</span>
+                      {t("form.scfhsNumber")} <span className="text-[var(--color-text-secondary)] font-normal text-xs">({t("form.optional")})</span>
                     </label>
                     <input
                       type="text"
@@ -244,14 +244,14 @@ function SignUpForm() {
                       }}
                       placeholder={t("form.scfhsPlaceholder")}
                     />
-                    <p className="text-xs text-[#9CA3AF]">{t("form.scfhsHint")}</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">{t("form.scfhsHint")}</p>
                   </div>
 
                   {/* Email Field */}
                   <div className="flex flex-col gap-1.5 w-full">
                     <label
                       htmlFor="email"
-                      className="font-medium text-[#0a0a0a]"
+                      className="font-medium text-[var(--color-text-primary)]"
                       style={{ fontSize: "14px", lineHeight: "20px" }}
                     >
                       {t("form.email")} *
@@ -276,7 +276,7 @@ function SignUpForm() {
                   <div className="flex flex-col gap-1.5 w-full">
                     <label
                       htmlFor="password"
-                      className="font-medium text-[#0a0a0a]"
+                      className="font-medium text-[var(--color-text-primary)]"
                       style={{ fontSize: "14px", lineHeight: "20px" }}
                     >
                       {t("form.password")} *
@@ -317,7 +317,7 @@ function SignUpForm() {
                   <div className="flex flex-col gap-1.5 w-full">
                     <label
                       htmlFor="confirmPassword"
-                      className="font-medium text-[#0a0a0a]"
+                      className="font-medium text-[var(--color-text-primary)]"
                       style={{ fontSize: "14px", lineHeight: "20px" }}
                     >
                       {t("form.confirmPassword")} *
@@ -366,15 +366,15 @@ function SignUpForm() {
                       )}
                     </button>
                     <span
-                      className="font-medium text-[#414651]"
+                      className="font-medium text-[var(--color-text-secondary)]"
                       style={{ fontSize: "14px", lineHeight: "20px" }}
                     >
                       {t("form.acceptTermsPrefix")}{" "}
-                      <Link href={`/${locale}/terms`} className="underline text-[#06080b] hover:text-[var(--on-surface-primary)]">
+                      <Link href={`/${locale}/terms`} className="underline text-[var(--color-text-primary)] hover:text-[var(--on-surface-primary)]">
                         {t("form.termsAndConditions")}
                       </Link>
                       {" "}{t("form.and")}{" "}
-                      <Link href={`/${locale}/privacy`} className="underline text-[#06080b] hover:text-[var(--on-surface-primary)]">
+                      <Link href={`/${locale}/privacy`} className="underline text-[var(--color-text-primary)] hover:text-[var(--on-surface-primary)]">
                         {t("form.privacyPolicy")}
                       </Link>
                       .

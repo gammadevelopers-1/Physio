@@ -28,7 +28,7 @@ const RefundsQueueWidget = ({ refunds }: RefundsQueueWidgetProps) => {
       <div className="flex items-center justify-between px-5 py-4 border-b border-[#F3F4F6]">
         <div className="flex items-center gap-2">
           <RotateCcw className="w-5 h-5 text-[#EA580C]" />
-          <h3 className="text-base font-semibold text-[#111827]">
+          <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t("refundsQueue.title")}
           </h3>
           <span className="bg-[#EF4444] text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
@@ -52,21 +52,21 @@ const RefundsQueueWidget = ({ refunds }: RefundsQueueWidgetProps) => {
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-medium text-[#111827]">
+                <p className="text-[13px] font-medium text-[var(--color-text-primary)]">
                   {refund.customer}
                 </p>
-                <p className="text-[11px] text-[#6B7280] truncate">
+                <p className="text-[11px] text-[var(--color-text-secondary)] truncate">
                   {refund.course} - {refund.reason}
                 </p>
               </div>
 
               {/* Amount */}
               <div className={`${isRTL ? "text-left" : "text-right"} flex-shrink-0`}>
-                <p className="text-sm font-semibold text-[#111827]">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                   {refund.refundAmount}
                 </p>
                 {refund.originalAmount !== refund.refundAmount && (
-                  <p className="text-[11px] text-[#9CA3AF] line-through">
+                  <p className="text-[11px] text-[var(--color-text-secondary)] line-through">
                     {refund.originalAmount}
                   </p>
                 )}

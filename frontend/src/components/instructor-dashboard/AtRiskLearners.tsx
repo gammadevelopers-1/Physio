@@ -78,7 +78,7 @@ const AtRiskLearners = ({
       case "inactive":
         return "bg-[#FEF9C3] text-[#EAB308]";
       default:
-        return "bg-[#F3F4F6] text-[#6B7280]";
+        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -150,14 +150,14 @@ const AtRiskLearners = ({
       <div className="p-4 sm:p-5">
         {/* Header with Badge Count + Settings Gear */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-[#1F2937] flex items-center gap-2">
+          <h3 className="text-base font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-[#F97316]" />
             {t("atRisk.title")}
           </h3>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowSettings(true)}
-              className="p-1.5 text-[#9CA3AF] hover:text-[#6B7280] hover:bg-[#F3F4F6] rounded-lg transition-colors"
+              className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors"
               title={t("atRisk.thresholdSettings")}
             >
               <Settings className="w-4 h-4" />
@@ -175,17 +175,17 @@ const AtRiskLearners = ({
               className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border border-[var(--color-border)] hover:border-[var(--color-border)] transition-colors"
             >
               {/* Avatar */}
-              <div className="w-10 h-10 rounded-full bg-[var(--color-border)] flex items-center justify-center text-sm font-semibold text-[#4B5563] flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-[var(--color-border)] flex items-center justify-center text-sm font-semibold text-[var(--color-text-secondary)] flex-shrink-0">
                 {learner.initials}
               </div>
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#1F2937] truncate">
+                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                   {learner.name}
                 </p>
                 {learner.course && (
-                  <p className="text-[11px] text-[#6B7280] truncate mb-0.5">
+                  <p className="text-[11px] text-[var(--color-text-secondary)] truncate mb-0.5">
                     {learner.course}
                   </p>
                 )}
@@ -201,7 +201,7 @@ const AtRiskLearners = ({
                 <button
                   onClick={() => setOpenDropdown(openDropdown === learner.id ? null : learner.id)}
                   disabled={actionLoading === learner.id}
-                  className="p-1.5 text-[#9CA3AF] hover:text-[#6B7280] hover:bg-[var(--color-border)] rounded-lg transition-colors disabled:opacity-50"
+                  className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border)] rounded-lg transition-colors disabled:opacity-50"
                   aria-label={tA("openActions")}
                   aria-haspopup="true"
                   aria-expanded={openDropdown === learner.id}
@@ -220,28 +220,28 @@ const AtRiskLearners = ({
                       <button
                         onClick={() => handleSendReminder(learner)}
                         disabled={actionLoading === learner.id}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
                         role="menuitem"
                       >
-                        <Mail className="w-4 h-4 text-[#6B7280]" />
+                        <Mail className="w-4 h-4 text-[var(--color-text-secondary)]" />
                         {t("atRisk.sendReminder")}
                       </button>
                       <button
                         onClick={() => handleScheduleMakeup(learner)}
                         disabled={actionLoading === learner.id}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
                         role="menuitem"
                       >
-                        <Calendar className="w-4 h-4 text-[#6B7280]" />
+                        <Calendar className="w-4 h-4 text-[var(--color-text-secondary)]" />
                         {t("atRisk.scheduleMakeup")}
                       </button>
                       <button
                         onClick={() => handleOpenTicket(learner)}
                         disabled={actionLoading === learner.id}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
                         role="menuitem"
                       >
-                        <Ticket className="w-4 h-4 text-[#6B7280]" />
+                        <Ticket className="w-4 h-4 text-[var(--color-text-secondary)]" />
                         {t("atRisk.openTicket")}
                       </button>
                     </div>
@@ -324,18 +324,18 @@ function ThresholdSettingsModal({
     >
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-semibold text-[#1F2937]">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("atRisk.thresholdSettings")}
           </h3>
           <button onClick={onClose} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
-            <X className="w-5 h-5 text-[#6B7280]" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
 
         <div className="space-y-4">
           {/* Course selector */}
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("atRisk.selectCourse")}
             </label>
             <select
@@ -351,7 +351,7 @@ function ThresholdSettingsModal({
 
           {/* Attendance threshold */}
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("atRisk.attendanceThreshold")}
             </label>
             <div className="flex items-center gap-2">
@@ -363,13 +363,13 @@ function ThresholdSettingsModal({
                 min={0}
                 max={100}
               />
-              <span className="text-sm text-[#6B7280]">%</span>
+              <span className="text-sm text-[var(--color-text-secondary)]">%</span>
             </div>
           </div>
 
           {/* Score threshold */}
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("atRisk.scoreThreshold")}
             </label>
             <div className="flex items-center gap-2">
@@ -381,13 +381,13 @@ function ThresholdSettingsModal({
                 min={0}
                 max={100}
               />
-              <span className="text-sm text-[#6B7280]">%</span>
+              <span className="text-sm text-[var(--color-text-secondary)]">%</span>
             </div>
           </div>
 
           {/* Inactivity threshold */}
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("atRisk.inactivityThreshold")}
             </label>
             <div className="flex items-center gap-2">
@@ -399,7 +399,7 @@ function ThresholdSettingsModal({
                 min={1}
                 max={90}
               />
-              <span className="text-sm text-[#6B7280]">{t("atRisk.days")}</span>
+              <span className="text-sm text-[var(--color-text-secondary)]">{t("atRisk.days")}</span>
             </div>
           </div>
 
@@ -408,7 +408,7 @@ function ThresholdSettingsModal({
             <button
               type="button"
               onClick={handleReset}
-              className="px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
+              className="px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
             >
               {t("atRisk.resetDefaults")}
             </button>

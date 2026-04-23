@@ -66,7 +66,7 @@ const BecomeTrainer = ({ data }: BecomeTrainerProps) => {
                   className={`flex flex-col gap-[32px] w-[600px] ${isRTL ? "items-start text-right" : "items-start"}`}
                 >
                   {(title || description) && (
-                    <div className="flex flex-col gap-[16px] text-[#06080b]">
+                    <div className="flex flex-col gap-[16px] text-[var(--color-text-primary)]">
                       {title && (
                         <h2
                           className="font-semibold leading-none tracking-[-0.24px] w-[600px]"
@@ -159,7 +159,7 @@ const BecomeTrainer = ({ data }: BecomeTrainerProps) => {
           >
             {/* Text Content */}
             {(title || description) && (
-              <div className="flex flex-col gap-4 text-[#06080b] w-full">
+              <div className="flex flex-col gap-4 text-[var(--color-text-primary)] w-full">
                 {title && (
                   <h2
                     className="font-semibold leading-none tracking-[-0.15px] w-full"

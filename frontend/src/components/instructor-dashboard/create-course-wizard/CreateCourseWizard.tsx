@@ -195,14 +195,14 @@ const CreateCourseWizard = () => {
       {/* Back Button */}
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#1F2937] mb-6 transition-colors"
+        className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-6 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         {t("cancel")}
       </button>
 
       {/* Title */}
-      <h1 className="text-2xl font-bold text-[#1F2937] mb-6">{t("title")}</h1>
+      <h1 className="text-2xl font-bold text-[var(--color-text-primary)] mb-6">{t("title")}</h1>
 
       {/* Step Indicator */}
       <WizardStepIndicator currentStep={state.step} skipStep2={isSelfPaced} />
@@ -225,7 +225,7 @@ const CreateCourseWizard = () => {
           <button
             type="button"
             onClick={handleBack}
-            className="px-6 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+            className="px-6 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
           >
             {state.step === 1 ? t("cancel") : t("back")}
           </button>

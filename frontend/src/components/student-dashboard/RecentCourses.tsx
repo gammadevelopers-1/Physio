@@ -49,7 +49,7 @@ function getActionConfig(action: string) {
       return {
         icon: PlayCircle,
         color:
-          "bg-white border border-[var(--color-border)] text-[#1F2937] hover:bg-[#F9FAFB]",
+          "bg-white border border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[#F9FAFB]",
         key: "resumeLesson" as const,
       };
     case "upload_assignment":
@@ -68,7 +68,7 @@ function getActionConfig(action: string) {
       return {
         icon: PlayCircle,
         color:
-          "bg-white border border-[var(--color-border)] text-[#1F2937] hover:bg-[#F9FAFB]",
+          "bg-white border border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[#F9FAFB]",
         key: "startCourse" as const,
       };
   }
@@ -108,19 +108,19 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
 
   return (
     <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 mt-6">
-      <h2 className="text-lg font-semibold text-[#1F2937] mb-6">
+      <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-6">
         {t("recentCourses.title")}
       </h2>
 
       {courses.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16">
           <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-4">
-            <ClipboardList className="w-8 h-8 text-[#9CA3AF]" />
+            <ClipboardList className="w-8 h-8 text-[var(--color-text-secondary)]" />
           </div>
-          <h3 className="text-base font-medium text-[#1F2937] mb-1">
+          <h3 className="text-base font-medium text-[var(--color-text-primary)] mb-1">
             {t("recentCourses.noCoursesTitle")}
           </h3>
-          <p className="text-sm text-[#6B7280] mb-6 text-center">
+          <p className="text-sm text-[var(--color-text-secondary)] mb-6 text-center">
             {t("recentCourses.noCoursesDescription")}
           </p>
           <Link
@@ -173,7 +173,7 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
 
                 {/* Content */}
                 <div className="p-3">
-                  <h3 className="text-sm font-semibold text-[#1F2937] line-clamp-2 min-h-[40px]">
+                  <h3 className="text-sm font-semibold text-[var(--color-text-primary)] line-clamp-2 min-h-[40px]">
                     {course.title}
                   </h3>
 
@@ -195,7 +195,7 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
                           <User className="w-3 h-3 text-gray-400" />
                         </div>
                       )}
-                      <span className="text-xs text-[#6B7280] truncate">
+                      <span className="text-xs text-[var(--color-text-secondary)] truncate">
                         {course.instructorName}
                       </span>
                     </div>
@@ -204,7 +204,7 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
                   {/* Progress Bar */}
                   <div className="mt-3">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-[#6B7280]">
+                      <span className="text-xs text-[var(--color-text-secondary)]">
                         {course.progress}%
                       </span>
                     </div>

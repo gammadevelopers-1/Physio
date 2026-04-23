@@ -118,8 +118,8 @@ function getPermissions(roleName: string): PermissionSet {
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  SUPER_ADMIN: "#1F2937",
-  ADMIN: "#1F2937",
+  SUPER_ADMIN: "var(--color-text-primary)",
+  ADMIN: "var(--color-text-primary)",
   MANAGER: "#8B5CF6",
   INSTRUCTOR: "#3B82F6",
   STUDENT: "#22C55E",
@@ -128,7 +128,7 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 function getRoleColor(roleName: string): string {
-  return ROLE_COLORS[roleName] || "#6B7280";
+  return ROLE_COLORS[roleName] || "var(--color-text-secondary)";
 }
 
 // System role names that cannot be deleted
@@ -189,16 +189,16 @@ function CreateRoleModal({ onClose, onCreated }: { onClose: () => void; onCreate
             <div className="w-10 h-10 rounded-full bg-[#002D87] flex items-center justify-center">
               <Shield className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-lg font-semibold text-[#1F2937]">Create New Role</h2>
+            <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Create New Role</h2>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg">
-            <X className="w-5 h-5 text-[#6B7280]" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">Role Name (key) *</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Role Name (key) *</label>
             <input
               type="text"
               value={form.name}
@@ -209,7 +209,7 @@ function CreateRoleModal({ onClose, onCreated }: { onClose: () => void; onCreate
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">Display Name *</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Display Name *</label>
             <input
               type="text"
               value={form.displayName}
@@ -220,7 +220,7 @@ function CreateRoleModal({ onClose, onCreated }: { onClose: () => void; onCreate
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">Description</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Description</label>
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -229,7 +229,7 @@ function CreateRoleModal({ onClose, onCreated }: { onClose: () => void; onCreate
             />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]">
+            <button type="button" onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
               Cancel
             </button>
             <button type="submit" disabled={isSubmitting} className="flex-1 h-10 btn-gold text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2">
@@ -281,18 +281,18 @@ function EditRoleModal({ role, onClose, onUpdated }: { role: RoleWithCount; onCl
               <Edit className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-[#1F2937]">Edit Role</h2>
-              <p className="text-xs text-[#6B7280]">{role.name}</p>
+              <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Edit Role</h2>
+              <p className="text-xs text-[var(--color-text-secondary)]">{role.name}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg">
-            <X className="w-5 h-5 text-[#6B7280]" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">Display Name *</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Display Name *</label>
             <input
               type="text"
               value={form.displayName}
@@ -302,7 +302,7 @@ function EditRoleModal({ role, onClose, onUpdated }: { role: RoleWithCount; onCl
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">Description</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Description</label>
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -310,7 +310,7 @@ function EditRoleModal({ role, onClose, onUpdated }: { role: RoleWithCount; onCl
             />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]">
+            <button type="button" onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
               Cancel
             </button>
             <button type="submit" disabled={isSubmitting} className="flex-1 h-10 btn-gold text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2">
@@ -351,9 +351,9 @@ function DeleteRoleModal({ role, onClose, onDeleted }: { role: RoleWithCount; on
           <div className="w-10 h-10 rounded-full bg-[#FEE2E2] flex items-center justify-center">
             <Trash2 className="w-5 h-5 text-[#DC2626]" />
           </div>
-          <h2 className="text-lg font-semibold text-[#1F2937]">Delete Role</h2>
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Delete Role</h2>
         </div>
-        <p className="text-sm text-[#4B5563] mb-2">
+        <p className="text-sm text-[var(--color-text-secondary)] mb-2">
           Are you sure you want to delete <strong>{role.displayName}</strong>?
         </p>
         {role.usersCount > 0 && (
@@ -361,9 +361,9 @@ function DeleteRoleModal({ role, onClose, onDeleted }: { role: RoleWithCount; on
             This role has {role.usersCount} user(s) assigned. Remove the role from all users before deleting.
           </p>
         )}
-        <p className="text-xs text-[#6B7280] mb-6">This action cannot be undone.</p>
+        <p className="text-xs text-[var(--color-text-secondary)] mb-6">This action cannot be undone.</p>
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]">
+          <button onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
             Cancel
           </button>
           <button
@@ -446,10 +446,10 @@ const RolesContent = () => {
               {/* Page Header */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
+                  <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
                     {t("rolesPage.title")}
                   </h1>
-                  <p className="text-sm text-[#6B7280] mt-1">
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                     {t("rolesPage.subtitle")}
                   </p>
                 </div>
@@ -466,7 +466,7 @@ const RolesContent = () => {
               {isLoading && (
                 <div className="bg-white rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center">
                   <Loader2 className="w-8 h-8 animate-spin text-[#002D87] mb-3" />
-                  <p className="text-sm text-[#6B7280]">Loading roles...</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">Loading roles...</p>
                 </div>
               )}
 
@@ -513,10 +513,10 @@ const RolesContent = () => {
                               <Shield className="w-5 h-5" style={{ color }} />
                             </div>
                             <div>
-                              <h3 className="text-base font-semibold text-[#1F2937]">
+                              <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                                 {role.displayName}
                               </h3>
-                              <p className="text-sm text-[#6B7280]">
+                              <p className="text-sm text-[var(--color-text-secondary)]">
                                 {role.description || role.name}
                               </p>
                             </div>
@@ -524,8 +524,8 @@ const RolesContent = () => {
 
                           <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2">
-                              <Users className="w-4 h-4 text-[#6B7280]" />
-                              <span className="text-sm text-[#6B7280]">
+                              <Users className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                              <span className="text-sm text-[var(--color-text-secondary)]">
                                 {role.usersCount} {t("rolesPage.users")}
                               </span>
                             </div>
@@ -538,7 +538,7 @@ const RolesContent = () => {
                                 }}
                                 className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
                               >
-                                <Edit className="w-4 h-4 text-[#6B7280]" />
+                                <Edit className="w-4 h-4 text-[var(--color-text-secondary)]" />
                               </button>
                               {!isSystem && (
                                 <button
@@ -554,10 +554,10 @@ const RolesContent = () => {
                             </div>
 
                             {expandedRole === role.id ? (
-                              <ChevronDown className="w-5 h-5 text-[#6B7280]" />
+                              <ChevronDown className="w-5 h-5 text-[var(--color-text-secondary)]" />
                             ) : (
                               <ChevronRight
-                                className={`w-5 h-5 text-[#6B7280] ${isRTL ? "rotate-180" : ""}`}
+                                className={`w-5 h-5 text-[var(--color-text-secondary)] ${isRTL ? "rotate-180" : ""}`}
                               />
                             )}
                           </div>
@@ -566,7 +566,7 @@ const RolesContent = () => {
                         {/* Permissions Matrix */}
                         {expandedRole === role.id && (
                           <div className="border-t border-[var(--color-border)] p-4">
-                            <h4 className="text-sm font-semibold text-[#6B7280] uppercase mb-4">
+                            <h4 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase mb-4">
                               {t("rolesPage.permissions")}
                             </h4>
 
@@ -574,19 +574,19 @@ const RolesContent = () => {
                               <table className="w-full">
                                 <thead>
                                   <tr className="border-b border-[var(--color-border)]">
-                                    <th className={`pb-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                                    <th className={`pb-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                                       {t("rolesPage.module")}
                                     </th>
-                                    <th className="pb-3 text-xs font-medium text-[#6B7280] uppercase text-center">
+                                    <th className="pb-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-center">
                                       {t("rolesPage.view")}
                                     </th>
-                                    <th className="pb-3 text-xs font-medium text-[#6B7280] uppercase text-center">
+                                    <th className="pb-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-center">
                                       {t("rolesPage.create")}
                                     </th>
-                                    <th className="pb-3 text-xs font-medium text-[#6B7280] uppercase text-center">
+                                    <th className="pb-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-center">
                                       {t("rolesPage.edit")}
                                     </th>
-                                    <th className="pb-3 text-xs font-medium text-[#6B7280] uppercase text-center">
+                                    <th className="pb-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase text-center">
                                       {t("rolesPage.delete")}
                                     </th>
                                   </tr>
@@ -597,7 +597,7 @@ const RolesContent = () => {
                                       key={category}
                                       className="border-b border-[#F3F4F6] last:border-b-0"
                                     >
-                                      <td className={`py-3 text-sm text-[#1F2937] capitalize ${isRTL ? "text-right" : "text-left"}`}>
+                                      <td className={`py-3 text-sm text-[var(--color-text-primary)] capitalize ${isRTL ? "text-right" : "text-left"}`}>
                                         {t(`rolesPage.categories.${category}`)}
                                       </td>
                                       {(["view", "create", "edit", "delete"] as const).map((action) => (
@@ -622,7 +622,7 @@ const RolesContent = () => {
 
                   {roles.length === 0 && (
                     <div className="bg-white rounded-xl border border-[var(--color-border)] py-12 text-center">
-                      <p className="text-[#6B7280]">No roles found</p>
+                      <p className="text-[var(--color-text-secondary)]">No roles found</p>
                     </div>
                   )}
                 </div>

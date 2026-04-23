@@ -33,7 +33,7 @@ export default function PartnersContent({ partners, strapiData }: PartnersConten
       <div className="max-w-[1312px] mx-auto flex flex-col items-center">
         {title && (
           <h1
-            className="font-semibold tracking-[-0.24px] text-[#06080B] text-center mb-12 md:mb-16 text-[32px] md:text-[48px] leading-none"
+            className="font-semibold tracking-[-0.24px] text-[var(--color-text-primary)] text-center mb-12 md:mb-16 text-[32px] md:text-[48px] leading-none"
             style={{ fontFamily: "'DM Sans', sans-serif" }}
           >
             {title}
@@ -89,7 +89,7 @@ export default function PartnersContent({ partners, strapiData }: PartnersConten
             </div>
           </>
         ) : (
-          <p className="text-[#4A4C4F] text-center leading-6 text-[16px]">
+          <p className="text-[var(--color-text-secondary)] text-center leading-6 text-[16px]">
             {isRTL ? "لا يوجد شركاء حالياً" : "No partners yet"}
           </p>
         )}

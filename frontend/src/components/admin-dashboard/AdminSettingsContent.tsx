@@ -100,10 +100,10 @@ const AdminSettingsContent = () => {
             <div className="flex-1 min-w-0">
               {/* Page Header */}
               <div className="mb-6">
-                <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
                   {t("settingsPage.title")}
                 </h1>
-                <p className="text-sm text-[#6B7280] mt-1">
+                <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                   {t("settingsPage.subtitle")}
                 </p>
               </div>
@@ -121,7 +121,7 @@ const AdminSettingsContent = () => {
                         className={`px-3 py-2.5 text-xs sm:text-sm font-medium relative transition-colors whitespace-nowrap flex items-center gap-1 ${
                           activeTab === tab.id
                             ? "text-[var(--color-primary)]"
-                            : "text-[#6B7280] hover:text-[#374151]"
+                            : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                         }`}
                       >
                         <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -138,12 +138,12 @@ const AdminSettingsContent = () => {
                 <div className="p-6">
                     {activeTab === "general" && (
                       <div className="space-y-6">
-                        <h2 className="text-lg font-semibold text-[#1F2937]">
+                        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                           {t("settingsPage.general.title")}
                         </h2>
 
                         <div>
-                          <label className="block text-sm font-medium text-[#4B5563] mb-2">
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
                             {t("settingsPage.general.platformName")}
                           </label>
                           <input
@@ -155,7 +155,7 @@ const AdminSettingsContent = () => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-[#4B5563] mb-2">
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
                             {t("settingsPage.general.contactEmail")}
                           </label>
                           <input
@@ -167,7 +167,7 @@ const AdminSettingsContent = () => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-[#4B5563] mb-2">
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
                             {t("settingsPage.general.timezone")}
                           </label>
                           <select
@@ -182,14 +182,14 @@ const AdminSettingsContent = () => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-[#4B5563] mb-2">
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
                             {t("settingsPage.general.logo")}
                           </label>
                           <div className="flex items-center gap-4">
                             <div className="w-20 h-20 bg-[#F9FAFB] rounded-lg flex items-center justify-center border border-[var(--color-border)]">
-                              <Settings className="w-8 h-8 text-[#9CA3AF]" />
+                              <Settings className="w-8 h-8 text-[var(--color-text-secondary)]" />
                             </div>
-                            <button className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB]">
+                            <button className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
                               {t("settingsPage.general.uploadLogo")}
                             </button>
                           </div>
@@ -199,16 +199,16 @@ const AdminSettingsContent = () => {
 
                     {activeTab === "authentication" && (
                       <div className="space-y-6">
-                        <h2 className="text-lg font-semibold text-[#1F2937]">
+                        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                           {t("settingsPage.auth.title")}
                         </h2>
 
                         <div className="flex items-center justify-between py-4 border-b border-[var(--color-border)]">
                           <div>
-                            <p className="text-sm font-medium text-[#1F2937]">
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">
                               {t("settingsPage.auth.require2FA")}
                             </p>
-                            <p className="text-sm text-[#6B7280]">
+                            <p className="text-sm text-[var(--color-text-secondary)]">
                               {t("settingsPage.auth.require2FADesc")}
                             </p>
                           </div>
@@ -221,7 +221,7 @@ const AdminSettingsContent = () => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-[#4B5563] mb-2">
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
                             {t("settingsPage.auth.sessionTimeout")}
                           </label>
                           <select
@@ -237,7 +237,7 @@ const AdminSettingsContent = () => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-[#4B5563] mb-2">
+                          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
                             {t("settingsPage.auth.passwordMinLength")}
                           </label>
                           <select
@@ -256,16 +256,16 @@ const AdminSettingsContent = () => {
 
                     {activeTab === "notifications" && (
                       <div className="space-y-6">
-                        <h2 className="text-lg font-semibold text-[#1F2937]">
+                        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                           {t("settingsPage.notifications.title")}
                         </h2>
 
                         <div className="flex items-center justify-between py-4 border-b border-[var(--color-border)]">
                           <div>
-                            <p className="text-sm font-medium text-[#1F2937]">
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">
                               {t("settingsPage.notifications.email")}
                             </p>
-                            <p className="text-sm text-[#6B7280]">
+                            <p className="text-sm text-[var(--color-text-secondary)]">
                               {t("settingsPage.notifications.emailDesc")}
                             </p>
                           </div>
@@ -279,10 +279,10 @@ const AdminSettingsContent = () => {
 
                         <div className="flex items-center justify-between py-4 border-b border-[var(--color-border)]">
                           <div>
-                            <p className="text-sm font-medium text-[#1F2937]">
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">
                               {t("settingsPage.notifications.sms")}
                             </p>
-                            <p className="text-sm text-[#6B7280]">
+                            <p className="text-sm text-[var(--color-text-secondary)]">
                               {t("settingsPage.notifications.smsDesc")}
                             </p>
                           </div>
@@ -298,10 +298,10 @@ const AdminSettingsContent = () => {
 
                     {activeTab === "my-security" && (
                       <div className="space-y-6">
-                        <h2 className="text-lg font-semibold text-[#1F2937]">
+                        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                           {locale === "ar" ? "الأمان الشخصي" : "My Security"}
                         </h2>
-                        <p className="text-sm text-[#6B7280]">
+                        <p className="text-sm text-[var(--color-text-secondary)]">
                           {locale === "ar" ? "إدارة المصادقة الثنائية والأجهزة الموثوقة لحسابك." : "Manage your personal two-factor authentication and trusted devices."}
                         </p>
 
@@ -332,16 +332,16 @@ const AdminSettingsContent = () => {
 
                     {activeTab === "maintenance" && (
                       <div className="space-y-6">
-                        <h2 className="text-lg font-semibold text-[#1F2937]">
+                        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                           {t("settingsPage.maintenance.title")}
                         </h2>
 
                         <div className={`flex items-center justify-between py-4 px-4 rounded-lg border ${maintenanceMode ? "bg-[#FEE2E2] border-[#FCA5A5]" : "bg-[#F9FAFB] border-[var(--color-border)]"}`}>
                           <div>
-                            <p className="text-sm font-medium text-[#1F2937]">
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">
                               {t("settingsPage.maintenance.mode")}
                             </p>
-                            <p className="text-sm text-[#6B7280]">
+                            <p className="text-sm text-[var(--color-text-secondary)]">
                               {t("settingsPage.maintenance.modeDesc")}
                             </p>
                           </div>
@@ -355,7 +355,7 @@ const AdminSettingsContent = () => {
 
                         {maintenanceMode && (
                           <div>
-                            <label className="block text-sm font-medium text-[#4B5563] mb-2">
+                            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
                               {t("settingsPage.maintenance.message")}
                             </label>
                             <textarea
@@ -372,7 +372,7 @@ const AdminSettingsContent = () => {
 
                     {activeTab === "integrations" && (
                       <div className="space-y-6">
-                        <h2 className="text-lg font-semibold text-[#1F2937]">
+                        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                           {t("settingsPage.integrations.title")}
                         </h2>
 
@@ -383,8 +383,8 @@ const AdminSettingsContent = () => {
                                 <span className="text-sm font-bold text-[#3B82F6]">Z</span>
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-[#1F2937]">{t("settingsPage.integrations.zoom")}</p>
-                                <p className="text-xs text-[#6B7280]">{t("settingsPage.integrations.connected")}</p>
+                                <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("settingsPage.integrations.zoom")}</p>
+                                <p className="text-xs text-[var(--color-text-secondary)]">{t("settingsPage.integrations.connected")}</p>
                               </div>
                             </div>
                             <button className="text-sm text-[#DC2626] hover:underline">
@@ -398,8 +398,8 @@ const AdminSettingsContent = () => {
                                 <span className="text-sm font-bold text-[#16A34A]">T</span>
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-[#1F2937]">{t("settingsPage.integrations.tapPayments")}</p>
-                                <p className="text-xs text-[#6B7280]">{t("settingsPage.integrations.connected")}</p>
+                                <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("settingsPage.integrations.tapPayments")}</p>
+                                <p className="text-xs text-[var(--color-text-secondary)]">{t("settingsPage.integrations.connected")}</p>
                               </div>
                             </div>
                             <button className="text-sm text-[#DC2626] hover:underline">
@@ -410,11 +410,11 @@ const AdminSettingsContent = () => {
                           <div className="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-lg">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center">
-                                <span className="text-sm font-bold text-[#6B7280]">U</span>
+                                <span className="text-sm font-bold text-[var(--color-text-secondary)]">U</span>
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-[#1F2937]">{t("settingsPage.integrations.unifonicSms")}</p>
-                                <p className="text-xs text-[#9CA3AF]">{t("settingsPage.integrations.notConnected")}</p>
+                                <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("settingsPage.integrations.unifonicSms")}</p>
+                                <p className="text-xs text-[var(--color-text-secondary)]">{t("settingsPage.integrations.notConnected")}</p>
                               </div>
                             </div>
                             <button className="text-sm text-[#0066FF] hover:underline">

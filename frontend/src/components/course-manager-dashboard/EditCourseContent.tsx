@@ -323,7 +323,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
               <div className="flex-1 min-w-0">
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <AlertTriangle className="w-12 h-12 text-[#D97706] mx-auto mb-4" />
-                  <p className="text-[#6B7280] mb-4">{loadError}</p>
+                  <p className="text-[var(--color-text-secondary)] mb-4">{loadError}</p>
                   <button
                     onClick={() => window.location.reload()}
                     className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white rounded-lg"
@@ -357,15 +357,15 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
               <div className="mb-6">
                 <button
                   onClick={() => router.back()}
-                  className="inline-flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#1F2937] mb-4 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-4 transition-colors"
                 >
                   {locale === "ar" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
                   {t("editCourse.backToCourse")}
                 </button>
-                <h1 className="text-2xl font-bold text-[#1F2937]">
+                <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
                   {t("editCourse.title")}
                 </h1>
-                <p className="text-sm text-[#6B7280] mt-1">
+                <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                   {t("editCourse.subtitle")}
                 </p>
               </div>
@@ -373,12 +373,12 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Basic Info */}
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-                  <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("createCourse.basicInfo")}
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="edit-course-title" className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-course-title" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("createCourse.courseTitle")} *
                       </label>
                       <input
@@ -391,7 +391,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       />
                     </div>
                     <div>
-                      <label htmlFor="edit-course-title-ar" className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-course-title-ar" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("createCourse.courseTitleAr")}
                       </label>
                       <input
@@ -404,7 +404,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <label htmlFor="edit-course-description" className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-course-description" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("createCourse.description")}
                       </label>
                       <textarea
@@ -416,7 +416,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <label htmlFor="edit-course-description-ar" className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-course-description-ar" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("createCourse.descriptionAr")}
                       </label>
                       <textarea
@@ -433,7 +433,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
                 {/* Course Image */}
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-                  <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("createCourse.courseImage")}
                   </h2>
                   <input
@@ -460,7 +460,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       <button
                         type="button"
                         onClick={removeThumbnail}
-                        className="absolute top-2 right-2 p-1 bg-white/90 rounded-full text-[#6B7280] hover:bg-white hover:text-red-500 transition-colors"
+                        className="absolute top-2 right-2 p-1 bg-white/90 rounded-full text-[var(--color-text-secondary)] hover:bg-white hover:text-red-500 transition-colors"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -469,7 +469,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="w-full max-w-md h-48 border-2 border-dashed border-[var(--color-border)] rounded-lg flex flex-col items-center justify-center text-[#9CA3AF] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                      className="w-full max-w-md h-48 border-2 border-dashed border-[var(--color-border)] rounded-lg flex flex-col items-center justify-center text-[var(--color-text-secondary)] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
                     >
                       <ImagePlus className="w-8 h-8 mb-2" />
                       <span className="text-sm font-medium">
@@ -481,13 +481,13 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
                 {/* Course Content */}
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-                  <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("createCourse.wizardStepContent")}
                   </h2>
                   <div className="space-y-4">
                     {/* Overview */}
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsOverviewEn")}</label>
+                      <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsOverviewEn")}</label>
                       <RichTextEditor
                         value={overview}
                         onChange={setOverview}
@@ -495,7 +495,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsOverviewAr")}</label>
+                      <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsOverviewAr")}</label>
                       <RichTextEditor
                         value={overviewAr}
                         onChange={setOverviewAr}
@@ -506,7 +506,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
                     {/* Objectives */}
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsObjectivesEn")}</label>
+                      <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsObjectivesEn")}</label>
                       {objectives.map((obj, i) => (
                         <div key={i} className="flex gap-2 mb-2">
                           <input
@@ -528,7 +528,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         className="text-sm text-blue-600 hover:underline">{t("createCourse.addObjective")}</button>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsObjectivesAr")}</label>
+                      <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsObjectivesAr")}</label>
                       {objectivesAr.map((obj, i) => (
                         <div key={i} className="flex gap-2 mb-2">
                           <input
@@ -553,7 +553,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
                     {/* Features */}
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsFeaturesEn")}</label>
+                      <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsFeaturesEn")}</label>
                       {features.map((feat, i) => (
                         <div key={i} className="flex gap-2 mb-2">
                           <input
@@ -575,7 +575,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         className="text-sm text-blue-600 hover:underline">{t("createCourse.addFeature")}</button>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsFeaturesAr")}</label>
+                      <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsFeaturesAr")}</label>
                       {featuresAr.map((feat, i) => (
                         <div key={i} className="flex gap-2 mb-2">
                           <input
@@ -600,7 +600,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
                     {/* Target Audience */}
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsTargetAudienceEn")}</label>
+                      <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsTargetAudienceEn")}</label>
                       {targetAudience.map((item, i) => (
                         <div key={i} className="flex gap-2 mb-2">
                           <input
@@ -622,7 +622,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         className="text-sm text-blue-600 hover:underline">{t("createCourse.addAudience")}</button>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsTargetAudienceAr")}</label>
+                      <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsTargetAudienceAr")}</label>
                       {targetAudienceAr.map((item, i) => (
                         <div key={i} className="flex gap-2 mb-2">
                           <input
@@ -649,7 +649,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                     {(deliveryType === 'onsite' || deliveryType === 'blended') && (
                       <>
                         <div>
-                          <label htmlFor="edit-requirements" className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsRequirementsEn")}</label>
+                          <label htmlFor="edit-requirements" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsRequirementsEn")}</label>
                           <textarea
                             id="edit-requirements"
                             value={requirements}
@@ -660,7 +660,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                           />
                         </div>
                         <div>
-                          <label htmlFor="edit-requirements-ar" className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsRequirementsAr")}</label>
+                          <label htmlFor="edit-requirements-ar" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsRequirementsAr")}</label>
                           <textarea
                             id="edit-requirements-ar"
                             value={requirementsAr}
@@ -676,7 +676,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
                     {/* Notices */}
                     <div>
-                      <label htmlFor="edit-notices" className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsNoticesEn")}</label>
+                      <label htmlFor="edit-notices" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsNoticesEn")}</label>
                       <textarea
                         id="edit-notices"
                         value={notices}
@@ -687,7 +687,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       />
                     </div>
                     <div>
-                      <label htmlFor="edit-notices-ar" className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsNoticesAr")}</label>
+                      <label htmlFor="edit-notices-ar" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsNoticesAr")}</label>
                       <textarea
                         id="edit-notices-ar"
                         value={noticesAr}
@@ -710,8 +710,8 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                             className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
                           />
                           <div>
-                            <p className="text-sm font-medium text-[#374151]">{t("createCourse.showContentsLabel")}</p>
-                            <p className="text-xs text-[#6B7280] mt-0.5">
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("createCourse.showContentsLabel")}</p>
+                            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
                               {t("createCourse.showContentsDesc")}
                             </p>
                           </div>
@@ -729,8 +729,8 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                           className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
                         />
                         <div>
-                          <p className="text-sm font-medium text-[#374151]">{t("createCourse.visibleOnPublicLabel")}</p>
-                          <p className="text-xs text-[#6B7280] mt-0.5">
+                          <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("createCourse.visibleOnPublicLabel")}</p>
+                          <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
                             {t("createCourse.visibleOnPublicDesc")}
                           </p>
                         </div>
@@ -739,8 +739,8 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
                     {/* Section order */}
                     <div className="pt-3 border-t border-[var(--color-border)]">
-                      <p className="text-sm font-medium text-[#374151] mb-1">{t("createCourse.sectionOrderTitle")}</p>
-                      <p className="text-xs text-[#6B7280] mb-3">
+                      <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.sectionOrderTitle")}</p>
+                      <p className="text-xs text-[var(--color-text-secondary)] mb-3">
                         {t("createCourse.sectionOrderDesc")}
                       </p>
                       <div className="flex flex-col gap-1.5">
@@ -766,8 +766,8 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                           };
                           return (
                             <div key={key} className="flex items-center gap-2 px-3 py-2 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg">
-                              <span className="text-xs text-[#9CA3AF] font-medium w-5">{idx + 1}.</span>
-                              <span className="text-sm text-[#374151] flex-1">{labels[key] || key}</span>
+                              <span className="text-xs text-[var(--color-text-secondary)] font-medium w-5">{idx + 1}.</span>
+                              <span className="text-sm text-[var(--color-text-secondary)] flex-1">{labels[key] || key}</span>
                               <button
                                 type="button"
                                 onClick={moveUp}
@@ -775,7 +775,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                                 className="p-1 rounded hover:bg-[var(--color-border)] disabled:opacity-30 disabled:cursor-not-allowed"
                                 title={t("createCourse.moveUp")}
                               >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#6B7280]">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[var(--color-text-secondary)]">
                                   <polyline points="18 15 12 9 6 15"></polyline>
                                 </svg>
                               </button>
@@ -786,7 +786,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                                 className="p-1 rounded hover:bg-[var(--color-border)] disabled:opacity-30 disabled:cursor-not-allowed"
                                 title={t("createCourse.moveDown")}
                               >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#6B7280]">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[var(--color-text-secondary)]">
                                   <polyline points="6 9 12 15 18 9"></polyline>
                                 </svg>
                               </button>
@@ -800,11 +800,11 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
                 {/* Instructor Assignment */}
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-                  <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("createCourse.instructor")}
                   </h2>
                   <div>
-                    <label htmlFor="edit-instructor-select" className="block text-sm font-medium text-[#374151] mb-1">
+                    <label htmlFor="edit-instructor-select" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                       {t("createCourse.selectInstructor")} *
                     </label>
                     <select
@@ -832,12 +832,12 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
                 {/* Course Settings */}
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-                  <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("createCourse.courseSettings")}
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="edit-delivery-type" className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-delivery-type" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("createCourse.deliveryType")}
                       </label>
                       <select
@@ -865,7 +865,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       </select>
                     </div>
                     <div>
-                      <label htmlFor="edit-max-enrollment" className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-max-enrollment" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("createCourse.maxEnrollment")}
                       </label>
                       <input
@@ -877,14 +877,14 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         min={1}
                         className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                       />
-                      <p className="text-xs text-[#9CA3AF] mt-1">
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-1">
                         {deliveryType === "self-paced"
                           ? t("createCourse.selfPacedNoLimit") || "Self-paced: unlimited enrollment. Leave empty for no limit."
                           : t("createCourse.syncDefaultLimit") || "Synchronous: default max 2000. Leave empty for default."}
                       </p>
                     </div>
                     <div>
-                      <label htmlFor="edit-cohort" className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-cohort" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("createCourse.cohort")}
                       </label>
                       <input
@@ -896,12 +896,12 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         maxLength={100}
                         className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                       />
-                      <p className="text-xs text-[#6B7280] mt-1">
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-1">
                         {t("createCourse.cohortHint")}
                       </p>
                     </div>
                     <div>
-                      <label htmlFor="edit-start-date" className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-start-date" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("createCourse.startDate")}
                       </label>
                       <DatePicker
@@ -911,7 +911,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       />
                     </div>
                     <div>
-                      <label htmlFor="edit-end-date" className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-end-date" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("createCourse.endDate")}
                       </label>
                       <DatePicker
@@ -921,7 +921,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       />
                     </div>
                     <div>
-                      <label htmlFor="edit-price" className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-price" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("createCourse.priceLabel")}
                       </label>
                       <input
@@ -935,7 +935,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       />
                     </div>
                     <div>
-                      <label htmlFor="edit-enrollment-deadline" className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-enrollment-deadline" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("createCourse.enrollmentDeadlineLabel")}
                       </label>
                       <DatePicker
@@ -945,7 +945,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       />
                     </div>
                     <div>
-                      <label htmlFor="edit-language" className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-language" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("createCourse.languageLabel")}
                       </label>
                       <select
@@ -962,7 +962,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                     {(deliveryType === 'onsite' || deliveryType === 'blended') && (
                       <>
                         <div>
-                          <label htmlFor="edit-venue" className="block text-sm font-medium text-[#374151] mb-1">
+                          <label htmlFor="edit-venue" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                             {t("createCourse.venueEn")}
                           </label>
                           <input
@@ -975,7 +975,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                           />
                         </div>
                         <div>
-                          <label htmlFor="edit-venue-ar" className="block text-sm font-medium text-[#374151] mb-1">
+                          <label htmlFor="edit-venue-ar" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                             {t("createCourse.venueAr")}
                           </label>
                           <input
@@ -998,7 +998,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                   <button
                     type="button"
                     onClick={() => router.back()}
-                    className="px-6 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                    className="px-6 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
                   >
                     {t("createCourse.cancel")}
                   </button>

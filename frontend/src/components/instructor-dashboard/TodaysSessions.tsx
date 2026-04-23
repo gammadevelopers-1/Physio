@@ -40,12 +40,12 @@ const TodaysSessions = ({
     <div className="bg-white rounded-xl border border-[var(--color-border)] mb-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border-b border-[var(--color-border)] gap-3">
-        <h2 className="text-base sm:text-lg font-semibold text-[#1F2937]">
+        <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)]">
           {t("todaysSessions.title")}
         </h2>
         <button
           onClick={() => router.push(`/${locale}/dashboard/instructor/sessions?view=calendar`)}
-          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-[#374151] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
         >
           {t("todaysSessions.viewCalendar")}
         </button>
@@ -56,12 +56,12 @@ const TodaysSessions = ({
         {sessions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
             <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
-              <Calendar className="w-6 h-6 text-[#9CA3AF]" />
+              <Calendar className="w-6 h-6 text-[var(--color-text-secondary)]" />
             </div>
-            <h3 className="text-sm font-medium text-[#1F2937] mb-1">
+            <h3 className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
               {t("todaysSessions.noSessionsTitle")}
             </h3>
-            <p className="text-xs text-[#6B7280] text-center max-w-[200px]">
+            <p className="text-xs text-[var(--color-text-secondary)] text-center max-w-[200px]">
               {t("todaysSessions.noSessionsDescription")}
             </p>
           </div>

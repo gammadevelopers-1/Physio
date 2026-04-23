@@ -353,7 +353,7 @@ const CourseManagerCourseDetailContent = ({
         );
       case "archived":
         return (
-          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#F3F4F6] text-[#6B7280]">
+          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#F3F4F6] text-[var(--color-text-secondary)]">
             {t("courseDetail.status.archived")}
           </span>
         );
@@ -387,7 +387,7 @@ const CourseManagerCourseDetailContent = ({
       case "blended":
         return <Layers className="w-4 h-4 text-[#8B5CF6]" />;
       default:
-        return <BookOpen className="w-4 h-4 text-[#6B7280]" />;
+        return <BookOpen className="w-4 h-4 text-[var(--color-text-secondary)]" />;
     }
   };
 
@@ -419,7 +419,7 @@ const CourseManagerCourseDetailContent = ({
               <div className="flex-1 min-w-0">
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <AlertTriangle className="w-12 h-12 text-[#D97706] mx-auto mb-4" />
-                  <p className="text-[#6B7280] mb-4">{error}</p>
+                  <p className="text-[var(--color-text-secondary)] mb-4">{error}</p>
                   <button
                     onClick={fetchCourse}
                     className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white rounded-lg"
@@ -434,7 +434,7 @@ const CourseManagerCourseDetailContent = ({
                 {/* Back Link */}
                 <Link
                   href={`/${locale}/dashboard/manager/courses`}
-                  className="inline-flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#002D87] mb-4 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] hover:text-[#002D87] mb-4 transition-colors"
                 >
                   <BackArrow className="w-4 h-4" />
                   {t("courseDetail.backToCourses")}
@@ -459,14 +459,14 @@ const CourseManagerCourseDetailContent = ({
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
+                          <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
                             {course.title}
                           </h1>
                           {getStatusBadge(course.status)}
                           {getRegistrationBadge()}
                         </div>
                         {course.titleAr && (
-                          <p className="text-sm text-[#6B7280] mb-1" dir="rtl">
+                          <p className="text-sm text-[var(--color-text-secondary)] mb-1" dir="rtl">
                             {course.titleAr}
                           </p>
                         )}
@@ -502,7 +502,7 @@ const CourseManagerCourseDetailContent = ({
                               className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${
                                 course.isFeatured
                                   ? "bg-[var(--gold-gold-100)] text-[var(--gold-gold-500)] hover:bg-[var(--gold-gold-200)]"
-                                  : "border border-[var(--color-border)] text-[#6B7280] hover:bg-[#F9FAFB]"
+                                  : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
                               }`}
                             >
                               <Star
@@ -515,7 +515,7 @@ const CourseManagerCourseDetailContent = ({
                             <button
                               onClick={handleDeactivate}
                               disabled={updatingStatus}
-                              className="inline-flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] text-[#6B7280] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                              className="inline-flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
                             >
                               <Archive className="w-4 h-4" />
                               {t("courseDetail.archive")}
@@ -579,55 +579,55 @@ const CourseManagerCourseDetailContent = ({
                   <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex items-center gap-2 mb-1">
                       {getDeliveryIcon(course.deliveryType)}
-                      <span className="text-xs text-[#6B7280]">
+                      <span className="text-xs text-[var(--color-text-secondary)]">
                         {t("courseDetail.deliveryType")}
                       </span>
                     </div>
-                    <p className="text-lg font-semibold text-[#1F2937] capitalize">
+                    <p className="text-lg font-semibold text-[var(--color-text-primary)] capitalize">
                       {t(`courseDetail.delivery.${course.deliveryType}`)}
                     </p>
                   </div>
                   <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex items-center gap-2 mb-1">
                       <Users className="w-4 h-4 text-[#8B5CF6]" />
-                      <span className="text-xs text-[#6B7280]">
+                      <span className="text-xs text-[var(--color-text-secondary)]">
                         {t("courseDetail.maxEnrollment")}
                       </span>
                     </div>
-                    <p className="text-lg font-semibold text-[#1F2937]">
+                    <p className="text-lg font-semibold text-[var(--color-text-primary)]">
                       {course.maxEnrollment ?? "—"}
                     </p>
                   </div>
                   <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex items-center gap-2 mb-1">
                       <Calendar className="w-4 h-4 text-[#16A34A]" />
-                      <span className="text-xs text-[#6B7280]">
+                      <span className="text-xs text-[var(--color-text-secondary)]">
                         {t("courseDetail.startDate")}
                       </span>
                     </div>
-                    <p className="text-sm font-semibold text-[#1F2937]">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                       {formatDate(course.startDate)}
                     </p>
                   </div>
                   <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex items-center gap-2 mb-1">
                       <Calendar className="w-4 h-4 text-[#DC2626]" />
-                      <span className="text-xs text-[#6B7280]">
+                      <span className="text-xs text-[var(--color-text-secondary)]">
                         {t("courseDetail.endDate")}
                       </span>
                     </div>
-                    <p className="text-sm font-semibold text-[#1F2937]">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                       {formatDate(course.endDate)}
                     </p>
                   </div>
                   <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex items-center gap-2 mb-1">
                       <Award className="w-4 h-4 text-[#D4A520]" />
-                      <span className="text-xs text-[#6B7280]">
+                      <span className="text-xs text-[var(--color-text-secondary)]">
                         CME/CPD Hours
                       </span>
                     </div>
-                    <p className="text-sm font-semibold text-[#1F2937]">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                       {course.cmeHours || "—"}
                     </p>
                   </div>
@@ -635,21 +635,21 @@ const CourseManagerCourseDetailContent = ({
 
                 {/* Description */}
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-6">
-                  <h2 className="text-base font-semibold text-[#1F2937] mb-3">
+                  <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">
                     {t("courseDetail.description")}
                   </h2>
                   {course.description ? (
-                    <p className="text-sm text-[#4B5563] leading-relaxed whitespace-pre-wrap">
+                    <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap">
                       {course.description}
                     </p>
                   ) : (
-                    <p className="text-sm text-[#9CA3AF] italic">
+                    <p className="text-sm text-[var(--color-text-secondary)] italic">
                       {t("courseDetail.noDescription")}
                     </p>
                   )}
                   {course.descriptionAr && (
                     <p
-                      className="text-sm text-[#4B5563] leading-relaxed mt-3 pt-3 border-t border-[var(--color-border)] whitespace-pre-wrap"
+                      className="text-sm text-[var(--color-text-secondary)] leading-relaxed mt-3 pt-3 border-t border-[var(--color-border)] whitespace-pre-wrap"
                       dir="rtl"
                     >
                       {course.descriptionAr}
@@ -674,7 +674,7 @@ const CourseManagerCourseDetailContent = ({
                 {/* Modules */}
                 <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
                   <div className="p-5 border-b border-[var(--color-border)] flex items-center justify-between">
-                    <h2 className="text-base font-semibold text-[#1F2937]">
+                    <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
                       {t("courseDetail.modules")} ({course.modules?.length ?? 0})
                     </h2>
                   </div>
@@ -694,11 +694,11 @@ const CourseManagerCourseDetailContent = ({
                                   {idx + 1}
                                 </span>
                                 <div className={`text-start`}>
-                                  <span className="text-sm font-medium text-[#1F2937]">
+                                  <span className="text-sm font-medium text-[var(--color-text-primary)]">
                                     {mod.title}
                                   </span>
                                   {mod.titleAr && (
-                                    <p className="text-xs text-[#6B7280]" dir="rtl">
+                                    <p className="text-xs text-[var(--color-text-secondary)]" dir="rtl">
                                       {mod.titleAr}
                                     </p>
                                   )}
@@ -706,19 +706,19 @@ const CourseManagerCourseDetailContent = ({
                               </div>
                               <div className="flex items-center gap-3">
                                 {mod.durationMinutes && (
-                                  <span className="text-xs text-[#6B7280] flex items-center gap-1">
+                                  <span className="text-xs text-[var(--color-text-secondary)] flex items-center gap-1">
                                     <Clock className="w-3 h-3" />
                                     {formatDuration(mod.durationMinutes, locale)}
                                   </span>
                                 )}
-                                <span className="px-2 py-0.5 text-xs rounded bg-[#F3F4F6] text-[#6B7280] capitalize">
+                                <span className="px-2 py-0.5 text-xs rounded bg-[#F3F4F6] text-[var(--color-text-secondary)] capitalize">
                                   {mod.type}
                                 </span>
                                 {expandedModules.has(mod.id) ? (
-                                  <ChevronDown className="w-4 h-4 text-[#6B7280]" />
+                                  <ChevronDown className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                 ) : (
                                   <ChevronRight
-                                    className={`w-4 h-4 text-[#6B7280] ${isRTL ? "rotate-180" : ""}`}
+                                    className={`w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "rotate-180" : ""}`}
                                   />
                                 )}
                               </div>
@@ -727,12 +727,12 @@ const CourseManagerCourseDetailContent = ({
                               <div className="px-4 pb-4 bg-[#F9FAFB]">
                                 <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                                   <div>
-                                    <span className="text-[#6B7280]">{t("courseDetail.moduleType")}:</span>{" "}
-                                    <span className="text-[#1F2937] capitalize">{mod.type}</span>
+                                    <span className="text-[var(--color-text-secondary)]">{t("courseDetail.moduleType")}:</span>{" "}
+                                    <span className="text-[var(--color-text-primary)] capitalize">{mod.type}</span>
                                   </div>
                                   <div>
-                                    <span className="text-[#6B7280]">{t("courseDetail.moduleDuration")}:</span>{" "}
-                                    <span className="text-[#1F2937]">
+                                    <span className="text-[var(--color-text-secondary)]">{t("courseDetail.moduleDuration")}:</span>{" "}
+                                    <span className="text-[var(--color-text-primary)]">
                                       {mod.durationMinutes ? formatDuration(mod.durationMinutes, locale) : "—"}
                                     </span>
                                   </div>
@@ -740,13 +740,13 @@ const CourseManagerCourseDetailContent = ({
 
                                 {/* Materials in this module */}
                                 <div className="border-t border-[var(--color-border)] pt-3">
-                                  <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-2">
+                                  <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide mb-2">
                                     {t("courseDetail.materials")}
                                   </p>
                                   {loadingMaterials.has(mod.id) ? (
                                     <div className="flex items-center gap-2 py-2">
                                       <Loader2 className="w-4 h-4 text-[#3B82F6] animate-spin" />
-                                      <span className="text-xs text-[#6B7280]">{t("dashboard.loading")}</span>
+                                      <span className="text-xs text-[var(--color-text-secondary)]">{t("dashboard.loading")}</span>
                                     </div>
                                   ) : (moduleMaterials[mod.id] && moduleMaterials[mod.id].length > 0) ? (
                                     <div className="space-y-2">
@@ -757,11 +757,11 @@ const CourseManagerCourseDetailContent = ({
                                         >
                                           {getMaterialIcon(mat.type)}
                                           <div className="flex-1 min-w-0">
-                                            <p className="text-sm text-[#1F2937] truncate">{mat.title}</p>
-                                            <p className="text-xs text-[#6B7280]">
+                                            <p className="text-sm text-[var(--color-text-primary)] truncate">{mat.title}</p>
+                                            <p className="text-xs text-[var(--color-text-secondary)]">
                                               {mat.type} • {formatFileSize(mat.fileSize)}
                                               {mat.wcagStatus && (
-                                                <span className={`ms-2 ${mat.wcagStatus === "compliant" ? "text-[#16A34A]" : mat.wcagStatus === "warning" ? "text-[#D97706]" : mat.wcagStatus === "fail" ? "text-[#DC2626]" : "text-[#6B7280]"}`}>
+                                                <span className={`ms-2 ${mat.wcagStatus === "compliant" ? "text-[#16A34A]" : mat.wcagStatus === "warning" ? "text-[#D97706]" : mat.wcagStatus === "fail" ? "text-[#DC2626]" : "text-[var(--color-text-secondary)]"}`}>
                                                   WCAG: {mat.wcagStatus}
                                                 </span>
                                               )}
@@ -772,7 +772,7 @@ const CourseManagerCourseDetailContent = ({
                                             mat.status === "pending_review" ? "bg-[#DBEAFE] text-[#1D4ED8]" :
                                             mat.status === "processing" ? "bg-[#FEF3C7] text-[#D97706]" :
                                             mat.status === "failed" ? "bg-[#FEE2E2] text-[#DC2626]" :
-                                            "bg-[#F3F4F6] text-[#6B7280]"
+                                            "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
                                           }`}>
                                             {mat.status.replace("_", " ")}
                                           </span>
@@ -782,7 +782,7 @@ const CourseManagerCourseDetailContent = ({
                                               target="_blank"
                                               rel="noopener noreferrer"
                                               onClick={(e) => e.stopPropagation()}
-                                              className="p-1 text-[#9CA3AF] hover:text-[#3B82F6] transition-colors"
+                                              className="p-1 text-[var(--color-text-secondary)] hover:text-[#3B82F6] transition-colors"
                                               title={t("courseDetail.viewContent")}
                                             >
                                               <Eye className="w-3.5 h-3.5" />
@@ -790,7 +790,7 @@ const CourseManagerCourseDetailContent = ({
                                           )}
                                           <button
                                             onClick={(e) => { e.stopPropagation(); setRemovingMaterial(mat); }}
-                                            className="p-1 text-[#9CA3AF] hover:text-[#DC2626] transition-colors"
+                                            className="p-1 text-[var(--color-text-secondary)] hover:text-[#DC2626] transition-colors"
                                             title={t("courseDetail.removeMaterial")}
                                           >
                                             <Trash2 className="w-3.5 h-3.5" />
@@ -799,7 +799,7 @@ const CourseManagerCourseDetailContent = ({
                                       ))}
                                     </div>
                                   ) : (
-                                    <p className="text-xs text-[#9CA3AF] italic py-1">
+                                    <p className="text-xs text-[var(--color-text-secondary)] italic py-1">
                                       {t("courseDetail.noMaterials")}
                                     </p>
                                   )}
@@ -811,7 +811,7 @@ const CourseManagerCourseDetailContent = ({
                                   if (modAssessments.length === 0) return null;
                                   return (
                                     <div className="border-t border-[var(--color-border)] pt-3">
-                                      <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-2">
+                                      <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide mb-2">
                                         {t("courseDetail.moduleAssessments")}
                                       </p>
                                       <div className="space-y-2">
@@ -820,10 +820,10 @@ const CourseManagerCourseDetailContent = ({
                                             key={ma.id}
                                             className="flex items-center gap-3 bg-white rounded-lg border border-[var(--color-border)] px-3 py-2"
                                           >
-                                            <ClipboardCheck className="w-4 h-4 text-[#6B7280] flex-shrink-0" />
+                                            <ClipboardCheck className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
                                             <div className="flex-1 min-w-0">
-                                              <p className="text-sm text-[#1F2937] truncate">{ma.title}</p>
-                                              <p className="text-xs text-[#6B7280]">
+                                              <p className="text-sm text-[var(--color-text-primary)] truncate">{ma.title}</p>
+                                              <p className="text-xs text-[var(--color-text-secondary)]">
                                                 {ma.totalMarks} {t("courseDetail.marks") || "marks"}
                                               </p>
                                             </div>
@@ -845,8 +845,8 @@ const CourseManagerCourseDetailContent = ({
                     </div>
                   ) : (
                     <div className="p-8 text-center">
-                      <FileText className="w-10 h-10 text-[#9CA3AF] mx-auto mb-3" />
-                      <p className="text-sm text-[#6B7280]">
+                      <FileText className="w-10 h-10 text-[var(--color-text-secondary)] mx-auto mb-3" />
+                      <p className="text-sm text-[var(--color-text-secondary)]">
                         {t("courseDetail.noModules")}
                       </p>
                     </div>
@@ -855,25 +855,25 @@ const CourseManagerCourseDetailContent = ({
 
                 {/* Course Metadata */}
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
-                  <h2 className="text-base font-semibold text-[#1F2937] mb-3">
+                  <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">
                     {t("courseDetail.courseInfo")}
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-[#6B7280]">{t("courseDetail.courseId")}:</span>{" "}
-                      <span className="text-[#1F2937] font-mono text-xs">{course.id}</span>
+                      <span className="text-[var(--color-text-secondary)]">{t("courseDetail.courseId")}:</span>{" "}
+                      <span className="text-[var(--color-text-primary)] font-mono text-xs">{course.id}</span>
                     </div>
                     <div>
-                      <span className="text-[#6B7280]">{t("courseDetail.createdAt")}:</span>{" "}
-                      <span className="text-[#1F2937]">{formatDate(course.createdAt)}</span>
+                      <span className="text-[var(--color-text-secondary)]">{t("courseDetail.createdAt")}:</span>{" "}
+                      <span className="text-[var(--color-text-primary)]">{formatDate(course.createdAt)}</span>
                     </div>
                     <div>
-                      <span className="text-[#6B7280]">{t("courseDetail.updatedAt")}:</span>{" "}
-                      <span className="text-[#1F2937]">{formatDate(course.updatedAt)}</span>
+                      <span className="text-[var(--color-text-secondary)]">{t("courseDetail.updatedAt")}:</span>{" "}
+                      <span className="text-[var(--color-text-primary)]">{formatDate(course.updatedAt)}</span>
                     </div>
                     <div>
-                      <span className="text-[#6B7280]">{t("courseDetail.instructorId")}:</span>{" "}
-                      <span className="text-[#1F2937] font-mono text-xs">{course.instructorId}</span>
+                      <span className="text-[var(--color-text-secondary)]">{t("courseDetail.instructorId")}:</span>{" "}
+                      <span className="text-[var(--color-text-primary)] font-mono text-xs">{course.instructorId}</span>
                     </div>
                   </div>
                 </div>
@@ -881,7 +881,7 @@ const CourseManagerCourseDetailContent = ({
                 {/* Student Reviews */}
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
                   <div className="flex items-center justify-between mb-4 gap-3">
-                    <h2 className="text-base font-semibold text-[#1F2937]">
+                    <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
                       {t("courseDetail.reviewsTitle")}
                     </h2>
                     {reviews.length > 0 && (
@@ -897,21 +897,21 @@ const CourseManagerCourseDetailContent = ({
                             );
                           })}
                         </div>
-                        <span className="font-medium text-[#1F2937]">
+                        <span className="font-medium text-[var(--color-text-primary)]">
                           {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
                         </span>
                       </div>
                     )}
                   </div>
                   {reviewsLoading ? (
-                    <div className="text-center py-6 text-sm text-[#6B7280]">
+                    <div className="text-center py-6 text-sm text-[var(--color-text-secondary)]">
                       <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
                       {t("courseDetail.reviewsLoading")}
                     </div>
                   ) : reviews.length === 0 ? (
                     <div className="text-center py-8">
                       <Star className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
-                      <p className="text-sm text-[#6B7280]">{t("courseDetail.noReviewsYet")}</p>
+                      <p className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.noReviewsYet")}</p>
                     </div>
                   ) : (
                     <>
@@ -920,8 +920,8 @@ const CourseManagerCourseDetailContent = ({
                           <div key={r.id} className="border border-[var(--color-border)] rounded-lg p-4 bg-[#FAFAFA]">
                             <div className="flex items-start justify-between mb-2">
                               <div>
-                                <p className="text-sm font-medium text-[#1F2937]">{r.studentName}</p>
-                                <p className="text-xs text-[#9CA3AF]">{formatDate(r.createdAt)}</p>
+                                <p className="text-sm font-medium text-[var(--color-text-primary)]">{r.studentName}</p>
+                                <p className="text-xs text-[var(--color-text-secondary)]">{formatDate(r.createdAt)}</p>
                               </div>
                               <div className="flex items-center gap-0.5">
                                 {[1, 2, 3, 4, 5].map((s) => (
@@ -933,7 +933,7 @@ const CourseManagerCourseDetailContent = ({
                               </div>
                             </div>
                             {r.reviewText && (
-                              <p dir="auto" className="text-sm text-[#374151] whitespace-pre-line">{r.reviewText}</p>
+                              <p dir="auto" className="text-sm text-[var(--color-text-secondary)] whitespace-pre-line">{r.reviewText}</p>
                             )}
                           </div>
                         ))}
@@ -965,34 +965,34 @@ const CourseManagerCourseDetailContent = ({
                 <div className="w-10 h-10 rounded-full bg-[#FEE2E2] flex items-center justify-center">
                   <Trash2 className="w-5 h-5 text-[#DC2626]" />
                 </div>
-                <h3 className="text-lg font-semibold text-[#1F2937]">
+                <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                   {t("courseDetail.removeMaterialTitle")}
                 </h3>
               </div>
-              <button onClick={() => { setRemovingMaterial(null); setRemoveReason(""); }} className="text-[#6B7280] hover:text-[#1F2937]">
+              <button onClick={() => { setRemovingMaterial(null); setRemoveReason(""); }} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-sm text-[#6B7280] mb-2">
+            <p className="text-sm text-[var(--color-text-secondary)] mb-2">
               {t("courseDetail.removeMaterialDesc")}
             </p>
-            <p className="text-sm font-medium text-[#1F2937] mb-4">
+            <p className="text-sm font-medium text-[var(--color-text-primary)] mb-4">
               &ldquo;{removingMaterial.title}&rdquo;
             </p>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("courseDetail.removeReason")}
             </label>
             <textarea
               value={removeReason}
               onChange={(e) => setRemoveReason(e.target.value)}
               placeholder={t("courseDetail.removeReasonPlaceholder")}
-              className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[#1F2937] resize-none focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+              className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] resize-none focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
               rows={3}
             />
             <div className="flex items-center justify-end gap-3 mt-4">
               <button
                 onClick={() => { setRemovingMaterial(null); setRemoveReason(""); }}
-                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]"
               >
                 {t("courseDetail.cancel")}
               </button>
@@ -1017,17 +1017,17 @@ const CourseManagerCourseDetailContent = ({
               <div className="w-10 h-10 rounded-full bg-[#FEE2E2] flex items-center justify-center">
                 <Trash2 className="w-5 h-5 text-[#DC2626]" />
               </div>
-              <h3 className="text-lg font-semibold text-[#1F2937]">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {t("courseDetail.confirmDelete")}
               </h3>
             </div>
-            <p className="text-sm text-[#6B7280] mb-6">
+            <p className="text-sm text-[var(--color-text-secondary)] mb-6">
               {t("courseDetail.confirmDeleteDesc")}
             </p>
             <div className="flex items-center justify-end gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]"
               >
                 {t("courseDetail.cancel")}
               </button>
@@ -1053,10 +1053,10 @@ const CourseManagerCourseDetailContent = ({
                 <AlertTriangle className="w-5 h-5 text-[#D97706]" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-[#1F2937]">
+                <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                   {t("courseDetail.requestChangesTitle")}
                 </h3>
-                <p className="text-xs text-[#6B7280]">
+                <p className="text-xs text-[var(--color-text-secondary)]">
                   {t("courseDetail.requestChangesDesc")}
                 </p>
               </div>
@@ -1069,11 +1069,11 @@ const CourseManagerCourseDetailContent = ({
               placeholder={t("courseDetail.requestChangesPlaceholder")}
               className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent resize-none mb-1"
             />
-            <p className="text-xs text-[#9CA3AF] mb-4 text-end">{requestChangesNote.length}/1000</p>
+            <p className="text-xs text-[var(--color-text-secondary)] mb-4 text-end">{requestChangesNote.length}/1000</p>
             <div className="flex items-center justify-end gap-3">
               <button
                 onClick={() => { setShowRequestChanges(false); setRequestChangesNote(""); }}
-                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]"
               >
                 {t("courseDetail.cancel")}
               </button>

@@ -65,7 +65,7 @@ function StepIndicator({
                     ? "bg-[#22C55E] text-white"
                     : isCurrent
                       ? "bg-[#3B82F6] text-white"
-                      : "bg-[var(--color-border)] text-[#9CA3AF]"
+                      : "bg-[var(--color-border)] text-[var(--color-text-secondary)]"
                 }`}
               >
                 {isCompleted ? <Check className="w-4 h-4" /> : step.number}
@@ -76,7 +76,7 @@ function StepIndicator({
                     ? "text-[#3B82F6]"
                     : isCompleted
                       ? "text-[#22C55E]"
-                      : "text-[#9CA3AF]"
+                      : "text-[var(--color-text-secondary)]"
                 }`}
               >
                 {step.label}
@@ -454,15 +454,15 @@ const CreateCourseContent = () => {
               <div className="mb-6">
                 <button
                   onClick={() => router.back()}
-                  className="inline-flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#1F2937] mb-4 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-4 transition-colors"
                 >
                   {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
                   {t("createCourse.backToCourses")}
                 </button>
-                <h1 className="text-2xl font-bold text-[#1F2937]">
+                <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
                   {t("createCourse.title")}
                 </h1>
-                <p className="text-sm text-[#6B7280] mt-1">
+                <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                   {t("createCourse.subtitle")}
                 </p>
               </div>
@@ -474,12 +474,12 @@ const CreateCourseContent = () => {
               {currentStep === 1 && (
                 <div className="space-y-6">
                   <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-                    <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                       {t("createCourse.basicInfo")}
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="course-title" className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="course-title" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                           {t("createCourse.courseTitle")} *
                         </label>
                         <input
@@ -493,7 +493,7 @@ const CreateCourseContent = () => {
                         />
                       </div>
                       <div>
-                        <label htmlFor="course-title-ar" className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="course-title-ar" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                           {t("createCourse.courseTitleAr")}
                         </label>
                         <input
@@ -509,7 +509,7 @@ const CreateCourseContent = () => {
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label htmlFor="course-description" className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="course-description" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                           {t("createCourse.description")}
                         </label>
                         <textarea
@@ -524,7 +524,7 @@ const CreateCourseContent = () => {
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label htmlFor="course-description-ar" className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="course-description-ar" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                           {t("createCourse.descriptionAr")}
                         </label>
                         <textarea
@@ -540,7 +540,7 @@ const CreateCourseContent = () => {
                         />
                       </div>
                       <div>
-                        <label htmlFor="delivery-type" className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="delivery-type" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                           {t("createCourse.deliveryType")}
                         </label>
                         <select
@@ -572,7 +572,7 @@ const CreateCourseContent = () => {
 
                   {/* Course Image */}
                   <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-                    <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                       {t("createCourse.courseImage")}
                     </h2>
                     <input
@@ -598,7 +598,7 @@ const CreateCourseContent = () => {
                         <button
                           type="button"
                           onClick={removeThumbnail}
-                          className="absolute top-2 right-2 p-1 bg-white/90 rounded-full text-[#6B7280] hover:bg-white hover:text-red-500 transition-colors"
+                          className="absolute top-2 right-2 p-1 bg-white/90 rounded-full text-[var(--color-text-secondary)] hover:bg-white hover:text-red-500 transition-colors"
                           aria-label={tA("removeImage")}
                         >
                           <X className="w-4 h-4" />
@@ -608,7 +608,7 @@ const CreateCourseContent = () => {
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-full max-w-md h-48 border-2 border-dashed border-[var(--color-border)] rounded-lg flex flex-col items-center justify-center text-[#9CA3AF] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                        className="w-full max-w-md h-48 border-2 border-dashed border-[var(--color-border)] rounded-lg flex flex-col items-center justify-center text-[var(--color-text-secondary)] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
                       >
                         <ImagePlus className="w-8 h-8 mb-2" />
                         <span className="text-sm font-medium">
@@ -627,13 +627,13 @@ const CreateCourseContent = () => {
               {currentStep === 2 && (
                 <div className="space-y-6">
                   <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-                    <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                       {t("createCourse.wizardStepContent")}
                     </h2>
                     <div className="space-y-4">
                       {/* Overview */}
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsOverviewEn")}</label>
+                        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsOverviewEn")}</label>
                         <RichTextEditor
                           value={overview}
                           onChange={setOverview}
@@ -641,7 +641,7 @@ const CreateCourseContent = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsOverviewAr")}</label>
+                        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsOverviewAr")}</label>
                         <RichTextEditor
                           value={overviewAr}
                           onChange={setOverviewAr}
@@ -652,7 +652,7 @@ const CreateCourseContent = () => {
 
                       {/* Objectives */}
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsObjectivesEn")}</label>
+                        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsObjectivesEn")}</label>
                         {objectives.map((obj, i) => (
                           <div key={i} className="flex gap-2 mb-2">
                             <input
@@ -674,7 +674,7 @@ const CreateCourseContent = () => {
                           className="text-sm text-blue-600 hover:underline">{t("createCourse.addObjective")}</button>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsObjectivesAr")}</label>
+                        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsObjectivesAr")}</label>
                         {objectivesAr.map((obj, i) => (
                           <div key={i} className="flex gap-2 mb-2">
                             <input
@@ -699,7 +699,7 @@ const CreateCourseContent = () => {
 
                       {/* Features */}
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsFeaturesEn")}</label>
+                        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsFeaturesEn")}</label>
                         {features.map((feat, i) => (
                           <div key={i} className="flex gap-2 mb-2">
                             <input
@@ -721,7 +721,7 @@ const CreateCourseContent = () => {
                           className="text-sm text-blue-600 hover:underline">{t("createCourse.addFeature")}</button>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsFeaturesAr")}</label>
+                        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsFeaturesAr")}</label>
                         {featuresAr.map((feat, i) => (
                           <div key={i} className="flex gap-2 mb-2">
                             <input
@@ -746,7 +746,7 @@ const CreateCourseContent = () => {
 
                       {/* Target Audience */}
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsTargetAudienceEn")}</label>
+                        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsTargetAudienceEn")}</label>
                         {targetAudience.map((item, i) => (
                           <div key={i} className="flex gap-2 mb-2">
                             <input
@@ -768,7 +768,7 @@ const CreateCourseContent = () => {
                           className="text-sm text-blue-600 hover:underline">{t("createCourse.addAudience")}</button>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsTargetAudienceAr")}</label>
+                        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsTargetAudienceAr")}</label>
                         {targetAudienceAr.map((item, i) => (
                           <div key={i} className="flex gap-2 mb-2">
                             <input
@@ -795,7 +795,7 @@ const CreateCourseContent = () => {
                       {(deliveryType === 'onsite' || deliveryType === 'blended') && (
                         <>
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsRequirementsEn")}</label>
+                            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsRequirementsEn")}</label>
                             <textarea
                               value={requirements}
                               onChange={(e) => setRequirements(e.target.value)}
@@ -805,7 +805,7 @@ const CreateCourseContent = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsRequirementsAr")}</label>
+                            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsRequirementsAr")}</label>
                             <textarea
                               value={requirementsAr}
                               onChange={(e) => setRequirementsAr(e.target.value)}
@@ -820,7 +820,7 @@ const CreateCourseContent = () => {
 
                       {/* Notices */}
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsNoticesEn")}</label>
+                        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsNoticesEn")}</label>
                         <textarea
                           value={notices}
                           onChange={(e) => setNotices(e.target.value)}
@@ -830,7 +830,7 @@ const CreateCourseContent = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsNoticesAr")}</label>
+                        <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("createCourse.contentDetailsNoticesAr")}</label>
                         <textarea
                           value={noticesAr}
                           onChange={(e) => setNoticesAr(e.target.value)}
@@ -852,8 +852,8 @@ const CreateCourseContent = () => {
                               className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
                             />
                             <div>
-                              <p className="text-sm font-medium text-[#374151]">{t("createCourse.showContentsLabel")}</p>
-                              <p className="text-xs text-[#6B7280] mt-0.5">
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("createCourse.showContentsLabel")}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
                                 {t("createCourse.showContentsDesc")}
                               </p>
                             </div>
@@ -871,8 +871,8 @@ const CreateCourseContent = () => {
                             className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
                           />
                           <div>
-                            <p className="text-sm font-medium text-[#374151]">{t("createCourse.visibleOnPublicLabel")}</p>
-                            <p className="text-xs text-[#6B7280] mt-0.5">
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("createCourse.visibleOnPublicLabel")}</p>
+                            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
                               {t("createCourse.visibleOnPublicDesc")}
                             </p>
                           </div>
@@ -888,12 +888,12 @@ const CreateCourseContent = () => {
                 <div className="space-y-6">
                   {/* Schedule */}
                   <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-                    <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                       {t("createCourse.scheduleTitle")}
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="start-date" className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="start-date" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                           {t("createCourse.startDate")} *
                         </label>
                         <DatePicker
@@ -904,7 +904,7 @@ const CreateCourseContent = () => {
                         />
                       </div>
                       <div>
-                        <label htmlFor="end-date" className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="end-date" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                           {t("createCourse.endDate")} *
                         </label>
                         <DatePicker
@@ -915,7 +915,7 @@ const CreateCourseContent = () => {
                         />
                       </div>
                       <div>
-                        <label htmlFor="max-enrollment" className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="max-enrollment" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                           {t("createCourse.maxEnrollment")}
                         </label>
                         <input
@@ -927,7 +927,7 @@ const CreateCourseContent = () => {
                           min={1}
                           className={inputClass}
                         />
-                        <p className="text-xs text-[#9CA3AF] mt-1">
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
                           {isSelfPaced
                             ? t("createCourse.selfPacedNoLimit") || "Self-paced: unlimited enrollment. Leave empty for no limit."
                             : t("createCourse.syncDefaultLimit") || "Synchronous: default max 2000. Leave empty for default."}
@@ -940,7 +940,7 @@ const CreateCourseContent = () => {
                           )}
                       </div>
                       <div>
-                        <label htmlFor="cme-hours" className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="cme-hours" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                           {t("createCourse.cmeHours")} *
                         </label>
                         <input
@@ -953,10 +953,10 @@ const CreateCourseContent = () => {
                           required
                           className={inputClass}
                         />
-                        <p className="text-xs text-[#9CA3AF] mt-1">{t("createCourse.cmeHoursHint")}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("createCourse.cmeHoursHint")}</p>
                       </div>
                       <div>
-                        <label htmlFor="cohort" className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="cohort" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                           {t("createCourse.cohort")}
                         </label>
                         <input
@@ -968,12 +968,12 @@ const CreateCourseContent = () => {
                           maxLength={100}
                           className={inputClass}
                         />
-                        <p className="text-xs text-[#6B7280] mt-1">
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
                           {t("createCourse.cohortHint")}
                         </p>
                       </div>
                       <div>
-                        <label htmlFor="price" className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="price" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                           {t("createCourse.priceLabel")}
                         </label>
                         <input
@@ -987,7 +987,7 @@ const CreateCourseContent = () => {
                         />
                       </div>
                       <div>
-                        <label htmlFor="enrollment-deadline" className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="enrollment-deadline" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                           {t("createCourse.enrollmentDeadlineLabel")}
                         </label>
                         <DatePicker
@@ -998,7 +998,7 @@ const CreateCourseContent = () => {
                         />
                       </div>
                       <div>
-                        <label htmlFor="language" className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="language" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                           {t("createCourse.languageLabel")}
                         </label>
                         <select
@@ -1015,7 +1015,7 @@ const CreateCourseContent = () => {
                       {(deliveryType === 'onsite' || deliveryType === 'blended') && (
                         <>
                           <div>
-                            <label htmlFor="venue" className="block text-sm font-medium text-[#374151] mb-1">
+                            <label htmlFor="venue" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                               {t("createCourse.venueEn")}
                             </label>
                             <input
@@ -1028,7 +1028,7 @@ const CreateCourseContent = () => {
                             />
                           </div>
                           <div>
-                            <label htmlFor="venue-ar" className="block text-sm font-medium text-[#374151] mb-1">
+                            <label htmlFor="venue-ar" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                               {t("createCourse.venueAr")}
                             </label>
                             <input
@@ -1050,7 +1050,7 @@ const CreateCourseContent = () => {
                   <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                     <div className="flex items-center gap-2 mb-4">
                       <ShieldCheck className="w-5 h-5 text-[var(--color-primary-dark)]" />
-                      <h2 className="text-lg font-semibold text-[#1F2937]">
+                      <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                         {t("createCourse.nelcConfig")}
                       </h2>
                     </div>
@@ -1067,12 +1067,12 @@ const CreateCourseContent = () => {
                             <Check className="w-4 h-4 text-[#22C55E]" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-[#1F2937]">{item.label}</p>
-                            <p className="text-xs text-[#6B7280] mt-0.5">{item.desc}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{item.label}</p>
+                            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{item.desc}</p>
                           </div>
                         </div>
                       ))}
-                      <p className="text-xs text-[#9CA3AF] mt-2">
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-2">
                         {isRTL ? "هذه المتطلبات مطبقة تلقائياً على جميع الدورات." : "These requirements are automatically enforced for all courses."}
                       </p>
                     </div>
@@ -1088,10 +1088,10 @@ const CreateCourseContent = () => {
                 <div className="space-y-6">
                   {/* Instructor Section */}
                   <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-                    <h2 className="text-lg font-semibold text-[#1F2937] mb-1">
+                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-1">
                       {t("createCourse.instructor")} *
                     </h2>
-                    <p className="text-sm text-[#6B7280] mb-4">{t("createCourse.selectInstructor")}</p>
+                    <p className="text-sm text-[var(--color-text-secondary)] mb-4">{t("createCourse.selectInstructor")}</p>
 
                     {loadingInstructors ? (
                       <div className="flex items-center justify-center py-8">
@@ -1113,21 +1113,21 @@ const CreateCourseContent = () => {
                                   : (selectedInstructor.email || "").substring(0, 2).toUpperCase()}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-[#1F2937] truncate">
+                                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                                   {[selectedInstructor.firstName, selectedInstructor.lastName].filter(Boolean).join(" ") || selectedInstructor.email}
                                 </p>
-                                <p className="text-[11px] text-[#6B7280] truncate">{selectedInstructor.email}</p>
+                                <p className="text-[11px] text-[var(--color-text-secondary)] truncate">{selectedInstructor.email}</p>
                               </div>
                               {selectedInstructor.status && (
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${statusBadgeBg[selectedInstructor.status] || "bg-[#F3F4F6] text-[#6B7280]"}`}>
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${statusBadgeBg[selectedInstructor.status] || "bg-[#F3F4F6] text-[var(--color-text-secondary)]"}`}>
                                   {t(`instructorsPage.status.${selectedInstructor.status}` as Parameters<typeof t>[0])}
                                 </span>
                               )}
                             </>
                           ) : (
-                            <span className="text-sm text-[#9CA3AF]">{t("createCourse.chooseInstructor")}</span>
+                            <span className="text-sm text-[var(--color-text-secondary)]">{t("createCourse.chooseInstructor")}</span>
                           )}
-                          <ChevronDown className={`w-4 h-4 text-[#6B7280] ms-auto transition-transform ${instructorDropdownOpen ? "rotate-180" : ""}`} />
+                          <ChevronDown className={`w-4 h-4 text-[var(--color-text-secondary)] ms-auto transition-transform ${instructorDropdownOpen ? "rotate-180" : ""}`} />
                         </button>
 
                         {/* Dropdown */}
@@ -1136,7 +1136,7 @@ const CreateCourseContent = () => {
                             {/* Search */}
                             <div className="p-2 border-b border-[var(--color-border)]">
                               <div className="relative">
-                                <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                                <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
                                 <input
                                   type="text"
                                   value={instructorSearch}
@@ -1172,12 +1172,12 @@ const CreateCourseContent = () => {
                                         {initials}
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-[#1F2937] truncate">{name}</p>
-                                        <p className="text-[11px] text-[#6B7280] truncate">{inst.email}</p>
+                                        <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{name}</p>
+                                        <p className="text-[11px] text-[var(--color-text-secondary)] truncate">{inst.email}</p>
                                       </div>
                                       {inst.status && (
-                                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#6B7280] flex-shrink-0">
-                                          <span className={`w-2 h-2 rounded-full ${statusDot[inst.status] || "bg-[#9CA3AF]"}`} />
+                                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[var(--color-text-secondary)] flex-shrink-0">
+                                          <span className={`w-2 h-2 rounded-full ${statusDot[inst.status] || "bg-[var(--color-text-secondary)]"}`} />
                                           {t(`instructorsPage.status.${inst.status}` as Parameters<typeof t>[0])}
                                         </span>
                                       )}
@@ -1198,7 +1198,7 @@ const CreateCourseContent = () => {
                       <div className="w-full border-t border-[var(--color-border)]" />
                     </div>
                     <div className="relative flex justify-center">
-                      <span className="bg-[#F9FAFB] px-3 text-xs text-[#9CA3AF] uppercase tracking-wider">
+                      <span className="bg-[#F9FAFB] px-3 text-xs text-[var(--color-text-secondary)] uppercase tracking-wider">
                         {t("createCourse.taAssignment")}
                       </span>
                     </div>
@@ -1208,10 +1208,10 @@ const CreateCourseContent = () => {
                   <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                     <div className="flex items-center gap-2 mb-4">
                       <Users className="w-5 h-5 text-[var(--color-primary-dark)]" />
-                      <h2 className="text-lg font-semibold text-[#1F2937]">
+                      <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                         {t("createCourse.taAssignment")}
                       </h2>
-                      <span className="text-xs text-[#9CA3AF] bg-[#F3F4F6] px-2 py-0.5 rounded-full">
+                      <span className="text-xs text-[var(--color-text-secondary)] bg-[#F3F4F6] px-2 py-0.5 rounded-full">
                         {t("createCourse.optional")}
                       </span>
                     </div>
@@ -1225,11 +1225,11 @@ const CreateCourseContent = () => {
                               : (selectedTA.email || "").substring(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-[#1F2937]">{[selectedTA.firstName, selectedTA.lastName].filter(Boolean).join(" ")}</p>
-                            <p className="text-[11px] text-[#6B7280]">{selectedTA.email}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{[selectedTA.firstName, selectedTA.lastName].filter(Boolean).join(" ")}</p>
+                            <p className="text-[11px] text-[var(--color-text-secondary)]">{selectedTA.email}</p>
                           </div>
                         </div>
-                        <button type="button" onClick={() => setSelectedTAId("")} className="p-1.5 text-[#6B7280] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                        <button type="button" onClick={() => setSelectedTAId("")} className="p-1.5 text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                           <X className="w-4 h-4" />
                         </button>
                       </div>
@@ -1244,15 +1244,15 @@ const CreateCourseContent = () => {
                           onClick={() => setTaDropdownOpen(!taDropdownOpen)}
                           className="w-full flex items-center gap-3 p-3 border border-[var(--color-border)] rounded-xl bg-white hover:border-[#D97706] transition-colors text-start"
                         >
-                          <span className="text-sm text-[#9CA3AF]">{t("createCourse.noneSelected")}</span>
-                          <ChevronDown className={`w-4 h-4 text-[#6B7280] ms-auto transition-transform ${taDropdownOpen ? "rotate-180" : ""}`} />
+                          <span className="text-sm text-[var(--color-text-secondary)]">{t("createCourse.noneSelected")}</span>
+                          <ChevronDown className={`w-4 h-4 text-[var(--color-text-secondary)] ms-auto transition-transform ${taDropdownOpen ? "rotate-180" : ""}`} />
                         </button>
 
                         {taDropdownOpen && (
                           <div className="absolute z-20 mt-1 w-full bg-white border border-[var(--color-border)] rounded-xl shadow-lg max-h-[280px] overflow-hidden">
                             <div className="p-2 border-b border-[var(--color-border)]">
                               <div className="relative">
-                                <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                                <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
                                 <input
                                   type="text"
                                   value={taSearch}
@@ -1265,7 +1265,7 @@ const CreateCourseContent = () => {
                             </div>
                             <div className="overflow-y-auto max-h-[220px]">
                               {availableTAs.length === 0 ? (
-                                <p className="text-sm text-[#9CA3AF] text-center py-4">{isRTL ? "لا يوجد مساعدو تدريس" : "No TAs available"}</p>
+                                <p className="text-sm text-[var(--color-text-secondary)] text-center py-4">{isRTL ? "لا يوجد مساعدو تدريس" : "No TAs available"}</p>
                               ) : availableTAs
                                 .filter((ta) => {
                                   if (!taSearch) return true;
@@ -1289,8 +1289,8 @@ const CreateCourseContent = () => {
                                         {initials}
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-[#1F2937] truncate">{name}</p>
-                                        <p className="text-[11px] text-[#6B7280] truncate">{ta.email}</p>
+                                        <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{name}</p>
+                                        <p className="text-[11px] text-[var(--color-text-secondary)] truncate">{ta.email}</p>
                                       </div>
                                     </button>
                                   );
@@ -1309,17 +1309,17 @@ const CreateCourseContent = () => {
               {currentStep === 5 && (
                 <div className="space-y-6">
                   <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-                    <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                       {t("createCourse.reviewTitle")}
                     </h2>
-                    <p className="text-sm text-[#6B7280] mb-6">
+                    <p className="text-sm text-[var(--color-text-secondary)] mb-6">
                       {t("createCourse.reviewDescription")}
                     </p>
 
                     <div className="space-y-4">
                       {/* Basic Info */}
                       <div className="border border-[var(--color-border)] rounded-lg p-4">
-                        <h3 className="text-sm font-semibold text-[#374151] mb-3">
+                        <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] mb-3">
                           {t("createCourse.basicInfo")}
                         </h3>
 
@@ -1337,37 +1337,37 @@ const CreateCourseContent = () => {
 
                         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                           <div>
-                            <dt className="text-[#6B7280]">
+                            <dt className="text-[var(--color-text-secondary)]">
                               {t("createCourse.courseTitle")}
                             </dt>
-                            <dd className="font-medium text-[#1F2937]">
+                            <dd className="font-medium text-[var(--color-text-primary)]">
                               {title || "\u2014"}
                             </dd>
                           </div>
                           {titleAr && (
                             <div>
-                              <dt className="text-[#6B7280]">
+                              <dt className="text-[var(--color-text-secondary)]">
                                 {t("createCourse.courseTitleAr")}
                               </dt>
-                              <dd className="font-medium text-[#1F2937]" dir="rtl">
+                              <dd className="font-medium text-[var(--color-text-primary)]" dir="rtl">
                                 {titleAr}
                               </dd>
                             </div>
                           )}
                           <div>
-                            <dt className="text-[#6B7280]">
+                            <dt className="text-[var(--color-text-secondary)]">
                               {t("createCourse.deliveryType")}
                             </dt>
-                            <dd className="font-medium text-[#1F2937]">
+                            <dd className="font-medium text-[var(--color-text-primary)]">
                               {getDeliveryTypeLabel(deliveryType)}
                             </dd>
                           </div>
                           {description && (
                             <div className="sm:col-span-2">
-                              <dt className="text-[#6B7280]">
+                              <dt className="text-[var(--color-text-secondary)]">
                                 {t("createCourse.description")}
                               </dt>
-                              <dd className="font-medium text-[#1F2937] line-clamp-2">
+                              <dd className="font-medium text-[var(--color-text-primary)] line-clamp-2">
                                 {description}
                               </dd>
                             </div>
@@ -1378,27 +1378,27 @@ const CreateCourseContent = () => {
                       {/* Content Details */}
                       {(overview || overviewAr || objectives.some(s => s.trim()) || objectivesAr.some(s => s.trim()) || features.some(s => s.trim()) || featuresAr.some(s => s.trim()) || targetAudience.some(s => s.trim()) || targetAudienceAr.some(s => s.trim()) || requirements || requirementsAr || notices || noticesAr) && (
                         <div className="border border-[var(--color-border)] rounded-lg p-4">
-                          <h3 className="text-sm font-semibold text-[#374151] mb-3">
+                          <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] mb-3">
                             {t("createCourse.wizardStepContent")}
                           </h3>
                           <dl className="space-y-3 text-sm">
                             {overview && (
                               <div>
-                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsOverviewEn")}</dt>
-                                <dd className="font-medium text-[#1F2937] whitespace-pre-line">{overview}</dd>
+                                <dt className="text-[var(--color-text-secondary)]">{t("createCourse.contentDetailsOverviewEn")}</dt>
+                                <dd className="font-medium text-[var(--color-text-primary)] whitespace-pre-line">{overview}</dd>
                               </div>
                             )}
                             {overviewAr && (
                               <div>
-                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsOverviewAr")}</dt>
-                                <dd className="font-medium text-[#1F2937] whitespace-pre-line" dir="rtl">{overviewAr}</dd>
+                                <dt className="text-[var(--color-text-secondary)]">{t("createCourse.contentDetailsOverviewAr")}</dt>
+                                <dd className="font-medium text-[var(--color-text-primary)] whitespace-pre-line" dir="rtl">{overviewAr}</dd>
                               </div>
                             )}
                             {objectives.some(s => s.trim()) && (
                               <div>
-                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsObjectivesEn")}</dt>
+                                <dt className="text-[var(--color-text-secondary)]">{t("createCourse.contentDetailsObjectivesEn")}</dt>
                                 <dd>
-                                  <ul className="list-disc list-inside text-[#1F2937]">
+                                  <ul className="list-disc list-inside text-[var(--color-text-primary)]">
                                     {objectives.filter(s => s.trim()).map((o, i) => <li key={i}>{o}</li>)}
                                   </ul>
                                 </dd>
@@ -1406,9 +1406,9 @@ const CreateCourseContent = () => {
                             )}
                             {objectivesAr.some(s => s.trim()) && (
                               <div>
-                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsObjectivesAr")}</dt>
+                                <dt className="text-[var(--color-text-secondary)]">{t("createCourse.contentDetailsObjectivesAr")}</dt>
                                 <dd dir="rtl">
-                                  <ul className="list-disc list-inside text-[#1F2937]">
+                                  <ul className="list-disc list-inside text-[var(--color-text-primary)]">
                                     {objectivesAr.filter(s => s.trim()).map((o, i) => <li key={i}>{o}</li>)}
                                   </ul>
                                 </dd>
@@ -1416,9 +1416,9 @@ const CreateCourseContent = () => {
                             )}
                             {features.some(s => s.trim()) && (
                               <div>
-                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsFeaturesEn")}</dt>
+                                <dt className="text-[var(--color-text-secondary)]">{t("createCourse.contentDetailsFeaturesEn")}</dt>
                                 <dd>
-                                  <ul className="list-disc list-inside text-[#1F2937]">
+                                  <ul className="list-disc list-inside text-[var(--color-text-primary)]">
                                     {features.filter(s => s.trim()).map((f, i) => <li key={i}>{f}</li>)}
                                   </ul>
                                 </dd>
@@ -1426,9 +1426,9 @@ const CreateCourseContent = () => {
                             )}
                             {featuresAr.some(s => s.trim()) && (
                               <div>
-                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsFeaturesAr")}</dt>
+                                <dt className="text-[var(--color-text-secondary)]">{t("createCourse.contentDetailsFeaturesAr")}</dt>
                                 <dd dir="rtl">
-                                  <ul className="list-disc list-inside text-[#1F2937]">
+                                  <ul className="list-disc list-inside text-[var(--color-text-primary)]">
                                     {featuresAr.filter(s => s.trim()).map((f, i) => <li key={i}>{f}</li>)}
                                   </ul>
                                 </dd>
@@ -1436,9 +1436,9 @@ const CreateCourseContent = () => {
                             )}
                             {targetAudience.some(s => s.trim()) && (
                               <div>
-                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsTargetAudienceEn")}</dt>
+                                <dt className="text-[var(--color-text-secondary)]">{t("createCourse.contentDetailsTargetAudienceEn")}</dt>
                                 <dd>
-                                  <ul className="list-disc list-inside text-[#1F2937]">
+                                  <ul className="list-disc list-inside text-[var(--color-text-primary)]">
                                     {targetAudience.filter(s => s.trim()).map((a, i) => <li key={i}>{a}</li>)}
                                   </ul>
                                 </dd>
@@ -1446,9 +1446,9 @@ const CreateCourseContent = () => {
                             )}
                             {targetAudienceAr.some(s => s.trim()) && (
                               <div>
-                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsTargetAudienceAr")}</dt>
+                                <dt className="text-[var(--color-text-secondary)]">{t("createCourse.contentDetailsTargetAudienceAr")}</dt>
                                 <dd dir="rtl">
-                                  <ul className="list-disc list-inside text-[#1F2937]">
+                                  <ul className="list-disc list-inside text-[var(--color-text-primary)]">
                                     {targetAudienceAr.filter(s => s.trim()).map((a, i) => <li key={i}>{a}</li>)}
                                   </ul>
                                 </dd>
@@ -1456,26 +1456,26 @@ const CreateCourseContent = () => {
                             )}
                             {requirements && (
                               <div>
-                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsRequirementsEn")}</dt>
-                                <dd className="font-medium text-[#1F2937] whitespace-pre-line">{requirements}</dd>
+                                <dt className="text-[var(--color-text-secondary)]">{t("createCourse.contentDetailsRequirementsEn")}</dt>
+                                <dd className="font-medium text-[var(--color-text-primary)] whitespace-pre-line">{requirements}</dd>
                               </div>
                             )}
                             {requirementsAr && (
                               <div>
-                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsRequirementsAr")}</dt>
-                                <dd className="font-medium text-[#1F2937] whitespace-pre-line" dir="rtl">{requirementsAr}</dd>
+                                <dt className="text-[var(--color-text-secondary)]">{t("createCourse.contentDetailsRequirementsAr")}</dt>
+                                <dd className="font-medium text-[var(--color-text-primary)] whitespace-pre-line" dir="rtl">{requirementsAr}</dd>
                               </div>
                             )}
                             {notices && (
                               <div>
-                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsNoticesEn")}</dt>
-                                <dd className="font-medium text-[#1F2937] whitespace-pre-line">{notices}</dd>
+                                <dt className="text-[var(--color-text-secondary)]">{t("createCourse.contentDetailsNoticesEn")}</dt>
+                                <dd className="font-medium text-[var(--color-text-primary)] whitespace-pre-line">{notices}</dd>
                               </div>
                             )}
                             {noticesAr && (
                               <div>
-                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsNoticesAr")}</dt>
-                                <dd className="font-medium text-[#1F2937] whitespace-pre-line" dir="rtl">{noticesAr}</dd>
+                                <dt className="text-[var(--color-text-secondary)]">{t("createCourse.contentDetailsNoticesAr")}</dt>
+                                <dd className="font-medium text-[var(--color-text-primary)] whitespace-pre-line" dir="rtl">{noticesAr}</dd>
                               </div>
                             )}
                           </dl>
@@ -1484,81 +1484,81 @@ const CreateCourseContent = () => {
 
                       {/* Schedule & NELC */}
                       <div className="border border-[var(--color-border)] rounded-lg p-4">
-                        <h3 className="text-sm font-semibold text-[#374151] mb-3">
+                        <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] mb-3">
                           {t("createCourse.scheduleTitle")} &{" "}
                           {t("createCourse.nelcConfig")}
                         </h3>
                         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                           <div>
-                            <dt className="text-[#6B7280]">
+                            <dt className="text-[var(--color-text-secondary)]">
                               {t("createCourse.startDate")}
                             </dt>
-                            <dd className="font-medium text-[#1F2937]">
+                            <dd className="font-medium text-[var(--color-text-primary)]">
                               {formatDate(startDate)}
                             </dd>
                           </div>
                           <div>
-                            <dt className="text-[#6B7280]">
+                            <dt className="text-[var(--color-text-secondary)]">
                               {t("createCourse.endDate")}
                             </dt>
-                            <dd className="font-medium text-[#1F2937]">
+                            <dd className="font-medium text-[var(--color-text-primary)]">
                               {formatDate(endDate)}
                             </dd>
                           </div>
                           <div>
-                            <dt className="text-[#6B7280]">
+                            <dt className="text-[var(--color-text-secondary)]">
                               {t("createCourse.cmeHours")}
                             </dt>
-                            <dd className="font-medium text-[#1F2937]">
+                            <dd className="font-medium text-[var(--color-text-primary)]">
                               {cmeHours || "\u2014"}
                             </dd>
                           </div>
                           <div>
-                            <dt className="text-[#6B7280]">
+                            <dt className="text-[var(--color-text-secondary)]">
                               {t("createCourse.maxEnrollment")}
                             </dt>
-                            <dd className="font-medium text-[#1F2937]">
+                            <dd className="font-medium text-[var(--color-text-primary)]">
                               {maxEnrollment || "\u2014"}
                             </dd>
                           </div>
                           {cohort && (
                             <div>
-                              <dt className="text-[#6B7280]">
+                              <dt className="text-[var(--color-text-secondary)]">
                                 {t("createCourse.cohort")}
                               </dt>
-                              <dd className="font-medium text-[#1F2937]">
+                              <dd className="font-medium text-[var(--color-text-primary)]">
                                 {cohort}
                               </dd>
                             </div>
                           )}
                           {price && (
                             <div>
-                              <dt className="text-[#6B7280]">{t("createCourse.priceLabel")}</dt>
-                              <dd className="font-medium text-[#1F2937]">{price}</dd>
+                              <dt className="text-[var(--color-text-secondary)]">{t("createCourse.priceLabel")}</dt>
+                              <dd className="font-medium text-[var(--color-text-primary)]">{price}</dd>
                             </div>
                           )}
                           {enrollmentDeadline && (
                             <div>
-                              <dt className="text-[#6B7280]">{t("createCourse.enrollmentDeadlineLabel")}</dt>
-                              <dd className="font-medium text-[#1F2937]">{formatDate(enrollmentDeadline)}</dd>
+                              <dt className="text-[var(--color-text-secondary)]">{t("createCourse.enrollmentDeadlineLabel")}</dt>
+                              <dd className="font-medium text-[var(--color-text-primary)]">{formatDate(enrollmentDeadline)}</dd>
                             </div>
                           )}
                           {language !== 'en' && (
                             <div>
-                              <dt className="text-[#6B7280]">{t("createCourse.languageLabel")}</dt>
-                              <dd className="font-medium text-[#1F2937]">{language === 'ar' ? t("createCourse.languageAr") : language === 'both' ? t("createCourse.languageBoth") : t("createCourse.languageEn")}</dd>
+                              <dt className="text-[var(--color-text-secondary)]">{t("createCourse.languageLabel")}</dt>
+                              <dd className="font-medium text-[var(--color-text-primary)]">{language === 'ar' ? t("createCourse.languageAr") : language === 'both' ? t("createCourse.languageBoth") : t("createCourse.languageEn")}</dd>
                             </div>
                           )}
                           {(deliveryType === 'onsite' || deliveryType === 'blended') && venue && (
                             <div>
-                              <dt className="text-[#6B7280]">{t("createCourse.venueEn")}</dt>
-                              <dd className="font-medium text-[#1F2937]">{venue}</dd>
+                              <dt className="text-[var(--color-text-secondary)]">{t("createCourse.venueEn")}</dt>
+                              <dd className="font-medium text-[var(--color-text-primary)]">{venue}</dd>
                             </div>
                           )}
                           {(deliveryType === 'onsite' || deliveryType === 'blended') && venueAr && (
                             <div>
-                              <dt className="text-[#6B7280]">Venue (Arabic)</dt>
-                              <dd className="font-medium text-[#1F2937]" dir="rtl">{venueAr}</dd>
+                              <dt className="text-[var(--color-text-secondary)]">Venue (Arabic)</dt>
+                              <dd className="font-medium text-[var(--color-text-primary)]" dir="rtl">{venueAr}</dd>
                             </div>
                           )}
                           <div className="sm:col-span-2 flex items-center gap-4 flex-wrap">
@@ -1586,12 +1586,12 @@ const CreateCourseContent = () => {
 
                       {/* Instructor */}
                       <div className="border border-[var(--color-border)] rounded-lg p-4">
-                        <h3 className="text-sm font-semibold text-[#374151] mb-3">
+                        <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] mb-3">
                           {t("createCourse.instructor")}
                         </h3>
                         {selectedInstructor ? (
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium text-[#1F2937]">
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">
                               {[
                                 selectedInstructor.firstName,
                                 selectedInstructor.lastName,
@@ -1608,24 +1608,24 @@ const CreateCourseContent = () => {
                             )}
                           </div>
                         ) : (
-                          <p className="text-sm text-[#6B7280]">{"\u2014"}</p>
+                          <p className="text-sm text-[var(--color-text-secondary)]">{"\u2014"}</p>
                         )}
                       </div>
 
                       {/* Teaching Assistant */}
                       <div className="border border-[var(--color-border)] rounded-lg p-4">
-                        <h3 className="text-sm font-semibold text-[#374151] mb-3">
+                        <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] mb-3">
                           {t("createCourse.taAssignment")}
                         </h3>
                         {selectedTA ? (
-                          <p className="text-sm font-medium text-[#1F2937]">
+                          <p className="text-sm font-medium text-[var(--color-text-primary)]">
                             {[selectedTA.firstName, selectedTA.lastName]
                               .filter(Boolean)
                               .join(" ")}{" "}
                             ({selectedTA.email})
                           </p>
                         ) : (
-                          <p className="text-sm text-[#6B7280]">
+                          <p className="text-sm text-[var(--color-text-secondary)]">
                             {t("createCourse.noTASelected")}
                           </p>
                         )}
@@ -1640,7 +1640,7 @@ const CreateCourseContent = () => {
                 <button
                   type="button"
                   onClick={currentStep === 1 ? () => router.back() : goBack}
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
                 >
                   {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
                   {currentStep === 1

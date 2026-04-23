@@ -144,7 +144,7 @@ const MyTicketsContent = () => {
     inProgress: "bg-[#FEF9C3] text-[#EAB308]",
     waiting: "bg-[#FFEDD5] text-[#F97316]",
     resolved: "bg-[#DCFCE7] text-[#22C55E]",
-    closed: "bg-[#F3F4F6] text-[#6B7280]",
+    closed: "bg-[#F3F4F6] text-[var(--color-text-secondary)]",
   };
 
   const getSlaColor = (sla: string): string => {
@@ -206,10 +206,10 @@ const MyTicketsContent = () => {
                         <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                       </div>
                       <div>
-                        <p className="text-xs text-[#6B7280] font-medium">
+                        <p className="text-xs text-[var(--color-text-secondary)] font-medium">
                           {stat.label}
                         </p>
-                        <p className="text-xl font-bold text-[#111827]">
+                        <p className="text-xl font-bold text-[var(--color-text-primary)]">
                           {stat.value}
                         </p>
                       </div>
@@ -227,8 +227,8 @@ const MyTicketsContent = () => {
                       onClick={() => setActiveTab(tab.key)}
                       className={`px-4 py-1.5 text-[13px] font-medium rounded-md transition-colors whitespace-nowrap ${
                         activeTab === tab.key
-                          ? "bg-white text-[#111827] shadow-sm"
-                          : "text-[#6B7280] hover:text-[#374151]"
+                          ? "bg-white text-[var(--color-text-primary)] shadow-sm"
+                          : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                       }`}
                     >
                       {tab.label}
@@ -237,7 +237,7 @@ const MyTicketsContent = () => {
                 </div>
                 <div className="relative w-full sm:w-auto">
                   <Search
-                    className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                    className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                   />
                   <input
                     type="text"
@@ -267,7 +267,7 @@ const MyTicketsContent = () => {
                           <span className="text-[13px] font-medium text-[#3B82F6] cursor-pointer hover:underline">
                             #{ticket.id}
                           </span>
-                          <h4 className="text-sm font-semibold text-[#111827] mt-0.5 truncate">
+                          <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mt-0.5 truncate">
                             {ticket.subject}
                           </h4>
                         </div>
@@ -275,10 +275,10 @@ const MyTicketsContent = () => {
 
                       {/* Middle Row: Customer + Category */}
                       <div className="flex items-center gap-2 mb-3">
-                        <span className="text-[13px] text-[#4B5563]">
+                        <span className="text-[13px] text-[var(--color-text-secondary)]">
                           {ticket.customer}
                         </span>
-                        <span className="bg-[#F3F4F6] text-[#4B5563] text-[10px] px-2 py-0.5 rounded-md font-medium">
+                        <span className="bg-[#F3F4F6] text-[var(--color-text-secondary)] text-[10px] px-2 py-0.5 rounded-md font-medium">
                           {t(
                             `allTicketsPage.filters.categories.${ticket.category}`
                           )}
@@ -308,7 +308,7 @@ const MyTicketsContent = () => {
                         </div>
 
                         {/* Date */}
-                        <span className="text-[12px] text-[#9CA3AF]">
+                        <span className="text-[12px] text-[var(--color-text-secondary)]">
                           {ticket.date}
                         </span>
                       </div>
@@ -318,7 +318,7 @@ const MyTicketsContent = () => {
 
                 {filteredTickets.length === 0 && (
                   <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
-                    <p className="text-sm text-[#6B7280]">
+                    <p className="text-sm text-[var(--color-text-secondary)]">
                       {t("myTicketsPage.noTickets")}
                     </p>
                   </div>
@@ -330,7 +330,7 @@ const MyTicketsContent = () => {
                 {/* Title */}
                 <div className="flex items-center gap-2 mb-4">
                   <Send className="w-5 h-5 text-[var(--color-primary)]" />
-                  <h3 className="text-base font-semibold text-[#111827]">
+                  <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                     {t("myTicketsPage.quickReply")}
                   </h3>
                 </div>
@@ -339,20 +339,20 @@ const MyTicketsContent = () => {
                 <textarea
                   rows={3}
                   placeholder={t("myTicketsPage.quickReplyPlaceholder")}
-                  className="w-full px-4 py-3 border border-[var(--color-border)] rounded-xl text-[13px] text-[#374151] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[var(--color-primary)] resize-none mb-3"
+                  className="w-full px-4 py-3 border border-[var(--color-border)] rounded-xl text-[13px] text-[var(--color-text-secondary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-primary)] resize-none mb-3"
                 />
 
                 {/* Macros + Send */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   {/* Macro Pills */}
                   <div className="flex items-center gap-2 flex-wrap">
-                    <button className="px-3 py-1.5 text-[12px] font-medium text-[#4B5563] bg-[#F3F4F6] rounded-full hover:bg-[var(--color-border)] transition-colors">
+                    <button className="px-3 py-1.5 text-[12px] font-medium text-[var(--color-text-secondary)] bg-[#F3F4F6] rounded-full hover:bg-[var(--color-border)] transition-colors">
                       {t("myTicketsPage.macros.acknowledgement")}
                     </button>
-                    <button className="px-3 py-1.5 text-[12px] font-medium text-[#4B5563] bg-[#F3F4F6] rounded-full hover:bg-[var(--color-border)] transition-colors">
+                    <button className="px-3 py-1.5 text-[12px] font-medium text-[var(--color-text-secondary)] bg-[#F3F4F6] rounded-full hover:bg-[var(--color-border)] transition-colors">
                       {t("myTicketsPage.macros.needMoreInfo")}
                     </button>
-                    <button className="px-3 py-1.5 text-[12px] font-medium text-[#4B5563] bg-[#F3F4F6] rounded-full hover:bg-[var(--color-border)] transition-colors">
+                    <button className="px-3 py-1.5 text-[12px] font-medium text-[var(--color-text-secondary)] bg-[#F3F4F6] rounded-full hover:bg-[var(--color-border)] transition-colors">
                       {t("myTicketsPage.macros.resolved")}
                     </button>
                   </div>

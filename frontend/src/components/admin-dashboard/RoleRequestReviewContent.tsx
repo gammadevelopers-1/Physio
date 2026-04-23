@@ -172,7 +172,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
           {/* Back button */}
           <Link
             href={`/${locale}/dashboard/admin/role-requests`}
-            className="inline-flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#1F2937] transition-colors mb-6"
+            className="inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors mb-6"
           >
             <BackIcon className="w-4 h-4" />
             {t("roleRequestReviewPage.backToList") || "Back to Role Requests"}
@@ -198,10 +198,10 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
               <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <h1 className="text-xl font-bold text-[#1F2937]">
+                    <h1 className="text-xl font-bold text-[var(--color-text-primary)]">
                       {t("roleRequestReviewPage.title") || "Application Review"}
                     </h1>
-                    <p className="text-sm text-[#6B7280] mt-1">
+                    <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                       {profileData.fullNameEnglish || profileData.fullNameArabic || application.user?.email}
                     </p>
                   </div>
@@ -214,17 +214,17 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
                 {/* Review note from admin */}
                 {application.reviewNote && (
                   <div className="mt-4 p-3 bg-[#F9FAFB] rounded-lg border border-[var(--color-border)]">
-                    <p className="text-xs font-semibold text-[#6B7280] mb-1 uppercase tracking-wider">
+                    <p className="text-xs font-semibold text-[var(--color-text-secondary)] mb-1 uppercase tracking-wider">
                       {t("roleRequestReviewPage.adminNote") || "Admin Note"}
                     </p>
-                    <p className="text-sm text-[#1F2937]">{application.reviewNote}</p>
+                    <p className="text-sm text-[var(--color-text-primary)]">{application.reviewNote}</p>
                   </div>
                 )}
               </div>
 
               {/* Profile Information */}
               <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-                <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                   {t("roleRequestReviewPage.profileSection") || "Profile Information"}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -245,7 +245,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
                 {/* Social Links */}
                 {(profileData.twitter || profileData.linkedIn || profileData.linkedin) && (
                   <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
-                    <h3 className="text-sm font-medium text-[#6B7280] mb-3">
+                    <h3 className="text-sm font-medium text-[var(--color-text-secondary)] mb-3">
                       {t("roleRequestReviewPage.socialLinks") || "Social Links"}
                     </h3>
                     <div className="flex flex-wrap gap-3">
@@ -269,7 +269,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
               {/* Resume / Documents */}
               {resumeFiles.length > 0 && (
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-                  <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("roleRequestReviewPage.documentsSection") || "Documents & Resume"}
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -285,8 +285,8 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
                           <Download className="w-5 h-5 text-[#002D87]" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-[#1F2937] truncate">{file.filename || file.type}</p>
-                          <p className="text-xs text-[#9CA3AF] capitalize">{file.type}</p>
+                          <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{file.filename || file.type}</p>
+                          <p className="text-xs text-[var(--color-text-secondary)] capitalize">{file.type}</p>
                         </div>
                       </a>
                     ))}
@@ -297,7 +297,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
               {/* Bank Information */}
               {(bankData.accountHolderName || bankData.bankName || bankData.iban) && (
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-                  <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("roleRequestReviewPage.bankSection") || "Bank Information"}
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -310,14 +310,14 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
 
               {/* Timeline */}
               <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-                <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                   {t("roleRequestReviewPage.timeline") || "Timeline"}
                 </h2>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-[var(--color-border)]" />
-                    <p className="text-sm text-[#6B7280]">
-                      <span className="font-medium text-[#1F2937]">{t("roleRequestReviewPage.submitted") || "Submitted"}</span>{" "}
+                    <p className="text-sm text-[var(--color-text-secondary)]">
+                      <span className="font-medium text-[var(--color-text-primary)]">{t("roleRequestReviewPage.submitted") || "Submitted"}</span>{" "}
                       — {formatDate(application.createdAt)}
                     </p>
                   </div>
@@ -326,8 +326,8 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
                       <div className={`w-2 h-2 rounded-full ${
                         application.status === "APPROVED" ? "bg-[#16A34A]" : application.status === "REJECTED" ? "bg-[#DC2626]" : "bg-[#F59E0B]"
                       }`} />
-                      <p className="text-sm text-[#6B7280]">
-                        <span className="font-medium text-[#1F2937]">{t("roleRequestReviewPage.reviewed") || "Reviewed"}</span>{" "}
+                      <p className="text-sm text-[var(--color-text-secondary)]">
+                        <span className="font-medium text-[var(--color-text-primary)]">{t("roleRequestReviewPage.reviewed") || "Reviewed"}</span>{" "}
                         — {formatDate(application.reviewedAt)}
                       </p>
                     </div>
@@ -338,7 +338,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
               {/* Action Buttons */}
               {canTakeAction && (
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-                  <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("roleRequestReviewPage.actions") || "Actions"}
                   </h2>
                   <div className="flex flex-wrap gap-3">
@@ -376,12 +376,12 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-[#1F2937] mb-1">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-1">
                 {showModal === "approve" && (t("roleRequestReviewPage.modalApproveTitle") || "Approve Application")}
                 {showModal === "reject" && (t("roleRequestReviewPage.modalRejectTitle") || "Reject Application")}
                 {showModal === "request-info" && (t("roleRequestReviewPage.modalRequestInfoTitle") || "Request More Information")}
               </h3>
-              <p className="text-sm text-[#6B7280] mb-4">
+              <p className="text-sm text-[var(--color-text-secondary)] mb-4">
                 {showModal === "approve" && (t("roleRequestReviewPage.modalApproveDesc") || "This will approve the application and assign the Instructor role.")}
                 {showModal === "reject" && (t("roleRequestReviewPage.modalRejectDesc") || "Please provide a reason for rejecting this application.")}
                 {showModal === "request-info" && (t("roleRequestReviewPage.modalRequestInfoDesc") || "Describe what additional information is needed from the applicant.")}
@@ -406,7 +406,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
                 <button
                   onClick={() => setShowModal(null)}
                   disabled={!!actionLoading}
-                  className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#6B7280] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                  className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
                 >
                   {t("roleRequestReviewPage.cancel") || "Cancel"}
                 </button>
@@ -443,11 +443,11 @@ function InfoField({ icon: Icon, label, value, className = "" }: { icon: React.C
   return (
     <div className={`flex items-start gap-3 ${className}`}>
       <div className="w-9 h-9 bg-[#F3F4F6] rounded-lg flex items-center justify-center shrink-0 mt-0.5">
-        <Icon className="w-4 h-4 text-[#6B7280]" />
+        <Icon className="w-4 h-4 text-[var(--color-text-secondary)]" />
       </div>
       <div className="min-w-0">
-        <p className="text-xs text-[#9CA3AF] mb-0.5">{label}</p>
-        <p className="text-sm font-medium text-[#1F2937] break-all">{value || "—"}</p>
+        <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">{label}</p>
+        <p className="text-sm font-medium text-[var(--color-text-primary)] break-all">{value || "—"}</p>
       </div>
     </div>
   );

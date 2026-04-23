@@ -66,7 +66,7 @@ export default function CertificateVerifyContent({
       <div className="min-h-screen bg-[#F8F9FC] flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-[#002D87] mx-auto mb-3" />
-          <p className="text-sm text-[#6B7280]">{t("verify.verifying")}</p>
+          <p className="text-sm text-[var(--color-text-secondary)]">{t("verify.verifying")}</p>
         </div>
       </div>
     );
@@ -80,10 +80,10 @@ export default function CertificateVerifyContent({
             <div className="w-20 h-20 bg-[#FEF2F2] rounded-full flex items-center justify-center mx-auto mb-5">
               <XCircle className="w-10 h-10 text-[#EF4444]" />
             </div>
-            <h1 className="text-2xl font-bold text-[#1F2937] mb-2">
+            <h1 className="text-2xl font-bold text-[var(--color-text-primary)] mb-2">
               {t("verify.notFoundTitle")}
             </h1>
-            <p className="text-sm text-[#6B7280] mb-8">
+            <p className="text-sm text-[var(--color-text-secondary)] mb-8">
               {t("verify.notFoundDescription")}
             </p>
             <Link
@@ -177,9 +177,9 @@ export default function CertificateVerifyContent({
 
             {/* Certificate Title */}
             <div className="text-center mb-6">
-              <p className="text-xs text-[#9CA3AF] uppercase tracking-widest mb-1">Certificate of Attendance</p>
-              <p className="text-lg font-bold text-[#1F2937]">{result.studentName}</p>
-              <p className="text-sm text-[#6B7280] mt-1">for completing</p>
+              <p className="text-xs text-[var(--color-text-secondary)] uppercase tracking-widest mb-1">Certificate of Attendance</p>
+              <p className="text-lg font-bold text-[var(--color-text-primary)]">{result.studentName}</p>
+              <p className="text-sm text-[var(--color-text-secondary)] mt-1">for completing</p>
               <p className="text-base font-semibold text-[#002D87] mt-1">{courseName}</p>
             </div>
 
@@ -187,20 +187,20 @@ export default function CertificateVerifyContent({
             <div className="grid grid-cols-2 gap-4 mt-6">
               <div className="bg-[#F9FAFB] rounded-xl p-4 text-center">
                 <Calendar className="w-5 h-5 text-[#002D87] mx-auto mb-2" />
-                <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mb-1">Date Issued</p>
-                <p className="text-sm font-semibold text-[#1F2937]">{formattedDate}</p>
+                <p className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider mb-1">Date Issued</p>
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">{formattedDate}</p>
               </div>
 
               {result.totalHours && result.totalHours > 0 ? (
                 <div className="bg-[#F9FAFB] rounded-xl p-4 text-center">
                   <Clock className="w-5 h-5 text-[#D4A520] mx-auto mb-2" />
-                  <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mb-1">CME Hours</p>
-                  <p className="text-sm font-semibold text-[#1F2937]">{result.totalHours} Hours</p>
+                  <p className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider mb-1">CME Hours</p>
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">{result.totalHours} Hours</p>
                 </div>
               ) : (
                 <div className="bg-[#F9FAFB] rounded-xl p-4 text-center">
                   <Shield className="w-5 h-5 text-[#22C55E] mx-auto mb-2" />
-                  <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mb-1">Status</p>
+                  <p className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider mb-1">Status</p>
                   <p className="text-sm font-semibold text-[#22C55E]">Verified</p>
                 </div>
               )}
@@ -208,7 +208,7 @@ export default function CertificateVerifyContent({
 
             {/* SCFHS Accreditation */}
             <div className="mt-6 text-center">
-              <p className="text-[11px] text-[#9CA3AF]">
+              <p className="text-[11px] text-[var(--color-text-secondary)]">
                 Accredited by the Saudi Commission for Health Specialties (SCFHS)
               </p>
             </div>
@@ -218,7 +218,7 @@ export default function CertificateVerifyContent({
           <div className="border-t border-[var(--color-border)] bg-[#FAFBFC] px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Image src="/images/logo.png" alt="" width={20} height={20} />
-              <span className="text-xs text-[#9CA3AF]">Issued by PhysioGuidance</span>
+              <span className="text-xs text-[var(--color-text-secondary)]">Issued by PhysioGuidance</span>
             </div>
             <Link
               href={`/${locale}`}

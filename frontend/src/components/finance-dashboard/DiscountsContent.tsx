@@ -106,7 +106,7 @@ const DiscountsContent = () => {
 
   const statusStyles: Record<string, string> = {
     active: "bg-[#DCFCE7] text-[#16A34A]",
-    expired: "bg-[#F3F4F6] text-[#6B7280]",
+    expired: "bg-[#F3F4F6] text-[var(--color-text-secondary)]",
     disabled: "bg-[#FEE2E2] text-[#DC2626]",
   };
 
@@ -153,8 +153,8 @@ const DiscountsContent = () => {
                         <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                       </div>
                       <div>
-                        <p className="text-xs text-[#6B7280] font-medium">{stat.label}</p>
-                        <p className="text-xl font-bold text-[#111827]">{stat.value}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)] font-medium">{stat.label}</p>
+                        <p className="text-xl font-bold text-[var(--color-text-primary)]">{stat.value}</p>
                       </div>
                     </div>
                   );
@@ -172,8 +172,8 @@ const DiscountsContent = () => {
                         onClick={() => setActiveTab(tab.key)}
                         className={`px-4 py-1.5 text-[13px] font-medium rounded-md transition-colors ${
                           activeTab === tab.key
-                            ? "bg-white text-[#111827] shadow-sm"
-                            : "text-[#6B7280] hover:text-[#374151]"
+                            ? "bg-white text-[var(--color-text-primary)] shadow-sm"
+                            : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                         }`}
                       >
                         {tab.label}
@@ -193,12 +193,12 @@ const DiscountsContent = () => {
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <p className="text-sm font-bold text-[#111827] font-mono">{coupon.code}</p>
-                              <button className="text-[#9CA3AF] hover:text-[#6B7280]">
+                              <p className="text-sm font-bold text-[var(--color-text-primary)] font-mono">{coupon.code}</p>
+                              <button className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]">
                                 <Copy className="w-3.5 h-3.5" />
                               </button>
                             </div>
-                            <p className="text-[12px] text-[#6B7280]">
+                            <p className="text-[12px] text-[var(--color-text-secondary)]">
                               {coupon.type === "percentage"
                                 ? t("discounts.off", { amount: coupon.value })
                                 : t("discounts.fixedOff", { amount: coupon.value })}
@@ -213,17 +213,17 @@ const DiscountsContent = () => {
                           <div className="relative">
                             <button
                               onClick={() => setOpenActionId(openActionId === coupon.id ? null : coupon.id)}
-                              className="w-6 h-6 flex items-center justify-center text-[#9CA3AF] hover:text-[#6B7280]"
+                              className="w-6 h-6 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                             >
                               <MoreVertical className="w-4 h-4" />
                             </button>
                             {openActionId === coupon.id && (
                               <div className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[120px] z-20 ${isRTL ? "left-0" : "right-0"}`}>
-                                <button className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB]">
+                                <button className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
                                   <Eye className="w-3.5 h-3.5" />
                                   {t("paymentsTable.actions.view")}
                                 </button>
-                                <button className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB]">
+                                <button className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
                                   <Pencil className="w-3.5 h-3.5" />
                                   {t("discountsPage.actions.edit")}
                                 </button>
@@ -239,7 +239,7 @@ const DiscountsContent = () => {
 
                       {/* Usage Bar */}
                       <div className="mb-2">
-                        <div className="flex items-center justify-between text-[11px] text-[#6B7280] mb-1">
+                        <div className="flex items-center justify-between text-[11px] text-[var(--color-text-secondary)] mb-1">
                           <span>{t("discounts.usage", { used: coupon.usedCount, limit: coupon.usageLimit })}</span>
                           <span>{Math.round((coupon.usedCount / coupon.usageLimit) * 100)}%</span>
                         </div>
@@ -252,7 +252,7 @@ const DiscountsContent = () => {
                       </div>
 
                       {/* Footer */}
-                      <div className="flex items-center gap-3 text-[11px] text-[#9CA3AF]">
+                      <div className="flex items-center gap-3 text-[11px] text-[var(--color-text-secondary)]">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           {coupon.expiryDate}
@@ -270,12 +270,12 @@ const DiscountsContent = () => {
               <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <BarChart3 className="w-5 h-5 text-[var(--color-primary)]" />
-                  <h3 className="text-base font-semibold text-[#111827]">{t("discountsPage.analytics.title")}</h3>
+                  <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{t("discountsPage.analytics.title")}</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="p-4 bg-[#F9FAFB] rounded-xl text-center">
-                    <p className="text-2xl font-bold text-[#111827]">342</p>
-                    <p className="text-[12px] text-[#6B7280]">{t("discountsPage.analytics.totalUsage")}</p>
+                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">342</p>
+                    <p className="text-[12px] text-[var(--color-text-secondary)]">{t("discountsPage.analytics.totalUsage")}</p>
                   </div>
                   <div className="p-4 bg-[#DCFCE7] rounded-xl text-center">
                     <p className="text-2xl font-bold text-[#16A34A]">+12%</p>
@@ -297,18 +297,18 @@ const DiscountsContent = () => {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-[#111827]">{t("discountsPage.createCoupon")}</h3>
-              <button onClick={() => setShowCreateModal(false)} className="text-[#6B7280] hover:text-[#374151]">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("discountsPage.createCoupon")}</h3>
+              <button onClick={() => setShowCreateModal(false)} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.code")}</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("discountsPage.form.code")}</label>
                 <input type="text" placeholder={t("discountsPage.form.codePlaceholder")} className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.type")}</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("discountsPage.form.type")}</label>
                 <select className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
                   <option value="percentage">{t("discountsPage.form.percentage")}</option>
                   <option value="fixed">{t("discountsPage.form.fixedAmount")}</option>
@@ -316,21 +316,21 @@ const DiscountsContent = () => {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.usageLimit")}</label>
+                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("discountsPage.form.usageLimit")}</label>
                   <input type="number" placeholder="100" className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.expiryDate")}</label>
+                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("discountsPage.form.expiryDate")}</label>
                   <input type="date" className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.minOrder")}</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("discountsPage.form.minOrder")}</label>
                 <input type="number" placeholder="0" className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
               </div>
             </div>
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowCreateModal(false)} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]">
+              <button onClick={() => setShowCreateModal(false)} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
                 {t("discountsPage.form.cancel")}
               </button>
               <button className="flex-1 px-4 py-2.5 btn-gold text-white rounded-lg text-sm font-medium">

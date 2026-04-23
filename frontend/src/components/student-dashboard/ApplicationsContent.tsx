@@ -100,10 +100,10 @@ const ApplicationsContent = () => {
         <div className="flex-1 p-4 lg:p-8" dir={isRTL ? "rtl" : "ltr"}>
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-[#1F2937]">
+            <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
               {t("applicationsPage.title") || "My Applications"}
             </h1>
-            <p className="text-sm text-[#6B7280] mt-1">
+            <p className="text-sm text-[var(--color-text-secondary)] mt-1">
               {t("applicationsPage.subtitle") || "Track the status of your role applications"}
             </p>
           </div>
@@ -126,10 +126,10 @@ const ApplicationsContent = () => {
           {!isLoading && !error && applications.length === 0 && (
             <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
               <FileText className="w-12 h-12 text-[var(--color-border)] mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-[#1F2937] mb-2">
+              <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-2">
                 {t("applicationsPage.emptyTitle") || "No Applications Yet"}
               </h3>
-              <p className="text-sm text-[#6B7280] mb-6">
+              <p className="text-sm text-[var(--color-text-secondary)] mb-6">
                 {t("applicationsPage.emptyDesc") || "You haven't submitted any role applications yet."}
               </p>
               <Link
@@ -167,16 +167,16 @@ const ApplicationsContent = () => {
                           </span>
                         </div>
 
-                        <h3 className="text-lg font-semibold text-[#1F2937]">
+                        <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                           {t("applicationsPage.instructorApplication") || "Instructor Application"}
                         </h3>
-                        <p className="text-sm text-[#6B7280] mt-1">
+                        <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                           {profileData?.fullNameEnglish || profileData?.fullNameArabic}
                           {profileData?.specialty && ` · ${profileData.specialty}`}
                         </p>
                       </div>
 
-                      <p className="text-xs text-[#9CA3AF] whitespace-nowrap">
+                      <p className="text-xs text-[var(--color-text-secondary)] whitespace-nowrap">
                         {formatDate(app.createdAt)}
                       </p>
                     </div>
@@ -249,16 +249,16 @@ const ApplicationsContent = () => {
                     {/* Timeline */}
                     {(app.reviewedAt || app.updatedAt !== app.createdAt) && (
                       <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
-                        <p className="text-xs font-medium text-[#9CA3AF] uppercase tracking-wider mb-2">
+                        <p className="text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider mb-2">
                           {t("applicationsPage.timeline") || "Timeline"}
                         </p>
                         <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-xs text-[#6B7280]">
+                          <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
                             <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-border)]" />
                             <span>{t("applicationsPage.submitted") || "Submitted"}: {formatDate(app.createdAt)}</span>
                           </div>
                           {app.reviewedAt && (
-                            <div className="flex items-center gap-2 text-xs text-[#6B7280]">
+                            <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
                               <div className={`w-1.5 h-1.5 rounded-full ${app.status === "APPROVED" ? "bg-[#16A34A]" : app.status === "REJECTED" ? "bg-[#DC2626]" : "bg-[#F59E0B]"}`} />
                               <span>{t("applicationsPage.reviewed") || "Reviewed"}: {formatDate(app.reviewedAt)}</span>
                             </div>

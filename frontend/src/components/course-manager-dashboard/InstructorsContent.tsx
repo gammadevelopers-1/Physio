@@ -242,8 +242,8 @@ const InstructorsContent = () => {
             <div className="flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
-                  <h1 className="text-2xl font-bold text-[#1F2937]">{t("instructorsPage.title")}</h1>
-                  <p className="text-sm text-[#6B7280] mt-1">{t("instructorsPage.subtitle")}</p>
+                  <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{t("instructorsPage.title")}</h1>
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">{t("instructorsPage.subtitle")}</p>
                 </div>
                 <ExportButton tableType="instructors" />
               </div>
@@ -251,19 +251,19 @@ const InstructorsContent = () => {
               {/* Stats Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
-                  <p className="text-xs text-[#6B7280]">{t("instructorsPage.stats.total")}</p>
-                  <p className="text-2xl font-bold text-[#1F2937] mt-1">{stats.total}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{t("instructorsPage.stats.total")}</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)] mt-1">{stats.total}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
-                  <p className="text-xs text-[#6B7280]">{t("instructorsPage.stats.available")}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{t("instructorsPage.stats.available")}</p>
                   <p className="text-2xl font-bold text-[#22C55E] mt-1">{stats.available}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
-                  <p className="text-xs text-[#6B7280]">{t("instructorsPage.filters.busy")}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{t("instructorsPage.filters.busy")}</p>
                   <p className="text-2xl font-bold text-[#F59E0B] mt-1">{stats.busy}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
-                  <p className="text-xs text-[#6B7280]">{t("instructorsPage.stats.overloaded")}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{t("instructorsPage.stats.overloaded")}</p>
                   <p className="text-2xl font-bold text-[#EF4444] mt-1">{stats.overloaded}</p>
                 </div>
               </div>
@@ -271,7 +271,7 @@ const InstructorsContent = () => {
               {/* Search + Filter */}
               <div className="flex flex-col sm:flex-row gap-3 mb-6">
                 <div className="relative flex-1">
-                  <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]`} />
+                  <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]`} />
                   <input
                     type="text"
                     placeholder={t("instructorsPage.searchPlaceholder")}
@@ -283,7 +283,7 @@ const InstructorsContent = () => {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("instructorsPage.filters.allStatus")}</option>
                   <option value="available">{t("instructorsPage.filters.available")}</option>
@@ -303,7 +303,7 @@ const InstructorsContent = () => {
               {error && (
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
-                  <p className="text-sm text-[#6B7280] mb-4">{error}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)] mb-4">{error}</p>
                   <button onClick={fetchRoster} className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg">
                     <RefreshCw className="w-4 h-4" />{t("dashboard.retry")}
                   </button>
@@ -313,10 +313,10 @@ const InstructorsContent = () => {
               {!loading && !error && filtered.length === 0 && (
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <User className="w-8 h-8 text-[#9CA3AF]" />
+                    <User className="w-8 h-8 text-[var(--color-text-secondary)]" />
                   </div>
-                  <h3 className="text-lg font-semibold text-[#1F2937] mb-2">{t("instructorsPage.noInstructors")}</h3>
-                  <p className="text-sm text-[#6B7280]">{t("instructorsPage.noInstructorsDesc")}</p>
+                  <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">{t("instructorsPage.noInstructors")}</h3>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{t("instructorsPage.noInstructorsDesc")}</p>
                 </div>
               )}
 
@@ -356,11 +356,11 @@ const InstructorsContent = () => {
                             <span className="text-sm font-semibold text-[#3B82F6]">{getInitials(instructor)}</span>
                           </div>
                           <div className="min-w-0">
-                            <h3 className="text-sm font-semibold text-[#1F2937] truncate">{getName(instructor)}</h3>
-                            <p className="text-xs text-[#6B7280] truncate">{instructor.email}</p>
+                            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] truncate">{getName(instructor)}</h3>
+                            <p className="text-xs text-[var(--color-text-secondary)] truncate">{instructor.email}</p>
                             {(instructor.department || instructor.specialty) && (
                               <div className="flex flex-wrap gap-1 mt-1">
-                                {instructor.department && <span className="px-1.5 py-0.5 bg-[#F3F4F6] text-[#6B7280] text-[9px] rounded">{instructor.department}</span>}
+                                {instructor.department && <span className="px-1.5 py-0.5 bg-[#F3F4F6] text-[var(--color-text-secondary)] text-[9px] rounded">{instructor.department}</span>}
                                 {instructor.specialty && <span className="px-1.5 py-0.5 bg-[#EFF6FF] text-[#3B82F6] text-[9px] rounded">{instructor.specialty}</span>}
                               </div>
                             )}
@@ -373,32 +373,32 @@ const InstructorsContent = () => {
                         {/* Metrics */}
                         <div className="grid grid-cols-3 gap-3 mb-4">
                           <div className="text-center">
-                            <div className="flex items-center justify-center gap-1 text-[#6B7280] mb-1">
+                            <div className="flex items-center justify-center gap-1 text-[var(--color-text-secondary)] mb-1">
                               <BookOpen className="w-3.5 h-3.5" />
                             </div>
-                            <p className="text-lg font-bold text-[#1F2937]">{instructor.coursesCount}</p>
-                            <p className="text-[10px] text-[#6B7280]">{t("instructorsPage.courses")}</p>
+                            <p className="text-lg font-bold text-[var(--color-text-primary)]">{instructor.coursesCount}</p>
+                            <p className="text-[10px] text-[var(--color-text-secondary)]">{t("instructorsPage.courses")}</p>
                           </div>
                           <div className="text-center">
-                            <div className="flex items-center justify-center gap-1 text-[#6B7280] mb-1">
+                            <div className="flex items-center justify-center gap-1 text-[var(--color-text-secondary)] mb-1">
                               <Users className="w-3.5 h-3.5" />
                             </div>
-                            <p className="text-lg font-bold text-[#1F2937]">{instructor.studentsCount}</p>
-                            <p className="text-[10px] text-[#6B7280]">{t("instructorsPage.students")}</p>
+                            <p className="text-lg font-bold text-[var(--color-text-primary)]">{instructor.studentsCount}</p>
+                            <p className="text-[10px] text-[var(--color-text-secondary)]">{t("instructorsPage.students")}</p>
                           </div>
                           <div className="text-center">
-                            <div className="flex items-center justify-center gap-1 text-[#6B7280] mb-1">
+                            <div className="flex items-center justify-center gap-1 text-[var(--color-text-secondary)] mb-1">
                               <Star className="w-3.5 h-3.5" />
                             </div>
-                            <p className="text-lg font-bold text-[#1F2937]">{instructor.avgRating?.toFixed(1) || "—"}</p>
-                            <p className="text-[10px] text-[#6B7280]">{t("instructorsPage.rating")}</p>
+                            <p className="text-lg font-bold text-[var(--color-text-primary)]">{instructor.avgRating?.toFixed(1) || "—"}</p>
+                            <p className="text-[10px] text-[var(--color-text-secondary)]">{t("instructorsPage.rating")}</p>
                           </div>
                         </div>
 
                         {/* Load Bar */}
                         <div className="mb-4">
                           <div className="flex items-center justify-between text-xs mb-1">
-                            <span className="text-[#6B7280]">{t("instructorsPage.workload")}</span>
+                            <span className="text-[var(--color-text-secondary)]">{t("instructorsPage.workload")}</span>
                             <span className={`font-medium ${config.text}`}>{instructor.hoursThisWeek}h / {maxHours}h</span>
                           </div>
                           <div className="h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
@@ -413,7 +413,7 @@ const InstructorsContent = () => {
                         <div className="flex items-center justify-center pt-3 border-t border-[var(--color-border)] mt-auto">
                           <button
                             onClick={() => setDetailInstructorId(instructor.id)}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F9FAFB] rounded-lg transition-colors"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[#F9FAFB] rounded-lg transition-colors"
                           >
                             {t("instructorsPage.viewProfile")}
                             <ChevronRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />

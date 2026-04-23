@@ -56,7 +56,7 @@ const CertificateQueue = ({
       <div className="p-4 sm:p-5">
         {/* Header with Badge Count */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-[#1F2937] flex items-center gap-2">
+          <h3 className="text-base font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
             <GraduationCap className="w-5 h-5 text-[#D4A520]" />
             {t("certificates.pendingTitle")}
           </h3>
@@ -78,10 +78,10 @@ const CertificateQueue = ({
                   <Star className="w-4 h-4 text-[#D4A520] fill-[#D4A520]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#1F2937]">
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">
                     {cert.studentName}
                   </p>
-                  <p className="text-xs text-[#6B7280] truncate">
+                  <p className="text-xs text-[var(--color-text-secondary)] truncate">
                     {cert.courseName}
                   </p>
                 </div>
@@ -138,7 +138,7 @@ const CertificateQueue = ({
                 {/* View Button */}
                 <button
                   onClick={() => handlePreview(cert.id)}
-                  className="p-1.5 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded transition-colors"
+                  className="p-1.5 text-[var(--color-text-secondary)] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded transition-colors"
                   aria-label={t("certificates.preview")}
                 >
                   <Eye className="w-3.5 h-3.5" />

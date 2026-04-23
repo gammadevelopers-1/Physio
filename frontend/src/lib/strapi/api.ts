@@ -39,6 +39,9 @@ const BLOCKS_POPULATE_PARAMS: Record<string, string> = {
   'populate[blocks][on][blocks.cta-banner][populate][buttons]': 'true',
   'populate[blocks][on][blocks.cta-banner][populate][image]': 'true',
   'populate[blocks][on][blocks.cta-banner][populate][backgroundImage]': 'true',
+  // Image Banner Block - has media (image) + single component (button)
+  'populate[blocks][on][blocks.image-banner-block][populate][image]': 'true',
+  'populate[blocks][on][blocks.image-banner-block][populate][button]': 'true',
   'populate[blocks][on][blocks.instructors-grid][populate]': '*',
   'populate[blocks][on][blocks.testimonials-carousel][populate]': '*',
   'populate[blocks][on][blocks.rich-text-block][populate]': '*',

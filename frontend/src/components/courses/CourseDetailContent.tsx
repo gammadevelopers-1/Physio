@@ -179,7 +179,7 @@ function AllReviewsModal({
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-[var(--color-border)]">
           <div>
-            <h3 className="text-xl font-bold text-[#06080b]">
+            <h3 className="text-xl font-bold text-[var(--color-text-primary)]">
               {reviewsHeading || (isRTL ? "المراجعات" : "Reviews")}
             </h3>
             <div className={`flex items-center gap-2 mt-1 ${isRTL ? "flex-row-reverse" : ""}`}>
@@ -191,8 +191,8 @@ function AllReviewsModal({
                   />
                 ))}
               </div>
-              <span className="text-sm font-semibold text-[#06080b]">{avgRating.toFixed(1)}</span>
-              <span className="text-sm text-[#71717A]">
+              <span className="text-sm font-semibold text-[var(--color-text-primary)]">{avgRating.toFixed(1)}</span>
+              <span className="text-sm text-[var(--color-text-secondary)]">
                 · {totalCount} {isRTL ? "مراجعة" : totalCount === 1 ? "review" : "reviews"}
               </span>
             </div>
@@ -202,7 +202,7 @@ function AllReviewsModal({
             className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors"
             aria-label={isRTL ? "إغلاق" : "Close"}
           >
-            <X className="w-5 h-5 text-[#6B7280]" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
 
@@ -210,7 +210,7 @@ function AllReviewsModal({
         <div className="px-5 py-3 border-b border-[var(--color-border)] flex flex-wrap items-center gap-3">
           {/* Sort */}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-[#6B7280]">{isRTL ? "الترتيب:" : "Sort:"}</span>
+            <span className="text-xs font-medium text-[var(--color-text-secondary)]">{isRTL ? "الترتيب:" : "Sort:"}</span>
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as typeof sort)}
@@ -228,7 +228,7 @@ function AllReviewsModal({
             <button
               onClick={() => setStarFilter(null)}
               className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                starFilter === null ? "bg-[#1F2937] text-white" : "bg-[#F3F4F6] text-[#374151] hover:bg-[var(--color-border)]"
+                starFilter === null ? "bg-[var(--color-text-primary)] text-white" : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
               }`}
             >
               {isRTL ? "الكل" : "All"}
@@ -241,7 +241,7 @@ function AllReviewsModal({
                   onClick={() => setStarFilter(starFilter === s ? null : s)}
                   disabled={c === 0}
                   className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                    starFilter === s ? "bg-[#B8860B] text-white" : "bg-[#F3F4F6] text-[#374151] hover:bg-[var(--color-border)]"
+                    starFilter === s ? "bg-[#B8860B] text-white" : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
                   }`}
                 >
                   {s} <Star className="w-3 h-3 fill-current" /> ({c})
@@ -259,11 +259,11 @@ function AllReviewsModal({
               const pct = (c / maxDist) * 100;
               return (
                 <div key={s} className="flex items-center gap-2 text-xs">
-                  <span className="w-4 text-[#6B7280]">{s}★</span>
+                  <span className="w-4 text-[var(--color-text-secondary)]">{s}★</span>
                   <div className="flex-1 h-2 bg-[#F3F4F6] rounded-full overflow-hidden">
                     <div className="h-full bg-[#B8860B]" style={{ width: `${pct}%` }} />
                   </div>
-                  <span className="w-8 text-right text-[#6B7280] tabular-nums">{c}</span>
+                  <span className="w-8 text-right text-[var(--color-text-secondary)] tabular-nums">{c}</span>
                 </div>
               );
             })}
@@ -274,14 +274,14 @@ function AllReviewsModal({
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-5 py-4">
           {loadingInitial ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-[#6B7280]" />
+              <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />
             </div>
           ) : reviews.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="w-14 h-14 rounded-xl bg-[#F3F4F6] flex items-center justify-center mb-3">
-                <Star className="w-7 h-7 text-[#9CA3AF]" />
+                <Star className="w-7 h-7 text-[var(--color-text-secondary)]" />
               </div>
-              <p className="text-sm text-[#9CA3AF]">{isRTL ? "لا توجد مراجعات مطابقة" : "No matching reviews"}</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">{isRTL ? "لا توجد مراجعات مطابقة" : "No matching reviews"}</p>
             </div>
           ) : (
             <div className="flex flex-col divide-y divide-[var(--color-border)]">
@@ -292,8 +292,8 @@ function AllReviewsModal({
                   className="py-4 first:pt-0 last:pb-0"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <p className="font-medium text-[14px] text-[#06080b]">{r.studentName}</p>
-                    <p className="text-[12px] text-[#9CA3AF]">{formatDate(r.createdAt)}</p>
+                    <p className="font-medium text-[14px] text-[var(--color-text-primary)]">{r.studentName}</p>
+                    <p className="text-[12px] text-[var(--color-text-secondary)]">{formatDate(r.createdAt)}</p>
                   </div>
                   <div className={`flex items-center gap-0.5 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
                     {[...Array(5)].map((_, si) => (
@@ -304,7 +304,7 @@ function AllReviewsModal({
                     ))}
                   </div>
                   {r.reviewText && (
-                    <p dir="auto" className="text-[13px] text-[#4a4c4f] leading-relaxed whitespace-pre-line">
+                    <p dir="auto" className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-line">
                       {r.reviewText}
                     </p>
                   )}
@@ -317,7 +317,7 @@ function AllReviewsModal({
         {/* Footer — Load more */}
         {!loadingInitial && reviews.length > 0 && (
           <div className="p-4 border-t border-[var(--color-border)] flex items-center justify-between gap-3">
-            <p className="text-xs text-[#6B7280]">
+            <p className="text-xs text-[var(--color-text-secondary)]">
               {isRTL
                 ? `عرض ${reviews.length} من ${totalCount}`
                 : `Showing ${reviews.length} of ${totalCount}`}
@@ -326,13 +326,13 @@ function AllReviewsModal({
               <button
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#1F2937] text-white text-sm font-medium hover:bg-[#111827] transition-colors disabled:opacity-60"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[var(--color-text-primary)] text-white text-sm font-medium hover:bg-[var(--color-text-primary)] transition-colors disabled:opacity-60"
               >
                 {loadingMore && <Loader2 className="w-4 h-4 animate-spin" />}
                 {isRTL ? "تحميل المزيد" : "Load more"}
               </button>
             ) : (
-              <span className="text-xs text-[#9CA3AF] italic">
+              <span className="text-xs text-[var(--color-text-secondary)] italic">
                 {isRTL ? "لا توجد مراجعات إضافية" : "No more reviews"}
               </span>
             )}
@@ -535,15 +535,15 @@ const CourseDetailContent = ({
       <div className={`flex items-center gap-3 ${isRTL ? "justify-start" : ""}`}>
         {(lang === "en" || lang === "both") && (
           <div className="flex items-center gap-1.5">
-            <Globe className="w-4 h-4 text-[#71717A]" />
-            <span className={`${sizeClass} text-[#06080b]`}>{t("languages.english")}</span>
+            <Globe className="w-4 h-4 text-[var(--color-text-secondary)]" />
+            <span className={`${sizeClass} text-[var(--color-text-primary)]`}>{t("languages.english")}</span>
           </div>
         )}
         {lang === "both" && <div className="w-px h-4 bg-[#D4D4D8]" />}
         {(lang === "ar" || lang === "both") && (
           <div className="flex items-center gap-1.5">
-            <Globe className="w-4 h-4 text-[#71717A]" />
-            <span className={`${sizeClass} text-[#06080b]`}>{t("languages.arabic")}</span>
+            <Globe className="w-4 h-4 text-[var(--color-text-secondary)]" />
+            <span className={`${sizeClass} text-[var(--color-text-primary)]`}>{t("languages.arabic")}</span>
           </div>
         )}
       </div>
@@ -606,7 +606,7 @@ const CourseDetailContent = ({
           <div className={`flex flex-wrap gap-3 mb-5 ${isRTL ? "flex-row-reverse" : ""}`}>
             {showCityFilter && (
               <div className="flex flex-col gap-1">
-                <label className="text-[12px] text-[#6B7280] font-medium">
+                <label className="text-[12px] text-[var(--color-text-secondary)] font-medium">
                   {locale === "ar" ? "المدينة" : "City"}
                 </label>
                 <select
@@ -625,7 +625,7 @@ const CourseDetailContent = ({
             )}
             {showMonthFilter && (
               <div className="flex flex-col gap-1">
-                <label className="text-[12px] text-[#6B7280] font-medium">
+                <label className="text-[12px] text-[var(--color-text-secondary)] font-medium">
                   {locale === "ar" ? "الشهر" : "Month"}
                 </label>
                 <select
@@ -648,7 +648,7 @@ const CourseDetailContent = ({
                   setSessionFilterCity("");
                   setSessionFilterMonth("");
                 }}
-                className="self-end px-3 py-2 text-sm text-[#6B7280] hover:text-[#1F2937] underline"
+                className="self-end px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] underline"
               >
                 {locale === "ar" ? "مسح" : "Clear"}
               </button>
@@ -658,7 +658,7 @@ const CourseDetailContent = ({
 
         <div className="flex flex-col gap-3">
           {filteredSessions.length === 0 ? (
-            <div className="text-center py-6 text-sm text-[#9CA3AF]">
+            <div className="text-center py-6 text-sm text-[var(--color-text-secondary)]">
               {locale === "ar"
                 ? "لا توجد جلسات تطابق المرشحات"
                 : "No sessions match your filters"}
@@ -668,7 +668,7 @@ const CourseDetailContent = ({
               <div key={session.id} className={`flex items-center justify-between p-3 bg-[#f4f4f5] rounded-lg ${isRTL ? "flex-row-reverse" : ""}`}>
                 <div className={isRTL ? "text-right" : "text-left"}>
                   <p className="font-medium text-[14px]">{session.title}</p>
-                  <p className="text-[13px] text-[#6B7280]">
+                  <p className="text-[13px] text-[var(--color-text-secondary)]">
                     {new Date(session.scheduledAt).toLocaleDateString(
                       locale === "ar" ? "ar-SA" : "en-US",
                       { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }
@@ -676,12 +676,12 @@ const CourseDetailContent = ({
                     {" · "}{formatDuration(session.durationMinutes, locale)}
                   </p>
                   {session.city && (
-                    <p className="text-[12px] text-[#6B7280] font-medium">
+                    <p className="text-[12px] text-[var(--color-text-secondary)] font-medium">
                       {getCityLabel(session.city, locale)}
                     </p>
                   )}
                   {session.venueAddress && (
-                    <p className="text-[12px] text-[#9CA3AF]">{session.venueAddress}</p>
+                    <p className="text-[12px] text-[var(--color-text-secondary)]">{session.venueAddress}</p>
                   )}
                 </div>
                 <span className={`text-[11px] px-2 py-1 rounded-full ${
@@ -711,7 +711,7 @@ const CourseDetailContent = ({
             {contentsHeading || t("contents") || "Contents"} {totalCount}
           </h2>
           {totalMinutes > 0 && (
-            <span className="text-[13px] text-[#9CA3AF]">
+            <span className="text-[13px] text-[var(--color-text-secondary)]">
               {formatDuration(totalMinutes, locale)} {locale === "ar" ? "من المحتوى" : "of content"}
             </span>
           )}
@@ -721,21 +721,21 @@ const CourseDetailContent = ({
             <div key={mod.id} className="border border-[var(--outline-subtle)] rounded-lg overflow-hidden">
               <div className={`flex items-center justify-between p-3 bg-[#F9FAFB] ${isRTL ? "flex-row-reverse" : ""}`}>
                 <div className={`flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
-                  <span className="text-[13px] text-[#9CA3AF] font-medium">{i + 1}.</span>
-                  <span className="text-[14px] font-medium text-[#06080b]">
+                  <span className="text-[13px] text-[var(--color-text-secondary)] font-medium">{i + 1}.</span>
+                  <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
                     {isRTL && mod.titleAr ? mod.titleAr : mod.title}
                   </span>
                 </div>
                 {mod.durationMinutes && (
-                  <span className="text-[12px] text-[#9CA3AF]">{formatDuration(mod.durationMinutes, locale)}</span>
+                  <span className="text-[12px] text-[var(--color-text-secondary)]">{formatDuration(mod.durationMinutes, locale)}</span>
                 )}
               </div>
               {mod.materials && mod.materials.length > 0 && (
                 <div className="flex flex-col divide-y divide-[var(--outline-subtle)]">
                   {mod.materials.map((mat) => (
                     <div key={mat.id} className={`flex items-center gap-2 p-3 ${isRTL ? "flex-row-reverse" : ""}`}>
-                      <span className="text-[11px] text-[#9CA3AF] uppercase bg-[#F3F4F6] px-2 py-0.5 rounded">{mat.type}</span>
-                      <span className="text-[13px] text-[#4a4c4f]">{mat.title}</span>
+                      <span className="text-[11px] text-[var(--color-text-secondary)] uppercase bg-[#F3F4F6] px-2 py-0.5 rounded">{mat.type}</span>
+                      <span className="text-[13px] text-[var(--color-text-secondary)]">{mat.title}</span>
                     </div>
                   ))}
                 </div>
@@ -744,7 +744,7 @@ const CourseDetailContent = ({
           ))}
           {remaining > 0 && (
             <div className="mt-2 p-4 bg-[#F9FAFB] rounded-lg text-center">
-              <p className="text-[13px] text-[#6B7280]">
+              <p className="text-[13px] text-[var(--color-text-secondary)]">
                 {moreContentText || (locale === "ar"
                   ? "المزيد من المحتوى متاح عند التسجيل"
                   : "More content available after enrollment")}
@@ -762,11 +762,11 @@ const CourseDetailContent = ({
     if (!overview) return null;
     return (
       <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
-        <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} ${isRTL ? "text-right" : "text-left"}`}>
+        <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} ${isRTL ? "text-right" : "text-left"}`}>
           {overviewHeading || t("overview") || "Overview"}
         </h2>
         <div
-          className={`course-overview-content text-[#4a4c4f] ${isMobile ? "text-sm" : "text-base"} leading-relaxed ${isRTL ? "text-right" : "text-left"}`}
+          className={`course-overview-content text-[var(--color-text-secondary)] ${isMobile ? "text-sm" : "text-base"} leading-relaxed ${isRTL ? "text-right" : "text-left"}`}
           dir={isRTL ? "rtl" : "ltr"}
           dangerouslySetInnerHTML={{ __html: overview }}
         />
@@ -780,14 +780,14 @@ const CourseDetailContent = ({
     if (!objectives.length) return null;
     return (
       <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
-        <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} ${isRTL ? "text-right" : "text-left"}`}>
+        <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} ${isRTL ? "text-right" : "text-left"}`}>
           {objectivesHeading || t("whatYouWillLearn.title")}
         </h2>
         <div className={isMobile ? "space-y-3" : "space-y-4"}>
           {objectives.map((item, index) => (
             <div key={index} className={`flex items-start ${isMobile ? "gap-2.5" : "gap-3"}`}>
-              <Check className={`${isMobile ? "w-4 h-4" : "w-5 h-5"} text-[#06080b] flex-shrink-0 mt-0.5`} />
-              <p className={`text-[#06080b] ${isMobile ? "text-sm" : "text-base"} ${isRTL ? "text-right" : "text-left"}`}>{item}</p>
+              <Check className={`${isMobile ? "w-4 h-4" : "w-5 h-5"} text-[var(--color-text-primary)] flex-shrink-0 mt-0.5`} />
+              <p className={`text-[var(--color-text-primary)] ${isMobile ? "text-sm" : "text-base"} ${isRTL ? "text-right" : "text-left"}`}>{item}</p>
             </div>
           ))}
         </div>
@@ -801,14 +801,14 @@ const CourseDetailContent = ({
     if (!audience.length) return null;
     return (
       <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
-        <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} ${isRTL ? "text-right" : "text-left"}`}>
+        <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} ${isRTL ? "text-right" : "text-left"}`}>
           {targetAudienceHeading || t("targetAudience") || "Target Audience"}
         </h2>
         <div className="flex flex-wrap gap-2">
           {audience.map((item, index) => (
             <span
               key={index}
-              className="inline-flex items-center px-3 py-1.5 bg-[#F4F4F5] text-[#4a4c4f] text-sm rounded-full"
+              className="inline-flex items-center px-3 py-1.5 bg-[#F4F4F5] text-[var(--color-text-secondary)] text-sm rounded-full"
             >
               {item}
             </span>
@@ -823,10 +823,10 @@ const CourseDetailContent = ({
     if (!showRequirements) return null;
     return (
       <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
-        <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} ${isRTL ? "text-right" : "text-left"}`}>
+        <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} ${isRTL ? "text-right" : "text-left"}`}>
           {requirementsHeading || t("requirements") || "Requirements"}
         </h2>
-        <p className={`text-[#4a4c4f] ${isMobile ? "text-sm" : "text-base"} leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
+        <p className={`text-[var(--color-text-secondary)] ${isMobile ? "text-sm" : "text-base"} leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
           {getRequirements()}
         </p>
       </div>
@@ -859,7 +859,7 @@ const CourseDetailContent = ({
     return (
       <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <div className={`flex items-center justify-between mb-6 ${isRTL ? "flex-row-reverse" : ""}`}>
-          <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg" : "text-xl"}`}>
+          <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg" : "text-xl"}`}>
             {reviewsHeading || t("reviews")}
           </h2>
           <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
@@ -871,7 +871,7 @@ const CourseDetailContent = ({
                 />
               ))}
             </div>
-            <span className="text-sm text-[#71717A]">({apiCourse.totalRatings} {t("reviews")})</span>
+            <span className="text-sm text-[var(--color-text-secondary)]">({apiCourse.totalRatings} {t("reviews")})</span>
           </div>
         </div>
         {apiCourse.ratings.length > 0 ? (
@@ -880,8 +880,8 @@ const CourseDetailContent = ({
               {apiCourse.ratings.map((review, index) => (
                 <div key={index} className="py-4 first:pt-0 last:pb-0">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="font-medium text-[14px] text-[#06080b]">{review.studentName}</p>
-                    <p className="text-[12px] text-[#9CA3AF]">
+                    <p className="font-medium text-[14px] text-[var(--color-text-primary)]">{review.studentName}</p>
+                    <p className="text-[12px] text-[var(--color-text-secondary)]">
                       {new Date(review.createdAt).toLocaleDateString(
                         locale === "ar" ? "ar-SA" : "en-US",
                         { day: "numeric", month: "short", year: "numeric" }
@@ -897,7 +897,7 @@ const CourseDetailContent = ({
                     ))}
                   </div>
                   {review.reviewText && (
-                    <p dir="auto" className="text-[13px] text-[#4a4c4f] leading-relaxed">
+                    <p dir="auto" className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed">
                       {review.reviewText}
                     </p>
                   )}
@@ -918,9 +918,9 @@ const CourseDetailContent = ({
         ) : (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <div className="w-14 h-14 rounded-xl bg-[#F3F4F6] flex items-center justify-center mb-3">
-              <Star className="w-7 h-7 text-[#9CA3AF]" />
+              <Star className="w-7 h-7 text-[var(--color-text-secondary)]" />
             </div>
-            <p className="text-sm text-[#9CA3AF]">
+            <p className="text-sm text-[var(--color-text-secondary)]">
               {noReviewsText || (locale === "ar" ? "لا توجد تقييمات بعد" : "No Reviews Yet")}
             </p>
           </div>
@@ -940,29 +940,29 @@ const CourseDetailContent = ({
               {/* Course Info - flex-1 */}
               <div className="flex-1">
                 {/* Breadcrumb */}
-                <div className={`flex items-center gap-2 text-sm text-[#71717A] mb-6 ${isRTL ? "flex-row" : ""}`}>
-                  <Link href="/" className="hover:text-[#06080b]">
+                <div className={`flex items-center gap-2 text-sm text-[var(--color-text-secondary)] mb-6 ${isRTL ? "flex-row" : ""}`}>
+                  <Link href="/" className="hover:text-[var(--color-text-primary)]">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M2 6L8 1.33333L14 6V13.3333C14 13.687 13.8595 14.0261 13.6095 14.2761C13.3594 14.5262 13.0203 14.6667 12.6667 14.6667H3.33333C2.97971 14.6667 2.64057 14.5262 2.39052 14.2761C2.14048 14.0261 2 13.687 2 13.3333V6Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </Link>
                   <ChevronIcon className="w-4 h-4" />
-                  <Link href="/courses" className="hover:text-[#06080b]">
+                  <Link href="/courses" className="hover:text-[var(--color-text-primary)]">
                     {t("breadcrumb.courses")}
                   </Link>
                   <ChevronIcon className="w-4 h-4" />
-                  <span className="text-[#06080b]">{getTitle()}</span>
+                  <span className="text-[var(--color-text-primary)]">{getTitle()}</span>
                 </div>
 
                 {/* Title */}
                 <h1
-                  className={`font-bold text-[#06080b] mb-4 ${isRTL ? "text-right" : "text-left"}`}
+                  className={`font-bold text-[var(--color-text-primary)] mb-4 ${isRTL ? "text-right" : "text-left"}`}
                   style={{ fontSize: "40px", lineHeight: "1.2" }}
                 >
                   {getTitle()}
                 </h1>
                 {getDescription() && (
-                  <p className={`text-[#4a4c4f] text-lg mb-6 ${isRTL ? "text-right" : "text-left"}`}>{getDescription()}</p>
+                  <p className={`text-[var(--color-text-secondary)] text-lg mb-6 ${isRTL ? "text-right" : "text-left"}`}>{getDescription()}</p>
                 )}
 
                 {/* Language Tags */}
@@ -974,13 +974,13 @@ const CourseDetailContent = ({
                 {(apiSessionCount > 0 || apiRemainingSeats !== null) && (
                   <div className={`flex flex-wrap items-center gap-3 mb-6 ${isRTL ? "justify-start" : ""}`}>
                     {apiSessionCount > 0 && (
-                      <div className="flex items-center gap-1.5 bg-[#F3F4F6] text-[#4a4c4f] px-3 py-1.5 rounded-full text-sm">
+                      <div className="flex items-center gap-1.5 bg-[#F3F4F6] text-[var(--color-text-secondary)] px-3 py-1.5 rounded-full text-sm">
                         <Video className="w-4 h-4" />
                         {apiSessionCount} {tCourses("card.sessions")}
                       </div>
                     )}
                     {availabilityStatus === "completed" ? (
-                      <div className="flex items-center gap-1.5 bg-[var(--color-border)] text-[#4B5563] px-3 py-1.5 rounded-full text-sm font-semibold">
+                      <div className="flex items-center gap-1.5 bg-[var(--color-border)] text-[var(--color-text-secondary)] px-3 py-1.5 rounded-full text-sm font-semibold">
                         <Clock className="w-4 h-4" />
                         {tCourses("card.courseEnded")}
                       </div>
@@ -1011,67 +1011,67 @@ const CourseDetailContent = ({
 
                 {/* Course Details — placed in left column to fill space next to pricing card */}
                 <div className="bg-white rounded-2xl p-8 mb-8 mt-6">
-                  <h2 className={`font-bold text-[#06080b] text-xl mb-6 ${isRTL ? "text-right" : "text-left"}`}>{courseDetailsHeading || t("courseDetails.title")}</h2>
+                  <h2 className={`font-bold text-[var(--color-text-primary)] text-xl mb-6 ${isRTL ? "text-right" : "text-left"}`}>{courseDetailsHeading || t("courseDetails.title")}</h2>
 
                   <div className="grid grid-cols-2 gap-x-12 gap-y-6">
                     {apiCourse.enrollmentDeadline && (
                       <div className="flex items-start gap-3">
-                        <Calendar className="w-5 h-5 text-[#71717A] mt-0.5" />
+                        <Calendar className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
                         <div className={isRTL ? "text-right" : "text-left"}>
-                          <p className="text-sm font-semibold text-[#06080b]">{t("courseDetails.registrationDeadline")}</p>
-                          <p className="text-sm text-[#71717A]">{formatDate(apiCourse.enrollmentDeadline)}</p>
+                          <p className="text-sm font-semibold text-[var(--color-text-primary)]">{t("courseDetails.registrationDeadline")}</p>
+                          <p className="text-sm text-[var(--color-text-secondary)]">{formatDate(apiCourse.enrollmentDeadline)}</p>
                         </div>
                       </div>
                     )}
                     <div className="flex items-start gap-3">
-                      <Globe className="w-5 h-5 text-[#71717A] mt-0.5" />
+                      <Globe className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
                       <div className={isRTL ? "text-right" : "text-left"}>
-                        <p className="text-sm font-semibold text-[#06080b]">{t("courseDetails.language")}</p>
-                        <p className="text-sm text-[#71717A]">{getLanguageLabel()}</p>
+                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">{t("courseDetails.language")}</p>
+                        <p className="text-sm text-[var(--color-text-secondary)]">{getLanguageLabel()}</p>
                       </div>
                     </div>
                     {apiCourse.startDate && (
                       <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
                         <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
-                        <p className={`text-sm font-semibold text-[#06080b] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.startTime")}</p>
-                        <p className={`text-sm text-[#71717A] ${isRTL ? "text-right" : "text-left"}`}>{formatDate(apiCourse.startDate)}</p>
+                        <p className={`text-sm font-semibold text-[var(--color-text-primary)] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.startTime")}</p>
+                        <p className={`text-sm text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{formatDate(apiCourse.startDate)}</p>
                       </div>
                     )}
                     {apiCourse.endDate && (
                       <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
                         <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
-                        <p className={`text-sm font-semibold text-[#06080b] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.endTime")}</p>
-                        <p className={`text-sm text-[#71717A] ${isRTL ? "text-right" : "text-left"}`}>{formatDate(apiCourse.endDate)}</p>
+                        <p className={`text-sm font-semibold text-[var(--color-text-primary)] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.endTime")}</p>
+                        <p className={`text-sm text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{formatDate(apiCourse.endDate)}</p>
                       </div>
                     )}
                     <div className="flex items-start gap-3">
-                      <Clock className="w-5 h-5 text-[#71717A] mt-0.5" />
+                      <Clock className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
                       <div className={isRTL ? "text-right" : "text-left"}>
-                        <p className="text-sm font-semibold text-[#06080b]">{t("courseDetails.duration")}</p>
-                        <p className="text-sm text-[#71717A]">{apiCourse.totalHours} {t("courseDetails.hours")}</p>
+                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">{t("courseDetails.duration")}</p>
+                        <p className="text-sm text-[var(--color-text-secondary)]">{apiCourse.totalHours} {t("courseDetails.hours")}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <Video className="w-5 h-5 text-[#71717A] mt-0.5" />
+                      <Video className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
                       <div className={isRTL ? "text-right" : "text-left"}>
-                        <p className="text-sm font-semibold text-[#06080b]">{locale === "ar" ? "نوع التقديم" : "Delivery Type"}</p>
-                        <p className="text-sm text-[#71717A]">{getDeliveryLabel()}</p>
+                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">{locale === "ar" ? "نوع التقديم" : "Delivery Type"}</p>
+                        <p className="text-sm text-[var(--color-text-secondary)]">{getDeliveryLabel()}</p>
                       </div>
                     </div>
                     {apiCmeAccredited && (
                       <div className="flex items-start gap-3">
-                        <Award className="w-5 h-5 text-[#71717A] mt-0.5" />
+                        <Award className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
                         <div className={isRTL ? "text-right" : "text-left"}>
-                          <p className="text-sm font-semibold text-[#06080b]">{locale === "ar" ? "ساعات CME" : "CME Hours"}</p>
-                          <p className="text-sm text-[#71717A]">{apiCmeHours} {t("courseDetails.hours")}</p>
+                          <p className="text-sm font-semibold text-[var(--color-text-primary)]">{locale === "ar" ? "ساعات CME" : "CME Hours"}</p>
+                          <p className="text-sm text-[var(--color-text-secondary)]">{apiCmeHours} {t("courseDetails.hours")}</p>
                         </div>
                       </div>
                     )}
                     {showVenue && getVenue() && (
                       <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
                         <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
-                        <p className={`text-sm font-semibold text-[#06080b] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.venue")}</p>
-                        <p className={`text-sm text-[#71717A] ${isRTL ? "text-right" : "text-left"}`}>{getVenue()}</p>
+                        <p className={`text-sm font-semibold text-[var(--color-text-primary)] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.venue")}</p>
+                        <p className={`text-sm text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{getVenue()}</p>
                       </div>
                     )}
                   </div>
@@ -1079,14 +1079,14 @@ const CourseDetailContent = ({
                   {/* Target Audience — inline */}
                   {getTargetAudience().length > 0 && (
                     <div className={`mt-6 pt-6 border-t border-[var(--color-border)] ${isRTL ? "text-right" : "text-left"}`}>
-                      <p className="text-sm font-semibold text-[#06080b] mb-3">
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
                         {targetAudienceHeading || t("targetAudience") || "Target Audience"}
                       </p>
                       <div className={`flex flex-wrap gap-2 ${isRTL ? "justify-end" : "justify-start"}`}>
                         {getTargetAudience().map((item, idx) => (
                           <span
                             key={idx}
-                            className="px-3 py-1 rounded-full bg-[#F4F4F5] text-[#4a4c4f] text-xs font-medium"
+                            className="px-3 py-1 rounded-full bg-[#F4F4F5] text-[var(--color-text-secondary)] text-xs font-medium"
                           >
                             {item}
                           </span>
@@ -1115,7 +1115,7 @@ const CourseDetailContent = ({
                   {/* Features in sidebar */}
                   {getFeatures().length > 0 && (
                     <div className="px-5 pt-5 pb-4">
-                      <h3 className={`text-[15px] font-semibold text-[#06080b] mb-3 ${isRTL ? "text-right" : "text-left"}`}>
+                      <h3 className={`text-[15px] font-semibold text-[var(--color-text-primary)] mb-3 ${isRTL ? "text-right" : "text-left"}`}>
                         {featuresHeading || (locale === "ar" ? "المميزات" : "Features")}
                       </h3>
                       <div className="flex flex-col gap-3">
@@ -1124,7 +1124,7 @@ const CourseDetailContent = ({
                             <div className="w-5 h-5 rounded-full bg-[#DCFCE7] flex items-center justify-center flex-shrink-0 mt-0.5">
                               <Check className="w-3 h-3 text-[#16A34A]" strokeWidth={3} />
                             </div>
-                            <span className="text-[#4a4c4f] text-[13px] leading-[18px]">{feature}</span>
+                            <span className="text-[var(--color-text-secondary)] text-[13px] leading-[18px]">{feature}</span>
                           </div>
                         ))}
                       </div>
@@ -1140,7 +1140,7 @@ const CourseDetailContent = ({
                         ) : (
                           <>
                             <Image src="/icons/rayal-icon.svg" alt="SAR" width={22} height={24} />
-                            <span className="text-3xl font-bold text-[#06080b]">{apiPrice}</span>
+                            <span className="text-3xl font-bold text-[var(--color-text-primary)]">{apiPrice}</span>
                           </>
                         )}
                       </div>
@@ -1150,10 +1150,10 @@ const CourseDetailContent = ({
                           className="p-2.5 rounded-full bg-[#F4F4F5] hover:bg-[var(--color-border)] transition-colors"
                           aria-label="Share course"
                         >
-                          <Share2 className="w-4 h-4 text-[#4a4c4f]" />
+                          <Share2 className="w-4 h-4 text-[var(--color-text-secondary)]" />
                         </button>
                         {shareTooltip && (
-                          <span className="absolute -bottom-8 right-0 bg-[#06080b] text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                          <span className="absolute -bottom-8 right-0 bg-[var(--color-text-primary)] text-white text-xs px-2 py-1 rounded whitespace-nowrap">
                             {locale === "ar" ? "تم نسخ الرابط" : "Link copied"}
                           </span>
                         )}
@@ -1165,15 +1165,15 @@ const CourseDetailContent = ({
                       <div className="border border-[var(--color-border-subtle)] rounded-xl p-4 mb-4">
                         <div className="flex items-start justify-between">
                           <div className={isRTL ? "text-right" : "text-left"}>
-                            <p className="text-sm text-[#06080b]">
+                            <p className="text-sm text-[var(--color-text-primary)]">
                               {t("pricingCard.asLowAs")}{" "}
                               <span className="font-semibold">
                                 <Image src="/icons/rayal-icon.svg" alt="SAR" width={12} height={13} className="inline -mt-0.5" />
                                 {" "}{(apiPrice / 4).toFixed(2)}{t("pricingCard.perMonth")}
                               </span>
                             </p>
-                            <p className="text-sm text-[#06080b]">{t("pricingCard.interestFree")}</p>
-                            <p className="text-sm text-[#06080b]">
+                            <p className="text-sm text-[var(--color-text-primary)]">{t("pricingCard.interestFree")}</p>
+                            <p className="text-sm text-[var(--color-text-primary)]">
                               {t("pricingCard.shariahCompliant")}{" "}
                               <Link href="#" className="font-semibold underline">{t("pricingCard.learnMore")}</Link>
                             </p>
@@ -1188,7 +1188,7 @@ const CourseDetailContent = ({
                       /* UNAVAILABLE — disabled with reason */
                       <button
                         disabled
-                        className="w-full h-12 border-2 border-[var(--color-border)] rounded-xl text-[#6B7280] font-medium flex items-center justify-center gap-2 cursor-not-allowed mb-3"
+                        className="w-full h-12 border-2 border-[var(--color-border)] rounded-xl text-[var(--color-text-secondary)] font-medium flex items-center justify-center gap-2 cursor-not-allowed mb-3"
                       >
                         {availabilityStatus === "completed"
                           ? tCourses("card.courseEnded")
@@ -1252,7 +1252,7 @@ const CourseDetailContent = ({
                               alert(t("enrollment.contactMessage"));
                             }
                           }}
-                          className="w-full h-12 bg-[#0b0f17] rounded-xl text-white font-medium flex items-center justify-center gap-2 mb-3"
+                          className="w-full h-12 bg-[var(--color-text-primary)] rounded-xl text-white font-medium flex items-center justify-center gap-2 mb-3"
                         >
                           {t("pricingCard.addToCart")}
                           <ShoppingCart className="w-4 h-4" />
@@ -1263,7 +1263,7 @@ const CourseDetailContent = ({
                     {/* Payment Methods — only for PAID courses */}
                     {!apiIsFree && (
                       <div className="flex items-center justify-center gap-3 flex-wrap">
-                        <span className="text-sm text-[#4a4c4f]">{t("pricingCard.securePayment")}</span>
+                        <span className="text-sm text-[var(--color-text-secondary)]">{t("pricingCard.securePayment")}</span>
                         <div className="flex items-center gap-2">
                           <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
                             <Image src="/payment icons/Mastercard.svg" alt="Mastercard" fill className="object-contain p-[5px]" />
@@ -1310,7 +1310,7 @@ const CourseDetailContent = ({
         {/* Related Courses */}
         <section className="px-16 py-16 bg-white">
           <div className="max-w-[1200px] mx-auto">
-            <h2 className="font-bold text-[#06080b] text-center mb-10" style={{ fontSize: "36px" }}>
+            <h2 className="font-bold text-[var(--color-text-primary)] text-center mb-10" style={{ fontSize: "36px" }}>
               {relatedCoursesTitle || t("relatedCourses.title")}
             </h2>
 
@@ -1336,7 +1336,7 @@ const CourseDetailContent = ({
       <div className="lg:hidden pb-24 bg-[var(--color-surface-page)]" dir={isRTL ? "rtl" : "ltr"}>
         {/* Breadcrumb */}
         <div className="px-4 pt-4">
-          <div className="flex items-center gap-1 text-xs text-[#71717A] overflow-x-auto">
+          <div className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)] overflow-x-auto">
             <Link href="/" className="flex-shrink-0">
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M2 6L8 1.33333L14 6V13.3333C14 13.687 13.8595 14.0261 13.6095 14.2761C13.3594 14.5262 13.0203 14.6667 12.6667 14.6667H3.33333C2.97971 14.6667 2.64057 14.5262 2.39052 14.2761C2.14048 14.0261 2 13.687 2 13.3333V6Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1345,20 +1345,20 @@ const CourseDetailContent = ({
             <ChevronIcon className="w-3 h-3 flex-shrink-0" />
             <Link href="/courses" className="flex-shrink-0">{t("breadcrumb.courses")}</Link>
             <ChevronIcon className="w-3 h-3 flex-shrink-0" />
-            <span className="text-[#06080b] truncate">{getTitle()}</span>
+            <span className="text-[var(--color-text-primary)] truncate">{getTitle()}</span>
           </div>
         </div>
 
         {/* Hero Section */}
         <section className="px-4 py-6">
           <h1
-            className={`font-bold text-[#06080b] mb-2 ${isRTL ? "text-right" : "text-left"}`}
+            className={`font-bold text-[var(--color-text-primary)] mb-2 ${isRTL ? "text-right" : "text-left"}`}
             style={{ fontSize: "24px", lineHeight: "1.3" }}
           >
             {getTitle()}
           </h1>
           {getDescription() && (
-            <p className={`text-[#4a4c4f] text-sm mb-4 ${isRTL ? "text-right" : "text-left"}`}>{getDescription()}</p>
+            <p className={`text-[var(--color-text-secondary)] text-sm mb-4 ${isRTL ? "text-right" : "text-left"}`}>{getDescription()}</p>
           )}
 
           {/* Language Tags */}
@@ -1374,7 +1374,7 @@ const CourseDetailContent = ({
             />
             <div className={`flex items-center p-3 ${isRTL ? "pr-4" : "pl-4"}`}>
               <div className={`flex-1 text-center ${isRTL ? "border-l" : "border-r"} border-[var(--color-border)]`}>
-                <p className="font-bold text-[#06080b]">{apiCourse.avgRating.toFixed(1)}</p>
+                <p className="font-bold text-[var(--color-text-primary)]">{apiCourse.avgRating.toFixed(1)}</p>
                 <div className={`flex items-center justify-center gap-0.5 mb-0.5 ${isRTL ? "flex-row-reverse" : ""}`}>
                   {[...Array(5)].map((_, i) => (
                     <Star
@@ -1383,12 +1383,12 @@ const CourseDetailContent = ({
                     />
                   ))}
                 </div>
-                <p className="text-[10px] text-[#71717A]">{apiCourse.totalRatings} {t("statsBar.reviews")}</p>
+                <p className="text-[10px] text-[var(--color-text-secondary)]">{apiCourse.totalRatings} {t("statsBar.reviews")}</p>
               </div>
               <div className="flex-1 text-center">
-                <Users className="w-4 h-4 text-[#71717A] mx-auto mb-0.5" />
-                <p className="font-bold text-[#06080b]">{apiCourse.enrolledCount}+</p>
-                <p className="text-[10px] text-[#71717A]">{t("statsBar.learners")}</p>
+                <Users className="w-4 h-4 text-[var(--color-text-secondary)] mx-auto mb-0.5" />
+                <p className="font-bold text-[var(--color-text-primary)]">{apiCourse.enrolledCount}+</p>
+                <p className="text-[10px] text-[var(--color-text-secondary)]">{t("statsBar.learners")}</p>
               </div>
             </div>
           </div>
@@ -1402,7 +1402,7 @@ const CourseDetailContent = ({
                 ) : (
                   <>
                     <Image src="/icons/rayal-icon.svg" alt="SAR" width={18} height={20} />
-                    <span className="text-2xl font-bold text-[#06080b]">{apiPrice}</span>
+                    <span className="text-2xl font-bold text-[var(--color-text-primary)]">{apiPrice}</span>
                   </>
                 )}
               </div>
@@ -1412,10 +1412,10 @@ const CourseDetailContent = ({
                   className="p-2 rounded-full bg-[#F4F4F5] hover:bg-[var(--color-border)]"
                   aria-label="Share course"
                 >
-                  <Share2 className="w-4 h-4 text-[#4a4c4f]" />
+                  <Share2 className="w-4 h-4 text-[var(--color-text-secondary)]" />
                 </button>
                 {shareTooltip && (
-                  <span className="absolute -bottom-8 right-0 bg-[#06080b] text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                  <span className="absolute -bottom-8 right-0 bg-[var(--color-text-primary)] text-white text-xs px-2 py-1 rounded whitespace-nowrap">
                     {locale === "ar" ? "تم نسخ الرابط" : "Link copied"}
                   </span>
                 )}
@@ -1425,7 +1425,7 @@ const CourseDetailContent = ({
             {/* Features */}
             {getFeatures().length > 0 && (
               <div className="mb-4 pb-4 border-b border-[var(--color-border)]">
-                <h3 className={`text-sm font-semibold text-[#06080b] mb-3 ${isRTL ? "text-right" : "text-left"}`}>
+                <h3 className={`text-sm font-semibold text-[var(--color-text-primary)] mb-3 ${isRTL ? "text-right" : "text-left"}`}>
                   {featuresHeading || (locale === "ar" ? "المميزات" : "Features")}
                 </h3>
                 <div className="flex flex-col gap-2.5">
@@ -1434,7 +1434,7 @@ const CourseDetailContent = ({
                       <div className="w-4 h-4 rounded-full bg-[#DCFCE7] flex items-center justify-center flex-shrink-0 mt-0.5">
                         <Check className="w-2.5 h-2.5 text-[#16A34A]" strokeWidth={3} />
                       </div>
-                      <span className="text-[#4a4c4f] text-xs leading-[16px]">{feature}</span>
+                      <span className="text-[var(--color-text-secondary)] text-xs leading-[16px]">{feature}</span>
                     </div>
                   ))}
                 </div>
@@ -1446,11 +1446,11 @@ const CourseDetailContent = ({
               <div className="border border-[var(--color-border-subtle)] rounded-xl p-3 mb-4">
                 <div className="flex items-start justify-between">
                   <div className={isRTL ? "text-right" : "text-left"}>
-                    <p className="text-sm text-[#06080b]">
+                    <p className="text-sm text-[var(--color-text-primary)]">
                       {t("pricingCard.asLowAs")} <span className="font-semibold">{(apiPrice / 4).toFixed(2)}{t("pricingCard.perMonth")}</span>
                     </p>
-                    <p className="text-xs text-[#06080b]">{t("pricingCard.interestFree")}</p>
-                    <p className="text-xs text-[#06080b]">
+                    <p className="text-xs text-[var(--color-text-primary)]">{t("pricingCard.interestFree")}</p>
+                    <p className="text-xs text-[var(--color-text-primary)]">
                       {t("pricingCard.shariahCompliant")} <Link href="#" className="font-semibold underline">{t("pricingCard.learnMore")}</Link>
                     </p>
                   </div>
@@ -1463,7 +1463,7 @@ const CourseDetailContent = ({
             {!canEnroll ? (
               <button
                 disabled
-                className="w-full h-10 border-2 border-[var(--color-border)] rounded-xl text-[#6B7280] text-sm font-medium flex items-center justify-center gap-2 cursor-not-allowed mb-2"
+                className="w-full h-10 border-2 border-[var(--color-border)] rounded-xl text-[var(--color-text-secondary)] text-sm font-medium flex items-center justify-center gap-2 cursor-not-allowed mb-2"
               >
                 {availabilityStatus === "completed"
                   ? tCourses("card.courseEnded")
@@ -1525,7 +1525,7 @@ const CourseDetailContent = ({
                       alert(t("enrollment.contactMessage"));
                     }
                   }}
-                  className="w-full h-10 bg-[#0b0f17] rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2 mb-2"
+                  className="w-full h-10 bg-[var(--color-text-primary)] rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2 mb-2"
                 >
                   {t("pricingCard.addToCart")}
                   <ShoppingCart className="w-4 h-4" />
@@ -1538,13 +1538,13 @@ const CourseDetailContent = ({
           {(apiSessionCount > 0 || apiRemainingSeats !== null) && (
             <div className="flex flex-wrap items-center gap-2 mb-4">
               {apiSessionCount > 0 && (
-                <div className="flex items-center gap-1 bg-[#F3F4F6] text-[#4a4c4f] px-2.5 py-1 rounded-full text-xs">
+                <div className="flex items-center gap-1 bg-[#F3F4F6] text-[var(--color-text-secondary)] px-2.5 py-1 rounded-full text-xs">
                   <Video className="w-3.5 h-3.5" />
                   {apiSessionCount} {tCourses("card.sessions")}
                 </div>
               )}
               {availabilityStatus === "completed" ? (
-                <div className="flex items-center gap-1 bg-[var(--color-border)] text-[#4B5563] px-2.5 py-1 rounded-full text-xs font-semibold">
+                <div className="flex items-center gap-1 bg-[var(--color-border)] text-[var(--color-text-secondary)] px-2.5 py-1 rounded-full text-xs font-semibold">
                   {tCourses("card.courseEnded")}
                 </div>
               ) : availabilityStatus === "deadline_passed" ? (
@@ -1573,53 +1573,53 @@ const CourseDetailContent = ({
         {/* Course Details */}
         <section className="px-4 py-6">
           <div className="bg-white rounded-xl p-4 mb-4">
-            <h2 className={`font-bold text-[#06080b] text-lg mb-4 ${isRTL ? "text-right" : "text-left"}`}>{courseDetailsHeading || t("courseDetails.title")}</h2>
+            <h2 className={`font-bold text-[var(--color-text-primary)] text-lg mb-4 ${isRTL ? "text-right" : "text-left"}`}>{courseDetailsHeading || t("courseDetails.title")}</h2>
             <div className="space-y-4">
               {apiCourse.enrollmentDeadline && (
                 <div className="flex items-center gap-3">
-                  <Calendar className="w-4 h-4 text-[#71717A]" />
+                  <Calendar className="w-4 h-4 text-[var(--color-text-secondary)]" />
                   <div className={isRTL ? "text-right" : "text-left"}>
-                    <p className="text-xs font-semibold text-[#06080b]">{t("courseDetails.registrationDeadline")}</p>
-                    <p className="text-sm text-[#71717A]">{formatDate(apiCourse.enrollmentDeadline)}</p>
+                    <p className="text-xs font-semibold text-[var(--color-text-primary)]">{t("courseDetails.registrationDeadline")}</p>
+                    <p className="text-sm text-[var(--color-text-secondary)]">{formatDate(apiCourse.enrollmentDeadline)}</p>
                   </div>
                 </div>
               )}
               <div className="flex items-center gap-3">
-                <Globe className="w-4 h-4 text-[#71717A]" />
+                <Globe className="w-4 h-4 text-[var(--color-text-secondary)]" />
                 <div className={isRTL ? "text-right" : "text-left"}>
-                  <p className="text-xs font-semibold text-[#06080b]">{t("courseDetails.language")}</p>
-                  <p className="text-sm text-[#71717A]">{getLanguageLabel()}</p>
+                  <p className="text-xs font-semibold text-[var(--color-text-primary)]">{t("courseDetails.language")}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{getLanguageLabel()}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Clock className="w-4 h-4 text-[#71717A]" />
+                <Clock className="w-4 h-4 text-[var(--color-text-secondary)]" />
                 <div className={isRTL ? "text-right" : "text-left"}>
-                  <p className="text-xs font-semibold text-[#06080b]">{t("courseDetails.duration")}</p>
-                  <p className="text-sm text-[#71717A]">{apiCourse.totalHours} {t("courseDetails.hours")}</p>
+                  <p className="text-xs font-semibold text-[var(--color-text-primary)]">{t("courseDetails.duration")}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{apiCourse.totalHours} {t("courseDetails.hours")}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Video className="w-4 h-4 text-[#71717A]" />
+                <Video className="w-4 h-4 text-[var(--color-text-secondary)]" />
                 <div className={isRTL ? "text-right" : "text-left"}>
-                  <p className="text-xs font-semibold text-[#06080b]">{locale === "ar" ? "نوع التقديم" : "Delivery Type"}</p>
-                  <p className="text-sm text-[#71717A]">{getDeliveryLabel()}</p>
+                  <p className="text-xs font-semibold text-[var(--color-text-primary)]">{locale === "ar" ? "نوع التقديم" : "Delivery Type"}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{getDeliveryLabel()}</p>
                 </div>
               </div>
               {apiCmeAccredited && (
                 <div className="flex items-center gap-3">
-                  <Award className="w-4 h-4 text-[#71717A]" />
+                  <Award className="w-4 h-4 text-[var(--color-text-secondary)]" />
                   <div className={isRTL ? "text-right" : "text-left"}>
-                    <p className="text-xs font-semibold text-[#06080b]">{locale === "ar" ? "ساعات CME" : "CME Hours"}</p>
-                    <p className="text-sm text-[#71717A]">{apiCmeHours} {t("courseDetails.hours")}</p>
+                    <p className="text-xs font-semibold text-[var(--color-text-primary)]">{locale === "ar" ? "ساعات CME" : "CME Hours"}</p>
+                    <p className="text-sm text-[var(--color-text-secondary)]">{apiCmeHours} {t("courseDetails.hours")}</p>
                   </div>
                 </div>
               )}
               {showVenue && getVenue() && (
                 <div className="flex items-center gap-3">
-                  <MapPin className="w-4 h-4 text-[#71717A]" />
+                  <MapPin className="w-4 h-4 text-[var(--color-text-secondary)]" />
                   <div className={isRTL ? "text-right" : "text-left"}>
-                    <p className="text-xs font-semibold text-[#06080b]">{t("courseDetails.venue")}</p>
-                    <p className="text-sm text-[#71717A]">{getVenue()}</p>
+                    <p className="text-xs font-semibold text-[var(--color-text-primary)]">{t("courseDetails.venue")}</p>
+                    <p className="text-sm text-[var(--color-text-secondary)]">{getVenue()}</p>
                   </div>
                 </div>
               )}
@@ -1627,14 +1627,14 @@ const CourseDetailContent = ({
             {/* Target Audience — inline in course details (mobile) */}
             {getTargetAudience().length > 0 && (
               <div className={`mt-4 pt-4 border-t border-[var(--color-border)] ${isRTL ? "text-right" : "text-left"}`}>
-                <p className="text-xs font-semibold text-[#06080b] mb-2">
+                <p className="text-xs font-semibold text-[var(--color-text-primary)] mb-2">
                   {targetAudienceHeading || t("targetAudience") || "Target Audience"}
                 </p>
                 <div className={`flex flex-wrap gap-1.5 ${isRTL ? "justify-end" : "justify-start"}`}>
                   {getTargetAudience().map((item, idx) => (
                     <span
                       key={idx}
-                      className="px-2.5 py-1 rounded-full bg-[#F4F4F5] text-[#4a4c4f] text-xs font-medium"
+                      className="px-2.5 py-1 rounded-full bg-[#F4F4F5] text-[var(--color-text-secondary)] text-xs font-medium"
                     >
                       {item}
                     </span>
@@ -1662,10 +1662,10 @@ const CourseDetailContent = ({
 
         {/* Related Courses */}
         <section className="px-4 py-8 bg-white">
-          <h2 className="font-bold text-[#06080b] text-center mb-1" style={{ fontSize: "24px" }}>
+          <h2 className="font-bold text-[var(--color-text-primary)] text-center mb-1" style={{ fontSize: "24px" }}>
             {relatedCoursesTitle || t("relatedCourses.title")}
           </h2>
-          <p className="text-[#4a4c4f] text-center text-sm mb-6">
+          <p className="text-[var(--color-text-secondary)] text-center text-sm mb-6">
             {relatedCoursesSubtitle || t("relatedCourses.subtitle")}
           </p>
 

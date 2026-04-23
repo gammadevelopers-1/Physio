@@ -1175,7 +1175,7 @@ export default function VideoPlayer({
       </div>
 
       {/* Keyboard Shortcuts Hint */}
-      <p className="text-[10px] text-[#9CA3AF] mt-2 text-end">
+      <p className="text-[10px] text-[var(--color-text-secondary)] mt-2 text-end">
         {t("keyboardShortcuts")}
       </p>
 
@@ -1199,7 +1199,7 @@ export default function VideoPlayer({
 
           {showTranscript && transcript && (
             <div className="mt-2 p-4 bg-[#F9FAFB] rounded-lg border border-[var(--color-border)] max-h-[300px] overflow-y-auto">
-              <pre className="text-sm text-[#4B5563] whitespace-pre-wrap font-sans">
+              <pre className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap font-sans">
                 {transcript}
               </pre>
             </div>

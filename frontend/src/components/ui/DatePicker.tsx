@@ -151,12 +151,12 @@ export default function DatePicker({
       {/* Input trigger */}
       <div
         onClick={() => !disabled && setOpen(!open)}
-        className={`flex items-center gap-2 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm cursor-pointer bg-white hover:border-[#9CA3AF] transition-colors ${
+        className={`flex items-center gap-2 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm cursor-pointer bg-white hover:border-[var(--color-text-secondary)] transition-colors ${
           disabled ? "opacity-60 cursor-not-allowed bg-[#F9FAFB]" : ""
         } ${open ? "ring-2 ring-[#3B82F6] border-[#3B82F6]" : ""} ${className}`}
       >
-        <Calendar className="w-4 h-4 text-[#9CA3AF] flex-shrink-0" />
-        <span className={`flex-1 ${displayValue ? "text-[#1F2937]" : "text-[#9CA3AF]"}`}>
+        <Calendar className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
+        <span className={`flex-1 ${displayValue ? "text-[var(--color-text-primary)]" : "text-[var(--color-text-secondary)]"}`}>
           {displayValue || placeholder || (isRTL ? "اختر تاريخ" : "Select date")}
         </span>
         <input type="hidden" id={id} name={id} value={value} />
@@ -176,22 +176,22 @@ export default function DatePicker({
               onClick={goToPrevMonth}
               className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
             >
-              {isRTL ? <ChevronRight className="w-4 h-4 text-[#6B7280]" /> : <ChevronLeft className="w-4 h-4 text-[#6B7280]" />}
+              {isRTL ? <ChevronRight className="w-4 h-4 text-[var(--color-text-secondary)]" /> : <ChevronLeft className="w-4 h-4 text-[var(--color-text-secondary)]" />}
             </button>
-            <span className="text-sm font-semibold text-[#1F2937]">{calData.headerLabel}</span>
+            <span className="text-sm font-semibold text-[var(--color-text-primary)]">{calData.headerLabel}</span>
             <button
               type="button"
               onClick={goToNextMonth}
               className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
             >
-              {isRTL ? <ChevronLeft className="w-4 h-4 text-[#6B7280]" /> : <ChevronRight className="w-4 h-4 text-[#6B7280]" />}
+              {isRTL ? <ChevronLeft className="w-4 h-4 text-[var(--color-text-secondary)]" /> : <ChevronRight className="w-4 h-4 text-[var(--color-text-secondary)]" />}
             </button>
           </div>
 
           {/* Day headers */}
           <div className="grid grid-cols-7 border-b border-[var(--color-border)]">
             {dayLabels.map((d) => (
-              <div key={d} className="py-1.5 text-center text-[10px] font-medium text-[#9CA3AF]">
+              <div key={d} className="py-1.5 text-center text-[10px] font-medium text-[var(--color-text-secondary)]">
                 {d}
               </div>
             ))}
@@ -229,7 +229,7 @@ export default function DatePicker({
                         ? "bg-[#EFF6FF] text-[#3B82F6] font-semibold"
                         : isDis
                           ? "text-[var(--color-border)] cursor-not-allowed"
-                          : "text-[#374151] hover:bg-[#F3F4F6]"
+                          : "text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
                   }`}
                 >
                   {day}
@@ -239,7 +239,7 @@ export default function DatePicker({
           </div>
 
           {/* Footer — calendar type indicator */}
-          <div className="flex items-center justify-center px-3 py-1.5 border-t border-[var(--color-border)] text-[10px] text-[#9CA3AF]">
+          <div className="flex items-center justify-center px-3 py-1.5 border-t border-[var(--color-border)] text-[10px] text-[var(--color-text-secondary)]">
             {useHijri ? "هجري (Hijri)" : "ميلادي (Gregorian)"}
           </div>
         </div>

@@ -120,11 +120,11 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t 
                 <Award className="w-6 h-6 text-[#D4A520]" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-[#1F2937]">{t("certificates.reviewRequest")}</h3>
-                <p className="text-sm text-[#6B7280]">{courseName}</p>
+                <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("certificates.reviewRequest")}</h3>
+                <p className="text-sm text-[var(--color-text-secondary)]">{courseName}</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors">
+            <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -132,27 +132,27 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t 
           {/* Student Info */}
           <div className="p-4 bg-[#F9FAFB] rounded-xl mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[var(--color-border)] flex items-center justify-center text-sm font-semibold text-[#4B5563]">
+              <div className="w-10 h-10 rounded-full bg-[var(--color-border)] flex items-center justify-center text-sm font-semibold text-[var(--color-text-secondary)]">
                 {initials}
               </div>
               <div>
-                <p className="text-sm font-medium text-[#1F2937]">{studentName}</p>
-                <p className="text-xs text-[#6B7280]">{cert.studentEmail}</p>
-                <p className="text-xs text-[#9CA3AF]">{t("certificates.requested")}: {formatDateHijri(cert.createdAt, calendarFormat, { locale })}</p>
+                <p className="text-sm font-medium text-[var(--color-text-primary)]">{studentName}</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">{cert.studentEmail}</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.requested")}: {formatDateHijri(cert.createdAt, calendarFormat, { locale })}</p>
               </div>
             </div>
           </div>
 
           {/* Eligibility Checks */}
-          <h4 className="text-sm font-semibold text-[#1F2937] mb-3">{t("certificates.eligibilityChecks")}</h4>
+          <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">{t("certificates.eligibilityChecks")}</h4>
           <div className="space-y-3 mb-6">
             {/* Attendance */}
             <div className={`flex items-center justify-between p-3 rounded-lg ${attendanceMet ? "bg-[#DCFCE7]" : "bg-[#FEE2E2]"}`}>
               <div className="flex items-center gap-3">
                 <Calendar className={`w-5 h-5 ${attendanceMet ? "text-[#22C55E]" : "text-[#EF4444]"}`} />
                 <div>
-                  <p className="text-sm font-medium text-[#1F2937]">{t("certificates.attendanceRequirement")}</p>
-                  <p className="text-xs text-[#6B7280]">{t("certificates.required")}: 70%</p>
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("certificates.attendanceRequirement")}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.required")}: 70%</p>
                 </div>
               </div>
               <span className={`text-sm font-semibold ${attendanceMet ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
@@ -165,8 +165,8 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t 
               <div className="flex items-center gap-3">
                 <ClipboardCheck className={`w-5 h-5 ${assessmentMet ? "text-[#22C55E]" : "text-[#EF4444]"}`} />
                 <div>
-                  <p className="text-sm font-medium text-[#1F2937]">{t("certificates.assessmentRequirement")}</p>
-                  <p className="text-xs text-[#6B7280]">{t("certificates.required")}: {t("certificates.allPassed")}</p>
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("certificates.assessmentRequirement")}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.required")}: {t("certificates.allPassed")}</p>
                 </div>
               </div>
               <span className={`text-sm font-semibold ${assessmentMet ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
@@ -179,8 +179,8 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t 
               <div className="flex items-center gap-3">
                 <BookOpen className={`w-5 h-5 ${completionMet ? "text-[#22C55E]" : "text-[#EF4444]"}`} />
                 <div>
-                  <p className="text-sm font-medium text-[#1F2937]">{t("certificates.completionRequirement")}</p>
-                  <p className="text-xs text-[#6B7280]">{t("certificates.required")}: 100%</p>
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("certificates.completionRequirement")}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.required")}: 100%</p>
                 </div>
               </div>
               <span className={`text-sm font-semibold ${completionMet ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
@@ -203,15 +203,15 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t 
           {/* Existing review note */}
           {cert.reviewNote && cert.status !== "pending" && (
             <div className="p-3 bg-[#F9FAFB] rounded-lg mb-4">
-              <p className="text-xs font-medium text-[#6B7280] mb-1">{t("certificates.reviewNote")}</p>
-              <p className="text-sm text-[#374151]">{cert.reviewNote}</p>
+              <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-1">{t("certificates.reviewNote")}</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">{cert.reviewNote}</p>
             </div>
           )}
 
           {/* Note input for actions */}
           {canAct && (
             <div className="mb-6">
-              <label className="block text-sm font-medium text-[#374151] mb-1">{t("certificates.noteLabel")}</label>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("certificates.noteLabel")}</label>
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
@@ -219,14 +219,14 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t 
                 rows={3}
                 className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
               />
-              <p className="text-xs text-[#9CA3AF] mt-1">{t("certificates.noteHint")}</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("certificates.noteHint")}</p>
             </div>
           )}
 
           {/* Action Buttons */}
           {canAct ? (
             <div className="flex gap-2">
-              <button onClick={onClose} disabled={processing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
+              <button onClick={onClose} disabled={processing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50">
                 {t("certificates.cancel")}
               </button>
               {cert.status === "pending" && (
@@ -257,7 +257,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t 
               </button>
             </div>
           ) : (
-            <button onClick={onClose} className="w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]">
+            <button onClick={onClose} className="w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
               {t("certificates.close")}
             </button>
           )}
@@ -279,7 +279,7 @@ interface BatchBarProps {
 }
 
 const BatchBar = ({ count, onApprove, onReject, onClear, processing, t }: BatchBarProps) => (
-  <div className="bg-[#1F2937] rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+  <div className="bg-[var(--color-text-primary)] rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
     <div className="flex items-center gap-3">
       <div className="w-8 h-8 rounded-full bg-[#3B82F6] flex items-center justify-center text-white text-sm font-bold">
         {count}
@@ -582,7 +582,7 @@ const CertificatesContent = () => {
       case "rejected": return "bg-[#FEE2E2] text-[#EF4444]";
       case "held": return "bg-[#FFEDD5] text-[#F97316]";
       case "revoked": return "bg-[#FEE2E2] text-[#991B1B]";
-      default: return "bg-[#F3F4F6] text-[#6B7280]";
+      default: return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -654,10 +654,10 @@ const CertificatesContent = () => {
               {/* Header */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <h1 className="text-xl md:text-2xl font-bold text-[#1F2937]">{t("certificates.title")}</h1>
-                  <p className="text-sm text-[#6B7280] mt-1">{t("certificates.subtitle")}</p>
+                  <h1 className="text-xl md:text-2xl font-bold text-[var(--color-text-primary)]">{t("certificates.title")}</h1>
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">{t("certificates.subtitle")}</p>
                 </div>
-                <button onClick={refetch} className="p-2 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" title={t("certificates.refresh")}>
+                <button onClick={refetch} className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors" title={t("certificates.refresh")}>
                   <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                 </button>
               </div>
@@ -668,8 +668,8 @@ const CertificatesContent = () => {
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center"><Award className="w-5 h-5 text-[#3B82F6]" /></div>
                     <div>
-                      <p className="text-2xl font-bold text-[#1F2937]">{stats.total}</p>
-                      <p className="text-xs text-[#6B7280]">{t("certificates.totalRequests")}</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.total}</p>
+                      <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.totalRequests")}</p>
                     </div>
                   </div>
                 </div>
@@ -677,8 +677,8 @@ const CertificatesContent = () => {
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#FEF9C3] flex items-center justify-center"><Clock className="w-5 h-5 text-[#EAB308]" /></div>
                     <div>
-                      <p className="text-2xl font-bold text-[#1F2937]">{stats.pending}</p>
-                      <p className="text-xs text-[#6B7280]">{t("certificates.pending")}</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.pending}</p>
+                      <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.pending")}</p>
                     </div>
                   </div>
                 </div>
@@ -686,8 +686,8 @@ const CertificatesContent = () => {
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center"><FileCheck className="w-5 h-5 text-[#22C55E]" /></div>
                     <div>
-                      <p className="text-2xl font-bold text-[#1F2937]">{stats.approved}</p>
-                      <p className="text-xs text-[#6B7280]">{t("certificates.approved")}</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.approved}</p>
+                      <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.approved")}</p>
                     </div>
                   </div>
                 </div>
@@ -695,8 +695,8 @@ const CertificatesContent = () => {
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#FFEDD5] flex items-center justify-center"><PauseCircle className="w-5 h-5 text-[#F97316]" /></div>
                     <div>
-                      <p className="text-2xl font-bold text-[#1F2937]">{stats.held}</p>
-                      <p className="text-xs text-[#6B7280]">{t("certificates.held")}</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.held}</p>
+                      <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.held")}</p>
                     </div>
                   </div>
                 </div>
@@ -730,7 +730,7 @@ const CertificatesContent = () => {
               {loading && (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
-                  <span className="ms-3 text-[#6B7280]">{t("certificates.loading")}</span>
+                  <span className="ms-3 text-[var(--color-text-secondary)]">{t("certificates.loading")}</span>
                 </div>
               )}
 
@@ -748,7 +748,7 @@ const CertificatesContent = () => {
                   <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex flex-col md:flex-row gap-4">
                       <div className="relative flex-1">
-                        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`} />
+                        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`} />
                         <input
                           type="text"
                           placeholder={t("certificates.searchPlaceholder")}
@@ -759,7 +759,7 @@ const CertificatesContent = () => {
                       </div>
                       <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] hover:bg-[#F9FAFB]"
+                        className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
                       >
                         <Filter className="w-4 h-4" />
                         {t("certificates.filters")}
@@ -769,7 +769,7 @@ const CertificatesContent = () => {
                         <select
                           value={selectedCourse}
                           onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); setSelectedIds(new Set()); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           <option value="all">{t("certificates.allCourses")}</option>
                           {courses.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
@@ -777,7 +777,7 @@ const CertificatesContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); setSelectedIds(new Set()); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           {statusOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
@@ -788,7 +788,7 @@ const CertificatesContent = () => {
                         <select
                           value={selectedCourse}
                           onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           <option value="all">{t("certificates.allCourses")}</option>
                           {courses.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
@@ -796,7 +796,7 @@ const CertificatesContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           {statusOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
@@ -808,8 +808,8 @@ const CertificatesContent = () => {
                   {filteredCertificates.length === 0 && (
                     <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                       <Award className="w-12 h-12 text-[var(--color-border)] mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-[#1F2937] mb-2">{t("certificates.noRequests")}</h3>
-                      <p className="text-sm text-[#6B7280]">{t("certificates.noRequestsDesc")}</p>
+                      <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">{t("certificates.noRequests")}</h3>
+                      <p className="text-sm text-[var(--color-text-secondary)]">{t("certificates.noRequestsDesc")}</p>
                     </div>
                   )}
 
@@ -828,12 +828,12 @@ const CertificatesContent = () => {
                                   className="w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
                                 />
                               </th>
-                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableStudent")}</th>
-                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableCourse")}</th>
-                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableEligibility")}</th>
-                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableRequestDate")}</th>
-                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableStatus")}</th>
-                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableActions")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider`}>{t("certificates.tableStudent")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider`}>{t("certificates.tableCourse")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider`}>{t("certificates.tableEligibility")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider`}>{t("certificates.tableRequestDate")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider`}>{t("certificates.tableStatus")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider`}>{t("certificates.tableActions")}</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[var(--color-border)]">
@@ -854,17 +854,17 @@ const CertificatesContent = () => {
                                   </td>
                                   <td className="px-4 py-4">
                                     <div className="flex items-center gap-3">
-                                      <div className="w-10 h-10 rounded-full bg-[var(--color-border)] flex items-center justify-center text-sm font-semibold text-[#4B5563] flex-shrink-0">
+                                      <div className="w-10 h-10 rounded-full bg-[var(--color-border)] flex items-center justify-center text-sm font-semibold text-[var(--color-text-secondary)] flex-shrink-0">
                                         {getInitials(cert)}
                                       </div>
                                       <div className="min-w-0">
-                                        <p className="text-sm font-medium text-[#1F2937] truncate">{getStudentName(cert)}</p>
-                                        <p className="text-xs text-[#6B7280] truncate">{cert.studentEmail}</p>
+                                        <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{getStudentName(cert)}</p>
+                                        <p className="text-xs text-[var(--color-text-secondary)] truncate">{cert.studentEmail}</p>
                                       </div>
                                     </div>
                                   </td>
                                   <td className="px-4 py-4">
-                                    <span className="text-sm text-[#374151] max-w-[150px] truncate block">{courseNameMap[cert.courseId] || cert.courseId}</span>
+                                    <span className="text-sm text-[var(--color-text-secondary)] max-w-[150px] truncate block">{courseNameMap[cert.courseId] || cert.courseId}</span>
                                   </td>
                                   <td className="px-4 py-4">
                                     <div className="flex items-center gap-1">
@@ -881,7 +881,7 @@ const CertificatesContent = () => {
                                     </div>
                                   </td>
                                   <td className="px-4 py-4">
-                                    <span className="text-sm text-[#6B7280]">{formatDateHijri(cert.createdAt, calendarFormat, { locale })}</span>
+                                    <span className="text-sm text-[var(--color-text-secondary)]">{formatDateHijri(cert.createdAt, calendarFormat, { locale })}</span>
                                   </td>
                                   <td className="px-4 py-4">
                                     <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusStyle(cert.status)}`}>
@@ -891,15 +891,15 @@ const CertificatesContent = () => {
                                   </td>
                                   <td className="px-4 py-4">
                                     <div className="flex items-center gap-1">
-                                      <button onClick={() => setReviewingCert(cert)} className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors" title={t("certificates.review")}>
+                                      <button onClick={() => setReviewingCert(cert)} className="p-2 text-[var(--color-text-secondary)] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors" title={t("certificates.review")}>
                                         <Eye className="w-4 h-4" />
                                       </button>
                                       {(cert.status === "pending" || cert.status === "held") && (
                                         <>
-                                          <button onClick={() => quickApprove(cert)} className="p-2 text-[#6B7280] hover:text-[#22C55E] hover:bg-[#DCFCE7] rounded-lg transition-colors" title={t("certificates.approve")}>
+                                          <button onClick={() => quickApprove(cert)} className="p-2 text-[var(--color-text-secondary)] hover:text-[#22C55E] hover:bg-[#DCFCE7] rounded-lg transition-colors" title={t("certificates.approve")}>
                                             <CheckCircle className="w-4 h-4" />
                                           </button>
-                                          <button onClick={() => setReviewingCert(cert)} className="p-2 text-[#6B7280] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors" title={t("certificates.reject")}>
+                                          <button onClick={() => setReviewingCert(cert)} className="p-2 text-[var(--color-text-secondary)] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors" title={t("certificates.reject")}>
                                             <XCircle className="w-4 h-4" />
                                           </button>
                                         </>
@@ -909,12 +909,12 @@ const CertificatesContent = () => {
                                           <button
                                             onClick={() => handleDownload(cert.id)}
                                             disabled={downloading === cert.id}
-                                            className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors disabled:opacity-50"
+                                            className="p-2 text-[var(--color-text-secondary)] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors disabled:opacity-50"
                                             title={t("certificates.download")}
                                           >
                                             {downloading === cert.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                                           </button>
-                                          <button onClick={() => setRevokingCert(cert)} className="p-2 text-[#6B7280] hover:text-[#991B1B] hover:bg-[#FEE2E2] rounded-lg transition-colors" title={t("certificates.revoke")}>
+                                          <button onClick={() => setRevokingCert(cert)} className="p-2 text-[var(--color-text-secondary)] hover:text-[#991B1B] hover:bg-[#FEE2E2] rounded-lg transition-colors" title={t("certificates.revoke")}>
                                             <ShieldOff className="w-4 h-4" />
                                           </button>
                                         </>
@@ -930,15 +930,15 @@ const CertificatesContent = () => {
 
                       {/* Pagination */}
                       <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--color-border)]">
-                        <p className="text-sm text-[#6B7280]">
+                        <p className="text-sm text-[var(--color-text-secondary)]">
                           {t("certificates.showing")} {filteredCertificates.length} {t("certificates.of")} {totalCerts} {t("certificates.requests")}
                         </p>
                         <div className="flex items-center gap-1">
-                          <button onClick={() => { setCurrentPage(Math.max(1, currentPage - 1)); setSelectedIds(new Set()); }} disabled={currentPage === 1} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                          <button onClick={() => { setCurrentPage(Math.max(1, currentPage - 1)); setSelectedIds(new Set()); }} disabled={currentPage === 1} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
                             {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                           </button>
-                          <span className="px-3 py-1 text-sm text-[#374151]">{currentPage} / {totalPages || 1}</span>
-                          <button onClick={() => { setCurrentPage(Math.min(totalPages, currentPage + 1)); setSelectedIds(new Set()); }} disabled={currentPage >= totalPages} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                          <span className="px-3 py-1 text-sm text-[var(--color-text-secondary)]">{currentPage} / {totalPages || 1}</span>
+                          <button onClick={() => { setCurrentPage(Math.min(totalPages, currentPage + 1)); setSelectedIds(new Set()); }} disabled={currentPage >= totalPages} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
                             {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                           </button>
                         </div>
@@ -958,7 +958,7 @@ const CertificatesContent = () => {
                             onChange={toggleSelectAll}
                             className="w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
                           />
-                          <span className="text-xs text-[#6B7280]">{t("certificates.selectAll")}</span>
+                          <span className="text-xs text-[var(--color-text-secondary)]">{t("certificates.selectAll")}</span>
                         </div>
                       )}
                       {filteredCertificates.map((cert) => {
@@ -976,12 +976,12 @@ const CertificatesContent = () => {
                                     className="w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6] mt-1"
                                   />
                                 )}
-                                <div className="w-10 h-10 rounded-full bg-[var(--color-border)] flex items-center justify-center text-sm font-semibold text-[#4B5563]">
+                                <div className="w-10 h-10 rounded-full bg-[var(--color-border)] flex items-center justify-center text-sm font-semibold text-[var(--color-text-secondary)]">
                                   {getInitials(cert)}
                                 </div>
                                 <div>
-                                  <p className="text-sm font-medium text-[#1F2937]">{getStudentName(cert)}</p>
-                                  <p className="text-xs text-[#6B7280]">{courseNameMap[cert.courseId] || ""}</p>
+                                  <p className="text-sm font-medium text-[var(--color-text-primary)]">{getStudentName(cert)}</p>
+                                  <p className="text-xs text-[var(--color-text-secondary)]">{courseNameMap[cert.courseId] || ""}</p>
                                 </div>
                               </div>
                               <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(cert.status)}`}>
@@ -996,30 +996,30 @@ const CertificatesContent = () => {
                                 <div className={`w-6 h-6 mx-auto rounded flex items-center justify-center mb-1 ${elig.attendance ? "bg-[#DCFCE7] text-[#22C55E]" : "bg-[#FEE2E2] text-[#EF4444]"}`}>
                                   {elig.attendance ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
                                 </div>
-                                <p className="text-[10px] text-[#6B7280]">{t("certificates.attendance")}</p>
-                                <p className="text-xs font-medium text-[#374151]">{parseFloat(cert.attendancePercent || "0").toFixed(1)}%</p>
+                                <p className="text-[10px] text-[var(--color-text-secondary)]">{t("certificates.attendance")}</p>
+                                <p className="text-xs font-medium text-[var(--color-text-secondary)]">{parseFloat(cert.attendancePercent || "0").toFixed(1)}%</p>
                               </div>
                               <div className="text-center">
                                 <div className={`w-6 h-6 mx-auto rounded flex items-center justify-center mb-1 ${elig.assessment ? "bg-[#DCFCE7] text-[#22C55E]" : "bg-[#FEE2E2] text-[#EF4444]"}`}>
                                   {elig.assessment ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
                                 </div>
-                                <p className="text-[10px] text-[#6B7280]">{t("certificates.assessment")}</p>
-                                <p className="text-xs font-medium text-[#374151]">{elig.assessment ? t("certificates.passed") : t("certificates.failed")}</p>
+                                <p className="text-[10px] text-[var(--color-text-secondary)]">{t("certificates.assessment")}</p>
+                                <p className="text-xs font-medium text-[var(--color-text-secondary)]">{elig.assessment ? t("certificates.passed") : t("certificates.failed")}</p>
                               </div>
                               <div className="text-center">
                                 <div className={`w-6 h-6 mx-auto rounded flex items-center justify-center mb-1 ${elig.completion ? "bg-[#DCFCE7] text-[#22C55E]" : "bg-[#FEE2E2] text-[#EF4444]"}`}>
                                   {elig.completion ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
                                 </div>
-                                <p className="text-[10px] text-[#6B7280]">{t("certificates.completion")}</p>
-                                <p className="text-xs font-medium text-[#374151]">{elig.completion ? "100%" : t("certificates.incomplete")}</p>
+                                <p className="text-[10px] text-[var(--color-text-secondary)]">{t("certificates.completion")}</p>
+                                <p className="text-xs font-medium text-[var(--color-text-secondary)]">{elig.completion ? "100%" : t("certificates.incomplete")}</p>
                               </div>
                             </div>
 
-                            <p className="text-xs text-[#9CA3AF] mb-3">{t("certificates.requested")}: {formatDateHijri(cert.createdAt, calendarFormat, { locale })}</p>
+                            <p className="text-xs text-[var(--color-text-secondary)] mb-3">{t("certificates.requested")}: {formatDateHijri(cert.createdAt, calendarFormat, { locale })}</p>
 
                             {(cert.status === "pending" || cert.status === "held") && (
                               <div className="flex gap-2">
-                                <button onClick={() => setReviewingCert(cert)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]">
+                                <button onClick={() => setReviewingCert(cert)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
                                   <Eye className="w-4 h-4" />{t("certificates.review")}
                                 </button>
                                 <button onClick={() => quickApprove(cert)} className="flex items-center justify-center px-3 py-2 bg-[#22C55E] text-white rounded-lg hover:bg-[#16A34A]">
@@ -1084,8 +1084,8 @@ const CertificatesContent = () => {
                   <ShieldOff className="w-5 h-5 text-[#991B1B]" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-[#1F2937]">{t("certificates.revokeTitle")}</h3>
-                  <p className="text-sm text-[#6B7280]">{getStudentName(revokingCert)}</p>
+                  <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("certificates.revokeTitle")}</h3>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{getStudentName(revokingCert)}</p>
                 </div>
               </div>
               <div className="p-3 bg-[#FEF9C3] rounded-lg mb-4">
@@ -1095,7 +1095,7 @@ const CertificatesContent = () => {
                 </div>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("certificates.revokeReasonLabel")}</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("certificates.revokeReasonLabel")}</label>
                 <textarea
                   value={revokeReason}
                   onChange={(e) => setRevokeReason(e.target.value)}
@@ -1105,7 +1105,7 @@ const CertificatesContent = () => {
                 />
               </div>
               <div className="flex gap-3">
-                <button onClick={() => { setRevokingCert(null); setRevokeReason(""); }} disabled={revokeProcessing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
+                <button onClick={() => { setRevokingCert(null); setRevokeReason(""); }} disabled={revokeProcessing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50">
                   {t("certificates.cancel")}
                 </button>
                 <button
@@ -1127,8 +1127,8 @@ const CertificatesContent = () => {
         <ModalOverlay onClose={() => setBatchNoteModal(null)}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-[#1F2937] mb-4">{t("certificates.batchRejectTitle")}</h3>
-              <p className="text-sm text-[#6B7280] mb-4">{t("certificates.batchRejectDesc")} ({selectedIds.size} {t("certificates.selected")})</p>
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">{t("certificates.batchRejectTitle")}</h3>
+              <p className="text-sm text-[var(--color-text-secondary)] mb-4">{t("certificates.batchRejectDesc")} ({selectedIds.size} {t("certificates.selected")})</p>
               <textarea
                 value={batchNote}
                 onChange={(e) => setBatchNote(e.target.value)}
@@ -1137,7 +1137,7 @@ const CertificatesContent = () => {
                 className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none mb-4"
               />
               <div className="flex gap-3">
-                <button onClick={() => { setBatchNoteModal(null); setBatchNote(""); }} disabled={batchProcessing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
+                <button onClick={() => { setBatchNoteModal(null); setBatchNote(""); }} disabled={batchProcessing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50">
                   {t("certificates.cancel")}
                 </button>
                 <button
@@ -1178,24 +1178,24 @@ const CertificatesContent = () => {
                     <Award className={`w-6 h-6 ${allPassed ? "text-[#22C55E]" : "text-[#EAB308]"}`} />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-[#1F2937]">Approve Certificate</h3>
-                    <p className="text-sm text-[#6B7280]">{studentName}</p>
+                    <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Approve Certificate</h3>
+                    <p className="text-sm text-[var(--color-text-secondary)]">{studentName}</p>
                   </div>
                 </div>
 
                 {/* Course Info */}
                 <div className="p-3 bg-[#F9FAFB] rounded-lg mb-4">
-                  <p className="text-sm text-[#374151]"><span className="font-medium">Course:</span> {courseName}</p>
-                  <p className="text-sm text-[#374151]"><span className="font-medium">Type:</span> {deliveryLabel}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]"><span className="font-medium">Course:</span> {courseName}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]"><span className="font-medium">Type:</span> {deliveryLabel}</p>
                 </div>
 
                 {/* Eligibility Summary */}
-                <h4 className="text-sm font-semibold text-[#1F2937] mb-3">Eligibility Summary</h4>
+                <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">Eligibility Summary</h4>
                 <div className="space-y-2 mb-4">
                   {/* Attendance — only for sync/blended */}
                   {!isSelfPaced && (
                     <div className={`flex items-center justify-between p-2.5 rounded-lg ${attendanceOk ? "bg-[#DCFCE7]" : "bg-[#FEE2E2]"}`}>
-                      <span className="text-sm text-[#374151]">Lecture Attendance (≥70%)</span>
+                      <span className="text-sm text-[var(--color-text-secondary)]">Lecture Attendance (≥70%)</span>
                       <span className={`text-sm font-semibold ${attendanceOk ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
                         {attendancePct.toFixed(1)}%
                       </span>
@@ -1205,7 +1205,7 @@ const CertificatesContent = () => {
                   {/* Module Completion — for self-paced and blended */}
                   {(isSelfPaced || isBlended) && (
                     <div className={`flex items-center justify-between p-2.5 rounded-lg ${completionOk ? "bg-[#DCFCE7]" : "bg-[#FEE2E2]"}`}>
-                      <span className="text-sm text-[#374151]">Module Completion (100%)</span>
+                      <span className="text-sm text-[var(--color-text-secondary)]">Module Completion (100%)</span>
                       <span className={`text-sm font-semibold ${completionOk ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
                         {completionOk ? "100%" : "Incomplete"}
                       </span>
@@ -1215,7 +1215,7 @@ const CertificatesContent = () => {
                   {/* Course Completed — for sync */}
                   {!isSelfPaced && !isBlended && (
                     <div className={`flex items-center justify-between p-2.5 rounded-lg ${completionOk ? "bg-[#DCFCE7]" : "bg-[#FEE2E2]"}`}>
-                      <span className="text-sm text-[#374151]">Course Completed</span>
+                      <span className="text-sm text-[var(--color-text-secondary)]">Course Completed</span>
                       <span className={`text-sm font-semibold ${completionOk ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
                         {completionOk ? "Yes" : "No"}
                       </span>
@@ -1224,7 +1224,7 @@ const CertificatesContent = () => {
 
                   {/* Assessments */}
                   <div className={`flex items-center justify-between p-2.5 rounded-lg ${assessmentOk ? "bg-[#DCFCE7]" : "bg-[#FEE2E2]"}`}>
-                    <span className="text-sm text-[#374151]">Assessments Passed</span>
+                    <span className="text-sm text-[var(--color-text-secondary)]">Assessments Passed</span>
                     <span className={`text-sm font-semibold ${assessmentOk ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
                       {assessmentOk ? "All Passed" : "Not Passed"}
                     </span>
@@ -1254,7 +1254,7 @@ const CertificatesContent = () => {
                   <button
                     onClick={() => setConfirmingApproval(null)}
                     disabled={approvalProcessing}
-                    className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50"
+                    className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50"
                   >
                     Close
                   </button>

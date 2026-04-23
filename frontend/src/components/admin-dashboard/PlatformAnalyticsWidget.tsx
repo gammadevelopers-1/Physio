@@ -50,7 +50,7 @@ const PlatformAnalyticsWidget = ({ data }: PlatformAnalyticsWidgetProps) => {
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-[#002D87]" />
-          <h3 className="text-lg font-semibold text-[#1F2937]">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("analytics.title")}
           </h3>
         </div>
@@ -68,17 +68,17 @@ const PlatformAnalyticsWidget = ({ data }: PlatformAnalyticsWidgetProps) => {
         {/* Enrollment Funnel Chart */}
         <div className="bg-[#F9FAFB] rounded-lg p-4 min-h-[160px] flex flex-col items-center justify-center">
           <div className="w-16 h-16 mb-3 flex items-center justify-center">
-            <BarChart3 className="w-12 h-12 text-[#9CA3AF]" />
+            <BarChart3 className="w-12 h-12 text-[var(--color-text-secondary)]" />
           </div>
-          <p className="text-sm text-[#6B7280]">{t("analytics.enrollmentFunnel")}</p>
+          <p className="text-sm text-[var(--color-text-secondary)]">{t("analytics.enrollmentFunnel")}</p>
         </div>
 
         {/* User Growth Chart */}
         <div className="bg-[#F9FAFB] rounded-lg p-4 min-h-[160px] flex flex-col items-center justify-center">
           <div className="w-16 h-16 mb-3 flex items-center justify-center">
-            <TrendingUp className="w-12 h-12 text-[#9CA3AF]" />
+            <TrendingUp className="w-12 h-12 text-[var(--color-text-secondary)]" />
           </div>
-          <p className="text-sm text-[#6B7280]">{t("analytics.userGrowth")}</p>
+          <p className="text-sm text-[var(--color-text-secondary)]">{t("analytics.userGrowth")}</p>
         </div>
       </div>
 
@@ -89,8 +89,8 @@ const PlatformAnalyticsWidget = ({ data }: PlatformAnalyticsWidgetProps) => {
             key={metric.id}
             className="bg-[#F9FAFB] rounded-lg p-4 text-center"
           >
-            <p className="text-2xl font-bold text-[#1F2937]">{metric.value}%</p>
-            <p className="text-xs text-[#6B7280] mt-1">{metric.label}</p>
+            <p className="text-2xl font-bold text-[var(--color-text-primary)]">{metric.value}%</p>
+            <p className="text-xs text-[var(--color-text-secondary)] mt-1">{metric.label}</p>
           </div>
         ))}
       </div>

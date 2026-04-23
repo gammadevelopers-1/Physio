@@ -231,7 +231,7 @@ const InstructorTabs = ({
       case "image":
         return "bg-[#E0E7FF] text-[#6366F1]";
       default:
-        return "bg-[#F3F4F6] text-[#6B7280]";
+        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -245,9 +245,9 @@ const InstructorTabs = ({
       case "pending_review":
         return { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", icon: Clock };
       case "draft":
-        return { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", icon: File };
+        return { bg: "bg-[#F3F4F6]", text: "text-[var(--color-text-secondary)]", icon: File };
       default:
-        return { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", icon: File };
+        return { bg: "bg-[#F3F4F6]", text: "text-[var(--color-text-secondary)]", icon: File };
     }
   };
 
@@ -343,7 +343,7 @@ const InstructorTabs = ({
               className={`px-4 sm:px-5 py-3 text-xs sm:text-sm font-medium relative transition-colors whitespace-nowrap ${
                 activeTab === tab.id
                   ? "text-[#3B82F6]"
-                  : "text-[#6B7280] hover:text-[#374151]"
+                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
               }`}
             >
               <span className="flex items-center gap-1 sm:gap-1.5">
@@ -390,10 +390,10 @@ const InstructorTabs = ({
                     <Upload className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-[#1F2937]">
+                    <p className="text-sm font-medium text-[var(--color-text-primary)]">
                       {t("content.dragDrop")}
                     </p>
-                    <p className="text-xs text-[#6B7280] mt-1">
+                    <p className="text-xs text-[var(--color-text-secondary)] mt-1">
                       {t("content.supportedFormats")}
                     </p>
                   </div>
@@ -436,22 +436,22 @@ const InstructorTabs = ({
                 </colgroup>
                 <thead>
                   <tr className="text-start">
-                    <th className="pb-3 text-[13px] font-medium text-[#6B7280]">
+                    <th className="pb-3 text-[13px] font-medium text-[var(--color-text-secondary)]">
                       {t("content.fileName")}
                     </th>
-                    <th className="pb-3 text-[13px] font-medium text-[#6B7280]">
+                    <th className="pb-3 text-[13px] font-medium text-[var(--color-text-secondary)]">
                       {t("content.type")}
                     </th>
-                    <th className="pb-3 text-[13px] font-medium text-[#6B7280]">
+                    <th className="pb-3 text-[13px] font-medium text-[var(--color-text-secondary)]">
                       {t("content.version")}
                     </th>
-                    <th className="pb-3 text-[13px] font-medium text-[#6B7280]">
+                    <th className="pb-3 text-[13px] font-medium text-[var(--color-text-secondary)]">
                       {t("content.status")}
                     </th>
-                    <th className="pb-3 text-[13px] font-medium text-[#6B7280]">
+                    <th className="pb-3 text-[13px] font-medium text-[var(--color-text-secondary)]">
                       {t("content.wcag")}
                     </th>
-                    <th className="pb-3 text-[13px] font-medium text-[#6B7280]">
+                    <th className="pb-3 text-[13px] font-medium text-[var(--color-text-secondary)]">
                       {t("content.actions")}
                     </th>
                   </tr>
@@ -475,9 +475,9 @@ const InstructorTabs = ({
                               {getFileIcon(file.type)}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium text-[#1F2937] truncate">{file.name}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{file.name}</p>
                               {file.size && (
-                                <p className="text-xs text-[#9CA3AF]">{file.size}</p>
+                                <p className="text-xs text-[var(--color-text-secondary)]">{file.size}</p>
                               )}
                             </div>
                           </div>
@@ -489,7 +489,7 @@ const InstructorTabs = ({
                           </span>
                         </td>
                         {/* Version */}
-                        <td className="py-3.5 text-sm text-[#374151] overflow-hidden">
+                        <td className="py-3.5 text-sm text-[var(--color-text-secondary)] overflow-hidden">
                           {file.version}
                         </td>
                         {/* Status */}
@@ -513,7 +513,7 @@ const InstructorTabs = ({
                           <div className="relative">
                             <button
                               onClick={() => setOpenActionMenu(openActionMenu === file.id ? null : file.id)}
-                              className="p-2 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                              className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
                               aria-label={tA("openActions")}
                               aria-haspopup="true"
                               aria-expanded={openActionMenu === file.id}
@@ -527,18 +527,18 @@ const InstructorTabs = ({
                                 <div className="py-1">
                                   <button
                                     onClick={() => handleEdit(file.id)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
                                     role="menuitem"
                                   >
-                                    <Edit className="w-4 h-4 text-[#6B7280]" />
+                                    <Edit className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                     {t("content.edit")}
                                   </button>
                                   <button
                                     onClick={() => handleReplace(file.id)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
                                     role="menuitem"
                                   >
-                                    <RefreshCw className="w-4 h-4 text-[#6B7280]" />
+                                    <RefreshCw className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                     {t("content.replace")}
                                   </button>
                                   <button
@@ -564,21 +564,21 @@ const InstructorTabs = ({
             {/* Pagination Controls */}
             {totalFiles > PAGE_SIZE && (
               <div className="flex items-center justify-between pt-3 border-t border-[#F3F4F6]">
-                <p className="text-sm text-[#6B7280]">
+                <p className="text-sm text-[var(--color-text-secondary)]">
                   {t("content.showing")} {contentPage * PAGE_SIZE + 1}-{Math.min((contentPage + 1) * PAGE_SIZE, totalFiles)} {t("content.of")} {totalFiles}
                 </p>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setContentPage((p) => Math.max(0, p - 1))}
                     disabled={contentPage === 0}
-                    className="px-3 py-1.5 text-sm font-medium border border-[var(--color-border)] rounded-lg text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-1.5 text-sm font-medium border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {t("content.previous")}
                   </button>
                   <button
                     onClick={() => setContentPage((p) => Math.min(totalPages - 1, p + 1))}
                     disabled={contentPage >= totalPages - 1}
-                    className="px-3 py-1.5 text-sm font-medium border border-[var(--color-border)] rounded-lg text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-1.5 text-sm font-medium border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {t("content.next")}
                   </button>

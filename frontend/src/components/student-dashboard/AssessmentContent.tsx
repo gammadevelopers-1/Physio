@@ -381,7 +381,7 @@ const AssessmentContent = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#9CA3AF] animate-spin" />
+        <Loader2 className="w-8 h-8 text-[var(--color-text-secondary)] animate-spin" />
       </div>
     );
   }
@@ -391,7 +391,7 @@ const AssessmentContent = () => {
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-10 h-10 text-[#DC2626] mx-auto mb-3" />
-          <p className="text-[#6B7280] mb-4">{error}</p>
+          <p className="text-[var(--color-text-secondary)] mb-4">{error}</p>
           <Link
             href={`/${locale}/dashboard/student/courses/${courseId}`}
             className="text-sm text-[#002D87] hover:underline"
@@ -410,7 +410,7 @@ const AssessmentContent = () => {
   if (openReview && !reviewMode && !reviewData) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#9CA3AF] animate-spin" />
+        <Loader2 className="w-8 h-8 text-[var(--color-text-secondary)] animate-spin" />
       </div>
     );
   }
@@ -436,7 +436,7 @@ const AssessmentContent = () => {
             <XCircle className="w-16 h-16 text-[#DC2626] mx-auto mb-4" />
           )}
 
-          <h2 className="text-xl font-bold text-[#1F2937] mb-2">
+          <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-2">
             {!isGraded
               ? t("assessment.pendingGrading")
               : passed
@@ -448,19 +448,19 @@ const AssessmentContent = () => {
             <div className="bg-[#F9FAFB] rounded-xl p-4 mb-6 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-[#6B7280] mb-1">{t("assessment.score")}</p>
-                  <p className="text-lg font-bold text-[#1F2937]">{score}/{assessment.totalMarks}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("assessment.score")}</p>
+                  <p className="text-lg font-bold text-[var(--color-text-primary)]">{score}/{assessment.totalMarks}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#6B7280] mb-1">{t("assessment.percentage")}</p>
-                  <p className="text-lg font-bold text-[#1F2937]">{pct.toFixed(1)}%</p>
+                  <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("assessment.percentage")}</p>
+                  <p className="text-lg font-bold text-[var(--color-text-primary)]">{pct.toFixed(1)}%</p>
                 </div>
               </div>
             </div>
           )}
 
           {!isGraded && (
-            <p className="text-sm text-[#6B7280] mb-6">{t("assessment.pendingGradingMessage")}</p>
+            <p className="text-sm text-[var(--color-text-secondary)] mb-6">{t("assessment.pendingGradingMessage")}</p>
           )}
 
           <div className="flex flex-col gap-3 mt-4">
@@ -512,13 +512,13 @@ const AssessmentContent = () => {
                   href={`/${locale}/dashboard/student/courses/${courseId}`}
                   className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
                 >
-                  <BackIcon className="w-5 h-5 text-[#4B5563]" />
+                  <BackIcon className="w-5 h-5 text-[var(--color-text-secondary)]" />
                 </Link>
-                <h1 className="text-sm sm:text-base font-semibold text-[#1F2937]">
+                <h1 className="text-sm sm:text-base font-semibold text-[var(--color-text-primary)]">
                   {assessment.title} — {t("assessment.reviewAnswers")}
                 </h1>
               </div>
-              <span className="text-sm font-medium text-[#1F2937]">
+              <span className="text-sm font-medium text-[var(--color-text-primary)]">
                 {reviewData.score}/{reviewData.totalMarks} ({reviewData.percentage.toFixed(1)}%)
               </span>
             </div>
@@ -532,7 +532,7 @@ const AssessmentContent = () => {
                   <MessageSquare className="w-4 h-4 text-[#0284C7]" />
                   <h3 className="text-sm font-semibold text-[#0C4A6E]">{t("assessment.instructorComment") || "Instructor Comment"}</h3>
                 </div>
-                <p className="text-sm text-[#374151] whitespace-pre-wrap">{reviewData.instructorComment}</p>
+                <p className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap">{reviewData.instructorComment}</p>
               </div>
             )}
 
@@ -540,15 +540,15 @@ const AssessmentContent = () => {
             <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <p className="text-xs text-[#6B7280] mb-1">{t("assessment.score")}</p>
-                  <p className="text-lg font-bold text-[#1F2937]">{reviewData.score}/{reviewData.totalMarks}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("assessment.score")}</p>
+                  <p className="text-lg font-bold text-[var(--color-text-primary)]">{reviewData.score}/{reviewData.totalMarks}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#6B7280] mb-1">{t("assessment.percentage")}</p>
-                  <p className="text-lg font-bold text-[#1F2937]">{reviewData.percentage.toFixed(1)}%</p>
+                  <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("assessment.percentage")}</p>
+                  <p className="text-lg font-bold text-[var(--color-text-primary)]">{reviewData.percentage.toFixed(1)}%</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#6B7280] mb-1">{t("assessment.status")}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("assessment.status")}</p>
                   <p className={`text-lg font-bold ${reviewData.percentage >= ((assessment.passingMarks / assessment.totalMarks) * 100) ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
                     {reviewData.percentage >= ((assessment.passingMarks / assessment.totalMarks) * 100) ? t("assessment.passed") : t("assessment.failed")}
                   </p>
@@ -559,14 +559,14 @@ const AssessmentContent = () => {
             {/* Submitted Files */}
             {reviewData.submissionFiles && reviewData.submissionFiles.length > 0 && (
               <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
-                <h3 className="text-sm font-semibold text-[#1F2937] mb-3">{t("assessment.studentFiles") || "Your Submitted Files"}</h3>
+                <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">{t("assessment.studentFiles") || "Your Submitted Files"}</h3>
                 <div className="space-y-2">
                   {reviewData.submissionFiles.map((f) => (
                     <div key={f.id} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <FileText className="w-4 h-4 text-[#3B82F6] shrink-0" />
-                        <span className="text-sm text-[#374151] truncate">{f.fileName}</span>
-                        <span className="text-xs text-[#9CA3AF] shrink-0">{(f.fileSize / 1024).toFixed(0)} KB</span>
+                        <span className="text-sm text-[var(--color-text-secondary)] truncate">{f.fileName}</span>
+                        <span className="text-xs text-[var(--color-text-secondary)] shrink-0">{(f.fileSize / 1024).toFixed(0)} KB</span>
                       </div>
                       <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 text-[#3B82F6] hover:bg-[#EFF6FF] rounded">
                         <Download className="w-4 h-4" />
@@ -603,10 +603,10 @@ const AssessmentContent = () => {
               <XCircle className="w-16 h-16 text-[#DC2626] mx-auto mb-4" />
             )}
 
-            <h2 className="text-xl font-bold text-[#1F2937] mb-2">
+            <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-2">
               {isPendingGrading ? (t("assessment.assignmentSubmitted") || "Assignment Submitted") : result.passed ? t("assessment.passed") : t("assessment.failed")}
             </h2>
-            <p className="text-[#6B7280] mb-6">
+            <p className="text-[var(--color-text-secondary)] mb-6">
               {isPendingGrading ? (t("assessment.pendingGradingMessage")) : t("assessment.resultMessage")}
             </p>
 
@@ -614,12 +614,12 @@ const AssessmentContent = () => {
               <div className="bg-[#F9FAFB] rounded-xl p-4 mb-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-[#6B7280] mb-1">{t("assessment.score")}</p>
-                    <p className="text-lg font-bold text-[#1F2937]">{result.score}/{result.totalMarks}</p>
+                    <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("assessment.score")}</p>
+                    <p className="text-lg font-bold text-[var(--color-text-primary)]">{result.score}/{result.totalMarks}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#6B7280] mb-1">{t("assessment.percentage")}</p>
-                    <p className="text-lg font-bold text-[#1F2937]">{result.percentage.toFixed(1)}%</p>
+                    <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("assessment.percentage")}</p>
+                    <p className="text-lg font-bold text-[var(--color-text-primary)]">{result.percentage.toFixed(1)}%</p>
                   </div>
                 </div>
               </div>
@@ -655,7 +655,7 @@ const AssessmentContent = () => {
           {/* Back link */}
           <Link
             href={`/${locale}/dashboard/student/courses/${courseId}`}
-            className="inline-flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#1F2937] mb-6 transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-6 transition-colors"
           >
             <BackIcon className="w-4 h-4" />
             {t("assessment.backToCourse")}
@@ -666,7 +666,7 @@ const AssessmentContent = () => {
             <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium mb-3 ${badge.color}`}>
               {badge.label}
             </span>
-            <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">{assessment.title}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">{assessment.title}</h1>
           </div>
 
           {/* Deadline Banner */}
@@ -688,17 +688,17 @@ const AssessmentContent = () => {
           {/* Info Grid */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
-              <p className="text-xs text-[#6B7280] mb-0.5">{t("assessment.totalMarks")}</p>
-              <p className="text-base font-semibold text-[#1F2937]">{assessment.totalMarks}</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">{t("assessment.totalMarks")}</p>
+              <p className="text-base font-semibold text-[var(--color-text-primary)]">{assessment.totalMarks}</p>
             </div>
             <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
-              <p className="text-xs text-[#6B7280] mb-0.5">{t("assessment.passingMarks")}</p>
-              <p className="text-base font-semibold text-[#1F2937]">{assessment.passingMarks}</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">{t("assessment.passingMarks")}</p>
+              <p className="text-base font-semibold text-[var(--color-text-primary)]">{assessment.passingMarks}</p>
             </div>
             {assessment.dueDate && (
               <div className="col-span-2 bg-white rounded-xl border border-[var(--color-border)] p-4">
-                <p className="text-xs text-[#6B7280] mb-0.5">{t("assessment.deadline") || "Deadline"}</p>
-                <p className="text-base font-semibold text-[#1F2937]">
+                <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">{t("assessment.deadline") || "Deadline"}</p>
+                <p className="text-base font-semibold text-[var(--color-text-primary)]">
                   {new Date(assessment.dueDate).toLocaleString(locale === "ar" ? "ar-SA" : "en-US", { timeZone: "Asia/Riyadh" })} (KSA)
                 </p>
               </div>
@@ -709,21 +709,21 @@ const AssessmentContent = () => {
           {assessment.instructions && (
             <div className="bg-[#F0F9FF] border border-[#BAE6FD] rounded-xl p-5 mb-6">
               <h3 className="font-medium text-sm text-[#0C4A6E] mb-2">{t("assessment.assignmentInstructions") || "Instructions"}</h3>
-              <p className="text-sm text-[#4B5563] whitespace-pre-wrap leading-relaxed">{assessment.instructions}</p>
+              <p className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap leading-relaxed">{assessment.instructions}</p>
             </div>
           )}
 
           {/* Assignment Files (instructor-provided) */}
           {assessment.assignmentFiles && assessment.assignmentFiles.length > 0 && (
             <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-6">
-              <h3 className="text-sm font-semibold text-[#1F2937] mb-3">{t("assessment.assignmentFiles") || "Assignment Files"}</h3>
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">{t("assessment.assignmentFiles") || "Assignment Files"}</h3>
               <div className="space-y-2">
                 {assessment.assignmentFiles.map((f) => (
                   <div key={f.id} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <FileText className="w-4 h-4 text-[#3B82F6] shrink-0" />
-                      <span className="text-sm text-[#374151] truncate">{f.fileName}</span>
-                      <span className="text-xs text-[#9CA3AF] shrink-0">{(f.fileSize / 1024).toFixed(0)} KB</span>
+                      <span className="text-sm text-[var(--color-text-secondary)] truncate">{f.fileName}</span>
+                      <span className="text-xs text-[var(--color-text-secondary)] shrink-0">{(f.fileSize / 1024).toFixed(0)} KB</span>
                     </div>
                     <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 px-3 py-1.5 text-sm text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors">
                       <Download className="w-4 h-4" />
@@ -738,13 +738,13 @@ const AssessmentContent = () => {
           {/* Student File Upload */}
           {canSubmit && (
             <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-6">
-              <h3 className="text-sm font-semibold text-[#1F2937] mb-3">{t("assessment.uploadFiles") || "Upload Your Files"}</h3>
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">{t("assessment.uploadFiles") || "Upload Your Files"}</h3>
 
               <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[var(--color-border)] rounded-xl cursor-pointer hover:border-[#3B82F6] hover:bg-[#EFF6FF] transition-colors mb-3">
                 <div className="flex flex-col items-center">
-                  <Upload className="w-8 h-8 text-[#9CA3AF] mb-1" />
-                  <p className="text-sm text-[#6B7280]">{t("assessment.dragDropFiles") || "Click to select files"}</p>
-                  <p className="text-xs text-[#9CA3AF] mt-1">PDF, DOC, DOCX, JPG, PNG, GIF, MP4, MOV ({t("assessment.maxFiles") || "Max 10 files, 100 MB each"})</p>
+                  <Upload className="w-8 h-8 text-[var(--color-text-secondary)] mb-1" />
+                  <p className="text-sm text-[var(--color-text-secondary)]">{t("assessment.dragDropFiles") || "Click to select files"}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-1">PDF, DOC, DOCX, JPG, PNG, GIF, MP4, MOV ({t("assessment.maxFiles") || "Max 10 files, 100 MB each"})</p>
                 </div>
                 <input
                   type="file"
@@ -783,13 +783,13 @@ const AssessmentContent = () => {
                   {assignmentFiles.map((f, i) => (
                     <div key={i} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <Paperclip className="w-4 h-4 text-[#6B7280] shrink-0" />
-                        <span className="text-sm text-[#374151] truncate">{f.name}</span>
-                        <span className="text-xs text-[#9CA3AF] shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
+                        <Paperclip className="w-4 h-4 text-[var(--color-text-secondary)] shrink-0" />
+                        <span className="text-sm text-[var(--color-text-secondary)] truncate">{f.name}</span>
+                        <span className="text-xs text-[var(--color-text-secondary)] shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
                       </div>
                       <button
                         onClick={() => setAssignmentFiles((prev) => prev.filter((_, idx) => idx !== i))}
-                        className="p-1 text-[#6B7280] hover:text-[#DC2626] hover:bg-[#FEE2E2] rounded"
+                        className="p-1 text-[var(--color-text-secondary)] hover:text-[#DC2626] hover:bg-[#FEE2E2] rounded"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -829,7 +829,7 @@ const AssessmentContent = () => {
           {/* No files uploaded notice when can't submit */}
           {!canSubmit && !hasExistingSubmission && (
             <div className="text-center py-4">
-              <p className="text-sm text-[#6B7280]">{t("assessment.noFilesUploaded") || "Submissions are closed"}</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">{t("assessment.noFilesUploaded") || "Submissions are closed"}</p>
             </div>
           )}
         </div>
@@ -861,13 +861,13 @@ const AssessmentContent = () => {
                 href={`/${locale}/dashboard/student/courses/${courseId}`}
                 className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
               >
-                <BackIcon className="w-5 h-5 text-[#4B5563]" />
+                <BackIcon className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </Link>
-              <h1 className="text-sm sm:text-base font-semibold text-[#1F2937]">
+              <h1 className="text-sm sm:text-base font-semibold text-[var(--color-text-primary)]">
                 {assessment.title} — {t("assessment.reviewAnswers")}
               </h1>
             </div>
-            <span className="text-sm font-medium text-[#1F2937]">
+            <span className="text-sm font-medium text-[var(--color-text-primary)]">
               {reviewData.score}/{reviewData.totalMarks} (
               {reviewData.percentage.toFixed(1)}%)
             </span>
@@ -889,13 +889,13 @@ const AssessmentContent = () => {
                     className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-60 ${
                       isActive
                         ? "bg-[#002D87] text-white"
-                        : "bg-[#F3F4F6] text-[#4B5563] hover:bg-[var(--color-border)]"
+                        : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
                     }`}
                   >
                     {attempt.attemptNumber === 1
                       ? (t("assessment.originalAttempt") || "Original")
                       : (t("assessment.retakeNum", { n: attempt.attemptNumber - 1 }) || `Retake ${attempt.attemptNumber - 1}`)}
-                    <span className={isActive ? "text-white/80" : "text-[#9CA3AF]"}>
+                    <span className={isActive ? "text-white/80" : "text-[var(--color-text-secondary)]"}>
                       {attempt.score ?? "—"}/{attempt.totalMarks ?? assessment.totalMarks} ({pct}%)
                     </span>
                     {attempt.isEffective && (
@@ -916,7 +916,7 @@ const AssessmentContent = () => {
           {/* Loading overlay when switching attempts */}
           {reviewLoading && (
             <div className="absolute inset-0 bg-white/60 flex items-center justify-center z-10 rounded-xl">
-              <Loader2 className="w-6 h-6 text-[#9CA3AF] animate-spin" />
+              <Loader2 className="w-6 h-6 text-[var(--color-text-secondary)] animate-spin" />
             </div>
           )}
           {/* Instructor Overall Comment */}
@@ -926,19 +926,19 @@ const AssessmentContent = () => {
                 <MessageSquare className="w-4 h-4 text-[#0284C7]" />
                 <h3 className="text-sm font-semibold text-[#0C4A6E]">{t("assessment.instructorComment") || "Instructor Comment"}</h3>
               </div>
-              <p className="text-sm text-[#374151] whitespace-pre-wrap">{reviewData.instructorComment}</p>
+              <p className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap">{reviewData.instructorComment}</p>
             </div>
           )}
 
           {reviewQuestion && (
             <>
               <div className="mb-6">
-                <p className="text-xs text-[#6B7280] mb-1">
+                <p className="text-xs text-[var(--color-text-secondary)] mb-1">
                   {t("assessment.question")} {currentQuestion + 1} /{" "}
                   {reviewData.questions.length}
                 </p>
                 <div className="flex items-center gap-2">
-                  <p className="text-xs text-[#9CA3AF]">
+                  <p className="text-xs text-[var(--color-text-secondary)]">
                     {reviewQuestion.marks}{" "}
                     {reviewQuestion.marks === 1
                       ? t("assessment.mark")
@@ -961,7 +961,7 @@ const AssessmentContent = () => {
               </div>
 
               <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 mb-6">
-                <p className="text-base sm:text-lg font-medium text-[#1F2937] mb-6">
+                <p className="text-base sm:text-lg font-medium text-[var(--color-text-primary)] mb-6">
                   {isRTL && reviewQuestion.questionTextAr
                     ? reviewQuestion.questionTextAr
                     : reviewQuestion.questionText}
@@ -1018,7 +1018,7 @@ const AssessmentContent = () => {
                                 <XCircle className="w-3 h-3 text-white" />
                               )}
                             </div>
-                            <span className="text-sm text-[#4B5563]">
+                            <span className="text-sm text-[var(--color-text-secondary)]">
                               {optionText}
                             </span>
                           </div>
@@ -1031,10 +1031,10 @@ const AssessmentContent = () => {
                   reviewQuestion.type === "essay") && (
                   <div className="space-y-3">
                     <div>
-                      <p className="text-xs font-medium text-[#6B7280] mb-1">
+                      <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("assessment.yourAnswer")}
                       </p>
-                      <div className="p-3 bg-[#F9FAFB] rounded-lg border border-[var(--color-border)] text-sm text-[#1F2937] whitespace-pre-wrap">
+                      <div className="p-3 bg-[#F9FAFB] rounded-lg border border-[var(--color-border)] text-sm text-[var(--color-text-primary)] whitespace-pre-wrap">
                         {studentAnswer?.answer || "—"}
                       </div>
                     </div>
@@ -1043,7 +1043,7 @@ const AssessmentContent = () => {
                         <p className="text-xs font-medium text-[#16A34A] mb-1">
                           {t("assessment.correctAnswer")}
                         </p>
-                        <div className="p-3 bg-green-50 rounded-lg border border-[#16A34A] text-sm text-[#1F2937] whitespace-pre-wrap">
+                        <div className="p-3 bg-green-50 rounded-lg border border-[#16A34A] text-sm text-[var(--color-text-primary)] whitespace-pre-wrap">
                           {reviewQuestion.correctAnswer}
                         </div>
                       </div>
@@ -1059,7 +1059,7 @@ const AssessmentContent = () => {
                     <MessageSquare className="w-3.5 h-3.5 text-[#EA580C]" />
                     <span className="text-xs font-semibold text-[#9A3412]">{t("assessment.questionComment") || "Instructor Feedback"}</span>
                   </div>
-                  <p className="text-sm text-[#374151] whitespace-pre-wrap">{reviewData.questionComments[reviewQuestion.id]}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap">{reviewData.questionComments[reviewQuestion.id]}</p>
                 </div>
               )}
 
@@ -1068,7 +1068,7 @@ const AssessmentContent = () => {
                 <button
                   onClick={() => setCurrentQuestion((p) => Math.max(0, p - 1))}
                   disabled={currentQuestion === 0}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB] transition-colors disabled:opacity-40"
+                  className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors disabled:opacity-40"
                 >
                   {isRTL ? (
                     <ArrowRight className="w-4 h-4" />
@@ -1085,7 +1085,7 @@ const AssessmentContent = () => {
                         Math.min(reviewData.questions.length - 1, p + 1)
                       )
                     }
-                    className="flex items-center gap-2 px-4 py-2.5 bg-[#1F2937] text-white rounded-lg text-sm hover:bg-[#111827] transition-colors"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-[var(--color-text-primary)] text-white rounded-lg text-sm hover:bg-[var(--color-text-primary)] transition-colors"
                   >
                     {t("assessment.next")}
                     {isRTL ? (
@@ -1114,7 +1114,7 @@ const AssessmentContent = () => {
                             ? "bg-[#16A34A] text-white"
                             : ans?.isCorrect === false
                               ? "bg-[#DC2626] text-white"
-                              : "bg-[#F3F4F6] text-[#6B7280]"
+                              : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
                       }`}
                     >
                       {index + 1}
@@ -1148,7 +1148,7 @@ const AssessmentContent = () => {
             <XCircle className="w-16 h-16 text-[#DC2626] mx-auto mb-4" />
           )}
 
-          <h2 className="text-xl font-bold text-[#1F2937] mb-2">
+          <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-2">
             {isPendingGrading
               ? t("assessment.submittedTitle")
               : result.passed
@@ -1156,7 +1156,7 @@ const AssessmentContent = () => {
                 : t("assessment.failed")}
           </h2>
 
-          <p className="text-[#6B7280] mb-6">
+          <p className="text-[var(--color-text-secondary)] mb-6">
             {isPendingGrading
               ? t("assessment.pendingGradingMessage")
               : t("assessment.resultMessage")}
@@ -1166,20 +1166,20 @@ const AssessmentContent = () => {
           <div className="bg-[#F9FAFB] rounded-xl p-4 mb-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-[#6B7280] mb-1">
+                <p className="text-xs text-[var(--color-text-secondary)] mb-1">
                   {isPendingGrading
                     ? t("assessment.autoGradedScore")
                     : t("assessment.score")}
                 </p>
-                <p className="text-lg font-bold text-[#1F2937]">
+                <p className="text-lg font-bold text-[var(--color-text-primary)]">
                   {result.score}/{result.totalMarks}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-[#6B7280] mb-1">
+                <p className="text-xs text-[var(--color-text-secondary)] mb-1">
                   {t("assessment.percentage")}
                 </p>
-                <p className="text-lg font-bold text-[#1F2937]">
+                <p className="text-lg font-bold text-[var(--color-text-primary)]">
                   {result.percentage.toFixed(1)}%
                 </p>
               </div>
@@ -1220,10 +1220,10 @@ const AssessmentContent = () => {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-[#1F2937] truncate">
+                        <p className="text-sm text-[var(--color-text-primary)] truncate">
                           Q{i + 1}. {ga.questionText}
                         </p>
-                        <p className="text-xs text-[#6B7280]">
+                        <p className="text-xs text-[var(--color-text-secondary)]">
                           {ga.isCorrect === null
                             ? t("assessment.pendingReview")
                             : ga.isCorrect
@@ -1231,7 +1231,7 @@ const AssessmentContent = () => {
                               : t("assessment.incorrect")}
                         </p>
                       </div>
-                      <span className="text-sm font-medium text-[#4B5563] flex-shrink-0">
+                      <span className="text-sm font-medium text-[var(--color-text-secondary)] flex-shrink-0">
                         {ga.marksAwarded ?? "—"}/{ga.questionMarks}
                       </span>
                     </div>
@@ -1244,11 +1244,11 @@ const AssessmentContent = () => {
           {/* Past attempts history — visible if the student has multiple attempts */}
           {assessment.allAttempts && assessment.allAttempts.length > 0 && (
             <div className="mb-6 text-start">
-              <h3 className="text-sm font-semibold text-[#1F2937] mb-3 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#6B7280]" />
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-[var(--color-text-secondary)]" />
                 {t("assessment.attemptsHistory") || "Attempts History"}
                 {assessment.retakeScorePolicy && (
-                  <span className="text-[10px] uppercase font-semibold text-[#6B7280] bg-[#F3F4F6] px-2 py-0.5 rounded">
+                  <span className="text-[10px] uppercase font-semibold text-[var(--color-text-secondary)] bg-[#F3F4F6] px-2 py-0.5 rounded">
                     {assessment.retakeScorePolicy === "average"
                       ? (t("assessment.policyAverage") || "Average of all attempts")
                       : assessment.retakeScorePolicy === "latest"
@@ -1276,12 +1276,12 @@ const AssessmentContent = () => {
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#1F2937]">
+                        <p className="text-sm font-medium text-[var(--color-text-primary)]">
                           {attempt.attemptNumber === 1
                             ? (t("assessment.originalAttempt") || "Original attempt")
                             : (t("assessment.retakeNum", { n: attempt.attemptNumber - 1 }) || `Retake ${attempt.attemptNumber - 1}`)}
                         </p>
-                        <p className="text-xs text-[#6B7280]">
+                        <p className="text-xs text-[var(--color-text-secondary)]">
                           {isNotSubmitted
                             ? (t("assessment.notSubmittedLabel") || "Not submitted")
                             : attempt.submittedAt
@@ -1297,7 +1297,7 @@ const AssessmentContent = () => {
                             {attempt.score}/{attempt.totalMarks}
                           </span>
                         ) : (
-                          <span className="text-sm text-[#9CA3AF]">—</span>
+                          <span className="text-sm text-[var(--color-text-secondary)]">—</span>
                         )}
                         {attempt.isEffective && (
                           <span className="text-[10px] font-semibold text-[#7C3AED] bg-[#EDE9FE] px-1.5 py-0.5 rounded">
@@ -1305,7 +1305,7 @@ const AssessmentContent = () => {
                           </span>
                         )}
                         {assessment.retakeScorePolicy === "average" && attempt.score !== null && (
-                          <span className="text-[10px] font-semibold text-[#6B7280] bg-[#F3F4F6] px-1.5 py-0.5 rounded">
+                          <span className="text-[10px] font-semibold text-[var(--color-text-secondary)] bg-[#F3F4F6] px-1.5 py-0.5 rounded">
                             {t("assessment.includedInAvg") || "In avg"}
                           </span>
                         )}
@@ -1372,7 +1372,7 @@ const AssessmentContent = () => {
           {/* Back link */}
           <Link
             href={`/${locale}/dashboard/student/courses/${courseId}`}
-            className="inline-flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#1F2937] mb-6 transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-6 transition-colors"
           >
             <BackIcon className="w-4 h-4" />
             {t("assessment.backToCourse")}
@@ -1393,7 +1393,7 @@ const AssessmentContent = () => {
                 </span>
               )}
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
+            <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
               {assessment.title}
             </h1>
             {assessment.isRetakeAttempt && (
@@ -1407,34 +1407,34 @@ const AssessmentContent = () => {
           {/* Info Grid */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="bg-[#F9FAFB] rounded-lg p-3">
-              <p className="text-xs text-[#6B7280] mb-0.5">
+              <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">
                 {t("assessment.totalMarks")}
               </p>
-              <p className="text-base font-semibold text-[#1F2937]">
+              <p className="text-base font-semibold text-[var(--color-text-primary)]">
                 {assessment.totalMarks}
               </p>
             </div>
             <div className="bg-[#F9FAFB] rounded-lg p-3">
-              <p className="text-xs text-[#6B7280] mb-0.5">
+              <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">
                 {t("assessment.passingMarks")}
               </p>
-              <p className="text-base font-semibold text-[#1F2937]">
+              <p className="text-base font-semibold text-[var(--color-text-primary)]">
                 {assessment.passingMarks}
               </p>
             </div>
             <div className="bg-[#F9FAFB] rounded-lg p-3">
-              <p className="text-xs text-[#6B7280] mb-0.5">
+              <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">
                 {t("assessment.questionsCount")}
               </p>
-              <p className="text-base font-semibold text-[#1F2937]">
+              <p className="text-base font-semibold text-[var(--color-text-primary)]">
                 {assessment.questions.length}
               </p>
             </div>
             <div className="bg-[#F9FAFB] rounded-lg p-3">
-              <p className="text-xs text-[#6B7280] mb-0.5">
+              <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">
                 {t("assessment.timeLimit")}
               </p>
-              <p className="text-base font-semibold text-[#1F2937]">
+              <p className="text-base font-semibold text-[var(--color-text-primary)]">
                 {assessment.durationMinutes
                   ? `${assessment.durationMinutes} ${t("assessment.minutes")}`
                   : t("assessment.noTimeLimit")}
@@ -1444,10 +1444,10 @@ const AssessmentContent = () => {
 
           {/* Attempts */}
           <div className="bg-[#F9FAFB] rounded-lg p-3 mb-6">
-            <p className="text-xs text-[#6B7280] mb-0.5">
+            <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">
               {t("assessment.attemptsUsed")}
             </p>
-            <p className="text-base font-semibold text-[#1F2937]">
+            <p className="text-base font-semibold text-[var(--color-text-primary)]">
               {assessment.attemptsTaken} /{" "}
               {assessment.attemptsAllowed ?? t("assessment.unlimited")}
             </p>
@@ -1459,7 +1459,7 @@ const AssessmentContent = () => {
               <h3 className="font-medium text-sm text-[#0C4A6E] mb-2">
                 {t("assessment.instructions")}
               </h3>
-              <p className="text-sm text-[#4B5563] whitespace-pre-wrap leading-relaxed">
+              <p className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap leading-relaxed">
                 {assessment.instructions}
               </p>
             </div>
@@ -1508,10 +1508,10 @@ const AssessmentContent = () => {
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4" dir={isRTL ? "rtl" : "ltr"}>
         <div className="bg-white rounded-2xl border border-[var(--color-border)] p-8 max-w-lg w-full text-center">
           <AlertCircle className="w-12 h-12 text-[#D4A520] mx-auto mb-4" />
-          <h2 className="text-lg font-bold text-[#1F2937] mb-2">
+          <h2 className="text-lg font-bold text-[var(--color-text-primary)] mb-2">
             {t("assessment.noQuestionsAvailable") || "No questions available"}
           </h2>
-          <p className="text-sm text-[#6B7280] mb-6">
+          <p className="text-sm text-[var(--color-text-secondary)] mb-6">
             {t("assessment.noQuestionsDesc") || "This assessment has no questions loaded. Please go back and try again."}
           </p>
           <Link
@@ -1536,9 +1536,9 @@ const AssessmentContent = () => {
     const isFlagged = flagged.has(q.id);
 
     if (isAnswered && isFlagged) return "bg-[#D4A520] text-white ring-2 ring-[#16A34A]";
-    if (isFlagged) return "bg-[#FBBF24] text-[#1F2937]";
+    if (isFlagged) return "bg-[#FBBF24] text-[var(--color-text-primary)]";
     if (isAnswered) return "bg-[#16A34A] text-white";
-    return "bg-[#F3F4F6] text-[#6B7280] hover:bg-[var(--color-border)]";
+    return "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]";
   };
 
   return (
@@ -1551,9 +1551,9 @@ const AssessmentContent = () => {
               href={`/${locale}/dashboard/student/courses/${courseId}`}
               className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
             >
-              <BackIcon className="w-5 h-5 text-[#4B5563]" />
+              <BackIcon className="w-5 h-5 text-[var(--color-text-secondary)]" />
             </Link>
-            <h1 className="text-sm sm:text-base font-semibold text-[#1F2937] truncate max-w-[200px] sm:max-w-none">
+            <h1 className="text-sm sm:text-base font-semibold text-[var(--color-text-primary)] truncate max-w-[200px] sm:max-w-none">
               {assessment.title}
             </h1>
           </div>
@@ -1561,7 +1561,7 @@ const AssessmentContent = () => {
           <div className="flex items-center gap-3 sm:gap-4">
             {/* Auto-save indicator */}
             {saving && (
-              <span className="text-xs text-[#9CA3AF]">
+              <span className="text-xs text-[var(--color-text-secondary)]">
                 {t("assessment.saving")}
               </span>
             )}
@@ -1576,12 +1576,12 @@ const AssessmentContent = () => {
               <div
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${
                   assessment?.timeLimitEnforced === false
-                    ? "bg-[#F3F4F6] text-[#4B5563]"
+                    ? "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
                     : timeLeft < 60
                       ? "bg-red-50 text-[#DC2626]"
                       : timeLeft < 300
                         ? "bg-yellow-50 text-[#D4A520]"
-                        : "bg-[#F3F4F6] text-[#4B5563]"
+                        : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
                 }`}
                 title={
                   assessment?.timeLimitEnforced === false
@@ -1602,7 +1602,7 @@ const AssessmentContent = () => {
             )}
 
             {/* Progress */}
-            <span className="text-xs text-[#6B7280]">
+            <span className="text-xs text-[var(--color-text-secondary)]">
               {answeredCount}/{totalQuestions}
             </span>
 
@@ -1622,7 +1622,7 @@ const AssessmentContent = () => {
         {/* Question Navigation Sidebar (desktop only) */}
         <div className="hidden lg:block w-[200px] flex-shrink-0">
           <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sticky top-6">
-            <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-3">
+            <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
               {t("assessment.questionsCount")}
             </p>
             <div className="grid grid-cols-5 gap-2">
@@ -1639,15 +1639,15 @@ const AssessmentContent = () => {
 
             {/* Legend */}
             <div className="mt-4 space-y-1.5">
-              <div className="flex items-center gap-2 text-xs text-[#6B7280]">
+              <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
                 <div className="w-3 h-3 rounded-full bg-[#16A34A]" />
                 {t("assessment.correct")}
               </div>
-              <div className="flex items-center gap-2 text-xs text-[#6B7280]">
+              <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
                 <div className="w-3 h-3 rounded-full bg-[#FBBF24]" />
                 {t("assessment.flagged")}
               </div>
-              <div className="flex items-center gap-2 text-xs text-[#6B7280]">
+              <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
                 <div className="w-3 h-3 rounded-full bg-[#F3F4F6]" />
                 {t("assessment.unanswered")}
               </div>
@@ -1660,11 +1660,11 @@ const AssessmentContent = () => {
           {/* Question Header */}
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <p className="text-xs text-[#6B7280] mb-1">
+              <p className="text-xs text-[var(--color-text-secondary)] mb-1">
                 {t("assessment.question")} {currentQuestion + 1} /{" "}
                 {totalQuestions}
               </p>
-              <p className="text-xs text-[#9CA3AF]">
+              <p className="text-xs text-[var(--color-text-secondary)]">
                 {question.marks}{" "}
                 {question.marks === 1
                   ? t("assessment.mark")
@@ -1683,7 +1683,7 @@ const AssessmentContent = () => {
               className={`p-2 rounded-lg transition-colors ${
                 flagged.has(question.id)
                   ? "text-[#D4A520] bg-yellow-50"
-                  : "text-[#9CA3AF] hover:text-[#D4A520] hover:bg-yellow-50"
+                  : "text-[var(--color-text-secondary)] hover:text-[#D4A520] hover:bg-yellow-50"
               }`}
               title={
                 flagged.has(question.id)
@@ -1697,7 +1697,7 @@ const AssessmentContent = () => {
 
           {/* Question Content */}
           <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 mb-6">
-            <p className="text-base sm:text-lg font-medium text-[#1F2937] mb-6">
+            <p className="text-base sm:text-lg font-medium text-[var(--color-text-primary)] mb-6">
               {isRTL && question.questionTextAr
                 ? question.questionTextAr
                 : question.questionText}
@@ -1741,7 +1741,7 @@ const AssessmentContent = () => {
                         className={`text-sm ${
                           isSelected
                             ? "text-[#002D87] font-medium"
-                            : "text-[#4B5563]"
+                            : "text-[var(--color-text-secondary)]"
                         }`}
                       >
                         {optionText}
@@ -1793,7 +1793,7 @@ const AssessmentContent = () => {
                         className={`text-sm ${
                           isSelected
                             ? "text-[#002D87] font-medium"
-                            : "text-[#4B5563]"
+                            : "text-[var(--color-text-secondary)]"
                         }`}
                       >
                         {optionText}
@@ -1842,7 +1842,7 @@ const AssessmentContent = () => {
                         className={`text-sm ${
                           isSelected
                             ? "text-[#002D87] font-medium"
-                            : "text-[#4B5563]"
+                            : "text-[var(--color-text-secondary)]"
                         }`}
                       >
                         {optionText}
@@ -1869,7 +1869,7 @@ const AssessmentContent = () => {
                   placeholder={t("assessment.typeAnswer")}
                   className="w-full px-4 py-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
                 />
-                <p className="text-xs text-[#9CA3AF] mt-1 text-end">
+                <p className="text-xs text-[var(--color-text-secondary)] mt-1 text-end">
                   {(answers[question.id] || "").length}/500
                 </p>
               </div>
@@ -1886,7 +1886,7 @@ const AssessmentContent = () => {
                     className="p-1.5 rounded hover:bg-[var(--color-border)] transition-colors"
                     title={t("assessment.bold")}
                   >
-                    <Bold className="w-4 h-4 text-[#4B5563]" />
+                    <Bold className="w-4 h-4 text-[var(--color-text-secondary)]" />
                   </button>
                   <button
                     type="button"
@@ -1894,7 +1894,7 @@ const AssessmentContent = () => {
                     className="p-1.5 rounded hover:bg-[var(--color-border)] transition-colors"
                     title={t("assessment.italic")}
                   >
-                    <Italic className="w-4 h-4 text-[#4B5563]" />
+                    <Italic className="w-4 h-4 text-[var(--color-text-secondary)]" />
                   </button>
                   <button
                     type="button"
@@ -1902,7 +1902,7 @@ const AssessmentContent = () => {
                     className="p-1.5 rounded hover:bg-[var(--color-border)] transition-colors"
                     title={t("assessment.underline")}
                   >
-                    <Underline className="w-4 h-4 text-[#4B5563]" />
+                    <Underline className="w-4 h-4 text-[var(--color-text-secondary)]" />
                   </button>
                   <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
                   <button
@@ -1911,14 +1911,14 @@ const AssessmentContent = () => {
                     className="p-1.5 rounded hover:bg-[var(--color-border)] transition-colors"
                     title={t("assessment.bulletList")}
                   >
-                    <List className="w-4 h-4 text-[#4B5563]" />
+                    <List className="w-4 h-4 text-[var(--color-text-secondary)]" />
                   </button>
                 </div>
                 {/* Editable area */}
                 <div
                   contentEditable
                   suppressContentEditableWarning
-                  className="px-4 py-3 min-h-[180px] text-sm text-[#1F2937] focus:outline-none"
+                  className="px-4 py-3 min-h-[180px] text-sm text-[var(--color-text-primary)] focus:outline-none"
                   dangerouslySetInnerHTML={{
                     __html: answers[question.id] || "",
                   }}
@@ -1938,8 +1938,8 @@ const AssessmentContent = () => {
               <div>
                 {answers[question.id] ? (
                   <div className="flex items-center gap-3 p-4 border border-[var(--color-border)] rounded-lg bg-[#F9FAFB]">
-                    <Paperclip className="w-5 h-5 text-[#6B7280] flex-shrink-0" />
-                    <span className="text-sm text-[#374151] truncate flex-1">
+                    <Paperclip className="w-5 h-5 text-[var(--color-text-secondary)] flex-shrink-0" />
+                    <span className="text-sm text-[var(--color-text-secondary)] truncate flex-1">
                       {t("assessment.fileUploaded")}
                     </span>
                     <button
@@ -1953,13 +1953,13 @@ const AssessmentContent = () => {
                       }
                       className="p-1 hover:bg-gray-200 rounded flex-shrink-0"
                     >
-                      <X className="w-4 h-4 text-[#6B7280]" />
+                      <X className="w-4 h-4 text-[var(--color-text-secondary)]" />
                     </button>
                   </div>
                 ) : (
                   <label className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:bg-[#F9FAFB] hover:border-[#002D87] transition-colors">
-                    <Upload className="w-10 h-10 text-[#9CA3AF]" />
-                    <span className="text-sm text-[#6B7280]">
+                    <Upload className="w-10 h-10 text-[var(--color-text-secondary)]" />
+                    <span className="text-sm text-[var(--color-text-secondary)]">
                       {t("assessment.uploadFile")}
                     </span>
                     <span className="text-xs text-[var(--color-border)]">
@@ -1995,7 +1995,7 @@ const AssessmentContent = () => {
             <button
               onClick={() => setCurrentQuestion((p) => Math.max(0, p - 1))}
               disabled={currentQuestion === 0}
-              className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB] transition-colors disabled:opacity-40"
+              className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors disabled:opacity-40"
             >
               {isRTL ? (
                 <ArrowRight className="w-4 h-4" />
@@ -2013,7 +2013,7 @@ const AssessmentContent = () => {
                       Math.min(totalQuestions - 1, p + 1)
                     )
                   }
-                  className="flex items-center gap-2 px-4 py-2.5 bg-[#1F2937] text-white rounded-lg text-sm hover:bg-[#111827] transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-[var(--color-text-primary)] text-white rounded-lg text-sm hover:bg-[var(--color-text-primary)] transition-colors"
                 >
                   {t("assessment.next")}
                   {isRTL ? (

@@ -81,7 +81,7 @@ const SLAPerformanceWidget = () => {
       <div className="flex items-center justify-between px-5 py-4 border-b border-[#F3F4F6]">
         <div className="flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-[#8B5CF6]" />
-          <h3 className="text-base font-semibold text-[#111827]">
+          <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t("sla.title")}
           </h3>
         </div>
@@ -96,14 +96,14 @@ const SLAPerformanceWidget = () => {
         <div className="grid grid-cols-2 gap-3 mb-5">
           {slaMetrics.map((metric) => (
             <div key={metric.id} className="bg-[#F9FAFB] rounded-lg p-3">
-              <p className="text-[11px] text-[#6B7280] mb-1">{metric.label}</p>
+              <p className="text-[11px] text-[var(--color-text-secondary)] mb-1">{metric.label}</p>
               <div className="flex items-baseline justify-between mb-2">
                 <span
-                  className={`text-lg font-bold ${metric.actualColor || "text-[#111827]"}`}
+                  className={`text-lg font-bold ${metric.actualColor || "text-[var(--color-text-primary)]"}`}
                 >
                   {metric.actual}
                 </span>
-                <span className="text-[11px] text-[#9CA3AF]">
+                <span className="text-[11px] text-[var(--color-text-secondary)]">
                   {metric.target}
                 </span>
               </div>
@@ -119,7 +119,7 @@ const SLAPerformanceWidget = () => {
 
         {/* Agent Performance */}
         <div>
-          <h4 className="text-sm font-semibold text-[#374151] mb-3">
+          <h4 className="text-sm font-semibold text-[var(--color-text-secondary)] mb-3">
             {t("sla.agentPerformance")}
           </h4>
           <div className="space-y-2.5">
@@ -146,10 +146,10 @@ const SLAPerformanceWidget = () => {
 
                 {/* Agent Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-[#111827]">
+                  <p className="text-[13px] font-medium text-[var(--color-text-primary)]">
                     {t(`sla.agents.${agent.nameKey}`)}
                   </p>
-                  <p className="text-[11px] text-[#6B7280]">
+                  <p className="text-[11px] text-[var(--color-text-secondary)]">
                     {t(`sla.agentStatus.${agent.status}`)}
                   </p>
                 </div>
@@ -157,18 +157,18 @@ const SLAPerformanceWidget = () => {
                 {/* Stats */}
                 <div className="flex items-center gap-4 flex-shrink-0">
                   <div className="text-center">
-                    <p className="text-[13px] font-semibold text-[#111827]">
+                    <p className="text-[13px] font-semibold text-[var(--color-text-primary)]">
                       {agent.openTickets}
                     </p>
-                    <p className="text-[10px] text-[#9CA3AF]">
+                    <p className="text-[10px] text-[var(--color-text-secondary)]">
                       {t("sla.open")}
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-[13px] font-semibold text-[#111827]">
+                    <p className="text-[13px] font-semibold text-[var(--color-text-primary)]">
                       {agent.avgResponse}
                     </p>
-                    <p className="text-[10px] text-[#9CA3AF]">
+                    <p className="text-[10px] text-[var(--color-text-secondary)]">
                       {t("sla.avg")}
                     </p>
                   </div>
@@ -176,7 +176,7 @@ const SLAPerformanceWidget = () => {
                     <p className="text-[13px] font-semibold text-[#16A34A]">
                       {agent.csat}%
                     </p>
-                    <p className="text-[10px] text-[#9CA3AF]">
+                    <p className="text-[10px] text-[var(--color-text-secondary)]">
                       {t("sla.csat")}
                     </p>
                   </div>

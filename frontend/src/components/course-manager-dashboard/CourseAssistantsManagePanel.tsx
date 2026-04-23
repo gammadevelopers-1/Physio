@@ -211,7 +211,7 @@ const CourseAssistantsManagePanel = ({
     <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-[#1F2937]">
+        <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
           {t("taManagement.title")}
         </h3>
         {unassignedTAs.length > 0 && (
@@ -251,11 +251,11 @@ const CourseAssistantsManagePanel = ({
       {showDropdown && (
         <div className="mb-4 p-3 bg-[#F9FAFB] rounded-lg border border-[var(--color-border)]">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-[#4B5563]">
+            <p className="text-sm font-medium text-[var(--color-text-secondary)]">
               {t("taManagement.selectTA")}
             </p>
             <button onClick={() => setShowDropdown(false)}>
-              <X className="w-4 h-4 text-[#6B7280]" />
+              <X className="w-4 h-4 text-[var(--color-text-secondary)]" />
             </button>
           </div>
           <div className="space-y-1 max-h-48 overflow-y-auto">
@@ -264,11 +264,11 @@ const CourseAssistantsManagePanel = ({
                 key={ta.id}
                 onClick={() => handleAssign(ta.id)}
                 disabled={assigning}
-                className="w-full flex items-center justify-between px-3 py-2 text-sm text-[#1F2937] hover:bg-white rounded-lg transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-between px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-white rounded-lg transition-colors disabled:opacity-50"
               >
                 <span>
                   {ta.firstName} {ta.lastName}{" "}
-                  <span className="text-[#6B7280]">({ta.email})</span>
+                  <span className="text-[var(--color-text-secondary)]">({ta.email})</span>
                 </span>
                 {assigning && (
                   <Loader2 className="w-4 h-4 animate-spin text-[var(--color-primary-dark)]" />
@@ -285,7 +285,7 @@ const CourseAssistantsManagePanel = ({
           <div className="w-6 h-6 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : sortedTAs.length === 0 ? (
-        <p className="text-sm text-[#6B7280] text-center py-4">
+        <p className="text-sm text-[var(--color-text-secondary)] text-center py-4">
           {t("taManagement.noTAs")}
         </p>
       ) : (
@@ -304,7 +304,7 @@ const CourseAssistantsManagePanel = ({
                         handlePriorityChange(ta.userId, "up")
                       }
                       disabled={ta.priority <= minPriority}
-                      className="p-0.5 text-[#6B7280] hover:text-[var(--color-primary-dark)] disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="p-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-primary-dark)] disabled:opacity-30 disabled:cursor-not-allowed"
                       title={t("taManagement.movePriorityUp")}
                     >
                       <ChevronUp className="w-3.5 h-3.5" />
@@ -314,7 +314,7 @@ const CourseAssistantsManagePanel = ({
                         handlePriorityChange(ta.userId, "down")
                       }
                       disabled={ta.priority >= maxPriority}
-                      className="p-0.5 text-[#6B7280] hover:text-[var(--color-primary-dark)] disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="p-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-primary-dark)] disabled:opacity-30 disabled:cursor-not-allowed"
                       title={t("taManagement.movePriorityDown")}
                     >
                       <ChevronDown className="w-3.5 h-3.5" />
@@ -323,7 +323,7 @@ const CourseAssistantsManagePanel = ({
                 )}
 
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-[#1F2937] truncate">
+                  <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                     {ta.firstName} {ta.lastName}
                     {ta.otherCourseCount > 0 && (
                       <span
@@ -337,7 +337,7 @@ const CourseAssistantsManagePanel = ({
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-[#6B7280] truncate">{ta.email}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)] truncate">{ta.email}</p>
                 </div>
               </div>
 
@@ -386,7 +386,7 @@ const CourseAssistantsManagePanel = ({
                         </button>
                         <button
                           onClick={() => setConfirmRemove(null)}
-                          className="px-2 py-1 text-xs text-[#6B7280] border border-[var(--color-border)] rounded hover:bg-[#F9FAFB]"
+                          className="px-2 py-1 text-xs text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded hover:bg-[#F9FAFB]"
                         >
                           {t("taManagement.cancel")}
                         </button>
@@ -394,7 +394,7 @@ const CourseAssistantsManagePanel = ({
                     ) : (
                       <button
                         onClick={() => setConfirmRemove(ta.userId)}
-                        className="p-1.5 text-[#6B7280] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-[var(--color-text-secondary)] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title={t("taManagement.removeTA")}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -421,10 +421,10 @@ const CourseAssistantsManagePanel = ({
             }}
           />
           <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-[#1F2937] mb-1">
+            <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-1">
               {t("taManagement.rejectTitle")}
             </h3>
-            <p className="text-sm text-[#6B7280] mb-4">
+            <p className="text-sm text-[var(--color-text-secondary)] mb-4">
               {t("taManagement.rejectDesc")}
             </p>
             <textarea
@@ -436,11 +436,11 @@ const CourseAssistantsManagePanel = ({
               }}
               placeholder={t("taManagement.rejectPlaceholder")}
               rows={4}
-              className="w-full px-3 py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none text-[#1F2937] placeholder-[#9CA3AF]"
+              className="w-full px-3 py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)]"
               disabled={rejectingLoading}
             />
             <div className="flex items-center justify-between mt-2 mb-4">
-              <span className="text-xs text-[#9CA3AF]">
+              <span className="text-xs text-[var(--color-text-secondary)]">
                 {rejectionReason.length}/500 {t("taManagement.characters")}
               </span>
             </div>
@@ -451,7 +451,7 @@ const CourseAssistantsManagePanel = ({
                   setRejectionReason("");
                 }}
                 disabled={rejectingLoading}
-                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
               >
                 {t("taManagement.cancel")}
               </button>

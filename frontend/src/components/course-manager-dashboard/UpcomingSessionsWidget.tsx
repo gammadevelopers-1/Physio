@@ -39,7 +39,7 @@ const UpcomingSessionsWidget = ({ sessions }: UpcomingSessionsWidgetProps) => {
           <div className="w-8 h-8 bg-[var(--gold-gold-100)] rounded-lg flex items-center justify-center">
             <Calendar className="w-4 h-4 text-[var(--gold-gold-500)]" />
           </div>
-          <h3 className="text-[15px] font-semibold text-[#1F2937]">
+          <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
             {t("upcomingSessions.title")}
           </h3>
         </div>
@@ -55,12 +55,12 @@ const UpcomingSessionsWidget = ({ sessions }: UpcomingSessionsWidgetProps) => {
         {sessions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8">
             <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
-              <Calendar className="w-6 h-6 text-[#9CA3AF]" />
+              <Calendar className="w-6 h-6 text-[var(--color-text-secondary)]" />
             </div>
-            <h4 className="text-sm font-medium text-[#1F2937] mb-1">
+            <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
               {t("upcomingSessions.noSessions")}
             </h4>
-            <p className="text-xs text-[#6B7280] text-center">
+            <p className="text-xs text-[var(--color-text-secondary)] text-center">
               {t("upcomingSessions.noSessionsDesc")}
             </p>
           </div>
@@ -76,18 +76,18 @@ const UpcomingSessionsWidget = ({ sessions }: UpcomingSessionsWidgetProps) => {
                 }`}
               >
                 {/* Date and Time */}
-                <p className="text-[13px] text-[#6B7280] mb-1">
+                <p className="text-[13px] text-[var(--color-text-secondary)] mb-1">
                   {session.date} - {session.time}
                 </p>
 
                 {/* Session Title */}
-                <h4 className="text-[14px] font-semibold text-[#1F2937] truncate" title={session.title}>
+                <h4 className="text-[14px] font-semibold text-[var(--color-text-primary)] truncate" title={session.title}>
                   {session.title}
                 </h4>
 
                 {/* Course Name */}
                 {session.courseName && (
-                  <p className="text-xs text-[#6B7280] truncate mt-0.5" title={session.courseName}>
+                  <p className="text-xs text-[var(--color-text-secondary)] truncate mt-0.5" title={session.courseName}>
                     {session.courseName}
                   </p>
                 )}
@@ -95,11 +95,11 @@ const UpcomingSessionsWidget = ({ sessions }: UpcomingSessionsWidgetProps) => {
                 {/* Footer */}
                 <div className="flex items-center justify-between mt-2">
                   {session.capacity > 0 ? (
-                    <span className="text-[12px] text-[#6B7280]">
+                    <span className="text-[12px] text-[var(--color-text-secondary)]">
                       {session.enrolled}/{session.capacity} {t("upcomingSessions.enrolled")}
                     </span>
                   ) : (
-                    <span className="text-[12px] text-[#6B7280]">
+                    <span className="text-[12px] text-[var(--color-text-secondary)]">
                       {session.enrolled} {t("upcomingSessions.enrolled")}
                     </span>
                   )}

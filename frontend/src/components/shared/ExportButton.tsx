@@ -96,7 +96,7 @@ const ExportButton = ({ tableType, filters, label = "Export" }: ExportButtonProp
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={exporting}
-        className="inline-flex items-center gap-2 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F3F4F6] transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-2 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] transition-colors disabled:opacity-50"
         aria-label="Export options"
         aria-haspopup="true"
         aria-expanded={isOpen}
@@ -112,21 +112,21 @@ const ExportButton = ({ tableType, filters, label = "Export" }: ExportButtonProp
         <div className="absolute right-0 top-full mt-1 bg-white rounded-lg border border-[var(--color-border)] shadow-lg py-1 z-10 min-w-[120px]" role="menu">
           <button
             onClick={() => handleExport("csv")}
-            className="w-full px-4 py-2 text-left text-sm text-[#374151] hover:bg-[#F3F4F6]"
+            className="w-full px-4 py-2 text-left text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
             role="menuitem"
           >
             CSV
           </button>
           <button
             onClick={() => handleExport("pdf")}
-            className="w-full px-4 py-2 text-left text-sm text-[#374151] hover:bg-[#F3F4F6]"
+            className="w-full px-4 py-2 text-left text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
             role="menuitem"
           >
             PDF
           </button>
           <button
             onClick={() => handleExport("xlsx")}
-            className="w-full px-4 py-2 text-left text-sm text-[#374151] hover:bg-[#F3F4F6]"
+            className="w-full px-4 py-2 text-left text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
             role="menuitem"
           >
             Excel

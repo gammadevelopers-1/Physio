@@ -227,7 +227,7 @@ const CourseManagerDashboardContent = () => {
         <div className="bg-[#F9FAFB] min-h-screen flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin mx-auto mb-3" />
-            <p className="text-sm text-[#6B7280]">{t("dashboard.loading")}</p>
+            <p className="text-sm text-[var(--color-text-secondary)]">{t("dashboard.loading")}</p>
           </div>
         </div>
       </>
@@ -241,7 +241,7 @@ const CourseManagerDashboardContent = () => {
         <div className="bg-[#F9FAFB] min-h-screen flex items-center justify-center">
           <div className="text-center">
             <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
-            <p className="text-sm text-[#6B7280] mb-4">{error}</p>
+            <p className="text-sm text-[var(--color-text-secondary)] mb-4">{error}</p>
             <button
               onClick={refetch}
               className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg"

@@ -85,7 +85,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
               <div className="flex flex-col gap-4 mb-8 md:mb-0 items-start">
                 {heroTitle && (
                   <h1
-                    className="font-semibold text-[#06080B] tracking-[-0.15px] md:tracking-[-0.24px]"
+                    className="font-semibold text-[var(--color-text-primary)] tracking-[-0.15px] md:tracking-[-0.24px]"
                     style={{
                       fontFamily: "var(--typeface-family, 'DM Sans')",
                       fontSize: "30px",
@@ -97,7 +97,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                 )}
                 {heroSubtitle && (
                   <p
-                    className="text-[#06080B]"
+                    className="text-[var(--color-text-primary)]"
                     style={{
                       fontFamily: "var(--typeface-family, 'DM Sans')",
                       fontSize: "18px",
@@ -124,7 +124,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                     <div className="flex flex-col gap-1 md:gap-2 items-start">
                       {strapiData?.generalInquiryLabel && (
                         <h3
-                          className="font-semibold text-[#4A4C4F]"
+                          className="font-semibold text-[var(--color-text-secondary)]"
                           style={{
                             fontFamily: "var(--typeface-family, 'DM Sans')",
                             fontSize: "20px",
@@ -136,7 +136,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                       )}
                       <a
                         href={`mailto:${email}`}
-                        className="text-[#06080B] underline"
+                        className="text-[var(--color-text-primary)] underline"
                         style={{
                           fontFamily: "Roboto, sans-serif",
                           fontSize: "16px",
@@ -160,7 +160,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                     <div className="flex flex-col gap-1 md:gap-2 items-start">
                       {strapiData?.technicalSupportLabel && (
                         <h3
-                          className="font-semibold text-[#4A4C4F]"
+                          className="font-semibold text-[var(--color-text-secondary)]"
                           style={{
                             fontFamily: "var(--typeface-family, 'DM Sans')",
                             fontSize: "20px",
@@ -171,7 +171,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                         </h3>
                       )}
                       <p
-                        className="text-[#06080B]"
+                        className="text-[var(--color-text-primary)]"
                         style={{
                           fontFamily: "Roboto, sans-serif",
                           fontSize: "16px",
@@ -195,7 +195,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                     />
                     <div className="flex flex-col gap-2 md:gap-4 items-start">
                       <h3
-                        className="font-semibold text-[#4A4C4F]"
+                        className="font-semibold text-[var(--color-text-secondary)]"
                         style={{
                           fontFamily: "var(--typeface-family, 'DM Sans')",
                           fontSize: "20px",
@@ -209,7 +209,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                           href={`https://www.google.com/maps?q=${mapLat},${mapLng}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-[#06080B] hover:underline w-fit"
+                          className="flex items-center gap-1 text-[var(--color-text-primary)] hover:underline w-fit"
                           style={{
                             fontFamily: "Roboto, sans-serif",
                             fontSize: "14px",
@@ -246,7 +246,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                   <label
                     className={`flex items-center gap-2 h-6 ${isRTL ? "flex-row-reverse justify-end" : ""}`}
                     style={{
-                      color: "var(--on-surface-default, #06080B)",
+                      color: "var(--on-surface-default, var(--color-text-primary))",
                       fontFamily: "var(--typeface-family, 'DM Sans')",
                       fontSize: "16px",
                       fontWeight: 400,
@@ -275,7 +275,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                   <label
                     className={`flex items-center gap-2 h-6 ${isRTL ? "flex-row-reverse justify-end" : ""}`}
                     style={{
-                      color: "var(--on-surface-default, #06080B)",
+                      color: "var(--on-surface-default, var(--color-text-primary))",
                       fontFamily: "var(--typeface-family, 'DM Sans')",
                       fontSize: "16px",
                       fontWeight: 400,
@@ -310,7 +310,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                   <label
                     className={`flex items-center gap-2 h-6 ${isRTL ? "flex-row-reverse justify-end" : ""}`}
                     style={{
-                      color: "var(--on-surface-default, #06080B)",
+                      color: "var(--on-surface-default, var(--color-text-primary))",
                       fontFamily: "var(--typeface-family, 'DM Sans')",
                       fontSize: "16px",
                       fontWeight: 400,
@@ -383,7 +383,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                   <label
                     className={`flex items-center gap-2 h-6 ${isRTL ? "flex-row-reverse justify-end" : ""}`}
                     style={{
-                      color: "var(--on-surface-default, #06080B)",
+                      color: "var(--on-surface-default, var(--color-text-primary))",
                       fontFamily: "var(--typeface-family, 'DM Sans')",
                       fontSize: "16px",
                       fontWeight: 400,
@@ -400,7 +400,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                         className={`h-full px-3.5 flex items-center gap-1 cursor-pointer ${isRTL ? "border-l border-[var(--color-border-subtle)]" : "border-r border-[var(--color-border-subtle)]"}`}
                       >
                         <span
-                          className="text-[#181d27] text-sm md:text-base"
+                          className="text-[var(--color-text-primary)] text-sm md:text-base"
                           style={{ fontSize: "16px" }}
                         >
                           {formData.countryCode}
@@ -452,7 +452,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                   <label
                     className={`flex items-center gap-2 h-6 ${isRTL ? "flex-row-reverse justify-end" : ""}`}
                     style={{
-                      color: "var(--on-surface-default, #06080B)",
+                      color: "var(--on-surface-default, var(--color-text-primary))",
                       fontFamily: "var(--typeface-family, 'DM Sans')",
                       fontSize: "16px",
                       fontWeight: 400,
@@ -480,7 +480,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                   <label
                     className={`flex items-center gap-2 h-6 ${isRTL ? "flex-row-reverse justify-end" : ""}`}
                     style={{
-                      color: "var(--on-surface-default, #06080B)",
+                      color: "var(--on-surface-default, var(--color-text-primary))",
                       fontFamily: "var(--typeface-family, 'DM Sans')",
                       fontSize: "16px",
                       fontWeight: 400,

@@ -94,16 +94,16 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
 
   return (
     <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-      <h2 className="text-lg font-semibold text-[#1F2937] mb-1">
+      <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-1">
         {t("wizardStep3")}
       </h2>
-      <p className="text-sm text-[#6B7280] mb-4">{t("modulesHint")}</p>
+      <p className="text-sm text-[var(--color-text-secondary)] mb-4">{t("modulesHint")}</p>
 
       {/* Module Form */}
       <div className="border border-[var(--color-border)] rounded-lg p-4 mb-4 bg-[#F9FAFB]">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label htmlFor="module-title" className="block text-sm font-medium text-[#374151] mb-1">
+            <label htmlFor="module-title" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("moduleTitle")} *
             </label>
             <input
@@ -115,7 +115,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
             />
           </div>
           <div>
-            <label htmlFor="module-title-ar" className="block text-sm font-medium text-[#374151] mb-1">
+            <label htmlFor="module-title-ar" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("moduleTitleAr")}
             </label>
             <input
@@ -128,7 +128,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
             />
           </div>
           <div>
-            <label htmlFor="module-type" className="block text-sm font-medium text-[#374151] mb-1">
+            <label htmlFor="module-type" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("moduleType")}
             </label>
             <select
@@ -145,7 +145,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("moduleDuration")}
             </label>
             <div className="flex items-center gap-2">
@@ -164,7 +164,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
                   placeholder="1"
                   className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                 />
-                <span className="text-xs text-[#9CA3AF] mt-0.5 block">{t("hours")}</span>
+                <span className="text-xs text-[var(--color-text-secondary)] mt-0.5 block">{t("hours")}</span>
               </div>
               <div className="flex-1">
                 <input
@@ -182,7 +182,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
                   placeholder="30"
                   className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                 />
-                <span className="text-xs text-[#9CA3AF] mt-0.5 block">{t("minutes")}</span>
+                <span className="text-xs text-[var(--color-text-secondary)] mt-0.5 block">{t("minutes")}</span>
               </div>
             </div>
           </div>
@@ -192,7 +192,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
             <button
               type="button"
               onClick={handleCancelEdit}
-              className="px-4 py-2 text-sm text-[#6B7280] hover:text-[#1F2937] transition-colors"
+              className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
             >
               {t("cancel")}
             </button>
@@ -211,7 +211,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
 
       {/* Module List */}
       {state.modules.length === 0 ? (
-        <div className="text-center py-8 text-sm text-[#9CA3AF]">
+        <div className="text-center py-8 text-sm text-[var(--color-text-secondary)]">
           {t("noModulesAdded")}
         </div>
       ) : (
@@ -225,15 +225,15 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
                   : "border-[var(--color-border)]"
               }`}
             >
-              <span className="text-sm font-medium text-[#9CA3AF] w-6 text-center">
+              <span className="text-sm font-medium text-[var(--color-text-secondary)] w-6 text-center">
                 {idx + 1}
               </span>
-              <span className="text-[#6B7280]">{typeIcons[mod.type]}</span>
+              <span className="text-[var(--color-text-secondary)]">{typeIcons[mod.type]}</span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#1F2937] truncate">
+                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                   {mod.title}
                 </p>
-                <p className="text-xs text-[#6B7280]">
+                <p className="text-xs text-[var(--color-text-secondary)]">
                   {t(`moduleTypes.${mod.type}`)}
                   {mod.durationMinutes ? ` \u00B7 ${Math.floor(Number(mod.durationMinutes) / 60) > 0 ? `${Math.floor(Number(mod.durationMinutes) / 60)}h ` : ""}${Number(mod.durationMinutes) % 60}m` : ""}
                 </p>
@@ -243,7 +243,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
                   type="button"
                   onClick={() => handleReorder(idx, "up")}
                   disabled={idx === 0}
-                  className="p-1 text-[#9CA3AF] hover:text-[#1F2937] disabled:opacity-30"
+                  className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-30"
                 >
                   <ChevronUp className="w-4 h-4" />
                 </button>
@@ -251,21 +251,21 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
                   type="button"
                   onClick={() => handleReorder(idx, "down")}
                   disabled={idx === state.modules.length - 1}
-                  className="p-1 text-[#9CA3AF] hover:text-[#1F2937] disabled:opacity-30"
+                  className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-30"
                 >
                   <ChevronDown className="w-4 h-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => handleEdit(mod)}
-                  className="p-1 text-[#6B7280] hover:text-[#3B82F6]"
+                  className="p-1 text-[var(--color-text-secondary)] hover:text-[#3B82F6]"
                 >
                   <Pencil className="w-4 h-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => dispatch({ type: "REMOVE_MODULE", tempId: mod.tempId })}
-                  className="p-1 text-[#6B7280] hover:text-[#EF4444]"
+                  className="p-1 text-[var(--color-text-secondary)] hover:text-[#EF4444]"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

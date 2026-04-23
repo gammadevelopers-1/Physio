@@ -234,10 +234,10 @@ const SettingsContent = () => {
 
             <div className="flex-1 min-w-0 space-y-6">
               <div>
-                <h1 className="text-xl md:text-2xl font-bold text-[#1F2937]">
+                <h1 className="text-xl md:text-2xl font-bold text-[var(--color-text-primary)]">
                   {t("settingsPage.title")}
                 </h1>
-                <p className="text-sm text-[#6B7280] mt-1">{t("settingsPage.subtitle")}</p>
+                <p className="text-sm text-[var(--color-text-secondary)] mt-1">{t("settingsPage.subtitle")}</p>
               </div>
 
               {/* Tabs */}
@@ -250,7 +250,7 @@ const SettingsContent = () => {
                       className={`px-5 py-3 text-sm font-medium relative transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                         activeTab === tab.id
                           ? "text-[#3B82F6]"
-                          : "text-[#6B7280] hover:text-[#374151]"
+                          : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                       }`}
                     >
                       <tab.icon className="w-4 h-4" />
@@ -281,7 +281,7 @@ const SettingsContent = () => {
                               />
                             </div>
                           ) : (
-                            <div className="w-24 h-24 rounded-full bg-[var(--color-border)] flex items-center justify-center text-2xl font-bold text-[#4B5563]">
+                            <div className="w-24 h-24 rounded-full bg-[var(--color-border)] flex items-center justify-center text-2xl font-bold text-[var(--color-text-secondary)]">
                               {initials}
                             </div>
                           )}
@@ -303,9 +303,9 @@ const SettingsContent = () => {
                               <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`}>
                                 <button
                                   onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
                                 >
-                                  <Upload className="w-4 h-4 text-[#4B5563]" />
+                                  <Upload className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                   {t("settingsPage.uploadPhoto")}
                                 </button>
                                 {user?.avatar && (
@@ -322,23 +322,23 @@ const SettingsContent = () => {
                           </div>
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-[#1F2937]">
+                          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                             {isRTL && (profileData.firstNameAr || profileData.lastNameAr)
                               ? `${profileData.firstNameAr} ${profileData.lastNameAr}`.trim()
                               : `${profileData.firstName} ${profileData.lastName}`.trim()}
                           </h3>
-                          <p className="text-sm text-[#6B7280]">{profileData.email}</p>
+                          <p className="text-sm text-[var(--color-text-secondary)]">{profileData.email}</p>
                         </div>
                       </div>
 
                       {/* Personal Information */}
                       <div>
-                        <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
+                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">
                           {t("settingsPage.profile.personalInfo")}
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label htmlFor="cm-first-name" className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="cm-first-name" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                               {t("settingsPage.profile.firstName")}
                             </label>
                             <input
@@ -352,7 +352,7 @@ const SettingsContent = () => {
                             />
                           </div>
                           <div>
-                            <label htmlFor="cm-last-name" className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="cm-last-name" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                               {t("settingsPage.profile.lastName")}
                             </label>
                             <input
@@ -366,7 +366,7 @@ const SettingsContent = () => {
                             />
                           </div>
                           <div>
-                            <label htmlFor="cm-first-name-ar" className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="cm-first-name-ar" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                               {t("settingsPage.profile.firstNameAr")}
                             </label>
                             <input
@@ -381,7 +381,7 @@ const SettingsContent = () => {
                             />
                           </div>
                           <div>
-                            <label htmlFor="cm-last-name-ar" className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="cm-last-name-ar" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                               {t("settingsPage.profile.lastNameAr")}
                             </label>
                             <input
@@ -396,29 +396,29 @@ const SettingsContent = () => {
                             />
                           </div>
                           <div>
-                            <label htmlFor="cm-email" className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="cm-email" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                               {t("settingsPage.profile.email")}
                             </label>
                             <div className="relative">
                               <Mail
-                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
                                 id="cm-email"
                                 type="email"
                                 value={profileData.email}
                                 disabled
-                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-[#F9FAFB] text-[var(--color-text-secondary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                               />
                             </div>
                           </div>
                           <div>
-                            <label htmlFor="cm-phone" className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="cm-phone" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                               {t("settingsPage.profile.phone")}
                             </label>
                             <div className="relative">
                               <Phone
-                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
                                 id="cm-phone"
@@ -436,13 +436,13 @@ const SettingsContent = () => {
 
                       {/* Language Section */}
                       <div className="pt-6 border-t border-[var(--color-border)]">
-                        <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
+                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">
                           {t("settingsPage.preferences.language")}
                         </h4>
                         <div className="max-w-xs">
                           <div className="relative">
                             <Globe
-                              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                             />
                             <select
                               id="cm-language"
@@ -463,7 +463,7 @@ const SettingsContent = () => {
 
                       {/* Calendar Preference */}
                       <div className="pt-4 border-t border-[var(--color-border)]">
-                        <h4 className="text-sm font-semibold text-[#1F2937] mb-3">
+                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
                           {t("settingsPage.profile.calendarType") || "Calendar Type"}
                         </h4>
                         <div className="flex items-center gap-2">
@@ -473,7 +473,7 @@ const SettingsContent = () => {
                             className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                               calendarFormat === "gregorian"
                                 ? "bg-[#002D87] text-white border-[#002D87]"
-                                : "bg-white text-[#374151] border-[var(--color-border)] hover:bg-[#F9FAFB]"
+                                : "bg-white text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[#F9FAFB]"
                             }`}
                           >
                             {t("settingsPage.profile.gregorian") || "Gregorian"} (ميلادي)
@@ -484,13 +484,13 @@ const SettingsContent = () => {
                             className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                               calendarFormat === "hijri"
                                 ? "bg-[#002D87] text-white border-[#002D87]"
-                                : "bg-white text-[#374151] border-[var(--color-border)] hover:bg-[#F9FAFB]"
+                                : "bg-white text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[#F9FAFB]"
                             }`}
                           >
                             {t("settingsPage.profile.hijri") || "Hijri"} (هجري)
                           </button>
                         </div>
-                        <p className="text-xs text-[#6B7280] mt-1.5">
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-1.5">
                           {t("settingsPage.profile.calendarTypeDesc") || "Applies to all dates across the system"}
                         </p>
                       </div>
@@ -518,17 +518,17 @@ const SettingsContent = () => {
                     <div className="space-y-6">
                       {/* Change Password */}
                       <div>
-                        <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
+                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">
                           {t("settingsPage.security.changePassword")}
                         </h4>
                         <div className="space-y-4 max-w-md">
                           <div>
-                            <label htmlFor="cm-current-password" className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="cm-current-password" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                               {t("settingsPage.security.currentPassword")}
                             </label>
                             <div className="relative">
                               <Key
-                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
                                 id="cm-current-password"
@@ -541,7 +541,7 @@ const SettingsContent = () => {
                               <button
                                 type="button"
                                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                className={`absolute top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B7280] ${isRTL ? "left-3" : "right-3"}`}
+                                className={`absolute top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] ${isRTL ? "left-3" : "right-3"}`}
                               >
                                 {showCurrentPassword ? (
                                   <EyeOff className="w-4 h-4" />
@@ -552,12 +552,12 @@ const SettingsContent = () => {
                             </div>
                           </div>
                           <div>
-                            <label htmlFor="cm-new-password" className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="cm-new-password" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                               {t("settingsPage.security.newPassword")}
                             </label>
                             <div className="relative">
                               <Key
-                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
                                 id="cm-new-password"
@@ -570,7 +570,7 @@ const SettingsContent = () => {
                               <button
                                 type="button"
                                 onClick={() => setShowNewPassword(!showNewPassword)}
-                                className={`absolute top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B7280] ${isRTL ? "left-3" : "right-3"}`}
+                                className={`absolute top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] ${isRTL ? "left-3" : "right-3"}`}
                               >
                                 {showNewPassword ? (
                                   <EyeOff className="w-4 h-4" />
@@ -629,10 +629,10 @@ const SettingsContent = () => {
                           {/* Email Notifications Toggle */}
                           <div className="flex items-center justify-between py-2">
                             <div>
-                              <span className="text-sm font-medium text-[#374151]">
+                              <span className="text-sm font-medium text-[var(--color-text-secondary)]">
                                 {t("settingsPage.notifications.email")}
                               </span>
-                              <p className="text-xs text-[#6B7280]">
+                              <p className="text-xs text-[var(--color-text-secondary)]">
                                 {t("settingsPage.notifications.emailDesc")}
                               </p>
                             </div>
@@ -659,10 +659,10 @@ const SettingsContent = () => {
                           {/* In-app Notifications Toggle */}
                           <div className="flex items-center justify-between py-2 pt-6 border-t border-[var(--color-border)]">
                             <div>
-                              <span className="text-sm font-medium text-[#374151]">
+                              <span className="text-sm font-medium text-[var(--color-text-secondary)]">
                                 {t("settingsPage.notifications.push")}
                               </span>
-                              <p className="text-xs text-[#6B7280]">
+                              <p className="text-xs text-[var(--color-text-secondary)]">
                                 {t("settingsPage.notifications.pushDesc")}
                               </p>
                             </div>

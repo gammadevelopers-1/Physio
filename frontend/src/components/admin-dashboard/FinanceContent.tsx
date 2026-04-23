@@ -102,7 +102,7 @@ const FinanceContent = () => {
       case "failed":
         return "bg-[#FEE2E2] text-[#DC2626]";
       default:
-        return "bg-[#F3F4F6] text-[#6B7280]";
+        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -130,10 +130,10 @@ const FinanceContent = () => {
               {/* Page Header */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
+                  <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
                     {t("financePage.title")}
                   </h1>
-                  <p className="text-sm text-[#6B7280] mt-1">
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                     {t("financePage.subtitle")}
                   </p>
                 </div>
@@ -141,14 +141,14 @@ const FinanceContent = () => {
                   <select
                     value={dateRange}
                     onChange={(e) => setDateRange(e.target.value)}
-                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
+                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
                   >
                     <option value="today">{t("financePage.dateRange.today")}</option>
                     <option value="week">{t("financePage.dateRange.week")}</option>
                     <option value="mtd">{t("financePage.dateRange.mtd")}</option>
                     <option value="ytd">{t("financePage.dateRange.ytd")}</option>
                   </select>
-                  <button className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB] transition-colors">
+                  <button className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors">
                     <Download className="w-4 h-4" />
                     {t("financePage.export")}
                   </button>
@@ -171,10 +171,10 @@ const FinanceContent = () => {
                       <span className="text-sm font-medium">{Math.abs(stats.grossTrend)}%</span>
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-[#1F2937]">
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">
                     {(stats.grossRevenue / 1000).toFixed(0)}K
                   </p>
-                  <p className="text-sm text-[#6B7280]">{t("financePage.stats.gross")}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{t("financePage.stats.gross")}</p>
                 </div>
 
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
@@ -191,10 +191,10 @@ const FinanceContent = () => {
                       <span className="text-sm font-medium">{Math.abs(stats.netTrend)}%</span>
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-[#1F2937]">
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">
                     {(stats.netRevenue / 1000).toFixed(0)}K
                   </p>
-                  <p className="text-sm text-[#6B7280]">{t("financePage.stats.net")}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{t("financePage.stats.net")}</p>
                 </div>
 
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
@@ -211,10 +211,10 @@ const FinanceContent = () => {
                       <span className="text-sm font-medium">{Math.abs(stats.refundTrend)}%</span>
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-[#1F2937]">
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">
                     {(stats.refunds / 1000).toFixed(0)}K
                   </p>
-                  <p className="text-sm text-[#6B7280]">{t("financePage.stats.refunds")}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{t("financePage.stats.refunds")}</p>
                 </div>
 
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
@@ -231,33 +231,33 @@ const FinanceContent = () => {
                       <span className="text-sm font-medium">{Math.abs(stats.aovTrend)}%</span>
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-[#1F2937]">
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">
                     {stats.avgOrderValue.toLocaleString()}
                   </p>
-                  <p className="text-sm text-[#6B7280]">{t("financePage.stats.aov")}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{t("financePage.stats.aov")}</p>
                 </div>
               </div>
 
               {/* Gateway Breakdown */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 <div className="lg:col-span-2 bg-white rounded-xl border border-[var(--color-border)] p-5">
-                  <h3 className="text-lg font-semibold text-[#1F2937] mb-4">
+                  <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("financePage.revenueChart")}
                   </h3>
                   <div className="h-48 bg-[#F9FAFB] rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-12 h-12 text-[#9CA3AF]" />
+                    <TrendingUp className="w-12 h-12 text-[var(--color-text-secondary)]" />
                   </div>
                 </div>
 
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
-                  <h3 className="text-lg font-semibold text-[#1F2937] mb-4">
+                  <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("financePage.gatewayBreakdown")}
                   </h3>
                   <div className="space-y-4">
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-[#4B5563]">Tap/Moyasar</span>
-                        <span className="text-sm font-medium text-[#1F2937]">72%</span>
+                        <span className="text-sm text-[var(--color-text-secondary)]">Tap/Moyasar</span>
+                        <span className="text-sm font-medium text-[var(--color-text-primary)]">72%</span>
                       </div>
                       <div className="h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                         <div className="h-full bg-[#3B82F6] rounded-full" style={{ width: "72%" }} />
@@ -265,8 +265,8 @@ const FinanceContent = () => {
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-[#4B5563]">BNPL (Tamara)</span>
-                        <span className="text-sm font-medium text-[#1F2937]">28%</span>
+                        <span className="text-sm text-[var(--color-text-secondary)]">BNPL (Tamara)</span>
+                        <span className="text-sm font-medium text-[var(--color-text-primary)]">28%</span>
                       </div>
                       <div className="h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                         <div className="h-full bg-[#8B5CF6] rounded-full" style={{ width: "28%" }} />
@@ -280,13 +280,13 @@ const FinanceContent = () => {
               <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                 <div className="p-5 border-b border-[var(--color-border)]">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-[#1F2937]">
+                    <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                       {t("financePage.recentTransactions")}
                     </h3>
                     <select
                       value={transactionFilter}
                       onChange={(e) => setTransactionFilter(e.target.value)}
-                      className="h-9 px-3 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
+                      className="h-9 px-3 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
                     >
                       <option value="all">{t("financePage.filters.all")}</option>
                       <option value="payment">{t("financePage.filters.payments")}</option>
@@ -299,22 +299,22 @@ const FinanceContent = () => {
                   <table className="w-full">
                     <thead className="bg-[#F9FAFB]">
                       <tr>
-                        <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                           {t("financePage.table.date")}
                         </th>
-                        <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                           {t("financePage.table.description")}
                         </th>
-                        <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                           {t("financePage.table.user")}
                         </th>
-                        <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                           {t("financePage.table.gateway")}
                         </th>
-                        <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                           {t("financePage.table.status")}
                         </th>
-                        <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                           {t("financePage.table.amount")}
                         </th>
                       </tr>
@@ -325,10 +325,10 @@ const FinanceContent = () => {
                           key={tx.id}
                           className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]"
                         >
-                          <td className="px-4 py-4 text-sm text-[#6B7280]">{tx.date}</td>
-                          <td className="px-4 py-4 text-sm text-[#1F2937]">{tx.description}</td>
-                          <td className="px-4 py-4 text-sm text-[#6B7280]">{tx.user}</td>
-                          <td className="px-4 py-4 text-sm text-[#6B7280]">{tx.gateway}</td>
+                          <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)]">{tx.date}</td>
+                          <td className="px-4 py-4 text-sm text-[var(--color-text-primary)]">{tx.description}</td>
+                          <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)]">{tx.user}</td>
+                          <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)]">{tx.gateway}</td>
                           <td className="px-4 py-4">
                             <span
                               className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusBadgeStyle(tx.status)}`}

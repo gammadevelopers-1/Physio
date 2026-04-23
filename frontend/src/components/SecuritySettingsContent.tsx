@@ -44,7 +44,7 @@ export default function SecuritySettingsContent() {
       {/* Back button */}
       <button
         onClick={() => router.back()}
-        className="inline-flex items-center gap-1.5 text-[var(--color-text-secondary)] hover:text-[#1a1a1a] transition-colors mb-6"
+        className="inline-flex items-center gap-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors mb-6"
         style={{ fontSize: "14px" }}
       >
         <ArrowLeft className="w-4 h-4" />

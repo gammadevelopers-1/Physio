@@ -40,7 +40,7 @@ const FinanceSummaryWidget = ({ data }: FinanceSummaryWidgetProps) => {
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <DollarSign className="w-5 h-5 text-[#002D87]" />
-          <h3 className="text-lg font-semibold text-[#1F2937]">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("finance.title")}
           </h3>
         </div>
@@ -56,18 +56,18 @@ const FinanceSummaryWidget = ({ data }: FinanceSummaryWidgetProps) => {
       {/* Revenue Cards */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="text-center">
-          <p className="text-3xl font-bold text-[#1F2937]">
+          <p className="text-3xl font-bold text-[var(--color-text-primary)]">
             {formatCurrency(data.grossRevenue)}
           </p>
-          <p className="text-sm text-[#6B7280]">
+          <p className="text-sm text-[var(--color-text-secondary)]">
             {t("finance.gross")} ({t("finance.sar")})
           </p>
         </div>
         <div className="text-center">
-          <p className="text-3xl font-bold text-[#1F2937]">
+          <p className="text-3xl font-bold text-[var(--color-text-primary)]">
             {formatCurrency(data.netRevenue)}
           </p>
-          <p className="text-sm text-[#6B7280]">
+          <p className="text-sm text-[var(--color-text-secondary)]">
             {t("finance.net")} ({t("finance.sar")})
           </p>
         </div>
@@ -75,7 +75,7 @@ const FinanceSummaryWidget = ({ data }: FinanceSummaryWidgetProps) => {
 
       {/* Gateway Breakdown */}
       <div className="mb-4">
-        <h4 className="text-sm font-semibold text-[#6B7280] uppercase mb-3">
+        <h4 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase mb-3">
           {t("finance.byGateway")}
         </h4>
         <div className="space-y-2">
@@ -84,8 +84,8 @@ const FinanceSummaryWidget = ({ data }: FinanceSummaryWidgetProps) => {
               key={gateway.name}
               className="flex items-center justify-between"
             >
-              <span className="text-sm text-[#4B5563]">{gateway.name}</span>
-              <span className="text-sm font-medium text-[#1F2937]">
+              <span className="text-sm text-[var(--color-text-secondary)]">{gateway.name}</span>
+              <span className="text-sm font-medium text-[var(--color-text-primary)]">
                 {gateway.percentage}%
               </span>
             </div>
@@ -97,7 +97,7 @@ const FinanceSummaryWidget = ({ data }: FinanceSummaryWidgetProps) => {
       <div className="pt-4 border-t border-[var(--color-border)]">
         <div className="grid grid-cols-2 gap-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-[#4B5563]">
+            <span className="text-sm text-[var(--color-text-secondary)]">
               {t("finance.refundRate")}
             </span>
             <span
@@ -107,7 +107,7 @@ const FinanceSummaryWidget = ({ data }: FinanceSummaryWidgetProps) => {
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-[#4B5563]">
+            <span className="text-sm text-[var(--color-text-secondary)]">
               {t("finance.chargebackRate")}
             </span>
             <span

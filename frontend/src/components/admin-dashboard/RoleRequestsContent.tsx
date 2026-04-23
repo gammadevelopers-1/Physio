@@ -130,10 +130,10 @@ const RoleRequestsContent = () => {
         <div className="flex-1 p-4 lg:p-8" dir={isRTL ? "rtl" : "ltr"}>
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-[#1F2937]">
+            <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
               {t("roleRequestsPage.title") || "Role Requests"}
             </h1>
-            <p className="text-sm text-[#6B7280] mt-1">
+            <p className="text-sm text-[var(--color-text-secondary)] mt-1">
               {t("roleRequestsPage.subtitle") || "Review and manage instructor role applications"}
             </p>
           </div>
@@ -141,20 +141,20 @@ const RoleRequestsContent = () => {
           {/* Stats Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
             <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
-              <p className="text-2xl font-bold text-[#1F2937]">{stats.total}</p>
-              <p className="text-sm text-[#6B7280]">{t("roleRequestsPage.stats.total") || "Total"}</p>
+              <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.total}</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">{t("roleRequestsPage.stats.total") || "Total"}</p>
             </div>
             <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-2xl font-bold text-[#D97706]">{stats.pending}</p>
-              <p className="text-sm text-[#6B7280]">{t("roleRequestsPage.stats.pending") || "Pending"}</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">{t("roleRequestsPage.stats.pending") || "Pending"}</p>
             </div>
             <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-2xl font-bold text-[#16A34A]">{stats.approved}</p>
-              <p className="text-sm text-[#6B7280]">{t("roleRequestsPage.stats.approved") || "Approved"}</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">{t("roleRequestsPage.stats.approved") || "Approved"}</p>
             </div>
             <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-2xl font-bold text-[#DC2626]">{stats.rejected}</p>
-              <p className="text-sm text-[#6B7280]">{t("roleRequestsPage.stats.rejected") || "Rejected"}</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">{t("roleRequestsPage.stats.rejected") || "Rejected"}</p>
             </div>
           </div>
 
@@ -162,7 +162,7 @@ const RoleRequestsContent = () => {
           <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
-                <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`} />
+                <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`} />
                 <input
                   type="text"
                   placeholder={t("roleRequestsPage.searchPlaceholder") || "Search by name or email..."}
@@ -201,7 +201,7 @@ const RoleRequestsContent = () => {
             ) : requests.length === 0 ? (
               <div className="text-center py-16">
                 <FileText className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
-                <p className="text-sm text-[#6B7280]">{t("roleRequestsPage.noResults") || "No role requests found"}</p>
+                <p className="text-sm text-[var(--color-text-secondary)]">{t("roleRequestsPage.noResults") || "No role requests found"}</p>
               </div>
             ) : (
               <>
@@ -210,22 +210,22 @@ const RoleRequestsContent = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
-                        <th className="text-start px-4 py-3 text-xs font-medium text-[#6B7280] uppercase tracking-wider">
+                        <th className="text-start px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
                           {t("roleRequestsPage.colApplicant") || "Applicant"}
                         </th>
-                        <th className="text-start px-4 py-3 text-xs font-medium text-[#6B7280] uppercase tracking-wider">
+                        <th className="text-start px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
                           {t("roleRequestsPage.colEmail") || "Email"}
                         </th>
-                        <th className="text-start px-4 py-3 text-xs font-medium text-[#6B7280] uppercase tracking-wider">
+                        <th className="text-start px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
                           {t("roleRequestsPage.colRole") || "Role"}
                         </th>
-                        <th className="text-start px-4 py-3 text-xs font-medium text-[#6B7280] uppercase tracking-wider">
+                        <th className="text-start px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
                           {t("roleRequestsPage.colStatus") || "Status"}
                         </th>
-                        <th className="text-start px-4 py-3 text-xs font-medium text-[#6B7280] uppercase tracking-wider">
+                        <th className="text-start px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
                           {t("roleRequestsPage.colSubmitted") || "Submitted"}
                         </th>
-                        <th className="text-start px-4 py-3 text-xs font-medium text-[#6B7280] uppercase tracking-wider">
+                        <th className="text-start px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
                           {t("roleRequestsPage.colActions") || "Actions"}
                         </th>
                       </tr>
@@ -242,13 +242,13 @@ const RoleRequestsContent = () => {
                             className="border-b border-[var(--color-border)] hover:bg-[#F9FAFB] transition-colors cursor-pointer"
                           >
                             <td className="px-4 py-3">
-                              <p className="text-sm font-medium text-[#1F2937]">{getApplicantName(request)}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-primary)]">{getApplicantName(request)}</p>
                             </td>
                             <td className="px-4 py-3">
-                              <p className="text-sm text-[#6B7280]">{request.user?.email || "-"}</p>
+                              <p className="text-sm text-[var(--color-text-secondary)]">{request.user?.email || "-"}</p>
                             </td>
                             <td className="px-4 py-3">
-                              <span className="text-sm text-[#6B7280]">{request.requestedRole}</span>
+                              <span className="text-sm text-[var(--color-text-secondary)]">{request.requestedRole}</span>
                             </td>
                             <td className="px-4 py-3">
                               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${config.badgeBg} ${config.badgeText}`}>
@@ -257,7 +257,7 @@ const RoleRequestsContent = () => {
                               </span>
                             </td>
                             <td className="px-4 py-3">
-                              <p className="text-sm text-[#6B7280]">{formatDate(request.createdAt)}</p>
+                              <p className="text-sm text-[var(--color-text-secondary)]">{formatDate(request.createdAt)}</p>
                             </td>
                             <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                               <Link
@@ -289,15 +289,15 @@ const RoleRequestsContent = () => {
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-[#1F2937] truncate">{getApplicantName(request)}</p>
-                            <p className="text-xs text-[#6B7280] truncate">{request.user?.email}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{getApplicantName(request)}</p>
+                            <p className="text-xs text-[var(--color-text-secondary)] truncate">{request.user?.email}</p>
                           </div>
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 ${config.badgeBg} ${config.badgeText}`}>
                             <StatusIcon className="w-3 h-3" />
                             {request.status}
                           </span>
                         </div>
-                        <p className="text-xs text-[#9CA3AF] mt-2">{formatDate(request.createdAt)}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-2">{formatDate(request.createdAt)}</p>
                       </Link>
                     );
                   })}
@@ -306,7 +306,7 @@ const RoleRequestsContent = () => {
                 {/* Pagination */}
                 {pagination.totalPages > 1 && (
                   <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--color-border)]">
-                    <p className="text-sm text-[#6B7280]">
+                    <p className="text-sm text-[var(--color-text-secondary)]">
                       {t("roleRequestsPage.showing") || "Showing"} {(currentPage - 1) * 10 + 1}-{Math.min(currentPage * 10, pagination.total)} {t("roleRequestsPage.of") || "of"} {pagination.total}
                     </p>
                     <div className="flex items-center gap-1">
@@ -319,7 +319,7 @@ const RoleRequestsContent = () => {
                       </button>
                       {getPageNumbers().map((page, i) =>
                         typeof page === "string" ? (
-                          <span key={`ellipsis-${i}`} className="px-2 text-sm text-[#9CA3AF]">...</span>
+                          <span key={`ellipsis-${i}`} className="px-2 text-sm text-[var(--color-text-secondary)]">...</span>
                         ) : (
                           <button
                             key={page}
@@ -327,7 +327,7 @@ const RoleRequestsContent = () => {
                             className={`w-8 h-8 rounded-lg text-sm font-medium ${
                               page === currentPage
                                 ? "bg-[#002D87] text-white"
-                                : "text-[#6B7280] hover:bg-[#F9FAFB]"
+                                : "text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
                             }`}
                           >
                             {page}

@@ -73,7 +73,7 @@ const InvoicesContent = () => {
       case "cancelled":
         return "text-[#DC2626]";
       default:
-        return "text-[#6B7280]";
+        return "text-[var(--color-text-secondary)]";
     }
   };
 
@@ -102,7 +102,7 @@ const InvoicesContent = () => {
             <div className="flex-1 min-w-0">
               {/* Page Title */}
               <h1
-                className={`text-xl sm:text-2xl font-bold text-[#1F2937] mb-4 sm:mb-6 ${isRTL ? "text-right" : ""}`}
+                className={`text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] mb-4 sm:mb-6 ${isRTL ? "text-right" : ""}`}
               >
                 {t("invoices.title")}
               </h1>
@@ -114,12 +114,12 @@ const InvoicesContent = () => {
                   // Empty State
                   <div className="flex flex-col items-center justify-center py-10 sm:py-16">
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3 sm:mb-4">
-                      <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-[#9CA3AF]" />
+                      <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--color-text-secondary)]" />
                     </div>
-                    <h3 className="text-sm sm:text-base font-medium text-[#1F2937] mb-1">
+                    <h3 className="text-sm sm:text-base font-medium text-[var(--color-text-primary)] mb-1">
                       {t("invoices.noInvoicesTitle")}
                     </h3>
-                    <p className="text-xs sm:text-sm text-[#6B7280] text-center px-4">
+                    <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] text-center px-4">
                       {t("invoices.noInvoicesDescription")}
                     </p>
                   </div>
@@ -134,22 +134,22 @@ const InvoicesContent = () => {
                       <thead>
                         <tr className="border-b border-[var(--color-border)]">
                           <th
-                            className={`py-3 px-4 text-xs font-medium text-[#6B7280] ${isRTL ? "text-right" : "text-left"}`}
+                            className={`py-3 px-4 text-xs font-medium text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}
                           >
                             {t("invoices.invoiceNo")}
                           </th>
                           <th
-                            className={`py-3 px-4 text-xs font-medium text-[#6B7280] ${isRTL ? "text-right" : "text-left"}`}
+                            className={`py-3 px-4 text-xs font-medium text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}
                           >
                             {t("invoices.amount")}
                           </th>
                           <th
-                            className={`py-3 px-4 text-xs font-medium text-[#6B7280] ${isRTL ? "text-right" : "text-left"}`}
+                            className={`py-3 px-4 text-xs font-medium text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}
                           >
                             {t("invoices.date")}
                           </th>
                           <th
-                            className={`py-3 px-4 text-xs font-medium text-[#6B7280] ${isRTL ? "text-right" : "text-left"}`}
+                            className={`py-3 px-4 text-xs font-medium text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}
                           >
                             {t("invoices.status")}
                           </th>
@@ -163,17 +163,17 @@ const InvoicesContent = () => {
                             className="border-b border-[var(--color-border)] last:border-b-0 hover:bg-[#F9FAFB] transition-colors"
                           >
                             <td
-                              className={`py-4 px-4 text-sm text-[#1F2937] ${isRTL ? "text-right" : "text-left"}`}
+                              className={`py-4 px-4 text-sm text-[var(--color-text-primary)] ${isRTL ? "text-right" : "text-left"}`}
                             >
                               {invoice.invoiceNo}
                             </td>
                             <td
-                              className={`py-4 px-4 text-sm text-[#1F2937] ${isRTL ? "text-right" : "text-left"}`}
+                              className={`py-4 px-4 text-sm text-[var(--color-text-primary)] ${isRTL ? "text-right" : "text-left"}`}
                             >
                               {invoice.amount.toFixed(2)}
                             </td>
                             <td
-                              className={`py-4 px-4 text-sm text-[#1F2937] ${isRTL ? "text-right" : "text-left"}`}
+                              className={`py-4 px-4 text-sm text-[var(--color-text-primary)] ${isRTL ? "text-right" : "text-left"}`}
                             >
                               {invoice.date}
                             </td>
@@ -193,20 +193,20 @@ const InvoicesContent = () => {
                                 className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
                                 aria-label={t("invoices.moreOptions")}
                               >
-                                <MoreVertical className="w-5 h-5 text-[#6B7280]" />
+                                <MoreVertical className="w-5 h-5 text-[var(--color-text-secondary)]" />
                               </button>
                               {openMenuId === invoice.id && (
                                 <div
                                   className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                 >
                                   <button
-                                    className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                    className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                                     onClick={() => setOpenMenuId(null)}
                                   >
                                     {t("invoices.viewInvoice")}
                                   </button>
                                   <button
-                                    className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                    className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                                     onClick={() => setOpenMenuId(null)}
                                   >
                                     {t("invoices.downloadInvoice")}
@@ -228,7 +228,7 @@ const InvoicesContent = () => {
                           dir={isRTL ? "rtl" : "ltr"}
                         >
                           <div className="flex items-center justify-between mb-3">
-                            <span className="text-sm font-medium text-[#1F2937]">
+                            <span className="text-sm font-medium text-[var(--color-text-primary)]">
                               {invoice.invoiceNo}
                             </span>
                             <div className="relative">
@@ -237,20 +237,20 @@ const InvoicesContent = () => {
                                 className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
                                 aria-label={t("invoices.moreOptions")}
                               >
-                                <MoreVertical className="w-5 h-5 text-[#6B7280]" />
+                                <MoreVertical className="w-5 h-5 text-[var(--color-text-secondary)]" />
                               </button>
                               {openMenuId === invoice.id && (
                                 <div
                                   className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                 >
                                   <button
-                                    className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                    className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                                     onClick={() => setOpenMenuId(null)}
                                   >
                                     {t("invoices.viewInvoice")}
                                   </button>
                                   <button
-                                    className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                    className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                                     onClick={() => setOpenMenuId(null)}
                                   >
                                     {t("invoices.downloadInvoice")}
@@ -261,21 +261,21 @@ const InvoicesContent = () => {
                           </div>
                           <div className="grid grid-cols-2 gap-2 text-sm">
                             <div>
-                              <p className="text-[#6B7280] text-xs mb-0.5">
+                              <p className="text-[var(--color-text-secondary)] text-xs mb-0.5">
                                 {t("invoices.amount")}
                               </p>
-                              <p className="text-[#1F2937]">
+                              <p className="text-[var(--color-text-primary)]">
                                 {invoice.amount.toFixed(2)}
                               </p>
                             </div>
                             <div>
-                              <p className="text-[#6B7280] text-xs mb-0.5">
+                              <p className="text-[var(--color-text-secondary)] text-xs mb-0.5">
                                 {t("invoices.date")}
                               </p>
-                              <p className="text-[#1F2937]">{invoice.date}</p>
+                              <p className="text-[var(--color-text-primary)]">{invoice.date}</p>
                             </div>
                             <div className="col-span-2">
-                              <p className="text-[#6B7280] text-xs mb-0.5">
+                              <p className="text-[var(--color-text-secondary)] text-xs mb-0.5">
                                 {t("invoices.status")}
                               </p>
                               <span

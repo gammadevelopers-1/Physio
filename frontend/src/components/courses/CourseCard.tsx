@@ -75,7 +75,7 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
           <div
             className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} z-20 text-[11px] font-semibold px-3 py-1 rounded-full ${
               course.availabilityStatus === "completed"
-                ? "bg-[#6B7280] text-white"
+                ? "bg-[var(--color-text-secondary)] text-white"
                 : course.availabilityStatus === "full"
                   ? "bg-red-600 text-white"
                   : "bg-[#F59E0B] text-white"
@@ -91,7 +91,7 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
 
         {/* Title */}
         <p
-          className={`text-[#06080b] font-semibold text-[18px] leading-[24px] max-w-[55%] z-10 line-clamp-3 ${isRTL ? "text-right ml-auto" : "text-left"}`}
+          className={`text-[var(--color-text-primary)] font-semibold text-[18px] leading-[24px] max-w-[55%] z-10 line-clamp-3 ${isRTL ? "text-right ml-auto" : "text-left"}`}
         >
           {title}
         </p>
@@ -112,7 +112,7 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
 
         {/* Bottom row - delivery badge only */}
         <div className="flex items-center w-full z-10">
-          <div className="flex items-center gap-1.5 bg-[#0b0f17] rounded-full px-3 py-1.5">
+          <div className="flex items-center gap-1.5 bg-[var(--color-text-primary)] rounded-full px-3 py-1.5">
             <DeliveryIcon className="w-3.5 h-3.5 text-white" strokeWidth={1.5} />
             <span className="text-white text-[12px] font-medium">{deliveryLabel}</span>
           </div>
@@ -122,19 +122,19 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
       {/* Meta tags row */}
       <div className={`flex flex-wrap gap-2 mt-3 ${isRTL ? "justify-end" : "justify-start"}`}>
         <div className="flex items-center gap-1 bg-[#f4f4f5] rounded-lg px-2.5 py-1.5">
-          <Calendar className="w-3.5 h-3.5 text-[#4a4c4f]" strokeWidth={1.5} />
-          <span className="text-[#4a4c4f] text-[13px]">{formattedDate}</span>
+          <Calendar className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" strokeWidth={1.5} />
+          <span className="text-[var(--color-text-secondary)] text-[13px]">{formattedDate}</span>
         </div>
         {cmeLabel && (
           <div className="flex items-center gap-1 bg-[#f4f4f5] rounded-lg px-2.5 py-1.5">
-            <Clock className="w-3.5 h-3.5 text-[#4a4c4f]" strokeWidth={1.5} />
-            <span className="text-[#4a4c4f] text-[13px]">{cmeLabel}</span>
+            <Clock className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" strokeWidth={1.5} />
+            <span className="text-[var(--color-text-secondary)] text-[13px]">{cmeLabel}</span>
           </div>
         )}
       </div>
 
       {/* Description */}
-      <p className={`text-[#06080b] text-[14px] leading-[20px] mt-3 line-clamp-2 ${isRTL ? "text-right" : "text-left"}`}>
+      <p className={`text-[var(--color-text-primary)] text-[14px] leading-[20px] mt-3 line-clamp-2 ${isRTL ? "text-right" : "text-left"}`}>
         {description}
       </p>
 
@@ -144,12 +144,12 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
       {/* Footer: Price (SAR icon) + View Details - always at bottom */}
       <div className={`flex items-center justify-between mt-3 ${isRTL ? "flex-row-reverse" : ""}`}>
         <div className="flex items-center gap-1">
-          <Banknote className="w-4 h-4 text-[#4a4c4f]" strokeWidth={1.5} />
-          <span className="text-[#06080b] text-[14px] font-semibold">
+          <Banknote className="w-4 h-4 text-[var(--color-text-secondary)]" strokeWidth={1.5} />
+          <span className="text-[var(--color-text-primary)] text-[14px] font-semibold">
             {isFree ? t("card.free") : `${price} SAR`}
           </span>
         </div>
-        <span className={`flex items-center gap-1 text-[#06080b] text-[14px] font-medium group-hover:text-[var(--color-primary)] transition-colors ${isRTL ? "flex-row-reverse" : ""}`}>
+        <span className={`flex items-center gap-1 text-[var(--color-text-primary)] text-[14px] font-medium group-hover:text-[var(--color-primary)] transition-colors ${isRTL ? "flex-row-reverse" : ""}`}>
           {t("card.viewDetails")}
           {isRTL ? <ArrowLeft className="w-4 h-4" strokeWidth={1.5} /> : <ArrowRight className="w-4 h-4" strokeWidth={1.5} />}
         </span>

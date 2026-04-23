@@ -135,7 +135,7 @@ function getModuleIcon(type: string) {
   if (type === "video") return <Play className="w-4 h-4 text-[#3B82F6]" />;
   if (type === "quiz") return <BookOpen className="w-4 h-4 text-[#F59E0B]" />;
   if (type === "mixed") return <BarChart3 className="w-4 h-4 text-[#8B5CF6]" />;
-  return <FileText className="w-4 h-4 text-[#6B7280]" />;
+  return <FileText className="w-4 h-4 text-[var(--color-text-secondary)]" />;
 }
 
 function getSessionStatusColor(status: string) {
@@ -146,7 +146,7 @@ function getSessionStatusColor(status: string) {
     case "cancelled": return "bg-[#FEE2E2] text-[#EF4444]";
     case "missed": return "bg-[#FEE2E2] text-[#EF4444]";
     case "rescheduled": return "bg-[#FEF3C7] text-[#D97706]";
-    default: return "bg-[#F3F4F6] text-[#6B7280]";
+    default: return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
   }
 }
 
@@ -343,7 +343,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
     if (type === "video") return <Video className="w-4 h-4 text-[#3B82F6]" />;
     if (type === "pdf") return <FileText className="w-4 h-4 text-[#EF4444]" />;
     if (type === "image") return <ImageIcon className="w-4 h-4 text-[#22C55E]" />;
-    return <FileText className="w-4 h-4 text-[#6B7280]" />;
+    return <FileText className="w-4 h-4 text-[var(--color-text-secondary)]" />;
   };
 
   const formatFileSize = (size: number | string): string => {
@@ -768,7 +768,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
               <div className="flex-1 min-w-0">
                 <Link
                   href={`/${locale}/dashboard/instructor/courses`}
-                  className="inline-flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#1F2937] mb-4 transition-colors"
+                  className="inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-4 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   {t("courseDetail.backToCourses")}
@@ -781,7 +781,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
               <div className="flex-1 min-w-0">
                 <Link
                   href={`/${locale}/dashboard/instructor/courses`}
-                  className="inline-flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#1F2937] mb-4 transition-colors"
+                  className="inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-4 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   {t("courseDetail.backToCourses")}
@@ -812,12 +812,12 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               ? "bg-[#FEF3C7] text-[#D4A520]"
                               : course.status === "completed"
                               ? "bg-[#EFF6FF] text-[#3B82F6]"
-                              : "bg-[#F3F4F6] text-[#6B7280]"
+                              : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
                           }`}
                         >
                           {t(`courses.status.${course.status}`)}
                         </span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/90 rounded-md text-xs font-medium text-[#374151]">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/90 rounded-md text-xs font-medium text-[var(--color-text-secondary)]">
                           {deliveryIcon}
                           {t(`courses.delivery.${course.deliveryType}`)}
                         </span>
@@ -833,8 +833,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           <Users className="w-5 h-5 text-[#3B82F6]" />
                         </div>
                         <div>
-                          <p className="text-lg font-bold text-[#1F2937]">{enrollments.length}</p>
-                          <p className="text-xs text-[#6B7280]">{t("courseDetail.students")}</p>
+                          <p className="text-lg font-bold text-[var(--color-text-primary)]">{enrollments.length}</p>
+                          <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.students")}</p>
                         </div>
                       </div>
                       {!isSelfPaced && (
@@ -843,10 +843,10 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                             <Calendar className="w-5 h-5 text-[#D4A520]" />
                           </div>
                           <div>
-                            <p className="text-lg font-bold text-[#1F2937]">
+                            <p className="text-lg font-bold text-[var(--color-text-primary)]">
                               {sessions.filter((s) => s.status === "completed").length}/{sessions.length}
                             </p>
-                            <p className="text-xs text-[#6B7280]">{t("courseDetail.sessions")}</p>
+                            <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.sessions")}</p>
                           </div>
                         </div>
                       )}
@@ -855,12 +855,12 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           <BarChart3 className="w-5 h-5 text-[#22C55E]" />
                         </div>
                         <div>
-                          <p className="text-lg font-bold text-[#1F2937]">
+                          <p className="text-lg font-bold text-[var(--color-text-primary)]">
                             {enrollments.length > 0
                               ? Math.round(enrollments.reduce((sum, e) => sum + e.progress, 0) / enrollments.length)
                               : 0}%
                           </p>
-                          <p className="text-xs text-[#6B7280]">{t("courseDetail.completion")}</p>
+                          <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.completion")}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -868,10 +868,10 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           <Clock className="w-5 h-5 text-[#9333EA]" />
                         </div>
                         <div>
-                          <p className="text-lg font-bold text-[#1F2937]">
+                          <p className="text-lg font-bold text-[var(--color-text-primary)]">
                             {formatDuration(course.startDate, course.endDate)}
                           </p>
-                          <p className="text-xs text-[#6B7280]">{t("courseDetail.duration")}</p>
+                          <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.duration")}</p>
                         </div>
                       </div>
                     </div>
@@ -888,7 +888,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         role="tab"
                         aria-selected={activeTab === tab.id}
                         className={`px-5 py-3.5 text-sm font-medium whitespace-nowrap relative transition-colors ${
-                          activeTab === tab.id ? "text-[#3B82F6]" : "text-[#6B7280] hover:text-[#374151]"
+                          activeTab === tab.id ? "text-[#3B82F6]" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                         }`}
                       >
                         {tab.label}
@@ -917,41 +917,41 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         )}
 
                         <div>
-                          <h3 className="text-base font-semibold text-[#1F2937] mb-2">{t("courseDetail.description")}</h3>
-                          <p className="text-sm text-[#6B7280] leading-relaxed whitespace-pre-wrap">
+                          <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-2">{t("courseDetail.description")}</h3>
+                          <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-wrap">
                             {courseDescription || t("courseDetail.noDescription")}
                           </p>
                         </div>
                         <div>
-                          <h3 className="text-base font-semibold text-[#1F2937] mb-3">{t("courseDetail.courseInfo")}</h3>
+                          <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">{t("courseDetail.courseInfo")}</h3>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
-                              <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.deliveryTypeLabel")}</p>
-                              <p className="text-sm font-medium text-[#1F2937] capitalize">{t(`courses.delivery.${course.deliveryType}`)}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.deliveryTypeLabel")}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-primary)] capitalize">{t(`courses.delivery.${course.deliveryType}`)}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
-                              <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.statusLabel")}</p>
-                              <p className="text-sm font-medium text-[#1F2937] capitalize">{t(`courses.status.${course.status}`)}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.statusLabel")}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-primary)] capitalize">{t(`courses.status.${course.status}`)}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
-                              <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.maxEnrollmentLabel")}</p>
-                              <p className="text-sm font-medium text-[#1F2937]">{course.maxEnrollment || "—"}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.maxEnrollmentLabel")}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-primary)]">{course.maxEnrollment || "—"}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
-                              <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.startDate")}</p>
-                              <p className="text-sm font-medium text-[#1F2937]">{formatDateLocal(course.startDate, calendarFormat, locale)}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.startDate")}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-primary)]">{formatDateLocal(course.startDate, calendarFormat, locale)}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
-                              <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.endDate")}</p>
-                              <p className="text-sm font-medium text-[#1F2937]">{formatDateLocal(course.endDate, calendarFormat, locale)}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.endDate")}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-primary)]">{formatDateLocal(course.endDate, calendarFormat, locale)}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
-                              <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.cmeHoursLabel") || "CME/CPD Hours"}</p>
-                              <p className="text-sm font-medium text-[#1F2937]">{course.cmeHours || "—"}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.cmeHoursLabel") || "CME/CPD Hours"}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-primary)]">{course.cmeHours || "—"}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
-                              <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.enrollmentCount")}</p>
-                              <p className="text-sm font-medium text-[#1F2937]">
+                              <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.enrollmentCount")}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-primary)]">
                                 {enrollments.length}{course.maxEnrollment ? ` / ${course.maxEnrollment}` : ""}
                               </p>
                             </div>
@@ -980,8 +980,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       <div className="space-y-3">
                         {course.modules.length === 0 && (
                           <div className="text-center py-8">
-                            <BookOpen className="w-10 h-10 text-[#9CA3AF] mx-auto mb-3" />
-                            <p className="text-sm text-[#6B7280]">{t("courseDetail.noModules")}</p>
+                            <BookOpen className="w-10 h-10 text-[var(--color-text-secondary)] mx-auto mb-3" />
+                            <p className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.noModules")}</p>
                           </div>
                         )}
                         {[...course.modules]
@@ -993,22 +993,22 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                   onClick={() => toggleModule(mod.id)}
                                   className="flex-1 flex items-center gap-3 text-start"
                                 >
-                                  <span className="w-6 h-6 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xs font-medium text-[#6B7280]">
+                                  <span className="w-6 h-6 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xs font-medium text-[var(--color-text-secondary)]">
                                     {idx + 1}
                                   </span>
                                   <span className="flex items-center gap-2">
                                     {getModuleIcon(mod.type)}
-                                    <span className="text-sm font-semibold text-[#1F2937]">
+                                    <span className="text-sm font-semibold text-[var(--color-text-primary)]">
                                       {locale === "ar" && mod.titleAr ? mod.titleAr : mod.title}
                                     </span>
                                   </span>
                                   {mod.durationMinutes && (
-                                    <span className="text-xs text-[#6B7280] ml-2">
+                                    <span className="text-xs text-[var(--color-text-secondary)] ml-2">
                                       {formatDurationMinutes(mod.durationMinutes, locale)}
                                     </span>
                                   )}
                                   <ChevronDown
-                                    className={`w-4 h-4 text-[#6B7280] transition-transform ml-auto ${
+                                    className={`w-4 h-4 text-[var(--color-text-secondary)] transition-transform ml-auto ${
                                       expandedModules.includes(mod.id) ? "rotate-180" : ""
                                     }`}
                                   />
@@ -1021,7 +1021,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                       className="p-1 hover:bg-[var(--color-border)] rounded disabled:opacity-30 disabled:cursor-not-allowed"
                                       aria-label={t("courseDetail.moveUp")}
                                     >
-                                      <ArrowUp className="w-3.5 h-3.5 text-[#6B7280]" />
+                                      <ArrowUp className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
                                     </button>
                                     <button
                                       onClick={() => handleReorderModule(mod.id, "down")}
@@ -1029,14 +1029,14 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                       className="p-1 hover:bg-[var(--color-border)] rounded disabled:opacity-30 disabled:cursor-not-allowed"
                                       aria-label={t("courseDetail.moveDown")}
                                     >
-                                      <ArrowDown className="w-3.5 h-3.5 text-[#6B7280]" />
+                                      <ArrowDown className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
                                     </button>
                                     <button
                                       onClick={() => openEditModule(mod)}
                                       className="p-1 hover:bg-[var(--color-border)] rounded"
                                       aria-label={t("courseDetail.editModule")}
                                     >
-                                      <Edit className="w-3.5 h-3.5 text-[#6B7280]" />
+                                      <Edit className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
                                     </button>
                                     <button
                                       onClick={() => handleDeleteModule(mod.id)}
@@ -1052,7 +1052,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               {expandedModules.includes(mod.id) && (
                                 <div className="border-t border-[var(--color-border)]">
                                   {/* Module metadata */}
-                                  <div className="px-4 pt-3 pb-2 flex items-center gap-4 text-sm text-[#6B7280]">
+                                  <div className="px-4 pt-3 pb-2 flex items-center gap-4 text-sm text-[var(--color-text-secondary)]">
                                     {getModuleIcon(mod.type)}
                                     <span className="capitalize">{t(`courseDetail.moduleTypes.${mod.type}`)}</span>
                                     {mod.durationMinutes && (
@@ -1062,14 +1062,14 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                       </span>
                                     )}
                                     {mod.titleAr && (
-                                      <span className="text-xs text-[#9CA3AF]" dir="rtl">{mod.titleAr}</span>
+                                      <span className="text-xs text-[var(--color-text-secondary)]" dir="rtl">{mod.titleAr}</span>
                                     )}
                                   </div>
 
                                   {/* Module materials */}
                                   <div className="px-4 pb-3">
                                     <div className="flex items-center justify-between mb-2">
-                                      <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wide">
+                                      <span className="text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
                                         {t("courseDetail.moduleMaterials")}
                                       </span>
                                       {!isCourseReadOnly && (
@@ -1090,7 +1090,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     ) : (moduleMaterials[mod.id] || []).length === 0 ? (
                                       <div className="text-center py-4">
                                         <FileText className="w-8 h-8 text-[var(--color-border)] mx-auto mb-2" />
-                                        <p className="text-xs text-[#9CA3AF]">{t("courseDetail.noModuleMaterials")}</p>
+                                        <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.noModuleMaterials")}</p>
                                       </div>
                                     ) : (
                                       <div className="space-y-1.5">
@@ -1101,8 +1101,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                           >
                                             {getMaterialIcon(mat.type)}
                                             <div className="flex-1 min-w-0">
-                                              <p className="text-sm font-medium text-[#1F2937] truncate">{mat.title}</p>
-                                              <p className="text-xs text-[#9CA3AF]">
+                                              <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{mat.title}</p>
+                                              <p className="text-xs text-[var(--color-text-secondary)]">
                                                 {mat.type.toUpperCase()}
                                                 {mat.fileSize ? ` · ${formatFileSize(mat.fileSize)}` : ""}
                                               </p>
@@ -1136,7 +1136,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                                   className="p-1 hover:bg-[var(--color-border)] rounded"
                                                   aria-label={t("courseDetail.download")}
                                                 >
-                                                  <Download className="w-3.5 h-3.5 text-[#6B7280]" />
+                                                  <Download className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
                                                 </a>
                                               )}
                                               <button
@@ -1159,7 +1159,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     if (modAssessments.length === 0) return null;
                                     return (
                                       <div className="px-4 pb-3">
-                                        <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wide">
+                                        <span className="text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
                                           {t("courseDetail.moduleAssessments")}
                                         </span>
                                         <div className="mt-2 space-y-1.5">
@@ -1168,10 +1168,10 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                               key={ma.id}
                                               className="flex items-center gap-3 p-2 rounded-lg bg-[#F9FAFB] border border-[#F3F4F6] hover:border-[var(--color-border)] transition-colors"
                                             >
-                                              <ClipboardCheck className="w-4 h-4 text-[#6B7280] flex-shrink-0" />
+                                              <ClipboardCheck className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
                                               <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-[#1F2937] truncate">{ma.title}</p>
-                                                <p className="text-xs text-[#9CA3AF]">
+                                                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{ma.title}</p>
+                                                <p className="text-xs text-[var(--color-text-secondary)]">
                                                   {ma.totalMarks} {t("courseDetail.marks") || "marks"}
                                                 </p>
                                               </div>
@@ -1201,7 +1201,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         {!isCourseReadOnly && (
                           <button
                             onClick={openAddModule}
-                            className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[var(--color-border)] rounded-lg text-sm text-[#6B7280] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                            className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
                           >
                             <Plus className="w-4 h-4" />
                             {t("courseDetail.addModule")}
@@ -1221,20 +1221,20 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         <div className="overflow-x-auto">
                           {enrollments.length === 0 ? (
                             <div className="text-center py-8">
-                              <Users className="w-10 h-10 text-[#9CA3AF] mx-auto mb-3" />
-                              <p className="text-sm text-[#6B7280]">{t("courseDetail.noStudents")}</p>
+                              <Users className="w-10 h-10 text-[var(--color-text-secondary)] mx-auto mb-3" />
+                              <p className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.noStudents")}</p>
                             </div>
                           ) : (
                             <>
                               <table className="w-full">
                                 <thead>
                                   <tr className="border-b border-[var(--color-border)]">
-                                    <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">{t("courseDetail.name")}</th>
-                                    <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">{t("courseDetail.enrolledDate")}</th>
-                                    <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-32">{t("courseDetail.progress")}</th>
-                                    <th className="px-3 pb-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-20">{t("courseDetail.status")}</th>
-                                    <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">{t("courseDetail.lastActive")}</th>
-                                    <th className="px-2 pb-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-12"></th>
+                                    <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">{t("courseDetail.name")}</th>
+                                    <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">{t("courseDetail.enrolledDate")}</th>
+                                    <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider w-32">{t("courseDetail.progress")}</th>
+                                    <th className="px-3 pb-3 text-center text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider w-20">{t("courseDetail.status")}</th>
+                                    <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">{t("courseDetail.lastActive")}</th>
+                                    <th className="px-2 pb-3 text-center text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider w-12"></th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -1249,12 +1249,12 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     return (
                                       <tr key={enrollment.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
                                         <td className="px-3 py-3">
-                                          <p className="text-sm font-medium text-[#1F2937]">
+                                          <p className="text-sm font-medium text-[var(--color-text-primary)]">
                                             {enrollment.studentFirstName} {enrollment.studentLastName}
                                           </p>
-                                          <p className="text-[11px] text-[#9CA3AF]">{enrollment.studentEmail}</p>
+                                          <p className="text-[11px] text-[var(--color-text-secondary)]">{enrollment.studentEmail}</p>
                                         </td>
-                                        <td className="px-3 py-3 text-xs text-[#6B7280]">{formatDateLocal(enrollment.enrolledAt, calendarFormat, locale)}</td>
+                                        <td className="px-3 py-3 text-xs text-[var(--color-text-secondary)]">{formatDateLocal(enrollment.enrolledAt, calendarFormat, locale)}</td>
                                         <td className="px-3 py-3">
                                           <div className="flex items-center gap-2">
                                             <div className="flex-1 h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
@@ -1265,21 +1265,21 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                                 style={{ width: `${progress}%` }}
                                               />
                                             </div>
-                                            <span className="text-xs text-[#6B7280] w-8 text-right">{progress}%</span>
+                                            <span className="text-xs text-[var(--color-text-secondary)] w-8 text-right">{progress}%</span>
                                           </div>
                                         </td>
                                         <td className="px-3 py-3 text-center">
-                                          <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${statusColors[enrollment.status] || "bg-[#F3F4F6] text-[#6B7280]"}`}>
+                                          <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${statusColors[enrollment.status] || "bg-[#F3F4F6] text-[var(--color-text-secondary)]"}`}>
                                             {t(`courseDetail.studentStatus.${enrollment.status}`)}
                                           </span>
                                         </td>
-                                        <td className="px-3 py-3 text-xs text-[#9CA3AF]">
+                                        <td className="px-3 py-3 text-xs text-[var(--color-text-secondary)]">
                                           {enrollment.lastAccessedAt ? formatDateLocal(enrollment.lastAccessedAt, calendarFormat, locale) : "—"}
                                         </td>
                                         <td className="px-2 py-3 text-center">
                                           <Link
                                             href={`/${locale}/dashboard/instructor/students/${enrollment.studentId}`}
-                                            className="p-1.5 text-[#9CA3AF] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors inline-flex"
+                                            className="p-1.5 text-[var(--color-text-secondary)] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors inline-flex"
                                           >
                                             <Eye className="w-3.5 h-3.5" />
                                           </Link>
@@ -1291,24 +1291,24 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               </table>
                               {studentsTotalPages > 1 && (
                                 <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)] mt-2">
-                                  <p className="text-xs text-[#6B7280]">
+                                  <p className="text-xs text-[var(--color-text-secondary)]">
                                     {(studentsPage - 1) * STUDENTS_PER_PAGE + 1}–{Math.min(studentsPage * STUDENTS_PER_PAGE, enrollments.length)} of {enrollments.length}
                                   </p>
                                   <div className="flex items-center gap-1">
                                     <button
                                       onClick={() => setStudentsPage((p) => Math.max(1, p - 1))}
                                       disabled={studentsPage === 1}
-                                      className="p-1.5 border border-[var(--color-border)] rounded text-[#6B7280] hover:bg-[#F9FAFB] disabled:opacity-50"
+                                      className="p-1.5 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50"
                                     >
                                       <ChevronLeft className="w-3.5 h-3.5" />
                                     </button>
-                                    <span className="text-xs text-[#6B7280] px-2">
+                                    <span className="text-xs text-[var(--color-text-secondary)] px-2">
                                       {studentsPage} / {studentsTotalPages}
                                     </span>
                                     <button
                                       onClick={() => setStudentsPage((p) => Math.min(studentsTotalPages, p + 1))}
                                       disabled={studentsPage === studentsTotalPages}
-                                      className="p-1.5 border border-[var(--color-border)] rounded text-[#6B7280] hover:bg-[#F9FAFB] disabled:opacity-50"
+                                      className="p-1.5 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50"
                                     >
                                       <ChevronRight className="w-3.5 h-3.5" />
                                     </button>
@@ -1326,8 +1326,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       <div className="space-y-3">
                         {sessions.length === 0 ? (
                           <div className="text-center py-8">
-                            <Calendar className="w-10 h-10 text-[#9CA3AF] mx-auto mb-3" />
-                            <p className="text-sm text-[#6B7280]">{t("courseDetail.noSessions")}</p>
+                            <Calendar className="w-10 h-10 text-[var(--color-text-secondary)] mx-auto mb-3" />
+                            <p className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.noSessions")}</p>
                           </div>
                         ) : (
                           sessions.map((session) => (
@@ -1346,12 +1346,12 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 </div>
                                 <div>
                                   <div className="flex items-center gap-2">
-                                    <p className="text-sm font-medium text-[#1F2937]">{session.title}</p>
+                                    <p className="text-sm font-medium text-[var(--color-text-primary)]">{session.title}</p>
                                     <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${getSessionStatusColor(session.status)}`}>
                                       {t(`courseDetail.sessionStatus.${session.status}`)}
                                     </span>
                                   </div>
-                                  <p className="text-xs text-[#6B7280]">
+                                  <p className="text-xs text-[var(--color-text-secondary)]">
                                     {formatSessionDateLocal(session.scheduledAt, calendarFormat, locale)} &bull;{" "}
                                     {formatSessionTime(session.scheduledAt, session.durationMinutes)}
                                     {" "}&bull; {session.durationMinutes} {t("courseDetail.minutes")}
@@ -1395,7 +1395,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                       className="p-1.5 hover:bg-[#F3F4F6] rounded"
                                       aria-label={t("courseDetail.editSession")}
                                     >
-                                      <Edit className="w-4 h-4 text-[#6B7280]" />
+                                      <Edit className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                     </button>
                                     <button
                                       onClick={() => { setCancelModal({ open: true, sessionId: session.id }); setCancelReason(""); }}
@@ -1432,7 +1432,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         {!isCourseReadOnly && (
                           <button
                             onClick={openAddSession}
-                            className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[var(--color-border)] rounded-lg text-sm text-[#6B7280] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                            className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
                           >
                             <Plus className="w-4 h-4" />
                             {t("courseDetail.scheduleSession")}
@@ -1445,58 +1445,58 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                     {activeTab === "analytics" && (
                       <div className="space-y-6">
                         <div>
-                          <h3 className="text-base font-semibold text-[#1F2937] mb-3">{t("courseDetail.enrollmentStats")}</h3>
+                          <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">{t("courseDetail.enrollmentStats")}</h3>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
                               <div className="w-10 h-10 mx-auto mb-2 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
                                 <Users className="w-5 h-5 text-[#3B82F6]" />
                               </div>
-                              <p className="text-2xl font-bold text-[#1F2937]">{analytics.total}</p>
-                              <p className="text-xs text-[#6B7280]">{t("courseDetail.totalEnrolled")}</p>
+                              <p className="text-2xl font-bold text-[var(--color-text-primary)]">{analytics.total}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.totalEnrolled")}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
                               <div className="w-10 h-10 mx-auto mb-2 bg-[#DCFCE7] rounded-lg flex items-center justify-center">
                                 <UserCheck className="w-5 h-5 text-[#22C55E]" />
                               </div>
-                              <p className="text-2xl font-bold text-[#1F2937]">{analytics.active}</p>
-                              <p className="text-xs text-[#6B7280]">{t("courseDetail.activeStudents")}</p>
+                              <p className="text-2xl font-bold text-[var(--color-text-primary)]">{analytics.active}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.activeStudents")}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
                               <div className="w-10 h-10 mx-auto mb-2 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
                                 <TrendingUp className="w-5 h-5 text-[#3B82F6]" />
                               </div>
-                              <p className="text-2xl font-bold text-[#1F2937]">{analytics.completed}</p>
-                              <p className="text-xs text-[#6B7280]">{t("courseDetail.completedStudents")}</p>
+                              <p className="text-2xl font-bold text-[var(--color-text-primary)]">{analytics.completed}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.completedStudents")}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
                               <div className="w-10 h-10 mx-auto mb-2 bg-[#FEE2E2] rounded-lg flex items-center justify-center">
                                 <UserX className="w-5 h-5 text-[#EF4444]" />
                               </div>
-                              <p className="text-2xl font-bold text-[#1F2937]">{analytics.dropped}</p>
-                              <p className="text-xs text-[#6B7280]">{t("courseDetail.droppedStudents")}</p>
+                              <p className="text-2xl font-bold text-[var(--color-text-primary)]">{analytics.dropped}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.droppedStudents")}</p>
                             </div>
                           </div>
                         </div>
 
                         <div>
-                          <h3 className="text-base font-semibold text-[#1F2937] mb-3">{t("courseDetail.performanceOverview")}</h3>
+                          <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">{t("courseDetail.performanceOverview")}</h3>
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div className="p-4 border border-[var(--color-border)] rounded-lg">
-                              <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.completionRate")}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.completionRate")}</p>
                               <p className="text-2xl font-bold text-[#22C55E]">{analytics.completionRate}%</p>
                               <div className="mt-2 w-full h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                                 <div className="h-full bg-[#22C55E] rounded-full" style={{ width: `${analytics.completionRate}%` }} />
                               </div>
                             </div>
                             <div className="p-4 border border-[var(--color-border)] rounded-lg">
-                              <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.dropoffRate")}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.dropoffRate")}</p>
                               <p className="text-2xl font-bold text-[#EF4444]">{analytics.dropoffRate}%</p>
                               <div className="mt-2 w-full h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                                 <div className="h-full bg-[#EF4444] rounded-full" style={{ width: `${analytics.dropoffRate}%` }} />
                               </div>
                             </div>
                             <div className="p-4 border border-[var(--color-border)] rounded-lg">
-                              <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.avgProgress")}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.avgProgress")}</p>
                               <p className="text-2xl font-bold text-[#3B82F6]">{analytics.avgProgress}%</p>
                               <div className="mt-2 w-full h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                                 <div className="h-full bg-[#3B82F6] rounded-full" style={{ width: `${analytics.avgProgress}%` }} />
@@ -1507,7 +1507,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
 
                         {analytics.total > 0 && (
                           <div>
-                            <h3 className="text-base font-semibold text-[#1F2937] mb-3">{t("courseDetail.progressDistribution")}</h3>
+                            <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">{t("courseDetail.progressDistribution")}</h3>
                             <div className="space-y-3">
                               {[
                                 { label: "0-25%", count: analytics.dist.low, color: "bg-[#EF4444]" },
@@ -1516,7 +1516,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 { label: "76-100%", count: analytics.dist.complete, color: "bg-[#22C55E]" },
                               ].map((bucket) => (
                                 <div key={bucket.label} className="flex items-center gap-3">
-                                  <span className="text-xs text-[#6B7280] w-14">{bucket.label}</span>
+                                  <span className="text-xs text-[var(--color-text-secondary)] w-14">{bucket.label}</span>
                                   <div className="flex-1 h-6 bg-[#F3F4F6] rounded-full overflow-hidden">
                                     <div
                                       className={`h-full ${bucket.color} rounded-full flex items-center justify-end pr-2 transition-all`}
@@ -1525,7 +1525,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                       {bucket.count > 0 && <span className="text-[10px] font-medium text-white">{bucket.count}</span>}
                                     </div>
                                   </div>
-                                  <span className="text-xs text-[#6B7280] w-8 text-right">{bucket.count}</span>
+                                  <span className="text-xs text-[var(--color-text-secondary)] w-8 text-right">{bucket.count}</span>
                                 </div>
                               ))}
                             </div>
@@ -1534,23 +1534,23 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
 
                         {!isSelfPaced && (
                         <div>
-                          <h3 className="text-base font-semibold text-[#1F2937] mb-3">{t("courseDetail.sessionStats")}</h3>
+                          <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">{t("courseDetail.sessionStats")}</h3>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
-                              <p className="text-2xl font-bold text-[#1F2937]">{analytics.totalSessions}</p>
-                              <p className="text-xs text-[#6B7280]">{t("courseDetail.totalSessionsLabel")}</p>
+                              <p className="text-2xl font-bold text-[var(--color-text-primary)]">{analytics.totalSessions}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.totalSessionsLabel")}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
                               <p className="text-2xl font-bold text-[#22C55E]">{analytics.completedSessions}</p>
-                              <p className="text-xs text-[#6B7280]">{t("courseDetail.completedSessionsLabel")}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.completedSessionsLabel")}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
                               <p className="text-2xl font-bold text-[#3B82F6]">{analytics.scheduledSessions}</p>
-                              <p className="text-xs text-[#6B7280]">{t("courseDetail.scheduledSessionsLabel")}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.scheduledSessionsLabel")}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
                               <p className="text-2xl font-bold text-[#D97706]">{analytics.liveSessions}</p>
-                              <p className="text-xs text-[#6B7280]">{t("courseDetail.liveSessionsLabel")}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.liveSessionsLabel")}</p>
                             </div>
                           </div>
                         </div>
@@ -1558,8 +1558,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
 
                         {analytics.total === 0 && (isSelfPaced || analytics.totalSessions === 0) && (
                           <div className="text-center py-8">
-                            <BarChart3 className="w-10 h-10 text-[#9CA3AF] mx-auto mb-3" />
-                            <p className="text-sm text-[#6B7280]">{t("courseDetail.noAnalyticsData")}</p>
+                            <BarChart3 className="w-10 h-10 text-[var(--color-text-secondary)] mx-auto mb-3" />
+                            <p className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.noAnalyticsData")}</p>
                           </div>
                         )}
                       </div>
@@ -1569,10 +1569,10 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                     {activeTab === "settings" && (
                       <div className={`space-y-8 ${isCourseReadOnly ? "pointer-events-none opacity-60" : ""}`}>
                         <div>
-                          <h3 className="text-base font-semibold text-[#1F2937] mb-4">{t("courseDetail.editCourse")}</h3>
+                          <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">{t("courseDetail.editCourse")}</h3>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.courseTitleEn")}</label>
+                              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.courseTitleEn")}</label>
                               <input
                                 type="text"
                                 value={settingsForm.title}
@@ -1581,7 +1581,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.courseTitleAr")}</label>
+                              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.courseTitleAr")}</label>
                               <input
                                 type="text"
                                 dir="rtl"
@@ -1591,7 +1591,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               />
                             </div>
                             <div className="sm:col-span-2">
-                              <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.courseDescEn")}</label>
+                              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.courseDescEn")}</label>
                               <textarea
                                 value={settingsForm.description}
                                 onChange={(e) => setSettingsForm((f) => ({ ...f, description: e.target.value }))}
@@ -1600,7 +1600,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               />
                             </div>
                             <div className="sm:col-span-2">
-                              <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.courseDescAr")}</label>
+                              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.courseDescAr")}</label>
                               <textarea
                                 dir="rtl"
                                 value={settingsForm.descriptionAr}
@@ -1610,11 +1610,11 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.deliveryTypeLabel")}</label>
+                              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.deliveryTypeLabel")}</label>
                               <select
                                 value={settingsForm.deliveryType}
                                 disabled
-                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed"
+                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[#F9FAFB] text-[var(--color-text-secondary)] cursor-not-allowed"
                               >
                                 <option value="zoom">{t("courseDetail.deliveryOptions.zoom")}</option>
                                 <option value="onsite">{t("courseDetail.deliveryOptions.onsite")}</option>
@@ -1623,17 +1623,17 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               </select>
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.maxEnrollmentLabel")}</label>
+                              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.maxEnrollmentLabel")}</label>
                               <input
                                 type="number"
                                 min="1"
                                 value={settingsForm.maxEnrollment}
                                 disabled
-                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed"
+                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[#F9FAFB] text-[var(--color-text-secondary)] cursor-not-allowed"
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.startDate")}</label>
+                              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.startDate")}</label>
                               <DatePicker
                                 value={settingsForm.startDate}
                                 onChange={() => {}}
@@ -1641,7 +1641,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.endDate")}</label>
+                              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.endDate")}</label>
                               <DatePicker
                                 value={settingsForm.endDate}
                                 onChange={() => {}}
@@ -1651,16 +1651,16 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           </div>
 
                           <div className="mt-4">
-                            <label className="block text-sm font-medium text-[#374151] mb-2">{t("courseDetail.thumbnail")}</label>
+                            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">{t("courseDetail.thumbnail")}</label>
                             <div className="flex items-center gap-4">
                               {course.thumbnail ? (
                                 <div className="w-20 h-14 rounded-lg overflow-hidden border border-[var(--color-border)]">
                                   <Image src={course.thumbnail} alt="Thumbnail" width={80} height={56} className="object-cover w-full h-full" unoptimized={course.thumbnail.startsWith("http")} />
                                 </div>
                               ) : (
-                                <p className="text-sm text-[#6B7280]">—</p>
+                                <p className="text-sm text-[var(--color-text-secondary)]">—</p>
                               )}
-                              <p className="text-xs text-[#9CA3AF]">{t("courseDetail.managerOnlyField")}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.managerOnlyField")}</p>
                             </div>
                           </div>
 
@@ -1678,10 +1678,10 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
 
                         {/* Review Workflow */}
                         <div className="border-t border-[var(--color-border)] pt-6">
-                          <h3 className="text-base font-semibold text-[#1F2937] mb-3">{t("courseDetail.statusManagement")}</h3>
-                          <p className="text-sm text-[#6B7280] mb-4">
+                          <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">{t("courseDetail.statusManagement")}</h3>
+                          <p className="text-sm text-[var(--color-text-secondary)] mb-4">
                             {t("courseDetail.currentStatus")}:{" "}
-                            <span className="font-medium text-[#1F2937] capitalize">{t(`courses.status.${course.status}`)}</span>
+                            <span className="font-medium text-[var(--color-text-primary)] capitalize">{t(`courses.status.${course.status}`)}</span>
                           </p>
 
                           {/* Review note banner when changes requested */}
@@ -1730,16 +1730,16 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
         <ModalOverlay onClose={() => setModuleModal({ open: false, editing: null })}>
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-[#1F2937]">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {moduleModal.editing ? t("courseDetail.editModule") : t("courseDetail.addModule")}
               </h3>
               <button onClick={() => setModuleModal({ open: false, editing: null })} className="p-1 hover:bg-[#F3F4F6] rounded">
-                <X className="w-5 h-5 text-[#6B7280]" />
+                <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.moduleTitle")} *</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.moduleTitle")} *</label>
                 <input
                   type="text"
                   value={moduleForm.title}
@@ -1749,7 +1749,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.moduleTitleAr")}</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.moduleTitleAr")}</label>
                 <input
                   type="text"
                   dir="rtl"
@@ -1759,7 +1759,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.moduleType")} *</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.moduleType")} *</label>
                 <select
                   value={moduleForm.type}
                   onChange={(e) => setModuleForm((f) => ({ ...f, type: e.target.value }))}
@@ -1772,7 +1772,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.moduleDuration")}</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.moduleDuration")}</label>
                 <div className="flex items-center gap-2">
                   <div className="flex-1">
                     <input
@@ -1783,7 +1783,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                       placeholder="1"
                     />
-                    <span className="text-xs text-[#9CA3AF] mt-0.5 block">{t("courseDetail.hours")}</span>
+                    <span className="text-xs text-[var(--color-text-secondary)] mt-0.5 block">{t("courseDetail.hours")}</span>
                   </div>
                   <div className="flex-1">
                     <input
@@ -1795,13 +1795,13 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                       placeholder="30"
                     />
-                    <span className="text-xs text-[#9CA3AF] mt-0.5 block">{t("courseDetail.minutes")}</span>
+                    <span className="text-xs text-[var(--color-text-secondary)] mt-0.5 block">{t("courseDetail.minutes")}</span>
                   </div>
                 </div>
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setModuleModal({ open: false, editing: null })} className="px-4 py-2 text-sm text-[#6B7280] hover:text-[#1F2937] transition-colors">
+              <button onClick={() => setModuleModal({ open: false, editing: null })} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
                 {t("courseDetail.cancel")}
               </button>
               <button
@@ -1821,17 +1821,17 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
         <ModalOverlay onClose={() => setAddMaterialModal({ open: false, moduleId: null })}>
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-[#1F2937]">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {t("courseDetail.addExisting")}
               </h3>
               <button
                 onClick={() => setAddMaterialModal({ open: false, moduleId: null })}
                 className="p-1 hover:bg-[#F3F4F6] rounded"
               >
-                <X className="w-5 h-5 text-[#6B7280]" />
+                <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
             </div>
-            <p className="text-sm text-[#6B7280] mb-4">
+            <p className="text-sm text-[var(--color-text-secondary)] mb-4">
               {t("courseDetail.addExistingDescription")}
             </p>
 
@@ -1842,7 +1842,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
             ) : unassignedMaterials.length === 0 ? (
               <div className="text-center py-8">
                 <FileText className="w-10 h-10 text-[var(--color-border)] mx-auto mb-2" />
-                <p className="text-sm text-[#9CA3AF]">{t("courseDetail.noUnassignedMaterials")}</p>
+                <p className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.noUnassignedMaterials")}</p>
               </div>
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -1871,8 +1871,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       </div>
                       {getMaterialIcon(mat.type)}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#1F2937] truncate">{mat.title}</p>
-                        <p className="text-xs text-[#9CA3AF]">
+                        <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{mat.title}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)]">
                           {mat.type.toUpperCase()}
                           {mat.fileSize ? ` · ${formatFileSize(mat.fileSize)}` : ""}
                         </p>
@@ -1886,7 +1886,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setAddMaterialModal({ open: false, moduleId: null })}
-                className="px-4 py-2 text-sm text-[#6B7280] hover:text-[#1F2937] transition-colors"
+                className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
               >
                 {t("courseDetail.cancel")}
               </button>
@@ -1909,16 +1909,16 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
         <ModalOverlay onClose={() => setSessionModal({ open: false, editing: null })}>
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-[#1F2937]">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {sessionModal.editing ? t("courseDetail.editSession") : t("courseDetail.scheduleSession")}
               </h3>
               <button onClick={() => setSessionModal({ open: false, editing: null })} className="p-1 hover:bg-[#F3F4F6] rounded">
-                <X className="w-5 h-5 text-[#6B7280]" />
+                <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.sessionTitle")} *</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.sessionTitle")} *</label>
                 <input
                   type="text"
                   value={sessionForm.title}
@@ -1927,7 +1927,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.sessionType")} *</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.sessionType")} *</label>
                 <select
                   value={sessionForm.type}
                   onChange={(e) => setSessionForm((f) => ({ ...f, type: e.target.value }))}
@@ -1939,14 +1939,14 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.scheduledDate")} *</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.scheduledDate")} *</label>
                 <DateTimePicker
                   value={sessionForm.scheduledAt}
                   onChange={(v) => setSessionForm((f) => ({ ...f, scheduledAt: v }))}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.sessionDuration") || "Duration"}</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.sessionDuration") || "Duration"}</label>
                 <div className="flex items-center gap-2 flex-wrap">
                   <input
                     type="number"
@@ -1955,7 +1955,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                     onChange={(e) => setSessionForm((f) => ({ ...f, durationHours: Math.max(0, Number(e.target.value)) }))}
                     className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                   />
-                  <span className="text-sm text-[#6B7280]">{t("courseDetail.durationHours")}</span>
+                  <span className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.durationHours")}</span>
                   <input
                     type="number"
                     min={0}
@@ -1964,23 +1964,23 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                     onChange={(e) => setSessionForm((f) => ({ ...f, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))}
                     className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                   />
-                  <span className="text-sm text-[#6B7280]">{t("courseDetail.durationMinutes")}</span>
+                  <span className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.durationMinutes")}</span>
                 </div>
               </div>
               {(sessionForm.type === "onsite" || sessionForm.type === "hybrid") && (
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.roomName")}</label>
+                      <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.roomName")}</label>
                       <input type="text" value={sessionForm.roomName} onChange={(e) => setSessionForm((f) => ({ ...f, roomName: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.venueAddress")}</label>
+                      <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.venueAddress")}</label>
                       <input type="text" value={sessionForm.venueAddress} onChange={(e) => setSessionForm((f) => ({ ...f, venueAddress: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.city")}</label>
+                    <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.city")}</label>
                     <CitySelect
                       value={sessionForm.city}
                       onChange={(v) => setSessionForm((f) => ({ ...f, city: v }))}
@@ -1991,7 +1991,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
               )}
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setSessionModal({ open: false, editing: null })} className="px-4 py-2 text-sm text-[#6B7280] hover:text-[#1F2937] transition-colors">
+              <button onClick={() => setSessionModal({ open: false, editing: null })} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
                 {t("courseDetail.cancel")}
               </button>
               <button
@@ -2011,14 +2011,14 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
         <ModalOverlay onClose={() => setCancelModal({ open: false, sessionId: null })}>
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-[#1F2937]">{t("courseDetail.cancelSession")}</h3>
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("courseDetail.cancelSession")}</h3>
               <button onClick={() => setCancelModal({ open: false, sessionId: null })} className="p-1 hover:bg-[#F3F4F6] rounded">
-                <X className="w-5 h-5 text-[#6B7280]" />
+                <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
             </div>
-            <p className="text-sm text-[#6B7280] mb-4">{t("courseDetail.cancelSessionConfirm")}</p>
+            <p className="text-sm text-[var(--color-text-secondary)] mb-4">{t("courseDetail.cancelSessionConfirm")}</p>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.cancelReason")} *</label>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.cancelReason")} *</label>
               <textarea
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
@@ -2027,7 +2027,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
               />
             </div>
             <div className="flex justify-end gap-3 mt-4">
-              <button onClick={() => setCancelModal({ open: false, sessionId: null })} className="px-4 py-2 text-sm text-[#6B7280] hover:text-[#1F2937] transition-colors">
+              <button onClick={() => setCancelModal({ open: false, sessionId: null })} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
                 {t("courseDetail.cancel")}
               </button>
               <button
@@ -2047,14 +2047,14 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
         <ModalOverlay onClose={() => setRescheduleModal({ open: false, sessionId: null })}>
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-[#1F2937]">Reschedule Lecture</h3>
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Reschedule Lecture</h3>
               <button onClick={() => setRescheduleModal({ open: false, sessionId: null })} className="p-1 hover:bg-[#F3F4F6] rounded">
-                <X className="w-5 h-5 text-[#6B7280]" />
+                <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">Reason *</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Reason *</label>
                 <textarea
                   value={rescheduleData.reason}
                   onChange={(e) => setRescheduleData(d => ({ ...d, reason: e.target.value }))}
@@ -2065,14 +2065,14 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">New Date *</label>
+                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">New Date *</label>
                   <DatePicker
                     value={rescheduleData.newDate}
                     onChange={(v) => setRescheduleData(d => ({ ...d, newDate: v }))}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">New Time *</label>
+                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">New Time *</label>
                   <input
                     type="time"
                     value={rescheduleData.newTime}
@@ -2082,16 +2082,16 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.sessionDuration")}</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.sessionDuration")}</label>
                 <div className="flex items-center gap-2">
                   <input type="number" min={0} value={rescheduleData.durationHours} onChange={(e) => setRescheduleData(d => ({ ...d, durationHours: Math.max(0, Number(e.target.value)) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
-                  <span className="text-sm text-[#6B7280]">{t("courseDetail.durationHrs")}</span>
+                  <span className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.durationHrs")}</span>
                   <input type="number" min={0} max={59} value={rescheduleData.durationMins} onChange={(e) => setRescheduleData(d => ({ ...d, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
                 </div>
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-5">
-              <button onClick={() => setRescheduleModal({ open: false, sessionId: null })} className="px-4 py-2 text-sm text-[#6B7280] hover:text-[#1F2937] transition-colors">
+              <button onClick={() => setRescheduleModal({ open: false, sessionId: null })} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
                 Cancel
               </button>
               <button

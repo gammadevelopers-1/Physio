@@ -105,7 +105,7 @@ const SupportRightSidebar = () => {
     <div className="w-full lg:w-[300px] lg:flex-shrink-0 space-y-4">
       {/* CSAT Score */}
       <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
-        <h3 className="text-[15px] font-semibold text-[#111827] mb-4">
+        <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)] mb-4">
           {t("csatSection.title")}
         </h3>
 
@@ -117,20 +117,20 @@ const SupportRightSidebar = () => {
 
         <div className="grid grid-cols-3 gap-2">
           <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
-            <p className="text-sm font-semibold text-[#111827]">156</p>
-            <p className="text-[10px] text-[#6B7280]">
+            <p className="text-sm font-semibold text-[var(--color-text-primary)]">156</p>
+            <p className="text-[10px] text-[var(--color-text-secondary)]">
               {t("csatSection.responses")}
             </p>
           </div>
           <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
             <p className="text-sm font-semibold text-[#16A34A]">+42</p>
-            <p className="text-[10px] text-[#6B7280]">
+            <p className="text-[10px] text-[var(--color-text-secondary)]">
               {t("csatSection.nps")}
             </p>
           </div>
           <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
-            <p className="text-sm font-semibold text-[#111827]">4.7</p>
-            <p className="text-[10px] text-[#6B7280]">
+            <p className="text-sm font-semibold text-[var(--color-text-primary)]">4.7</p>
+            <p className="text-[10px] text-[var(--color-text-secondary)]">
               {t("csatSection.avgRating")}
             </p>
           </div>
@@ -141,7 +141,7 @@ const SupportRightSidebar = () => {
       <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
           <ClipboardList className="w-4 h-4 text-[#3B82F6]" />
-          <h3 className="text-[15px] font-semibold text-[#111827]">
+          <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
             {t("activity.title")}
           </h3>
         </div>
@@ -160,10 +160,10 @@ const SupportRightSidebar = () => {
                   <Icon className={`w-3.5 h-3.5 ${item.iconColor}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] text-[#374151]">
+                  <p className="text-[13px] text-[var(--color-text-secondary)]">
                     {t(item.textKey)}
                   </p>
-                  <p className="text-[11px] text-[#9CA3AF]">
+                  <p className="text-[11px] text-[var(--color-text-secondary)]">
                     {t(item.timeKey)}
                   </p>
                 </div>
@@ -187,7 +187,7 @@ const SupportRightSidebar = () => {
       <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
           <AlertTriangle className="w-4 h-4 text-[#EA580C]" />
-          <h3 className="text-[15px] font-semibold text-[#111827]">
+          <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
             {t("alerts.title")}
           </h3>
         </div>
@@ -213,10 +213,10 @@ const SupportRightSidebar = () => {
                 <AlertTriangle className="w-4 h-4 text-[#EA580C] flex-shrink-0 mt-0.5" />
               )}
               <div>
-                <p className="text-[12px] font-medium text-[#111827]">
+                <p className="text-[12px] font-medium text-[var(--color-text-primary)]">
                   {t(alert.titleKey)}
                 </p>
-                <p className="text-[11px] text-[#4B5563]">
+                <p className="text-[11px] text-[var(--color-text-secondary)]">
                   {t(alert.descriptionKey)}
                 </p>
               </div>
@@ -229,7 +229,7 @@ const SupportRightSidebar = () => {
       <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
           <Zap className="w-4 h-4 text-[#3B82F6]" />
-          <h3 className="text-[15px] font-semibold text-[#111827]">
+          <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
             {t("quickActions.title")}
           </h3>
         </div>
@@ -240,7 +240,7 @@ const SupportRightSidebar = () => {
             return (
               <button
                 key={action.id}
-                className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#EFF6FF] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#EFF6FF] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
               >
                 <Icon className="w-3.5 h-3.5" />
                 {t(action.labelKey)}

@@ -70,7 +70,7 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
   if (!selectedDate) {
     return (
       <div className="mt-6 pt-6 border-t border-[var(--color-border)]">
-        <p className="text-sm text-[#6B7280] text-center py-6">
+        <p className="text-sm text-[var(--color-text-secondary)] text-center py-6">
           {t("calendarPage.selectDay")}
         </p>
       </div>
@@ -81,9 +81,9 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
     <div className="mt-6 pt-6 border-t border-[var(--color-border)]">
       {/* Selected date header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-[#1F2937]">{dateLabel}</h3>
+        <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{dateLabel}</h3>
         {events.length > 0 && (
-          <span className="text-xs text-[#6B7280]">
+          <span className="text-xs text-[var(--color-text-secondary)]">
             {t("calendarPage.eventsCount", { count: events.length })}
           </span>
         )}
@@ -92,7 +92,7 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
       {events.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8">
           <EmptyStateIllustration variant="calendar" className="mb-2" />
-          <p className="text-sm text-[#6B7280]">
+          <p className="text-sm text-[var(--color-text-secondary)]">
             {t("calendarPage.noEventsForDay")}
           </p>
         </div>
@@ -153,7 +153,7 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
                         {typeLabel}
                       </span>
                     </div>
-                    <h4 className="text-sm font-semibold text-[#1F2937]">
+                    <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
                       {event.title}
                     </h4>
                   </div>
@@ -162,7 +162,7 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
                 {/* Details Grid */}
                 <div className="space-y-2 mb-4">
                   {/* Course */}
-                  <div className="flex items-center gap-2 text-xs text-[#6B7280]">
+                  <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
                     <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
                     <span>
                       {isRTL && event.courseTitleAr
@@ -173,24 +173,24 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
 
                   {/* Instructor */}
                   {event.instructorName && (
-                    <div className="flex items-center gap-2 text-xs text-[#6B7280]">
+                    <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
                       <User className="w-3.5 h-3.5 flex-shrink-0" />
                       <span>{event.instructorName}</span>
                     </div>
                   )}
 
                   {/* Time with timezone */}
-                  <div className="flex items-center gap-2 text-xs text-[#6B7280]">
+                  <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
                     <Clock className="w-3.5 h-3.5 flex-shrink-0" />
                     <span>{timeWithTimezone.format(eventDate)}</span>
-                    <span className="text-[#9CA3AF]">
+                    <span className="text-[var(--color-text-secondary)]">
                       · {event.durationMinutes} {t("calendarPage.mins")}
                     </span>
                   </div>
 
                   {/* Venue / Room */}
                   {hasVenue && (event.venueAddress || event.roomName) && (
-                    <div className="flex items-center gap-2 text-xs text-[#6B7280]">
+                    <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
                       <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                       <span>
                         {event.roomName && (
@@ -266,7 +266,7 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
                   {/* Add to Calendar */}
                   <button
                     onClick={() => downloadIcs(event)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F3F4F6] transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F3F4F6] transition-colors"
                   >
                     <Download className="w-3.5 h-3.5" />
                     {t("calendarPage.addToCalendar")}

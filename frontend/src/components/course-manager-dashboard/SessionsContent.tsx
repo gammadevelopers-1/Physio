@@ -115,17 +115,17 @@ function ScheduleSessionModal({
   return (
     <div className="bg-white rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl">
       <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
-        <h2 className="text-lg font-semibold text-[#1F2937]">
+        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
           {t("sessionsPage.scheduleSessionTitle")}
         </h2>
         <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
-          <X className="w-5 h-5 text-[#6B7280]" />
+          <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
       <div className="p-4 space-y-4">
         {/* Course */}
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("sessionsPage.form.course")} *
           </label>
           <select
@@ -142,7 +142,7 @@ function ScheduleSessionModal({
 
         {/* Title */}
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("sessionsPage.form.sessionTitle")} *
           </label>
           <input
@@ -157,7 +157,7 @@ function ScheduleSessionModal({
         {/* Date + Time */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
               {t("sessionsPage.form.date")} *
             </label>
             <DatePicker
@@ -167,7 +167,7 @@ function ScheduleSessionModal({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
               {t("sessionsPage.form.time")} *
             </label>
             <input
@@ -181,20 +181,20 @@ function ScheduleSessionModal({
 
         {/* Duration */}
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("sessionsPage.form.duration") || "Duration"}
           </label>
           <div className="flex items-center gap-2">
             <input type="number" min={0} value={durationHours} onChange={(e) => setDurationHours(Math.max(0, Number(e.target.value)))} className="w-20 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-center" />
-            <span className="text-sm text-[#6B7280]">{t("sessionsPage.form.hours") || "hrs"}</span>
+            <span className="text-sm text-[var(--color-text-secondary)]">{t("sessionsPage.form.hours") || "hrs"}</span>
             <input type="number" min={0} max={59} value={durationMins} onChange={(e) => setDurationMins(Math.max(0, Math.min(59, Number(e.target.value))))} className="w-20 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-center" />
-            <span className="text-sm text-[#6B7280]">{t("sessionsPage.form.minutes") || "min"}</span>
+            <span className="text-sm text-[var(--color-text-secondary)]">{t("sessionsPage.form.minutes") || "min"}</span>
           </div>
         </div>
 
         {/* Session Type */}
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("sessionsPage.form.sessionType") || "Session Type"}
           </label>
           <div className="grid grid-cols-3 gap-2">
@@ -206,7 +206,7 @@ function ScheduleSessionModal({
                 className={`flex flex-col items-center gap-1.5 p-3 rounded-lg transition-colors ${
                   type === opt
                     ? "border-2 border-[#3B82F6] bg-[#EFF6FF] text-[#3B82F6]"
-                    : "border border-[var(--color-border)] text-[#6B7280] hover:border-[#3B82F6]"
+                    : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[#3B82F6]"
                 }`}
               >
                 {opt === "zoom" && <Video className="w-5 h-5" />}
@@ -232,19 +232,19 @@ function ScheduleSessionModal({
         {(type === "onsite" || type === "hybrid") && (
           <>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                 {t("sessionsPage.form.roomName") || "Room Name"}
               </label>
               <input type="text" value={roomName} onChange={(e) => setRoomName(e.target.value)} className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm" placeholder={t("sessionsPage.form.roomNamePlaceholder") || "e.g. Room 101"} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                 {t("sessionsPage.form.venueAddress") || "Venue Address"} *
               </label>
               <input type="text" value={venueAddress} onChange={(e) => setVenueAddress(e.target.value)} className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm" placeholder={t("sessionsPage.form.venueAddressPlaceholder") || "Enter venue address"} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                 {t("sessionsPage.form.city") || "City"}
               </label>
               <CitySelect
@@ -257,7 +257,7 @@ function ScheduleSessionModal({
         )}
       </div>
       <div className="flex items-center justify-end gap-3 p-4 border-t border-[var(--color-border)]">
-        <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors">
+        <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
           {t("sessionsPage.form.cancel")}
         </button>
         <button
@@ -461,7 +461,7 @@ const SessionsContent = () => {
       live: { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: t("sessionsPage.statusLive") },
       ended: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessionsPage.statusEnded") },
       completed: { bg: "bg-[#DCFCE7]", text: "text-[#22C55E]", label: t("sessionsPage.statusCompleted") },
-      cancelled: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: t("sessionsPage.statusCancelled") },
+      cancelled: { bg: "bg-[#F3F4F6]", text: "text-[var(--color-text-secondary)]", label: t("sessionsPage.statusCancelled") },
       missed: { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: "Missed" },
       rescheduled: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: "Rescheduled" },
     };
@@ -676,12 +676,12 @@ const SessionsContent = () => {
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${dimmed ? "bg-[#F3F4F6] text-[#9CA3AF]" : getTypeBadgeStyle(session.type)}`}>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${dimmed ? "bg-[#F3F4F6] text-[var(--color-text-secondary)]" : getTypeBadgeStyle(session.type)}`}>
               {getTypeIcon(session.type)}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className={`text-sm font-semibold ${dimmed ? "text-[#6B7280]" : "text-[#1F2937]"}`}>
+                <h3 className={`text-sm font-semibold ${dimmed ? "text-[var(--color-text-secondary)]" : "text-[var(--color-text-primary)]"}`}>
                   {session.title}
                 </h3>
                 {isConflict && (
@@ -700,7 +700,7 @@ const SessionsContent = () => {
                   </span>
                 )}
               </div>
-              <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-[#6B7280]">
+              <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-[var(--color-text-secondary)]">
                 {showDate && (
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5" />
@@ -746,7 +746,7 @@ const SessionsContent = () => {
                     ? "text-[#EF4444]"
                     : (session.capacityPercent || 0) > 80
                     ? "text-[#F59E0B]"
-                    : "text-[#6B7280]"
+                    : "text-[var(--color-text-secondary)]"
                 }`}>
                   {session.enrolledCount || 0}/{session.nelcLimit}
                 </span>
@@ -761,14 +761,14 @@ const SessionsContent = () => {
                 onClick={(e) => { e.stopPropagation(); setActionDropdown(actionDropdown === session.id ? null : session.id); }}
                 className="p-1.5 hover:bg-[#F3F4F6] rounded-lg transition-colors"
               >
-                <MoreVertical className="w-4 h-4 text-[#6B7280]" />
+                <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
               </button>
               {actionDropdown === session.id && (
                 <div className={`absolute ${isRTL ? "left-0" : "right-0"} top-full mt-1 w-48 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 py-1`}>
                   {(session.status === "completed" || session.status === "ended" || session.status === "cancelled") && (
                     <button
                       onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setAttendanceModal({ id: session.id, title: session.title, courseId: session.courseId }); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB]"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F9FAFB]"
                     >
                       <Users className="w-4 h-4" /> {t("sessionsPage.viewAttendance")}
                     </button>
@@ -783,13 +783,13 @@ const SessionsContent = () => {
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setRescheduleModal({ id: session.id, title: session.title, scheduledAt: session.scheduledAt }); (() => { const d = new Date(session.scheduledAt); const local = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}T${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; setRescheduleDate(local); })(); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB]"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F9FAFB]"
                       >
                         <CalendarClock className="w-4 h-4" /> {t("sessionsPage.reschedule")}
                       </button>
                       {false && <button
                         onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setSubstituteModal({ id: session.id, title: session.title }); setSubstituteId(""); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB]"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F9FAFB]"
                       >
                         <UserPlus className="w-4 h-4" /> {t("sessionsPage.assignSubstitute")}
                       </button>}
@@ -820,8 +820,8 @@ const SessionsContent = () => {
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h1 className="text-2xl font-bold text-[#1F2937]">{t("sessionsPage.title")}</h1>
-                  <p className="text-sm text-[#6B7280] mt-1">{t("sessionsPage.subtitle")}</p>
+                  <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">{t("sessionsPage.title")}</h1>
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">{t("sessionsPage.subtitle")}</p>
                 </div>
                 <button
                   onClick={() => setShowScheduleModal(true)}
@@ -837,14 +837,14 @@ const SessionsContent = () => {
                 <div className="flex items-center bg-white border border-[var(--color-border)] rounded-lg p-1">
                   <button
                     onClick={() => setViewMode("list")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "list" ? "btn-gold text-white" : "text-[#6B7280] hover:text-[#1F2937]"}`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "list" ? "btn-gold text-white" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"}`}
                   >
                     <List className="w-4 h-4" />
                     {t("sessionsPage.listView")}
                   </button>
                   <button
                     onClick={() => setViewMode("calendar")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "calendar" ? "btn-gold text-white" : "text-[#6B7280] hover:text-[#1F2937]"}`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "calendar" ? "btn-gold text-white" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"}`}
                   >
                     <Calendar className="w-4 h-4" />
                     {t("sessionsPage.calendarView")}
@@ -885,7 +885,7 @@ const SessionsContent = () => {
                 <div className="bg-white border border-[var(--color-border)] rounded-xl p-4 mb-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div>
-                      <label className="block text-xs text-[#6B7280] mb-1">{t("sessionsPage.filterByCourse")}</label>
+                      <label className="block text-xs text-[var(--color-text-secondary)] mb-1">{t("sessionsPage.filterByCourse")}</label>
                       <select
                         value={courseFilter}
                         onChange={(e) => { setCourseFilter(e.target.value); setCurrentPage(1); }}
@@ -898,7 +898,7 @@ const SessionsContent = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs text-[#6B7280] mb-1">{t("sessionsPage.filterByType")}</label>
+                      <label className="block text-xs text-[var(--color-text-secondary)] mb-1">{t("sessionsPage.filterByType")}</label>
                       <select
                         value={typeFilter}
                         onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
@@ -911,14 +911,14 @@ const SessionsContent = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs text-[#6B7280] mb-1">{t("sessionsPage.dateFrom")}</label>
+                      <label className="block text-xs text-[var(--color-text-secondary)] mb-1">{t("sessionsPage.dateFrom")}</label>
                       <DatePicker
                         value={dateFrom}
                         onChange={(v) => { setDateFrom(v); setCurrentPage(1); }}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-[#6B7280] mb-1">{t("sessionsPage.dateTo")}</label>
+                      <label className="block text-xs text-[var(--color-text-secondary)] mb-1">{t("sessionsPage.dateTo")}</label>
                       <DatePicker
                         value={dateTo}
                         onChange={(v) => { setDateTo(v); setCurrentPage(1); }}
@@ -968,16 +968,16 @@ const SessionsContent = () => {
               {error && (
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
-                  <p className="text-sm text-[#6B7280] mb-4">{error}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)] mb-4">{error}</p>
                   <button onClick={refetch} className="px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg">{t("dashboard.retry")}</button>
                 </div>
               )}
 
               {!loading && !error && sessions.length === 0 && (
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
-                  <CalendarDays className="w-12 h-12 text-[#9CA3AF] mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-[#1F2937] mb-2">{t("sessionsPage.noSessions")}</h3>
-                  <p className="text-sm text-[#6B7280]">{t("sessionsPage.noSessionsDesc")}</p>
+                  <CalendarDays className="w-12 h-12 text-[var(--color-text-secondary)] mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">{t("sessionsPage.noSessions")}</h3>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{t("sessionsPage.noSessionsDesc")}</p>
                 </div>
               )}
 
@@ -986,7 +986,7 @@ const SessionsContent = () => {
                   {todaySessions.length > 0 && (
                     <div className="bg-white rounded-xl border border-[var(--color-border)]">
                       <div className="p-4 border-b border-[var(--color-border)]">
-                        <h2 className="text-base font-semibold text-[#1F2937]">{t("sessionsPage.today")}</h2>
+                        <h2 className="text-base font-semibold text-[var(--color-text-primary)]">{t("sessionsPage.today")}</h2>
                       </div>
                       <div className="divide-y divide-[var(--color-border)]">
                         {todaySessions.map((session) => renderSessionRow(session))}
@@ -997,7 +997,7 @@ const SessionsContent = () => {
                   {upcomingSessions.length > 0 && (
                     <div className="bg-white rounded-xl border border-[var(--color-border)]">
                       <div className="p-4 border-b border-[var(--color-border)]">
-                        <h2 className="text-base font-semibold text-[#1F2937]">{t("sessionsPage.upcoming")}</h2>
+                        <h2 className="text-base font-semibold text-[var(--color-text-primary)]">{t("sessionsPage.upcoming")}</h2>
                       </div>
                       <div className="divide-y divide-[var(--color-border)]">
                         {upcomingSessions.map((session) => renderSessionRow(session, true))}
@@ -1012,10 +1012,10 @@ const SessionsContent = () => {
                         className="w-full flex items-center justify-between p-4 hover:bg-[#F9FAFB] transition-colors rounded-xl"
                       >
                         <div className="flex items-center gap-2">
-                          <h2 className="text-base font-semibold text-[#1F2937]">{t("sessionsPage.past")}</h2>
-                          <span className="text-xs font-medium text-[#6B7280] bg-[#F3F4F6] px-2 py-0.5 rounded-full">{pastSessions.length}</span>
+                          <h2 className="text-base font-semibold text-[var(--color-text-primary)]">{t("sessionsPage.past")}</h2>
+                          <span className="text-xs font-medium text-[var(--color-text-secondary)] bg-[#F3F4F6] px-2 py-0.5 rounded-full">{pastSessions.length}</span>
                         </div>
-                        <ChevronDown className={`w-5 h-5 text-[#6B7280] transition-transform ${showPast ? "rotate-180" : ""}`} />
+                        <ChevronDown className={`w-5 h-5 text-[var(--color-text-secondary)] transition-transform ${showPast ? "rotate-180" : ""}`} />
                       </button>
                       {showPast && (
                         <>
@@ -1025,7 +1025,7 @@ const SessionsContent = () => {
                           {totalPages > 1 && (
                             <div className="flex items-center justify-center gap-2 py-4 border-t border-[var(--color-border)]">
                               <button disabled={currentPage <= 1} onClick={() => setCurrentPage((p) => p - 1)} className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm disabled:opacity-50"><ChevronLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} /></button>
-                              <span className="text-sm text-[#6B7280]">{currentPage} / {totalPages}</span>
+                              <span className="text-sm text-[var(--color-text-secondary)]">{currentPage} / {totalPages}</span>
                               <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage((p) => p + 1)} className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm disabled:opacity-50"><ChevronRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} /></button>
                             </div>
                           )}
@@ -1039,20 +1039,20 @@ const SessionsContent = () => {
               {!loading && !error && viewMode === "calendar" && (
                 <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                   <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
-                    <button onClick={goToPrevMonth} className="p-2 hover:bg-[#F3F4F6] rounded-lg">{isRTL ? <ChevronRight className="w-5 h-5 text-[#6B7280]" /> : <ChevronLeft className="w-5 h-5 text-[#6B7280]" />}</button>
-                    <h2 className="text-lg font-semibold text-[#1F2937]">{calendarData.headerLabel}</h2>
-                    <button onClick={goToNextMonth} className="p-2 hover:bg-[#F3F4F6] rounded-lg">{isRTL ? <ChevronLeft className="w-5 h-5 text-[#6B7280]" /> : <ChevronRight className="w-5 h-5 text-[#6B7280]" />}</button>
+                    <button onClick={goToPrevMonth} className="p-2 hover:bg-[#F3F4F6] rounded-lg">{isRTL ? <ChevronRight className="w-5 h-5 text-[var(--color-text-secondary)]" /> : <ChevronLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />}</button>
+                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{calendarData.headerLabel}</h2>
+                    <button onClick={goToNextMonth} className="p-2 hover:bg-[#F3F4F6] rounded-lg">{isRTL ? <ChevronLeft className="w-5 h-5 text-[var(--color-text-secondary)]" /> : <ChevronRight className="w-5 h-5 text-[var(--color-text-secondary)]" />}</button>
                   </div>
                   <div className="flex items-center justify-end px-4 py-2 border-b border-[var(--color-border)] bg-[#F9FAFB]">
                     <button
                       onClick={() => setCalendarFormat(useHijri ? "gregorian" : "hijri")}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border border-[var(--color-border)] hover:bg-white transition-colors text-[#374151]"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border border-[var(--color-border)] hover:bg-white transition-colors text-[var(--color-text-secondary)]"
                     >
                       {useHijri ? (t("sessionsPage.gregorian") || "Gregorian") : (t("sessionsPage.hijri") || "Hijri")}
                     </button>
                   </div>
                   <div className="grid grid-cols-7">
-                    {dayNames.map((day) => (<div key={day} className="p-3 text-center text-xs font-medium text-[#6B7280] border-b border-[var(--color-border)]">{day}</div>))}
+                    {dayNames.map((day) => (<div key={day} className="p-3 text-center text-xs font-medium text-[var(--color-text-secondary)] border-b border-[var(--color-border)]">{day}</div>))}
                     {Array.from({ length: calendarData.firstDayOfMonth }).map((_, i) => (<div key={`empty-${i}`} className="min-h-[100px] p-2 border-b border-r border-[var(--color-border)] bg-[#F9FAFB]" />))}
                     {Array.from({ length: calendarData.daysInMonth }).map((_, i) => {
                       const day = i + 1;
@@ -1062,10 +1062,10 @@ const SessionsContent = () => {
                       const isToday = gDate.getDate() === todayObj.getDate() && gDate.getMonth() === todayObj.getMonth() && gDate.getFullYear() === todayObj.getFullYear();
                       return (
                         <div key={day} className={`min-h-[100px] p-2 border-b border-r border-[var(--color-border)] ${isToday ? "bg-[#EFF6FF]" : ""}`}>
-                          <span className={`inline-flex items-center justify-center w-7 h-7 text-sm ${isToday ? "bg-[#3B82F6] text-white rounded-full font-semibold" : "text-[#1F2937]"}`}>{day}</span>
+                          <span className={`inline-flex items-center justify-center w-7 h-7 text-sm ${isToday ? "bg-[#3B82F6] text-white rounded-full font-semibold" : "text-[var(--color-text-primary)]"}`}>{day}</span>
                           <div className="mt-1 space-y-1">
                             {daySessions.slice(0, 2).map((session) => (<div key={session.id} className={`px-1.5 py-0.5 rounded text-[10px] truncate ${getTypeBadgeStyle(session.type)}`} title={session.title}>{session.title}</div>))}
-                            {daySessions.length > 2 && (<div className="text-[10px] text-[#6B7280] px-1.5">+{daySessions.length - 2} {isRTL ? "أكثر" : "more"}</div>)}
+                            {daySessions.length > 2 && (<div className="text-[10px] text-[var(--color-text-secondary)] px-1.5">+{daySessions.length - 2} {isRTL ? "أكثر" : "more"}</div>)}
                           </div>
                         </div>
                       );
@@ -1095,17 +1095,17 @@ const SessionsContent = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-[#1F2937]">Cancel Session</h3>
-              <button onClick={() => setCancelModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg"><X className="w-5 h-5 text-[#6B7280]" /></button>
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Cancel Session</h3>
+              <button onClick={() => setCancelModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg"><X className="w-5 h-5 text-[var(--color-text-secondary)]" /></button>
             </div>
             {actionSuccess ? (
               <div className="text-center py-6">
                 <Check className="w-8 h-8 text-[#22C55E] mx-auto mb-2" />
-                <p className="text-sm font-medium text-[#1F2937]">Session cancelled</p>
+                <p className="text-sm font-medium text-[var(--color-text-primary)]">Session cancelled</p>
               </div>
             ) : (
               <>
-                <p className="text-sm text-[#6B7280] mb-3">Cancel &quot;{cancelModal.title}&quot;? Please provide a reason:</p>
+                <p className="text-sm text-[var(--color-text-secondary)] mb-3">Cancel &quot;{cancelModal.title}&quot;? Please provide a reason:</p>
                 <textarea
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
@@ -1113,7 +1113,7 @@ const SessionsContent = () => {
                   className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[#3B82F6] outline-none resize-none h-24"
                 />
                 <div className="flex justify-end gap-3">
-                  <button onClick={() => setCancelModal(null)} className="px-4 py-2 text-sm text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">Close</button>
+                  <button onClick={() => setCancelModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">Close</button>
                   <button onClick={handleCancelOnBehalf} disabled={!cancelReason || actionLoading} className="px-4 py-2 text-sm font-medium text-white bg-[#EF4444] rounded-lg disabled:opacity-50 inline-flex items-center gap-2 hover:bg-[#DC2626]">
                     {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}Cancel Session
                   </button>
@@ -1129,17 +1129,17 @@ const SessionsContent = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-[#1F2937]">Reschedule Session</h3>
-              <button onClick={() => setRescheduleModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg"><X className="w-5 h-5 text-[#6B7280]" /></button>
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Reschedule Session</h3>
+              <button onClick={() => setRescheduleModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg"><X className="w-5 h-5 text-[var(--color-text-secondary)]" /></button>
             </div>
             {actionSuccess ? (
               <div className="text-center py-6">
                 <Check className="w-8 h-8 text-[#22C55E] mx-auto mb-2" />
-                <p className="text-sm font-medium text-[#1F2937]">Session rescheduled</p>
+                <p className="text-sm font-medium text-[var(--color-text-primary)]">Session rescheduled</p>
               </div>
             ) : (
               <>
-                <p className="text-sm text-[#6B7280] mb-3">Reschedule &quot;{rescheduleModal.title}&quot;:</p>
+                <p className="text-sm text-[var(--color-text-secondary)] mb-3">Reschedule &quot;{rescheduleModal.title}&quot;:</p>
                 <div className="mb-4">
                   <DateTimePicker
                     value={rescheduleDate}
@@ -1147,7 +1147,7 @@ const SessionsContent = () => {
                   />
                 </div>
                 <div className="flex justify-end gap-3">
-                  <button onClick={() => setRescheduleModal(null)} className="px-4 py-2 text-sm text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">Close</button>
+                  <button onClick={() => setRescheduleModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">Close</button>
                   <button onClick={handleReschedule} disabled={!rescheduleDate || actionLoading} className="px-4 py-2 text-sm font-medium text-white btn-gold rounded-lg disabled:opacity-50 inline-flex items-center gap-2">
                     {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}Reschedule
                   </button>
@@ -1163,17 +1163,17 @@ const SessionsContent = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-[#1F2937]">Assign Substitute</h3>
-              <button onClick={() => setSubstituteModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg"><X className="w-5 h-5 text-[#6B7280]" /></button>
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Assign Substitute</h3>
+              <button onClick={() => setSubstituteModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg"><X className="w-5 h-5 text-[var(--color-text-secondary)]" /></button>
             </div>
             {actionSuccess ? (
               <div className="text-center py-6">
                 <Check className="w-8 h-8 text-[#22C55E] mx-auto mb-2" />
-                <p className="text-sm font-medium text-[#1F2937]">Substitute assigned</p>
+                <p className="text-sm font-medium text-[var(--color-text-primary)]">Substitute assigned</p>
               </div>
             ) : (
               <>
-                <p className="text-sm text-[#6B7280] mb-3">Select substitute for &quot;{substituteModal.title}&quot;:</p>
+                <p className="text-sm text-[var(--color-text-secondary)] mb-3">Select substitute for &quot;{substituteModal.title}&quot;:</p>
                 <select
                   value={substituteId}
                   onChange={(e) => setSubstituteId(e.target.value)}
@@ -1185,7 +1185,7 @@ const SessionsContent = () => {
                   ))}
                 </select>
                 <div className="flex justify-end gap-3">
-                  <button onClick={() => setSubstituteModal(null)} className="px-4 py-2 text-sm text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">Close</button>
+                  <button onClick={() => setSubstituteModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">Close</button>
                   <button onClick={handleAssignSubstitute} disabled={!substituteId || actionLoading} className="px-4 py-2 text-sm font-medium text-white btn-gold rounded-lg disabled:opacity-50 inline-flex items-center gap-2">
                     {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}Assign
                   </button>
@@ -1202,11 +1202,11 @@ const SessionsContent = () => {
           <div className="bg-white rounded-xl w-full max-w-2xl p-6 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-[#1F2937]">{t("sessionsPage.attendanceTitle")}</h3>
-                <p className="text-sm text-[#6B7280]">{attendanceModal.title}</p>
+                <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("sessionsPage.attendanceTitle")}</h3>
+                <p className="text-sm text-[var(--color-text-secondary)]">{attendanceModal.title}</p>
               </div>
               <button onClick={() => setAttendanceModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
-                <X className="w-5 h-5 text-[#6B7280]" />
+                <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
             </div>
 
@@ -1216,21 +1216,21 @@ const SessionsContent = () => {
               </div>
             ) : attendanceData.length === 0 ? (
               <div className="text-center py-12">
-                <Users className="w-10 h-10 text-[#9CA3AF] mx-auto mb-3" />
-                <p className="text-sm text-[#6B7280]">{t("sessionsPage.noAttendance")}</p>
+                <Users className="w-10 h-10 text-[var(--color-text-secondary)] mx-auto mb-3" />
+                <p className="text-sm text-[var(--color-text-secondary)]">{t("sessionsPage.noAttendance")}</p>
               </div>
             ) : (
               <>
                 {/* Summary bar */}
                 <div className="grid grid-cols-5 gap-2 mb-4">
                   {[
-                    { label: t("sessionsPage.attendTotal"), count: attendanceStats.total, color: "text-[#1F2937]" },
+                    { label: t("sessionsPage.attendTotal"), count: attendanceStats.total, color: "text-[var(--color-text-primary)]" },
                     { label: t("sessionsPage.attendPresent"), count: attendanceStats.present, color: "text-[#22C55E]" },
                     { label: t("sessionsPage.attendAbsent"), count: attendanceStats.absent, color: "text-[#EF4444]" },
                   ].map((s) => (
                     <div key={s.label} className="bg-[#F9FAFB] rounded-lg p-2 text-center">
                       <p className={`text-lg font-bold ${s.color}`}>{s.count}</p>
-                      <p className="text-[10px] text-[#6B7280]">{s.label}</p>
+                      <p className="text-[10px] text-[var(--color-text-secondary)]">{s.label}</p>
                     </div>
                   ))}
                 </div>
@@ -1240,8 +1240,8 @@ const SessionsContent = () => {
                   const marker = attendanceData.find((r: any) => r.markedByName);
                   if (!marker) return null;
                   return (
-                    <div className="flex items-center gap-3 px-3 py-2 mb-2 bg-[#FAFAFA] rounded-lg text-[10px] text-[#9CA3AF]">
-                      <span>Marked by: <span className="font-medium text-[#6B7280]">{(marker as any).markedByName}</span> ({(marker as any).markedByRole === "TEACHING_ASSISTANT" ? "TA" : (marker as any).markedByRole === "INSTRUCTOR" ? "Instructor" : (marker as any).markedByRole || "System"})</span>
+                    <div className="flex items-center gap-3 px-3 py-2 mb-2 bg-[#FAFAFA] rounded-lg text-[10px] text-[var(--color-text-secondary)]">
+                      <span>Marked by: <span className="font-medium text-[var(--color-text-secondary)]">{(marker as any).markedByName}</span> ({(marker as any).markedByRole === "TEACHING_ASSISTANT" ? "TA" : (marker as any).markedByRole === "INSTRUCTOR" ? "Instructor" : (marker as any).markedByRole || "System"})</span>
                       {(marker as any).updatedAt && (
                         <span>Last updated: {new Date((marker as any).updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                       )}
@@ -1252,7 +1252,7 @@ const SessionsContent = () => {
                 {/* Attendance table */}
                 <div className="overflow-x-auto border border-[var(--color-border)] rounded-lg">
                   <table className="w-full text-sm">
-                    <thead className="bg-[#F9FAFB] text-[#6B7280]">
+                    <thead className="bg-[#F9FAFB] text-[var(--color-text-secondary)]">
                       <tr>
                         <th className="text-start px-3 py-2 font-medium">{t("sessionsPage.attendStudent")}</th>
                         <th className="text-start px-3 py-2 font-medium">{t("sessionsPage.attendStatus")}</th>
@@ -1274,19 +1274,19 @@ const SessionsContent = () => {
                         const presPercent = (record as any).presencePercent;
                         return (
                           <tr key={`${record.studentId}-${idx}`} className="hover:bg-[#F9FAFB]">
-                            <td className="px-3 py-2 text-[#1F2937]">{name}</td>
+                            <td className="px-3 py-2 text-[var(--color-text-primary)]">{name}</td>
                             <td className="px-3 py-2">
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColors[record.status] || "bg-[#F3F4F6] text-[#6B7280]"}`}>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColors[record.status] || "bg-[#F3F4F6] text-[var(--color-text-secondary)]"}`}>
                                 {record.status}
                               </span>
                             </td>
-                            <td className="px-3 py-2 text-[#6B7280]">
+                            <td className="px-3 py-2 text-[var(--color-text-secondary)]">
                               {record.joinedAt ? new Date(record.joinedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "\u2014"}
                             </td>
-                            <td className="px-3 py-2 text-[#6B7280]">
+                            <td className="px-3 py-2 text-[var(--color-text-secondary)]">
                               {record.leftAt ? new Date(record.leftAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "\u2014"}
                             </td>
-                            <td className="px-3 py-2 text-[#6B7280]">
+                            <td className="px-3 py-2 text-[var(--color-text-secondary)]">
                               {record.durationMinutes != null ? `${record.durationMinutes}min` : "\u2014"}
                             </td>
                             <td className="px-3 py-2">
@@ -1311,7 +1311,7 @@ const SessionsContent = () => {
                 <select
                   value={exportFormat}
                   onChange={(e) => setExportFormat(e.target.value as "csv" | "pdf" | "xlsx")}
-                  className="px-2 py-2 text-xs border border-[var(--color-border)] rounded-lg text-[#6B7280] bg-white focus:ring-1 focus:ring-[#3B82F6] outline-none"
+                  className="px-2 py-2 text-xs border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] bg-white focus:ring-1 focus:ring-[#3B82F6] outline-none"
                 >
                   <option value="csv">CSV</option>
                   <option value="pdf">PDF</option>
@@ -1329,7 +1329,7 @@ const SessionsContent = () => {
                       // silently fail
                     }
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors whitespace-nowrap"
                 >
                   <Download className="w-3.5 h-3.5" />
                   Export

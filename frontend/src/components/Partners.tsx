@@ -26,7 +26,7 @@ const Partners = ({ partners = [], sectionTitle }: PartnersProps) => {
         {sectionTitle && (
           <div className="flex justify-center md:px-16">
             <h2
-              className="text-black md:text-[var(--on-surface-default)] font-semibold text-center leading-9 md:w-[560px]"
+              className="text-[var(--color-text-primary)] md:text-[var(--on-surface-default)] font-semibold text-center leading-9 md:w-[560px]"
               style={{ fontSize: "var(--typeface-font-styles-heading-h2)" }}
             >
               {sectionTitle}

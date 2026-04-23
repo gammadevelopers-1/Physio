@@ -115,7 +115,7 @@ const ActionsDropdown = ({ actions }: { actions: ActionItem[] }) => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
       <button
-        className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors"
+        className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors"
         aria-label="Actions"
       >
         <MoreVertical className="w-4 h-4" />
@@ -239,8 +239,8 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 id="upload-modal-title" className="text-lg font-semibold text-[#1F2937]">{t("content.uploadTitle")}</h3>
-            <button onClick={onClose} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors" aria-label={t("content.cancel")}>
+            <h3 id="upload-modal-title" className="text-lg font-semibold text-[var(--color-text-primary)]">{t("content.uploadTitle")}</h3>
+            <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors" aria-label={t("content.cancel")}>
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -268,8 +268,8 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
             {file ? (
               <div>
                 <Check className="w-8 h-8 mx-auto mb-2 text-[#22C55E]" />
-                <p className="text-sm font-medium text-[#1F2937] truncate">{file.name}</p>
-                <p className="text-xs text-[#6B7280] mt-1">
+                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{file.name}</p>
+                <p className="text-xs text-[var(--color-text-secondary)] mt-1">
                   {formatFileSize(file.size)} &bull; {detectedType?.toUpperCase()}
                 </p>
                 <button
@@ -284,16 +284,16 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
                 <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[#EFF6FF] flex items-center justify-center">
                   <Upload className="w-6 h-6 text-[#3B82F6]" />
                 </div>
-                <p className="text-sm text-[#374151] mb-1">{t("content.dragDrop")}</p>
-                <p className="text-xs text-[#6B7280]">{t("content.orBrowse")}</p>
-                <p className="text-xs text-[#9CA3AF] mt-2">{t("content.supportedFormats")}</p>
+                <p className="text-sm text-[var(--color-text-secondary)] mb-1">{t("content.dragDrop")}</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">{t("content.orBrowse")}</p>
+                <p className="text-xs text-[var(--color-text-secondary)] mt-2">{t("content.supportedFormats")}</p>
               </div>
             )}
           </div>
 
           {/* Title */}
           <div className="mt-4">
-            <label className="block text-sm font-medium text-[#374151] mb-1">{t("content.materialTitle")}</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("content.materialTitle")}</label>
             <input
               type="text"
               value={title}
@@ -305,11 +305,11 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
 
           {/* Course */}
           <div className="mt-4">
-            <label className="block text-sm font-medium text-[#374151] mb-1">{t("content.selectCourse")}</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("content.selectCourse")}</label>
             <select
               value={selectedCourseId}
               onChange={(e) => setSelectedCourseId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
             >
               {courses.filter((c) => c.status !== "completed" && c.status !== "archived").map((c) => (
                 <option key={c.id} value={c.id}>{c.title}</option>
@@ -320,11 +320,11 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
           {/* Module (optional) */}
           {courseModules.length > 0 && (
             <div className="mt-4">
-              <label className="block text-sm font-medium text-[#374151] mb-1">{t("content.selectModule")}</label>
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("content.selectModule")}</label>
               <select
                 value={selectedModuleId}
                 onChange={(e) => setSelectedModuleId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
               >
                 <option value="">{t("content.noModule")}</option>
                 {courseModules.map((m) => (
@@ -338,8 +338,8 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
           {detectedType === "video" && (
             <div className="mt-4 flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#374151]">{t("content.autoTranscribe")}</p>
-                <p className="text-xs text-[#6B7280] mt-0.5">{t("content.autoTranscribeDesc")}</p>
+                <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("content.autoTranscribe")}</p>
+                <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{t("content.autoTranscribeDesc")}</p>
               </div>
               <button
                 type="button"
@@ -362,7 +362,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
           {/* Progress */}
           {uploading && (
             <div className="mt-4">
-              <div className="flex items-center justify-between text-xs text-[#6B7280] mb-1">
+              <div className="flex items-center justify-between text-xs text-[var(--color-text-secondary)] mb-1">
                 <span>{t("content.uploading")}</span>
                 <span>{progress}%</span>
               </div>
@@ -388,7 +388,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
 
           {/* Actions */}
           <div className="flex gap-3 mt-6">
-            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50">
+            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50">
               {t("content.cancel")}
             </button>
             <button
@@ -455,21 +455,21 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 id="replace-modal-title" className="text-lg font-semibold text-[#1F2937]">{t("content.replaceTitle")}</h3>
-            <button onClick={onClose} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors" aria-label={t("content.cancel")}>
+            <h3 id="replace-modal-title" className="text-lg font-semibold text-[var(--color-text-primary)]">{t("content.replaceTitle")}</h3>
+            <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors" aria-label={t("content.cancel")}>
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Current file info */}
           <div className="p-3 bg-[#F9FAFB] rounded-lg mb-4">
-            <p className="text-sm font-medium text-[#1F2937]">{material.title}</p>
-            <p className="text-xs text-[#6B7280] mt-1">
+            <p className="text-sm font-medium text-[var(--color-text-primary)]">{material.title}</p>
+            <p className="text-xs text-[var(--color-text-secondary)] mt-1">
               v{material.version} &bull; {formatFileSize(material.fileSize)} &bull; {material.type.toUpperCase()}
             </p>
           </div>
 
-          <p className="text-sm text-[#6B7280] mb-4">{t("content.replaceDesc")}</p>
+          <p className="text-sm text-[var(--color-text-secondary)] mb-4">{t("content.replaceDesc")}</p>
 
           {/* File picker */}
           <div
@@ -491,14 +491,14 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
             {file ? (
               <div>
                 <Check className="w-6 h-6 mx-auto mb-2 text-[#22C55E]" />
-                <p className="text-sm font-medium text-[#1F2937] truncate">{file.name}</p>
-                <p className="text-xs text-[#6B7280] mt-1">{formatFileSize(file.size)}</p>
+                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{file.name}</p>
+                <p className="text-xs text-[var(--color-text-secondary)] mt-1">{formatFileSize(file.size)}</p>
               </div>
             ) : (
               <div>
-                <Replace className="w-8 h-8 mx-auto mb-2 text-[#6B7280]" />
-                <p className="text-sm text-[#374151]">{t("content.selectNewFile")}</p>
-                <p className="text-xs text-[#9CA3AF] mt-1">{t("content.sameTypeRequired")}</p>
+                <Replace className="w-8 h-8 mx-auto mb-2 text-[var(--color-text-secondary)]" />
+                <p className="text-sm text-[var(--color-text-secondary)]">{t("content.selectNewFile")}</p>
+                <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("content.sameTypeRequired")}</p>
               </div>
             )}
           </div>
@@ -506,7 +506,7 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
           {/* Progress */}
           {uploading && (
             <div className="mt-4">
-              <div className="flex items-center justify-between text-xs text-[#6B7280] mb-1">
+              <div className="flex items-center justify-between text-xs text-[var(--color-text-secondary)] mb-1">
                 <span>{t("content.uploading")}</span>
                 <span>{progress}%</span>
               </div>
@@ -519,7 +519,7 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
           {error && <p className="mt-3 text-sm text-[#EF4444]">{error}</p>}
 
           <div className="flex gap-3 mt-6">
-            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
+            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50">
               {t("content.cancel")}
             </button>
             <button
@@ -586,15 +586,15 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 id="edit-modal-title" className="text-lg font-semibold text-[#1F2937]">{t("content.editTitle")}</h3>
-            <button onClick={onClose} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors" aria-label={t("content.cancel")}>
+            <h3 id="edit-modal-title" className="text-lg font-semibold text-[var(--color-text-primary)]">{t("content.editTitle")}</h3>
+            <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors" aria-label={t("content.cancel")}>
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Title */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-[#374151] mb-1">{t("content.materialTitle")}</label>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("content.materialTitle")}</label>
             <input
               type="text"
               value={title}
@@ -605,12 +605,12 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
 
           {/* WCAG Status display */}
           <div className="mb-4 p-3 bg-[#F9FAFB] rounded-lg">
-            <p className="text-xs font-medium text-[#6B7280] mb-1">{t("content.wcagStatus")}</p>
+            <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-1">{t("content.wcagStatus")}</p>
             <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
               material.wcagStatus === "pass" ? "bg-[#DCFCE7] text-[#22C55E]" :
               material.wcagStatus === "warning" ? "bg-[#FEF9C3] text-[#EAB308]" :
               material.wcagStatus === "fail" ? "bg-[#FEE2E2] text-[#EF4444]" :
-              "bg-[#F3F4F6] text-[#6B7280]"
+              "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
             }`}>
               {material.wcagStatus === "pass" ? <Check className="w-3 h-3" /> :
                material.wcagStatus === "warning" ? <AlertTriangle className="w-3 h-3" /> :
@@ -628,7 +628,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                 return (
                   <ul className="mt-2 space-y-1">
                     {checks.filter((c) => c.rule !== "INFO").map((check, i) => (
-                      <li key={i} className="flex items-start gap-1.5 text-xs text-[#374151]">
+                      <li key={i} className="flex items-start gap-1.5 text-xs text-[var(--color-text-secondary)]">
                         {check.passed ? (
                           <Check className="w-3.5 h-3.5 text-[#22C55E] shrink-0 mt-0.5" />
                         ) : (
@@ -636,7 +636,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                         )}
                         <span>
                           <span className="font-medium">{check.label}</span>
-                          <span className="text-[#6B7280]"> — {check.detail}</span>
+                          <span className="text-[var(--color-text-secondary)]"> — {check.detail}</span>
                         </span>
                       </li>
                     ))}
@@ -651,14 +651,14 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
           {/* Auto-generated captions/transcript download links */}
           {material.type === "video" && (material.captionsUrl || material.transcriptUrl) && (
             <div className="mb-4 p-3 bg-[#F0FDF4] rounded-lg">
-              <p className="text-xs font-medium text-[#374151] mb-2">{t("content.autoGenerated")}</p>
+              <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-2">{t("content.autoGenerated")}</p>
               <div className="flex flex-wrap gap-2">
                 {material.captionsUrl && (
                   <a
                     href={material.captionsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[var(--color-border)] rounded-lg text-xs font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
                   >
                     <Download className="w-3 h-3" />
                     {t("content.downloadCaptions")}
@@ -669,7 +669,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                     href={material.transcriptUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[var(--color-border)] rounded-lg text-xs font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
                   >
                     <Download className="w-3 h-3" />
                     {t("content.downloadTranscript")}
@@ -683,7 +683,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
           {material.type === "video" && (
             <>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("content.captionsUrl")}</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("content.captionsUrl")}</label>
                 <input
                   type="text"
                   value={captionsUrl}
@@ -691,10 +691,10 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                   placeholder="https://..."
                   className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                 />
-                <p className="text-xs text-[#9CA3AF] mt-1">{t("content.captionsUrlHint")}</p>
+                <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("content.captionsUrlHint")}</p>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("content.transcriptUrl")}</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("content.transcriptUrl")}</label>
                 <input
                   type="text"
                   value={transcriptUrl}
@@ -707,8 +707,8 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
               {/* Auto-Transcribe Toggle */}
               <div className="mb-4 flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#374151]">{t("content.autoTranscribe")}</p>
-                  <p className="text-xs text-[#6B7280] mt-0.5">{t("content.autoTranscribeDesc")}</p>
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("content.autoTranscribe")}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{t("content.autoTranscribeDesc")}</p>
                 </div>
                 <button
                   type="button"
@@ -730,14 +730,14 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
           )}
 
           {/* Info */}
-          <div className="p-3 bg-[#F9FAFB] rounded-lg text-xs text-[#6B7280] space-y-1">
+          <div className="p-3 bg-[#F9FAFB] rounded-lg text-xs text-[var(--color-text-secondary)] space-y-1">
             <p>{t("content.version")}: v{material.version}</p>
             <p>{t("content.type")}: {material.type.toUpperCase()}</p>
             <p>{t("content.tableSize")}: {formatFileSize(material.fileSize)}</p>
           </div>
 
           <div className="flex gap-3 mt-6">
-            <button onClick={onClose} disabled={saving} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
+            <button onClick={onClose} disabled={saving} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50">
               {t("content.cancel")}
             </button>
             <button
@@ -788,12 +788,12 @@ const DeleteConfirm = ({ material, onClose, onDeleted, t }: DeleteConfirmProps) 
           <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[#FEE2E2] flex items-center justify-center">
             <Trash2 className="w-6 h-6 text-[#EF4444]" />
           </div>
-          <h3 id="delete-modal-title" className="text-lg font-semibold text-[#1F2937] mb-2">{t("content.deleteConfirmTitle")}</h3>
-          <p className="text-sm text-[#6B7280] mb-1">{t("content.deleteConfirmDesc")}</p>
-          <p className="text-sm font-medium text-[#1F2937] mb-6">&ldquo;{material.title}&rdquo;</p>
+          <h3 id="delete-modal-title" className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">{t("content.deleteConfirmTitle")}</h3>
+          <p className="text-sm text-[var(--color-text-secondary)] mb-1">{t("content.deleteConfirmDesc")}</p>
+          <p className="text-sm font-medium text-[var(--color-text-primary)] mb-6">&ldquo;{material.title}&rdquo;</p>
 
           <div className="flex gap-3">
-            <button onClick={onClose} disabled={deleting} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
+            <button onClick={onClose} disabled={deleting} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50">
               {t("content.cancel")}
             </button>
             <button
@@ -981,7 +981,7 @@ const ContentManagementContent = () => {
       case "pdf": return "bg-[#FFEDD5] text-[#F97316]";
       case "document": return "bg-[#DBEAFE] text-[#3B82F6]";
       case "image": return "bg-[#D1FAE5] text-[#10B981]";
-      default: return "bg-[#F3F4F6] text-[#6B7280]";
+      default: return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -992,7 +992,7 @@ const ContentManagementContent = () => {
       case "failed": return "bg-[#FEE2E2] text-[#EF4444]";
       case "pending_review": return "bg-[#DBEAFE] text-[#3B82F6]";
       case "changes_requested": return "bg-[#FEF3C7] text-[#D97706]";
-      default: return "bg-[#F3F4F6] text-[#6B7280]";
+      default: return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -1023,7 +1023,7 @@ const ContentManagementContent = () => {
     if (wcag === "pass" || wcag === "compliant") return "bg-[#DCFCE7] text-[#22C55E]";
     if (wcag === "warning") return "bg-[#FEF9C3] text-[#EAB308]";
     if (wcag === "fail") return "bg-[#FEE2E2] text-[#EF4444]";
-    return "bg-[#F3F4F6] text-[#6B7280]"; // pending (gray)
+    return "bg-[#F3F4F6] text-[var(--color-text-secondary)]"; // pending (gray)
   };
 
   const getWcagIcon = (wcag: string) => {
@@ -1102,13 +1102,13 @@ const ContentManagementContent = () => {
               {/* Header */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <h1 className="text-xl md:text-2xl font-bold text-[#1F2937]">{t("content.title")}</h1>
-                  <p className="text-sm text-[#6B7280] mt-1">{t("content.subtitle")}</p>
+                  <h1 className="text-xl md:text-2xl font-bold text-[var(--color-text-primary)]">{t("content.title")}</h1>
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">{t("content.subtitle")}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={refetch}
-                    className="p-2 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                    className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
                     aria-label={t("content.refresh")}
                   >
                     <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
@@ -1137,8 +1137,8 @@ const ContentManagementContent = () => {
                       <FolderOpen className="w-5 h-5 text-[#3B82F6]" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-[#1F2937]">{stats.totalFiles}</p>
-                      <p className="text-xs text-[#6B7280]">{t("content.totalFiles")}</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.totalFiles}</p>
+                      <p className="text-xs text-[var(--color-text-secondary)]">{t("content.totalFiles")}</p>
                     </div>
                   </div>
                 </div>
@@ -1148,8 +1148,8 @@ const ContentManagementContent = () => {
                       <HardDrive className="w-5 h-5 text-[#6366F1]" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-[#1F2937]">{stats.totalStorage}</p>
-                      <p className="text-xs text-[#6B7280]">{t("content.storageUsed")}</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.totalStorage}</p>
+                      <p className="text-xs text-[var(--color-text-secondary)]">{t("content.storageUsed")}</p>
                     </div>
                   </div>
                 </div>
@@ -1159,8 +1159,8 @@ const ContentManagementContent = () => {
                       <Check className="w-5 h-5 text-[#22C55E]" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-[#1F2937]">{stats.liveFiles}</p>
-                      <p className="text-xs text-[#6B7280]">{t("content.liveContent")}</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.liveFiles}</p>
+                      <p className="text-xs text-[var(--color-text-secondary)]">{t("content.liveContent")}</p>
                     </div>
                   </div>
                 </div>
@@ -1170,8 +1170,8 @@ const ContentManagementContent = () => {
                       <FileCheck className="w-5 h-5 text-[#EC4899]" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-[#1F2937]">{stats.wcagPass}</p>
-                      <p className="text-xs text-[#6B7280]">{t("content.wcagCompliant")}</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.wcagPass}</p>
+                      <p className="text-xs text-[var(--color-text-secondary)]">{t("content.wcagCompliant")}</p>
                     </div>
                   </div>
                 </div>
@@ -1181,7 +1181,7 @@ const ContentManagementContent = () => {
               {loading && (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
-                  <span className="ml-3 text-[#6B7280]">{t("content.loading")}</span>
+                  <span className="ml-3 text-[var(--color-text-secondary)]">{t("content.loading")}</span>
                 </div>
               )}
 
@@ -1201,7 +1201,7 @@ const ContentManagementContent = () => {
                   <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex flex-col md:flex-row gap-4">
                       <div className="relative flex-1">
-                        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`} />
+                        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`} />
                         <input
                           type="text"
                           placeholder={t("content.searchPlaceholder")}
@@ -1214,7 +1214,7 @@ const ContentManagementContent = () => {
                       <div className="flex gap-2">
                         <button
                           onClick={() => setShowFilters(!showFilters)}
-                          className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] hover:bg-[#F9FAFB]"
+                          className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
                         >
                           <Filter className="w-4 h-4" />
                           {t("content.filters")}
@@ -1225,13 +1225,13 @@ const ContentManagementContent = () => {
                         <div className="flex border border-[var(--color-border)] rounded-lg overflow-hidden">
                           <button
                             onClick={() => setViewMode("list")}
-                            className={`p-2.5 ${viewMode === "list" ? "bg-[#3B82F6] text-white" : "bg-white text-[#6B7280] hover:bg-[#F9FAFB]"}`}
+                            className={`p-2.5 ${viewMode === "list" ? "bg-[#3B82F6] text-white" : "bg-white text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"}`}
                           >
                             <List className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => setViewMode("grid")}
-                            className={`p-2.5 ${viewMode === "grid" ? "bg-[#3B82F6] text-white" : "bg-white text-[#6B7280] hover:bg-[#F9FAFB]"}`}
+                            className={`p-2.5 ${viewMode === "grid" ? "bg-[#3B82F6] text-white" : "bg-white text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"}`}
                           >
                             <Grid className="w-4 h-4" />
                           </button>
@@ -1243,7 +1243,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedCourse}
                           onChange={(e) => handleCourseChange(e.target.value)}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           <option value="all">{t("content.allCourses")}</option>
                           {courses.map((c) => (
@@ -1253,7 +1253,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedType}
                           onChange={(e) => { setSelectedType(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           {types.map((t) => (
                             <option key={t.id} value={t.id}>{t.name}</option>
@@ -1262,7 +1262,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           {statuses.map((s) => (
                             <option key={s.id} value={s.id}>{s.name}</option>
@@ -1277,7 +1277,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedCourse}
                           onChange={(e) => handleCourseChange(e.target.value)}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           <option value="all">{t("content.allCourses")}</option>
                           {courses.map((c) => (
@@ -1287,7 +1287,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedType}
                           onChange={(e) => { setSelectedType(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           {types.map((t) => (
                             <option key={t.id} value={t.id}>{t.name}</option>
@@ -1296,7 +1296,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           {statuses.map((s) => (
                             <option key={s.id} value={s.id}>{s.name}</option>
@@ -1310,8 +1310,8 @@ const ContentManagementContent = () => {
                   {filteredMaterials.length === 0 && (
                     <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                       <FolderOpen className="w-12 h-12 text-[var(--color-border)] mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-[#1F2937] mb-2">{t("content.noFiles")}</h3>
-                      <p className="text-sm text-[#6B7280] mb-6">{t("content.noFilesDesc")}</p>
+                      <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">{t("content.noFiles")}</h3>
+                      <p className="text-sm text-[var(--color-text-secondary)] mb-6">{t("content.noFilesDesc")}</p>
                       {courses.length > 0 && (
                         <button
                           onClick={() => setShowUploadModal(true)}
@@ -1339,22 +1339,22 @@ const ContentManagementContent = () => {
                           </colgroup>
                           <thead>
                             <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
-                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
                                 {t("content.tableFile")}
                               </th>
-                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
                                 {t("content.tableCourse")}
                               </th>
-                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
                                 {t("content.tableSize")}
                               </th>
-                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
                                 {t("content.tableStatus")}
                               </th>
-                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
                                 {t("content.tableWCAG")}
                               </th>
-                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
                                 {t("content.tableActions")}
                               </th>
                             </tr>
@@ -1368,8 +1368,8 @@ const ContentManagementContent = () => {
                                       {getFileIcon(m.type)}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                      <p className="text-sm font-medium text-[#1F2937] truncate">{m.title}</p>
-                                      <div className="flex items-center gap-2 text-xs text-[#6B7280]">
+                                      <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{m.title}</p>
+                                      <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
                                         <span>v{m.version}</span>
                                         <span>&bull;</span>
                                         <span>{formatDateHijri(m.createdAt, calendarFormat, { locale })}</span>
@@ -1383,12 +1383,12 @@ const ContentManagementContent = () => {
                                   </div>
                                 </td>
                                 <td className="px-4 py-4 overflow-hidden">
-                                  <span className="text-sm text-[#374151] truncate block">
+                                  <span className="text-sm text-[var(--color-text-secondary)] truncate block">
                                     {courseNameMap[m.courseId] || m.courseId}
                                   </span>
                                 </td>
                                 <td className="px-4 py-4">
-                                  <span className="text-sm text-[#6B7280]">{formatFileSize(m.fileSize)}</span>
+                                  <span className="text-sm text-[var(--color-text-secondary)]">{formatFileSize(m.fileSize)}</span>
                                 </td>
                                 <td className="px-4 py-4">
                                   <span
@@ -1464,24 +1464,24 @@ const ContentManagementContent = () => {
 
                       {/* Pagination */}
                       <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--color-border)]">
-                        <p className="text-sm text-[#6B7280]">
+                        <p className="text-sm text-[var(--color-text-secondary)]">
                           {t("content.showing")} {paginatedMaterials.length} {t("content.of")} {filteredMaterials.length} {t("content.files")}
                         </p>
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                             disabled={currentPage === 1}
-                            className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                           </button>
-                          <span className="px-3 py-1 text-sm text-[#374151]">
+                          <span className="px-3 py-1 text-sm text-[var(--color-text-secondary)]">
                             {currentPage} / {totalPages || 1}
                           </span>
                           <button
                             onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                             disabled={currentPage >= totalPages}
-                            className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                           </button>
@@ -1514,8 +1514,8 @@ const ContentManagementContent = () => {
                             </div>
 
                             <div className="p-4">
-                              <p className="text-sm font-medium text-[#1F2937] truncate mb-1">{m.title}</p>
-                              <p className="text-xs text-[#6B7280] truncate mb-3">{courseNameMap[m.courseId] || ""}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-primary)] truncate mb-1">{m.title}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)] truncate mb-3">{courseNameMap[m.courseId] || ""}</p>
 
                               <div className="flex items-center justify-between mb-3">
                                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getStatusStyle(m.status)}`}>
@@ -1533,7 +1533,7 @@ const ContentManagementContent = () => {
                                 </span>
                               </div>
 
-                              <div className="flex items-center justify-between text-xs text-[#9CA3AF]">
+                              <div className="flex items-center justify-between text-xs text-[var(--color-text-secondary)]">
                                 <span>{formatFileSize(m.fileSize)}</span>
                                 <span>v{m.version}</span>
                               </div>
@@ -1590,15 +1590,15 @@ const ContentManagementContent = () => {
                           <button
                             onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                             disabled={currentPage === 1}
-                            className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50"
+                            className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50"
                           >
                             {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                           </button>
-                          <span className="text-sm text-[#374151]">{currentPage} / {totalPages}</span>
+                          <span className="text-sm text-[var(--color-text-secondary)]">{currentPage} / {totalPages}</span>
                           <button
                             onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                             disabled={currentPage >= totalPages}
-                            className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50"
+                            className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50"
                           >
                             {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                           </button>

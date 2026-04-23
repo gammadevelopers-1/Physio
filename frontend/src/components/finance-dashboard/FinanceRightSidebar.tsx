@@ -79,7 +79,7 @@ const FinanceRightSidebar = ({
       <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
           <CreditCard className="w-4 h-4 text-[var(--color-primary)]" />
-          <h3 className="text-[15px] font-semibold text-[#111827]">
+          <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
             {t("transactionFeed.title")}
           </h3>
         </div>
@@ -100,13 +100,13 @@ const FinanceRightSidebar = ({
                   <Icon className={`w-3.5 h-3.5 ${config.iconColor}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] text-[#374151]">
-                    <span className="font-medium text-[#111827]">
+                  <p className="text-[13px] text-[var(--color-text-secondary)]">
+                    <span className="font-medium text-[var(--color-text-primary)]">
                       {tx.customer}
                     </span>{" "}
                     {t(`transactionFeed.${tx.type}`)}
                   </p>
-                  <p className="text-[11px] text-[#9CA3AF]">{tx.time}</p>
+                  <p className="text-[11px] text-[var(--color-text-secondary)]">{tx.time}</p>
                 </div>
                 <span
                   className={`text-[13px] font-semibold flex-shrink-0 ${
@@ -114,7 +114,7 @@ const FinanceRightSidebar = ({
                       ? "text-[#16A34A]"
                       : tx.type === "refund"
                         ? "text-[#DC2626]"
-                        : "text-[#6B7280]"
+                        : "text-[var(--color-text-secondary)]"
                   }`}
                 >
                   {tx.type === "income" ? "+" : tx.type === "refund" ? "-" : ""}
@@ -139,7 +139,7 @@ const FinanceRightSidebar = ({
       <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
           <AlertTriangle className="w-4 h-4 text-[#EA580C]" />
-          <h3 className="text-[15px] font-semibold text-[#111827]">
+          <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
             {t("financialAlerts.title")}
           </h3>
         </div>
@@ -165,10 +165,10 @@ const FinanceRightSidebar = ({
                 <AlertTriangle className="w-4 h-4 text-[#EA580C] flex-shrink-0 mt-0.5" />
               )}
               <div>
-                <p className="text-[12px] font-medium text-[#111827]">
+                <p className="text-[12px] font-medium text-[var(--color-text-primary)]">
                   {alert.title}
                 </p>
-                <p className="text-[11px] text-[#4B5563]">
+                <p className="text-[11px] text-[var(--color-text-secondary)]">
                   {alert.description}
                 </p>
               </div>
@@ -182,7 +182,7 @@ const FinanceRightSidebar = ({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Tag className="w-4 h-4 text-[var(--color-primary)]" />
-            <h3 className="text-[15px] font-semibold text-[#111827]">
+            <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
               {t("discounts.title")}
             </h3>
           </div>
@@ -198,10 +198,10 @@ const FinanceRightSidebar = ({
               className="flex items-center justify-between p-2.5 bg-[#F9FAFB] rounded-lg border border-[#F3F4F6]"
             >
               <div>
-                <p className="text-[13px] font-medium text-[#111827]">
+                <p className="text-[13px] font-medium text-[var(--color-text-primary)]">
                   {coupon.code}
                 </p>
-                <p className="text-[11px] text-[#6B7280]">
+                <p className="text-[11px] text-[var(--color-text-secondary)]">
                   {coupon.discount} -{" "}
                   {t("discounts.usage", {
                     used: coupon.used,
@@ -213,7 +213,7 @@ const FinanceRightSidebar = ({
                 className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
                   coupon.status === "active"
                     ? "bg-[#DCFCE7] text-[#16A34A]"
-                    : "bg-[#F3F4F6] text-[#6B7280]"
+                    : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
                 }`}
               >
                 {t(`discounts.${coupon.status}`)}
@@ -227,25 +227,25 @@ const FinanceRightSidebar = ({
       <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
           <Zap className="w-4 h-4 text-[var(--color-primary)]" />
-          <h3 className="text-[15px] font-semibold text-[#111827]">
+          <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
             {t("quickActions.title")}
           </h3>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
+          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
             <FileText className="w-3.5 h-3.5" />
             {t("quickActions.createInvoice")}
           </button>
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
+          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
             <BarChart3 className="w-3.5 h-3.5" />
             {t("quickActions.exportReport")}
           </button>
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
+          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
             <Tag className="w-3.5 h-3.5" />
             {t("quickActions.addCoupon")}
           </button>
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
+          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
             <RotateCcw className="w-3.5 h-3.5" />
             {t("quickActions.processRefund")}
           </button>

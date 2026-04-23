@@ -82,9 +82,9 @@ const InviteFriendsContent = () => {
       case "accepted":
         return "text-[#15803D] bg-[#15803D]/10";
       case "pending":
-        return "text-[#6B7280] bg-[#F3F4F6]";
+        return "text-[var(--color-text-secondary)] bg-[#F3F4F6]";
       default:
-        return "text-[#6B7280] bg-[#F3F4F6]";
+        return "text-[var(--color-text-secondary)] bg-[#F3F4F6]";
     }
   };
 
@@ -113,7 +113,7 @@ const InviteFriendsContent = () => {
             <div className="flex-1 min-w-0">
               {/* Page Title */}
               <h1
-                className={`text-xl sm:text-2xl font-bold text-[#1F2937] mb-4 sm:mb-6 ${isRTL ? "text-right" : ""}`}
+                className={`text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] mb-4 sm:mb-6 ${isRTL ? "text-right" : ""}`}
               >
                 {t("inviteFriends.title")}
               </h1>
@@ -138,10 +138,10 @@ const InviteFriendsContent = () => {
                     </div>
 
                     {/* Title and Description */}
-                    <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-1">
+                    <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-1">
                       {t("inviteFriends.sendAnInvite")}
                     </h2>
-                    <p className="text-xs sm:text-sm text-[#6B7280] mb-4 sm:mb-6 max-w-md">
+                    <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mb-4 sm:mb-6 max-w-md">
                       {t("inviteFriends.sendDescription")}
                     </p>
 
@@ -151,7 +151,7 @@ const InviteFriendsContent = () => {
                       className="w-full max-w-md mb-4"
                     >
                       <label
-                        className={`block text-sm text-[#1F2937] mb-2 ${isRTL ? "text-right" : "text-left"}`}
+                        className={`block text-sm text-[var(--color-text-primary)] mb-2 ${isRTL ? "text-right" : "text-left"}`}
                       >
                         {t("inviteFriends.email")}
                       </label>
@@ -179,13 +179,13 @@ const InviteFriendsContent = () => {
                       className={`flex flex-col sm:flex-row items-center gap-2 sm:gap-3 w-full max-w-md ${isRTL ? "sm:flex-row-reverse" : ""}`}
                     >
                       <div
-                        className={`flex-1 px-4 py-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-sm text-[#6B7280] truncate w-full sm:w-auto ${isRTL ? "text-right" : "text-left"}`}
+                        className={`flex-1 px-4 py-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] truncate w-full sm:w-auto ${isRTL ? "text-right" : "text-left"}`}
                       >
                         {referralCode}...
                       </div>
                       <button
                         onClick={handleCopyCode}
-                        className={`flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors whitespace-nowrap ${isRTL ? "flex-row-reverse" : ""}`}
+                        className={`flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors whitespace-nowrap ${isRTL ? "flex-row-reverse" : ""}`}
                       >
                         {copied ? (
                           <Check className="w-4 h-4 text-[#16A34A]" />
@@ -203,14 +203,14 @@ const InviteFriendsContent = () => {
                 {/* Invites List */}
                 <div dir={isRTL ? "rtl" : "ltr"}>
                   <h3
-                    className={`text-base sm:text-lg font-semibold text-[#1F2937] mb-4 ${isRTL ? "text-right" : ""}`}
+                    className={`text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-4 ${isRTL ? "text-right" : ""}`}
                   >
                     {t("inviteFriends.invites")}
                   </h3>
 
                   {invites.length === 0 ? (
                     <p
-                      className={`text-sm text-[#6B7280] ${isRTL ? "text-right" : ""}`}
+                      className={`text-sm text-[var(--color-text-secondary)] ${isRTL ? "text-right" : ""}`}
                     >
                       {t("inviteFriends.noInvites")}
                     </p>
@@ -222,12 +222,12 @@ const InviteFriendsContent = () => {
                           <thead>
                             <tr className="border-b border-[var(--color-border)]">
                               <th
-                                className={`py-3 px-4 text-sm font-medium text-[#6B7280] ${isRTL ? "text-right" : "text-left"}`}
+                                className={`py-3 px-4 text-sm font-medium text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}
                               >
                                 {t("inviteFriends.emailAddress")}
                               </th>
                               <th
-                                className={`py-3 px-4 text-sm font-medium text-[#1F2937] ${isRTL ? "text-left" : "text-right"}`}
+                                className={`py-3 px-4 text-sm font-medium text-[var(--color-text-primary)] ${isRTL ? "text-left" : "text-right"}`}
                               >
                                 <span
                                   className={`inline-flex items-center gap-1 ${isRTL ? "flex-row-reverse" : ""}`}
@@ -259,7 +259,7 @@ const InviteFriendsContent = () => {
                                 className="border-b border-[var(--color-border)] last:border-b-0 hover:bg-[#F9FAFB] transition-colors"
                               >
                                 <td
-                                  className={`py-4 px-4 text-sm text-[#1F2937] ${isRTL ? "text-right" : "text-left"}`}
+                                  className={`py-4 px-4 text-sm text-[var(--color-text-primary)] ${isRTL ? "text-right" : "text-left"}`}
                                 >
                                   {invite.email}
                                 </td>
@@ -278,14 +278,14 @@ const InviteFriendsContent = () => {
                                     className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
                                     aria-label={t("inviteFriends.moreOptions")}
                                   >
-                                    <MoreVertical className="w-5 h-5 text-[#6B7280]" />
+                                    <MoreVertical className="w-5 h-5 text-[var(--color-text-secondary)]" />
                                   </button>
                                   {openMenuId === invite.id && (
                                     <div
                                       className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                     >
                                       <button
-                                        className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                        className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                                         onClick={() => setOpenMenuId(null)}
                                       >
                                         {t("inviteFriends.resend")}
@@ -314,7 +314,7 @@ const InviteFriendsContent = () => {
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm text-[#1F2937] truncate mb-1">
+                                <p className="text-sm text-[var(--color-text-primary)] truncate mb-1">
                                   {invite.email}
                                 </p>
                                 <span
@@ -329,14 +329,14 @@ const InviteFriendsContent = () => {
                                   className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
                                   aria-label={t("inviteFriends.moreOptions")}
                                 >
-                                  <MoreVertical className="w-5 h-5 text-[#6B7280]" />
+                                  <MoreVertical className="w-5 h-5 text-[var(--color-text-secondary)]" />
                                 </button>
                                 {openMenuId === invite.id && (
                                   <div
                                     className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                   >
                                     <button
-                                      className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                      className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                                       onClick={() => setOpenMenuId(null)}
                                     >
                                       {t("inviteFriends.resend")}

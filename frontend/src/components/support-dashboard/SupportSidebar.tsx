@@ -122,10 +122,10 @@ const SupportSidebar = ({ profile }: SupportSidebarProps) => {
           </div>
 
           {/* Name and Email */}
-          <h3 className="text-lg font-semibold text-[#1F2937]">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {profile.name}
           </h3>
-          <p className="text-sm text-[#6B7280] mb-2">{profile.email}</p>
+          <p className="text-sm text-[var(--color-text-secondary)] mb-2">{profile.email}</p>
 
           {/* Role Badge */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#EDE9FE] rounded-full">
@@ -139,27 +139,27 @@ const SupportSidebar = ({ profile }: SupportSidebarProps) => {
         {/* Stats Row */}
         <div className="mt-6 flex justify-around py-4 border-t border-[var(--color-border)]">
           <div className="text-center">
-            <p className="text-xl font-bold text-[#1F2937]">
+            <p className="text-xl font-bold text-[var(--color-text-primary)]">
               {profile.resolved}
             </p>
-            <p className="text-xs text-[#6B7280]">{t("sidebar.resolved")}</p>
+            <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.resolved")}</p>
           </div>
           <div className="text-center">
             <p className="text-xl font-bold text-[#16A34A]">
               {profile.csat}%
             </p>
-            <p className="text-xs text-[#6B7280]">{t("sidebar.csat")}</p>
+            <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.csat")}</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-[#1F2937]">
+            <p className="text-xl font-bold text-[var(--color-text-primary)]">
               {profile.avgFRT}
             </p>
-            <p className="text-xs text-[#6B7280]">{t("sidebar.avgFRT")}</p>
+            <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.avgFRT")}</p>
           </div>
         </div>
 
         {/* View Profile Button */}
-        <button className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors">
+        <button className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors">
           {t("sidebar.viewProfile")}
         </button>
       </div>
@@ -178,11 +178,11 @@ const SupportSidebar = ({ profile }: SupportSidebarProps) => {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                   active
                     ? "bg-[#F0F7FF] text-[#002D87]"
-                    : "text-[#4B5563] hover:bg-[#F9FAFB]"
+                    : "text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
                 }`}
               >
                 <Icon
-                  className={`w-5 h-5 ${active ? "text-[#002D87]" : "text-[#6B7280]"}`}
+                  className={`w-5 h-5 ${active ? "text-[#002D87]" : "text-[var(--color-text-secondary)]"}`}
                 />
                 <span
                   className={`text-sm flex-1 ${active ? "font-medium" : ""}`}

@@ -116,12 +116,12 @@ const CalendarContent = () => {
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
                   {t("calendarPage.title")}
                 </h1>
                 <button
                   onClick={handleExportIcs}
-                  className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] text-[#4B5563] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
                 >
                   <Download className="w-4 h-4" />
                   {t("calendarPage.exportIcs")}

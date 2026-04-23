@@ -187,7 +187,7 @@ const InstructorDashboardContent = () => {
             ) : (
               <div className="flex-1 min-w-0">
                 {/* Page Title */}
-                <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937] mb-4 sm:mb-6">
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] mb-4 sm:mb-6">
                   {t("title")}
                 </h1>
 
@@ -339,24 +339,24 @@ function ShareMaterialsModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[70vh] flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
-          <h3 className="text-lg font-semibold text-[#1F2937]">{t("shareMaterials.title")}</h3>
-          <button onClick={onClose} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("shareMaterials.title")}</h3>
+          <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg">
             <span className="text-lg">&times;</span>
           </button>
         </div>
-        <p className="px-4 pt-3 text-sm text-[#6B7280]">{t("shareMaterials.description")}</p>
+        <p className="px-4 pt-3 text-sm text-[var(--color-text-secondary)]">{t("shareMaterials.description")}</p>
         <div className="flex-1 overflow-y-auto p-4">
           {loading ? (
-            <div className="text-center py-8 text-[#9CA3AF]">...</div>
+            <div className="text-center py-8 text-[var(--color-text-secondary)]">...</div>
           ) : courseMaterials.length === 0 ? (
-            <p className="text-sm text-[#9CA3AF] text-center py-8">{t("shareMaterials.noMaterials")}</p>
+            <p className="text-sm text-[var(--color-text-secondary)] text-center py-8">{t("shareMaterials.noMaterials")}</p>
           ) : (
             <div className="space-y-2">
               {courseMaterials.map((m) => (
                 <div key={m.id} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-[#1F2937] truncate">{m.title}</p>
-                    <p className="text-xs text-[#9CA3AF]">{m.type}</p>
+                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{m.title}</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">{m.type}</p>
                   </div>
                   <button
                     onClick={() => toggle(m.id)}

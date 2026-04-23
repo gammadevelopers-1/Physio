@@ -119,16 +119,16 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
         <div className="relative flex-shrink-0">
           <ProgressRing percentage={stats.averageProgress} />
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-lg font-bold text-[#1F2937]">
+            <span className="text-lg font-bold text-[var(--color-text-primary)]">
               {Math.round(stats.averageProgress)}%
             </span>
           </div>
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-medium text-[#6B7280]">
+          <p className="text-sm font-medium text-[var(--color-text-secondary)]">
             {t("kpi.overallProgress")}
           </p>
-          <p className="text-xs text-[#9CA3AF] mt-0.5">
+          <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
             {t("kpi.activeCourses", { count: stats.inProgressCourses })}
           </p>
         </div>
@@ -136,7 +136,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
 
       {/* Card 2: Attendance Rate */}
       <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex flex-col justify-between">
-        <p className="text-sm font-medium text-[#6B7280]">
+        <p className="text-sm font-medium text-[var(--color-text-secondary)]">
           {t("kpi.attendanceRate")}
         </p>
         <div className="mt-3">
@@ -151,7 +151,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
               style={{ width: `${Math.min(stats.attendanceRate, 100)}%` }}
             />
           </div>
-          <p className="text-xs text-[#9CA3AF] mt-1.5">
+          <p className="text-xs text-[var(--color-text-secondary)] mt-1.5">
             {t("kpi.sessionsCount", {
               attended: stats.sessionsAttended,
               total: stats.totalSessions,
@@ -162,7 +162,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
 
       {/* Card 3: Certificates */}
       <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex flex-col justify-between">
-        <p className="text-sm font-medium text-[#6B7280]">
+        <p className="text-sm font-medium text-[var(--color-text-secondary)]">
           {t("kpi.certificates")}
         </p>
         <div className="flex items-center gap-3 mt-3">
@@ -170,7 +170,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
             <span className="text-xl font-bold text-[#16A34A]">
               {stats.certificatesEarned}
             </span>
-            <span className="text-[10px] text-[#6B7280] mt-0.5">
+            <span className="text-[10px] text-[var(--color-text-secondary)] mt-0.5">
               {t("kpi.earned")}
             </span>
           </div>
@@ -179,7 +179,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
             <span className="text-xl font-bold text-[#F59E0B]">
               {stats.certificatesPending}
             </span>
-            <span className="text-[10px] text-[#6B7280] mt-0.5">
+            <span className="text-[10px] text-[var(--color-text-secondary)] mt-0.5">
               {t("kpi.pending")}
             </span>
           </div>
@@ -190,7 +190,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
                 <span className="text-xl font-bold text-[#DC2626]">
                   {stats.certificatesExpiringSoon}
                 </span>
-                <span className="text-[10px] text-[#6B7280] mt-0.5">
+                <span className="text-[10px] text-[var(--color-text-secondary)] mt-0.5">
                   {t("kpi.expiring")}
                 </span>
               </div>
@@ -201,15 +201,15 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
 
       {/* Card 4: Next Session */}
       <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex flex-col justify-between">
-        <p className="text-sm font-medium text-[#6B7280]">
+        <p className="text-sm font-medium text-[var(--color-text-secondary)]">
           {t("kpi.nextSession")}
         </p>
         {nextSession ? (
           <div className="mt-2">
-            <p className="text-xs font-medium text-[#1F2937] truncate">
+            <p className="text-xs font-medium text-[var(--color-text-primary)] truncate">
               {nextSession.title}
             </p>
-            <p className="text-[10px] text-[#9CA3AF] truncate mt-0.5">
+            <p className="text-[10px] text-[var(--color-text-secondary)] truncate mt-0.5">
               {nextSession.courseTitle}
             </p>
             <div className="flex items-center gap-1 mt-2">
@@ -223,7 +223,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
                 nextSession.sessionType === "hybrid") && (
                 <Globe className="w-3 h-3 text-purple-500" />
               )}
-              <div className="flex items-center gap-1 text-sm font-semibold text-[#1F2937]">
+              <div className="flex items-center gap-1 text-sm font-semibold text-[var(--color-text-primary)]">
                 {timeLeft.days > 0 && (
                   <span>
                     {timeLeft.days}
@@ -256,7 +256,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
             )}
           </div>
         ) : (
-          <p className="text-xs text-[#9CA3AF] mt-3">
+          <p className="text-xs text-[var(--color-text-secondary)] mt-3">
             {t("kpi.noUpcomingSessions")}
           </p>
         )}

@@ -38,7 +38,7 @@ const BadgesContent = () => {
             <div className="flex-1 min-w-0">
               {/* Page Title */}
               <h1
-                className={`text-xl sm:text-2xl font-bold text-[#1F2937] mb-4 sm:mb-6 ${isRTL ? "text-right" : ""}`}
+                className={`text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] mb-4 sm:mb-6 ${isRTL ? "text-right" : ""}`}
               >
                 {t("badges.title")}
               </h1>
@@ -50,17 +50,17 @@ const BadgesContent = () => {
                   // Empty State
                   <div className="flex flex-col items-center justify-center py-10 sm:py-16">
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3 sm:mb-4">
-                      <Award className="w-6 h-6 sm:w-8 sm:h-8 text-[#9CA3AF]" />
+                      <Award className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--color-text-secondary)]" />
                     </div>
-                    <h3 className="text-sm sm:text-base font-medium text-[#1F2937] mb-1">
+                    <h3 className="text-sm sm:text-base font-medium text-[var(--color-text-primary)] mb-1">
                       {t("badges.noBadgesTitle")}
                     </h3>
-                    <p className="text-xs sm:text-sm text-[#6B7280] mb-4 sm:mb-6 text-center px-4">
+                    <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mb-4 sm:mb-6 text-center px-4">
                       {t("badges.noBadgesDescription")}
                     </p>
                     <Link
                       href={`/${locale}/courses`}
-                      className="px-5 py-2 sm:px-6 sm:py-2.5 border border-[var(--color-border)] text-[#1F2937] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                      className="px-5 py-2 sm:px-6 sm:py-2.5 border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
                     >
                       {t("badges.viewCourses")}
                     </Link>

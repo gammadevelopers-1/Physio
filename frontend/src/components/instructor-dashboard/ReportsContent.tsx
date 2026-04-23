@@ -162,17 +162,17 @@ function ExportModal({
                 />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-[#1F2937]">
+                <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                   {t("reports.exportReport")}
                 </h3>
-                <p className="text-sm text-[#6B7280]">
+                <p className="text-sm text-[var(--color-text-secondary)]">
                   {t(`reports.${reportType.id}Report`)}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors"
+              className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -180,7 +180,7 @@ function ExportModal({
 
           {/* Course Selector */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
               {t("reports.selectCourse")}
               {reportType.requiresCourse && (
                 <span className="text-red-500 ml-0.5">*</span>
@@ -189,7 +189,7 @@ function ExportModal({
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
             >
               {reportType.requiresCourse ? (
                 <option value="">{t("reports.chooseCourse")}</option>
@@ -208,7 +208,7 @@ function ExportModal({
           {reportType.supportsDateRange && (
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                   {t("reports.dateFrom")}
                 </label>
                 <DatePicker
@@ -217,7 +217,7 @@ function ExportModal({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                   {t("reports.dateTo")}
                 </label>
                 <DatePicker
@@ -229,7 +229,7 @@ function ExportModal({
           )}
 
           {/* Export Format */}
-          <p className="text-sm font-medium text-[#374151] mb-2">
+          <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-2">
             {t("reports.selectFormat")}
           </p>
           <div className="space-y-2 mb-5">
@@ -254,15 +254,15 @@ function ExportModal({
                     className={`w-4 h-4 ${
                       selectedFormat === fmt.id
                         ? "text-[#3B82F6]"
-                        : "text-[#6B7280]"
+                        : "text-[var(--color-text-secondary)]"
                     }`}
                   />
                 </div>
                 <div className="flex-1 text-start">
-                  <p className="text-sm font-medium text-[#1F2937]">
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">
                     {fmt.label}
                   </p>
-                  <p className="text-xs text-[#6B7280]">{fmt.desc}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">{fmt.desc}</p>
                 </div>
                 {selectedFormat === fmt.id && (
                   <div className="w-5 h-5 rounded-full bg-[#3B82F6] flex items-center justify-center">
@@ -289,7 +289,7 @@ function ExportModal({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
             >
               {t("reports.cancel")}
             </button>
@@ -299,7 +299,7 @@ function ExportModal({
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 canGenerate && !generating
                   ? "btn-gold text-white"
-                  : "bg-[#F3F4F6] text-[#9CA3AF] cursor-not-allowed"
+                  : "bg-[#F3F4F6] text-[var(--color-text-secondary)] cursor-not-allowed"
               }`}
             >
               {generating ? (
@@ -411,10 +411,10 @@ const ReportsContent = () => {
               {/* Header */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <h1 className="text-xl md:text-2xl font-bold text-[#1F2937]">
+                  <h1 className="text-xl md:text-2xl font-bold text-[var(--color-text-primary)]">
                     {t("reports.title")}
                   </h1>
-                  <p className="text-sm text-[#6B7280] mt-1">
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                     {t("reports.subtitle")}
                   </p>
                 </div>
@@ -434,10 +434,10 @@ const ReportsContent = () => {
                         <rt.icon className={`w-5 h-5 ${rt.iconColor}`} />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-[#1F2937]">
+                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                           {t(`reports.${rt.id}Report`)}
                         </p>
-                        <p className="text-xs text-[#6B7280]">
+                        <p className="text-xs text-[var(--color-text-secondary)]">
                           {rt.requiresCourse
                             ? t("reports.perCourse")
                             : t("reports.allOrPerCourse")}
@@ -456,7 +456,7 @@ const ReportsContent = () => {
                     <select
                       value={filterDelivery}
                       onChange={(e) => { setFilterDelivery(e.target.value); setFilterCourse(""); }}
-                      className="md:w-40 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="md:w-40 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                     >
                       <option value="all">{t("reports.allDeliveryTypes")}</option>
                       <option value="zoom">{t("reports.zoom")}</option>
@@ -469,7 +469,7 @@ const ReportsContent = () => {
                       value={filterCourse}
                       onChange={(e) => setFilterCourse(e.target.value)}
                       disabled={loadingCourses}
-                      className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] disabled:opacity-50"
+                      className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] disabled:opacity-50"
                     >
                       <option value="">{t("reports.allCourses")}</option>
                       {filteredCourses.map((c) => (
@@ -485,7 +485,7 @@ const ReportsContent = () => {
                       onChange={(e) =>
                         setFilterFormat(e.target.value as ReportFormat)
                       }
-                      className="md:w-40 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="md:w-40 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                     >
                       <option value="pdf">PDF</option>
                       <option value="csv">CSV</option>
@@ -574,10 +574,10 @@ const ReportsContent = () => {
                             />
                           </div>
                           <div>
-                            <h3 className="text-base font-semibold text-[#1F2937] mb-1">
+                            <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">
                               {t(`reports.${rt.id}Report`)}
                             </h3>
-                            <p className="text-sm text-[#6B7280] line-clamp-2">
+                            <p className="text-sm text-[var(--color-text-secondary)] line-clamp-2">
                               {t(`reports.${rt.id}Desc`)}
                             </p>
                           </div>
@@ -596,7 +596,7 @@ const ReportsContent = () => {
                             {t("reports.dateRangeSupported")}
                           </span>
                         )}
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#F3F4F6] text-[#6B7280] rounded text-xs font-medium">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#F3F4F6] text-[var(--color-text-secondary)] rounded text-xs font-medium">
                           CSV / PDF / Excel
                         </span>
                       </div>
@@ -608,7 +608,7 @@ const ReportsContent = () => {
                           disabled={generatingReport === rt.id}
                           className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                             generatingReport === rt.id
-                              ? "bg-[#F3F4F6] text-[#9CA3AF] cursor-not-allowed"
+                              ? "bg-[#F3F4F6] text-[var(--color-text-secondary)] cursor-not-allowed"
                               : "bg-[#EFF6FF] text-[#3B82F6] hover:bg-[#DBEAFE]"
                           }`}
                         >
@@ -626,7 +626,7 @@ const ReportsContent = () => {
                         </button>
                         <button
                           onClick={() => setExportModal(rt)}
-                          className="flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
                         >
                           {t("reports.customize")}
                         </button>

@@ -38,8 +38,8 @@ function StatCard({
           <Icon className="w-5 h-5" />
         </div>
         <div>
-          <p className="text-2xl font-bold text-[#1F2937]">{value}</p>
-          <p className="text-xs text-[#6B7280]">{label}</p>
+          <p className="text-2xl font-bold text-[var(--color-text-primary)]">{value}</p>
+          <p className="text-xs text-[var(--color-text-secondary)]">{label}</p>
         </div>
       </div>
     </div>
@@ -78,7 +78,7 @@ function CertBadge({
 }) {
   if (!certStatus) {
     return (
-      <span className="text-xs text-[#9CA3AF]">
+      <span className="text-xs text-[var(--color-text-secondary)]">
         {t("transcriptPage.none")}
       </span>
     );
@@ -113,7 +113,7 @@ function DeliveryLabel({
           ? "hybrid"
           : "blended";
   return (
-    <span className="text-xs text-[#6B7280]">
+    <span className="text-xs text-[var(--color-text-secondary)]">
       {t(`transcriptPage.${key}`)}
     </span>
   );
@@ -135,12 +135,12 @@ function CourseRow({
   return (
     <tr className="border-b border-[#F3F4F6] last:border-0 hover:bg-[#F9FAFB] transition-colors">
       <td className="py-3 px-3">
-        <p className="text-sm font-medium text-[#1F2937]">
+        <p className="text-sm font-medium text-[var(--color-text-primary)]">
           {isRTL && course.courseTitleAr
             ? course.courseTitleAr
             : course.courseTitle}
         </p>
-        <p className="text-xs text-[#9CA3AF] mt-0.5">{course.instructorName}</p>
+        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{course.instructorName}</p>
       </td>
       <td className="py-3 px-3">
         <StatusBadge status={course.status} t={t} />
@@ -148,15 +148,15 @@ function CourseRow({
       <td className="py-3 px-3">
         <DeliveryLabel deliveryType={course.deliveryType} t={t} />
       </td>
-      <td className="py-3 px-3 text-xs text-[#6B7280]">
+      <td className="py-3 px-3 text-xs text-[var(--color-text-secondary)]">
         {formatDate(course.enrolledAt)}
       </td>
-      <td className="py-3 px-3 text-xs text-[#6B7280]">
+      <td className="py-3 px-3 text-xs text-[var(--color-text-secondary)]">
         {course.completedAt
           ? formatDate(course.completedAt)
           : "—"}
       </td>
-      <td className="py-3 px-3 text-xs text-[#6B7280]">
+      <td className="py-3 px-3 text-xs text-[var(--color-text-secondary)]">
         {course.totalHours} {t("transcriptPage.hrs")}
       </td>
       <td className="py-3 px-3">
@@ -170,7 +170,7 @@ function CourseRow({
               style={{ width: `${course.progress}%` }}
             />
           </div>
-          <span className="text-xs text-[#6B7280] w-8 text-right">
+          <span className="text-xs text-[var(--color-text-secondary)] w-8 text-right">
             {course.progress}%
           </span>
         </div>
@@ -195,7 +195,7 @@ function CourseMobileCard({
   return (
     <div className="bg-[#F9FAFB] rounded-xl border border-[var(--color-border)] p-4">
       <div className="flex items-start justify-between mb-2">
-        <h4 className="text-sm font-semibold text-[#1F2937] flex-1 min-w-0">
+        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] flex-1 min-w-0">
           {isRTL && course.courseTitleAr
             ? course.courseTitleAr
             : course.courseTitle}
@@ -203,31 +203,31 @@ function CourseMobileCard({
         <StatusBadge status={course.status} t={t} />
       </div>
 
-      <p className="text-xs text-[#9CA3AF] mb-3">{course.instructorName}</p>
+      <p className="text-xs text-[var(--color-text-secondary)] mb-3">{course.instructorName}</p>
 
       <div className="grid grid-cols-2 gap-2 text-xs mb-3">
         <div>
-          <span className="text-[#9CA3AF]">{t("transcriptPage.deliveryType")}: </span>
+          <span className="text-[var(--color-text-secondary)]">{t("transcriptPage.deliveryType")}: </span>
           <DeliveryLabel deliveryType={course.deliveryType} t={t} />
         </div>
         <div>
-          <span className="text-[#9CA3AF]">{t("transcriptPage.hours")}: </span>
-          <span className="text-[#6B7280]">
+          <span className="text-[var(--color-text-secondary)]">{t("transcriptPage.hours")}: </span>
+          <span className="text-[var(--color-text-secondary)]">
             {course.totalHours} {t("transcriptPage.hrs")}
           </span>
         </div>
         <div>
-          <span className="text-[#9CA3AF]">{t("transcriptPage.enrolledDate")}: </span>
-          <span className="text-[#6B7280]">{formatDate(course.enrolledAt)}</span>
+          <span className="text-[var(--color-text-secondary)]">{t("transcriptPage.enrolledDate")}: </span>
+          <span className="text-[var(--color-text-secondary)]">{formatDate(course.enrolledAt)}</span>
         </div>
         <div>
-          <span className="text-[#9CA3AF]">{t("transcriptPage.completedDate")}: </span>
-          <span className="text-[#6B7280]">
+          <span className="text-[var(--color-text-secondary)]">{t("transcriptPage.completedDate")}: </span>
+          <span className="text-[var(--color-text-secondary)]">
             {course.completedAt ? formatDate(course.completedAt) : "—"}
           </span>
         </div>
         <div>
-          <span className="text-[#9CA3AF]">{t("transcriptPage.certificate")}: </span>
+          <span className="text-[var(--color-text-secondary)]">{t("transcriptPage.certificate")}: </span>
           <CertBadge certStatus={course.certificateStatus} t={t} />
         </div>
       </div>
@@ -240,7 +240,7 @@ function CourseMobileCard({
             style={{ width: `${course.progress}%` }}
           />
         </div>
-        <span className="text-xs text-[#6B7280]">{course.progress}%</span>
+        <span className="text-xs text-[var(--color-text-secondary)]">{course.progress}%</span>
       </div>
     </div>
   );
@@ -287,10 +287,10 @@ const TranscriptContent = () => {
               {/* Header with print button */}
               <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
+                  <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
                     {t("transcriptPage.title")}
                   </h1>
-                  <p className="text-sm text-[#6B7280] mt-1">
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                     {t("transcriptPage.subtitle")}
                   </p>
                 </div>
@@ -313,12 +313,12 @@ const TranscriptContent = () => {
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                   <div className="flex flex-col items-center justify-center py-10 sm:py-16">
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3 sm:mb-4">
-                      <GraduationCap className="w-6 h-6 sm:w-8 sm:h-8 text-[#9CA3AF]" />
+                      <GraduationCap className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--color-text-secondary)]" />
                     </div>
-                    <h3 className="text-sm sm:text-base font-medium text-[#1F2937] mb-1">
+                    <h3 className="text-sm sm:text-base font-medium text-[var(--color-text-primary)] mb-1">
                       {t("transcriptPage.noCoursesTitle")}
                     </h3>
-                    <p className="text-xs sm:text-sm text-[#6B7280] text-center px-4">
+                    <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] text-center px-4">
                       {t("transcriptPage.noCoursesDescription")}
                     </p>
                   </div>
@@ -333,19 +333,19 @@ const TranscriptContent = () => {
                           <GraduationCap className="w-6 h-6 text-[#002D87]" />
                         </div>
                         <div>
-                          <h2 className="text-base font-semibold text-[#1F2937]">
+                          <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
                             {isRTL
                               ? `${transcript.student.firstNameAr || transcript.student.firstName || ""} ${transcript.student.lastNameAr || transcript.student.lastName || ""}`
                               : `${transcript.student.firstName || ""} ${transcript.student.lastName || ""}`}
                           </h2>
-                          <p className="text-xs text-[#6B7280]">
+                          <p className="text-xs text-[var(--color-text-secondary)]">
                             {transcript.student.email}
                           </p>
                         </div>
                       </div>
-                      <div className="sm:ml-auto text-xs text-[#9CA3AF]">
+                      <div className="sm:ml-auto text-xs text-[var(--color-text-secondary)]">
                         {t("transcriptPage.studentId")}:{" "}
-                        <span className="font-mono text-[#6B7280]">
+                        <span className="font-mono text-[var(--color-text-secondary)]">
                           {transcript.student.id.slice(0, 8).toUpperCase()}
                         </span>
                       </div>
@@ -380,28 +380,28 @@ const TranscriptContent = () => {
                       <table className="w-full">
                         <thead>
                           <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
-                            <th className="py-3 px-3 text-left text-xs font-medium text-[#6B7280]">
+                            <th className="py-3 px-3 text-left text-xs font-medium text-[var(--color-text-secondary)]">
                               {t("transcriptPage.courseTitle")}
                             </th>
-                            <th className="py-3 px-3 text-left text-xs font-medium text-[#6B7280]">
+                            <th className="py-3 px-3 text-left text-xs font-medium text-[var(--color-text-secondary)]">
                               {t("transcriptPage.status")}
                             </th>
-                            <th className="py-3 px-3 text-left text-xs font-medium text-[#6B7280]">
+                            <th className="py-3 px-3 text-left text-xs font-medium text-[var(--color-text-secondary)]">
                               {t("transcriptPage.deliveryType")}
                             </th>
-                            <th className="py-3 px-3 text-left text-xs font-medium text-[#6B7280]">
+                            <th className="py-3 px-3 text-left text-xs font-medium text-[var(--color-text-secondary)]">
                               {t("transcriptPage.enrolledDate")}
                             </th>
-                            <th className="py-3 px-3 text-left text-xs font-medium text-[#6B7280]">
+                            <th className="py-3 px-3 text-left text-xs font-medium text-[var(--color-text-secondary)]">
                               {t("transcriptPage.completedDate")}
                             </th>
-                            <th className="py-3 px-3 text-left text-xs font-medium text-[#6B7280]">
+                            <th className="py-3 px-3 text-left text-xs font-medium text-[var(--color-text-secondary)]">
                               {t("transcriptPage.hours")}
                             </th>
-                            <th className="py-3 px-3 text-left text-xs font-medium text-[#6B7280]">
+                            <th className="py-3 px-3 text-left text-xs font-medium text-[var(--color-text-secondary)]">
                               {t("transcriptPage.certificate")}
                             </th>
-                            <th className="py-3 px-3 text-left text-xs font-medium text-[#6B7280] min-w-[120px]">
+                            <th className="py-3 px-3 text-left text-xs font-medium text-[var(--color-text-secondary)] min-w-[120px]">
                               {t("transcriptPage.progress")}
                             </th>
                           </tr>

@@ -317,8 +317,8 @@ function AttendanceModal({
       case "absent": return "bg-[#FEE2E2] text-[#EF4444]";
       case "late": return "bg-[#FEF3C7] text-[#D97706]";
       case "excused": return "bg-[#EFF6FF] text-[#3B82F6]";
-      case "unmarked": return "bg-[#F3F4F6] text-[#9CA3AF]";
-      default: return "bg-[#F3F4F6] text-[#6B7280]";
+      case "unmarked": return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+      default: return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -416,19 +416,19 @@ function AttendanceModal({
     <ModalOverlay onClose={onClose}>
       <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
         <div>
-          <h2 className="text-lg font-semibold text-[#1F2937]">
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("sessionsPage.attendance.title")}
           </h2>
-          <p className="text-xs text-[#6B7280] mt-0.5">{session.title}</p>
+          <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{session.title}</p>
         </div>
         <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
-          <X className="w-5 h-5 text-[#6B7280]" />
+          <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-[#6B7280]" />
+          <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />
         </div>
       ) : (
         <>
@@ -478,15 +478,15 @@ function AttendanceModal({
                     .map((d, i) => (
                     <div key={i} className="flex items-center gap-2 text-[10px]">
                       {d.action === 'skipped' ? (
-                        <XCircle className="w-3 h-3 text-[#9CA3AF] shrink-0" />
+                        <XCircle className="w-3 h-3 text-[var(--color-text-secondary)] shrink-0" />
                       ) : (
                         <CheckCircle className="w-3 h-3 text-[#16A34A] shrink-0" />
                       )}
-                      <span className={d.action === 'skipped' ? 'text-[#9CA3AF]' : 'text-[#374151]'}>
+                      <span className={d.action === 'skipped' ? 'text-[var(--color-text-secondary)]' : 'text-[var(--color-text-secondary)]'}>
                         {d.name || d.email}
                       </span>
                       {d.action !== 'skipped' && d.joinTime && (
-                        <span className="text-[#6B7280]">
+                        <span className="text-[var(--color-text-secondary)]">
                           {new Date(d.joinTime).toLocaleTimeString(timeLocale, { hour: '2-digit', minute: '2-digit' })}
                           {d.leaveTime && ` – ${new Date(d.leaveTime).toLocaleTimeString(timeLocale, { hour: '2-digit', minute: '2-digit' })}`}
                           {d.durationMinutes > 0 && ` (${d.durationMinutes} min)`}
@@ -507,7 +507,7 @@ function AttendanceModal({
 
           {/* Summary */}
           <div className="flex items-center gap-4 px-4 py-3 border-b border-[var(--color-border)] bg-[#F9FAFB] flex-wrap">
-            <span className="text-xs font-medium text-[#6B7280]">
+            <span className="text-xs font-medium text-[var(--color-text-secondary)]">
               {t("sessionsPage.attendance.summary")}:
             </span>
             <span className="text-xs text-[#16A34A]">{presentCount} {t("sessionsPage.attendance.present")}</span>
@@ -517,8 +517,8 @@ function AttendanceModal({
           {/* Bulk actions / lock banner */}
           {isVerifiedReadOnly ? (
             <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--color-border)] bg-[#F9FAFB]">
-              <Lock className="w-3.5 h-3.5 text-[#9CA3AF]" />
-              <span className="text-xs text-[#6B7280]">
+              <Lock className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
+              <span className="text-xs text-[var(--color-text-secondary)]">
                 {attendanceLocked
                   ? (locale === "ar" ? "تم قفل الحضور نهائياً" : "Attendance is finalized & locked")
                   : isPostSession && isZoomSession && hasUnmatched
@@ -528,7 +528,7 @@ function AttendanceModal({
             </div>
           ) : (
             <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--color-border)]">
-              <span className="text-xs font-medium text-[#6B7280]">{t("sessionsPage.attendance.markAll")}:</span>
+              <span className="text-xs font-medium text-[var(--color-text-secondary)]">{t("sessionsPage.attendance.markAll")}:</span>
               {statusOptions.map((status) => (
                 <button
                   key={status}
@@ -546,8 +546,8 @@ function AttendanceModal({
             const marker = attendanceRecords.find((r) => (r as any).markedByName);
             if (!marker) return null;
             return (
-              <div className="flex items-center gap-3 px-4 py-2 border-b border-[var(--color-border)] bg-[#FAFAFA] text-[10px] text-[#9CA3AF]">
-                <span>Marked by: <span className="font-medium text-[#6B7280]">{(marker as any).markedByName}</span> ({(marker as any).markedByRole === "TEACHING_ASSISTANT" ? "TA" : (marker as any).markedByRole === "INSTRUCTOR" ? "Instructor" : (marker as any).markedByRole || "System"})</span>
+              <div className="flex items-center gap-3 px-4 py-2 border-b border-[var(--color-border)] bg-[#FAFAFA] text-[10px] text-[var(--color-text-secondary)]">
+                <span>Marked by: <span className="font-medium text-[var(--color-text-secondary)]">{(marker as any).markedByName}</span> ({(marker as any).markedByRole === "TEACHING_ASSISTANT" ? "TA" : (marker as any).markedByRole === "INSTRUCTOR" ? "Instructor" : (marker as any).markedByRole || "System"})</span>
                 {(marker as any).updatedAt && (
                   <span>Last updated: {new Date((marker as any).updatedAt).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}</span>
                 )}
@@ -558,7 +558,7 @@ function AttendanceModal({
           {/* Student list */}
           <div className="max-h-[400px] overflow-y-auto">
             {enrollments.length === 0 ? (
-              <div className="text-center py-8 text-sm text-[#6B7280]">
+              <div className="text-center py-8 text-sm text-[var(--color-text-secondary)]">
                 {t("sessionsPage.attendance.noStudents")}
               </div>
             ) : (
@@ -571,12 +571,12 @@ function AttendanceModal({
                     <div key={e.studentId} className="px-4 py-3 space-y-2">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-[#1F2937]">
+                          <p className="text-sm font-medium text-[var(--color-text-primary)]">
                             {e.studentFirstName} {e.studentLastName}
                           </p>
-                          <p className="text-xs text-[#6B7280]">{e.studentEmail}</p>
+                          <p className="text-xs text-[var(--color-text-secondary)]">{e.studentEmail}</p>
                           {(e as any).studentScfhsNumber && (
-                            <p className="text-[10px] text-[#9CA3AF] font-mono">{(e as any).studentScfhsNumber}</p>
+                            <p className="text-[10px] text-[var(--color-text-secondary)] font-mono">{(e as any).studentScfhsNumber}</p>
                           )}
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -588,7 +588,7 @@ function AttendanceModal({
                               className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
                                 currentStatus === status
                                   ? `${getStatusColor(status)} ring-2 ring-offset-1 ring-current`
-                                  : "bg-[#F3F4F6] text-[#9CA3AF] hover:bg-[var(--color-border)]"
+                                  : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
                               } ${isVerifiedReadOnly ? "cursor-default opacity-70" : ""}`}
                             >
                               {t(`sessionsPage.attendance.${status}`)}
@@ -605,13 +605,13 @@ function AttendanceModal({
                             setLocalNotes((prev) => ({ ...prev, [e.studentId]: ev.target.value }))
                           }
                           placeholder={t("sessionsPage.attendance.notePlaceholder")}
-                          className="w-full px-2.5 py-1.5 border border-[var(--color-border)] rounded text-xs text-[#374151] placeholder:text-[#9CA3AF] focus:ring-1 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+                          className="w-full px-2.5 py-1.5 border border-[var(--color-border)] rounded text-xs text-[var(--color-text-secondary)] placeholder:text-[var(--color-text-secondary)] focus:ring-1 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
                         />
                       )}
                       {/* Zoom sync timing data + timeline bar */}
                       {rec?.joinedAt && (
                         <div className="space-y-1.5">
-                          <div className="flex items-center gap-3 text-[10px] text-[#9CA3AF]">
+                          <div className="flex items-center gap-3 text-[10px] text-[var(--color-text-secondary)]">
                             <span>
                               {t("sessionsPage.attendance.joinedAt")}:{" "}
                               {new Date(rec.joinedAt).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}
@@ -676,7 +676,7 @@ function AttendanceModal({
                         <Users className="w-3 h-3 text-[#D97706]" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="text-xs font-medium text-[#374151] truncate block">
+                        <span className="text-xs font-medium text-[var(--color-text-secondary)] truncate block">
                           {p.zoomUserEmail}
                           {selectedStudent && (
                             <span className="text-[#16A34A] font-medium">
@@ -684,7 +684,7 @@ function AttendanceModal({
                             </span>
                           )}
                         </span>
-                        <span className="text-[10px] text-[#9CA3AF]">
+                        <span className="text-[10px] text-[var(--color-text-secondary)]">
                           {new Date(p.timestamp).toLocaleTimeString(locale === "ar" ? "ar-SA" : "en-US", {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -702,7 +702,7 @@ function AttendanceModal({
                           }))
                         }
                         disabled={attendanceLocked}
-                        className="flex-1 px-2 py-1.5 text-xs border border-[var(--color-border)] rounded-lg bg-white text-[#374151] disabled:opacity-50"
+                        className="flex-1 px-2 py-1.5 text-xs border border-[var(--color-border)] rounded-lg bg-white text-[var(--color-text-secondary)] disabled:opacity-50"
                       >
                         <option value="">{locale === "ar" ? "اختر طالب" : "Select student"}</option>
                         {enrollments
@@ -734,7 +734,7 @@ function AttendanceModal({
             <div className="flex items-center gap-3">
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
               >
                 {(attendanceLocked || (isPostSession && isZoomSession && !hasUnmatched))
                   ? t("sessionsPage.attendance.close")
@@ -842,24 +842,24 @@ function RecordingsModal({
     <ModalOverlay onClose={onClose}>
       <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
         <div>
-          <h2 className="text-lg font-semibold text-[#1F2937]">
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("sessionsPage.recordings.title")}
           </h2>
-          <p className="text-xs text-[#6B7280] mt-0.5">{session.title}</p>
+          <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{session.title}</p>
         </div>
         <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
-          <X className="w-5 h-5 text-[#6B7280]" />
+          <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-[#6B7280]" />
+          <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />
         </div>
       ) : recordings.length === 0 ? (
         <div className="py-12 text-center">
           <Film className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
-          <p className="text-sm text-[#6B7280]">
+          <p className="text-sm text-[var(--color-text-secondary)]">
             {t("sessionsPage.recordings.noRecordings")}
           </p>
         </div>
@@ -888,7 +888,7 @@ function RecordingsModal({
                       href={rec.downloadUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
                     >
                       <Download className="w-3 h-3" />
                       {t("sessionsPage.recordings.download")}
@@ -896,7 +896,7 @@ function RecordingsModal({
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-4 text-xs text-[#6B7280]">
+              <div className="flex items-center gap-4 text-xs text-[var(--color-text-secondary)]">
                 <span>
                   {t("sessionsPage.recordings.duration")}:{" "}
                   {formatDuration(rec.recordingStart, rec.recordingEnd)}
@@ -922,7 +922,7 @@ function RecordingsModal({
       <div className="flex items-center justify-end p-4 border-t border-[var(--color-border)]">
         <button
           onClick={onClose}
-          className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
+          className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
         >
           {t("sessionsPage.form.cancel")}
         </button>
@@ -951,11 +951,11 @@ function CancelSessionModal({
   return (
     <ModalOverlay onClose={onClose}>
       <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
-        <h2 className="text-lg font-semibold text-[#1F2937]">
+        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
           {t("sessionsPage.cancelSession.title")}
         </h2>
         <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
-          <X className="w-5 h-5 text-[#6B7280]" />
+          <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
       <div className="p-4 space-y-4">
@@ -966,7 +966,7 @@ function CancelSessionModal({
           </p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("sessionsPage.cancelSession.reasonLabel")}
           </label>
           <textarea
@@ -981,7 +981,7 @@ function CancelSessionModal({
       <div className="flex items-center justify-end gap-3 p-4 border-t border-[var(--color-border)]">
         <button
           onClick={onClose}
-          className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
+          className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
         >
           {t("sessionsPage.cancelSession.goBack")}
         </button>
@@ -1016,11 +1016,11 @@ function DeleteSessionModal({
   return (
     <ModalOverlay onClose={onClose}>
       <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
-        <h2 className="text-lg font-semibold text-[#1F2937]">
+        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
           {t("sessionsPage.deleteModal.title")}
         </h2>
         <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
-          <X className="w-5 h-5 text-[#6B7280]" />
+          <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
       <div className="p-4">
@@ -1034,7 +1034,7 @@ function DeleteSessionModal({
       <div className="flex items-center justify-end gap-3 p-4 border-t border-[var(--color-border)]">
         <button
           onClick={onClose}
-          className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
+          className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
         >
           {t("sessionsPage.deleteModal.goBack")}
         </button>
@@ -1070,11 +1070,11 @@ function EndSessionModal({
   return (
     <ModalOverlay onClose={onClose}>
       <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
-        <h2 className="text-lg font-semibold text-[#1F2937]">
+        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
           {t("sessionsPage.endModal.title")}
         </h2>
         <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
-          <X className="w-5 h-5 text-[#6B7280]" />
+          <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
       <div className="p-4 space-y-3">
@@ -1096,7 +1096,7 @@ function EndSessionModal({
       <div className="flex items-center justify-end gap-3 p-4 border-t border-[var(--color-border)]">
         <button
           onClick={onClose}
-          className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
+          className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
         >
           {t("sessionsPage.endModal.goBack")}
         </button>
@@ -1241,17 +1241,17 @@ function ScheduleSessionModal({
   return (
     <ModalOverlay onClose={onClose}>
       <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
-        <h2 className="text-lg font-semibold text-[#1F2937]">
+        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
           {t("sessionsPage.scheduleSessionTitle")}
         </h2>
         <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
-          <X className="w-5 h-5 text-[#6B7280]" />
+          <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
       <div className="p-4 space-y-4">
         {/* Course */}
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("sessionsPage.form.course")} *
           </label>
           <select
@@ -1268,7 +1268,7 @@ function ScheduleSessionModal({
 
         {/* Title */}
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("sessionsPage.form.sessionTitle")} *
           </label>
           <input
@@ -1283,7 +1283,7 @@ function ScheduleSessionModal({
         {/* Date + Time */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
               {t("sessionsPage.form.date")} *
             </label>
             <DatePicker
@@ -1293,7 +1293,7 @@ function ScheduleSessionModal({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
               {t("sessionsPage.form.time")} *
             </label>
             <input
@@ -1317,7 +1317,7 @@ function ScheduleSessionModal({
 
         {/* Duration */}
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("sessionsPage.form.duration")}
           </label>
           <div className="flex items-center gap-2">
@@ -1328,7 +1328,7 @@ function ScheduleSessionModal({
               onChange={(e) => setDurationHours(Math.max(0, Number(e.target.value)))}
               className="w-20 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-center"
             />
-            <span className="text-sm text-[#6B7280]">{t("sessionsPage.form.hours")}</span>
+            <span className="text-sm text-[var(--color-text-secondary)]">{t("sessionsPage.form.hours")}</span>
             <input
               type="number"
               min={0}
@@ -1337,13 +1337,13 @@ function ScheduleSessionModal({
               onChange={(e) => setDurationMins(Math.max(0, Math.min(59, Number(e.target.value))))}
               className="w-20 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-center"
             />
-            <span className="text-sm text-[#6B7280]">{t("sessionsPage.form.minutes")}</span>
+            <span className="text-sm text-[var(--color-text-secondary)]">{t("sessionsPage.form.minutes")}</span>
           </div>
         </div>
 
         {/* Session Type */}
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("sessionsPage.form.sessionType")}
           </label>
           <div className="grid grid-cols-3 gap-2">
@@ -1355,7 +1355,7 @@ function ScheduleSessionModal({
                 className={`flex flex-col items-center gap-1.5 p-3 rounded-lg transition-colors ${
                   type === opt
                     ? "border-2 border-[#3B82F6] bg-[#EFF6FF] text-[#3B82F6]"
-                    : "border border-[var(--color-border)] text-[#6B7280] hover:border-[#3B82F6] hover:bg-[#EFF6FF] hover:text-[#3B82F6]"
+                    : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[#3B82F6] hover:bg-[#EFF6FF] hover:text-[#3B82F6]"
                 }`}
               >
                 {opt === "zoom" && <Video className="w-5 h-5" />}
@@ -1383,7 +1383,7 @@ function ScheduleSessionModal({
         {(type === "onsite" || type === "hybrid") && (
           <>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                 {t("sessionsPage.form.roomName")}
               </label>
               <input
@@ -1395,7 +1395,7 @@ function ScheduleSessionModal({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                 {t("sessionsPage.form.venueAddress")}
               </label>
               <input
@@ -1407,7 +1407,7 @@ function ScheduleSessionModal({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                 {t("sessionsPage.form.city")}
               </label>
               <CitySelect
@@ -1422,7 +1422,7 @@ function ScheduleSessionModal({
       <div className="flex items-center justify-end gap-3 p-4 border-t border-[var(--color-border)]">
         <button
           onClick={onClose}
-          className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
+          className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
         >
           {t("sessionsPage.form.cancel")}
         </button>
@@ -1481,7 +1481,7 @@ function SessionCard({
       live: { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: t("sessionsPage.statusLive") },
       ended: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessionsPage.statusEnded") },
       completed: { bg: "bg-[#DCFCE7]", text: "text-[#22C55E]", label: t("sessionsPage.statusCompleted") },
-      cancelled: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: t("sessionsPage.statusCancelled") },
+      cancelled: { bg: "bg-[#F3F4F6]", text: "text-[var(--color-text-secondary)]", label: t("sessionsPage.statusCancelled") },
       missed: { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: t("sessionsPage.statusMissed") },
       rescheduled: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessionsPage.statusRescheduled") },
     };
@@ -1518,14 +1518,14 @@ function SessionCard({
       {/* Main row */}
       <div className="flex items-center gap-3">
         {/* Type icon */}
-        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${isPast ? "bg-[#F3F4F6] text-[#9CA3AF]" : getTypeBadgeStyle(session.type)}`}>
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${isPast ? "bg-[#F3F4F6] text-[var(--color-text-secondary)]" : getTypeBadgeStyle(session.type)}`}>
           {getTypeIcon(session.type)}
         </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className={`text-sm font-semibold truncate ${isPast ? "text-[#6B7280]" : "text-[#1F2937]"}`}>
+            <h3 className={`text-sm font-semibold truncate ${isPast ? "text-[var(--color-text-secondary)]" : "text-[var(--color-text-primary)]"}`}>
               {session.title}
             </h3>
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${badge.bg} ${badge.text}`}>
@@ -1543,7 +1543,7 @@ function SessionCard({
               </span>
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs text-[#6B7280]">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs text-[var(--color-text-secondary)]">
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
               {formatDateHijri(session.scheduledAt, calendarFormat, { locale })}
@@ -1563,7 +1563,7 @@ function SessionCard({
               <span className={`flex items-center gap-1 font-medium ${
                 (session.capacityPercent || 0) >= 95 ? "text-[#EF4444]"
                 : (session.capacityPercent || 0) >= 80 ? "text-[#D97706]"
-                : "text-[#6B7280]"
+                : "text-[var(--color-text-secondary)]"
               }`}>
                 <Users className="w-3 h-3" />
                 {session.enrolledCount || 0}/{session.nelcLimit}
@@ -1584,10 +1584,10 @@ function SessionCard({
                 {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
                 {t("sessionsPage.start")}
               </button>
-              <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
+              <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
                 <ClipboardCheck className="w-3.5 h-3.5" />
               </button>
-              <button onClick={onEdit} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.edit")}>
+              <button onClick={onEdit} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.edit")}>
                 <Edit className="w-3.5 h-3.5" />
               </button>
               <button onClick={onCancel} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors" aria-label={t("sessionsPage.cancel")}>
@@ -1606,7 +1606,7 @@ function SessionCard({
                 {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
                 {t("sessionsPage.endSession")}
               </button>
-              <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
+              <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
                 <ClipboardCheck className="w-3.5 h-3.5" />
               </button>
               {session.zoomLink && (
@@ -1625,7 +1625,7 @@ function SessionCard({
           )}
 
           {session.status === "completed" && (
-            <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
+            <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
               <ClipboardCheck className="w-3.5 h-3.5" />
             </button>
           )}
@@ -1747,16 +1747,16 @@ function EditSessionModal({
   return (
     <ModalOverlay onClose={onClose}>
       <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
-        <h2 className="text-lg font-semibold text-[#1F2937]">
+        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
           {t("sessionsPage.editModal.title")}
         </h2>
         <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
-          <X className="w-5 h-5 text-[#6B7280]" />
+          <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
       <div className="p-4 space-y-4">
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("sessionsPage.form.sessionTitle")}
           </label>
           <input
@@ -1768,7 +1768,7 @@ function EditSessionModal({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
               {t("sessionsPage.form.date")}
             </label>
             <DatePicker
@@ -1778,7 +1778,7 @@ function EditSessionModal({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
               {t("sessionsPage.form.time")}
             </label>
             <input
@@ -1801,7 +1801,7 @@ function EditSessionModal({
         )}
 
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("sessionsPage.form.duration")}
           </label>
           <div className="flex items-center gap-2">
@@ -1812,7 +1812,7 @@ function EditSessionModal({
               onChange={(e) => setDurationHours(Math.max(0, Number(e.target.value)))}
               className="w-20 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-center"
             />
-            <span className="text-sm text-[#6B7280]">{t("sessionsPage.form.hours")}</span>
+            <span className="text-sm text-[var(--color-text-secondary)]">{t("sessionsPage.form.hours")}</span>
             <input
               type="number"
               min={0}
@@ -1821,13 +1821,13 @@ function EditSessionModal({
               onChange={(e) => setDurationMins(Math.max(0, Math.min(59, Number(e.target.value))))}
               className="w-20 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-center"
             />
-            <span className="text-sm text-[#6B7280]">{t("sessionsPage.form.minutes")}</span>
+            <span className="text-sm text-[var(--color-text-secondary)]">{t("sessionsPage.form.minutes")}</span>
           </div>
         </div>
         {(session.type === "onsite" || session.type === "hybrid") && (
           <>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                 {t("sessionsPage.form.roomName")}
               </label>
               <input
@@ -1838,7 +1838,7 @@ function EditSessionModal({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                 {t("sessionsPage.form.venueAddress")} *
               </label>
               <input
@@ -1849,7 +1849,7 @@ function EditSessionModal({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                 {t("sessionsPage.form.city")}
               </label>
               <CitySelect
@@ -1864,7 +1864,7 @@ function EditSessionModal({
       <div className="flex items-center justify-end gap-3 p-4 border-t border-[var(--color-border)]">
         <button
           onClick={onClose}
-          className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
+          className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
         >
           {t("sessionsPage.form.cancel")}
         </button>
@@ -2259,7 +2259,7 @@ const SessionsContent = () => {
       case "live": return "bg-[#EF4444]";
       case "ended": return "bg-[#D97706]";
       case "completed": return "bg-[#22C55E]";
-      case "cancelled": return "bg-[#9CA3AF]";
+      case "cancelled": return "bg-[var(--color-text-secondary)]";
       default: return "bg-[#3B82F6]";
     }
   };
@@ -2271,13 +2271,13 @@ const SessionsContent = () => {
     return (
     <div className="bg-white rounded-xl border border-[var(--color-border)]">
       <div className="p-4 border-b border-[var(--color-border)]">
-        <h2 className="text-base font-semibold text-[#1F2937]">
+        <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
           {groupTitle}
-          <span className="ml-2 text-xs font-normal text-[#6B7280]">({groupSessions.length})</span>
+          <span className="ml-2 text-xs font-normal text-[var(--color-text-secondary)]">({groupSessions.length})</span>
         </h2>
       </div>
       {groupSessions.length === 0 ? (
-        <div className="p-8 text-center text-sm text-[#6B7280]">
+        <div className="p-8 text-center text-sm text-[var(--color-text-secondary)]">
           {t("sessionsPage.noSessions")}
         </div>
       ) : (
@@ -2334,10 +2334,10 @@ const SessionsContent = () => {
               {/* Page Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
-                  <h1 className="text-2xl font-bold text-[#1F2937]">
+                  <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
                     {t("sessionsPage.title")}
                   </h1>
-                  <p className="text-sm text-[#6B7280] mt-1">
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                     {t("sessionsPage.subtitle")}
                   </p>
                 </div>
@@ -2349,7 +2349,7 @@ const SessionsContent = () => {
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                         viewMode === "list"
                           ? "btn-gold text-white"
-                          : "text-[#6B7280] hover:text-[#1F2937]"
+                          : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                       }`}
                     >
                       <List className="w-4 h-4" />
@@ -2360,7 +2360,7 @@ const SessionsContent = () => {
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                         viewMode === "calendar"
                           ? "btn-gold text-white"
-                          : "text-[#6B7280] hover:text-[#1F2937]"
+                          : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                       }`}
                     >
                       <Calendar className="w-4 h-4" />
@@ -2379,7 +2379,7 @@ const SessionsContent = () => {
 
               {/* Filters */}
               <div className="flex flex-wrap items-center gap-3 mb-4">
-                <div className="flex items-center gap-1.5 text-sm text-[#6B7280]">
+                <div className="flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)]">
                   <Filter className="w-4 h-4" />
                   {t("sessionsPage.filters")}:
                 </div>
@@ -2433,7 +2433,7 @@ const SessionsContent = () => {
               {/* Loading */}
               {loading && (
                 <div className="flex items-center justify-center py-16">
-                  <Loader2 className="w-8 h-8 animate-spin text-[#6B7280]" />
+                  <Loader2 className="w-8 h-8 animate-spin text-[var(--color-text-secondary)]" />
                 </div>
               )}
 
@@ -2468,42 +2468,42 @@ const SessionsContent = () => {
                       onClick={goToPrevMonth}
                       className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
                     >
-                      {isRTL ? <ChevronRight className="w-5 h-5 text-[#6B7280]" /> : <ChevronLeft className="w-5 h-5 text-[#6B7280]" />}
+                      {isRTL ? <ChevronRight className="w-5 h-5 text-[var(--color-text-secondary)]" /> : <ChevronLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />}
                     </button>
-                    <h2 className="text-lg font-semibold text-[#1F2937]">
+                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                       {calendarData.headerLabel}
                     </h2>
                     <button
                       onClick={goToNextMonth}
                       className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
                     >
-                      {isRTL ? <ChevronLeft className="w-5 h-5 text-[#6B7280]" /> : <ChevronRight className="w-5 h-5 text-[#6B7280]" />}
+                      {isRTL ? <ChevronLeft className="w-5 h-5 text-[var(--color-text-secondary)]" /> : <ChevronRight className="w-5 h-5 text-[var(--color-text-secondary)]" />}
                     </button>
                   </div>
 
                   {/* Calendar type toggle + Legend */}
                   <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--color-border)] bg-[#F9FAFB]">
                     <div className="flex items-center gap-4">
-                      <span className="flex items-center gap-1.5 text-xs text-[#6B7280]">
+                      <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" />
                         {t("sessionsPage.statusUpcoming")}
                       </span>
-                      <span className="flex items-center gap-1.5 text-xs text-[#6B7280]">
+                      <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
                         {t("sessionsPage.statusLive")}
                       </span>
-                      <span className="flex items-center gap-1.5 text-xs text-[#6B7280]">
+                      <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E]" />
                         {t("sessionsPage.statusCompleted")}
                       </span>
-                      <span className="flex items-center gap-1.5 text-xs text-[#6B7280]">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#9CA3AF]" />
+                      <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-text-secondary)]" />
                         {t("sessionsPage.statusCancelled")}
                       </span>
                     </div>
                     <button
                       onClick={() => setCalendarFormat(useHijri ? "gregorian" : "hijri")}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border border-[var(--color-border)] hover:bg-white transition-colors text-[#374151]"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border border-[var(--color-border)] hover:bg-white transition-colors text-[var(--color-text-secondary)]"
                     >
                       {useHijri ? (t("sessionsPage.gregorian") || "Gregorian") : (t("sessionsPage.hijri") || "Hijri")}
                     </button>
@@ -2513,7 +2513,7 @@ const SessionsContent = () => {
                   <div className="grid grid-cols-7">
                     {/* Day Headers */}
                     {dayNames.map((day) => (
-                      <div key={day} className="p-3 text-center text-xs font-medium text-[#6B7280] border-b border-[var(--color-border)]">
+                      <div key={day} className="p-3 text-center text-xs font-medium text-[var(--color-text-secondary)] border-b border-[var(--color-border)]">
                         {day}
                       </div>
                     ))}
@@ -2537,7 +2537,7 @@ const SessionsContent = () => {
                           className={`min-h-[100px] p-2 border-b border-r border-[var(--color-border)] ${isToday ? "bg-[#EFF6FF]" : ""}`}
                         >
                           <span className={`inline-flex items-center justify-center w-7 h-7 text-sm ${
-                            isToday ? "bg-[#3B82F6] text-white rounded-full font-semibold" : "text-[#1F2937]"
+                            isToday ? "bg-[#3B82F6] text-white rounded-full font-semibold" : "text-[var(--color-text-primary)]"
                           }`}>
                             {day}
                           </span>
@@ -2549,11 +2549,11 @@ const SessionsContent = () => {
                                 title={`${session.title} - ${formatSessionTime(session.scheduledAt, locale)}`}
                               >
                                 <span className={`w-2 h-2 rounded-full flex-shrink-0 ${getCalendarDotColor(session.status)}`} />
-                                <span className="truncate text-[#374151]">{session.title}</span>
+                                <span className="truncate text-[var(--color-text-secondary)]">{session.title}</span>
                               </div>
                             ))}
                             {daySessions.length > 2 && (
-                              <div className="text-[10px] text-[#6B7280] px-1.5">
+                              <div className="text-[10px] text-[var(--color-text-secondary)] px-1.5">
                                 +{daySessions.length - 2} {t("sessionsPage.more")}
                               </div>
                             )}
@@ -2604,34 +2604,34 @@ const SessionsContent = () => {
       {rescheduleSession && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
-            <h3 className="text-lg font-semibold text-[#1F2937] mb-4">Reschedule Lecture</h3>
+            <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">Reschedule Lecture</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">Reason *</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Reason *</label>
                 <textarea value={rescheduleForm.reason} onChange={(e) => setRescheduleForm(d => ({ ...d, reason: e.target.value }))} rows={2} placeholder="Why is this lecture being rescheduled?" className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">New Date *</label>
+                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">New Date *</label>
                   <DatePicker value={rescheduleForm.date} onChange={(v) => setRescheduleForm(d => ({ ...d, date: v }))} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">New Time *</label>
+                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">New Time *</label>
                   <input type="time" value={rescheduleForm.time} onChange={(e) => setRescheduleForm(d => ({ ...d, time: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">Duration</label>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Duration</label>
                 <div className="flex items-center gap-2">
                   <input type="number" min={0} value={rescheduleForm.durationHours} onChange={(e) => setRescheduleForm(d => ({ ...d, durationHours: Math.max(0, Number(e.target.value)) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6]" />
-                  <span className="text-sm text-[#6B7280]">hrs</span>
+                  <span className="text-sm text-[var(--color-text-secondary)]">hrs</span>
                   <input type="number" min={0} max={59} value={rescheduleForm.durationMins} onChange={(e) => setRescheduleForm(d => ({ ...d, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6]" />
-                  <span className="text-sm text-[#6B7280]">min</span>
+                  <span className="text-sm text-[var(--color-text-secondary)]">min</span>
                 </div>
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-5">
-              <button onClick={() => setRescheduleSession(null)} className="px-4 py-2 text-sm text-[#6B7280]">Cancel</button>
+              <button onClick={() => setRescheduleSession(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)]">Cancel</button>
               <button
                 onClick={async () => {
                   if (!rescheduleForm.reason.trim() || !rescheduleForm.date || !rescheduleForm.time) { toast.error(tToasts("fillRequiredFields")); return; }

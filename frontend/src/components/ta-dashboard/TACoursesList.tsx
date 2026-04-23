@@ -105,10 +105,10 @@ const TACoursesList = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#1F2937]">
+        <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
           {t("courses.title")}
         </h1>
-        <p className="text-sm text-[#6B7280] mt-1">
+        <p className="text-sm text-[var(--color-text-secondary)] mt-1">
           {t("courses.subtitle") || "View your assigned courses"}
         </p>
       </div>
@@ -118,7 +118,7 @@ const TACoursesList = () => {
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Search */}
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
             <input
               type="text"
               placeholder={t("courses.searchPlaceholder") || "Search courses..."}
@@ -130,7 +130,7 @@ const TACoursesList = () => {
 
           {/* Sort */}
           <div className="flex items-center gap-2">
-            <ArrowUpDown className="w-4 h-4 text-[#6B7280]" />
+            <ArrowUpDown className="w-4 h-4 text-[var(--color-text-secondary)]" />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
@@ -153,7 +153,7 @@ const TACoursesList = () => {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === f.key
                 ? "btn-gold text-white"
-                : "bg-white text-[#4B5563] border border-[var(--color-border)] hover:bg-[#F9FAFB]"
+                : "bg-white text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[#F9FAFB]"
             }`}
           >
             {f.label}
@@ -168,8 +168,8 @@ const TACoursesList = () => {
         </div>
       ) : filteredAndSortedCourses.length === 0 ? (
         <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
-          <BookOpen className="w-12 h-12 text-[#9CA3AF] mx-auto mb-3" />
-          <p className="text-[#6B7280]">{t("courses.noCourses")}</p>
+          <BookOpen className="w-12 h-12 text-[var(--color-text-secondary)] mx-auto mb-3" />
+          <p className="text-[var(--color-text-secondary)]">{t("courses.noCourses")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -199,18 +199,18 @@ const TACoursesList = () => {
 
                 {/* Content */}
                 <div className="p-4 flex flex-col flex-1">
-                  <h3 className="text-base font-semibold text-[#1F2937] mb-2 line-clamp-1">
+                  <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-2 line-clamp-1">
                     {course.courseTitle}
                   </h3>
 
                   {(course.instructorFirstName || course.instructorLastName) && (
-                    <div className="flex items-center gap-1.5 text-sm text-[#6B7280] mb-2">
+                    <div className="flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] mb-2">
                       <Users className="w-3.5 h-3.5" />
                       {t("courses.instructor")}: {course.instructorFirstName} {course.instructorLastName}
                     </div>
                   )}
 
-                  <div className="flex items-center gap-1.5 text-xs text-[#9CA3AF] mb-3">
+                  <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)] mb-3">
                     <Calendar className="w-3.5 h-3.5" />
                     {t("courses.assignedOn")}{" "}
                     {new Date(course.assignedAt).toLocaleDateString(

@@ -265,7 +265,7 @@ export default function DashboardSearchOverlay({
       >
         {/* Search Input */}
         <div className="flex items-center border-b border-[var(--color-border)] px-4 flex-shrink-0">
-          <Search className="w-5 h-5 text-[#9CA3AF] flex-shrink-0" />
+          <Search className="w-5 h-5 text-[var(--color-text-secondary)] flex-shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -273,17 +273,17 @@ export default function DashboardSearchOverlay({
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("placeholder")}
             aria-label={t("placeholder")}
-            className="flex-1 h-14 px-3 text-base text-[#1F2937] placeholder:text-[#9CA3AF] outline-none bg-transparent"
+            className="flex-1 h-14 px-3 text-base text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] outline-none bg-transparent"
           />
           {isSearching && (
-            <Loader2 className="w-5 h-5 animate-spin text-[#9CA3AF] flex-shrink-0 mx-1" />
+            <Loader2 className="w-5 h-5 animate-spin text-[var(--color-text-secondary)] flex-shrink-0 mx-1" />
           )}
           {query && (
             <button
               onClick={() => setQuery("")}
               className="p-1.5 hover:bg-[#F3F4F6] rounded-md flex-shrink-0"
             >
-              <X className="w-4 h-4 text-[#6B7280]" />
+              <X className="w-4 h-4 text-[var(--color-text-secondary)]" />
             </button>
           )}
         </div>
@@ -293,7 +293,7 @@ export default function DashboardSearchOverlay({
           {/* Quick Links (when no query) */}
           {!hasQuery && (
             <div>
-              <p className="text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider px-2 mb-2">
+              <p className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider px-2 mb-2">
                 {t("quickLinks.title")}
               </p>
               <div className="grid grid-cols-2 gap-1">
@@ -301,7 +301,7 @@ export default function DashboardSearchOverlay({
                   <button
                     key={link.href}
                     onClick={() => handleNavigate(link.href)}
-                    className="text-start px-3 py-2.5 rounded-lg text-sm text-[#4B5563] hover:bg-[#F3F4F6] transition-colors"
+                    className="text-start px-3 py-2.5 rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] transition-colors"
                   >
                     {link.label}
                   </button>
@@ -309,7 +309,7 @@ export default function DashboardSearchOverlay({
               </div>
 
               {/* Hint */}
-              <p className="text-xs text-[#9CA3AF] px-2 mt-4">
+              <p className="text-xs text-[var(--color-text-secondary)] px-2 mt-4">
                 {t("hint")}
               </p>
             </div>
@@ -319,15 +319,15 @@ export default function DashboardSearchOverlay({
           {hasQuery && !isSearching && totalResults === 0 && (
             <div className="text-center py-10">
               <Search className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
-              <p className="text-sm text-[#6B7280]">{t("noResults")}</p>
-              <p className="text-xs text-[#9CA3AF] mt-1">{t("noResultsHint")}</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">{t("noResults")}</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("noResultsHint")}</p>
             </div>
           )}
 
           {/* Course Results */}
           {courseResults.length > 0 && (
             <div className="mb-3">
-              <p className="text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider px-2 mb-1.5 flex items-center gap-1.5">
+              <p className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider px-2 mb-1.5 flex items-center gap-1.5">
                 <GraduationCap className="w-3.5 h-3.5" />
                 {t("sections.courses")} ({courseResults.length})
               </p>
@@ -340,14 +340,14 @@ export default function DashboardSearchOverlay({
                   className="w-full text-start px-3 py-2.5 rounded-lg hover:bg-[#F3F4F6] flex items-center justify-between group transition-colors"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-[#1F2937] truncate">
+                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                       {course.title}
                     </p>
-                    <p className="text-xs text-[#6B7280]">
+                    <p className="text-xs text-[var(--color-text-secondary)]">
                       {course.type} &middot; {course.hours}
                     </p>
                   </div>
-                  <ArrowIcon className="w-4 h-4 text-[var(--color-border)] group-hover:text-[#6B7280] flex-shrink-0 ms-2" />
+                  <ArrowIcon className="w-4 h-4 text-[var(--color-border)] group-hover:text-[var(--color-text-secondary)] flex-shrink-0 ms-2" />
                 </button>
               ))}
             </div>
@@ -356,7 +356,7 @@ export default function DashboardSearchOverlay({
           {/* Blog Results */}
           {blogResults.length > 0 && (
             <div className="mb-3">
-              <p className="text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider px-2 mb-1.5 flex items-center gap-1.5">
+              <p className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider px-2 mb-1.5 flex items-center gap-1.5">
                 <BookOpen className="w-3.5 h-3.5" />
                 {t("sections.blogs")} ({blogResults.length})
               </p>
@@ -369,14 +369,14 @@ export default function DashboardSearchOverlay({
                   className="w-full text-start px-3 py-2.5 rounded-lg hover:bg-[#F3F4F6] flex items-center justify-between group transition-colors"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-[#1F2937] truncate">
+                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                       {blog.title}
                     </p>
-                    <p className="text-xs text-[#6B7280] truncate">
+                    <p className="text-xs text-[var(--color-text-secondary)] truncate">
                       {blog.excerpt}
                     </p>
                   </div>
-                  <ArrowIcon className="w-4 h-4 text-[var(--color-border)] group-hover:text-[#6B7280] flex-shrink-0 ms-2" />
+                  <ArrowIcon className="w-4 h-4 text-[var(--color-border)] group-hover:text-[var(--color-text-secondary)] flex-shrink-0 ms-2" />
                 </button>
               ))}
             </div>
@@ -385,7 +385,7 @@ export default function DashboardSearchOverlay({
           {/* User Results (admin only) */}
           {userResults.length > 0 && (
             <div className="mb-3">
-              <p className="text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider px-2 mb-1.5 flex items-center gap-1.5">
+              <p className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider px-2 mb-1.5 flex items-center gap-1.5">
                 <Users className="w-3.5 h-3.5" />
                 {t("sections.users")} ({userResults.length})
               </p>
@@ -404,20 +404,20 @@ export default function DashboardSearchOverlay({
                       </span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-[#1F2937] truncate">
+                      <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                         {getUserDisplayName(user)}
                       </p>
-                      <p className="text-xs text-[#6B7280] truncate">
+                      <p className="text-xs text-[var(--color-text-secondary)] truncate">
                         {user.email}
                         {user.activeRole && (
-                          <span className="ms-1.5 text-[#9CA3AF]">
+                          <span className="ms-1.5 text-[var(--color-text-secondary)]">
                             &middot; {user.activeRole}
                           </span>
                         )}
                       </p>
                     </div>
                   </div>
-                  <ArrowIcon className="w-4 h-4 text-[var(--color-border)] group-hover:text-[#6B7280] flex-shrink-0 ms-2" />
+                  <ArrowIcon className="w-4 h-4 text-[var(--color-border)] group-hover:text-[var(--color-text-secondary)] flex-shrink-0 ms-2" />
                 </button>
               ))}
             </div>
@@ -439,7 +439,7 @@ export default function DashboardSearchOverlay({
         </div>
 
         {/* Footer hint */}
-        <div className="border-t border-[var(--color-border)] px-4 py-2.5 flex items-center justify-between text-xs text-[#9CA3AF] flex-shrink-0">
+        <div className="border-t border-[var(--color-border)] px-4 py-2.5 flex items-center justify-between text-xs text-[var(--color-text-secondary)] flex-shrink-0">
           <span>{t("escToClose")}</span>
         </div>
       </div>

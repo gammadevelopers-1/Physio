@@ -27,19 +27,19 @@ const InstructorCalendarWidget = ({
   return (
     <div className="bg-white rounded-xl border border-[var(--color-border)]">
       <div className="p-4 sm:p-5">
-        <h3 className="text-base font-semibold text-[#1F2937] mb-4">
+        <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">
           {t("calendar.title")}
         </h3>
 
         {events.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8">
             <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
-              <Calendar className="w-6 h-6 text-[#9CA3AF]" />
+              <Calendar className="w-6 h-6 text-[var(--color-text-secondary)]" />
             </div>
-            <h4 className="text-sm font-medium text-[#1F2937] mb-1">
+            <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
               {t("calendar.noEventsTitle")}
             </h4>
-            <p className="text-xs text-[#6B7280] text-center max-w-[200px]">
+            <p className="text-xs text-[var(--color-text-secondary)] text-center max-w-[200px]">
               {t("calendar.noEventsDescription")}
             </p>
           </div>
@@ -57,15 +57,15 @@ const InstructorCalendarWidget = ({
 
               const titleStyle =
                 event.status === "cancelled"
-                  ? "text-[15px] font-semibold text-[#9CA3AF] line-through mb-1"
+                  ? "text-[15px] font-semibold text-[var(--color-text-secondary)] line-through mb-1"
                   : event.status === "completed"
-                    ? "text-[15px] font-semibold text-[#6B7280] mb-1"
-                    : "text-[15px] font-semibold text-[#1F2937] mb-1";
+                    ? "text-[15px] font-semibold text-[var(--color-text-secondary)] mb-1"
+                    : "text-[15px] font-semibold text-[var(--color-text-primary)] mb-1";
 
               return (
                 <div key={event.id} className={cardStyle}>
                   {/* Date and Time */}
-                  <p className="text-[13px] text-[#6B7280] mb-1">
+                  <p className="text-[13px] text-[var(--color-text-secondary)] mb-1">
                     {event.date} - {event.time}
                   </p>
 
@@ -73,13 +73,13 @@ const InstructorCalendarWidget = ({
                   <h4 className={titleStyle}>{event.title}</h4>
 
                   {/* Enrolled Count */}
-                  <p className="text-[13px] text-[#6B7280] mb-2">
+                  <p className="text-[13px] text-[var(--color-text-secondary)] mb-2">
                     {event.enrolled} {t("calendar.studentsEnrolled")}
                   </p>
 
                   {/* Footer */}
                   <div className="flex items-center justify-between">
-                    <span className="text-[13px] text-[#6B7280]">
+                    <span className="text-[13px] text-[var(--color-text-secondary)]">
                       {event.duration}
                     </span>
                     {event.status === "completed" ? (
@@ -88,7 +88,7 @@ const InstructorCalendarWidget = ({
                         {t("calendar.completed")}
                       </span>
                     ) : event.status === "cancelled" ? (
-                      <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[#9CA3AF]">
+                      <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[var(--color-text-secondary)]">
                         <XCircle className="w-3.5 h-3.5" />
                         {t("calendar.cancelled")}
                       </span>

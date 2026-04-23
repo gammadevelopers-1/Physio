@@ -138,12 +138,12 @@ const ArchivedPageContent = () => {
           <div className="max-w-[1200px] mx-auto">
             <div className={`mb-8 ${isRTL ? "text-right" : "text-left"}`}>
               <h1
-                className="font-semibold text-[#06080b] mb-2"
+                className="font-semibold text-[var(--color-text-primary)] mb-2"
                 style={{ fontSize: "48px" }}
               >
                 {t("title")}
               </h1>
-              <p className="text-[#4a4c4f]" style={{ fontSize: "20px" }}>
+              <p className="text-[var(--color-text-secondary)]" style={{ fontSize: "20px" }}>
                 {t("subtitle")}
               </p>
             </div>
@@ -177,7 +177,7 @@ const ArchivedPageContent = () => {
                   </>
                 ) : (
                   <div className="text-center py-16">
-                    <p className="text-[#4a4c4f] text-lg">
+                    <p className="text-[var(--color-text-secondary)] text-lg">
                       {t("noCoursesFound")}
                     </p>
                   </div>
@@ -198,12 +198,12 @@ const ArchivedPageContent = () => {
         <section className="px-4 py-6 max-w-full">
           <div className={`mb-6 ${isRTL ? "text-right" : "text-left"}`}>
             <h1
-              className="font-semibold text-[#06080b] mb-1"
+              className="font-semibold text-[var(--color-text-primary)] mb-1"
               style={{ fontSize: "24px" }}
             >
               {t("title")}
             </h1>
-            <p className="text-[#4a4c4f] text-sm">{t("subtitle")}</p>
+            <p className="text-[var(--color-text-secondary)] text-sm">{t("subtitle")}</p>
           </div>
 
           <CourseFilters {...filterProps} variant="mobile" />
@@ -234,7 +234,7 @@ const ArchivedPageContent = () => {
             </>
           ) : (
             <div className="text-center py-12">
-              <p className="text-[#4a4c4f] text-base">
+              <p className="text-[var(--color-text-secondary)] text-base">
                 {t("noCoursesFound")}
               </p>
             </div>

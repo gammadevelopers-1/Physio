@@ -74,9 +74,9 @@ const RecentFeedbackWidget = ({
       case "neutral":
         return {
           bg: "bg-[#F3F4F6]",
-          border: "border-[#9CA3AF]",
-          text: "text-[#6B7280]",
-          dot: "bg-[#9CA3AF]",
+          border: "border-[var(--color-text-secondary)]",
+          text: "text-[var(--color-text-secondary)]",
+          dot: "bg-[var(--color-text-secondary)]",
         };
       case "negative":
         return {
@@ -88,9 +88,9 @@ const RecentFeedbackWidget = ({
       default:
         return {
           bg: "bg-[#F3F4F6]",
-          border: "border-[#9CA3AF]",
-          text: "text-[#6B7280]",
-          dot: "bg-[#9CA3AF]",
+          border: "border-[var(--color-text-secondary)]",
+          text: "text-[var(--color-text-secondary)]",
+          dot: "bg-[var(--color-text-secondary)]",
         };
     }
   };
@@ -113,7 +113,7 @@ const RecentFeedbackWidget = ({
       <div className="p-4 sm:p-5">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-[#1F2937] flex items-center gap-2">
+          <h3 className="text-base font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-[#3B82F6]" />
             {t("feedback.title")}
           </h3>
@@ -157,14 +157,14 @@ const RecentFeedbackWidget = ({
                 {/* Header: Learner info + Rating */}
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xs font-semibold text-[#4B5563]">
+                    <div className="w-8 h-8 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xs font-semibold text-[var(--color-text-secondary)]">
                       {feedback.learnerInitials}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-[#1F2937]">
+                      <p className="text-sm font-medium text-[var(--color-text-primary)]">
                         {feedback.learnerName}
                       </p>
-                      <p className="text-[10px] text-[#6B7280]">
+                      <p className="text-[10px] text-[var(--color-text-secondary)]">
                         {feedback.courseName}
                       </p>
                     </div>
@@ -175,7 +175,7 @@ const RecentFeedbackWidget = ({
                 </div>
 
                 {/* Comment */}
-                <p className="text-xs text-[#4B5563] mb-2 line-clamp-2">
+                <p className="text-xs text-[var(--color-text-secondary)] mb-2 line-clamp-2">
                   "{feedback.comment}"
                 </p>
 
@@ -187,7 +187,7 @@ const RecentFeedbackWidget = ({
                       {getSentimentLabel(feedback.sentiment)}
                     </span>
                   </div>
-                  <span className="text-[10px] text-[#9CA3AF]">
+                  <span className="text-[10px] text-[var(--color-text-secondary)]">
                     {feedback.date}
                   </span>
                 </div>

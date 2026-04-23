@@ -137,8 +137,8 @@ const RefundsContent = () => {
                         <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                       </div>
                       <div>
-                        <p className="text-xs text-[#6B7280] font-medium">{stat.label}</p>
-                        <p className="text-xl font-bold text-[#111827]">{stat.value}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)] font-medium">{stat.label}</p>
+                        <p className="text-xl font-bold text-[var(--color-text-primary)]">{stat.value}</p>
                       </div>
                     </div>
                   );
@@ -167,15 +167,15 @@ const RefundsContent = () => {
                         onClick={() => setActiveTab(tab.key)}
                         className={`px-4 py-1.5 text-[13px] font-medium rounded-md transition-colors flex items-center gap-2 ${
                           activeTab === tab.key
-                            ? "bg-white text-[#111827] shadow-sm"
-                            : "text-[#6B7280] hover:text-[#374151]"
+                            ? "bg-white text-[var(--color-text-primary)] shadow-sm"
+                            : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                         }`}
                       >
                         {tab.label}
                         <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${
                           activeTab === tab.key
                             ? "bg-[var(--color-primary)] text-white"
-                            : "bg-[var(--color-border)] text-[#6B7280]"
+                            : "bg-[var(--color-border)] text-[var(--color-text-secondary)]"
                         }`}>
                           {tab.count}
                         </span>
@@ -194,15 +194,15 @@ const RefundsContent = () => {
                             <RotateCcw className="w-4 h-4 text-[#EA580C]" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-[#111827]">{refund.customer}</p>
-                            <p className="text-[12px] text-[#6B7280]">{refund.course} - {refund.reason}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{refund.customer}</p>
+                            <p className="text-[12px] text-[var(--color-text-secondary)]">{refund.course} - {refund.reason}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className={`${isRTL ? "text-left" : "text-right"}`}>
-                            <p className="text-sm font-semibold text-[#111827]">{refund.refundAmount}</p>
+                            <p className="text-sm font-semibold text-[var(--color-text-primary)]">{refund.refundAmount}</p>
                             {refund.originalAmount !== refund.refundAmount && (
-                              <p className="text-[11px] text-[#9CA3AF] line-through">{refund.originalAmount}</p>
+                              <p className="text-[11px] text-[var(--color-text-secondary)] line-through">{refund.originalAmount}</p>
                             )}
                           </div>
                           <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${statusStyles[refund.status]}`}>
@@ -212,7 +212,7 @@ const RefundsContent = () => {
                       </div>
 
                       {/* Deduction + Date */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[12px] text-[#6B7280]">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[12px] text-[var(--color-text-secondary)]">
                         <div className="flex items-center gap-3">
                           <span>{refund.date}</span>
                           {refund.deduction && (

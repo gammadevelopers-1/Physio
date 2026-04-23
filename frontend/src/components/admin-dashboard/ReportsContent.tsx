@@ -115,10 +115,10 @@ const ReportsContent = () => {
             <div className="flex-1 min-w-0">
               {/* Page Header */}
               <div className="mb-6">
-                <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
                   {t("reportsPage.title")}
                 </h1>
-                <p className="text-sm text-[#6B7280] mt-1">
+                <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                   {t("reportsPage.subtitle")}
                 </p>
               </div>
@@ -127,8 +127,8 @@ const ReportsContent = () => {
               <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-[#6B7280]" />
-                    <span className="text-sm text-[#4B5563]">{t("reportsPage.dateRange")}:</span>
+                    <Calendar className="w-5 h-5 text-[var(--color-text-secondary)]" />
+                    <span className="text-sm text-[var(--color-text-secondary)]">{t("reportsPage.dateRange")}:</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <input
@@ -137,7 +137,7 @@ const ReportsContent = () => {
                       onChange={(e) => setDateFrom(e.target.value)}
                       className="h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm"
                     />
-                    <span className="text-[#6B7280]">-</span>
+                    <span className="text-[var(--color-text-secondary)]">-</span>
                     <input
                       type="date"
                       value={dateTo}
@@ -146,16 +146,16 @@ const ReportsContent = () => {
                     />
                   </div>
                   <div className="flex items-center gap-2 sm:ml-auto">
-                    <button className="px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F3F4F6] rounded-lg">
+                    <button className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg">
                       {t("reportsPage.presets.today")}
                     </button>
-                    <button className="px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F3F4F6] rounded-lg">
+                    <button className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg">
                       {t("reportsPage.presets.week")}
                     </button>
-                    <button className="px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F3F4F6] rounded-lg">
+                    <button className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg">
                       {t("reportsPage.presets.month")}
                     </button>
-                    <button className="px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F3F4F6] rounded-lg">
+                    <button className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg">
                       {t("reportsPage.presets.year")}
                     </button>
                   </div>
@@ -164,7 +164,7 @@ const ReportsContent = () => {
 
               {/* Report Types Grid */}
               <div className="mb-6">
-                <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                   {t("reportsPage.generateReport")}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -186,8 +186,8 @@ const ReportsContent = () => {
                         >
                           <Icon className="w-6 h-6" style={{ color: report.color }} />
                         </div>
-                        <h3 className="font-semibold text-[#1F2937] mb-1">{report.title}</h3>
-                        <p className="text-sm text-[#6B7280]">{report.description}</p>
+                        <h3 className="font-semibold text-[var(--color-text-primary)] mb-1">{report.title}</h3>
+                        <p className="text-sm text-[var(--color-text-secondary)]">{report.description}</p>
                       </div>
                     );
                   })}
@@ -199,15 +199,15 @@ const ReportsContent = () => {
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-6">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
-                      <h3 className="font-semibold text-[#1F2937]">
+                      <h3 className="font-semibold text-[var(--color-text-primary)]">
                         {reportTypes.find((r) => r.id === selectedReport)?.title}
                       </h3>
-                      <p className="text-sm text-[#6B7280]">
+                      <p className="text-sm text-[var(--color-text-secondary)]">
                         {t("reportsPage.readyToGenerate")}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <select className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563]">
+                      <select className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)]">
                         <option value="pdf">PDF</option>
                         <option value="excel">Excel</option>
                         <option value="csv">CSV</option>
@@ -228,7 +228,7 @@ const ReportsContent = () => {
               {/* Scheduled Reports */}
               <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                 <div className="p-5 border-b border-[var(--color-border)]">
-                  <h3 className="text-lg font-semibold text-[#1F2937]">
+                  <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                     {t("reportsPage.scheduledReports")}
                   </h3>
                 </div>
@@ -237,19 +237,19 @@ const ReportsContent = () => {
                   <table className="w-full">
                     <thead className="bg-[#F9FAFB]">
                       <tr>
-                        <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                           {t("reportsPage.table.reportName")}
                         </th>
-                        <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                           {t("reportsPage.table.frequency")}
                         </th>
-                        <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                           {t("reportsPage.table.nextRun")}
                         </th>
-                        <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                           {t("reportsPage.table.recipients")}
                         </th>
-                        <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                        <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                           {t("reportsPage.table.actions")}
                         </th>
                       </tr>
@@ -257,19 +257,19 @@ const ReportsContent = () => {
                     <tbody>
                       {scheduledReports.map((report) => (
                         <tr key={report.id} className="border-b border-[#F3F4F6]">
-                          <td className="px-4 py-4 text-sm font-medium text-[#1F2937]">
+                          <td className="px-4 py-4 text-sm font-medium text-[var(--color-text-primary)]">
                             {report.name}
                           </td>
                           <td className="px-4 py-4">
-                            <span className="px-2.5 py-1 text-xs font-medium rounded bg-[#F3F4F6] text-[#4B5563]">
+                            <span className="px-2.5 py-1 text-xs font-medium rounded bg-[#F3F4F6] text-[var(--color-text-secondary)]">
                               {report.frequency}
                             </span>
                           </td>
-                          <td className="px-4 py-4 text-sm text-[#6B7280]">{report.nextRun}</td>
+                          <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)]">{report.nextRun}</td>
                           <td className="px-4 py-4">
                             <div className="flex items-center gap-1">
-                              <Mail className="w-4 h-4 text-[#6B7280]" />
-                              <span className="text-sm text-[#6B7280]">{report.recipients}</span>
+                              <Mail className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                              <span className="text-sm text-[var(--color-text-secondary)]">{report.recipients}</span>
                             </div>
                           </td>
                           <td className="px-4 py-4">

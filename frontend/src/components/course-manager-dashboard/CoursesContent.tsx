@@ -198,7 +198,7 @@ const CoursesContent = () => {
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       active: "bg-[#DCFCE7] text-[#22C55E]",
-      draft: "bg-[#F3F4F6] text-[#6B7280]",
+      draft: "bg-[#F3F4F6] text-[var(--color-text-secondary)]",
       pending_review: "bg-[#EEF2FF] text-[#6366F1]",
       changes_requested: "bg-[#FEF3C7] text-[#D97706]",
       completed: "bg-[#EFF6FF] text-[#3B82F6]",
@@ -236,10 +236,10 @@ const CoursesContent = () => {
               {/* Page Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
-                  <h1 className="text-2xl font-bold text-[#1F2937]">
+                  <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
                     {t("coursesPage.title")}
                   </h1>
-                  <p className="text-sm text-[#6B7280] mt-1">
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                     {t("coursesPage.subtitle")}
                   </p>
                 </div>
@@ -255,15 +255,15 @@ const CoursesContent = () => {
               {/* Stats Summary */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
-                  <p className="text-xs text-[#6B7280]">
+                  <p className="text-xs text-[var(--color-text-secondary)]">
                     {t("coursesPage.stats.total")}
                   </p>
-                  <p className="text-2xl font-bold text-[#1F2937] mt-1">
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)] mt-1">
                     {loading ? "—" : total}
                   </p>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
-                  <p className="text-xs text-[#6B7280]">
+                  <p className="text-xs text-[var(--color-text-secondary)]">
                     {t("coursesPage.stats.active")}
                   </p>
                   <p className="text-2xl font-bold text-[#22C55E] mt-1">
@@ -271,10 +271,10 @@ const CoursesContent = () => {
                   </p>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
-                  <p className="text-xs text-[#6B7280]">
+                  <p className="text-xs text-[var(--color-text-secondary)]">
                     {t("coursesPage.stats.totalEnrollments")}
                   </p>
-                  <p className="text-2xl font-bold text-[#1F2937] mt-1">
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)] mt-1">
                     {loading ? "—" : totalEnrolled}
                   </p>
                 </div>
@@ -284,7 +284,7 @@ const CoursesContent = () => {
               <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
                 <div className="flex flex-col lg:flex-row gap-4">
                   <div className="flex-1 relative">
-                    <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]`} />
+                    <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]`} />
                     <input
                       type="text"
                       placeholder={t("coursesPage.searchPlaceholder")}
@@ -297,7 +297,7 @@ const CoursesContent = () => {
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                     >
                       <option value="all">
                         {t("coursesPage.filters.allStatus")}
@@ -325,7 +325,7 @@ const CoursesContent = () => {
                     <select
                       value={deliveryFilter}
                       onChange={(e) => setDeliveryFilter(e.target.value)}
-                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                     >
                       <option value="all">
                         {t("coursesPage.filters.allDelivery")}
@@ -344,7 +344,7 @@ const CoursesContent = () => {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                     >
                       <option value="newest">
                         {t("coursesPage.sort.newest")}
@@ -392,12 +392,12 @@ const CoursesContent = () => {
               ) : courses.length === 0 ? (
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <BookOpen className="w-8 h-8 text-[#9CA3AF]" />
+                    <BookOpen className="w-8 h-8 text-[var(--color-text-secondary)]" />
                   </div>
-                  <h3 className="text-lg font-semibold text-[#1F2937] mb-2">
+                  <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
                     {t("coursesPage.noCourses")}
                   </h3>
-                  <p className="text-sm text-[#6B7280] mb-4">
+                  <p className="text-sm text-[var(--color-text-secondary)] mb-4">
                     {t("coursesPage.noCoursesDesc")}
                   </p>
                   <Link
@@ -438,7 +438,7 @@ const CoursesContent = () => {
                             >
                               {t(`coursesPage.status.${course.status}`)}
                             </span>
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/90 rounded-md text-xs font-medium text-[#374151]">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/90 rounded-md text-xs font-medium text-[var(--color-text-secondary)]">
                               {getDeliveryIcon(course.deliveryType)}
                               {t(
                                 `coursesPage.delivery.${course.deliveryType}`
@@ -451,7 +451,7 @@ const CoursesContent = () => {
                             <button
                               onClick={() => setOpenDropdown(openDropdown === course.id ? null : course.id)}
                               disabled={statusLoading === course.id}
-                              className="p-1.5 bg-white/90 rounded-lg text-[#6B7280] hover:bg-white transition-colors disabled:opacity-50"
+                              className="p-1.5 bg-white/90 rounded-lg text-[var(--color-text-secondary)] hover:bg-white transition-colors disabled:opacity-50"
                               aria-label={tA("openActions")}
                               aria-haspopup="true"
                               aria-expanded={openDropdown === course.id}
@@ -465,7 +465,7 @@ const CoursesContent = () => {
 
                             {openDropdown === course.id && (
                               <div className="absolute end-0 top-full mt-1 w-48 bg-white rounded-lg border border-[var(--color-border)] shadow-lg z-20" role="menu">
-                                <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">
+                                <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
                                   {t("coursesPage.actions.title")}
                                 </p>
 
@@ -522,7 +522,7 @@ const CoursesContent = () => {
                                   <>
                                     <button
                                       onClick={() => handleAction(course.id, "toggle_public", course.visibleOnPublicSite !== false)}
-                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors"
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors"
                                       role="menuitem"
                                     >
                                       {course.visibleOnPublicSite !== false ? (
@@ -539,7 +539,7 @@ const CoursesContent = () => {
                                     </button>
                                     <button
                                       onClick={() => handleAction(course.id, "toggle_featured", course.isFeatured === true)}
-                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors"
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors"
                                       role="menuitem"
                                     >
                                       <Star
@@ -573,7 +573,7 @@ const CoursesContent = () => {
                                   <>
                                     <button
                                       onClick={() => handleAction(course.id, "toggle_public", course.visibleOnPublicSite !== false)}
-                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors"
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors"
                                       role="menuitem"
                                     >
                                       {course.visibleOnPublicSite !== false ? (
@@ -606,7 +606,7 @@ const CoursesContent = () => {
 
                         <div className="p-4 flex flex-col flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-base font-semibold text-[#1F2937] line-clamp-1 flex-1 min-w-0">
+                            <h3 className="text-base font-semibold text-[var(--color-text-primary)] line-clamp-1 flex-1 min-w-0">
                               {courseTitle}
                             </h3>
                             {course.isFeatured && (
@@ -621,12 +621,12 @@ const CoursesContent = () => {
                           </div>
 
                           {course.instructorName && (
-                            <p className="text-xs text-[#6B7280] mb-3">
+                            <p className="text-xs text-[var(--color-text-secondary)] mb-3">
                               {course.instructorName}
                             </p>
                           )}
 
-                          <div className="flex items-center gap-3 text-xs text-[#6B7280] mb-3">
+                          <div className="flex items-center gap-3 text-xs text-[var(--color-text-secondary)] mb-3">
                             <span className="flex items-center gap-1">
                               <Users className="w-3.5 h-3.5" />
                               {course.enrolledCount}{" "}
@@ -655,7 +655,7 @@ const CoursesContent = () => {
                             {ratingsMap[course.id] && ratingsMap[course.id].totalRatings > 0 && (
                               <span className="flex items-center gap-1">
                                 <Star className="w-3.5 h-3.5 text-[var(--gold-gold-500)] fill-[var(--gold-gold-500)]" />
-                                <span className="font-medium text-[#1F2937]">
+                                <span className="font-medium text-[var(--color-text-primary)]">
                                   {ratingsMap[course.id].avgRating.toFixed(1)}
                                 </span>
                                 <span>({ratingsMap[course.id].totalRatings})</span>
@@ -666,10 +666,10 @@ const CoursesContent = () => {
                           {course.completionRate > 0 && (
                             <div className="mb-4">
                               <div className="flex justify-between text-xs mb-1">
-                                <span className="text-[#6B7280]">
+                                <span className="text-[var(--color-text-secondary)]">
                                   {t("coursesPage.completion")}
                                 </span>
-                                <span className="font-medium text-[#1F2937]">
+                                <span className="font-medium text-[var(--color-text-primary)]">
                                   {course.completionRate}%
                                 </span>
                               </div>
@@ -694,14 +694,14 @@ const CoursesContent = () => {
                             </Link>
                             <button
                               onClick={() => router.push(`/${locale}/dashboard/manager/courses/${course.id}`)}
-                              className="p-2 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                              className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
                               aria-label={tA("viewAnalytics")}
                             >
                               <BarChart3 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => router.push(`/${locale}/dashboard/manager/courses/${course.id}`)}
-                              className="p-2 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                              className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
                               aria-label={tA("courseSettings")}
                             >
                               <Settings className="w-4 h-4" />
@@ -718,10 +718,10 @@ const CoursesContent = () => {
               {requestChangesId && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                   <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-                    <h3 className="text-lg font-semibold text-[#1F2937] mb-2">
+                    <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
                       {t("coursesPage.actions.requestChanges")}
                     </h3>
-                    <p className="text-sm text-[#6B7280] mb-4">
+                    <p className="text-sm text-[var(--color-text-secondary)] mb-4">
                       {t("coursesPage.actions.requestChangesDesc")}
                     </p>
                     <textarea
@@ -736,7 +736,7 @@ const CoursesContent = () => {
                           setRequestChangesId(null);
                           setRequestChangesNote("");
                         }}
-                        className="px-4 py-2 text-sm text-[#6B7280] hover:bg-[#F3F4F6] rounded-lg transition-colors"
+                        className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors"
                       >
                         {t("coursesPage.actions.cancel")}
                       </button>

@@ -119,7 +119,7 @@ export default function NotificationBell() {
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--outline-subtle)]">
-            <h3 className="text-sm font-semibold text-[#1F2937]">
+            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
               {t("title")}
             </h3>
             {notifications.length > 0 && (
@@ -134,7 +134,7 @@ export default function NotificationBell() {
                 )}
                 <button
                   onClick={clearAll}
-                  className="text-xs text-[#6B7280] hover:text-[#EF4444] font-medium transition-colors"
+                  className="text-xs text-[var(--color-text-secondary)] hover:text-[#EF4444] font-medium transition-colors"
                 >
                   {t("clearAll")}
                 </button>
@@ -147,7 +147,7 @@ export default function NotificationBell() {
             {notifications.length === 0 ? (
               <div className="py-10 text-center">
                 <Bell className="w-8 h-8 mx-auto text-[var(--color-border)] mb-2" />
-                <p className="text-sm text-[#9CA3AF]">
+                <p className="text-sm text-[var(--color-text-secondary)]">
                   {t("noNotifications")}
                 </p>
               </div>
@@ -170,13 +170,13 @@ export default function NotificationBell() {
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#1F2937] truncate">
+                      <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                         {t.has(`types.${notif.type}.title`) ? t(`types.${notif.type}.title`) : notif.title}
                       </p>
-                      <p className="text-xs text-[#6B7280] line-clamp-2 mt-0.5">
+                      <p className="text-xs text-[var(--color-text-secondary)] line-clamp-2 mt-0.5">
                         {notif.message}
                       </p>
-                      <p className="text-[10px] text-[#9CA3AF] mt-1">
+                      <p className="text-[10px] text-[var(--color-text-secondary)] mt-1">
                         {getRelativeTime(notif.createdAt, t)}
                       </p>
                     </div>

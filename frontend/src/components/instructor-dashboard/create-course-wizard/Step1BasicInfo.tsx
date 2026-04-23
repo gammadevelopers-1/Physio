@@ -34,13 +34,13 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
     <div className="space-y-6">
       {/* Title & Description */}
       <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-        <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+        <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
           {t("basicInfo")}
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="course-title" className="block text-sm font-medium text-[#374151] mb-1">
+            <label htmlFor="course-title" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("courseTitle")} *
             </label>
             <input
@@ -52,7 +52,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
             />
           </div>
           <div>
-            <label htmlFor="course-title-ar" className="block text-sm font-medium text-[#374151] mb-1">
+            <label htmlFor="course-title-ar" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("courseTitleAr")}
             </label>
             <input
@@ -68,7 +68,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
-            <label htmlFor="course-description" className="block text-sm font-medium text-[#374151] mb-1">
+            <label htmlFor="course-description" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("description")}
             </label>
             <textarea
@@ -80,7 +80,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
             />
           </div>
           <div>
-            <label htmlFor="course-description-ar" className="block text-sm font-medium text-[#374151] mb-1">
+            <label htmlFor="course-description-ar" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("descriptionAr")}
             </label>
             <textarea
@@ -96,7 +96,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
 
         {/* Delivery Type — per spec, this belongs in Step 1 */}
         <div className="mt-4">
-          <label htmlFor="delivery-type" className="block text-sm font-medium text-[#374151] mb-1">
+          <label htmlFor="delivery-type" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
             {t("deliveryType")} *
           </label>
           <select
@@ -118,7 +118,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
         {state.deliveryType === "self-paced" && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             <div>
-              <label htmlFor="start-date" className="block text-sm font-medium text-[#374151] mb-1">
+              <label htmlFor="start-date" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("startDate")}
               </label>
               <DatePicker
@@ -128,7 +128,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               />
             </div>
             <div>
-              <label htmlFor="end-date" className="block text-sm font-medium text-[#374151] mb-1">
+              <label htmlFor="end-date" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("endDate")}
               </label>
               <DatePicker
@@ -139,10 +139,10 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("maxEnrollment")}
               </label>
-              <p className="text-sm text-[#6B7280] bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg px-3 py-2.5">
+              <p className="text-sm text-[var(--color-text-secondary)] bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg px-3 py-2.5">
                 {t("selfPacedUnlimited") || "Self-paced: unlimited enrollment"}
               </p>
             </div>
@@ -152,7 +152,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
 
       {/* Thumbnail */}
       <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
-        <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+        <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
           {t("courseImage")}
         </h2>
 
@@ -184,9 +184,9 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
             ) : (
               <>
-                <ImageIcon className="w-8 h-8 text-[#9CA3AF] mb-2" />
-                <span className="text-sm text-[#6B7280]">{t("uploadImage")}</span>
-                <span className="text-xs text-[#9CA3AF] mt-1">{t("imageHint")}</span>
+                <ImageIcon className="w-8 h-8 text-[var(--color-text-secondary)] mb-2" />
+                <span className="text-sm text-[var(--color-text-secondary)]">{t("uploadImage")}</span>
+                <span className="text-xs text-[var(--color-text-secondary)] mt-1">{t("imageHint")}</span>
               </>
             )}
           </label>

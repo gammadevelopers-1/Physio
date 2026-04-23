@@ -251,10 +251,10 @@ const CourseManagerNavbar = ({ manager }: CourseManagerNavbarProps) => {
                 />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#1F2937]">
+                <p className="text-sm font-medium text-[var(--color-text-primary)]">
                   {manager.name}
                 </p>
-                <p className="text-xs text-[#6B7280]">
+                <p className="text-xs text-[var(--color-text-secondary)]">
                   {tDashboard("sidebar.courseManagerDashboard")}
                 </p>
               </div>
@@ -275,11 +275,11 @@ const CourseManagerNavbar = ({ manager }: CourseManagerNavbarProps) => {
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                       isActive
                         ? "bg-[#F0F7FF] text-[#002D87]"
-                        : "text-[#4B5563] hover:bg-[#F9FAFB]"
+                        : "text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
                     }`}
                   >
                     <Icon
-                      className={`w-5 h-5 ${isActive ? "text-[#002D87]" : "text-[#6B7280]"}`}
+                      className={`w-5 h-5 ${isActive ? "text-[#002D87]" : "text-[var(--color-text-secondary)]"}`}
                     />
                     <span className={`text-sm ${isActive ? "font-medium" : ""}`}>
                       {item.label}

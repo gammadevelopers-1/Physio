@@ -211,12 +211,12 @@ export default function CheckoutPage() {
                   </div>
 
                   {/* Title position: RIGHT for RTL, LEFT for LTR */}
-                  <h3 className={`text-lg font-semibold text-[#06080b] leading-normal max-w-[140px] z-10 absolute top-4 ${isRTL ? "right-4 text-right" : "left-4 text-left"}`}>
+                  <h3 className={`text-lg font-semibold text-[var(--color-text-primary)] leading-normal max-w-[140px] z-10 absolute top-4 ${isRTL ? "right-4 text-right" : "left-4 text-left"}`}>
                     {t("courseDetails.courseTitle")}
                   </h3>
 
                   {/* Live Online badge position: RIGHT for RTL, LEFT for LTR */}
-                  <div className={`flex items-center gap-2 bg-[#0B0F17] text-white text-xs px-3 py-1 rounded-full w-fit z-10 absolute bottom-4 ${isRTL ? "right-4 flex-row-reverse" : "left-4"}`}>
+                  <div className={`flex items-center gap-2 bg-[var(--color-text-primary)] text-white text-xs px-3 py-1 rounded-full w-fit z-10 absolute bottom-4 ${isRTL ? "right-4 flex-row-reverse" : "left-4"}`}>
                     <Video className="w-4 h-4" />
                     <span>{t("courseDetails.liveOnline")}</span>
                   </div>
@@ -224,11 +224,11 @@ export default function CheckoutPage() {
 
                 {/* Date and Hours Badges */}
                 <div className={`flex w-full ${isRTL ? "flex-col gap-4 items-end" : "flex-row gap-4 items-start"}`}>
-                  <div className={`flex items-center gap-1 bg-[#f4f4f5] px-2 py-1 rounded-lg text-sm text-[#4a4c4f] ${isRTL ? "flex-row-reverse ml-auto" : ""}`}>
+                  <div className={`flex items-center gap-1 bg-[#f4f4f5] px-2 py-1 rounded-lg text-sm text-[var(--color-text-secondary)] ${isRTL ? "flex-row-reverse ml-auto" : ""}`}>
                     <Calendar className="w-4 h-4" />
                     <span>{t("courseDetails.date")}</span>
                   </div>
-                  <div className={`flex items-center gap-1 bg-[#f4f4f5] px-2 py-1 rounded-lg text-sm text-[#4a4c4f] ${isRTL ? "flex-row-reverse ml-auto" : ""}`}>
+                  <div className={`flex items-center gap-1 bg-[#f4f4f5] px-2 py-1 rounded-lg text-sm text-[var(--color-text-secondary)] ${isRTL ? "flex-row-reverse ml-auto" : ""}`}>
                     <Clock className="w-4 h-4" />
                     <span>{t("courseDetails.cmeHours")}</span>
                   </div>
@@ -246,11 +246,11 @@ export default function CheckoutPage() {
                           width={16}
                           height={18}
                         />
-                        <span className="text-lg font-semibold text-[#06080b]">
+                        <span className="text-lg font-semibold text-[var(--color-text-primary)]">
                           {t("courseDetails.price")}
                         </span>
                       </div>
-                      <button className="p-2 bg-[#f9fbfd] rounded-xl text-[#4a4c4f] hover:text-[#DC2626] transition-colors">
+                      <button className="p-2 bg-[#f9fbfd] rounded-xl text-[var(--color-text-secondary)] hover:text-[#DC2626] transition-colors">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </>
@@ -263,11 +263,11 @@ export default function CheckoutPage() {
                           width={16}
                           height={18}
                         />
-                        <span className="text-lg font-semibold text-[#06080b]">
+                        <span className="text-lg font-semibold text-[var(--color-text-primary)]">
                           {t("courseDetails.price")}
                         </span>
                       </div>
-                      <button className="p-2 bg-[#f9fbfd] rounded-xl text-[#4a4c4f] hover:text-[#DC2626] transition-colors">
+                      <button className="p-2 bg-[#f9fbfd] rounded-xl text-[var(--color-text-secondary)] hover:text-[#DC2626] transition-colors">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </>

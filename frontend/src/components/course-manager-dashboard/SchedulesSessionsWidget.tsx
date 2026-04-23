@@ -60,7 +60,7 @@ const SchedulesSessionsWidget = ({
           <div className="w-8 h-8 bg-[#FEF3C7] rounded-lg flex items-center justify-center">
             <Calendar className="w-4 h-4 text-[#D4A520]" />
           </div>
-          <h3 className="text-base font-semibold text-[#1F2937]">
+          <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t("schedules.title")}
           </h3>
         </div>
@@ -75,19 +75,19 @@ const SchedulesSessionsWidget = ({
         <div className="mb-6">
           {/* Calendar Header */}
           <div className="flex items-center justify-between mb-4">
-            <span className="text-[15px] font-semibold text-[#1F2937]">{currentMonth}</span>
+            <span className="text-[15px] font-semibold text-[var(--color-text-primary)]">{currentMonth}</span>
             <div className="flex gap-1">
               <button
                 onClick={onPrevMonth}
                 className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[#F3F4F6] transition-colors"
               >
-                <ChevronLeft className={`w-4 h-4 text-[#4B5563] ${isRTL ? "rotate-180" : ""}`} />
+                <ChevronLeft className={`w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "rotate-180" : ""}`} />
               </button>
               <button
                 onClick={onNextMonth}
                 className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[#F3F4F6] transition-colors"
               >
-                <ChevronRight className={`w-4 h-4 text-[#4B5563] ${isRTL ? "rotate-180" : ""}`} />
+                <ChevronRight className={`w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "rotate-180" : ""}`} />
               </button>
             </div>
           </div>
@@ -96,7 +96,7 @@ const SchedulesSessionsWidget = ({
           <div className="grid grid-cols-7 gap-0.5 text-center">
             {/* Week Day Names */}
             {weekDays.map((day) => (
-              <div key={day} className="py-2 text-[11px] font-medium text-[#6B7280]">
+              <div key={day} className="py-2 text-[11px] font-medium text-[var(--color-text-secondary)]">
                 {day}
               </div>
             ))}
@@ -107,7 +107,7 @@ const SchedulesSessionsWidget = ({
                 className={`relative py-2 text-[13px] rounded-md cursor-pointer transition-colors ${
                   day.isToday
                     ? "bg-[#3B82F6] text-white font-semibold"
-                    : "text-[#374151] hover:bg-[#F3F4F6]"
+                    : "text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
                 }`}
               >
                 {day.day > 0 ? day.day : ""}
@@ -142,10 +142,10 @@ const SchedulesSessionsWidget = ({
               style={{ borderInlineStartWidth: "3px" }}
             >
               <div className="min-w-[55px]">
-                <p className="text-xs font-semibold text-[#374151]">{session.time}</p>
+                <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{session.time}</p>
               </div>
               <div className="flex-1">
-                <p className="text-[13px] font-medium text-[#1F2937]">{session.title}</p>
+                <p className="text-[13px] font-medium text-[var(--color-text-primary)]">{session.title}</p>
                 <div className="flex items-center gap-2 mt-1">
                   {session.hasConflict ? (
                     <span className="flex items-center gap-1 text-[11px] font-medium text-[#EF4444]">
@@ -168,7 +168,7 @@ const SchedulesSessionsWidget = ({
                         )}
                         {session.type === "zoom" ? t("schedules.zoom") : t("schedules.onsite")}
                       </span>
-                      <span className="text-[11px] text-[#6B7280]">
+                      <span className="text-[11px] text-[var(--color-text-secondary)]">
                         {session.location || `${session.enrolled}/${session.capacity}`}
                       </span>
                     </>

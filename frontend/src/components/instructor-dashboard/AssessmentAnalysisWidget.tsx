@@ -41,7 +41,7 @@ const AssessmentAnalysisWidget = ({
       case "hard":
         return "bg-[#FEE2E2] text-[#EF4444]";
       default:
-        return "bg-[#F3F4F6] text-[#6B7280]";
+        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -70,7 +70,7 @@ const AssessmentAnalysisWidget = ({
       <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[var(--color-border)]">
         <div className="flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-[#3B82F6]" />
-          <h2 className="text-base sm:text-lg font-semibold text-[#1F2937]">
+          <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)]">
             {t("assessmentAnalysis.title")}
           </h2>
         </div>
@@ -91,7 +91,7 @@ const AssessmentAnalysisWidget = ({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Pre/Post Score Comparison Bar Chart */}
           <div>
-            <h4 className="text-sm text-[#4B5563] mb-4">
+            <h4 className="text-sm text-[var(--color-text-secondary)] mb-4">
               {t("assessmentAnalysis.scoreComparison")}
             </h4>
             <div className="space-y-4">
@@ -104,7 +104,7 @@ const AssessmentAnalysisWidget = ({
                 return (
                   <div key={assessment.id} className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-[#374151] font-medium truncate max-w-[60%]">
+                      <span className="text-[var(--color-text-secondary)] font-medium truncate max-w-[60%]">
                         {assessment.name}
                       </span>
                       {improvement > 0 && (
@@ -151,11 +151,11 @@ const AssessmentAnalysisWidget = ({
 
           {/* Most Challenging Questions (top 5 lowest correct rate) */}
           <div>
-            <h4 className="text-sm text-[#4B5563] mb-4">
+            <h4 className="text-sm text-[var(--color-text-secondary)] mb-4">
               {t("assessmentAnalysis.mostChallenging")}
             </h4>
             {questions.length === 0 ? (
-              <p className="text-sm text-[#9CA3AF] text-center py-8">
+              <p className="text-sm text-[var(--color-text-secondary)] text-center py-8">
                 {t("assessmentAnalysis.noQuestions")}
               </p>
             ) : (
@@ -166,17 +166,17 @@ const AssessmentAnalysisWidget = ({
                   className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-lg border border-[var(--color-border)]"
                 >
                   {/* Question number */}
-                  <div className="w-8 h-8 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xs font-semibold text-[#4B5563] flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xs font-semibold text-[var(--color-text-secondary)] flex-shrink-0">
                     Q{qIndex + 1}
                   </div>
 
                   {/* Question text and stats */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-[#374151] truncate">
+                    <p className="text-sm text-[var(--color-text-secondary)] truncate">
                       {question.question}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-[#6B7280]">
+                      <span className="text-xs text-[var(--color-text-secondary)]">
                         {t("assessmentAnalysis.correctRate")}: {question.correctRate}%
                       </span>
                     </div>

@@ -150,16 +150,16 @@ const CreateAssessmentModal = ({
     <ModalOverlay onClose={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-lg p-6">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-semibold text-[#1F2937]">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("assessments.createNew")}
           </h3>
           <button onClick={onClose} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
-            <X className="w-5 h-5 text-[#6B7280]" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("assessments.course")}
             </label>
             <select
@@ -177,7 +177,7 @@ const CreateAssessmentModal = ({
           </div>
           {courseModules.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.selectModule") || "Module"}
               </label>
               <select
@@ -193,7 +193,7 @@ const CreateAssessmentModal = ({
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("assessments.assessmentTitle")}
             </label>
             <input
@@ -207,7 +207,7 @@ const CreateAssessmentModal = ({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.type")}
               </label>
               <select
@@ -222,7 +222,7 @@ const CreateAssessmentModal = ({
             </div>
             {!isAssignment ? (
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                   {t("assessments.duration")}
                 </label>
                 <input
@@ -237,7 +237,7 @@ const CreateAssessmentModal = ({
               </div>
             ) : (
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                   {t("assessments.deadline") || "Deadline"} <span className="text-red-500">*</span>
                 </label>
                 <DateTimePicker
@@ -264,7 +264,7 @@ const CreateAssessmentModal = ({
           )}
           {isAssignment && (
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.assignmentInstructions") || "Instructions"}
               </label>
               <textarea
@@ -277,7 +277,7 @@ const CreateAssessmentModal = ({
           )}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.totalMarks")}
               </label>
               <input
@@ -290,7 +290,7 @@ const CreateAssessmentModal = ({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.passingMarks")}
               </label>
               <input
@@ -307,7 +307,7 @@ const CreateAssessmentModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
             >
               {t("assessments.cancel")}
             </button>
@@ -404,16 +404,16 @@ const EditAssessmentModal = ({
     <ModalOverlay onClose={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-lg p-6">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-semibold text-[#1F2937]">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("assessments.editAssessment")}
           </h3>
           <button onClick={onClose} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
-            <X className="w-5 h-5 text-[#6B7280]" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("assessments.assessmentTitle")}
             </label>
             <input
@@ -426,7 +426,7 @@ const EditAssessmentModal = ({
           </div>
           {editCourseModules.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.selectModule") || "Module"}
               </label>
               <select
@@ -443,7 +443,7 @@ const EditAssessmentModal = ({
           )}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.type")}
               </label>
               <select
@@ -457,7 +457,7 @@ const EditAssessmentModal = ({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.status")}
               </label>
               <select
@@ -473,7 +473,7 @@ const EditAssessmentModal = ({
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.totalMarks")}
               </label>
               <input
@@ -486,7 +486,7 @@ const EditAssessmentModal = ({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.passingMarks")}
               </label>
               <input
@@ -500,7 +500,7 @@ const EditAssessmentModal = ({
             </div>
             {!editIsAssignment ? (
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                   {t("assessments.duration")}
                 </label>
                 <input
@@ -514,7 +514,7 @@ const EditAssessmentModal = ({
               </div>
             ) : (
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                   {t("assessments.deadline") || "Deadline"}
                 </label>
                 <DateTimePicker
@@ -541,7 +541,7 @@ const EditAssessmentModal = ({
           )}
           {editIsAssignment && (
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.assignmentInstructions") || "Instructions"}
               </label>
               <textarea
@@ -556,7 +556,7 @@ const EditAssessmentModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
             >
               {t("assessments.cancel")}
             </button>
@@ -692,18 +692,18 @@ const AddQuestionModal = ({
     <ModalOverlay onClose={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-semibold text-[#1F2937]">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("assessments.addQuestion")}
           </h3>
           <button onClick={onClose} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
-            <X className="w-5 h-5 text-[#6B7280]" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Type + Difficulty + Marks */}
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#374151] mb-1">
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.questionType")}
               </label>
               <select
@@ -718,7 +718,7 @@ const AddQuestionModal = ({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#374151] mb-1">
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.difficulty")}
               </label>
               <select
@@ -732,7 +732,7 @@ const AddQuestionModal = ({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#374151] mb-1">
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.marks")}
               </label>
               <input
@@ -747,7 +747,7 @@ const AddQuestionModal = ({
 
           {/* Question Text EN */}
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("assessments.questionTextEn")}
             </label>
             <textarea
@@ -761,7 +761,7 @@ const AddQuestionModal = ({
 
           {/* Question Text AR */}
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("assessments.questionTextAr")}
             </label>
             <textarea
@@ -776,7 +776,7 @@ const AddQuestionModal = ({
           {/* MCQ Options */}
           {qType === "mcq" && (
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-[#374151]">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">
                 {t("assessments.options")}
               </label>
               {options.map((opt, idx) => (
@@ -832,7 +832,7 @@ const AddQuestionModal = ({
           {/* True/False */}
           {qType === "true_false" && (
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
                 {t("assessments.correctAnswer")}
               </label>
               <div className="flex gap-4">
@@ -864,7 +864,7 @@ const AddQuestionModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
             >
               {t("assessments.cancel")}
             </button>
@@ -996,17 +996,17 @@ const EditQuestionModal = ({
     <ModalOverlay onClose={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-semibold text-[#1F2937]">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("assessments.editQuestion")}
           </h3>
           <button onClick={onClose} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
-            <X className="w-5 h-5 text-[#6B7280]" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#374151] mb-1">
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.questionType")}
               </label>
               <select
@@ -1021,7 +1021,7 @@ const EditQuestionModal = ({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#374151] mb-1">
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.difficulty")}
               </label>
               <select
@@ -1035,7 +1035,7 @@ const EditQuestionModal = ({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#374151] mb-1">
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.marks")}
               </label>
               <input
@@ -1048,7 +1048,7 @@ const EditQuestionModal = ({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("assessments.questionTextEn")}
             </label>
             <textarea
@@ -1060,7 +1060,7 @@ const EditQuestionModal = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
               {t("assessments.questionTextAr")}
             </label>
             <textarea
@@ -1073,7 +1073,7 @@ const EditQuestionModal = ({
           </div>
           {qType === "mcq" && (
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-[#374151]">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)]">
                 {t("assessments.options")}
               </label>
               {options.map((opt, idx) => (
@@ -1127,7 +1127,7 @@ const EditQuestionModal = ({
           )}
           {qType === "true_false" && (
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-2">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
                 {t("assessments.correctAnswer")}
               </label>
               <div className="flex gap-4">
@@ -1158,7 +1158,7 @@ const EditQuestionModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
             >
               {t("assessments.cancel")}
             </button>
@@ -1261,15 +1261,15 @@ const GradeModal = ({
       <div className="bg-white rounded-2xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h3 className="text-lg font-semibold text-[#1F2937]">
+            <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
               {t("assessments.gradeSubmission")}
             </h3>
-            <p className="text-sm text-[#6B7280]">
+            <p className="text-sm text-[var(--color-text-secondary)]">
               {submission.studentFirstName} {submission.studentLastName}
             </p>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
-            <X className="w-5 h-5 text-[#6B7280]" />
+            <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
 
@@ -1284,7 +1284,7 @@ const GradeModal = ({
           <div className="space-y-4">
             {submission.submissionFiles && submission.submissionFiles.length > 0 && (
               <div>
-                <p className="text-sm font-medium text-[#374151] mb-2">
+                <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-2">
                   {t("assessments.studentFiles") || "Student Files"}
                 </p>
                 <div className="space-y-2">
@@ -1298,7 +1298,7 @@ const GradeModal = ({
                     >
                       <FileText className="w-4 h-4" />
                       {f.fileName}
-                      <span className="text-xs text-[#9CA3AF] ml-auto">
+                      <span className="text-xs text-[var(--color-text-secondary)] ml-auto">
                         {(f.fileSize / 1024).toFixed(0)} KB
                       </span>
                     </a>
@@ -1307,7 +1307,7 @@ const GradeModal = ({
               </div>
             )}
             <div>
-              <label className="block text-sm font-semibold text-[#374151] mb-1">
+              <label className="block text-sm font-semibold text-[var(--color-text-secondary)] mb-1">
                 Score
               </label>
               <div className="flex items-center gap-2">
@@ -1319,11 +1319,11 @@ const GradeModal = ({
                   min={0}
                   max={totalMarks || 100}
                 />
-                <span className="text-base font-medium text-[#6B7280]">/ {totalMarks || 100}</span>
+                <span className="text-base font-medium text-[var(--color-text-secondary)]">/ {totalMarks || 100}</span>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.instructorComment") || "Comment"}
               </label>
               <textarea
@@ -1353,7 +1353,7 @@ const GradeModal = ({
                         <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#3B82F6] text-white text-xs font-bold mr-2">
                           Q{idx + 1}
                         </span>
-                        <span className="text-sm font-semibold text-[#1F2937]">
+                        <span className="text-sm font-semibold text-[var(--color-text-primary)]">
                           {question?.questionText || t("assessments.unknownQuestion")}
                         </span>
                       </div>
@@ -1372,17 +1372,17 @@ const GradeModal = ({
 
                     {needsManualGrade ? (
                       <>
-                        <p className="text-xs font-semibold text-[#374151] mb-1.5 uppercase tracking-wide">
+                        <p className="text-xs font-semibold text-[var(--color-text-secondary)] mb-1.5 uppercase tracking-wide">
                           {t("assessments.studentsAnswer")}
                         </p>
                         <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-4 mb-3">
-                          <p className="text-sm text-[#1F2937] whitespace-pre-wrap leading-relaxed">
+                          <p className="text-sm text-[var(--color-text-primary)] whitespace-pre-wrap leading-relaxed">
                             {answer.answer || "-"}
                           </p>
                         </div>
                         {question?.correctAnswer && (
                           <div className="mb-3">
-                            <p className="text-xs font-semibold text-[#374151] mb-1 uppercase tracking-wide">
+                            <p className="text-xs font-semibold text-[var(--color-text-secondary)] mb-1 uppercase tracking-wide">
                               {t("assessments.correctAnswerLabel") || "Correct Answer"} (Reference)
                             </p>
                             <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-3">
@@ -1393,7 +1393,7 @@ const GradeModal = ({
                           </div>
                         )}
                         <div className="flex items-center gap-3 mb-2 p-2 bg-[#F9FAFB] rounded-lg">
-                          <label className="text-sm font-semibold text-[#374151]">
+                          <label className="text-sm font-semibold text-[var(--color-text-secondary)]">
                             Score:
                           </label>
                           <input
@@ -1412,7 +1412,7 @@ const GradeModal = ({
                             min={0}
                             max={maxMarks}
                           />
-                          <span className="text-sm font-medium text-[#6B7280]">/ {maxMarks}</span>
+                          <span className="text-sm font-medium text-[var(--color-text-secondary)]">/ {maxMarks}</span>
                         </div>
                         <input
                           type="text"
@@ -1430,14 +1430,14 @@ const GradeModal = ({
                     ) : (
                       <>
                         <div className="mb-1.5">
-                          <p className="text-xs font-semibold text-[#374151] mb-1 uppercase tracking-wide">
+                          <p className="text-xs font-semibold text-[var(--color-text-secondary)] mb-1 uppercase tracking-wide">
                             {t("assessments.studentAnswer")}
                           </p>
-                          <p className="text-sm text-[#1F2937] pl-2">{answer.answer}</p>
+                          <p className="text-sm text-[var(--color-text-primary)] pl-2">{answer.answer}</p>
                         </div>
                         {question && (
                           <div className="mb-1.5">
-                            <p className="text-xs font-semibold text-[#374151] mb-1 uppercase tracking-wide">
+                            <p className="text-xs font-semibold text-[var(--color-text-secondary)] mb-1 uppercase tracking-wide">
                               {t("assessments.correctAnswerLabel")}
                             </p>
                             <p className="text-sm text-[#22C55E] font-medium pl-2">
@@ -1453,8 +1453,8 @@ const GradeModal = ({
                           </div>
                         )}
                         <div className="flex items-center gap-2 p-2 bg-[#F9FAFB] rounded-lg">
-                          <span className="text-sm font-semibold text-[#374151]">Score:</span>
-                          <span className="text-sm font-medium text-[#1F2937]">{answer.marksAwarded ?? 0} / {maxMarks}</span>
+                          <span className="text-sm font-semibold text-[var(--color-text-secondary)]">Score:</span>
+                          <span className="text-sm font-medium text-[var(--color-text-primary)]">{answer.marksAwarded ?? 0} / {maxMarks}</span>
                         </div>
                       </>
                     )}
@@ -1466,7 +1466,7 @@ const GradeModal = ({
             {/* Overall comment for quiz/exam */}
             <hr className="border-[var(--color-border)] my-4" />
             <div className="pt-2">
-              <label className="block text-sm font-medium text-[#374151] mb-1">
+              <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("assessments.overallComment") || "Overall Comment"}
               </label>
               <textarea
@@ -1483,7 +1483,7 @@ const GradeModal = ({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
+            className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
           >
             {t("assessments.cancel")}
           </button>
@@ -1737,9 +1737,9 @@ const AssessmentsContent = () => {
       case "draft":
         return "bg-[#FEF9C3] text-[#EAB308]";
       case "closed":
-        return "bg-[#F3F4F6] text-[#6B7280]";
+        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
       default:
-        return "bg-[#F3F4F6] text-[#6B7280]";
+        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -1780,7 +1780,7 @@ const AssessmentsContent = () => {
       case "essay":
         return <FileText className="w-4 h-4 text-[#8B5CF6]" />;
       default:
-        return <HelpCircle className="w-4 h-4 text-[#6B7280]" />;
+        return <HelpCircle className="w-4 h-4 text-[var(--color-text-secondary)]" />;
     }
   };
 
@@ -1808,7 +1808,7 @@ const AssessmentsContent = () => {
       case "hard":
         return "bg-[#FEE2E2] text-[#EF4444]";
       default:
-        return "bg-[#F3F4F6] text-[#6B7280]";
+        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -1821,7 +1821,7 @@ const AssessmentsContent = () => {
       case "in_progress":
         return "bg-[#DBEAFE] text-[#3B82F6]";
       default:
-        return "bg-[#F3F4F6] text-[#6B7280]";
+        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -1947,10 +1947,10 @@ const AssessmentsContent = () => {
               {/* Header */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <h1 className="text-xl md:text-2xl font-bold text-[#1F2937]">
+                  <h1 className="text-xl md:text-2xl font-bold text-[var(--color-text-primary)]">
                     {t("assessments.title")}
                   </h1>
-                  <p className="text-sm text-[#6B7280] mt-1">
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                     {t("assessments.subtitle")}
                   </p>
                 </div>
@@ -1967,7 +1967,7 @@ const AssessmentsContent = () => {
               {loading && (
                 <div className="flex items-center justify-center py-20">
                   <RefreshCw className="w-6 h-6 text-[#3B82F6] animate-spin" />
-                  <span className="ml-3 text-sm text-[#6B7280]">
+                  <span className="ml-3 text-sm text-[var(--color-text-secondary)]">
                     {t("assessments.loading")}
                   </span>
                 </div>
@@ -1995,8 +1995,8 @@ const AssessmentsContent = () => {
                           <ClipboardList className="w-5 h-5 text-[#3B82F6]" />
                         </div>
                         <div>
-                          <p className="text-2xl font-bold text-[#1F2937]">{stats.total}</p>
-                          <p className="text-xs text-[#6B7280]">{t("assessments.total")}</p>
+                          <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.total}</p>
+                          <p className="text-xs text-[var(--color-text-secondary)]">{t("assessments.total")}</p>
                         </div>
                       </div>
                     </div>
@@ -2006,8 +2006,8 @@ const AssessmentsContent = () => {
                           <CheckCircle className="w-5 h-5 text-[#22C55E]" />
                         </div>
                         <div>
-                          <p className="text-2xl font-bold text-[#1F2937]">{stats.published}</p>
-                          <p className="text-xs text-[#6B7280]">{t("assessments.published")}</p>
+                          <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.published}</p>
+                          <p className="text-xs text-[var(--color-text-secondary)]">{t("assessments.published")}</p>
                         </div>
                       </div>
                     </div>
@@ -2017,8 +2017,8 @@ const AssessmentsContent = () => {
                           <Clock className="w-5 h-5 text-[#EAB308]" />
                         </div>
                         <div>
-                          <p className="text-2xl font-bold text-[#1F2937]">{stats.draft}</p>
-                          <p className="text-xs text-[#6B7280]">{t("assessments.drafts")}</p>
+                          <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.draft}</p>
+                          <p className="text-xs text-[var(--color-text-secondary)]">{t("assessments.drafts")}</p>
                         </div>
                       </div>
                     </div>
@@ -2034,7 +2034,7 @@ const AssessmentsContent = () => {
                           className={`px-5 py-3 text-sm font-medium relative transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                             activeTab === tab.id
                               ? "text-[#3B82F6]"
-                              : "text-[#6B7280] hover:text-[#374151]"
+                              : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                           }`}
                         >
                           <tab.icon className="w-4 h-4" />
@@ -2054,7 +2054,7 @@ const AssessmentsContent = () => {
                           <div className="flex flex-col md:flex-row gap-4">
                             <div className="relative flex-1">
                               <Search
-                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
                                 type="text"
@@ -2066,7 +2066,7 @@ const AssessmentsContent = () => {
                             </div>
                             <button
                               onClick={() => setShowFilters(!showFilters)}
-                              className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] hover:bg-[#F9FAFB]"
+                              className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
                             >
                               <Filter className="w-4 h-4" />
                               {t("assessments.filters")}
@@ -2078,7 +2078,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={selectedCourse}
                                 onChange={(e) => setSelectedCourse(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                               >
                                 <option value="all">{t("assessments.allCourses")}</option>
                                 {courses.map((c) => (
@@ -2090,7 +2090,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={selectedType}
                                 onChange={(e) => setSelectedType(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                               >
                                 {types.map((t_) => (
                                   <option key={t_.id} value={t_.id}>{t_.name}</option>
@@ -2099,7 +2099,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={selectedStatus}
                                 onChange={(e) => setSelectedStatus(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                               >
                                 {statusOptions.map((s) => (
                                   <option key={s.id} value={s.id}>{s.name}</option>
@@ -2112,7 +2112,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={selectedCourse}
                                 onChange={(e) => setSelectedCourse(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                               >
                                 <option value="all">{t("assessments.allCourses")}</option>
                                 {courses.map((c) => (
@@ -2124,7 +2124,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={selectedType}
                                 onChange={(e) => setSelectedType(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                               >
                                 {types.map((t_) => (
                                   <option key={t_.id} value={t_.id}>{t_.name}</option>
@@ -2133,7 +2133,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={selectedStatus}
                                 onChange={(e) => setSelectedStatus(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                               >
                                 {statusOptions.map((s) => (
                                   <option key={s.id} value={s.id}>{s.name}</option>
@@ -2147,10 +2147,10 @@ const AssessmentsContent = () => {
                           {filteredAssessments.length === 0 ? (
                             <div className="text-center py-12">
                               <ClipboardList className="w-12 h-12 text-[var(--color-border)] mx-auto mb-4" />
-                              <h3 className="text-lg font-semibold text-[#1F2937] mb-2">
+                              <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
                                 {t("assessments.noAssessments")}
                               </h3>
-                              <p className="text-sm text-[#6B7280]">
+                              <p className="text-sm text-[var(--color-text-secondary)]">
                                 {t("assessments.noAssessmentsDesc")}
                               </p>
                             </div>
@@ -2166,28 +2166,28 @@ const AssessmentsContent = () => {
                                       <FileText className="w-5 h-5 text-[#3B82F6]" />
                                     </div>
                                     <div>
-                                      <h4 className="text-sm font-semibold text-[#1F2937]">
+                                      <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
                                         {assessment.title}
                                       </h4>
-                                      <p className="text-xs text-[#6B7280] mt-0.5">
+                                      <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
                                         {courseNameMap.get(assessment.courseId) || assessment.courseId}
                                       </p>
                                       <div className="flex flex-wrap items-center gap-3 mt-2">
-                                        <span className="text-xs text-[#6B7280]">
+                                        <span className="text-xs text-[var(--color-text-secondary)]">
                                           {getTypeLabel(assessment.type)}
                                         </span>
-                                        <span className="text-xs text-[#6B7280]">
+                                        <span className="text-xs text-[var(--color-text-secondary)]">
                                           {t("assessments.totalMarks")}: {assessment.totalMarks}
                                         </span>
-                                        <span className="text-xs text-[#6B7280]">
+                                        <span className="text-xs text-[var(--color-text-secondary)]">
                                           {t("assessments.passingMarks")}: {assessment.passingMarks}
                                         </span>
                                         {assessment.durationMinutes && (
-                                          <span className="text-xs text-[#6B7280]">
+                                          <span className="text-xs text-[var(--color-text-secondary)]">
                                             {assessment.durationMinutes} {t("assessments.minutes")}
                                           </span>
                                         )}
-                                        <span className="text-xs text-[#6B7280] flex items-center gap-1">
+                                        <span className="text-xs text-[var(--color-text-secondary)] flex items-center gap-1">
                                           <Users className="w-3 h-3" />
                                           {t("assessments.submissionCount", { count: assessment.submissionCount || 0 })}
                                         </span>
@@ -2207,7 +2207,7 @@ const AssessmentsContent = () => {
                                   <div className="flex items-center gap-1">
                                     <button
                                       onClick={() => setEditingAssessment(assessment)}
-                                      className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
+                                      className="p-2 text-[var(--color-text-secondary)] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
                                       title={t("assessments.edit")}
                                     >
                                       <Edit3 className="w-4 h-4" />
@@ -2253,7 +2253,7 @@ const AssessmentsContent = () => {
                                             setPublishCheckLoading(false);
                                           }
                                         }}
-                                        className="p-2 text-[#6B7280] hover:text-[#22C55E] hover:bg-[#DCFCE7] rounded-lg transition-colors"
+                                        className="p-2 text-[var(--color-text-secondary)] hover:text-[#22C55E] hover:bg-[#DCFCE7] rounded-lg transition-colors"
                                         title={t("assessments.publish")}
                                       >
                                         <CheckCircle className="w-4 h-4" />
@@ -2262,7 +2262,7 @@ const AssessmentsContent = () => {
                                     {assessment.status === "draft" && (
                                       <button
                                         onClick={() => handleDeleteAssessment(assessment.id)}
-                                        className="p-2 text-[#6B7280] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors"
+                                        className="p-2 text-[var(--color-text-secondary)] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors"
                                         title={t("assessments.delete")}
                                       >
                                         <Trash2 className="w-4 h-4" />
@@ -2299,7 +2299,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={qbCourseFilter}
                                 onChange={(e) => { setQbCourseFilter(e.target.value); setSelectedAssessmentForQ(""); }}
-                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-w-[200px]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-w-[200px]"
                               >
                                 <option value="">{t("assessments.allCourses")}</option>
                                 {courses.map((c) => (
@@ -2307,7 +2307,7 @@ const AssessmentsContent = () => {
                                 ))}
                               </select>
                               <div className="relative flex-1 min-w-[200px]">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
                                 <input
                                   type="text"
                                   placeholder={t("assessments.searchByName") || "Search by name..."}
@@ -2319,7 +2319,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={qbStatusFilter}
                                 onChange={(e) => setQbStatusFilter(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                               >
                                 <option value="all">{t("assessments.allStatuses")}</option>
                                 <option value="draft">{t("assessments.statusDraft")}</option>
@@ -2328,7 +2328,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={qbTypeFilter}
                                 onChange={(e) => setQbTypeFilter(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                               >
                                 <option value="all">{t("assessments.allTypes")}</option>
                                 <option value="quiz">{t("assessments.typeQuiz")}</option>
@@ -2341,7 +2341,7 @@ const AssessmentsContent = () => {
                             {qbFiltered.length === 0 ? (
                               <div className="text-center py-10">
                                 <HelpCircle className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
-                                <p className="text-sm text-[#6B7280]">{t("assessments.noAssessmentsFound") || "No assessments found"}</p>
+                                <p className="text-sm text-[var(--color-text-secondary)]">{t("assessments.noAssessmentsFound") || "No assessments found"}</p>
                               </div>
                             ) : (
                               <div className="space-y-2 max-h-[400px] overflow-y-auto">
@@ -2368,7 +2368,7 @@ const AssessmentsContent = () => {
                                     >
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
-                                          <span className="text-sm font-medium text-[#1F2937] truncate">{a.title}</span>
+                                          <span className="text-sm font-medium text-[var(--color-text-primary)] truncate">{a.title}</span>
                                           <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${
                                             a.type === "quiz" ? "bg-[#DBEAFE] text-[#2563EB]" : a.type === "exam" ? "bg-[#FEF3C7] text-[#D97706]" : "bg-[#E0E7FF] text-[#4338CA]"
                                           }`}>
@@ -2381,12 +2381,12 @@ const AssessmentsContent = () => {
                                           </span>
                                         </div>
                                         <div className="flex items-center gap-2 mt-0.5">
-                                          <span className="text-xs text-[#9CA3AF]">{courseName}</span>
-                                          {modName && <span className="text-xs text-[#9CA3AF]">/ {modName}</span>}
-                                          <span className="text-xs text-[#9CA3AF]">{a.totalMarks} {t("assessments.marks")}</span>
+                                          <span className="text-xs text-[var(--color-text-secondary)]">{courseName}</span>
+                                          {modName && <span className="text-xs text-[var(--color-text-secondary)]">/ {modName}</span>}
+                                          <span className="text-xs text-[var(--color-text-secondary)]">{a.totalMarks} {t("assessments.marks")}</span>
                                         </div>
                                       </div>
-                                      <ChevronDown className="w-4 h-4 text-[#9CA3AF] -rotate-90 shrink-0" />
+                                      <ChevronDown className="w-4 h-4 text-[var(--color-text-secondary)] -rotate-90 shrink-0" />
                                     </button>
                                   );
                                 })}
@@ -2401,13 +2401,13 @@ const AssessmentsContent = () => {
                             <div className="flex items-center gap-3">
                               <button
                                 onClick={() => setSelectedAssessmentForQ("")}
-                                className="flex items-center gap-1 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] hover:bg-[#F3F4F6] transition-colors"
+                                className="flex items-center gap-1 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] transition-colors"
                               >
                                 <ChevronDown className="w-4 h-4 rotate-90" />
                                 {t("assessments.back") || "Back"}
                               </button>
                               <div>
-                                <span className="text-sm font-semibold text-[#1F2937]">
+                                <span className="text-sm font-semibold text-[var(--color-text-primary)]">
                                   {selectedQbAssessment?.title || (selectedAssessmentForQ.startsWith("course:") ? `${t("assessments.allQuestions")} — ${courses.find((c) => c.id === selectedAssessmentForQ.replace("course:", ""))?.title || ""}` : "")}
                                 </span>
                                 {selectedQbAssessment && (
@@ -2425,7 +2425,7 @@ const AssessmentsContent = () => {
                                   <select
                                     value={questionTypeFilter}
                                     onChange={(e) => setQuestionTypeFilter(e.target.value)}
-                                    className="px-2 py-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                    className="px-2 py-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                                   >
                                     <option value="all">{t("assessments.allTypes")}</option>
                                     <option value="mcq">{t("assessments.typeMCQ")}</option>
@@ -2436,7 +2436,7 @@ const AssessmentsContent = () => {
                                   <select
                                     value={questionDifficultyFilter}
                                     onChange={(e) => setQuestionDifficultyFilter(e.target.value)}
-                                    className="px-2 py-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                    className="px-2 py-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                                   >
                                     <option value="all">{t("assessments.allDifficulties")}</option>
                                     <option value="easy">{t("assessments.difficultyEasy")}</option>
@@ -2504,17 +2504,17 @@ const AssessmentsContent = () => {
                             return (
                               <div className="space-y-4">
                                 <div>
-                                  <p className="text-sm font-medium text-[#374151] mb-2">
+                                  <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-2">
                                     {t("assessments.assignmentFiles") || "Assignment Files"}
                                   </p>
                                   {selAssignment.instructions && (
                                     <div className="bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg p-3 mb-3">
-                                      <p className="text-xs font-medium text-[#6B7280] mb-1">{t("assessments.assignmentInstructions") || "Instructions"}</p>
-                                      <p className="text-sm text-[#374151] whitespace-pre-wrap">{selAssignment.instructions}</p>
+                                      <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-1">{t("assessments.assignmentInstructions") || "Instructions"}</p>
+                                      <p className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap">{selAssignment.instructions}</p>
                                     </div>
                                   )}
                                   {selAssignment.dueDate && (
-                                    <p className="text-xs text-[#6B7280] mb-3">
+                                    <p className="text-xs text-[var(--color-text-secondary)] mb-3">
                                       {t("assessments.deadline") || "Deadline"}: {new Date(selAssignment.dueDate).toLocaleString("en-SA", { timeZone: "Asia/Riyadh" })} (KSA)
                                     </p>
                                   )}
@@ -2523,8 +2523,8 @@ const AssessmentsContent = () => {
                                 {/* Upload zone */}
                                 <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[var(--color-border)] rounded-xl cursor-pointer hover:border-[#3B82F6] hover:bg-[#EFF6FF] transition-colors">
                                   <div className="flex flex-col items-center">
-                                    <Plus className="w-8 h-8 text-[#9CA3AF] mb-1" />
-                                    <p className="text-sm text-[#6B7280]">
+                                    <Plus className="w-8 h-8 text-[var(--color-text-secondary)] mb-1" />
+                                    <p className="text-sm text-[var(--color-text-secondary)]">
                                       {uploading ? `${t("assessments.uploadFiles") || "Uploading"}... ${uploadPct}%` : (t("assessments.dragDropFiles") || "Click to upload files")}
                                     </p>
                                   </div>
@@ -2540,7 +2540,7 @@ const AssessmentsContent = () => {
 
                                 {/* File list */}
                                 {files.length === 0 ? (
-                                  <p className="text-sm text-[#9CA3AF] text-center py-4">
+                                  <p className="text-sm text-[var(--color-text-secondary)] text-center py-4">
                                     {t("assessments.noFilesUploaded") || "No files uploaded yet"}
                                   </p>
                                 ) : (
@@ -2550,9 +2550,9 @@ const AssessmentsContent = () => {
                                         <div className="flex items-center gap-2 flex-1 min-w-0">
                                           <FileText className="w-4 h-4 text-[#3B82F6] shrink-0" />
                                           <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-[#3B82F6] hover:underline truncate">{f.fileName}</a>
-                                          <span className="text-xs text-[#9CA3AF] shrink-0">{(f.fileSize / 1024).toFixed(0)} KB</span>
+                                          <span className="text-xs text-[var(--color-text-secondary)] shrink-0">{(f.fileSize / 1024).toFixed(0)} KB</span>
                                         </div>
-                                        <button onClick={() => handleRemoveFile(f.id)} className="p-1 text-[#6B7280] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded">
+                                        <button onClick={() => handleRemoveFile(f.id)} className="p-1 text-[var(--color-text-secondary)] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded">
                                           <Trash2 className="w-4 h-4" />
                                         </button>
                                       </div>
@@ -2571,13 +2571,13 @@ const AssessmentsContent = () => {
                           return !selA || selA.type !== "assignment";
                         })()) && (
                           <>
-                            <p className="text-sm text-[#6B7280]">
+                            <p className="text-sm text-[var(--color-text-secondary)]">
                               {filteredQuestions.length} {t("assessments.questionsInBank")}
                             </p>
                             {filteredQuestions.length === 0 ? (
                               <div className="text-center py-8">
                                 <HelpCircle className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
-                                <p className="text-sm text-[#6B7280]">
+                                <p className="text-sm text-[var(--color-text-secondary)]">
                                   {t("assessments.noQuestions")}
                                 </p>
                               </div>
@@ -2594,7 +2594,7 @@ const AssessmentsContent = () => {
                                       {getQuestionTypeIcon(question.type)}
                                     </div>
                                     <div className="flex-1">
-                                      <p className="text-sm text-[#1F2937]">
+                                      <p className="text-sm text-[var(--color-text-primary)]">
                                         {question.questionText}
                                       </p>
                                       {/* MCQ options */}
@@ -2603,7 +2603,7 @@ const AssessmentsContent = () => {
                                           {opts.map((opt, oi) => (
                                             <span
                                               key={oi}
-                                              className={`text-xs ${opt.isCorrect ? "text-[#22C55E] font-medium" : "text-[#6B7280]"}`}
+                                              className={`text-xs ${opt.isCorrect ? "text-[#22C55E] font-medium" : "text-[var(--color-text-secondary)]"}`}
                                             >
                                               {opt.isCorrect ? "\u25CF" : "\u25CB"} {opt.text}{opt.isCorrect ? ` (${t("assessments.correct")})` : ""}
                                             </span>
@@ -2617,10 +2617,10 @@ const AssessmentsContent = () => {
                                         </p>
                                       )}
                                       <div className="flex flex-wrap items-center gap-2 mt-2">
-                                        <span className="text-xs text-[#9CA3AF]">
+                                        <span className="text-xs text-[var(--color-text-secondary)]">
                                           {getQuestionTypeLabel(question.type)}
                                         </span>
-                                        <span className="text-xs text-[#9CA3AF]">
+                                        <span className="text-xs text-[var(--color-text-secondary)]">
                                           {question.marks} {t("assessments.marks")}
                                         </span>
                                         {question.difficultyLevel && (
@@ -2637,14 +2637,14 @@ const AssessmentsContent = () => {
                                   <div className="flex items-center gap-2 shrink-0">
                                     <button
                                       onClick={() => setEditingQuestion(question)}
-                                      className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
+                                      className="p-2 text-[var(--color-text-secondary)] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
                                       title={t("assessments.editQuestion")}
                                     >
                                       <Pencil className="w-4 h-4" />
                                     </button>
                                     <button
                                       onClick={() => handleDeleteQuestion(question.id)}
-                                      className="p-2 text-[#6B7280] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors"
+                                      className="p-2 text-[var(--color-text-secondary)] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors"
                                     >
                                       <Trash2 className="w-4 h-4" />
                                     </button>
@@ -2678,7 +2678,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={subCourseFilter}
                                 onChange={(e) => { setSubCourseFilter(e.target.value); }}
-                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-w-[200px]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-w-[200px]"
                               >
                                 <option value="">{t("assessments.allCourses")}</option>
                                 {courses.map((c) => (
@@ -2686,7 +2686,7 @@ const AssessmentsContent = () => {
                                 ))}
                               </select>
                               <div className="relative flex-1 min-w-[200px]">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
                                 <input
                                   type="text"
                                   placeholder={t("assessments.searchByName") || "Search by name..."}
@@ -2699,7 +2699,7 @@ const AssessmentsContent = () => {
                             {subFiltered.length === 0 ? (
                               <div className="text-center py-10">
                                 <Users className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
-                                <p className="text-sm text-[#6B7280]">{t("assessments.noPublishedAssessments") || "No published assessments found"}</p>
+                                <p className="text-sm text-[var(--color-text-secondary)]">{t("assessments.noPublishedAssessments") || "No published assessments found"}</p>
                               </div>
                             ) : (
                               <div className="space-y-2 max-h-[400px] overflow-y-auto">
@@ -2715,18 +2715,18 @@ const AssessmentsContent = () => {
                                     >
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
-                                          <span className="text-sm font-medium text-[#1F2937] truncate">{a.title}</span>
+                                          <span className="text-sm font-medium text-[var(--color-text-primary)] truncate">{a.title}</span>
                                           <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${
                                             a.type === "quiz" ? "bg-[#DBEAFE] text-[#2563EB]" : a.type === "exam" ? "bg-[#FEF3C7] text-[#D97706]" : "bg-[#E0E7FF] text-[#4338CA]"
                                           }`}>{a.type}</span>
                                         </div>
                                         <div className="flex items-center gap-2 mt-0.5">
-                                          <span className="text-xs text-[#9CA3AF]">{courseName}</span>
-                                          {modName && <span className="text-xs text-[#9CA3AF]">/ {modName}</span>}
-                                          <span className="text-xs text-[#9CA3AF]">{a.submissionCount || 0} {t("assessments.submissions")}</span>
+                                          <span className="text-xs text-[var(--color-text-secondary)]">{courseName}</span>
+                                          {modName && <span className="text-xs text-[var(--color-text-secondary)]">/ {modName}</span>}
+                                          <span className="text-xs text-[var(--color-text-secondary)]">{a.submissionCount || 0} {t("assessments.submissions")}</span>
                                         </div>
                                       </div>
-                                      <ChevronDown className="w-4 h-4 text-[#9CA3AF] -rotate-90 shrink-0" />
+                                      <ChevronDown className="w-4 h-4 text-[var(--color-text-secondary)] -rotate-90 shrink-0" />
                                     </button>
                                   );
                                 })}
@@ -2741,13 +2741,13 @@ const AssessmentsContent = () => {
                             <div className="flex items-center gap-3">
                               <button
                                 onClick={() => setSelectedAssessmentForS("")}
-                                className="flex items-center gap-1 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] hover:bg-[#F3F4F6] transition-colors"
+                                className="flex items-center gap-1 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] transition-colors"
                               >
                                 <ChevronDown className="w-4 h-4 rotate-90" />
                                 {t("assessments.back") || "Back"}
                               </button>
                               <div>
-                                <span className="text-sm font-semibold text-[#1F2937]">{selectedSubAssessment?.title}</span>
+                                <span className="text-sm font-semibold text-[var(--color-text-primary)]">{selectedSubAssessment?.title}</span>
                                 {selectedSubAssessment && (
                                   <span className={`ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${
                                     selectedSubAssessment.type === "quiz" ? "bg-[#DBEAFE] text-[#2563EB]" : selectedSubAssessment.type === "exam" ? "bg-[#FEF3C7] text-[#D97706]" : "bg-[#E0E7FF] text-[#4338CA]"
@@ -2758,7 +2758,7 @@ const AssessmentsContent = () => {
                             <select
                               value={submissionStatusFilter}
                               onChange={(e) => setSubmissionStatusFilter(e.target.value)}
-                              className="px-2 py-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                              className="px-2 py-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                             >
                               <option value="all">{t("assessments.filterByStatus")}</option>
                               <option value="submitted">{t("assessments.submissionPending")}</option>
@@ -2782,7 +2782,7 @@ const AssessmentsContent = () => {
                             ).length === 0 ? (
                               <div className="text-center py-8">
                                 <Users className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
-                                <p className="text-sm text-[#6B7280]">
+                                <p className="text-sm text-[var(--color-text-secondary)]">
                                   {t("assessments.noSubmissions")}
                                 </p>
                               </div>
@@ -2791,22 +2791,22 @@ const AssessmentsContent = () => {
                                 <table className="w-full">
                                   <thead>
                                     <tr className="text-start">
-                                      <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
+                                      <th className="pb-3 text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         {t("assessments.student")}
                                       </th>
-                                      <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
+                                      <th className="pb-3 text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         {t("assessments.score")}
                                       </th>
-                                      <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
+                                      <th className="pb-3 text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         {t("assessments.percentage")}
                                       </th>
-                                      <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
+                                      <th className="pb-3 text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         {t("assessments.submitted")}
                                       </th>
-                                      <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
+                                      <th className="pb-3 text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         {t("assessments.status")}
                                       </th>
-                                      <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
+                                      <th className="pb-3 text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         {t("assessments.actions")}
                                       </th>
                                     </tr>
@@ -2843,13 +2843,13 @@ const AssessmentsContent = () => {
                                                 </div>
                                               ) : (
                                                 <div className="flex items-center gap-3">
-                                                  <div className="w-8 h-8 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xs font-semibold text-[#4B5563]">
+                                                  <div className="w-8 h-8 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xs font-semibold text-[var(--color-text-secondary)]">
                                                     {(sub.studentFirstName?.[0] || "").toUpperCase()}
                                                     {(sub.studentLastName?.[0] || "").toUpperCase()}
                                                   </div>
                                                   <div>
-                                                    <span className="text-sm text-[#1F2937]">{sub.studentFirstName} {sub.studentLastName}</span>
-                                                    <p className="text-xs text-[#9CA3AF]">{sub.studentEmail}</p>
+                                                    <span className="text-sm text-[var(--color-text-primary)]">{sub.studentFirstName} {sub.studentLastName}</span>
+                                                    <p className="text-xs text-[var(--color-text-secondary)]">{sub.studentEmail}</p>
                                                   </div>
                                                 </div>
                                               )}
@@ -2859,8 +2859,8 @@ const AssessmentsContent = () => {
                                                 {sub.score ?? 0}/{sub.totalMarks ?? 0}
                                               </span>
                                             </td>
-                                            <td className="py-3"><span className="text-sm text-[#374151]">{pct.toFixed(1)}%</span></td>
-                                            <td className="py-3"><span className="text-sm text-[#6B7280]">{formatDate(sub.submittedAt)}</span></td>
+                                            <td className="py-3"><span className="text-sm text-[var(--color-text-secondary)]">{pct.toFixed(1)}%</span></td>
+                                            <td className="py-3"><span className="text-sm text-[var(--color-text-secondary)]">{formatDate(sub.submittedAt)}</span></td>
                                             <td className="py-3">
                                               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getSubmissionStatusStyle(sub.status)}`}>
                                                 {sub.status === "graded" && <CheckCircle className="w-3 h-3" />}
@@ -2905,16 +2905,16 @@ const AssessmentsContent = () => {
                                                       }}
                                                       className="p-0.5 hover:bg-[#F3F4F6] rounded flex-shrink-0"
                                                     >
-                                                      {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-[#6B7280]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#6B7280]" />}
+                                                      {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" /> : <ChevronDown className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />}
                                                     </button>
                                                   )}
-                                                  <div className="w-8 h-8 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xs font-semibold text-[#4B5563]">
+                                                  <div className="w-8 h-8 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xs font-semibold text-[var(--color-text-secondary)]">
                                                     {(effectiveRow.studentFirstName?.[0] || "").toUpperCase()}
                                                     {(effectiveRow.studentLastName?.[0] || "").toUpperCase()}
                                                   </div>
                                                   <div>
-                                                    <span className="text-sm text-[#1F2937]">{effectiveRow.studentFirstName} {effectiveRow.studentLastName}</span>
-                                                    <p className="text-xs text-[#9CA3AF]">{effectiveRow.studentEmail}</p>
+                                                    <span className="text-sm text-[var(--color-text-primary)]">{effectiveRow.studentFirstName} {effectiveRow.studentLastName}</span>
+                                                    <p className="text-xs text-[var(--color-text-secondary)]">{effectiveRow.studentEmail}</p>
                                                     {hasRetakes && (
                                                       <div className="flex items-center gap-1.5 mt-0.5">
                                                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#F3E8FF] text-[#7C3AED]">
@@ -2936,8 +2936,8 @@ const AssessmentsContent = () => {
                                                   {effectiveRow.score ?? 0}/{effectiveRow.totalMarks ?? 0}
                                                 </span>
                                               </td>
-                                              <td className="py-3"><span className="text-sm text-[#374151]">{pct.toFixed(1)}%</span></td>
-                                              <td className="py-3"><span className="text-sm text-[#6B7280]">{formatDate(effectiveRow.submittedAt)}</span></td>
+                                              <td className="py-3"><span className="text-sm text-[var(--color-text-secondary)]">{pct.toFixed(1)}%</span></td>
+                                              <td className="py-3"><span className="text-sm text-[var(--color-text-secondary)]">{formatDate(effectiveRow.submittedAt)}</span></td>
                                               <td className="py-3">
                                                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getSubmissionStatusStyle(effectiveRow.status)}`}>
                                                   {effectiveRow.status === "graded" && <CheckCircle className="w-3 h-3" />}
@@ -2989,7 +2989,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={iaCourseFilter}
                                 onChange={(e) => { setIaCourseFilter(e.target.value); }}
-                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-w-[200px]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-w-[200px]"
                               >
                                 <option value="">{t("assessments.allCourses") || "All Courses"}</option>
                                 {courses.map((c) => (
@@ -2997,7 +2997,7 @@ const AssessmentsContent = () => {
                                 ))}
                               </select>
                               <div className="relative flex-1 min-w-[200px]">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
                                 <input
                                   type="text"
                                   placeholder={t("assessments.searchByName") || "Search by name..."}
@@ -3010,8 +3010,8 @@ const AssessmentsContent = () => {
                             {iaFiltered.length === 0 ? (
                               <div className="text-center py-10">
                                 <BarChart3 className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
-                                <p className="text-sm text-[#6B7280]">{t("assessments.noPublishedAssessments") || "No published assessments found"}</p>
-                                <p className="text-xs text-[#9CA3AF] mt-1">{t("assessments.itemAnalysisQuizExamOnly") || "Item analysis is available for quizzes and exams only"}</p>
+                                <p className="text-sm text-[var(--color-text-secondary)]">{t("assessments.noPublishedAssessments") || "No published assessments found"}</p>
+                                <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("assessments.itemAnalysisQuizExamOnly") || "Item analysis is available for quizzes and exams only"}</p>
                               </div>
                             ) : (
                               <div className="space-y-2 max-h-[400px] overflow-y-auto">
@@ -3027,18 +3027,18 @@ const AssessmentsContent = () => {
                                     >
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
-                                          <span className="text-sm font-medium text-[#1F2937] truncate">{a.title}</span>
+                                          <span className="text-sm font-medium text-[var(--color-text-primary)] truncate">{a.title}</span>
                                           <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${
                                             a.type === "quiz" ? "bg-[#DBEAFE] text-[#2563EB]" : "bg-[#FEF3C7] text-[#D97706]"
                                           }`}>{a.type}</span>
                                         </div>
                                         <div className="flex items-center gap-2 mt-0.5">
-                                          <span className="text-xs text-[#9CA3AF]">{courseName}</span>
-                                          {modName && <span className="text-xs text-[#9CA3AF]">/ {modName}</span>}
-                                          <span className="text-xs text-[#9CA3AF]">{a.totalMarks || 0} {t("assessments.marks")}</span>
+                                          <span className="text-xs text-[var(--color-text-secondary)]">{courseName}</span>
+                                          {modName && <span className="text-xs text-[var(--color-text-secondary)]">/ {modName}</span>}
+                                          <span className="text-xs text-[var(--color-text-secondary)]">{a.totalMarks || 0} {t("assessments.marks")}</span>
                                         </div>
                                       </div>
-                                      <ChevronDown className="w-4 h-4 text-[#9CA3AF] -rotate-90 shrink-0" />
+                                      <ChevronDown className="w-4 h-4 text-[var(--color-text-secondary)] -rotate-90 shrink-0" />
                                     </button>
                                   );
                                 })}
@@ -3052,13 +3052,13 @@ const AssessmentsContent = () => {
                           <div className="flex items-center gap-3">
                             <button
                               onClick={() => setSelectedAssessmentForIA("")}
-                              className="flex items-center gap-1 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] hover:bg-[#F3F4F6] transition-colors"
+                              className="flex items-center gap-1 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] transition-colors"
                             >
                               <ChevronDown className="w-4 h-4 rotate-90" />
                               {t("assessments.back") || "Back"}
                             </button>
                             <div>
-                              <span className="text-sm font-semibold text-[#1F2937]">{selectedIAAssessment?.title}</span>
+                              <span className="text-sm font-semibold text-[var(--color-text-primary)]">{selectedIAAssessment?.title}</span>
                               {selectedIAAssessment && (
                                 <span className={`ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${
                                   selectedIAAssessment.type === "quiz" ? "bg-[#DBEAFE] text-[#2563EB]" : "bg-[#FEF3C7] text-[#D97706]"
@@ -3079,18 +3079,18 @@ const AssessmentsContent = () => {
                             {/* Summary */}
                             <div className="flex items-center gap-4 p-3 bg-[#F9FAFB] rounded-xl">
                               <div className="text-center">
-                                <p className="text-lg font-bold text-[#1F2937]">
+                                <p className="text-lg font-bold text-[var(--color-text-primary)]">
                                   {itemAnalysis.totalSubmissions}
                                 </p>
-                                <p className="text-xs text-[#6B7280]">
+                                <p className="text-xs text-[var(--color-text-secondary)]">
                                   {t("assessments.totalSubmissions")}
                                 </p>
                               </div>
                               <div className="text-center">
-                                <p className="text-lg font-bold text-[#1F2937]">
+                                <p className="text-lg font-bold text-[var(--color-text-primary)]">
                                   {itemAnalysis.questions.length}
                                 </p>
-                                <p className="text-xs text-[#6B7280]">
+                                <p className="text-xs text-[var(--color-text-secondary)]">
                                   {t("assessments.questions")}
                                 </p>
                               </div>
@@ -3100,7 +3100,7 @@ const AssessmentsContent = () => {
                             {itemAnalysis.prePostComparison &&
                               itemAnalysis.prePostComparison.length > 1 && (
                                 <div className="p-4 border border-[var(--color-border)] rounded-xl">
-                                  <h4 className="text-sm font-semibold text-[#1F2937] mb-3">
+                                  <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
                                     {t("assessments.prePostComparison")}
                                   </h4>
                                   <div className="space-y-2">
@@ -3112,7 +3112,7 @@ const AssessmentsContent = () => {
                                           key={item.assessmentId}
                                           className="flex items-center justify-between"
                                         >
-                                          <span className="text-sm text-[#374151] flex-1 min-w-0 truncate">
+                                          <span className="text-sm text-[var(--color-text-secondary)] flex-1 min-w-0 truncate">
                                             {item.title}
                                           </span>
                                           <div className="flex items-center gap-2 shrink-0">
@@ -3124,7 +3124,7 @@ const AssessmentsContent = () => {
                                                 }}
                                               />
                                             </div>
-                                            <span className="text-sm font-medium text-[#374151] w-12 text-right">
+                                            <span className="text-sm font-medium text-[var(--color-text-secondary)] w-12 text-right">
                                               {item.averagePercentage.toFixed(1)}%
                                             </span>
                                             {delta !== null && (
@@ -3149,7 +3149,7 @@ const AssessmentsContent = () => {
                             {itemAnalysis.questions.length === 0 ? (
                               <div className="text-center py-8">
                                 <BarChart3 className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
-                                <p className="text-sm text-[#6B7280]">
+                                <p className="text-sm text-[var(--color-text-secondary)]">
                                   {t("assessments.noAnalysisData")}
                                 </p>
                               </div>
@@ -3158,16 +3158,16 @@ const AssessmentsContent = () => {
                                 <table className="w-full">
                                   <thead>
                                     <tr className="text-start">
-                                      <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
+                                      <th className="pb-3 text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         {t("assessments.question")}
                                       </th>
-                                      <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
+                                      <th className="pb-3 text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         {t("assessments.correctRate")}
                                       </th>
-                                      <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
+                                      <th className="pb-3 text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         {t("assessments.difficultyIndex")}
                                       </th>
-                                      <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
+                                      <th className="pb-3 text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         {t("assessments.discrimination")}
                                       </th>
                                     </tr>
@@ -3189,7 +3189,7 @@ const AssessmentsContent = () => {
                                           className="hover:bg-[#F9FAFB]"
                                         >
                                           <td className="py-3 max-w-[300px]">
-                                            <span className="text-sm text-[#1F2937] line-clamp-2">
+                                            <span className="text-sm text-[var(--color-text-primary)] line-clamp-2">
                                               {idx + 1}. {item.questionText}
                                             </span>
                                           </td>
@@ -3209,7 +3209,7 @@ const AssessmentsContent = () => {
                                                   }}
                                                 />
                                               </div>
-                                              <span className="text-sm text-[#374151]">
+                                              <span className="text-sm text-[var(--color-text-secondary)]">
                                                 {correctRate}%
                                               </span>
                                             </div>
@@ -3312,11 +3312,11 @@ const AssessmentsContent = () => {
         <ModalOverlay onClose={() => { setPublishConfirmId(null); setPublishCheckData(null); }}>
           <div className="bg-white rounded-2xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-[#1F2937]">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {t("assessments.confirmPublish")}
               </h3>
               <button onClick={() => { setPublishConfirmId(null); setPublishCheckData(null); }} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
-                <X className="w-5 h-5 text-[#6B7280]" />
+                <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
             </div>
             {publishCheckLoading ? (
@@ -3333,7 +3333,7 @@ const AssessmentsContent = () => {
                       ) : (
                         <AlertTriangle className="w-4 h-4 text-[#EF4444]" />
                       )}
-                      <span className="text-sm text-[#374151]">
+                      <span className="text-sm text-[var(--color-text-secondary)]">
                         {publishCheckData.hasFiles ? t("assessments.filesUploaded") || "Assignment files uploaded" : t("assessments.noFiles") || "No assignment files uploaded"}
                       </span>
                     </div>
@@ -3343,7 +3343,7 @@ const AssessmentsContent = () => {
                       ) : (
                         <AlertTriangle className="w-4 h-4 text-[#EF4444]" />
                       )}
-                      <span className="text-sm text-[#374151]">
+                      <span className="text-sm text-[var(--color-text-secondary)]">
                         {publishCheckData.hasDueDate ? t("assessments.dueDateSet") || "Due date set" : t("assessments.noDueDate") || "No due date set"}
                       </span>
                     </div>
@@ -3356,7 +3356,7 @@ const AssessmentsContent = () => {
                       ) : (
                         <AlertTriangle className="w-4 h-4 text-[#EF4444]" />
                       )}
-                      <span className="text-sm text-[#374151]">
+                      <span className="text-sm text-[var(--color-text-secondary)]">
                         {publishCheckData.questionCount} {t("assessments.questions")}
                       </span>
                     </div>
@@ -3366,7 +3366,7 @@ const AssessmentsContent = () => {
                       ) : (
                         <AlertTriangle className="w-4 h-4 text-[#EAB308]" />
                       )}
-                      <span className="text-sm text-[#374151]">
+                      <span className="text-sm text-[var(--color-text-secondary)]">
                         {t("assessments.marksTotal")}: {publishCheckData.marksSum} / {publishCheckData.totalMarks}
                       </span>
                     </div>
@@ -3376,7 +3376,7 @@ const AssessmentsContent = () => {
                       ) : (
                         <AlertTriangle className="w-4 h-4 text-[#EF4444]" />
                       )}
-                      <span className="text-sm text-[#374151]">
+                      <span className="text-sm text-[var(--color-text-secondary)]">
                         {publishCheckData.missingCorrect
                           ? t("assessments.mcqNoCorrectAnswer")
                           : t("assessments.correctAnswer")}
@@ -3389,7 +3389,7 @@ const AssessmentsContent = () => {
             <div className="flex gap-3">
               <button
                 onClick={() => { setPublishConfirmId(null); setPublishCheckData(null); }}
-                className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
+                className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
               >
                 {t("assessments.cancel")}
               </button>

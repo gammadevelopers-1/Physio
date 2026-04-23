@@ -51,10 +51,10 @@ export default function VideoRetentionChart({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
           <div>
-            <h3 className="text-lg font-semibold text-[#1F2937]">{t("analytics.title")}</h3>
-            <p className="text-sm text-[#6B7280] truncate max-w-[400px]">{materialTitle}</p>
+            <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("analytics.title")}</h3>
+            <p className="text-sm text-[var(--color-text-secondary)] truncate max-w-[400px]">{materialTitle}</p>
           </div>
-          <button onClick={onClose} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg">
+          <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -68,7 +68,7 @@ export default function VideoRetentionChart({
           ) : !data || data.totalViewers === 0 ? (
             <div className="text-center py-12">
               <Users className="w-12 h-12 text-[var(--color-border)] mx-auto mb-4" />
-              <p className="text-sm text-[#9CA3AF]">{t("analytics.noData")}</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">{t("analytics.noData")}</p>
             </div>
           ) : (
             <>
@@ -76,7 +76,7 @@ export default function VideoRetentionChart({
               <div className="flex gap-4 mb-6">
                 <div className="flex items-center gap-2 px-3 py-2 bg-[#EFF6FF] rounded-lg">
                   <Users className="w-4 h-4 text-[#3B82F6]" />
-                  <span className="text-sm font-medium text-[#1F2937]">{data.totalViewers} {t("analytics.viewers")}</span>
+                  <span className="text-sm font-medium text-[var(--color-text-primary)]">{data.totalViewers} {t("analytics.viewers")}</span>
                 </div>
                 {data.dropOffPoints.length > 0 && (
                   <div className="flex items-center gap-2 px-3 py-2 bg-[#FEF2F2] rounded-lg">
@@ -90,7 +90,7 @@ export default function VideoRetentionChart({
 
               {/* Retention Chart (SVG bars) */}
               <div className="bg-[#F9FAFB] rounded-lg p-4">
-                <p className="text-xs font-medium text-[#6B7280] mb-3">{t("analytics.retentionCurve")}</p>
+                <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-3">{t("analytics.retentionCurve")}</p>
                 <div className="relative h-[200px] flex items-end gap-px">
                   {data.retention.map((r) => {
                     const height = maxPercent > 0 ? (r.percent / maxPercent) * 100 : 0;
@@ -107,7 +107,7 @@ export default function VideoRetentionChart({
                         />
                         {/* Tooltip */}
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10">
-                          <div className="bg-[#1F2937] text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                          <div className="bg-[var(--color-text-primary)] text-white text-xs px-2 py-1 rounded whitespace-nowrap">
                             {r.percent}% ({r.viewers} {t("analytics.viewers")})
                           </div>
                         </div>
@@ -116,8 +116,8 @@ export default function VideoRetentionChart({
                   })}
                 </div>
                 <div className="flex justify-between mt-2">
-                  <span className="text-xs text-[#9CA3AF]">0s</span>
-                  <span className="text-xs text-[#9CA3AF]">
+                  <span className="text-xs text-[var(--color-text-secondary)]">0s</span>
+                  <span className="text-xs text-[var(--color-text-secondary)]">
                     {formatDuration(data.retention.length * data.bucketSize)}
                   </span>
                 </div>
@@ -126,7 +126,7 @@ export default function VideoRetentionChart({
               {/* Drop-off Points */}
               {data.dropOffPoints.length > 0 && (
                 <div className="mt-4">
-                  <p className="text-xs font-medium text-[#6B7280] mb-2">{t("analytics.dropOffPoints")}</p>
+                  <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-2">{t("analytics.dropOffPoints")}</p>
                   <div className="space-y-2">
                     {data.dropOffPoints.map((d, i) => (
                       <div key={i} className="flex items-center justify-between p-2 bg-[#FEF2F2] rounded-lg">
@@ -145,7 +145,7 @@ export default function VideoRetentionChart({
 
         {/* Footer */}
         <div className="p-4 border-t border-[var(--color-border)]">
-          <button onClick={onClose} className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]">
+          <button onClick={onClose} className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
             {t("analytics.close")}
           </button>
         </div>

@@ -199,7 +199,7 @@ export default function TrustedDevicesSection({
           >
             {t("trustedDevices.noDevices")}
           </p>
-          <p className="text-[#9ca3af]" style={{ fontSize: "13px" }}>
+          <p className="text-[var(--color-text-secondary)]" style={{ fontSize: "13px" }}>
             {t("trustedDevices.noDevicesHint")}
           </p>
         </div>
@@ -240,7 +240,7 @@ export default function TrustedDevicesSection({
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
                   {device.ipAddress && (
                     <span
-                      className="inline-flex items-center gap-1 text-[#9ca3af]"
+                      className="inline-flex items-center gap-1 text-[var(--color-text-secondary)]"
                       style={{ fontSize: "12px" }}
                     >
                       <Globe className="w-3 h-3" />
@@ -248,14 +248,14 @@ export default function TrustedDevicesSection({
                     </span>
                   )}
                   <span
-                    className="inline-flex items-center gap-1 text-[#9ca3af]"
+                    className="inline-flex items-center gap-1 text-[var(--color-text-secondary)]"
                     style={{ fontSize: "12px" }}
                   >
                     <Clock className="w-3 h-3" />
                     {t("trustedDevices.lastUsed")} {formatDate(device.lastUsedAt)}
                   </span>
                   <span
-                    className="inline-flex items-center gap-1 text-[#9ca3af]"
+                    className="inline-flex items-center gap-1 text-[var(--color-text-secondary)]"
                     style={{ fontSize: "12px" }}
                   >
                     <CalendarDays className="w-3 h-3" />

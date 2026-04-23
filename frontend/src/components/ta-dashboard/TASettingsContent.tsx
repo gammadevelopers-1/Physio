@@ -269,10 +269,10 @@ const TASettingsContent = () => {
           <div className="flex-1 min-w-0 space-y-6">
             {/* Header */}
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-[#1F2937]">
+              <h1 className="text-xl md:text-2xl font-bold text-[var(--color-text-primary)]">
                 {t("settings.title")}
               </h1>
-              <p className="text-sm text-[#6B7280] mt-1">{t("settings.subtitle")}</p>
+              <p className="text-sm text-[var(--color-text-secondary)] mt-1">{t("settings.subtitle")}</p>
             </div>
 
             {/* Tabs */}
@@ -285,7 +285,7 @@ const TASettingsContent = () => {
                     className={`px-5 py-3 text-sm font-medium relative transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                       activeTab === tab.id
                         ? "text-[#3B82F6]"
-                        : "text-[#6B7280] hover:text-[#374151]"
+                        : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                     }`}
                   >
                     <tab.icon className="w-4 h-4" />
@@ -316,7 +316,7 @@ const TASettingsContent = () => {
                             />
                           </div>
                         ) : (
-                          <div className="w-24 h-24 rounded-full bg-[var(--color-border)] flex items-center justify-center text-2xl font-bold text-[#4B5563]">
+                          <div className="w-24 h-24 rounded-full bg-[var(--color-border)] flex items-center justify-center text-2xl font-bold text-[var(--color-text-secondary)]">
                             {initials}
                           </div>
                         )}
@@ -338,9 +338,9 @@ const TASettingsContent = () => {
                             <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`}>
                               <button
                                 onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
                               >
-                                <Upload className="w-4 h-4 text-[#4B5563]" />
+                                <Upload className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                 {t("settings.uploadPhoto")}
                               </button>
                               {user?.avatar && (
@@ -357,21 +357,21 @@ const TASettingsContent = () => {
                         </div>
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-[#1F2937]">
+                        <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                           {profileData.firstName} {profileData.lastName}
                         </h3>
-                        <p className="text-sm text-[#6B7280]">{profileData.email}</p>
+                        <p className="text-sm text-[var(--color-text-secondary)]">{profileData.email}</p>
                       </div>
                     </div>
 
                     {/* Personal Information */}
                     <div>
-                      <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
+                      <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("settings.personalInfo")}
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label htmlFor="ta-first-name" className="block text-sm font-medium text-[#374151] mb-1.5">
+                          <label htmlFor="ta-first-name" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                             {t("settings.firstName")}
                           </label>
                           <input
@@ -385,7 +385,7 @@ const TASettingsContent = () => {
                           />
                         </div>
                         <div>
-                          <label htmlFor="ta-last-name" className="block text-sm font-medium text-[#374151] mb-1.5">
+                          <label htmlFor="ta-last-name" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                             {t("settings.lastName")}
                           </label>
                           <input
@@ -399,29 +399,29 @@ const TASettingsContent = () => {
                           />
                         </div>
                         <div>
-                          <label htmlFor="ta-email" className="block text-sm font-medium text-[#374151] mb-1.5">
+                          <label htmlFor="ta-email" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                             {t("settings.email")}
                           </label>
                           <div className="relative">
                             <Mail
-                              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                             />
                             <input
                               id="ta-email"
                               type="email"
                               value={profileData.email}
                               readOnly
-                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-[#F9FAFB] text-[var(--color-text-secondary)] cursor-not-allowed ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                             />
                           </div>
                         </div>
                         <div>
-                          <label htmlFor="ta-phone" className="block text-sm font-medium text-[#374151] mb-1.5">
+                          <label htmlFor="ta-phone" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                             {t("settings.phone")}
                           </label>
                           <div className="relative">
                             <Phone
-                              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                             />
                             <input
                               id="ta-phone"
@@ -435,12 +435,12 @@ const TASettingsContent = () => {
                           </div>
                         </div>
                         <div>
-                          <label htmlFor="ta-location" className="block text-sm font-medium text-[#374151] mb-1.5">
+                          <label htmlFor="ta-location" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                             {t("settings.location")}
                           </label>
                           <div className="relative">
                             <MapPin
-                              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                             />
                             <input
                               id="ta-location"
@@ -454,12 +454,12 @@ const TASettingsContent = () => {
                           </div>
                         </div>
                         <div>
-                          <label htmlFor="ta-language" className="block text-sm font-medium text-[#374151] mb-1.5">
+                          <label htmlFor="ta-language" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                             {t("settings.language")}
                           </label>
                           <div className="relative">
                             <Globe
-                              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                             />
                             <select
                               id="ta-language"
@@ -479,7 +479,7 @@ const TASettingsContent = () => {
 
                     {/* Bio */}
                     <div>
-                      <label htmlFor="ta-bio" className="block text-sm font-medium text-[#374151] mb-1.5">
+                      <label htmlFor="ta-bio" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                         {t("settings.bio")}
                       </label>
                       <textarea
@@ -516,17 +516,17 @@ const TASettingsContent = () => {
                   <div className="space-y-6">
                     {/* Change Password */}
                     <div>
-                      <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
+                      <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("settings.changePassword")}
                       </h4>
                       <div className="space-y-4 max-w-md">
                         <div>
-                          <label htmlFor="ta-current-password" className="block text-sm font-medium text-[#374151] mb-1.5">
+                          <label htmlFor="ta-current-password" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                             {t("settings.currentPassword")}
                           </label>
                           <div className="relative">
                             <Key
-                              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                             />
                             <input
                               id="ta-current-password"
@@ -539,7 +539,7 @@ const TASettingsContent = () => {
                             <button
                               type="button"
                               onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                              className={`absolute top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B7280] ${isRTL ? "left-3" : "right-3"}`}
+                              className={`absolute top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] ${isRTL ? "left-3" : "right-3"}`}
                             >
                               {showCurrentPassword ? (
                                 <EyeOff className="w-4 h-4" />
@@ -550,12 +550,12 @@ const TASettingsContent = () => {
                           </div>
                         </div>
                         <div>
-                          <label htmlFor="ta-new-password" className="block text-sm font-medium text-[#374151] mb-1.5">
+                          <label htmlFor="ta-new-password" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                             {t("settings.newPassword")}
                           </label>
                           <div className="relative">
                             <Key
-                              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                              className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                             />
                             <input
                               id="ta-new-password"
@@ -568,7 +568,7 @@ const TASettingsContent = () => {
                             <button
                               type="button"
                               onClick={() => setShowNewPassword(!showNewPassword)}
-                              className={`absolute top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B7280] ${isRTL ? "left-3" : "right-3"}`}
+                              className={`absolute top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] ${isRTL ? "left-3" : "right-3"}`}
                             >
                               {showNewPassword ? (
                                 <EyeOff className="w-4 h-4" />
@@ -621,7 +621,7 @@ const TASettingsContent = () => {
                   <div className="space-y-6">
                     {/* Email Notifications */}
                     <div>
-                      <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
+                      <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("settings.emailNotifications")}
                       </h4>
                       <div className="space-y-3">
@@ -635,7 +635,7 @@ const TASettingsContent = () => {
                             key={item.key}
                             className="flex items-center justify-between py-2"
                           >
-                            <span className="text-sm text-[#374151]">{item.label}</span>
+                            <span className="text-sm text-[var(--color-text-secondary)]">{item.label}</span>
                             <button
                               onClick={() =>
                                 setNotifications({
@@ -668,7 +668,7 @@ const TASettingsContent = () => {
 
                     {/* Push Notifications */}
                     <div className="pt-6 border-t border-[var(--color-border)]">
-                      <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
+                      <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("settings.pushNotifications")}
                       </h4>
                       <div className="space-y-3">
@@ -681,7 +681,7 @@ const TASettingsContent = () => {
                             key={item.key}
                             className="flex items-center justify-between py-2"
                           >
-                            <span className="text-sm text-[#374151]">{item.label}</span>
+                            <span className="text-sm text-[var(--color-text-secondary)]">{item.label}</span>
                             <button
                               onClick={() =>
                                 setNotifications({
@@ -714,7 +714,7 @@ const TASettingsContent = () => {
 
                     {/* Digest */}
                     <div className="pt-6 border-t border-[var(--color-border)]">
-                      <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
+                      <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("settings.emailDigest")}
                       </h4>
                       <div className="space-y-3">
@@ -726,7 +726,7 @@ const TASettingsContent = () => {
                             key={item.key}
                             className="flex items-center justify-between py-2"
                           >
-                            <span className="text-sm text-[#374151]">{item.label}</span>
+                            <span className="text-sm text-[var(--color-text-secondary)]">{item.label}</span>
                             <button
                               onClick={() =>
                                 setNotifications({
@@ -779,7 +779,7 @@ const TASettingsContent = () => {
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div>
-                        <label htmlFor="ta-pref-date-format" className="block text-sm font-medium text-[#374151] mb-1.5">
+                        <label htmlFor="ta-pref-date-format" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                           {t("settings.dateFormat")}
                         </label>
                         <select
@@ -796,7 +796,7 @@ const TASettingsContent = () => {
                         </select>
                       </div>
                       <div>
-                        <label htmlFor="ta-pref-time-format" className="block text-sm font-medium text-[#374151] mb-1.5">
+                        <label htmlFor="ta-pref-time-format" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                           {t("settings.timeFormat")}
                         </label>
                         <select
@@ -812,7 +812,7 @@ const TASettingsContent = () => {
                         </select>
                       </div>
                       <div>
-                        <label htmlFor="ta-pref-timezone" className="block text-sm font-medium text-[#374151] mb-1.5">
+                        <label htmlFor="ta-pref-timezone" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                           {t("settings.timezone")}
                         </label>
                         <select

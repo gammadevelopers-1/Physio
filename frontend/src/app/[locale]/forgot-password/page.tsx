@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
                 {/* Back link */}
                 <Link
                   href={`/${locale}/signin`}
-                  className="inline-flex items-center gap-1 text-sm text-[#6B7280] hover:text-[#1F2937] mb-6 transition-colors"
+                  className="inline-flex items-center gap-1 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-6 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   {t("backToLogin")}
@@ -96,7 +96,7 @@ export default function ForgotPasswordPage() {
                   <div className="flex flex-col gap-1.5 w-full">
                     <label
                       htmlFor="email"
-                      className="font-medium text-[#0a0a0a]"
+                      className="font-medium text-[var(--color-text-primary)]"
                       style={{ fontSize: "14px", lineHeight: "20px" }}
                     >
                       {t("emailLabel")}

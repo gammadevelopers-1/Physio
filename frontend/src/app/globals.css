@@ -138,10 +138,10 @@
 
   /* Outline */
   --outline-bright: var(--white);
-  --outline-default: var(--gold-gold-600);
-  --outline-focused: var(--blue-blue-600);
-  --outline-hover: var(--blue-blue-300);
-  --outline-subtle: var(--blue-blue-100);
+  --outline-default: var(--color-border);
+  --outline-focused: var(--color-primary);
+  --outline-hover: var(--color-primary-dark);
+  --outline-subtle: var(--color-border-subtle);
 
   /* Surface */
   --surface-default: var(--blue-blue-50);

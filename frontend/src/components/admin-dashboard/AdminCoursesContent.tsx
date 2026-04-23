@@ -61,7 +61,7 @@ const AdminCoursesContent = () => {
       case "active":
         return "bg-[#DCFCE7] text-[#16A34A]";
       case "draft":
-        return "bg-[#F3F4F6] text-[#6B7280]";
+        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
       case "completed":
         return "bg-[#DBEAFE] text-[#1D4ED8]";
       case "archived":
@@ -71,7 +71,7 @@ const AdminCoursesContent = () => {
       case "changes_requested":
         return "bg-[#FEE2E2] text-[#DC2626]";
       default:
-        return "bg-[#F3F4F6] text-[#6B7280]";
+        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -107,10 +107,10 @@ const AdminCoursesContent = () => {
               {/* Page Header */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
+                  <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
                     {t("coursesPage.title")}
                   </h1>
-                  <p className="text-sm text-[#6B7280] mt-1">
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                     {t("coursesPage.subtitle")}
                   </p>
                 </div>
@@ -119,20 +119,20 @@ const AdminCoursesContent = () => {
               {/* Stats Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
-                  <p className="text-2xl font-bold text-[#1F2937]">{total}</p>
-                  <p className="text-sm text-[#6B7280]">{t("coursesPage.stats.total")}</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">{total}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{t("coursesPage.stats.total")}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[#16A34A]">{activeCount}</p>
-                  <p className="text-sm text-[#6B7280]">{t("coursesPage.stats.active")}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{t("coursesPage.stats.active")}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[#3B82F6]">{enrollmentsCount}</p>
-                  <p className="text-sm text-[#6B7280]">{t("coursesPage.stats.enrollments")}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{t("coursesPage.stats.enrollments")}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[#D97706]">{pendingCount}</p>
-                  <p className="text-sm text-[#6B7280]">{t("coursesPage.stats.pendingReview")}</p>
+                  <p className="text-sm text-[var(--color-text-secondary)]">{t("coursesPage.stats.pendingReview")}</p>
                 </div>
               </div>
 
@@ -141,7 +141,7 @@ const AdminCoursesContent = () => {
                 <div className="flex flex-col sm:flex-row gap-4">
                   {/* Search */}
                   <div className="flex-1 relative">
-                    <Search className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`} />
+                    <Search className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`} />
                     <input
                       type="text"
                       placeholder={t("coursesPage.searchPlaceholder")}
@@ -155,7 +155,7 @@ const AdminCoursesContent = () => {
                   <select
                     value={statusFilter}
                     onChange={(e) => handleStatusChange(e.target.value)}
-                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
+                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
                   >
                     <option value="all">{t("coursesPage.filters.allStatus")}</option>
                     <option value="active">{t("coursesPage.filters.active")}</option>
@@ -170,13 +170,13 @@ const AdminCoursesContent = () => {
                   <div className="flex items-center gap-1 border border-[var(--color-border)] rounded-lg p-1">
                     <button
                       onClick={() => setViewMode("grid")}
-                      className={`p-2 rounded ${viewMode === "grid" ? "btn-gold text-white" : "text-[#6B7280]"}`}
+                      className={`p-2 rounded ${viewMode === "grid" ? "btn-gold text-white" : "text-[var(--color-text-secondary)]"}`}
                     >
                       <Grid className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setViewMode("list")}
-                      className={`p-2 rounded ${viewMode === "list" ? "btn-gold text-white" : "text-[#6B7280]"}`}
+                      className={`p-2 rounded ${viewMode === "list" ? "btn-gold text-white" : "text-[var(--color-text-secondary)]"}`}
                     >
                       <List className="w-4 h-4" />
                     </button>
@@ -232,7 +232,7 @@ const AdminCoursesContent = () => {
                           {/* Content */}
                           <div className="p-4">
                             <div className="flex items-start justify-between mb-2">
-                              <h3 className="text-base font-semibold text-[#1F2937] line-clamp-1">
+                              <h3 className="text-base font-semibold text-[var(--color-text-primary)] line-clamp-1">
                                 {locale === "ar" && course.titleAr ? course.titleAr : course.title}
                               </h3>
                               <span
@@ -242,11 +242,11 @@ const AdminCoursesContent = () => {
                               </span>
                             </div>
 
-                            <p className="text-sm text-[#6B7280] mb-3">
+                            <p className="text-sm text-[var(--color-text-secondary)] mb-3">
                               {course.instructorName || "—"}
                             </p>
 
-                            <div className="flex items-center gap-4 text-sm text-[#6B7280] mb-3">
+                            <div className="flex items-center gap-4 text-sm text-[var(--color-text-secondary)] mb-3">
                               <div className="flex items-center gap-1">
                                 <Users className="w-4 h-4" />
                                 <span>
@@ -262,7 +262,7 @@ const AdminCoursesContent = () => {
                             </div>
 
                             <div className="flex items-center justify-between pt-3 border-t border-[var(--color-border)]">
-                              <span className="text-sm font-medium text-[#1F2937]">
+                              <span className="text-sm font-medium text-[var(--color-text-primary)]">
                                 SAR {(course.price ?? 0).toLocaleString()}
                               </span>
                               <div className="relative">
@@ -274,22 +274,22 @@ const AdminCoursesContent = () => {
                                   }
                                   className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
                                 >
-                                  <MoreVertical className="w-4 h-4 text-[#6B7280]" />
+                                  <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                 </button>
 
                                 {openDropdownId === course.id && (
                                   <div
                                     className={`absolute bottom-full mb-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-10 ${isRTL ? "left-0" : "right-0"}`}
                                   >
-                                    <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F9FAFB]">
+                                    <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
                                       <Eye className="w-4 h-4" />
                                       {t("coursesPage.actions.view")}
                                     </button>
-                                    <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F9FAFB]">
+                                    <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
                                       <Edit className="w-4 h-4" />
                                       {t("coursesPage.actions.edit")}
                                     </button>
-                                    <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F9FAFB]">
+                                    <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
                                       <Archive className="w-4 h-4" />
                                       {t("coursesPage.actions.archive")}
                                     </button>
@@ -306,22 +306,22 @@ const AdminCoursesContent = () => {
                       <table className="w-full">
                         <thead className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
                           <tr>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("coursesPage.table.course")}
                             </th>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("coursesPage.table.instructor")}
                             </th>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("coursesPage.table.status")}
                             </th>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("coursesPage.table.enrolled")}
                             </th>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("coursesPage.table.completion")}
                             </th>
-                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                            <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("coursesPage.table.price")}
                             </th>
                           </tr>
@@ -333,11 +333,11 @@ const AdminCoursesContent = () => {
                               className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]"
                             >
                               <td className="px-4 py-4">
-                                <span className="text-sm font-medium text-[#1F2937]">
+                                <span className="text-sm font-medium text-[var(--color-text-primary)]">
                                   {locale === "ar" && course.titleAr ? course.titleAr : course.title}
                                 </span>
                               </td>
-                              <td className="px-4 py-4 text-sm text-[#6B7280]">
+                              <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)]">
                                 {course.instructorName || "—"}
                               </td>
                               <td className="px-4 py-4">
@@ -347,13 +347,13 @@ const AdminCoursesContent = () => {
                                   {t(`coursesPage.filters.${course.status === "pending_review" ? "pendingReview" : course.status === "changes_requested" ? "changesRequested" : course.status}`)}
                                 </span>
                               </td>
-                              <td className="px-4 py-4 text-sm text-[#6B7280]">
+                              <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)]">
                                 {course.enrolledCount}/{course.maxEnrollment ?? "∞"}
                               </td>
-                              <td className="px-4 py-4 text-sm text-[#6B7280]">
+                              <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)]">
                                 {course.completionRate}%
                               </td>
-                              <td className="px-4 py-4 text-sm font-medium text-[#1F2937]">
+                              <td className="px-4 py-4 text-sm font-medium text-[var(--color-text-primary)]">
                                 SAR {(course.price ?? 0).toLocaleString()}
                               </td>
                             </tr>
@@ -366,7 +366,7 @@ const AdminCoursesContent = () => {
                   {/* Pagination */}
                   {totalPages > 1 && (
                     <div className="flex items-center justify-between mt-6">
-                      <p className="text-sm text-[#6B7280]">
+                      <p className="text-sm text-[var(--color-text-secondary)]">
                         {t("coursesPage.showing", {
                           from: (currentPage - 1) * ITEMS_PER_PAGE + 1,
                           to: Math.min(currentPage * ITEMS_PER_PAGE, total),
@@ -381,7 +381,7 @@ const AdminCoursesContent = () => {
                         >
                           <ChevronLeft className="w-4 h-4" />
                         </button>
-                        <span className="text-sm text-[#4B5563] px-2">
+                        <span className="text-sm text-[var(--color-text-secondary)] px-2">
                           {currentPage} / {totalPages}
                         </span>
                         <button
@@ -400,8 +400,8 @@ const AdminCoursesContent = () => {
               {/* Empty State */}
               {!loading && !error && courses.length === 0 && (
                 <div className="bg-white rounded-xl border border-[var(--color-border)] py-12 text-center">
-                  <BookOpen className="w-12 h-12 text-[#9CA3AF] mx-auto mb-4" />
-                  <p className="text-[#6B7280]">{t("coursesPage.noCourses")}</p>
+                  <BookOpen className="w-12 h-12 text-[var(--color-text-secondary)] mx-auto mb-4" />
+                  <p className="text-[var(--color-text-secondary)]">{t("coursesPage.noCourses")}</p>
                 </div>
               )}
             </div>

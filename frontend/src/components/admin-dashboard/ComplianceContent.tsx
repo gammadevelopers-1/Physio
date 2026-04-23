@@ -143,10 +143,10 @@ const ComplianceContent = () => {
               {/* Page Header */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
+                  <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
                     {t("compliancePage.title")}
                   </h1>
-                  <p className="text-sm text-[#6B7280] mt-1">
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                     {t("compliancePage.subtitle")}
                   </p>
                 </div>
@@ -172,7 +172,7 @@ const ComplianceContent = () => {
                     >
                       {percentage}%
                     </p>
-                    <p className="text-sm text-[#6B7280] mt-2">{t("compliance.overallCompliance")}</p>
+                    <p className="text-sm text-[var(--color-text-secondary)] mt-2">{t("compliance.overallCompliance")}</p>
                   </div>
 
                   {/* Progress Bar */}
@@ -197,22 +197,22 @@ const ComplianceContent = () => {
                   <div className="flex items-center justify-center gap-6 mt-4">
                     <div className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-full bg-[#16A34A]" />
-                      <span className="text-sm text-[#6B7280]">{stats.passed} {t("compliance.pass")}</span>
+                      <span className="text-sm text-[var(--color-text-secondary)]">{stats.passed} {t("compliance.pass")}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-full bg-[#F59E0B]" />
-                      <span className="text-sm text-[#6B7280]">{stats.review} {t("compliance.review")}</span>
+                      <span className="text-sm text-[var(--color-text-secondary)]">{stats.review} {t("compliance.review")}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-full bg-[#EF4444]" />
-                      <span className="text-sm text-[#6B7280]">{stats.failed} {t("compliance.fail")}</span>
+                      <span className="text-sm text-[var(--color-text-secondary)]">{stats.failed} {t("compliance.fail")}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Category Summary */}
                 <div className="lg:col-span-2 bg-white rounded-xl border border-[var(--color-border)] p-5">
-                  <h3 className="text-base font-semibold text-[#1F2937] mb-4">
+                  <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("compliancePage.categorySummary")}
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -238,11 +238,11 @@ const ComplianceContent = () => {
                             >
                               {catPercentage}%
                             </span>
-                            <span className="text-xs text-[#9CA3AF]">
+                            <span className="text-xs text-[var(--color-text-secondary)]">
                               {passed}/{total}
                             </span>
                           </div>
-                          <p className="text-sm text-[#4B5563] line-clamp-1">{category.name}</p>
+                          <p className="text-sm text-[var(--color-text-secondary)] line-clamp-1">{category.name}</p>
                         </div>
                       );
                     })}
@@ -253,7 +253,7 @@ const ComplianceContent = () => {
               {/* Compliance Matrix */}
               <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                 <div className="p-5 border-b border-[var(--color-border)]">
-                  <h3 className="text-lg font-semibold text-[#1F2937]">
+                  <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                     {t("compliancePage.complianceMatrix")}
                   </h3>
                 </div>
@@ -272,15 +272,15 @@ const ComplianceContent = () => {
                       >
                         <div className="flex items-center gap-3">
                           <FileText className="w-5 h-5 text-[#002D87]" />
-                          <span className="font-medium text-[#1F2937]">{category.name}</span>
-                          <span className="text-sm text-[#6B7280]">
+                          <span className="font-medium text-[var(--color-text-primary)]">{category.name}</span>
+                          <span className="text-sm text-[var(--color-text-secondary)]">
                             ({category.clauses.filter((c) => c.status === "pass").length}/{category.clauses.length})
                           </span>
                         </div>
                         {expandedCategory === category.id ? (
-                          <ChevronDown className="w-5 h-5 text-[#6B7280]" />
+                          <ChevronDown className="w-5 h-5 text-[var(--color-text-secondary)]" />
                         ) : (
-                          <ChevronRight className={`w-5 h-5 text-[#6B7280] ${isRTL ? "rotate-180" : ""}`} />
+                          <ChevronRight className={`w-5 h-5 text-[var(--color-text-secondary)] ${isRTL ? "rotate-180" : ""}`} />
                         )}
                       </button>
 
@@ -290,16 +290,16 @@ const ComplianceContent = () => {
                           <table className="w-full">
                             <thead>
                               <tr className="border-b border-[var(--color-border)]">
-                                <th className={`py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                                <th className={`py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                                   {t("compliancePage.table.clause")}
                                 </th>
-                                <th className={`py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                                <th className={`py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                                   {t("compliancePage.table.status")}
                                 </th>
-                                <th className={`py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                                <th className={`py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                                   {t("compliancePage.table.evidence")}
                                 </th>
-                                <th className={`py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                                <th className={`py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                                   {t("compliancePage.table.actions")}
                                 </th>
                               </tr>
@@ -310,7 +310,7 @@ const ComplianceContent = () => {
                                   <td className="py-3">
                                     <div className="flex items-center gap-2">
                                       {getStatusIcon(clause.status)}
-                                      <span className="text-sm text-[#1F2937]">
+                                      <span className="text-sm text-[var(--color-text-primary)]">
                                         {clause.id}: {clause.title}
                                       </span>
                                     </div>

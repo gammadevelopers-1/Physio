@@ -67,8 +67,8 @@ const InstructorKPICards = ({ data }: InstructorKPICardsProps) => {
               <Icon className={`w-6 h-6 ${card.iconColor}`} />
             </div>
             <div>
-              <p className="text-sm text-[#6B7280]">{card.label}</p>
-              <p className="text-2xl font-bold text-[#1F2937]">{card.value}</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">{card.label}</p>
+              <p className="text-2xl font-bold text-[var(--color-text-primary)]">{card.value}</p>
             </div>
           </div>
         );

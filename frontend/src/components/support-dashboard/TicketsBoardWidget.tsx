@@ -89,7 +89,7 @@ const TicketsBoardWidget = () => {
     InProgress: "bg-[#FEF9C3] text-[#EAB308]",
     Waiting: "bg-[#FFEDD5] text-[#F97316]",
     Resolved: "bg-[#DCFCE7] text-[#22C55E]",
-    Closed: "bg-[#F3F4F6] text-[#6B7280]",
+    Closed: "bg-[#F3F4F6] text-[var(--color-text-secondary)]",
   };
 
   const filteredTickets = tickets.filter((ticket) => {
@@ -115,7 +115,7 @@ const TicketsBoardWidget = () => {
       <div className="flex items-center justify-between px-5 py-4 border-b border-[#F3F4F6]">
         <div className="flex items-center gap-2">
           <ClipboardList className="w-5 h-5 text-[#3B82F6]" />
-          <h3 className="text-base font-semibold text-[#111827]">
+          <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t("ticketsBoard.title")}
           </h3>
           <span className="bg-[#3B82F6] text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
@@ -133,7 +133,7 @@ const TicketsBoardWidget = () => {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="text-sm border border-[var(--color-border)] rounded-lg px-3 py-1.5 text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+          className="text-sm border border-[var(--color-border)] rounded-lg px-3 py-1.5 text-[var(--color-text-secondary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
         >
           <option value="all">{t("ticketsBoard.filters.allStatuses")}</option>
           <option value="New">{t("ticketsBoard.statuses.new")}</option>
@@ -150,7 +150,7 @@ const TicketsBoardWidget = () => {
         <select
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value)}
-          className="text-sm border border-[var(--color-border)] rounded-lg px-3 py-1.5 text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+          className="text-sm border border-[var(--color-border)] rounded-lg px-3 py-1.5 text-[var(--color-text-secondary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
         >
           <option value="all">
             {t("ticketsBoard.filters.allPriorities")}
@@ -161,13 +161,13 @@ const TicketsBoardWidget = () => {
         </select>
 
         <div className="relative flex-1 min-w-[180px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t("ticketsBoard.filters.searchPlaceholder")}
-            className="w-full text-sm border border-[var(--color-border)] rounded-lg pl-9 pr-3 py-1.5 text-[#374151] bg-white placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+            className="w-full text-sm border border-[var(--color-border)] rounded-lg pl-9 pr-3 py-1.5 text-[var(--color-text-secondary)] bg-white placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
           />
         </div>
       </div>
@@ -177,25 +177,25 @@ const TicketsBoardWidget = () => {
         <table className="w-full">
           <thead>
             <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
-              <th className="text-left text-[11px] font-semibold text-[#6B7280] uppercase px-3 py-2.5">
+              <th className="text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5">
                 {t("ticketsBoard.columns.id")}
               </th>
-              <th className="text-left text-[11px] font-semibold text-[#6B7280] uppercase px-3 py-2.5">
+              <th className="text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5">
                 {t("ticketsBoard.columns.subject")}
               </th>
-              <th className="text-left text-[11px] font-semibold text-[#6B7280] uppercase px-3 py-2.5">
+              <th className="text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5">
                 {t("ticketsBoard.columns.customer")}
               </th>
-              <th className="text-left text-[11px] font-semibold text-[#6B7280] uppercase px-3 py-2.5 hidden md:table-cell">
+              <th className="text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5 hidden md:table-cell">
                 {t("ticketsBoard.columns.category")}
               </th>
-              <th className="text-left text-[11px] font-semibold text-[#6B7280] uppercase px-3 py-2.5">
+              <th className="text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5">
                 {t("ticketsBoard.columns.priority")}
               </th>
-              <th className="text-left text-[11px] font-semibold text-[#6B7280] uppercase px-3 py-2.5">
+              <th className="text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5">
                 {t("ticketsBoard.columns.status")}
               </th>
-              <th className="text-left text-[11px] font-semibold text-[#6B7280] uppercase px-3 py-2.5 w-10">
+              <th className="text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5 w-10">
               </th>
             </tr>
           </thead>
@@ -211,17 +211,17 @@ const TicketsBoardWidget = () => {
                   </span>
                 </td>
                 <td className="px-3 py-3">
-                  <span className="text-[13px] text-[#111827] line-clamp-1">
+                  <span className="text-[13px] text-[var(--color-text-primary)] line-clamp-1">
                     {t(`ticketsBoard.subjects.${ticket.subjectKey}`)}
                   </span>
                 </td>
                 <td className="px-3 py-3">
-                  <span className="text-[13px] text-[#374151]">
+                  <span className="text-[13px] text-[var(--color-text-secondary)]">
                     {t(`names.${ticket.customerKey}`)}
                   </span>
                 </td>
                 <td className="px-3 py-3 hidden md:table-cell">
-                  <span className="text-[11px] font-medium bg-[#F3F4F6] text-[#4B5563] px-2 py-0.5 rounded-md">
+                  <span className="text-[11px] font-medium bg-[#F3F4F6] text-[var(--color-text-secondary)] px-2 py-0.5 rounded-md">
                     {t(`ticketsBoard.categories.${ticket.categoryKey}`)}
                   </span>
                 </td>
@@ -249,7 +249,7 @@ const TicketsBoardWidget = () => {
                 </td>
                 <td className="px-3 py-3">
                   <button className="w-7 h-7 flex items-center justify-center rounded-lg border border-[var(--color-border)] hover:bg-[#F3F4F6] transition-colors">
-                    <MoreVertical className="w-3.5 h-3.5 text-[#6B7280]" />
+                    <MoreVertical className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
                   </button>
                 </td>
               </tr>

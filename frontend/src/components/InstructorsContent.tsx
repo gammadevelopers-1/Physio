@@ -32,13 +32,13 @@ const InstructorCard = ({
       </div>
       <div className="flex flex-col gap-1 items-center text-center w-full">
         <h3
-          className="font-semibold text-[#06080B] w-full"
+          className="font-semibold text-[var(--color-text-primary)] w-full"
           style={{ fontSize: "var(--typeface-font-styles-heading-h5)" }}
         >
           {name}
         </h3>
         <p
-          className="text-[#06080B] leading-6 w-full"
+          className="text-[var(--color-text-primary)] leading-6 w-full"
           style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
         >
           {title}
@@ -74,8 +74,8 @@ const MobileInstructorCard = ({
         </div>
       </div>
       <div className="flex flex-col gap-1 items-center text-center w-full px-4">
-        <h3 className="font-semibold text-[#06080B] text-[16px]">{name}</h3>
-        <p className="text-[#06080B] text-[14px] leading-5">{title}</p>
+        <h3 className="font-semibold text-[var(--color-text-primary)] text-[16px]">{name}</h3>
+        <p className="text-[var(--color-text-primary)] text-[14px] leading-5">{title}</p>
       </div>
     </div>
   );
@@ -105,7 +105,7 @@ export default function InstructorsContent({ instructors, strapiData }: Instruct
           <div className="max-w-[1312px] mx-auto flex flex-col gap-12 items-center">
             {expertsTitle && (
               <h1
-                className="font-semibold text-[#06080B] text-center tracking-[-0.24px] leading-none text-[32px] md:text-[48px]"
+                className="font-semibold text-[var(--color-text-primary)] text-center tracking-[-0.24px] leading-none text-[32px] md:text-[48px]"
                 style={{ fontFamily: "'DM Sans', sans-serif" }}
               >
                 {expertsTitle}
@@ -144,7 +144,7 @@ export default function InstructorsContent({ instructors, strapiData }: Instruct
           <div className="max-w-[1312px] mx-auto flex flex-col gap-12 items-center">
             {mindsTitle && (
               <h1
-                className="font-semibold text-[#06080B] text-center tracking-[-0.24px] leading-none text-[32px] md:text-[48px]"
+                className="font-semibold text-[var(--color-text-primary)] text-center tracking-[-0.24px] leading-none text-[32px] md:text-[48px]"
                 style={{ fontFamily: "'DM Sans', sans-serif" }}
               >
                 {mindsTitle}

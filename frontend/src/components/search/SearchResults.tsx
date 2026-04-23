@@ -162,7 +162,7 @@ const CourseResultCard = ({ course, isRTL, searchQuery }: CourseResultCardProps)
             <HighlightText
               text={course.title}
               highlight={searchQuery}
-              className="text-[#06080b] font-semibold leading-snug text-base line-clamp-2"
+              className="text-[var(--color-text-primary)] font-semibold leading-snug text-base line-clamp-2"
             />
           </div>
           <div
@@ -177,7 +177,7 @@ const CourseResultCard = ({ course, isRTL, searchQuery }: CourseResultCardProps)
               className={`object-contain ${isRTL ? "-scale-x-100" : ""}`}
             />
           </div>
-          <div className="flex items-center gap-2 bg-[#0b0f17] rounded-full px-3 py-1 w-fit">
+          <div className="flex items-center gap-2 bg-[var(--color-text-primary)] rounded-full px-3 py-1 w-fit">
             <Video className="w-3 h-3 text-white" strokeWidth={1.5} />
             <span className="text-white text-xs">{course.type}</span>
           </div>
@@ -211,7 +211,7 @@ const CourseResultCard = ({ course, isRTL, searchQuery }: CourseResultCardProps)
         <div className="flex items-center justify-between pt-2 border-t border-[var(--outline-subtle)]">
           <div className="flex items-center gap-1">
             {course.price > 0 && <Image src="/icons/rayal-icon.svg" alt="SAR" width={14} height={15} />}
-            <span className="text-[#06080b] font-bold text-lg">{course.price > 0 ? course.price : (isRTL ? "مجاني" : "Free")}</span>
+            <span className="text-[var(--color-text-primary)] font-bold text-lg">{course.price > 0 ? course.price : (isRTL ? "مجاني" : "Free")}</span>
           </div>
           <span className="flex items-center gap-1 text-[var(--surface-container-primary-2)] text-sm font-medium group-hover:gap-2 transition-all">
             {t("viewDetails")}

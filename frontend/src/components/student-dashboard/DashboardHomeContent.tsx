@@ -89,7 +89,7 @@ const DashboardHomeContent = () => {
             {/* Main Content */}
             <div className="flex-1 min-w-0">
               {/* Page Title */}
-              <h1 className="text-2xl font-bold text-[#1F2937] mb-6">
+              <h1 className="text-2xl font-bold text-[var(--color-text-primary)] mb-6">
                 {t("title")}
               </h1>
 

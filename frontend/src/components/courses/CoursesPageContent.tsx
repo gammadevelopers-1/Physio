@@ -180,14 +180,14 @@ const CoursesPageContent = ({
               <div className={`mb-8 ${isRTL ? "text-right" : "text-left"}`}>
                 {heroTitle && (
                   <h1
-                    className="font-semibold text-[#06080b] mb-2"
+                    className="font-semibold text-[var(--color-text-primary)] mb-2"
                     style={{ fontSize: "48px" }}
                   >
                     {heroTitle}
                   </h1>
                 )}
                 {heroSubtitle && (
-                  <p className="text-[#4a4c4f]" style={{ fontSize: "20px" }}>
+                  <p className="text-[var(--color-text-secondary)]" style={{ fontSize: "20px" }}>
                     {heroSubtitle}
                   </p>
                 )}
@@ -221,12 +221,12 @@ const CoursesPageContent = ({
                   (emptyStateTitle || emptyStateMessage) && (
                     <div className="text-center py-16">
                       {emptyStateTitle && (
-                        <p className="text-[#06080b] text-xl font-semibold mb-2">
+                        <p className="text-[var(--color-text-primary)] text-xl font-semibold mb-2">
                           {emptyStateTitle}
                         </p>
                       )}
                       {emptyStateMessage && (
-                        <p className="text-[#4a4c4f] text-lg">{emptyStateMessage}</p>
+                        <p className="text-[var(--color-text-secondary)] text-lg">{emptyStateMessage}</p>
                       )}
                     </div>
                   )
@@ -255,14 +255,14 @@ const CoursesPageContent = ({
             <div className={`mb-6 ${isRTL ? "text-right" : "text-left"}`}>
               {heroTitle && (
                 <h1
-                  className="font-semibold text-[#06080b] mb-1"
+                  className="font-semibold text-[var(--color-text-primary)] mb-1"
                   style={{ fontSize: "24px" }}
                 >
                   {heroTitle}
                 </h1>
               )}
               {heroSubtitle && (
-                <p className="text-[#4a4c4f] text-sm">{heroSubtitle}</p>
+                <p className="text-[var(--color-text-secondary)] text-sm">{heroSubtitle}</p>
               )}
             </div>
           )}
@@ -293,12 +293,12 @@ const CoursesPageContent = ({
             (emptyStateTitle || emptyStateMessage) && (
               <div className="text-center py-12">
                 {emptyStateTitle && (
-                  <p className="text-[#06080b] text-lg font-semibold mb-2">
+                  <p className="text-[var(--color-text-primary)] text-lg font-semibold mb-2">
                     {emptyStateTitle}
                   </p>
                 )}
                 {emptyStateMessage && (
-                  <p className="text-[#4a4c4f] text-base">{emptyStateMessage}</p>
+                  <p className="text-[var(--color-text-secondary)] text-base">{emptyStateMessage}</p>
                 )}
               </div>
             )

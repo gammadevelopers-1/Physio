@@ -75,10 +75,10 @@ function ReplyBubble({
         } rounded-2xl p-3 sm:p-4`}
       >
         <div className="flex items-center gap-1.5 mb-1">
-          <User className={`w-3 h-3 ${isStaff ? "text-[#6B7280]" : "text-blue-200"}`} />
+          <User className={`w-3 h-3 ${isStaff ? "text-[var(--color-text-secondary)]" : "text-blue-200"}`} />
           <span
             className={`text-[10px] sm:text-xs font-medium ${
-              isStaff ? "text-[#6B7280]" : "text-blue-200"
+              isStaff ? "text-[var(--color-text-secondary)]" : "text-blue-200"
             }`}
           >
             {reply.userName}
@@ -86,14 +86,14 @@ function ReplyBubble({
         </div>
         <p
           className={`text-xs sm:text-sm whitespace-pre-wrap ${
-            isStaff ? "text-[#374151]" : "text-white"
+            isStaff ? "text-[var(--color-text-secondary)]" : "text-white"
           }`}
         >
           {reply.message}
         </p>
         <p
           className={`text-[10px] mt-1.5 ${
-            isStaff ? "text-[#9CA3AF]" : "text-blue-200"
+            isStaff ? "text-[var(--color-text-secondary)]" : "text-blue-200"
           }`}
         >
           {new Date(reply.createdAt).toLocaleString(
@@ -145,7 +145,7 @@ function SatisfactionRating({
 
   return (
     <div className="mt-4 p-4 bg-[#F9FAFB] rounded-xl border border-[var(--color-border)]">
-      <p className="text-sm font-medium text-[#374151] mb-2">
+      <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-2">
         {t("supportPage.rateExperience")}
       </p>
       <div className="flex items-center gap-1">
@@ -244,7 +244,7 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
               {/* Back button + title */}
               <button
                 onClick={onBack}
-                className={`flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#1F2937] mb-4 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
+                className={`flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-4 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
               >
                 <ArrowLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
                 {t("supportPage.backToTickets")}
@@ -252,7 +252,7 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
 
               {loading || !ticket ? (
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 flex items-center justify-center py-16">
-                  <Loader2 className="w-8 h-8 text-[#9CA3AF] animate-spin" />
+                  <Loader2 className="w-8 h-8 text-[var(--color-text-secondary)] animate-spin" />
                 </div>
               ) : (
                 <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
@@ -260,25 +260,25 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
                   <div className="p-4 sm:p-6 border-b border-[var(--color-border)]">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <StatusBadge status={ticket.status} t={t} />
-                      <span className="text-xs text-[#9CA3AF]">
+                      <span className="text-xs text-[var(--color-text-secondary)]">
                         <Tag className="w-3 h-3 inline mr-1" />
                         {t(`supportPage.category_${ticket.category}` as Parameters<typeof t>[0])}
                       </span>
-                      <span className="text-xs text-[#9CA3AF]">
+                      <span className="text-xs text-[var(--color-text-secondary)]">
                         {t(`supportPage.priority_${ticket.priority}` as Parameters<typeof t>[0])}
                       </span>
                     </div>
-                    <h1 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-1">
+                    <h1 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-1">
                       {ticket.subject}
                     </h1>
                     {ticket.courseTitle && (
-                      <p className="text-xs sm:text-sm text-[#6B7280] mb-1">
+                      <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mb-1">
                         {isRTL && ticket.courseTitleAr
                           ? ticket.courseTitleAr
                           : ticket.courseTitle}
                       </p>
                     )}
-                    <p className="text-xs text-[#9CA3AF]">
+                    <p className="text-xs text-[var(--color-text-secondary)]">
                       {t("supportPage.createdOn", {
                         date: formatDate(ticket.createdAt),
                       })}
@@ -287,22 +287,22 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
 
                   {/* Description */}
                   <div className="p-4 sm:p-6 border-b border-[var(--color-border)] bg-[#FAFBFC]">
-                    <p className="text-xs font-medium text-[#6B7280] mb-2">
+                    <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-2">
                       {t("supportPage.description")}
                     </p>
-                    <p className="text-sm text-[#374151] whitespace-pre-wrap">
+                    <p className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap">
                       {ticket.description}
                     </p>
                   </div>
 
                   {/* Replies */}
                   <div className="p-4 sm:p-6">
-                    <p className="text-xs font-medium text-[#6B7280] mb-3">
+                    <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-3">
                       {t("supportPage.replies")} ({ticket.replies.length})
                     </p>
 
                     {ticket.replies.length === 0 ? (
-                      <p className="text-xs text-[#9CA3AF] text-center py-6">
+                      <p className="text-xs text-[var(--color-text-secondary)] text-center py-6">
                         {t("supportPage.noRepliesYet")}
                       </p>
                     ) : (

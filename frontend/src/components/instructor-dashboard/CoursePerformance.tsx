@@ -216,14 +216,14 @@ const CoursePerformance = ({
       {/* Header */}
       <div className="p-4 sm:p-5 border-b border-[var(--color-border)]">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base sm:text-lg font-semibold text-[#1F2937]">
+          <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)]">
             {t("performance.title")}
           </h2>
           {/* Export Dropdown */}
           <div className="relative" ref={exportRef}>
             <button
               onClick={() => setShowExportDropdown(!showExportDropdown)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#374151] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
               aria-label={tA("exportOptions")}
               aria-haspopup="true"
               aria-expanded={showExportDropdown}
@@ -238,7 +238,7 @@ const CoursePerformance = ({
                 <div className="py-1">
                   <button
                     onClick={handleExportCSV}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
                     role="menuitem"
                   >
                     <FileSpreadsheet className="w-4 h-4 text-[#22C55E]" />
@@ -246,7 +246,7 @@ const CoursePerformance = ({
                   </button>
                   <button
                     onClick={handleExportPDF}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
                     role="menuitem"
                   >
                     <FileText className="w-4 h-4 text-[#EF4444]" />
@@ -262,7 +262,7 @@ const CoursePerformance = ({
           <select
             value={deliveryFilter}
             onChange={(e) => setDeliveryFilter(e.target.value)}
-            className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
+            className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] bg-white hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
           >
             <option value="all">{t("performance.allDeliveryTypes")}</option>
             <option value="zoom">{t("performance.zoom")}</option>
@@ -274,7 +274,7 @@ const CoursePerformance = ({
             <select
               value={cohortFilter}
               onChange={(e) => setCohortFilter(e.target.value)}
-              className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
+              className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] bg-white hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
             >
               <option value="all">{t("performance.allCohorts")}</option>
               {cohorts.map((cohort) => (
@@ -286,7 +286,7 @@ const CoursePerformance = ({
           <select
             value={selectedCourse}
             onChange={(e) => setSelectedCourse(e.target.value)}
-            className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
+            className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] bg-white hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
           >
             {filteredCourses.map((course) => (
               <option key={course.value} value={course.value}>
@@ -310,7 +310,7 @@ const CoursePerformance = ({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Line Chart - Attendance Trend */}
           <div>
-            <h4 className="text-sm text-[#4B5563] mb-3">
+            <h4 className="text-sm text-[var(--color-text-secondary)] mb-3">
               {t("performance.attendanceTrend")}
             </h4>
             <div className="h-48 bg-gradient-to-b from-[#EFF6FF] to-transparent rounded-lg p-4 relative">
@@ -386,7 +386,7 @@ const CoursePerformance = ({
               </svg>
             </div>
             {/* X-axis labels */}
-            <div className="flex justify-between mt-2 text-xs text-[#6B7280] px-1">
+            <div className="flex justify-between mt-2 text-xs text-[var(--color-text-secondary)] px-1">
               {days.map((day, index) => (
                 <span key={index} className="text-center">{day}</span>
               ))}
@@ -395,15 +395,15 @@ const CoursePerformance = ({
 
           {/* Module Completion - Progress Bars */}
           <div>
-            <h4 className="text-sm text-[#4B5563] mb-3">
+            <h4 className="text-sm text-[var(--color-text-secondary)] mb-3">
               {t("performance.moduleCompletion")}
             </h4>
             <div className="space-y-3">
               {modules.map((module, index) => (
                 <div key={index} className="space-y-1.5">
                   <div className="flex justify-between text-sm">
-                    <span className="text-[#374151]">{module.name}</span>
-                    <span className="font-semibold text-[#1F2937]">
+                    <span className="text-[var(--color-text-secondary)]">{module.name}</span>
+                    <span className="font-semibold text-[var(--color-text-primary)]">
                       {module.percentage}%
                     </span>
                   </div>
@@ -422,7 +422,7 @@ const CoursePerformance = ({
         {/* Pass/Fail Rate */}
         {passFailStats && passFailStats.totalStudents > 0 && (
           <div className="col-span-1 lg:col-span-2 pt-4 border-t border-[var(--color-border)]">
-            <h4 className="text-sm text-[#4B5563] mb-3">
+            <h4 className="text-sm text-[var(--color-text-secondary)] mb-3">
               {t("performance.passRate")}
             </h4>
             <div className="flex items-center gap-4">
@@ -441,15 +441,15 @@ const CoursePerformance = ({
               <div className="flex items-center gap-3 text-sm flex-shrink-0">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E]" />
-                  <span className="text-[#374151] font-medium">{passFailStats.passed}</span>
-                  <span className="text-[#6B7280]">{t("performance.passed")}</span>
+                  <span className="text-[var(--color-text-secondary)] font-medium">{passFailStats.passed}</span>
+                  <span className="text-[var(--color-text-secondary)]">{t("performance.passed")}</span>
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
-                  <span className="text-[#374151] font-medium">{passFailStats.failed}</span>
-                  <span className="text-[#6B7280]">{t("performance.failed")}</span>
+                  <span className="text-[var(--color-text-secondary)] font-medium">{passFailStats.failed}</span>
+                  <span className="text-[var(--color-text-secondary)]">{t("performance.failed")}</span>
                 </span>
-                <span className="text-[#6B7280] text-xs">
+                <span className="text-[var(--color-text-secondary)] text-xs">
                   ({passFailStats.passRate}% {t("performance.ofStudents", { total: passFailStats.totalStudents })})
                 </span>
               </div>

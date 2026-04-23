@@ -36,7 +36,7 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
       {/* Basic Info */}
       <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-semibold text-[#1F2937]">
+          <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t("reviewBasicInfo")}
           </h3>
           <button
@@ -50,37 +50,37 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
         </div>
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
           <div>
-            <dt className="text-[#6B7280]">{t("courseTitle")}</dt>
-            <dd className="font-medium text-[#1F2937]">{state.title || "—"}</dd>
+            <dt className="text-[var(--color-text-secondary)]">{t("courseTitle")}</dt>
+            <dd className="font-medium text-[var(--color-text-primary)]">{state.title || "—"}</dd>
           </div>
           <div>
-            <dt className="text-[#6B7280]">{t("courseTitleAr")}</dt>
-            <dd className="font-medium text-[#1F2937]" dir="rtl">
+            <dt className="text-[var(--color-text-secondary)]">{t("courseTitleAr")}</dt>
+            <dd className="font-medium text-[var(--color-text-primary)]" dir="rtl">
               {state.titleAr || "—"}
             </dd>
           </div>
           <div>
-            <dt className="text-[#6B7280]">{t("description")}</dt>
-            <dd className="font-medium text-[#1F2937] line-clamp-2">
+            <dt className="text-[var(--color-text-secondary)]">{t("description")}</dt>
+            <dd className="font-medium text-[var(--color-text-primary)] line-clamp-2">
               {state.description || "—"}
             </dd>
           </div>
           <div>
-            <dt className="text-[#6B7280]">{t("descriptionAr")}</dt>
-            <dd className="font-medium text-[#1F2937] line-clamp-2" dir="rtl">
+            <dt className="text-[var(--color-text-secondary)]">{t("descriptionAr")}</dt>
+            <dd className="font-medium text-[var(--color-text-primary)] line-clamp-2" dir="rtl">
               {state.descriptionAr || "—"}
             </dd>
           </div>
           <div>
-            <dt className="text-[#6B7280]">{t("deliveryType")}</dt>
-            <dd className="font-medium text-[#1F2937]">
+            <dt className="text-[var(--color-text-secondary)]">{t("deliveryType")}</dt>
+            <dd className="font-medium text-[var(--color-text-primary)]">
               {deliveryLabels[state.deliveryType]}
             </dd>
           </div>
         </dl>
         {state.thumbnail && (
           <div className="mt-3">
-            <dt className="text-sm text-[#6B7280] mb-1">{t("courseImage")}</dt>
+            <dt className="text-sm text-[var(--color-text-secondary)] mb-1">{t("courseImage")}</dt>
             <img
               src={state.thumbnail}
               alt="Course thumbnail"
@@ -93,7 +93,7 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
       {/* Schedule */}
       <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-semibold text-[#1F2937]">
+          <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t("reviewSchedule")}
           </h3>
           <button
@@ -107,20 +107,20 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
         </div>
         <dl className="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-3 text-sm">
           <div>
-            <dt className="text-[#6B7280]">{t("startDate")}</dt>
-            <dd className="font-medium text-[#1F2937]">
+            <dt className="text-[var(--color-text-secondary)]">{t("startDate")}</dt>
+            <dd className="font-medium text-[var(--color-text-primary)]">
               {state.startDate || "—"}
             </dd>
           </div>
           <div>
-            <dt className="text-[#6B7280]">{t("endDate")}</dt>
-            <dd className="font-medium text-[#1F2937]">
+            <dt className="text-[var(--color-text-secondary)]">{t("endDate")}</dt>
+            <dd className="font-medium text-[var(--color-text-primary)]">
               {state.endDate || "—"}
             </dd>
           </div>
           <div>
-            <dt className="text-[#6B7280]">{t("maxEnrollment")}</dt>
-            <dd className="font-medium text-[#1F2937]">
+            <dt className="text-[var(--color-text-secondary)]">{t("maxEnrollment")}</dt>
+            <dd className="font-medium text-[var(--color-text-primary)]">
               {state.maxEnrollment || "—"}
             </dd>
           </div>
@@ -130,7 +130,7 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
       {/* Modules */}
       <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-semibold text-[#1F2937]">
+          <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t("reviewModules")} ({state.modules.length})
           </h3>
           <button
@@ -143,7 +143,7 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
           </button>
         </div>
         {state.modules.length === 0 ? (
-          <p className="text-sm text-[#9CA3AF]">{t("noModulesAdded")}</p>
+          <p className="text-sm text-[var(--color-text-secondary)]">{t("noModulesAdded")}</p>
         ) : (
           <div className="space-y-2">
             {state.modules.map((mod, idx) => (
@@ -151,15 +151,15 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
                 key={mod.tempId}
                 className="flex items-center gap-3 p-2.5 border border-[var(--color-border)] rounded-lg"
               >
-                <span className="text-sm font-medium text-[#9CA3AF] w-6 text-center">
+                <span className="text-sm font-medium text-[var(--color-text-secondary)] w-6 text-center">
                   {idx + 1}
                 </span>
-                <span className="text-[#6B7280]">{typeIcons[mod.type]}</span>
+                <span className="text-[var(--color-text-secondary)]">{typeIcons[mod.type]}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#1F2937] truncate">
+                  <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                     {mod.title}
                   </p>
-                  <p className="text-xs text-[#6B7280]">
+                  <p className="text-xs text-[var(--color-text-secondary)]">
                     {t(`moduleTypes.${mod.type}`)}
                     {mod.durationMinutes ? ` \u00B7 ${mod.durationMinutes} min` : ""}
                   </p>
@@ -175,7 +175,7 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
         <button
           type="button"
           onClick={() => dispatch({ type: "SET_STEP", step: 3 })}
-          className="px-6 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+          className="px-6 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
         >
           {t("back")}
         </button>

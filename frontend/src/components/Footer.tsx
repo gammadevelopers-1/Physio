@@ -194,7 +194,7 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
             {/* Copyright */}
             {hasCopyright && (
               <div className="flex gap-1 items-center">
-                <Copyright className="w-5 h-5 text-[#4a4c4f]" strokeWidth={1.5} />
+                <Copyright className="w-5 h-5 text-[var(--color-text-secondary)]" strokeWidth={1.5} />
                 <span
                   className="text-[var(--on-surface-variant)] text-center"
                   style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}

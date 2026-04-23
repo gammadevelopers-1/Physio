@@ -30,7 +30,7 @@ const AssessmentsNeedingAttention = ({
   const getOverdueColor = (days: number) => {
     if (days >= 7) return "text-[#EF4444] bg-[#FEE2E2]";
     if (days >= 3) return "text-[#F59E0B] bg-[#FEF3C7]";
-    return "text-[#6B7280] bg-[#F3F4F6]";
+    return "text-[var(--color-text-secondary)] bg-[#F3F4F6]";
   };
 
   if (totalCount === 0) {
@@ -38,15 +38,15 @@ const AssessmentsNeedingAttention = ({
       <div className="bg-white rounded-xl border border-[var(--color-border)]">
         <div className="p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-[#1F2937] flex items-center gap-2">
+            <h3 className="text-base font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
               <ClipboardList className="w-5 h-5 text-[#F59E0B]" />
               {t("needsGrading.title")}
             </h3>
-            <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 bg-[#F3F4F6] text-[#6B7280] text-xs font-semibold rounded-full">
+            <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 bg-[#F3F4F6] text-[var(--color-text-secondary)] text-xs font-semibold rounded-full">
               0
             </span>
           </div>
-          <p className="text-sm text-[#9CA3AF] text-center py-6">
+          <p className="text-sm text-[var(--color-text-secondary)] text-center py-6">
             {t("needsGrading.empty")}
           </p>
         </div>
@@ -59,7 +59,7 @@ const AssessmentsNeedingAttention = ({
       <div className="p-4 sm:p-5">
         {/* Header with Badge Count */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-[#1F2937] flex items-center gap-2">
+          <h3 className="text-base font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
             <ClipboardList className="w-5 h-5 text-[#F59E0B]" />
             {t("needsGrading.title")}
           </h3>
@@ -81,10 +81,10 @@ const AssessmentsNeedingAttention = ({
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#1F2937] truncate">
+                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                   {sub.studentName}
                 </p>
-                <p className="text-[11px] text-[#6B7280] truncate mb-0.5">
+                <p className="text-[11px] text-[var(--color-text-secondary)] truncate mb-0.5">
                   {sub.assessmentTitle} · {sub.courseName}
                 </p>
                 <span

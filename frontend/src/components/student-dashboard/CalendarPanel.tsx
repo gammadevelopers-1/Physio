@@ -46,19 +46,19 @@ const CalendarPanel = ({ events }: CalendarPanelProps) => {
   return (
     <div className="bg-white rounded-xl border border-[var(--color-border)] mt-4">
       <div className="p-6">
-        <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+        <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
           {t("calendar.title")}
         </h2>
 
         {events.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8">
             <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
-              <Calendar className="w-6 h-6 text-[#9CA3AF]" />
+              <Calendar className="w-6 h-6 text-[var(--color-text-secondary)]" />
             </div>
-            <h3 className="text-sm font-medium text-[#1F2937] mb-1">
+            <h3 className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
               {t("calendar.noEventsTitle")}
             </h3>
-            <p className="text-xs text-[#6B7280] text-center max-w-[200px]">
+            <p className="text-xs text-[var(--color-text-secondary)] text-center max-w-[200px]">
               {t("calendar.noEventsDescription")}
             </p>
           </div>
@@ -82,26 +82,26 @@ const CalendarPanel = ({ events }: CalendarPanelProps) => {
                   {/* Date/Time + Delivery Icon */}
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <DeliveryIcon className={`w-3.5 h-3.5 ${iconColor}`} />
-                    <span className="text-xs text-[#6B7280]">
+                    <span className="text-xs text-[var(--color-text-secondary)]">
                       {dateFormatter.format(eventDate)} &middot;{" "}
                       {timeFormatter.format(eventDate)}
                     </span>
                   </div>
 
                   {/* Title */}
-                  <h4 className="text-sm font-semibold text-[#1F2937] line-clamp-1">
+                  <h4 className="text-sm font-semibold text-[var(--color-text-primary)] line-clamp-1">
                     {event.title}
                   </h4>
 
                   {/* Course + Instructor */}
-                  <p className="text-xs text-[#6B7280] mt-0.5 line-clamp-1">
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 line-clamp-1">
                     {event.courseTitle}
                     {event.instructorName &&
                       ` · ${event.instructorName}`}
                   </p>
 
                   {/* Duration */}
-                  <p className="text-[10px] text-[#9CA3AF] mt-1">
+                  <p className="text-[10px] text-[var(--color-text-secondary)] mt-1">
                     {event.durationMinutes} {t("calendar.mins")}
                   </p>
 
@@ -125,7 +125,7 @@ const CalendarPanel = ({ events }: CalendarPanelProps) => {
 
                     {/* Venue indicator for onsite */}
                     {event.sessionType === "onsite" && event.venueAddress && (
-                      <span className="text-[10px] text-[#6B7280] flex items-center gap-1">
+                      <span className="text-[10px] text-[var(--color-text-secondary)] flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
                         {event.roomName || event.venueAddress}
                       </span>
@@ -134,7 +134,7 @@ const CalendarPanel = ({ events }: CalendarPanelProps) => {
                     {/* Add to Calendar (.ics) */}
                     <button
                       onClick={() => downloadIcs(event)}
-                      className="flex items-center gap-1 px-2 py-1.5 text-xs text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F3F4F6] rounded-lg transition-colors ml-auto"
+                      className="flex items-center gap-1 px-2 py-1.5 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[#F3F4F6] rounded-lg transition-colors ml-auto"
                       aria-label={t("calendar.addToCalendar")}
                     >
                       <Download className="w-3 h-3" />

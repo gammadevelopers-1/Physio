@@ -188,17 +188,17 @@ function CalendarIllustration() {
         fill="none"
       />
       {/* Hour marks */}
-      <rect x="59" y="28" width="2" height="8" rx="1" fill="#9CA3AF" />
-      <rect x="59" y="84" width="2" height="8" rx="1" fill="#9CA3AF" />
-      <rect x="28" y="59" width="8" height="2" rx="1" fill="#9CA3AF" />
-      <rect x="84" y="59" width="8" height="2" rx="1" fill="#9CA3AF" />
+      <rect x="59" y="28" width="2" height="8" rx="1" fill="var(--color-text-secondary)" />
+      <rect x="59" y="84" width="2" height="8" rx="1" fill="var(--color-text-secondary)" />
+      <rect x="28" y="59" width="8" height="2" rx="1" fill="var(--color-text-secondary)" />
+      <rect x="84" y="59" width="8" height="2" rx="1" fill="var(--color-text-secondary)" />
       {/* Clock hands */}
       <line
         x1="60"
         y1="60"
         x2="60"
         y2="38"
-        stroke="#6B7280"
+        stroke="var(--color-text-secondary)"
         strokeWidth="2.5"
         strokeLinecap="round"
       />
@@ -207,12 +207,12 @@ function CalendarIllustration() {
         y1="60"
         x2="76"
         y2="54"
-        stroke="#9CA3AF"
+        stroke="var(--color-text-secondary)"
         strokeWidth="2"
         strokeLinecap="round"
       />
       {/* Center dot */}
-      <circle cx="60" cy="60" r="3" fill="#6B7280" />
+      <circle cx="60" cy="60" r="3" fill="var(--color-text-secondary)" />
     </svg>
   );
 }

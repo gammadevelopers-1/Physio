@@ -159,7 +159,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                 <ArrowLeft className="w-4 h-4" />
                 {t("courseDetail.backToCourses")}
               </Link>
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-8 text-center">
                 <AlertTriangle className="w-10 h-10 text-[#F59E0B] mx-auto mb-3" />
                 <p className="text-[var(--color-text-secondary)] mb-4">{error}</p>
                 <button
@@ -183,7 +183,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
               </Link>
 
               {/* Course Header — same as instructor */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
                 <div className="relative h-48 sm:h-56">
                   {course.thumbnail ? (
                     <Image
@@ -273,7 +273,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
               </div>
 
               {/* Tabs */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                 <div className="flex border-b border-[var(--color-border)] overflow-x-auto" role="tablist">
                   {tabs.map((tab) => (
                     <button
@@ -446,7 +446,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                                 className="flex items-center justify-between p-4 bg-[var(--color-surface-page)] rounded-lg"
                               >
                                 <div className="flex items-center gap-3 min-w-0">
-                                  <div className="w-10 h-10 bg-white rounded-lg border border-[var(--color-border)] flex items-center justify-center">
+                                  <div className="w-10 h-10 bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] flex items-center justify-center">
                                     {sessionTypeIcon(session.type)}
                                   </div>
                                   <div className="min-w-0">

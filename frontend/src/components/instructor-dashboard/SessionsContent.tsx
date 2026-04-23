@@ -85,7 +85,7 @@ function ModalOverlay({
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto scrollbar-hide">
+      <div className="relative bg-[var(--color-surface-card)] rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto scrollbar-hide">
         {children}
       </div>
     </div>
@@ -2269,7 +2269,7 @@ const SessionsContent = () => {
     const displaySessions = limit ? groupSessions.slice(0, limit) : groupSessions;
     const hasMore = limit ? groupSessions.length > limit : false;
     return (
-    <div className="bg-white rounded-xl border border-[var(--color-border)]">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
       <div className="p-4 border-b border-[var(--color-border)]">
         <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
           {groupTitle}
@@ -2439,7 +2439,7 @@ const SessionsContent = () => {
 
               {/* Error */}
               {error && !loading && (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-8 text-center">
                   <p className="text-sm text-[#EF4444] mb-3">{error}</p>
                   <button
                     onClick={fetchData}
@@ -2461,7 +2461,7 @@ const SessionsContent = () => {
 
               {/* Calendar View */}
               {!loading && !error && viewMode === "calendar" && (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                   {/* Calendar Header */}
                   <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
                     <button
@@ -2603,7 +2603,7 @@ const SessionsContent = () => {
 
       {rescheduleSession && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+          <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
             <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">Reschedule Lecture</h3>
             <div className="space-y-4">
               <div>

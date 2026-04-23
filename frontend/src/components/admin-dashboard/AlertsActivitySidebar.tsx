@@ -176,7 +176,7 @@ const AlertsActivitySidebar = ({
   return (
     <div className="w-full lg:w-[320px] lg:flex-shrink-0 space-y-4">
       {/* Alerts Section */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Bell className="w-5 h-5 text-[#002D87]" />
@@ -228,7 +228,7 @@ const AlertsActivitySidebar = ({
       </div>
 
       {/* Recent Activity Section */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-[#002D87]" />
@@ -263,7 +263,7 @@ const AlertsActivitySidebar = ({
       </div>
 
       {/* Quick Actions Section */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
           <Zap className="w-5 h-5 text-[#002D87]" />
           <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
@@ -290,7 +290,7 @@ const AlertsActivitySidebar = ({
 
       {/* Finance Summary Section */}
       {finance && (
-        <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
           {/* Header */}
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">

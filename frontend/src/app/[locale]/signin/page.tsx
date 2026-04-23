@@ -64,7 +64,7 @@ function SignInForm() {
         <div className="flex items-center justify-center w-full">
           {/* Auth Card Container */}
           <div
-            className="bg-white rounded-[24px] overflow-hidden w-full max-w-[1312px] flex flex-col lg:flex-row"
+            className="bg-[var(--color-surface-card)] rounded-[24px] overflow-hidden w-full max-w-[1312px] flex flex-col lg:flex-row"
             style={{
               boxShadow: "-2px 8px 2px 0px rgba(0,0,0,0), -1px 5px 2px 0px rgba(0,0,0,0.01), -1px 3px 2px 0px rgba(0,0,0,0.03), 0px 1px 1px 0px rgba(0,0,0,0.05), 0px 0px 1px 0px rgba(0,0,0,0.06)"
             }}

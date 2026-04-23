@@ -37,7 +37,7 @@ import {
 const COURSE_STATUSES = ["active", "draft", "pending_review", "changes_requested", "completed", "archived"] as const;
 
 const CourseCardSkeleton = () => (
-  <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
     <div className="h-40 bg-[var(--color-border)] animate-pulse" />
     <div className="p-4 space-y-3">
       <div className="h-5 w-3/4 bg-[var(--color-border)] rounded animate-pulse" />
@@ -190,7 +190,7 @@ const MyCoursesContent = () => {
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 mb-6">
                 <div className="flex flex-col lg:flex-row gap-4">
                   {/* Search */}
                   <div className="flex-1 relative">
@@ -310,7 +310,7 @@ const MyCoursesContent = () => {
               ) : error ? (
                 <DashboardError message={error} onRetry={refetch} />
               ) : courses.length === 0 ? (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
                     <BookOpen className="w-8 h-8 text-[var(--color-text-secondary)]" />
                   </div>
@@ -338,7 +338,7 @@ const MyCoursesContent = () => {
                         return (
                           <div
                             key={course.id}
-                            className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden hover:shadow-md transition-shadow flex flex-col"
+                            className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden hover:shadow-md transition-shadow flex flex-col"
                           >
                             <div className="relative h-40">
                               <Image
@@ -447,7 +447,7 @@ const MyCoursesContent = () => {
 
                   {/* List View */}
                   {viewMode === "list" && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] divide-y divide-[var(--color-border)]">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] divide-y divide-[var(--color-border)]">
                       {courses.map((course) => {
                         const courseTitle =
                           locale === "ar" && course.titleAr ? course.titleAr : course.title;

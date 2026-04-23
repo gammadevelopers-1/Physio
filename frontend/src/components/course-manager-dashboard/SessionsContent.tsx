@@ -113,7 +113,7 @@ function ScheduleSessionModal({
   };
 
   return (
-    <div className="bg-white rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl">
+    <div className="bg-[var(--color-surface-card)] rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl">
       <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
         <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
           {t("sessionsPage.scheduleSessionTitle")}
@@ -966,7 +966,7 @@ const SessionsContent = () => {
               )}
 
               {error && (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
                   <p className="text-sm text-[var(--color-text-secondary)] mb-4">{error}</p>
                   <button onClick={refetch} className="px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg">{t("dashboard.retry")}</button>
@@ -974,7 +974,7 @@ const SessionsContent = () => {
               )}
 
               {!loading && !error && sessions.length === 0 && (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <CalendarDays className="w-12 h-12 text-[var(--color-text-secondary)] mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">{t("sessionsPage.noSessions")}</h3>
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("sessionsPage.noSessionsDesc")}</p>
@@ -984,7 +984,7 @@ const SessionsContent = () => {
               {!loading && !error && sessions.length > 0 && viewMode === "list" && (
                 <div className="space-y-4">
                   {todaySessions.length > 0 && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)]">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
                       <div className="p-4 border-b border-[var(--color-border)]">
                         <h2 className="text-base font-semibold text-[var(--color-text-primary)]">{t("sessionsPage.today")}</h2>
                       </div>
@@ -995,7 +995,7 @@ const SessionsContent = () => {
                   )}
 
                   {upcomingSessions.length > 0 && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)]">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
                       <div className="p-4 border-b border-[var(--color-border)]">
                         <h2 className="text-base font-semibold text-[var(--color-text-primary)]">{t("sessionsPage.upcoming")}</h2>
                       </div>
@@ -1006,7 +1006,7 @@ const SessionsContent = () => {
                   )}
 
                   {pastSessions.length > 0 && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)]">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
                       <button
                         onClick={() => setShowPast(!showPast)}
                         className="w-full flex items-center justify-between p-4 hover:bg-[var(--color-surface-page)] transition-colors rounded-xl"
@@ -1037,7 +1037,7 @@ const SessionsContent = () => {
               )}
 
               {!loading && !error && viewMode === "calendar" && (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                   <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
                     <button onClick={goToPrevMonth} className="p-2 hover:bg-[#F3F4F6] rounded-lg">{isRTL ? <ChevronRight className="w-5 h-5 text-[var(--color-text-secondary)]" /> : <ChevronLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />}</button>
                     <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{calendarData.headerLabel}</h2>
@@ -1093,7 +1093,7 @@ const SessionsContent = () => {
       {/* Cancel Modal */}
       {cancelModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-md p-6">
+          <div className="bg-[var(--color-surface-card)] rounded-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Cancel Session</h3>
               <button onClick={() => setCancelModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg"><X className="w-5 h-5 text-[var(--color-text-secondary)]" /></button>
@@ -1127,7 +1127,7 @@ const SessionsContent = () => {
       {/* Reschedule Modal */}
       {rescheduleModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-md p-6">
+          <div className="bg-[var(--color-surface-card)] rounded-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Reschedule Session</h3>
               <button onClick={() => setRescheduleModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg"><X className="w-5 h-5 text-[var(--color-text-secondary)]" /></button>
@@ -1161,7 +1161,7 @@ const SessionsContent = () => {
       {/* Assign Substitute Modal */}
       {substituteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-md p-6">
+          <div className="bg-[var(--color-surface-card)] rounded-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Assign Substitute</h3>
               <button onClick={() => setSubstituteModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg"><X className="w-5 h-5 text-[var(--color-text-secondary)]" /></button>
@@ -1199,7 +1199,7 @@ const SessionsContent = () => {
       {/* Attendance Modal */}
       {attendanceModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-2xl p-6 max-h-[85vh] overflow-y-auto">
+          <div className="bg-[var(--color-surface-card)] rounded-xl w-full max-w-2xl p-6 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("sessionsPage.attendanceTitle")}</h3>

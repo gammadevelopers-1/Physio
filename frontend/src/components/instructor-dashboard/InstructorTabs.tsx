@@ -330,7 +330,7 @@ const InstructorTabs = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--color-border)]">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
       {/* Tab Headers */}
       <div className="overflow-x-auto scrollbar-hide">
         <div className="flex border-b border-[var(--color-border)] min-w-max" role="tablist">
@@ -523,7 +523,7 @@ const InstructorTabs = ({
 
                             {/* Action Menu Dropdown */}
                             {openActionMenu === file.id && (
-                              <div className="absolute end-0 top-full mt-1 w-36 bg-white rounded-lg border border-[var(--color-border)] shadow-lg z-10" role="menu">
+                              <div className="absolute end-0 top-full mt-1 w-36 bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] shadow-lg z-10" role="menu">
                                 <div className="py-1">
                                   <button
                                     onClick={() => handleEdit(file.id)}

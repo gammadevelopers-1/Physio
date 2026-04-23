@@ -124,7 +124,7 @@ const ApplicationsContent = () => {
 
           {/* Empty state */}
           {!isLoading && !error && applications.length === 0 && (
-            <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+            <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
               <FileText className="w-12 h-12 text-[var(--color-border)] mx-auto mb-4" />
               <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-2">
                 {t("applicationsPage.emptyTitle") || "No Applications Yet"}
@@ -152,7 +152,7 @@ const ApplicationsContent = () => {
               return (
                 <div
                   key={app.id}
-                  className={`bg-white rounded-xl border border-[var(--color-border)] overflow-hidden`}
+                  className={`bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden`}
                 >
                   <div className="p-5 sm:p-6">
                     <div className="flex items-start justify-between gap-4">

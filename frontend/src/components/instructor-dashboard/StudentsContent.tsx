@@ -327,7 +327,7 @@ const StudentsContent = () => {
                 <>
                   {/* Stats Cards */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center">
                           <Users className="w-5 h-5 text-[#3B82F6]" />
@@ -342,7 +342,7 @@ const StudentsContent = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center">
                           <CheckCircle className="w-5 h-5 text-[#22C55E]" />
@@ -357,7 +357,7 @@ const StudentsContent = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#FEF9C3] flex items-center justify-center">
                           <AlertTriangle className="w-5 h-5 text-[#EAB308]" />
@@ -372,7 +372,7 @@ const StudentsContent = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#FEE2E2] flex items-center justify-center">
                           <UserX className="w-5 h-5 text-[#EF4444]" />
@@ -390,7 +390,7 @@ const StudentsContent = () => {
                   </div>
 
                   {/* Search and Filters */}
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex flex-col md:flex-row gap-4">
                       <div className="relative flex-1">
                         <Search
@@ -470,7 +470,7 @@ const StudentsContent = () => {
 
                   {/* Empty state */}
                   {filteredStudents.length === 0 && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                       <Users className="w-12 h-12 text-[var(--color-border)] mx-auto mb-4" />
                       <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
                         {t("students.noStudents") || "No students found"}
@@ -485,7 +485,7 @@ const StudentsContent = () => {
                   {filteredStudents.length > 0 && (
                     <>
                       {/* Desktop Table */}
-                      <div className="hidden md:block bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                      <div className="hidden md:block bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                         <div className="overflow-x-auto">
                           <table className="w-full table-fixed">
                             <thead>
@@ -668,7 +668,7 @@ const StudentsContent = () => {
                         {paginatedStudents.map((student) => (
                           <div
                             key={student.studentId}
-                            className="bg-white rounded-xl border border-[var(--color-border)] p-4"
+                            className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4"
                           >
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex items-center gap-3">

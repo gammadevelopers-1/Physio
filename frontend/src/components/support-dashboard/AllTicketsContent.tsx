@@ -256,7 +256,7 @@ const AllTicketsContent = () => {
                   return (
                     <div
                       key={index}
-                      className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3"
+                      className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3"
                     >
                       <div
                         className={`w-10 h-10 ${stat.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}
@@ -277,7 +277,7 @@ const AllTicketsContent = () => {
               </div>
 
               {/* Tickets Table */}
-              <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
                 {/* Tabs */}
                 <div className="px-5 py-4 border-b border-[#F3F4F6]">
                   <div className="flex gap-1 bg-[#F3F4F6] rounded-lg p-0.5 w-fit overflow-x-auto">
@@ -511,7 +511,7 @@ const AllTicketsContent = () => {
                               </button>
                               {openActionId === ticket.id && (
                                 <div
-                                  className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[160px] z-20 ${isRTL ? "left-0" : "right-0"}`}
+                                  className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[160px] z-20 ${isRTL ? "left-0" : "right-0"}`}
                                 >
                                   <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
                                     <Eye className="w-3.5 h-3.5" />

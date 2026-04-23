@@ -212,7 +212,7 @@ const CoursePerformance = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--color-border)] mb-6">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] mb-6">
       {/* Header */}
       <div className="p-4 sm:p-5 border-b border-[var(--color-border)]">
         <div className="flex items-center justify-between mb-3">
@@ -234,7 +234,7 @@ const CoursePerformance = ({
             </button>
 
             {showExportDropdown && (
-              <div className="absolute end-0 top-full mt-1 w-40 bg-white rounded-lg border border-[var(--color-border)] shadow-lg z-10" role="menu">
+              <div className="absolute end-0 top-full mt-1 w-40 bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] shadow-lg z-10" role="menu">
                 <div className="py-1">
                   <button
                     onClick={handleExportCSV}

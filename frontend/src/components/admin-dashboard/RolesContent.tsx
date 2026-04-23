@@ -143,7 +143,7 @@ function ModalBackdrop({ children, onClose }: { children: React.ReactNode; onClo
       className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
     </div>
@@ -464,7 +464,7 @@ const RolesContent = () => {
 
               {/* Loading State */}
               {isLoading && (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center">
                   <Loader2 className="w-8 h-8 animate-spin text-[#002D87] mb-3" />
                   <p className="text-sm text-[var(--color-text-secondary)]">Loading roles...</p>
                 </div>
@@ -472,7 +472,7 @@ const RolesContent = () => {
 
               {/* Error State */}
               {fetchError && !isLoading && (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center" role="alert">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center" role="alert">
                   <AlertCircle className="w-8 h-8 text-[#DC2626] mb-3" />
                   <p className="text-sm text-[#DC2626] mb-4">{fetchError}</p>
                   <button
@@ -496,7 +496,7 @@ const RolesContent = () => {
                     return (
                       <div
                         key={role.id}
-                        className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden"
+                        className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden"
                       >
                         {/* Role Header */}
                         <div
@@ -621,7 +621,7 @@ const RolesContent = () => {
                   })}
 
                   {roles.length === 0 && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] py-12 text-center">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] py-12 text-center">
                       <p className="text-[var(--color-text-secondary)]">No roles found</p>
                     </div>
                   )}

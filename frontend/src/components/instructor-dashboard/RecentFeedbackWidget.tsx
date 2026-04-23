@@ -109,7 +109,7 @@ const RecentFeedbackWidget = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--color-border)]">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
       <div className="p-4 sm:p-5">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">

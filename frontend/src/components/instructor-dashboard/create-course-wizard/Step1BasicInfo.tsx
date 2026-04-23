@@ -33,7 +33,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
   return (
     <div className="space-y-6">
       {/* Title & Description */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
         <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
           {t("basicInfo")}
         </h2>
@@ -151,7 +151,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
       </div>
 
       {/* Thumbnail */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
         <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
           {t("courseImage")}
         </h2>

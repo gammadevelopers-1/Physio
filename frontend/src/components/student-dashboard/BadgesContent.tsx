@@ -44,7 +44,7 @@ const BadgesContent = () => {
               </h1>
 
               {/* Badges Section */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                 {/* Badges Grid or Empty State */}
                 {mockBadgesData.length === 0 ? (
                   // Empty State

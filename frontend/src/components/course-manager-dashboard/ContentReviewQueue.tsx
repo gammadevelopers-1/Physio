@@ -51,7 +51,7 @@ const ContentReviewQueue = ({
   const defaultTypeIcon = { icon: File, bg: "bg-[#F3F4F6]", color: "text-[var(--color-text-secondary)]" };
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--color-border)]">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
       {/* Header */}
       <div className="flex items-center gap-2 p-4 sm:p-5 border-b border-[var(--color-border)]">
         <div className="w-8 h-8 bg-[#FEF3C7] rounded-lg flex items-center justify-center">

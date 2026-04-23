@@ -185,7 +185,7 @@ const Testimonials = ({ testimonials: strapiTestimonials = [], sectionData }: Te
       </section>
 
       {/* Mobile/Tablet Testimonials - Show on screens smaller than 1280px */}
-      <section className="xl:hidden bg-white px-4 py-10 overflow-hidden relative">
+      <section className="xl:hidden bg-[var(--color-surface-page)] px-4 py-10 overflow-hidden relative">
         <div className="flex flex-col gap-5 items-center justify-center max-w-full w-full">
           {/* Section Title */}
           {(title || description) && (

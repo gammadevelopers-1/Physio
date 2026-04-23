@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 
 const CourseCardSkeleton = () => (
-  <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
     <div className="h-36 bg-[var(--color-border)] animate-pulse" />
     <div className="p-4 space-y-3">
       <div className="h-5 w-3/4 bg-[var(--color-border)] rounded animate-pulse" />
@@ -254,7 +254,7 @@ const CoursesContent = () => {
 
               {/* Stats Summary */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-xs text-[var(--color-text-secondary)]">
                     {t("coursesPage.stats.total")}
                   </p>
@@ -262,7 +262,7 @@ const CoursesContent = () => {
                     {loading ? "—" : total}
                   </p>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-xs text-[var(--color-text-secondary)]">
                     {t("coursesPage.stats.active")}
                   </p>
@@ -270,7 +270,7 @@ const CoursesContent = () => {
                     {loading ? "—" : activeCourses}
                   </p>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-xs text-[var(--color-text-secondary)]">
                     {t("coursesPage.stats.totalEnrollments")}
                   </p>
@@ -281,7 +281,7 @@ const CoursesContent = () => {
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 mb-6">
                 <div className="flex flex-col lg:flex-row gap-4">
                   <div className="flex-1 relative">
                     <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]`} />
@@ -390,7 +390,7 @@ const CoursesContent = () => {
                   </button>
                 </div>
               ) : courses.length === 0 ? (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
                     <BookOpen className="w-8 h-8 text-[var(--color-text-secondary)]" />
                   </div>
@@ -422,7 +422,7 @@ const CoursesContent = () => {
                     return (
                       <div
                         key={course.id}
-                        className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden hover:shadow-md transition-shadow flex flex-col"
+                        className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden hover:shadow-md transition-shadow flex flex-col"
                       >
                         <div className="relative h-36">
                           <Image
@@ -464,7 +464,7 @@ const CoursesContent = () => {
                             </button>
 
                             {openDropdown === course.id && (
-                              <div className="absolute end-0 top-full mt-1 w-48 bg-white rounded-lg border border-[var(--color-border)] shadow-lg z-20" role="menu">
+                              <div className="absolute end-0 top-full mt-1 w-48 bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] shadow-lg z-20" role="menu">
                                 <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
                                   {t("coursesPage.actions.title")}
                                 </p>
@@ -717,7 +717,7 @@ const CoursesContent = () => {
               {/* Request Changes Modal */}
               {requestChangesId && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                  <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full max-w-md p-6">
                     <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
                       {t("coursesPage.actions.requestChanges")}
                     </h3>

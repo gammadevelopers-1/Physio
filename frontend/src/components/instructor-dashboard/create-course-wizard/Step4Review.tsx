@@ -34,7 +34,7 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
   return (
     <div className="space-y-4">
       {/* Basic Info */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t("reviewBasicInfo")}
@@ -91,7 +91,7 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
       </div>
 
       {/* Schedule */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t("reviewSchedule")}
@@ -128,7 +128,7 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
       </div>
 
       {/* Modules */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t("reviewModules")} ({state.modules.length})

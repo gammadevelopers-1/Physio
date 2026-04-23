@@ -310,7 +310,7 @@ const ContentReviewContent = () => {
                   <div className="h-7 bg-[var(--color-border)] rounded w-48 animate-pulse mb-2" />
                   <div className="h-4 bg-[var(--color-border)] rounded w-72 animate-pulse" />
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                   <table className="w-full">
                     <tbody>
                       {Array.from({ length: 5 }).map((_, i) => (
@@ -369,7 +369,7 @@ const ContentReviewContent = () => {
 
               {/* Stats Cards — 4 cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-3">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#FEF3C7] rounded-lg flex items-center justify-center">
                     <Clock className="w-5 h-5 text-[#F59E0B]" />
                   </div>
@@ -378,7 +378,7 @@ const ContentReviewContent = () => {
                     <p className="text-xs text-[var(--color-text-secondary)]">{t("contentReviewPage.stats.pending")}</p>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-3">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#FEF9C3] rounded-lg flex items-center justify-center">
                     <MessageSquare className="w-5 h-5 text-[#D97706]" />
                   </div>
@@ -387,7 +387,7 @@ const ContentReviewContent = () => {
                     <p className="text-xs text-[var(--color-text-secondary)]">{t("contentReviewPage.stats.changesRequested")}</p>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-3">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#D1FAE5] rounded-lg flex items-center justify-center">
                     <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
                   </div>
@@ -396,7 +396,7 @@ const ContentReviewContent = () => {
                     <p className="text-xs text-[var(--color-text-secondary)]">{t("contentReviewPage.stats.approved")}</p>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-3">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#FEE2E2] rounded-lg flex items-center justify-center">
                     <XCircle className="w-5 h-5 text-[#EF4444]" />
                   </div>
@@ -455,7 +455,7 @@ const ContentReviewContent = () => {
               {/* Comment Modal Overlay */}
               {commentId && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                  <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl shadow-lg max-w-md w-full p-6">
                     <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
                       {commentAction === "reject"
                         ? t("contentReviewPage.rejectTitle")
@@ -535,7 +535,7 @@ const ContentReviewContent = () => {
 
               {/* Table */}
               {filtered.length === 0 ? (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
                     <FileText className="w-8 h-8 text-[var(--color-text-secondary)]" />
                   </div>
@@ -551,7 +551,7 @@ const ContentReviewContent = () => {
                   </p>
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full table-fixed">
                       <colgroup>
@@ -812,7 +812,7 @@ const ContentReviewContent = () => {
                                         {checklist.checks.map((check) => (
                                           <div
                                             key={check.rule}
-                                            className="flex items-start gap-3 p-3 bg-white rounded-lg border border-[var(--color-border)]"
+                                            className="flex items-start gap-3 p-3 bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)]"
                                           >
                                             {check.status === "passed" ? (
                                               <CheckCircle2 className="w-5 h-5 text-[#22C55E] flex-shrink-0 mt-0.5" />

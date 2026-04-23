@@ -296,7 +296,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
               <CourseManagerMobileSidebar manager={manager} />
               <div className="flex-1 min-w-0 animate-pulse space-y-4">
                 <div className="h-8 w-48 bg-[var(--color-border)] rounded" />
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 space-y-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6 space-y-4">
                   <div className="h-6 w-32 bg-[var(--color-border)] rounded" />
                   <div className="h-10 w-full bg-[var(--color-border)] rounded" />
                   <div className="h-10 w-full bg-[var(--color-border)] rounded" />
@@ -321,7 +321,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
               </div>
               <CourseManagerMobileSidebar manager={manager} />
               <div className="flex-1 min-w-0">
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <AlertTriangle className="w-12 h-12 text-[#D97706] mx-auto mb-4" />
                   <p className="text-[var(--color-text-secondary)] mb-4">{loadError}</p>
                   <button
@@ -372,7 +372,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Basic Info */}
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                   <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("createCourse.basicInfo")}
                   </h2>
@@ -432,7 +432,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                 </div>
 
                 {/* Course Image */}
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                   <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("createCourse.courseImage")}
                   </h2>
@@ -480,7 +480,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                 </div>
 
                 {/* Course Content */}
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                   <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("createCourse.wizardStepContent")}
                   </h2>
@@ -799,7 +799,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                 </div>
 
                 {/* Instructor Assignment */}
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                   <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("createCourse.instructor")}
                   </h2>
@@ -831,7 +831,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                 </div>
 
                 {/* Course Settings */}
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                   <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("createCourse.courseSettings")}
                   </h2>

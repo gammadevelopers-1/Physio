@@ -208,7 +208,7 @@ const CourseAssistantsManagePanel = ({
   const maxPriority = Math.max(...activeTAs.map((ta) => ta.priority), 0);
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
@@ -264,7 +264,7 @@ const CourseAssistantsManagePanel = ({
                 key={ta.id}
                 onClick={() => handleAssign(ta.id)}
                 disabled={assigning}
-                className="w-full flex items-center justify-between px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-white rounded-lg transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-between px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-card)] rounded-lg transition-colors disabled:opacity-50"
               >
                 <span>
                   {ta.firstName} {ta.lastName}{" "}
@@ -420,7 +420,7 @@ const CourseAssistantsManagePanel = ({
               }
             }}
           />
-          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+          <div className="relative bg-[var(--color-surface-card)] rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-1">
               {t("taManagement.rejectTitle")}
             </h3>

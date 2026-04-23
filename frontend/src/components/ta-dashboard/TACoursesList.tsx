@@ -114,7 +114,7 @@ const TACoursesList = () => {
       </div>
 
       {/* Filters Card */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Search */}
           <div className="flex-1 relative">
@@ -167,7 +167,7 @@ const TACoursesList = () => {
           <div className="w-8 h-8 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : filteredAndSortedCourses.length === 0 ? (
-        <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
+        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-8 text-center">
           <BookOpen className="w-12 h-12 text-[var(--color-text-secondary)] mx-auto mb-3" />
           <p className="text-[var(--color-text-secondary)]">{t("courses.noCourses")}</p>
         </div>
@@ -179,7 +179,7 @@ const TACoursesList = () => {
             return (
               <div
                 key={course.id}
-                className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden hover:shadow-md transition-shadow flex flex-col"
+                className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden hover:shadow-md transition-shadow flex flex-col"
               >
                 {/* Thumbnail */}
                 <div className="relative h-40">

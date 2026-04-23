@@ -68,7 +68,7 @@ interface CourseDetailContentProps {
 const CourseDetailSkeleton = () => (
   <div className="flex-1 min-w-0 animate-pulse">
     <div className="h-4 w-32 bg-[var(--color-border)] rounded mb-4" />
-    <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
       <div className="h-48 sm:h-56 bg-[var(--color-border)]" />
       <div className="p-4 border-t border-[var(--color-border)]">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -84,7 +84,7 @@ const CourseDetailSkeleton = () => (
         </div>
       </div>
     </div>
-    <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
       <div className="flex gap-4 p-4 border-b border-[var(--color-border)]">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="h-5 w-20 bg-[var(--color-border)] rounded" />
@@ -167,7 +167,7 @@ const ModalOverlay = ({
 }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
     <div className="absolute inset-0" onClick={onClose} />
-    <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="relative bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {children}
     </div>
   </div>
@@ -788,7 +788,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 </Link>
 
                 {/* Course Header */}
-                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
                   <div className="relative h-48 sm:h-56">
                     {course.thumbnail ? (
                       <Image
@@ -879,7 +879,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 </div>
 
                 {/* Tabs */}
-                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                   <div className="flex border-b border-[var(--color-border)] overflow-x-auto" role="tablist">
                     {tabs.map((tab) => (
                       <button

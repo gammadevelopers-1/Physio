@@ -144,7 +144,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
               </div>
 
               {/* Aggregate stats */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-4">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 mb-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <p className="text-xs text-[var(--color-text-secondary)] mb-1">{isRTL ? "متوسط التقييم" : "Average rating"}</p>
@@ -182,7 +182,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-4">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 mb-4">
                 <div className="flex flex-wrap items-center gap-3">
                   {/* Search */}
                   <div className="relative flex-1 min-w-[200px]">
@@ -245,7 +245,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
               </div>
 
               {/* Reviews list */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
                 {loading ? (
                   <div className="flex items-center justify-center py-16">
                     <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />

@@ -432,19 +432,19 @@ const NELCComplianceCenterContent = () => {
 
               {/* Summary Bar */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-center">
                   <p className="text-3xl font-bold text-[#3B82F6]">{overallPercentage}%</p>
                   <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("nelc.overallCompliance")}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-center">
                   <p className="text-3xl font-bold text-[#22C55E]">{totals.passed}</p>
                   <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("nelc.passed")}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-center">
                   <p className="text-3xl font-bold text-[#F59E0B]">{totals.review}</p>
                   <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("nelc.review")}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-center">
                   <p className="text-3xl font-bold text-[#EF4444]">{totals.failed}</p>
                   <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("nelc.failed")}</p>
                 </div>
@@ -488,7 +488,7 @@ const NELCComplianceCenterContent = () => {
 
               {/* Courses Tab Content */}
               {filtered.length === 0 ? (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
                     <ShieldCheck className="w-8 h-8 text-[var(--color-text-secondary)]" />
                   </div>
@@ -500,7 +500,7 @@ const NELCComplianceCenterContent = () => {
                   </p>
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
@@ -601,7 +601,7 @@ const NELCComplianceCenterContent = () => {
                                             return (
                                               <div
                                                 key={cat.category}
-                                                className="bg-white rounded-lg border border-[var(--color-border)] overflow-hidden cursor-pointer hover:shadow-sm transition-shadow"
+                                                className="bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] overflow-hidden cursor-pointer hover:shadow-sm transition-shadow"
                                                 onClick={(e) => {
                                                   e.stopPropagation();
                                                   setExpandedCategory(
@@ -713,12 +713,12 @@ const NELCComplianceCenterContent = () => {
               {false && (
                 <>
                   {vcLoading ? (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                       <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin mx-auto mb-3" />
                       <p className="text-sm text-[var(--color-text-secondary)]">{t("dashboard.loading")}</p>
                     </div>
                   ) : filteredVc.length === 0 ? (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                       <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
                         <Video className="w-8 h-8 text-[var(--color-text-secondary)]" />
                       </div>
@@ -732,7 +732,7 @@ const NELCComplianceCenterContent = () => {
                       </p>
                     </div>
                   ) : (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead>
@@ -856,7 +856,7 @@ const NELCComplianceCenterContent = () => {
                                             return (
                                               <div
                                                 key={idx}
-                                                className="flex items-start gap-3 p-2.5 bg-white rounded-lg border border-[var(--color-border)]"
+                                                className="flex items-start gap-3 p-2.5 bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)]"
                                               >
                                                 <CheckIcon
                                                   className={`w-4 h-4 mt-0.5 flex-shrink-0 ${checkConfig.text}`}

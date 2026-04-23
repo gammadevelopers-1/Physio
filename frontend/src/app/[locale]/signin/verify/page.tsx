@@ -200,7 +200,7 @@ function VerifyForm() {
       <main id="main-content" className="flex-1 bg-[var(--color-surface-page)] px-4 py-10 md:px-16 md:py-20">
         <div className="flex items-center justify-center w-full">
           <div
-            className="bg-white rounded-[24px] overflow-hidden w-full max-w-[520px]"
+            className="bg-[var(--color-surface-card)] rounded-[24px] overflow-hidden w-full max-w-[520px]"
             style={{
               boxShadow:
                 "-2px 8px 2px 0px rgba(0,0,0,0), -1px 5px 2px 0px rgba(0,0,0,0.01), -1px 3px 2px 0px rgba(0,0,0,0.03), 0px 1px 1px 0px rgba(0,0,0,0.05), 0px 0px 1px 0px rgba(0,0,0,0.06)",

@@ -52,7 +52,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
     <>
       {/* Hero Section */}
       {hasHero && (
-        <section className="bg-white px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
+        <section className="bg-[var(--color-surface-page)] px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
           <div className="max-w-[1312px] mx-auto">
             {breadcrumb && (
               <div className="flex items-center gap-1 mb-6">
@@ -193,7 +193,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
 
       {/* Certificate Verification Section */}
       {hasVerification && (
-        <section className="bg-white px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
+        <section className="bg-[var(--color-surface-page)] px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
           <div className="max-w-[1312px] mx-auto">
             <div className="bg-[var(--color-surface-page)] rounded-[24px] p-6 md:p-12 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
               <div className="flex flex-col md:flex-row items-center gap-8">

@@ -148,7 +148,7 @@ const CreateAssessmentModal = ({
 
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-lg p-6">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl w-full max-w-lg p-6">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("assessments.createNew")}
@@ -402,7 +402,7 @@ const EditAssessmentModal = ({
 
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-lg p-6">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl w-full max-w-lg p-6">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("assessments.editAssessment")}
@@ -690,7 +690,7 @@ const AddQuestionModal = ({
 
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("assessments.addQuestion")}
@@ -994,7 +994,7 @@ const EditQuestionModal = ({
 
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("assessments.editQuestion")}
@@ -1258,7 +1258,7 @@ const GradeModal = ({
 
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
         <div className="flex items-center justify-between mb-5">
           <div>
             <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
@@ -1989,7 +1989,7 @@ const AssessmentsContent = () => {
                 <>
                   {/* Stats Cards */}
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center">
                           <ClipboardList className="w-5 h-5 text-[#3B82F6]" />
@@ -2000,7 +2000,7 @@ const AssessmentsContent = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center">
                           <CheckCircle className="w-5 h-5 text-[#22C55E]" />
@@ -2011,7 +2011,7 @@ const AssessmentsContent = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#FEF9C3] flex items-center justify-center">
                           <Clock className="w-5 h-5 text-[#EAB308]" />
@@ -2025,7 +2025,7 @@ const AssessmentsContent = () => {
                   </div>
 
                   {/* Tabs */}
-                  <div className="bg-white rounded-xl border border-[var(--color-border)]">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
                     <div className="flex border-b border-[var(--color-border)] overflow-x-auto">
                       {tabs.map((tab) => (
                         <button
@@ -3310,7 +3310,7 @@ const AssessmentsContent = () => {
 
       {publishConfirmId && (
         <ModalOverlay onClose={() => { setPublishConfirmId(null); setPublishCheckData(null); }}>
-          <div className="bg-white rounded-2xl w-full max-w-md p-6">
+          <div className="bg-[var(--color-surface-card)] rounded-2xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {t("assessments.confirmPublish")}

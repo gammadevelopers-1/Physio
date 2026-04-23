@@ -1308,7 +1308,7 @@ const CourseDetailContent = ({
         </section>
 
         {/* Related Courses */}
-        <section className="px-16 py-16 bg-white">
+        <section className="px-16 py-16 bg-[var(--color-surface-page)]">
           <div className="max-w-[1200px] mx-auto">
             <h2 className="font-bold text-[var(--color-text-primary)] text-center mb-10" style={{ fontSize: "36px" }}>
               {relatedCoursesTitle || t("relatedCourses.title")}
@@ -1661,7 +1661,7 @@ const CourseDetailContent = ({
         </section>
 
         {/* Related Courses */}
-        <section className="px-4 py-8 bg-white">
+        <section className="px-4 py-8 bg-[var(--color-surface-page)]">
           <h2 className="font-bold text-[var(--color-text-primary)] text-center mb-1" style={{ fontSize: "24px" }}>
             {relatedCoursesTitle || t("relatedCourses.title")}
           </h2>

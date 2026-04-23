@@ -690,15 +690,15 @@ const SupportContent = () => {
 
               {/* Tab Content */}
               {mainTab === "faq" ? (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                   <FAQSection t={t} locale={locale} />
                 </div>
               ) : mainTab === "tutorials" ? (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                   <VideoTutorials t={t} locale={locale} />
                 </div>
               ) : (
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                 {showForm ? (
                   <CreateTicketForm
                     t={t}

@@ -140,7 +140,7 @@ const CourseAssistantsSuggestPanel = ({
   );
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
           {t("taPanel.title")}
@@ -199,7 +199,7 @@ const CourseAssistantsSuggestPanel = ({
                 key={ta.id}
                 onClick={() => handleSuggest(ta.id)}
                 disabled={suggesting}
-                className="w-full flex items-center justify-between px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-white rounded-lg transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-between px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-card)] rounded-lg transition-colors disabled:opacity-50"
               >
                 <span>
                   {ta.firstName} {ta.lastName}{" "}

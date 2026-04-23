@@ -95,7 +95,7 @@ function ModalBackdrop({
       }}
     >
       <div
-        className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto scrollbar-hide"
+        className="bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto scrollbar-hide"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -929,22 +929,22 @@ const UsersContent = () => {
 
               {/* Stats Cards */}
               <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.total}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("usersPage.stats.total")}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[#16A34A]">{stats.active}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("usersPage.stats.active")}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[#DC2626]">{stats.suspended}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("usersPage.stats.suspended")}</p>
                 </div>
               </div>
 
               {/* Filters and Search */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 mb-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-1 relative">
                     <Search className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`} />
@@ -992,7 +992,7 @@ const UsersContent = () => {
 
               {/* Loading State */}
               {isLoadingUsers && (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center">
                   <Loader2 className="w-8 h-8 animate-spin text-[#002D87] mb-3" />
                   <p className="text-sm text-[var(--color-text-secondary)]">Loading users...</p>
                 </div>
@@ -1000,7 +1000,7 @@ const UsersContent = () => {
 
               {/* Error State */}
               {fetchError && !isLoadingUsers && (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center" role="alert">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center" role="alert">
                   <AlertCircle className="w-8 h-8 text-[#DC2626] mb-3" />
                   <p className="text-sm text-[#DC2626] mb-4">{fetchError}</p>
                   <button
@@ -1016,7 +1016,7 @@ const UsersContent = () => {
               {/* Users Table */}
               {!isLoadingUsers && !fetchError && (
                 <>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                   <div className="overflow-x-auto scrollbar-hide">
                     <table className="w-full">
                       <thead className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
@@ -1096,7 +1096,7 @@ const UsersContent = () => {
                                   </button>
 
                                   {openDropdownId === user.id && (
-                                    <div className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[160px] z-10 ${isRTL ? "left-0" : "right-0"}`}>
+                                    <div className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[160px] z-10 ${isRTL ? "left-0" : "right-0"}`}>
                                       <button
                                         onClick={() => {
                                           setEditingUser(user);

@@ -30,7 +30,7 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
       <div className="flex items-center gap-3">
         <div
           className={`w-10 h-10 rounded-lg flex items-center justify-center ${color}`}
@@ -310,7 +310,7 @@ const TranscriptContent = () => {
               ) : error ? (
                 <StudentDashboardError message={error} onRetry={refetch} />
               ) : !transcript || transcript.courses.length === 0 ? (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                   <div className="flex flex-col items-center justify-center py-10 sm:py-16">
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3 sm:mb-4">
                       <GraduationCap className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--color-text-secondary)]" />
@@ -326,7 +326,7 @@ const TranscriptContent = () => {
               ) : (
                 <>
                   {/* Student Info */}
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-[#F0F7FF] rounded-full flex items-center justify-center">
@@ -375,7 +375,7 @@ const TranscriptContent = () => {
                   </div>
 
                   {/* Course Table (desktop) */}
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] hidden md:block overflow-hidden">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] hidden md:block overflow-hidden">
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>

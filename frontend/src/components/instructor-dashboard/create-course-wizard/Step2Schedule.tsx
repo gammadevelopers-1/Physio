@@ -13,7 +13,7 @@ const Step2Schedule = ({ state, dispatch }: Step2Props) => {
   const t = useTranslations("instructorDashboard.createCourse");
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
       <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
         {t("wizardStep2")}
       </h2>

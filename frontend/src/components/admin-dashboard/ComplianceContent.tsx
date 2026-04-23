@@ -159,7 +159,7 @@ const ComplianceContent = () => {
               {/* Compliance Overview */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 {/* Score Card */}
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                   <div className="text-center">
                     <p
                       className={`text-6xl font-bold ${
@@ -211,7 +211,7 @@ const ComplianceContent = () => {
                 </div>
 
                 {/* Category Summary */}
-                <div className="lg:col-span-2 bg-white rounded-xl border border-[var(--color-border)] p-5">
+                <div className="lg:col-span-2 bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
                   <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("compliancePage.categorySummary")}
                   </h3>
@@ -251,7 +251,7 @@ const ComplianceContent = () => {
               </div>
 
               {/* Compliance Matrix */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                 <div className="p-5 border-b border-[var(--color-border)]">
                   <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                     {t("compliancePage.complianceMatrix")}

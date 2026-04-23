@@ -157,7 +157,7 @@ function ExportModal({
 
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl w-full max-w-md">
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -474,7 +474,7 @@ const ReportsContent = () => {
               </div>
 
               {/* Global Filters */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                 <div className="flex flex-col md:flex-row gap-4">
                   <div className="flex-1 flex flex-col md:flex-row gap-3">
                     {/* Course filter */}
@@ -539,7 +539,7 @@ const ReportsContent = () => {
                   {[1, 2, 3, 4].map((i) => (
                     <div
                       key={i}
-                      className="bg-white rounded-xl border border-[var(--color-border)] p-5 animate-pulse"
+                      className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 animate-pulse"
                     >
                       <div className="flex items-start gap-4 mb-4">
                         <div className="w-12 h-12 rounded-xl bg-gray-200" />
@@ -560,7 +560,7 @@ const ReportsContent = () => {
                   {REPORT_TYPES.map((rt) => (
                     <div
                       key={rt.id}
-                      className="bg-white rounded-xl border border-[var(--color-border)] p-5 hover:shadow-md transition-shadow"
+                      className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 hover:shadow-md transition-shadow"
                     >
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-start gap-4">

@@ -216,7 +216,7 @@ const KnowledgeBaseContent = () => {
                   return (
                     <div
                       key={stat.label}
-                      className="bg-white rounded-xl border border-[var(--color-border)] p-4"
+                      className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4"
                     >
                       <div className="flex items-center justify-between mb-3">
                         <div
@@ -281,7 +281,7 @@ const KnowledgeBaseContent = () => {
                 {filteredArticles.map((article) => (
                   <div
                     key={article.id}
-                    className="bg-white rounded-xl border border-[var(--color-border)] p-5"
+                    className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5"
                   >
                     {/* Card Header */}
                     <div className="flex items-start justify-between mb-3">
@@ -309,7 +309,7 @@ const KnowledgeBaseContent = () => {
 
                         {openActionId === article.id && (
                           <div
-                            className={`absolute top-full mt-1 ${isRTL ? "left-0" : "right-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-10`}
+                            className={`absolute top-full mt-1 ${isRTL ? "left-0" : "right-0"} bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-10`}
                           >
                             <button className="flex items-center gap-2 w-full px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors">
                               <Eye className="w-4 h-4" />

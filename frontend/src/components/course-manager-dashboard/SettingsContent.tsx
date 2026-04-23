@@ -241,7 +241,7 @@ const SettingsContent = () => {
               </div>
 
               {/* Tabs */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)]">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
                 <div className="flex border-b border-[var(--color-border)] overflow-x-auto">
                   {tabs.map((tab) => (
                     <button
@@ -300,7 +300,7 @@ const SettingsContent = () => {
                               <Pencil className="w-3.5 h-3.5 text-white" />
                             </button>
                             {avatarMenuOpen && (
-                              <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`}>
+                              <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`}>
                                 <button
                                   onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
                                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors cursor-pointer"

@@ -29,7 +29,7 @@ export default function PartnersContent({ partners, strapiData }: PartnersConten
   }
 
   return (
-    <section className="bg-white px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
+    <section className="bg-[var(--color-surface-page)] px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
       <div className="max-w-[1312px] mx-auto flex flex-col items-center">
         {title && (
           <h1

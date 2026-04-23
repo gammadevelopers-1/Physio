@@ -195,7 +195,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
           {application && !isLoading && (
             <div className="space-y-6">
               {/* Header Card */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <h1 className="text-xl font-bold text-[var(--color-text-primary)]">
@@ -223,7 +223,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
               </div>
 
               {/* Profile Information */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                 <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                   {t("roleRequestReviewPage.profileSection") || "Profile Information"}
                 </h2>
@@ -268,7 +268,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
 
               {/* Resume / Documents */}
               {resumeFiles.length > 0 && (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                   <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("roleRequestReviewPage.documentsSection") || "Documents & Resume"}
                   </h2>
@@ -296,7 +296,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
 
               {/* Bank Information */}
               {(bankData.accountHolderName || bankData.bankName || bankData.iban) && (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                   <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("roleRequestReviewPage.bankSection") || "Bank Information"}
                   </h2>
@@ -309,7 +309,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
               )}
 
               {/* Timeline */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                 <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                   {t("roleRequestReviewPage.timeline") || "Timeline"}
                 </h2>
@@ -337,7 +337,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
 
               {/* Action Buttons */}
               {canTakeAction && (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                   <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("roleRequestReviewPage.actions") || "Actions"}
                   </h2>
@@ -372,7 +372,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
       {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => !actionLoading && setShowModal(null)}>
           <div
-            className="bg-white rounded-xl w-full max-w-md shadow-xl"
+            className="bg-[var(--color-surface-card)] rounded-xl w-full max-w-md shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">

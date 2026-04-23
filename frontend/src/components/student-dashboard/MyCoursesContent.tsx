@@ -129,7 +129,7 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-xl max-w-md w-full"
+        className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl max-w-md w-full"
         onClick={(e) => e.stopPropagation()}
         dir={isRTL ? "rtl" : "ltr"}
       >
@@ -317,7 +317,7 @@ const MyCoursesContent = () => {
 
               <OfflineBanner />
 
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                 <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                   {t("myCourses.recentCourses")}
                 </h2>
@@ -607,7 +607,7 @@ const MyCoursesContent = () => {
       {/* Drop Course Confirmation Modal */}
       {dropCourseId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full">
+          <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">

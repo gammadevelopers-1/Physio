@@ -58,7 +58,7 @@ interface CourseManagerCourseDetailContentProps {
 const CourseDetailSkeleton = () => (
   <div className="flex-1 min-w-0 animate-pulse">
     <div className="h-4 w-32 bg-[var(--color-border)] rounded mb-4" />
-    <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
       <div className="h-48 sm:h-56 bg-[var(--color-border)]" />
       <div className="p-5 space-y-3">
         <div className="h-6 w-2/3 bg-[var(--color-border)] rounded" />
@@ -67,13 +67,13 @@ const CourseDetailSkeleton = () => (
     </div>
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+        <div key={i} className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
           <div className="h-4 w-16 bg-[var(--color-border)] rounded mb-2" />
           <div className="h-6 w-12 bg-[var(--color-border)] rounded" />
         </div>
       ))}
     </div>
-    <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
       <div className="h-5 w-32 bg-[var(--color-border)] rounded mb-4" />
       <div className="space-y-3">
         <div className="h-4 w-full bg-[var(--color-border)] rounded" />
@@ -417,7 +417,7 @@ const CourseManagerCourseDetailContent = ({
               <CourseDetailSkeleton />
             ) : error ? (
               <div className="flex-1 min-w-0">
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <AlertTriangle className="w-12 h-12 text-[#D97706] mx-auto mb-4" />
                   <p className="text-[var(--color-text-secondary)] mb-4">{error}</p>
                   <button
@@ -441,7 +441,7 @@ const CourseManagerCourseDetailContent = ({
                 </Link>
 
                 {/* Course Header */}
-                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
                   {/* Thumbnail */}
                   {course.thumbnail && (
                     <div className="relative h-48 sm:h-56 bg-[#F3F4F6]">
@@ -576,7 +576,7 @@ const CourseManagerCourseDetailContent = ({
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex items-center gap-2 mb-1">
                       {getDeliveryIcon(course.deliveryType)}
                       <span className="text-xs text-[var(--color-text-secondary)]">
@@ -587,7 +587,7 @@ const CourseManagerCourseDetailContent = ({
                       {t(`courseDetail.delivery.${course.deliveryType}`)}
                     </p>
                   </div>
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex items-center gap-2 mb-1">
                       <Users className="w-4 h-4 text-[#8B5CF6]" />
                       <span className="text-xs text-[var(--color-text-secondary)]">
@@ -598,7 +598,7 @@ const CourseManagerCourseDetailContent = ({
                       {course.maxEnrollment ?? "—"}
                     </p>
                   </div>
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex items-center gap-2 mb-1">
                       <Calendar className="w-4 h-4 text-[#16A34A]" />
                       <span className="text-xs text-[var(--color-text-secondary)]">
@@ -609,7 +609,7 @@ const CourseManagerCourseDetailContent = ({
                       {formatDate(course.startDate)}
                     </p>
                   </div>
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex items-center gap-2 mb-1">
                       <Calendar className="w-4 h-4 text-[#DC2626]" />
                       <span className="text-xs text-[var(--color-text-secondary)]">
@@ -620,7 +620,7 @@ const CourseManagerCourseDetailContent = ({
                       {formatDate(course.endDate)}
                     </p>
                   </div>
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex items-center gap-2 mb-1">
                       <Award className="w-4 h-4 text-[#D4A520]" />
                       <span className="text-xs text-[var(--color-text-secondary)]">
@@ -634,7 +634,7 @@ const CourseManagerCourseDetailContent = ({
                 </div>
 
                 {/* Description */}
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-6">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 mb-6">
                   <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">
                     {t("courseDetail.description")}
                   </h2>
@@ -672,7 +672,7 @@ const CourseManagerCourseDetailContent = ({
                 )}
 
                 {/* Modules */}
-                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
                   <div className="p-5 border-b border-[var(--color-border)] flex items-center justify-between">
                     <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
                       {t("courseDetail.modules")} ({course.modules?.length ?? 0})
@@ -753,7 +753,7 @@ const CourseManagerCourseDetailContent = ({
                                       {moduleMaterials[mod.id].map((mat) => (
                                         <div
                                           key={mat.id}
-                                          className="flex items-center gap-3 bg-white rounded-lg border border-[var(--color-border)] px-3 py-2"
+                                          className="flex items-center gap-3 bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] px-3 py-2"
                                         >
                                           {getMaterialIcon(mat.type)}
                                           <div className="flex-1 min-w-0">
@@ -818,7 +818,7 @@ const CourseManagerCourseDetailContent = ({
                                         {modAssessments.map((ma) => (
                                           <div
                                             key={ma.id}
-                                            className="flex items-center gap-3 bg-white rounded-lg border border-[var(--color-border)] px-3 py-2"
+                                            className="flex items-center gap-3 bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] px-3 py-2"
                                           >
                                             <ClipboardCheck className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
                                             <div className="flex-1 min-w-0">
@@ -854,7 +854,7 @@ const CourseManagerCourseDetailContent = ({
                 </div>
 
                 {/* Course Metadata */}
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
                   <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">
                     {t("courseDetail.courseInfo")}
                   </h2>
@@ -879,7 +879,7 @@ const CourseManagerCourseDetailContent = ({
                 </div>
 
                 {/* Student Reviews */}
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
                   <div className="flex items-center justify-between mb-4 gap-3">
                     <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
                       {t("courseDetail.reviewsTitle")}
@@ -959,7 +959,7 @@ const CourseManagerCourseDetailContent = ({
       {/* Remove Material Modal */}
       {removingMaterial && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
+          <div className="bg-[var(--color-surface-card)] rounded-xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#FEE2E2] flex items-center justify-center">
@@ -1012,7 +1012,7 @@ const CourseManagerCourseDetailContent = ({
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
+          <div className="bg-[var(--color-surface-card)] rounded-xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-[#FEE2E2] flex items-center justify-center">
                 <Trash2 className="w-5 h-5 text-[#DC2626]" />
@@ -1047,7 +1047,7 @@ const CourseManagerCourseDetailContent = ({
       {/* Request Changes Modal */}
       {showRequestChanges && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
+          <div className="bg-[var(--color-surface-card)] rounded-xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-[#FEF3C7] flex items-center justify-center">
                 <AlertTriangle className="w-5 h-5 text-[#D97706]" />

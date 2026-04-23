@@ -195,7 +195,7 @@ const StudentCourseDetailContent = () => {
                   <Loader2 className="w-8 h-8 text-[var(--color-text-secondary)] animate-spin" />
                 </div>
               ) : error || !data ? (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-8 text-center">
                   <p className="text-[var(--color-text-secondary)]">
                     {error || t("courseDetail.notFound")}
                   </p>
@@ -203,7 +203,7 @@ const StudentCourseDetailContent = () => {
               ) : (
                 <>
                   {/* Course Header */}
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
                     <div className="flex flex-col sm:flex-row gap-4">
                       {/* Thumbnail */}
                       <div className="w-full sm:w-[200px] h-[120px] sm:h-[130px] bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
@@ -303,7 +303,7 @@ const StudentCourseDetailContent = () => {
 
                   {/* Course Description / Learning Objectives */}
                   {(data.course.description || data.course.descriptionAr) && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
                       <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
                         {t("courseDetail.aboutCourse")}
                       </h3>
@@ -318,7 +318,7 @@ const StudentCourseDetailContent = () => {
                   {/* Course Info Grid */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                     {/* Modules */}
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-[#F0F7FF] rounded-lg flex items-center justify-center">
                           <BookOpen className="w-5 h-5 text-[#002D87]" />
@@ -337,7 +337,7 @@ const StudentCourseDetailContent = () => {
 
                     {/* Attendance — hidden for self-paced */}
                     {data.course.deliveryType !== "self-paced" && (
-                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                         <div className="flex items-center gap-3">
                           <div
                             className={`w-10 h-10 rounded-lg flex items-center justify-center ${
@@ -383,7 +383,7 @@ const StudentCourseDetailContent = () => {
                     )}
 
                     {/* Assessments */}
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-[#FFFBEB] rounded-lg flex items-center justify-center">
                           <ClipboardCheck className="w-5 h-5 text-[#D4A520]" />
@@ -412,7 +412,7 @@ const StudentCourseDetailContent = () => {
                     </div>
 
                     {/* Status */}
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-[#F0FDF4] rounded-lg flex items-center justify-center">
                           <Users className="w-5 h-5 text-[#16A34A]" />
@@ -533,7 +533,7 @@ const StudentCourseDetailContent = () => {
                   })()}
 
                   {/* Modules List */}
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
                     <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                       {t("courseDetail.courseModules")}
                     </h2>
@@ -622,7 +622,7 @@ const StudentCourseDetailContent = () => {
 
                   {/* Attendance History — hidden for self-paced */}
                   {data.course.deliveryType !== "self-paced" && data.attendanceRecords && data.attendanceRecords.length > 0 && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] mb-4">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] mb-4">
                       <button
                         onClick={() => setShowAttendanceHistory(!showAttendanceHistory)}
                         className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-[var(--color-surface-page)] transition-colors rounded-xl"
@@ -710,7 +710,7 @@ const StudentCourseDetailContent = () => {
 
                   {/* Upcoming Sessions (hidden for self-paced) */}
                   {data.course.deliveryType !== "self-paced" && upcomingSessions.length > 0 && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
                       <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("courseDetail.upcomingSessions")}
                       </h2>
@@ -776,7 +776,7 @@ const StudentCourseDetailContent = () => {
 
                   {/* Past Sessions — hidden for self-paced */}
                   {data.course.deliveryType !== "self-paced" && completedSessions.length > 0 && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
                       <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("courseDetail.pastSessions")} ({completedSessions.length})
                       </h2>
@@ -840,7 +840,7 @@ const StudentCourseDetailContent = () => {
 
                   {/* Missed/Rescheduled Lectures — hidden for self-paced */}
                   {data.course.deliveryType !== "self-paced" && inactiveSessions.length > 0 && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
                       <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-secondary)] mb-4">
                         Cancelled / Rescheduled Lectures
                       </h2>
@@ -869,7 +869,7 @@ const StudentCourseDetailContent = () => {
 
                   {/* Assessments */}
                   {data.assessments.length > 0 && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                       <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("courseDetail.assessments")}
                       </h2>
@@ -1002,7 +1002,7 @@ const StudentCourseDetailContent = () => {
             onClick={() => setRecordingsModalSession(null)}
             aria-hidden="true"
           />
-          <div className="relative bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto scrollbar-hide">
+          <div className="relative bg-[var(--color-surface-card)] rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto scrollbar-hide">
             <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
               <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {t("courseDetail.viewRecording")}
@@ -1087,7 +1087,7 @@ const StudentCourseDetailContent = () => {
       {/* Drop Course Confirmation Modal */}
       {showDropConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full">
+          <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">

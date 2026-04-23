@@ -156,7 +156,7 @@ function PreferencesTab({
   return (
     <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
       {/* Language Settings */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
         <SectionHeading>{t("settings.languageSettings")}</SectionHeading>
 
         <SettingRow label={t("settings.interfaceLanguage")}>
@@ -196,7 +196,7 @@ function PreferencesTab({
       </div>
 
       {/* Accessibility Controls */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
         <SectionHeading>{t("settings.accessibilityControls")}</SectionHeading>
 
         <SettingRow label={t("settings.fontSize")}>
@@ -267,7 +267,7 @@ function PreferencesTab({
       </div>
 
       {/* Privacy Controls */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
         <SectionHeading>{t("settings.privacyControls")}</SectionHeading>
 
         <SettingRow
@@ -361,7 +361,7 @@ function NotificationsTab({
   return (
     <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
       {/* Email Notifications */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
         <SectionHeading>{t("settings.notificationPreferences")}</SectionHeading>
 
         {/* Header row */}
@@ -404,7 +404,7 @@ function NotificationsTab({
       </div>
 
       {/* Reminder Timing */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
         <SectionHeading>{t("settings.reminderTiming")}</SectionHeading>
         <p className="text-sm text-[var(--color-text-secondary)] mb-4">
           {t("settings.reminderTimingDesc")}
@@ -603,7 +603,7 @@ const SettingsContent = () => {
               {/* ── Profile Tab ── */}
               {activeTab === "profile" && (
                 <div
-                  className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6"
+                  className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6"
                   dir={isRTL ? "rtl" : "ltr"}
                 >
                   {/* Avatar + Name */}
@@ -638,7 +638,7 @@ const SettingsContent = () => {
                             <Pencil className="w-3.5 h-3.5 text-white" />
                           </button>
                           {avatarMenuOpen && (
-                            <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`}>
+                            <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`}>
                               <button
                                 onClick={() => { settingsAvatarRef.current?.click(); setAvatarMenuOpen(false); }}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
@@ -955,14 +955,14 @@ const SettingsContent = () => {
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                         <TwoFactorToggle
                           enabled={security.twoFactorEnabled}
                           toggling={security.toggling}
                           onToggle={security.handleToggle2FA}
                         />
                       </div>
-                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                         <TrustedDevicesSection
                           devices={security.devices}
                           revokingId={security.revokingId}

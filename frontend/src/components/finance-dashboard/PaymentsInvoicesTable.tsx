@@ -72,7 +72,7 @@ const PaymentsInvoicesTable = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
+    <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-5 py-4 border-b border-[#F3F4F6] gap-3">
         <div className="flex items-center gap-2">
@@ -226,7 +226,7 @@ const PaymentsInvoicesTable = ({
                     </button>
                     {openActionId === tx.id && (
                       <div
-                        className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-20 ${isRTL ? "left-0" : "right-0"}`}
+                        className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-20 ${isRTL ? "left-0" : "right-0"}`}
                       >
                         <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors">
                           <Eye className="w-3.5 h-3.5" />

@@ -427,7 +427,7 @@ const AssessmentContent = () => {
 
     return (
       <div className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center p-4" dir={isRTL ? "rtl" : "ltr"}>
-        <div className="bg-white rounded-2xl border border-[var(--color-border)] p-8 max-w-lg w-full text-center">
+        <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-8 max-w-lg w-full text-center">
           {!isGraded ? (
             <Clock className="w-16 h-16 text-[#D4A520] mx-auto mb-4" />
           ) : passed ? (
@@ -537,7 +537,7 @@ const AssessmentContent = () => {
             )}
 
             {/* Score */}
-            <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+            <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("assessment.score")}</p>
@@ -558,7 +558,7 @@ const AssessmentContent = () => {
 
             {/* Submitted Files */}
             {reviewData.submissionFiles && reviewData.submissionFiles.length > 0 && (
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
                 <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">{t("assessment.studentFiles") || "Your Submitted Files"}</h3>
                 <div className="space-y-2">
                   {reviewData.submissionFiles.map((f) => (
@@ -594,7 +594,7 @@ const AssessmentContent = () => {
 
       return (
         <div className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center p-4" dir={isRTL ? "rtl" : "ltr"}>
-          <div className="bg-white rounded-2xl border border-[var(--color-border)] p-8 max-w-lg w-full text-center">
+          <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-8 max-w-lg w-full text-center">
             {isPendingGrading ? (
               <Clock className="w-16 h-16 text-[#D4A520] mx-auto mb-4" />
             ) : result.passed ? (
@@ -687,16 +687,16 @@ const AssessmentContent = () => {
 
           {/* Info Grid */}
           <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+            <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">{t("assessment.totalMarks")}</p>
               <p className="text-base font-semibold text-[var(--color-text-secondary)]">{assessment.totalMarks}</p>
             </div>
-            <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+            <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">{t("assessment.passingMarks")}</p>
               <p className="text-base font-semibold text-[var(--color-text-secondary)]">{assessment.passingMarks}</p>
             </div>
             {assessment.dueDate && (
-              <div className="col-span-2 bg-white rounded-xl border border-[var(--color-border)] p-4">
+              <div className="col-span-2 bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                 <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">{t("assessment.deadline") || "Deadline"}</p>
                 <p className="text-base font-semibold text-[var(--color-text-secondary)]">
                   {new Date(assessment.dueDate).toLocaleString(locale === "ar" ? "ar-SA" : "en-US", { timeZone: "Asia/Riyadh" })} (KSA)
@@ -715,7 +715,7 @@ const AssessmentContent = () => {
 
           {/* Assignment Files (instructor-provided) */}
           {assessment.assignmentFiles && assessment.assignmentFiles.length > 0 && (
-            <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-6">
+            <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 mb-6">
               <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">{t("assessment.assignmentFiles") || "Assignment Files"}</h3>
               <div className="space-y-2">
                 {assessment.assignmentFiles.map((f) => (
@@ -737,7 +737,7 @@ const AssessmentContent = () => {
 
           {/* Student File Upload */}
           {canSubmit && (
-            <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-6">
+            <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 mb-6">
               <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">{t("assessment.uploadFiles") || "Upload Your Files"}</h3>
 
               <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[var(--color-border)] rounded-xl cursor-pointer hover:border-[#3B82F6] hover:bg-[#EFF6FF] transition-colors mb-3">
@@ -960,7 +960,7 @@ const AssessmentContent = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 mb-6">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6 mb-6">
                 <p className="text-base sm:text-lg font-medium text-[var(--color-text-secondary)] mb-6">
                   {isRTL && reviewQuestion.questionTextAr
                     ? reviewQuestion.questionTextAr
@@ -1139,7 +1139,7 @@ const AssessmentContent = () => {
         className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center p-4"
         dir={isRTL ? "rtl" : "ltr"}
       >
-        <div className="bg-white rounded-2xl border border-[var(--color-border)] p-8 max-w-lg w-full text-center">
+        <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-8 max-w-lg w-full text-center">
           {isPendingGrading ? (
             <Clock className="w-16 h-16 text-[#D4A520] mx-auto mb-4" />
           ) : result.passed ? (
@@ -1368,7 +1368,7 @@ const AssessmentContent = () => {
         className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center p-4"
         dir={isRTL ? "rtl" : "ltr"}
       >
-        <div className="bg-white rounded-2xl border border-[var(--color-border)] p-6 sm:p-8 max-w-lg w-full">
+        <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-6 sm:p-8 max-w-lg w-full">
           {/* Back link */}
           <Link
             href={`/${locale}/dashboard/student/courses/${courseId}`}
@@ -1506,7 +1506,7 @@ const AssessmentContent = () => {
   if (assessment.questions.length === 0) {
     return (
       <div className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center p-4" dir={isRTL ? "rtl" : "ltr"}>
-        <div className="bg-white rounded-2xl border border-[var(--color-border)] p-8 max-w-lg w-full text-center">
+        <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-8 max-w-lg w-full text-center">
           <AlertCircle className="w-12 h-12 text-[#D4A520] mx-auto mb-4" />
           <h2 className="text-lg font-bold text-[var(--color-text-primary)] mb-2">
             {t("assessment.noQuestionsAvailable") || "No questions available"}
@@ -1621,7 +1621,7 @@ const AssessmentContent = () => {
       <div className="max-w-[1100px] mx-auto px-4 py-6 sm:py-8 flex gap-6">
         {/* Question Navigation Sidebar (desktop only) */}
         <div className="hidden lg:block w-[200px] flex-shrink-0">
-          <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sticky top-6">
+          <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sticky top-6">
             <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
               {t("assessment.questionsCount")}
             </p>
@@ -1696,7 +1696,7 @@ const AssessmentContent = () => {
           </div>
 
           {/* Question Content */}
-          <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 mb-6">
+          <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6 mb-6">
             <p className="text-base sm:text-lg font-medium text-[var(--color-text-secondary)] mb-6">
               {isRTL && question.questionTextAr
                 ? question.questionTextAr

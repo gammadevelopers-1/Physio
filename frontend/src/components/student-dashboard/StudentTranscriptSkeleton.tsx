@@ -8,7 +8,7 @@ const StudentTranscriptSkeleton = () => (
   <div role="status" aria-busy="true">
     <span className="sr-only">Loading...</span>
     {/* Student Info */}
-    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
       <div className="flex items-center gap-3">
         <SkeletonBlock className="w-12 h-12 rounded-full" />
         <div className="space-y-2">
@@ -23,7 +23,7 @@ const StudentTranscriptSkeleton = () => (
       {[1, 2, 3].map((i) => (
         <div
           key={i}
-          className="bg-white rounded-xl border border-[var(--color-border)] p-4"
+          className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4"
         >
           <div className="flex items-center gap-3">
             <SkeletonBlock className="w-10 h-10 rounded-lg" />
@@ -37,7 +37,7 @@ const StudentTranscriptSkeleton = () => (
     </div>
 
     {/* Table */}
-    <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
       <div className="p-4 space-y-3">
         {[1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="flex items-center gap-4 py-2">

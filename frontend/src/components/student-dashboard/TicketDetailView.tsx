@@ -251,11 +251,11 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
               </button>
 
               {loading || !ticket ? (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 flex items-center justify-center py-16">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6 flex items-center justify-center py-16">
                   <Loader2 className="w-8 h-8 text-[var(--color-text-secondary)] animate-spin" />
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                   {/* Ticket header */}
                   <div className="p-4 sm:p-6 border-b border-[var(--color-border)]">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">

@@ -105,12 +105,12 @@ const TAAssessmentSubmissionsView = ({
           <div className="w-8 h-8 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : submissions.length === 0 ? (
-        <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
+        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-8 text-center">
           <FileText className="w-12 h-12 text-[var(--color-text-secondary)] mx-auto mb-3" />
           <p className="text-[var(--color-text-secondary)]">{t("submissions.noSubmissions")}</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -179,7 +179,7 @@ const TAAssessmentSubmissionsView = ({
                                   <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-2">{t("submissions.answers")}</p>
                                   <div className="space-y-2">
                                     {submission.answers.map((a, idx) => (
-                                      <div key={idx} className="bg-white rounded-lg border border-[var(--color-border)] px-3 py-2">
+                                      <div key={idx} className="bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] px-3 py-2">
                                         <p className="text-xs text-[var(--color-text-secondary)] mb-1">Q{idx + 1}</p>
                                         <p className="text-sm text-[var(--color-text-secondary)]">{a.answer || "—"}</p>
                                       </div>

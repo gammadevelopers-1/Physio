@@ -55,7 +55,7 @@ const Navbar = ({ siteSettings, navLinks = [], footerLinks }: NavbarProps) => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-[var(--surface-intense)] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] px-4 py-3 lg:px-16 lg:py-5">
+    <nav className="sticky top-0 z-50 w-full bg-[var(--color-surface-page)] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] px-4 py-3 lg:px-16 lg:py-5">
       {/* Main container - dir="rtl" on html handles the RTL layout automatically */}
       <div className="flex items-center justify-between w-full">
         {/* Logo + Nav Links (appears on right side in RTL due to dir="rtl") */}

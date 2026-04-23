@@ -481,7 +481,7 @@ const CourseLearningContent = () => {
               </div>
 
               {/* Content Card */}
-              <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden mb-5">
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden mb-5">
 
                 {/* Material Tabs — shown only when multiple materials */}
                 {!materialsLoading && materials.length > 1 && (

@@ -281,7 +281,7 @@ const SessionsCalendarWidget = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--color-border)]">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border-b border-[var(--color-border)] gap-3">
         <div className="flex items-center gap-2">

@@ -37,7 +37,7 @@ const TodaysSessions = ({
   const locale = useLocale();
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--color-border)] mb-6">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] mb-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border-b border-[var(--color-border)] gap-3">
         <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)]">

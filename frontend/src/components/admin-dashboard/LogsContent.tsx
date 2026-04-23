@@ -228,7 +228,7 @@ const LogsContent = () => {
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 mb-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                   {/* Search */}
                   <div className="flex-1 relative">
@@ -279,7 +279,7 @@ const LogsContent = () => {
               </div>
 
               {/* Logs Table */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">

@@ -287,7 +287,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
 
   // Session group renderer
   const renderSessionGroup = (groupTitle: string, groupSessions: AssignedSession[]) => (
-    <div className="bg-white rounded-xl border border-[var(--color-border)]">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
       <div className="p-4 border-b border-[var(--color-border)]">
         <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
           {groupTitle}
@@ -416,7 +416,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
 
       {/* Calendar View */}
       {!loading && viewMode === "calendar" && (
-        <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
           {/* Calendar Header */}
           <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
             <button
@@ -515,7 +515,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
 
       {/* Empty state when no sessions at all */}
       {!loading && sessions.length === 0 && (
-        <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
+        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-8 text-center">
           <Search className="w-12 h-12 text-[var(--color-text-secondary)] mx-auto mb-3" />
           <p className="text-[var(--color-text-secondary)]">{t("sessions.noSessions")}</p>
         </div>

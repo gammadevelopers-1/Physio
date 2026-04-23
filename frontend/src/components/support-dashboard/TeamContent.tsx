@@ -222,7 +222,7 @@ const TeamContent = () => {
                   return (
                     <div
                       key={stat.label}
-                      className="bg-white rounded-xl border border-[var(--color-border)] p-4"
+                      className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4"
                     >
                       <div className="flex items-center justify-between mb-3">
                         <div
@@ -294,7 +294,7 @@ const TeamContent = () => {
                 {filteredAgents.map((agent) => (
                   <div
                     key={agent.id}
-                    className="bg-white rounded-xl border border-[var(--color-border)] p-5"
+                    className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5"
                   >
                     {/* Agent Header */}
                     <div className="flex items-start gap-3 mb-4">
@@ -397,7 +397,7 @@ const TeamContent = () => {
               </div>
 
               {/* Performance Overview Section */}
-              <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
                 <div className="flex items-center gap-2 mb-5">
                   <TrendingUp className="w-5 h-5 text-[#3B82F6]" />
                   <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">

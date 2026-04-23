@@ -253,7 +253,7 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                   </div>
                   <div className="max-h-[200px] overflow-y-auto space-y-2 rounded-xl border border-[var(--color-border)] p-2 bg-[#FAFAFA]">
                     {data.courses.map((course) => (
-                      <div key={course.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-[#F3F4F6] hover:border-[var(--color-border)] transition-colors">
+                      <div key={course.id} className="flex items-center justify-between p-3 bg-[var(--color-surface-card)] rounded-lg border border-[#F3F4F6] hover:border-[var(--color-border)] transition-colors">
                         <span className="text-sm text-[var(--color-text-primary)] truncate flex-1 me-3">{course.title}</span>
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${
                           course.status === "active"

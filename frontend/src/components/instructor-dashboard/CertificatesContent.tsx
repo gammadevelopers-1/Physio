@@ -107,7 +107,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, t }: ReviewModalProp
 
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -634,7 +634,7 @@ const CertificatesContent = () => {
 
               {/* Stats Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center"><Award className="w-5 h-5 text-[#3B82F6]" /></div>
                     <div>
@@ -643,7 +643,7 @@ const CertificatesContent = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#FEF9C3] flex items-center justify-center"><Clock className="w-5 h-5 text-[#EAB308]" /></div>
                     <div>
@@ -652,7 +652,7 @@ const CertificatesContent = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center"><FileCheck className="w-5 h-5 text-[#22C55E]" /></div>
                     <div>
@@ -661,7 +661,7 @@ const CertificatesContent = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#FFEDD5] flex items-center justify-center"><PauseCircle className="w-5 h-5 text-[#F97316]" /></div>
                     <div>
@@ -705,7 +705,7 @@ const CertificatesContent = () => {
               )}
 
               {error && !loading && (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-8 text-center">
                   <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
                   <p className="text-[#EF4444] mb-4">{error}</p>
                   <button onClick={refetch} className="px-4 py-2 btn-gold text-white rounded-lg text-sm">{t("certificates.retry")}</button>
@@ -715,7 +715,7 @@ const CertificatesContent = () => {
               {!loading && !error && (
                 <>
                   {/* Search and Filters */}
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex flex-col md:flex-row gap-4">
                       <div className="relative flex-1">
                         <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`} />
@@ -776,7 +776,7 @@ const CertificatesContent = () => {
 
                   {/* Empty state */}
                   {filteredCertificates.length === 0 && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                       <Award className="w-12 h-12 text-[var(--color-border)] mx-auto mb-4" />
                       <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">{t("certificates.noRequests")}</h3>
                       <p className="text-sm text-[var(--color-text-secondary)]">{t("certificates.noRequestsDesc")}</p>
@@ -785,7 +785,7 @@ const CertificatesContent = () => {
 
                   {/* Desktop Table */}
                   {filteredCertificates.length > 0 && (
-                    <div className="hidden md:block bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                    <div className="hidden md:block bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead>
@@ -935,7 +935,7 @@ const CertificatesContent = () => {
                         const elig = getEligibility(cert);
                         const canSelect = cert.status === "pending" || cert.status === "held";
                         return (
-                          <div key={cert.id} className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                          <div key={cert.id} className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex items-center gap-3">
                                 {canSelect && (
@@ -1046,7 +1046,7 @@ const CertificatesContent = () => {
       {/* Revoke Confirmation Modal */}
       {revokingCert && (
         <ModalOverlay onClose={() => { setRevokingCert(null); setRevokeReason(""); }}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+          <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl w-full max-w-md">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-[#FEE2E2] flex items-center justify-center">
@@ -1094,7 +1094,7 @@ const CertificatesContent = () => {
       {/* Batch Reject Note Modal */}
       {batchNoteModal === "reject" && (
         <ModalOverlay onClose={() => setBatchNoteModal(null)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+          <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl w-full max-w-md">
             <div className="p-6">
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">{t("certificates.batchRejectTitle")}</h3>
               <p className="text-sm text-[var(--color-text-secondary)] mb-4">{t("certificates.batchRejectDesc")} ({selectedIds.size} {t("certificates.selected")})</p>

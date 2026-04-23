@@ -157,7 +157,7 @@ const InvoicesContent = () => {
                 {stats.map((stat, index) => {
                   const Icon = stat.icon;
                   return (
-                    <div key={index} className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3">
+                    <div key={index} className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3">
                       <div className={`w-10 h-10 ${stat.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
                         <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                       </div>
@@ -171,7 +171,7 @@ const InvoicesContent = () => {
               </div>
 
               {/* Invoices Table */}
-              <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden mb-6">
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden mb-6">
                 {/* Tabs + Search */}
                 <div className="px-5 py-4 border-b border-[#F3F4F6]">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -241,7 +241,7 @@ const InvoicesContent = () => {
                                 <MoreVertical className="w-3.5 h-3.5" />
                               </button>
                               {openActionId === inv.id && (
-                                <div className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-20 ${isRTL ? "left-0" : "right-0"}`}>
+                                <div className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-20 ${isRTL ? "left-0" : "right-0"}`}>
                                   <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
                                     <Eye className="w-3.5 h-3.5" />
                                     {t("paymentsTable.actions.view")}
@@ -283,7 +283,7 @@ const InvoicesContent = () => {
               </div>
 
               {/* Aging Report */}
-              <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <Clock className="w-5 h-5 text-[#EA580C]" />
                   <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{t("invoicesPage.agingReport")}</h3>

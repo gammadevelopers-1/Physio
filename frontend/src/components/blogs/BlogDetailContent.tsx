@@ -207,7 +207,7 @@ const BlogDetailContent = ({ blogPost, latestBlogs, blogsPage }: BlogDetailConte
 
         {/* Latest Blogs Section */}
         {relatedBlogs.length > 0 && (
-          <section className="px-16 py-16 bg-white">
+          <section className="px-16 py-16 bg-[var(--color-surface-page)]">
             <div className="max-w-[1200px] mx-auto">
               {latestBlogsTitle && (
                 <h2 className={`font-semibold text-[var(--on-surface-default)] mb-2 ${isRTL ? "text-right" : ""}`} style={{ fontSize: "48px" }}>
@@ -349,7 +349,7 @@ const BlogDetailContent = ({ blogPost, latestBlogs, blogsPage }: BlogDetailConte
 
         {/* Latest Blogs Section */}
         {relatedBlogs.length > 0 && (
-          <section className="px-4 py-8 bg-white">
+          <section className="px-4 py-8 bg-[var(--color-surface-page)]">
             {latestBlogsTitle && (
               <h2 className={`font-semibold text-[var(--on-surface-default)] mb-1 ${isRTL ? "text-right" : ""}`} style={{ fontSize: "24px" }}>
                 {latestBlogsTitle}

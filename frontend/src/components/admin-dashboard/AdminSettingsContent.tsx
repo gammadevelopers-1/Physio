@@ -109,7 +109,7 @@ const AdminSettingsContent = () => {
               </div>
 
               {/* Settings Card with Horizontal Tabs */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)]">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
                 {/* Horizontal Tabs - Compact & Wrapped */}
                 <div className="flex flex-wrap border-b border-[var(--color-border)]">
                   {settingsTabs.map((tab) => {

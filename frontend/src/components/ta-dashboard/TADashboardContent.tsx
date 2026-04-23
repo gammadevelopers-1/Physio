@@ -340,7 +340,7 @@ const TADashboardContent = ({
           return (
             <div
               key={i}
-              className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex flex-col gap-3"
+              className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex flex-col gap-3"
             >
               <div
                 className={`w-10 h-10 ${card.iconBg} rounded-lg flex items-center justify-center`}
@@ -373,7 +373,7 @@ const TADashboardContent = ({
                 <div className="w-8 h-8 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
               </div>
             ) : todaySessions.length === 0 ? (
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-8 text-center">
                 <Calendar className="w-12 h-12 text-[var(--color-text-secondary)] mx-auto mb-3" />
                 <p className="text-[var(--color-text-secondary)]">{t("home.noSessions")}</p>
               </div>
@@ -382,7 +382,7 @@ const TADashboardContent = ({
                 {todaySessions.map((session) => (
                   <div
                     key={session.id}
-                    className="bg-white rounded-xl border border-[var(--color-border)] p-5 hover:shadow-md transition-shadow"
+                    className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
@@ -479,7 +479,7 @@ const TADashboardContent = ({
         {/* Right Sidebar Widgets */}
         <div className="space-y-4">
           {/* Notifications Widget */}
-          <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+          <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
@@ -558,7 +558,7 @@ const TADashboardContent = ({
           </div>
 
           {/* Upcoming Sessions Widget */}
-          <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+          <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                 {t("home.upcomingSessions.title")}
@@ -612,7 +612,7 @@ const TADashboardContent = ({
           </div>
 
           {/* My Courses Quick View */}
-          <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+          <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                 {t("home.coursesOverview.title")}

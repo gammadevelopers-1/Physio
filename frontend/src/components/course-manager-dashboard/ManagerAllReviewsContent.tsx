@@ -280,7 +280,7 @@ export default function ManagerAllReviewsContent() {
               </div>
 
               {/* Tabs */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-2 mb-4">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-2 mb-4">
                 <div className="flex flex-wrap gap-1">
                   {tabItems.map((ti) => (
                     <button
@@ -308,7 +308,7 @@ export default function ManagerAllReviewsContent() {
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-4">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 mb-4">
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="relative flex-1 min-w-[200px]">
                     <Search className={`w-4 h-4 text-[var(--color-text-secondary)] absolute top-2.5 ${isRTL ? "right-3" : "left-3"}`} />
@@ -372,7 +372,7 @@ export default function ManagerAllReviewsContent() {
               </div>
 
               {/* List */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
                 {loading ? (
                   <div className="flex items-center justify-center py-16">
                     <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />
@@ -540,7 +540,7 @@ export default function ManagerAllReviewsContent() {
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setModal(null)}>
           <div
-            className="bg-white rounded-2xl shadow-2xl max-w-xl w-full max-h-[85vh] overflow-y-auto"
+            className="bg-[var(--color-surface-card)] rounded-2xl shadow-2xl max-w-xl w-full max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
             dir={isRTL ? "rtl" : "ltr"}
           >
@@ -593,7 +593,7 @@ export default function ManagerAllReviewsContent() {
       {/* Delete confirm */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5" dir={isRTL ? "rtl" : "ltr"}>
+          <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-2xl max-w-md w-full p-5" dir={isRTL ? "rtl" : "ltr"}>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
                 <Trash2 className="w-5 h-5 text-red-600" />

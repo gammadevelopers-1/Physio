@@ -236,7 +236,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
 
   return (
     <ModalOverlay onClose={onClose} ariaLabelledBy="upload-modal-title">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 id="upload-modal-title" className="text-lg font-semibold text-[var(--color-text-primary)]">{t("content.uploadTitle")}</h3>
@@ -452,7 +452,7 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
 
   return (
     <ModalOverlay onClose={onClose} ariaLabelledBy="replace-modal-title">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl w-full max-w-lg">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 id="replace-modal-title" className="text-lg font-semibold text-[var(--color-text-primary)]">{t("content.replaceTitle")}</h3>
@@ -583,7 +583,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
 
   return (
     <ModalOverlay onClose={onClose} ariaLabelledBy="edit-modal-title">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl w-full max-w-lg">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 id="edit-modal-title" className="text-lg font-semibold text-[var(--color-text-primary)]">{t("content.editTitle")}</h3>
@@ -783,7 +783,7 @@ const DeleteConfirm = ({ material, onClose, onDeleted, t }: DeleteConfirmProps) 
 
   return (
     <ModalOverlay onClose={onClose} ariaLabelledBy="delete-modal-title">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl w-full max-w-md">
         <div className="p-6 text-center">
           <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[#FEE2E2] flex items-center justify-center">
             <Trash2 className="w-6 h-6 text-[#EF4444]" />
@@ -1131,7 +1131,7 @@ const ContentManagementContent = () => {
 
               {/* Stats Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center">
                       <FolderOpen className="w-5 h-5 text-[#3B82F6]" />
@@ -1142,7 +1142,7 @@ const ContentManagementContent = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#E0E7FF] flex items-center justify-center">
                       <HardDrive className="w-5 h-5 text-[#6366F1]" />
@@ -1153,7 +1153,7 @@ const ContentManagementContent = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center">
                       <Check className="w-5 h-5 text-[#22C55E]" />
@@ -1164,7 +1164,7 @@ const ContentManagementContent = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#FCE7F3] flex items-center justify-center">
                       <FileCheck className="w-5 h-5 text-[#EC4899]" />
@@ -1186,7 +1186,7 @@ const ContentManagementContent = () => {
               )}
 
               {error && !loading && (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-8 text-center">
                   <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
                   <p className="text-[#EF4444] mb-4">{error}</p>
                   <button onClick={refetch} className="px-4 py-2 btn-gold text-white rounded-lg text-sm">
@@ -1198,7 +1198,7 @@ const ContentManagementContent = () => {
               {!loading && !error && (
                 <>
                   {/* Search and Filters */}
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex flex-col md:flex-row gap-4">
                       <div className="relative flex-1">
                         <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`} />
@@ -1308,7 +1308,7 @@ const ContentManagementContent = () => {
 
                   {/* Empty state */}
                   {filteredMaterials.length === 0 && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                       <FolderOpen className="w-12 h-12 text-[var(--color-border)] mx-auto mb-4" />
                       <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">{t("content.noFiles")}</h3>
                       <p className="text-sm text-[var(--color-text-secondary)] mb-6">{t("content.noFilesDesc")}</p>
@@ -1326,7 +1326,7 @@ const ContentManagementContent = () => {
 
                   {/* List View */}
                   {viewMode === "list" && filteredMaterials.length > 0 && (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                       <div className="overflow-x-auto">
                         <table className="w-full table-fixed">
                           <colgroup>
@@ -1495,7 +1495,7 @@ const ContentManagementContent = () => {
                     <>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {paginatedMaterials.map((m) => (
-                          <div key={m.id} className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden hover:shadow-md transition-shadow">
+                          <div key={m.id} className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden hover:shadow-md transition-shadow">
                             {/* File Preview */}
                             <div className={`h-32 flex items-center justify-center relative ${
                               m.type === "video" ? "bg-[#FEE2E2]" :

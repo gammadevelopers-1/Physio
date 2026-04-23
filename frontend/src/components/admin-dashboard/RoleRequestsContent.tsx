@@ -140,26 +140,26 @@ const RoleRequestsContent = () => {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+            <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.total}</p>
               <p className="text-sm text-[var(--color-text-secondary)]">{t("roleRequestsPage.stats.total") || "Total"}</p>
             </div>
-            <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+            <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-2xl font-bold text-[#D97706]">{stats.pending}</p>
               <p className="text-sm text-[var(--color-text-secondary)]">{t("roleRequestsPage.stats.pending") || "Pending"}</p>
             </div>
-            <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+            <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-2xl font-bold text-[#16A34A]">{stats.approved}</p>
               <p className="text-sm text-[var(--color-text-secondary)]">{t("roleRequestsPage.stats.approved") || "Approved"}</p>
             </div>
-            <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+            <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-2xl font-bold text-[#DC2626]">{stats.rejected}</p>
               <p className="text-sm text-[var(--color-text-secondary)]">{t("roleRequestsPage.stats.rejected") || "Rejected"}</p>
             </div>
           </div>
 
           {/* Filters */}
-          <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
+          <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 mb-6">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`} />
@@ -193,7 +193,7 @@ const RoleRequestsContent = () => {
           )}
 
           {/* Table */}
-          <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+          <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin text-[#002D87]" />

@@ -128,7 +128,7 @@ const SupportSettingsContent = () => {
               </div>
 
               {/* Settings Card */}
-              <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
                 {/* Tabs */}
                 <div className="px-5 overflow-x-auto">
                   <div className="flex flex-wrap border-b border-[var(--color-border)]">

@@ -101,7 +101,7 @@ const BlogsPageContent = ({ blogPosts, featuredBlogs, blogCategories, blogsPage 
         </section>
 
         {/* Blogs Section */}
-        <section className="px-16 py-12 bg-white">
+        <section className="px-16 py-12 bg-[var(--color-surface-page)]">
           <div className="max-w-[1200px] mx-auto">
             {blogsTitle && (
               <h2 className={`font-semibold text-[var(--on-surface-default)] mb-2 ${isRTL ? "text-right" : "text-left"}`} style={{ fontSize: "48px" }}>
@@ -176,7 +176,7 @@ const BlogsPageContent = ({ blogPosts, featuredBlogs, blogCategories, blogsPage 
         </section>
 
         {/* Blogs Section */}
-        <section className="px-4 py-6 bg-white">
+        <section className="px-4 py-6 bg-[var(--color-surface-page)]">
           {blogsTitle && (
             <h2 className={`font-semibold text-[var(--on-surface-default)] mb-1 ${isRTL ? "text-right" : "text-left"}`} style={{ fontSize: "24px" }}>
               {blogsTitle}

@@ -65,7 +65,7 @@ export default function SecuritySettingsContent() {
       </div>
 
       {/* 2FA Toggle Card */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 mb-6">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6 mb-6">
         <TwoFactorToggle
           enabled={twoFactorEnabled}
           toggling={toggling}
@@ -74,7 +74,7 @@ export default function SecuritySettingsContent() {
       </div>
 
       {/* Trusted Devices Card */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
         <TrustedDevicesSection
           devices={devices}
           revokingId={revokingId}

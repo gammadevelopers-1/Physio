@@ -603,7 +603,7 @@ const AssessmentsContent = () => {
   ) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Time Settings */}
-      <div className="bg-white rounded-lg border border-[var(--color-border)] p-4">
+      <div className="bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] p-4">
         <div className="flex items-center gap-2 mb-3">
           <Shield className="w-4 h-4 text-[#3B82F6]" />
           <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
@@ -625,7 +625,7 @@ const AssessmentsContent = () => {
       </div>
 
       {/* Retake Score Policy */}
-      <div className="bg-white rounded-lg border border-[var(--color-border)] p-4">
+      <div className="bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] p-4">
         <div className="flex items-center gap-2 mb-3">
           <RotateCcw className="w-4 h-4 text-[#8B5CF6]" />
           <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
@@ -728,7 +728,7 @@ const AssessmentsContent = () => {
               </div>
 
               {/* Course Selector */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 mb-6">
                 <label className="text-sm font-medium text-[var(--color-text-secondary)] block mb-2">
                   {t("assessmentsPage.selectCourse") || "Select Course"}
                 </label>
@@ -762,7 +762,7 @@ const AssessmentsContent = () => {
                     <>
                       {/* Stats Cards */}
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center">
                               <ClipboardList className="w-5 h-5 text-[#3B82F6]" />
@@ -773,7 +773,7 @@ const AssessmentsContent = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center">
                               <Check className="w-5 h-5 text-[#22C55E]" />
@@ -786,7 +786,7 @@ const AssessmentsContent = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg bg-[#EDE9FE] flex items-center justify-center">
                               <Users className="w-5 h-5 text-[#7C3AED]" />
@@ -799,7 +799,7 @@ const AssessmentsContent = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg bg-[#FEF3C7] flex items-center justify-center">
                               <BarChart3 className="w-5 h-5 text-[#D97706]" />
@@ -818,7 +818,7 @@ const AssessmentsContent = () => {
                           {t("assessmentsPage.byCourse") || "Assessments by Course"}
                         </h3>
                         {courses.length === 0 ? (
-                          <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
+                          <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-8 text-center">
                             <BookOpen className="w-8 h-8 text-[var(--color-text-secondary)] mx-auto mb-2" />
                             <p className="text-sm text-[var(--color-text-secondary)]">{t("assessmentsPage.noCourses") || "No courses found"}</p>
                           </div>
@@ -832,7 +832,7 @@ const AssessmentsContent = () => {
                                 <button
                                   key={course.id}
                                   onClick={() => setSelectedCourseId(course.id)}
-                                  className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-start hover:border-[#3B82F6] hover:shadow-sm transition-all group"
+                                  className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-start hover:border-[#3B82F6] hover:shadow-sm transition-all group"
                                 >
                                   <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3 truncate group-hover:text-[#3B82F6] transition-colors">
                                     {course.title}
@@ -882,7 +882,7 @@ const AssessmentsContent = () => {
                   )}
 
                   {/* Course Assessment Defaults (collapsible) */}
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] mb-6 overflow-hidden">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] mb-6 overflow-hidden">
                     <button
                       onClick={() => setDefaultsOpen(!defaultsOpen)}
                       className="w-full flex items-center justify-between px-4 py-4 hover:bg-[var(--color-surface-page)] transition-colors"
@@ -955,7 +955,7 @@ const AssessmentsContent = () => {
                   </div>
 
                   {/* Tabs: Assessments | Submissions */}
-                  <div className="flex gap-1 bg-white rounded-xl border border-[var(--color-border)] p-1 mb-6">
+                  <div className="flex gap-1 bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-1 mb-6">
                     <button
                       onClick={() => setActiveTab("assessments")}
                       className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -985,17 +985,17 @@ const AssessmentsContent = () => {
                     <>
                       {/* Stats Summary */}
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                           <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.stats.total")}</p>
                           <p className="text-2xl font-bold text-[var(--color-text-secondary)] mt-1">{assessments.length}</p>
                         </div>
-                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                           <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.stats.active")}</p>
                           <p className="text-2xl font-bold text-[#22C55E] mt-1">
                             {assessments.filter((a) => a.status === "published" || a.status === "active").length}
                           </p>
                         </div>
-                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                           <div className="flex items-center gap-1">
                             <Users className="w-3 h-3 text-[#3B82F6]" />
                             <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.stats.submissions") || "Submissions"}</p>
@@ -1004,7 +1004,7 @@ const AssessmentsContent = () => {
                             {assessments.reduce((sum, a) => sum + (a.submissionCount ?? 0), 0)}
                           </p>
                         </div>
-                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                           <div className="flex items-center gap-1">
                             <Flag className="w-3 h-3 text-[#EA580C]" />
                             <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.stats.flagged")}</p>
@@ -1016,7 +1016,7 @@ const AssessmentsContent = () => {
                       </div>
 
                       {/* Filters */}
-                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
+                      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 mb-6">
                         <div className="flex flex-col sm:flex-row gap-4">
                           <div className="flex-1 relative">
                             <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]`} />
@@ -1055,7 +1055,7 @@ const AssessmentsContent = () => {
 
                       {/* Loading */}
                       {loading && (
-                        <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                           <table className="w-full">
                             <tbody>
                               {Array.from({ length: 5 }).map((_, i) => (
@@ -1068,7 +1068,7 @@ const AssessmentsContent = () => {
 
                       {/* Error */}
                       {error && (
-                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                           <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
                           <p className="text-sm text-[var(--color-text-secondary)] mb-4">{error}</p>
                           <button
@@ -1083,7 +1083,7 @@ const AssessmentsContent = () => {
 
                       {/* Assessments table */}
                       {!loading && !error && filteredAssessments.length > 0 && (
-                        <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                           {/* Desktop Table */}
                           <div className="hidden md:block overflow-x-auto">
                             <table className="w-full table-fixed">
@@ -1297,7 +1297,7 @@ const AssessmentsContent = () => {
 
                       {/* Empty state */}
                       {!loading && !error && filteredAssessments.length === 0 && (
-                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                           <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
                             <FileText className="w-8 h-8 text-[var(--color-text-secondary)]" />
                           </div>
@@ -1316,7 +1316,7 @@ const AssessmentsContent = () => {
                   {activeTab === "submissions" && (
                     <div className="space-y-6">
                       {/* Assessment Selector */}
-                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                         <label className="text-sm font-medium text-[var(--color-text-secondary)] block mb-2">
                           {t("assessmentsPage.submissions.selectAssessment")}
                         </label>
@@ -1333,7 +1333,7 @@ const AssessmentsContent = () => {
                       </div>
 
                       {!selectedSubmissionAssessment && (
-                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                           <Users className="w-8 h-8 text-[var(--color-text-secondary)] mx-auto mb-3" />
                           <p className="text-sm text-[var(--color-text-secondary)]">{t("assessmentsPage.submissions.emptyDesc")}</p>
                         </div>
@@ -1346,14 +1346,14 @@ const AssessmentsContent = () => {
                       )}
 
                       {selectedSubmissionAssessment && !submissionsLoading && submissions.length === 0 && (
-                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                           <Users className="w-8 h-8 text-[var(--color-text-secondary)] mx-auto mb-3" />
                           <p className="text-sm text-[var(--color-text-secondary)]">{t("assessmentsPage.submissions.noSubmissions") || "No submissions yet for this assessment"}</p>
                         </div>
                       )}
 
                       {selectedSubmissionAssessment && !submissionsLoading && submissions.length > 0 && (
-                        <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                           <div className="overflow-x-auto">
                             <table className="w-full">
                               <thead>
@@ -1623,7 +1623,7 @@ const AssessmentsContent = () => {
         const isGraded = sub.status === "graded";
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
               <div className="flex items-center justify-between p-6 border-b border-[var(--color-border)]">
                 <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("assessmentsPage.submissions.details") || "Submission Details"}</h3>
                 <button onClick={() => setViewingSubmission(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
@@ -1835,7 +1835,7 @@ const AssessmentsContent = () => {
       {/* Emergency Override Modal */}
       {overrideModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6">
+          <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full max-w-lg mx-4 p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-[#EFF6FF] flex items-center justify-center">
                 <Shield className="w-5 h-5 text-[#3B82F6]" />
@@ -1919,7 +1919,7 @@ const AssessmentsContent = () => {
       {/* Assessment Preview Modal — shows questions + correct answers for manager */}
       {previewAssessment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-6 border-b border-[var(--color-border)]">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
@@ -2015,7 +2015,7 @@ const AssessmentsContent = () => {
       {/* Allow Retake Modal */}
       {retakeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6">
+          <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full max-w-lg mx-4 p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-[#F3E8FF] flex items-center justify-center">
                 <RotateCcw className="w-5 h-5 text-[#7C3AED]" />
@@ -2094,7 +2094,7 @@ const AssessmentsContent = () => {
       {/* Flag Confirmation Modal */}
       {flagModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+          <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-[#FFF7ED] flex items-center justify-center">
                 <Flag className="w-5 h-5 text-[#EA580C]" />

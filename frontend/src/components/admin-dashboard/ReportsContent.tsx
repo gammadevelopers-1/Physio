@@ -124,7 +124,7 @@ const ReportsContent = () => {
               </div>
 
               {/* Date Range Filter */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 mb-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-[var(--color-text-secondary)]" />
@@ -174,7 +174,7 @@ const ReportsContent = () => {
                       <div
                         key={report.id}
                         onClick={() => setSelectedReport(report.id)}
-                        className={`bg-white rounded-xl border-2 p-5 cursor-pointer transition-all ${
+                        className={`bg-[var(--color-surface-card)] rounded-xl border-2 p-5 cursor-pointer transition-all ${
                           selectedReport === report.id
                             ? "border-[#002D87] shadow-md"
                             : "border-[var(--color-border)] hover:border-[#002D87]/50"
@@ -196,7 +196,7 @@ const ReportsContent = () => {
 
               {/* Generate Button */}
               {selectedReport && (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-6">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 mb-6">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
                       <h3 className="font-semibold text-[var(--color-text-primary)]">
@@ -226,7 +226,7 @@ const ReportsContent = () => {
               )}
 
               {/* Scheduled Reports */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                 <div className="p-5 border-b border-[var(--color-border)]">
                   <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                     {t("reportsPage.scheduledReports")}

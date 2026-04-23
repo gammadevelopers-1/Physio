@@ -35,7 +35,7 @@ const FinanceSummaryWidget = ({ data }: FinanceSummaryWidgetProps) => {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">

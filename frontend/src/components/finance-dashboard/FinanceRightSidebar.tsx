@@ -76,7 +76,7 @@ const FinanceRightSidebar = ({
   return (
     <div className="w-full lg:w-[300px] lg:flex-shrink-0 space-y-4">
       {/* Recent Transactions */}
-      <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
           <CreditCard className="w-4 h-4 text-[var(--color-primary)]" />
           <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
@@ -136,7 +136,7 @@ const FinanceRightSidebar = ({
       </div>
 
       {/* Financial Alerts */}
-      <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
           <AlertTriangle className="w-4 h-4 text-[#EA580C]" />
           <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
@@ -178,7 +178,7 @@ const FinanceRightSidebar = ({
       </div>
 
       {/* Active Coupons */}
-      <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Tag className="w-4 h-4 text-[var(--color-primary)]" />
@@ -224,7 +224,7 @@ const FinanceRightSidebar = ({
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
           <Zap className="w-4 h-4 text-[var(--color-primary)]" />
           <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">

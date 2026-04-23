@@ -424,7 +424,7 @@ const CertificationsContent = () => {
 
               <OfflineBanner />
 
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                 {loading ? (
                   <StudentCoursesGridSkeleton count={4} />
                 ) : error ? (

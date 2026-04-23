@@ -118,26 +118,26 @@ const AdminCoursesContent = () => {
 
               {/* Stats Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{total}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("coursesPage.stats.total")}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[#16A34A]">{activeCount}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("coursesPage.stats.active")}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[#3B82F6]">{enrollmentsCount}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("coursesPage.stats.enrollments")}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[#D97706]">{pendingCount}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("coursesPage.stats.pendingReview")}</p>
                 </div>
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 mb-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                   {/* Search */}
                   <div className="flex-1 relative">
@@ -193,7 +193,7 @@ const AdminCoursesContent = () => {
 
               {/* Error State */}
               {error && !loading && (
-                <div className="bg-white rounded-xl border border-red-200 py-12 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-red-200 py-12 text-center">
                   <p className="text-red-600 mb-4">{t("coursesPage.error")}</p>
                   <button
                     onClick={refetch}
@@ -212,7 +212,7 @@ const AdminCoursesContent = () => {
                       {courses.map((course) => (
                         <div
                           key={course.id}
-                          className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden"
+                          className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden"
                         >
                           {/* Thumbnail */}
                           <div className="h-32 bg-gradient-to-r from-[#002D87] to-[#0066FF] flex items-center justify-center overflow-hidden">
@@ -279,7 +279,7 @@ const AdminCoursesContent = () => {
 
                                 {openDropdownId === course.id && (
                                   <div
-                                    className={`absolute bottom-full mb-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-10 ${isRTL ? "left-0" : "right-0"}`}
+                                    className={`absolute bottom-full mb-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-10 ${isRTL ? "left-0" : "right-0"}`}
                                   >
                                     <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
                                       <Eye className="w-4 h-4" />
@@ -302,7 +302,7 @@ const AdminCoursesContent = () => {
                       ))}
                     </div>
                   ) : (
-                    <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                       <table className="w-full">
                         <thead className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
                           <tr>
@@ -399,7 +399,7 @@ const AdminCoursesContent = () => {
 
               {/* Empty State */}
               {!loading && !error && courses.length === 0 && (
-                <div className="bg-white rounded-xl border border-[var(--color-border)] py-12 text-center">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] py-12 text-center">
                   <BookOpen className="w-12 h-12 text-[var(--color-text-secondary)] mx-auto mb-4" />
                   <p className="text-[var(--color-text-secondary)]">{t("coursesPage.noCourses")}</p>
                 </div>

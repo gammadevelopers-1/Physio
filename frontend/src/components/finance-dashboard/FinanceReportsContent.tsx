@@ -180,7 +180,7 @@ const FinanceReportsContent = () => {
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5 mb-6">
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 mb-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Filter className="w-4 h-4 text-[var(--color-text-secondary)]" />
                   <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{t("reportsPage.filters.period")}</h3>
@@ -223,7 +223,7 @@ const FinanceReportsContent = () => {
               </div>
 
               {/* Report Results */}
-              <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
                 <div className="px-5 py-4 border-b border-[#F3F4F6]">
                   <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                     {reportTypes.find((r) => r.key === selectedReport)?.title}

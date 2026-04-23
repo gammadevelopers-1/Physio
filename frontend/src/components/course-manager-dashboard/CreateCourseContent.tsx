@@ -473,7 +473,7 @@ const CreateCourseContent = () => {
               {/* Step 1: Basic Info */}
               {currentStep === 1 && (
                 <div className="space-y-6">
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                     <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                       {t("createCourse.basicInfo")}
                     </h2>
@@ -571,7 +571,7 @@ const CreateCourseContent = () => {
                   </div>
 
                   {/* Course Image */}
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                     <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                       {t("createCourse.courseImage")}
                     </h2>
@@ -626,7 +626,7 @@ const CreateCourseContent = () => {
               {/* Step 2: Content Details */}
               {currentStep === 2 && (
                 <div className="space-y-6">
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                     <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                       {t("createCourse.wizardStepContent")}
                     </h2>
@@ -887,7 +887,7 @@ const CreateCourseContent = () => {
               {currentStep === 3 && (
                 <div className="space-y-6">
                   {/* Schedule */}
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                     <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                       {t("createCourse.scheduleTitle")}
                     </h2>
@@ -1047,7 +1047,7 @@ const CreateCourseContent = () => {
                   </div>
 
                   {/* NELC Configuration */}
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                     <div className="flex items-center gap-2 mb-4">
                       <ShieldCheck className="w-5 h-5 text-[var(--color-primary-dark)]" />
                       <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
@@ -1087,7 +1087,7 @@ const CreateCourseContent = () => {
                 return (
                 <div className="space-y-6">
                   {/* Instructor Section */}
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                     <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-1">
                       {t("createCourse.instructor")} *
                     </h2>
@@ -1205,7 +1205,7 @@ const CreateCourseContent = () => {
                   </div>
 
                   {/* TA Section */}
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                     <div className="flex items-center gap-2 mb-4">
                       <Users className="w-5 h-5 text-[var(--color-primary-dark)]" />
                       <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
@@ -1308,7 +1308,7 @@ const CreateCourseContent = () => {
               {/* Step 5: Review & Submit */}
               {currentStep === 5 && (
                 <div className="space-y-6">
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                     <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                       {t("createCourse.reviewTitle")}
                     </h2>

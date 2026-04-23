@@ -12,7 +12,7 @@ const StudentDashboardHomeSkeleton = () => (
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-4"
+          className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-4"
         >
           <SkeletonBlock className="w-20 h-20 rounded-full flex-shrink-0" />
           <div className="flex-1 space-y-2">
@@ -24,7 +24,7 @@ const StudentDashboardHomeSkeleton = () => (
     </div>
 
     {/* Recent Courses section */}
-    <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 mt-6">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6 mt-6">
       <SkeletonBlock className="h-6 w-40 mb-6" />
       <div className="flex gap-4 overflow-hidden">
         {[1, 2, 3].map((i) => (

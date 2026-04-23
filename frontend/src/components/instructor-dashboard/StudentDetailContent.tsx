@@ -334,7 +334,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
               {!loading && !error && student && (
                 <>
                   {/* Student Header Card */}
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                       <div className="flex items-start gap-4">
                         <div className="w-16 h-16 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xl font-bold text-[var(--color-text-secondary)]">
@@ -388,7 +388,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                   {/* Stats Cards */}
                   {stats && (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
+                      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-center">
                         <div className="w-10 h-10 mx-auto rounded-lg bg-[#DBEAFE] flex items-center justify-center mb-2">
                           <BookOpen className="w-5 h-5 text-[#3B82F6]" />
                         </div>
@@ -399,7 +399,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                           {t("studentDetail.totalCourses")}
                         </p>
                       </div>
-                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
+                      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-center">
                         <div className="w-10 h-10 mx-auto rounded-lg bg-[#DCFCE7] flex items-center justify-center mb-2">
                           <CheckCircle className="w-5 h-5 text-[#22C55E]" />
                         </div>
@@ -410,7 +410,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                           {t("studentDetail.completed")}
                         </p>
                       </div>
-                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
+                      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-center">
                         <div className="w-10 h-10 mx-auto rounded-lg bg-[#FEF9C3] flex items-center justify-center mb-2">
                           <TrendingUp className="w-5 h-5 text-[#EAB308]" />
                         </div>
@@ -421,7 +421,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                           {t("studentDetail.avgAttendance")}
                         </p>
                       </div>
-                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
+                      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-center">
                         <div className="w-10 h-10 mx-auto rounded-lg bg-[#E0E7FF] flex items-center justify-center mb-2">
                           <FileText className="w-5 h-5 text-[#6366F1]" />
                         </div>
@@ -432,7 +432,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                           {t("studentDetail.avgScore")}
                         </p>
                       </div>
-                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
+                      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-center">
                         <div className="w-10 h-10 mx-auto rounded-lg bg-[#FEF3C7] flex items-center justify-center mb-2">
                           <Award className="w-5 h-5 text-[#D4A520]" />
                         </div>
@@ -447,7 +447,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                   )}
 
                   {/* Tabs */}
-                  <div className="bg-white rounded-xl border border-[var(--color-border)]">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
                     <div className="flex border-b border-[var(--color-border)] overflow-x-auto">
                       {tabs.map((tab) => (
                         <button
@@ -581,7 +581,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                               return (order[a.enrollmentStatus] ?? 3) - (order[b.enrollmentStatus] ?? 3);
                             })
                             .map((cp: any) => (
-                            <div key={cp.courseId} className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                            <div key={cp.courseId} className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                               {/* Course Header */}
                               <div className="px-4 py-3 bg-[var(--color-surface-page)] border-b border-[var(--color-border)] flex items-center justify-between">
                                 <div className="flex items-center gap-2">
@@ -757,7 +757,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                             const courseAssessments = cp.assessments || [];
                             if (courseAssessments.length === 0) return null;
                             return (
-                              <div key={cp.courseId} className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                              <div key={cp.courseId} className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                                 <div className="px-4 py-3 bg-[var(--color-surface-page)] border-b border-[var(--color-border)] flex items-center justify-between">
                                   <div className="flex items-center gap-2">
                                     <BookOpen className="w-4 h-4 text-[#D4A520]" />
@@ -969,7 +969,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
       {/* Make-up Lecture Modal */}
       {makeupModal?.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+          <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full max-w-md mx-4">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("studentDetail.makeupModalTitle")}</h3>

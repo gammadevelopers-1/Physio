@@ -27,7 +27,7 @@ const NELCContent = ({ strapiData }: { strapiData?: NELCPage | null }) => {
     <>
       {/* Hero Section */}
       {hasHero && (
-        <section className="bg-white px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
+        <section className="bg-[var(--color-surface-page)] px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
           <div className="max-w-[1312px] mx-auto">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-16">
               {/* Content */}
@@ -97,7 +97,7 @@ const NELCContent = ({ strapiData }: { strapiData?: NELCPage | null }) => {
 
       {/* Compliance Section */}
       {hasCompliance && (
-        <section className="bg-white px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
+        <section className="bg-[var(--color-surface-page)] px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
           <div className="max-w-[1312px] mx-auto">
             {(complianceTitle || complianceDescription) && (
               <div className="flex flex-col items-center gap-4 mb-10 max-w-[768px] mx-auto">

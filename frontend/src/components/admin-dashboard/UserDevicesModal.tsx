@@ -83,7 +83,7 @@ export default function UserDevicesModal({ user, onClose }: UserDevicesModalProp
       }}
     >
       <div
-        className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide"
+        className="bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6">

@@ -111,7 +111,7 @@ const FinanceMobileSidebar = ({ profile }: FinanceMobileSidebarProps) => {
 
         <div className="p-4 pt-14 flex flex-col gap-4">
           {/* Profile Card */}
-          <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
+          <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
             {/* Profile Section */}
             <div className="flex flex-col items-center">
               <div className="relative mb-3">
@@ -195,7 +195,7 @@ const FinanceMobileSidebar = ({ profile }: FinanceMobileSidebarProps) => {
           </div>
 
           {/* Navigation Card */}
-          <div className="bg-white rounded-2xl border border-[var(--color-border)] p-4">
+          <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-4">
             <nav className="space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon;

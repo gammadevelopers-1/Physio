@@ -46,7 +46,7 @@ const Hero = ({ data }: HeroProps) => {
   return (
     <section className="relative w-full">
       {/* Video Section - Responsive height */}
-      <div className={`relative ${videoContainerClass} w-full overflow-hidden bg-[var(--surface-intense)]`}>
+      <div className={`relative ${videoContainerClass} w-full overflow-hidden bg-[var(--color-surface-page)]`}>
         {videoUrl && (
           <video
             autoPlay
@@ -88,7 +88,7 @@ const Hero = ({ data }: HeroProps) => {
 
       {/* Content Section - only render when at least one piece of text/button is provided */}
       {(hasAnyMobileContent || hasAnyDesktopContent) && (
-        <div className="bg-[var(--surface-intense)] px-4 lg:px-16 pt-8 pb-6 lg:py-20 overflow-hidden">
+        <div className="bg-[var(--color-surface-page)] px-4 lg:px-16 pt-8 pb-6 lg:py-20 overflow-hidden">
           {/* Mobile/Tablet Layout */}
           {hasAnyMobileContent && (
             <div className="flex flex-col gap-4 lg:hidden">

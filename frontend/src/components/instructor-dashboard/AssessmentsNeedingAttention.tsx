@@ -35,7 +35,7 @@ const AssessmentsNeedingAttention = ({
 
   if (totalCount === 0) {
     return (
-      <div className="bg-white rounded-xl border border-[var(--color-border)]">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
         <div className="p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
@@ -55,7 +55,7 @@ const AssessmentsNeedingAttention = ({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--color-border)]">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
       <div className="p-4 sm:p-5">
         {/* Header with Badge Count */}
         <div className="flex items-center justify-between mb-4">

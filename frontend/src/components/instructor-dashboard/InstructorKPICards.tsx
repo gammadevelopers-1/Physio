@@ -59,7 +59,7 @@ const InstructorKPICards = ({ data }: InstructorKPICardsProps) => {
         return (
           <div
             key={card.id}
-            className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex flex-col gap-3"
+            className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex flex-col gap-3"
           >
             <div
               className={`w-10 h-10 ${card.iconBg} rounded-lg flex items-center justify-center`}

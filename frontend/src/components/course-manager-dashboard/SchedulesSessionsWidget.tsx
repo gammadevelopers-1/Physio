@@ -53,7 +53,7 @@ const SchedulesSessionsWidget = ({
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
+    <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--color-border)]">
         <div className="flex items-center gap-2">

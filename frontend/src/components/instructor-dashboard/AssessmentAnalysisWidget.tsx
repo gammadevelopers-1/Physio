@@ -65,7 +65,7 @@ const AssessmentAnalysisWidget = ({
   );
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--color-border)] mb-6">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] mb-6">
       {/* Header */}
       <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[var(--color-border)]">
         <div className="flex items-center gap-2">

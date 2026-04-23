@@ -157,7 +157,7 @@ const FinanceContent = () => {
 
               {/* Revenue Stats */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-10 h-10 bg-[#DCFCE7] rounded-lg flex items-center justify-center">
                       <DollarSign className="w-5 h-5 text-[#16A34A]" />
@@ -177,7 +177,7 @@ const FinanceContent = () => {
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("financePage.stats.gross")}</p>
                 </div>
 
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-10 h-10 bg-[#DBEAFE] rounded-lg flex items-center justify-center">
                       <TrendingUp className="w-5 h-5 text-[#3B82F6]" />
@@ -197,7 +197,7 @@ const FinanceContent = () => {
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("financePage.stats.net")}</p>
                 </div>
 
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-10 h-10 bg-[#FEE2E2] rounded-lg flex items-center justify-center">
                       <RefreshCcw className="w-5 h-5 text-[#DC2626]" />
@@ -217,7 +217,7 @@ const FinanceContent = () => {
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("financePage.stats.refunds")}</p>
                 </div>
 
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-10 h-10 bg-[var(--gold-gold-100)] rounded-lg flex items-center justify-center">
                       <CreditCard className="w-5 h-5 text-[var(--gold-gold-500)]" />
@@ -240,7 +240,7 @@ const FinanceContent = () => {
 
               {/* Gateway Breakdown */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                <div className="lg:col-span-2 bg-white rounded-xl border border-[var(--color-border)] p-5">
+                <div className="lg:col-span-2 bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
                   <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("financePage.revenueChart")}
                   </h3>
@@ -249,7 +249,7 @@ const FinanceContent = () => {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
                   <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("financePage.gatewayBreakdown")}
                   </h3>
@@ -277,7 +277,7 @@ const FinanceContent = () => {
               </div>
 
               {/* Recent Transactions */}
-              <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                 <div className="p-5 border-b border-[var(--color-border)]">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">

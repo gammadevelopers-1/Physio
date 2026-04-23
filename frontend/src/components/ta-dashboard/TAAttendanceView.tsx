@@ -322,7 +322,7 @@ const TAAttendanceView = ({
           <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
           {/* Zoom sync bar */}
           {isZoomSession && !attendanceLocked && isPostSession && (
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--color-border)] bg-[#EFF6FF]">

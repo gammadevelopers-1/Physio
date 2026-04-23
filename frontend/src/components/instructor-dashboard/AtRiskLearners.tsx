@@ -146,7 +146,7 @@ const AtRiskLearners = ({
   const totalCount = learners.length;
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--color-border)]">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
       <div className="p-4 sm:p-5">
         {/* Header with Badge Count + Settings Gear */}
         <div className="flex items-center justify-between mb-4">
@@ -215,7 +215,7 @@ const AtRiskLearners = ({
 
                 {/* Dropdown Menu */}
                 {openDropdown === learner.id && (
-                  <div className="absolute end-0 top-full mt-1 w-48 bg-white rounded-lg border border-[var(--color-border)] shadow-lg z-10" role="menu">
+                  <div className="absolute end-0 top-full mt-1 w-48 bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] shadow-lg z-10" role="menu">
                     <div className="py-1">
                       <button
                         onClick={() => handleSendReminder(learner)}
@@ -322,7 +322,7 @@ function ThresholdSettingsModal({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("atRisk.thresholdSettings")}

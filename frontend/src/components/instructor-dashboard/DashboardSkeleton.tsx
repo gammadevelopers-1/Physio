@@ -16,7 +16,7 @@ const DashboardSkeleton = () => {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex flex-col gap-3"
+            className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex flex-col gap-3"
           >
             <SkeletonBlock className="w-10 h-10 rounded-lg" />
             <div>
@@ -28,7 +28,7 @@ const DashboardSkeleton = () => {
       </div>
 
       {/* Today's Sessions skeleton */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] mb-6">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] mb-6">
         <div className="p-5 border-b border-[var(--color-border)] flex justify-between">
           <SkeletonBlock className="h-6 w-40" />
           <SkeletonBlock className="h-9 w-28 rounded-lg" />
@@ -48,7 +48,7 @@ const DashboardSkeleton = () => {
       </div>
 
       {/* Calendar widget skeleton */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] mb-6 p-5">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] mb-6 p-5">
         <SkeletonBlock className="h-6 w-36 mb-4" />
         <div className="grid grid-cols-7 gap-2 mb-4">
           {Array.from({ length: 7 }).map((_, i) => (
@@ -58,7 +58,7 @@ const DashboardSkeleton = () => {
       </div>
 
       {/* Course Performance skeleton */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] mb-6">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] mb-6">
         <div className="p-5 border-b border-[var(--color-border)] flex justify-between">
           <SkeletonBlock className="h-6 w-44" />
           <SkeletonBlock className="h-9 w-40 rounded-lg" />
@@ -80,7 +80,7 @@ const DashboardSkeleton = () => {
       </div>
 
       {/* Assessment Analysis skeleton */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] mb-6">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] mb-6">
         <div className="p-5 border-b border-[var(--color-border)]">
           <SkeletonBlock className="h-6 w-52" />
         </div>

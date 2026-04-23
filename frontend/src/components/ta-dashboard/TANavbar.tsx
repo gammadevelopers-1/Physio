@@ -143,7 +143,7 @@ const TANavbar = () => {
             </button>
 
             {isUserMenuOpen && (
-              <div className={`absolute top-full mt-2 bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50 ${isRTL ? "left-0" : "right-0"}`} role="menu">
+              <div className={`absolute top-full mt-2 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50 ${isRTL ? "left-0" : "right-0"}`} role="menu">
                 <Link href={`/${locale}/dashboard/teaching-assistant`} className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors" onClick={() => setIsUserMenuOpen(false)} role="menuitem">
                   <User className="w-4 h-4" />
                   {tDashboard("sidebar.dashboard")}

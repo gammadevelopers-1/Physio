@@ -115,7 +115,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Card 1: Overall Progress */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-4">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-4">
         <div className="relative flex-shrink-0">
           <ProgressRing percentage={stats.averageProgress} />
           <div className="absolute inset-0 flex items-center justify-center">
@@ -135,7 +135,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
       </div>
 
       {/* Card 2: Attendance Rate */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex flex-col justify-between">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex flex-col justify-between">
         <p className="text-sm font-medium text-[var(--color-text-secondary)]">
           {t("kpi.attendanceRate")}
         </p>
@@ -161,7 +161,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
       </div>
 
       {/* Card 3: Certificates */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex flex-col justify-between">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex flex-col justify-between">
         <p className="text-sm font-medium text-[var(--color-text-secondary)]">
           {t("kpi.certificates")}
         </p>
@@ -200,7 +200,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
       </div>
 
       {/* Card 4: Next Session */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex flex-col justify-between">
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex flex-col justify-between">
         <p className="text-sm font-medium text-[var(--color-text-secondary)]">
           {t("kpi.nextSession")}
         </p>

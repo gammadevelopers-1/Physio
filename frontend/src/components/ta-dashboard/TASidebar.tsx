@@ -129,7 +129,7 @@ const TASidebar = () => {
                 <Pencil className="w-3.5 h-3.5 text-white" />
               </button>
               {avatarMenuOpen && (
-                <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`} role="menu">
+                <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`} role="menu">
                   <button
                     onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors cursor-pointer"

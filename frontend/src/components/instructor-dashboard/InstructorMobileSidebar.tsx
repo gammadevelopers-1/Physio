@@ -158,7 +158,7 @@ const InstructorMobileSidebar = ({
 
         <div className="p-4 pt-14 flex flex-col gap-4">
           {/* Profile Card */}
-          <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
+          <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
             {/* Profile Section */}
             <div className="flex flex-col items-center">
               <div className="relative mb-3">
@@ -190,7 +190,7 @@ const InstructorMobileSidebar = ({
                     <Pencil className="w-3.5 h-3.5 text-white" />
                   </button>
                   {avatarMenuOpen && (
-                    <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`} role="menu">
+                    <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`} role="menu">
                       <button
                         onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
@@ -256,7 +256,7 @@ const InstructorMobileSidebar = ({
           </div>
 
           {/* Navigation Card */}
-          <div className="bg-white rounded-2xl border border-[var(--color-border)] p-4">
+          <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-4">
             <nav className="space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon;

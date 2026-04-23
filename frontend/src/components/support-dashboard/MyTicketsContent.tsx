@@ -198,7 +198,7 @@ const MyTicketsContent = () => {
                   return (
                     <div
                       key={index}
-                      className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3"
+                      className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3"
                     >
                       <div
                         className={`w-10 h-10 ${stat.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}
@@ -259,7 +259,7 @@ const MyTicketsContent = () => {
                   return (
                     <div
                       key={ticket.id}
-                      className={`bg-white rounded-xl border border-[var(--color-border)] p-4 ${isRTL ? "border-r-[3px]" : "border-l-[3px]"} ${priorityBorderColors[ticket.priority]} hover:shadow-sm transition-shadow`}
+                      className={`bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 ${isRTL ? "border-r-[3px]" : "border-l-[3px]"} ${priorityBorderColors[ticket.priority]} hover:shadow-sm transition-shadow`}
                     >
                       {/* Top Row: Ticket ID + Subject */}
                       <div className="flex items-start justify-between gap-3 mb-2">
@@ -317,7 +317,7 @@ const MyTicketsContent = () => {
                 })}
 
                 {filteredTickets.length === 0 && (
-                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-8 text-center">
                     <p className="text-sm text-[var(--color-text-secondary)]">
                       {t("myTicketsPage.noTickets")}
                     </p>
@@ -326,7 +326,7 @@ const MyTicketsContent = () => {
               </div>
 
               {/* Quick Reply Section */}
-              <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
                 {/* Title */}
                 <div className="flex items-center gap-2 mb-4">
                   <Send className="w-5 h-5 text-[var(--color-primary)]" />

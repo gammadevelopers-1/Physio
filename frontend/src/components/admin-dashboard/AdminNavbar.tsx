@@ -210,7 +210,7 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
 
             {isUserMenuOpen && (
               <div
-                className={`absolute top-full mt-2 bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50 ${isRTL ? "left-0" : "right-0"}`}
+                className={`absolute top-full mt-2 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50 ${isRTL ? "left-0" : "right-0"}`}
               >
                 <Link
                   href={`/${locale}/dashboard/admin`}

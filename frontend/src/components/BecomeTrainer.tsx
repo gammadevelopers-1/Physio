@@ -29,7 +29,7 @@ const BecomeTrainer = ({ data }: BecomeTrainerProps) => {
   return (
     <>
       {/* Desktop Version - Only show on large screens (1280px+) */}
-      <section className="hidden xl:block bg-[#eef3f7] px-[64px] py-[96px] overflow-hidden">
+      <section className="hidden xl:block bg-[var(--color-surface-page)] px-[64px] py-[96px] overflow-hidden">
         <div className="flex items-center justify-center">
           <div className="relative w-[1312px] h-[625px]">
             {/* Main White Container */}
@@ -88,7 +88,7 @@ const BecomeTrainer = ({ data }: BecomeTrainerProps) => {
                       href={buttonHref || "#"}
                       className="h-[40px] px-[20px] py-[8px] text-white rounded-[12px] text-[14px] font-medium min-w-[80px] inline-flex items-center justify-center"
                       style={{
-                        background: "linear-gradient(to right, #a37f49, #6b4e24)",
+                        background: "linear-gradient(to right, var(--color-primary), var(--color-primary-dark))",
                       }}
                     >
                       {buttonLabel}
@@ -153,7 +153,7 @@ const BecomeTrainer = ({ data }: BecomeTrainerProps) => {
         </div>
 
         {/* Content Container - 513px height */}
-        <div className="bg-[#eef3f7] h-[513px] px-4 py-16 flex flex-col items-center justify-end">
+        <div className="bg-[var(--color-surface-page)] h-[513px] px-4 py-16 flex flex-col items-center justify-end">
           <div
             className={`flex flex-col gap-8 justify-center w-full ${isRTL ? "items-start text-right" : "items-start"}`}
           >

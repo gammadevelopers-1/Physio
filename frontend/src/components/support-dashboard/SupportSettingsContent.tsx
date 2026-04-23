@@ -120,7 +120,7 @@ const SupportSettingsContent = () => {
                 </p>
                 <Link
                   href={`/${locale}/dashboard/settings/security`}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#a37f49] bg-[#a37f49]/10 hover:bg-[#a37f49]/20 rounded-lg transition-colors mt-3"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--color-primary)] bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 rounded-lg transition-colors mt-3"
                 >
                   <Shield className="w-4 h-4" />
                   Personal Security Settings
@@ -140,14 +140,14 @@ const SupportSettingsContent = () => {
                           onClick={() => setActiveTab(tab.key)}
                           className={`px-3 py-2.5 text-xs sm:text-sm font-medium relative transition-colors whitespace-nowrap flex items-center gap-1 ${
                             activeTab === tab.key
-                              ? "text-[#a37f49]"
+                              ? "text-[var(--color-primary)]"
                               : "text-[#6B7280] hover:text-[#374151]"
                           }`}
                         >
                           <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           {tab.label}
                           {activeTab === tab.key && (
-                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#a37f49] rounded-t" />
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)] rounded-t" />
                           )}
                         </button>
                       );
@@ -191,7 +191,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={highFRT}
                                     onChange={(e) => setHighFRT(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49]"
+                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
                                 </div>
@@ -202,7 +202,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={highResolution}
                                     onChange={(e) => setHighResolution(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49]"
+                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
                                 </div>
@@ -220,7 +220,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={medFRT}
                                     onChange={(e) => setMedFRT(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49]"
+                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
                                 </div>
@@ -231,7 +231,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={medResolution}
                                     onChange={(e) => setMedResolution(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49]"
+                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
                                 </div>
@@ -249,7 +249,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={lowFRT}
                                     onChange={(e) => setLowFRT(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49]"
+                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
                                 </div>
@@ -260,7 +260,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={lowResolution}
                                     onChange={(e) => setLowResolution(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49]"
+                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
                                 </div>
@@ -292,7 +292,7 @@ const SupportSettingsContent = () => {
                               onClick={() => setSelectedRule(rule.key)}
                               className={`p-5 rounded-xl border cursor-pointer transition-all ${
                                 isActive
-                                  ? "ring-1 ring-[#a37f49] border-[#a37f49] bg-[#FDF6EC]"
+                                  ? "ring-1 ring-[var(--color-primary)] border-[var(--color-primary)] bg-[#FDF6EC]"
                                   : "border-[#E5E7EB] bg-[#F9FAFB] hover:border-[#D1D5DB]"
                               }`}
                             >
@@ -300,15 +300,15 @@ const SupportSettingsContent = () => {
                                 <div className="flex items-center gap-3">
                                   <div
                                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                      isActive ? "border-[#a37f49]" : "border-[#D1D5DB]"
+                                      isActive ? "border-[var(--color-primary)]" : "border-[#D1D5DB]"
                                     }`}
                                   >
                                     {isActive && (
-                                      <div className="w-2.5 h-2.5 rounded-full bg-[#a37f49]" />
+                                      <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary)]" />
                                     )}
                                   </div>
                                   <div>
-                                    <p className={`text-sm font-semibold ${isActive ? "text-[#a37f49]" : "text-[#111827]"}`}>
+                                    <p className={`text-sm font-semibold ${isActive ? "text-[var(--color-primary)]" : "text-[#111827]"}`}>
                                       {rule.title}
                                     </p>
                                     <p className="text-[12px] text-[#6B7280] mt-0.5">
@@ -322,7 +322,7 @@ const SupportSettingsContent = () => {
                                     setRuleEnabled((prev) => ({ ...prev, [rule.key]: !prev[rule.key] }));
                                   }}
                                   className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${
-                                    enabled ? "bg-[#a37f49]" : "bg-[#E5E7EB]"
+                                    enabled ? "bg-[var(--color-primary)]" : "bg-[#E5E7EB]"
                                   }`}
                                 >
                                   <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${enabled ? "ms-auto" : ""}`} />
@@ -398,7 +398,7 @@ const SupportSettingsContent = () => {
                             </div>
                             <button
                               onClick={() => setEmailNotif(!emailNotif)}
-                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${emailNotif ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
+                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${emailNotif ? "bg-[var(--color-primary)]" : "bg-[#E5E7EB]"}`}
                             >
                               <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${emailNotif ? "ms-auto" : ""}`} />
                             </button>
@@ -412,7 +412,7 @@ const SupportSettingsContent = () => {
                             </div>
                             <button
                               onClick={() => setSmsNotif(!smsNotif)}
-                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${smsNotif ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
+                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${smsNotif ? "bg-[var(--color-primary)]" : "bg-[#E5E7EB]"}`}
                             >
                               <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${smsNotif ? "ms-auto" : ""}`} />
                             </button>
@@ -426,7 +426,7 @@ const SupportSettingsContent = () => {
                             </div>
                             <button
                               onClick={() => setWhatsappNotif(!whatsappNotif)}
-                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${whatsappNotif ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
+                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${whatsappNotif ? "bg-[var(--color-primary)]" : "bg-[#E5E7EB]"}`}
                             >
                               <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${whatsappNotif ? "ms-auto" : ""}`} />
                             </button>

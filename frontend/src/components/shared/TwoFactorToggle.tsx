@@ -71,8 +71,8 @@ export default function TwoFactorToggle({
             !enabled
               ? {
                   background: isRTL
-                    ? "linear-gradient(to left, #a37f49, #6b4e24)"
-                    : "linear-gradient(to right, #a37f49, #6b4e24)",
+                    ? "linear-gradient(to left, var(--color-primary), var(--color-primary-dark))"
+                    : "linear-gradient(to right, var(--color-primary), var(--color-primary-dark))",
                 }
               : undefined
           }

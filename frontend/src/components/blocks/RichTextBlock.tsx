@@ -65,14 +65,14 @@ export function RichTextBlock({ data }: RichTextBlockProps) {
               <li className="text-[var(--on-surface-variant)]">{children}</li>
             ),
             blockquote: ({ children }) => (
-              <blockquote className="border-l-4 border-[#a37f49] pl-6 py-2 my-6 bg-[var(--surface-container-low)] rounded-r-lg italic text-[var(--on-surface-variant)]">
+              <blockquote className="border-l-4 border-[var(--color-primary)] pl-6 py-2 my-6 bg-[var(--surface-container-low)] rounded-r-lg italic text-[var(--on-surface-variant)]">
                 {children}
               </blockquote>
             ),
             a: ({ href, children }) => (
               <a
                 href={href}
-                className="text-[#a37f49] underline hover:opacity-80 transition-opacity"
+                className="text-[var(--color-primary)] underline hover:opacity-80 transition-opacity"
                 target="_blank"
                 rel="noopener noreferrer"
               >

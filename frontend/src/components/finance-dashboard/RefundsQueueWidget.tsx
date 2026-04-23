@@ -35,7 +35,7 @@ const RefundsQueueWidget = ({ refunds }: RefundsQueueWidgetProps) => {
             {refunds.length}
           </span>
         </div>
-        <button className="text-sm font-medium text-[#a37f49] hover:text-[#6b4e24] hover:underline">
+        <button className="text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline">
           {t("refundsQueue.viewAll")}
         </button>
       </div>

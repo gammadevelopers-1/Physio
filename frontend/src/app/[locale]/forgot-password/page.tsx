@@ -50,7 +50,7 @@ export default function ForgotPasswordPage() {
 
       <main
         id="main-content"
-        className="flex-1 bg-[#EEF3F7] px-4 py-10 md:px-16 md:py-20"
+        className="flex-1 bg-[var(--color-surface-page)] px-4 py-10 md:px-16 md:py-20"
       >
         <div className="flex items-center justify-center w-full">
           <div
@@ -122,8 +122,8 @@ export default function ForgotPasswordPage() {
                     className="w-full h-10 px-5 py-2 rounded-xl text-white font-medium text-sm text-center hover:opacity-90 transition-opacity disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{
                       background: isRTL
-                        ? "linear-gradient(to left, #a37f49, #6b4e24)"
-                        : "linear-gradient(to right, #a37f49, #6b4e24)",
+                        ? "linear-gradient(to left, var(--color-primary), var(--color-primary-dark))"
+                        : "linear-gradient(to right, var(--color-primary), var(--color-primary-dark))",
                     }}
                   >
                     {isSubmitting && (
@@ -136,7 +136,7 @@ export default function ForgotPasswordPage() {
             </div>
 
             {/* Image Side */}
-            <div className="hidden lg:flex flex-1 bg-[#e5edf4] items-center justify-center">
+            <div className="hidden lg:flex flex-1 bg-[var(--color-surface-card)] items-center justify-center">
               <div className="relative w-full h-full min-h-[635px]">
                 <Image
                   src="/signin_signup_image/signin_signup.svg"

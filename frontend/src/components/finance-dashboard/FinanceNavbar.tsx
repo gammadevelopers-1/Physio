@@ -163,7 +163,7 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
               className="flex items-center gap-2 cursor-pointer"
             >
-              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#E5E7EB] bg-gradient-to-br from-[#a37f49] to-[#6b4e24] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#E5E7EB] bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] flex items-center justify-center">
                 {profile.avatar ? (
                   <Image
                     src={profile.avatar}
@@ -239,7 +239,7 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
           <div className="flex flex-col px-4 py-4">
             {/* User Info */}
             <div className="flex items-center gap-3 pb-4 mb-4 border-b border-[var(--outline-subtle)]">
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-[#a37f49] to-[#6b4e24] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] flex items-center justify-center">
                 {profile.avatar ? (
                   <Image
                     src={profile.avatar}

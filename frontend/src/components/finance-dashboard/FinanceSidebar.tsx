@@ -87,7 +87,7 @@ const FinanceSidebar = ({ profile }: FinanceSidebarProps) => {
         <div className="flex flex-col items-center">
           {/* Avatar with edit button */}
           <div className="relative mb-3">
-            <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-[#a37f49] to-[#6b4e24] flex items-center justify-center relative">
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] flex items-center justify-center relative">
               {profile.avatar ? (
                 <Image
                   src={profile.avatar}
@@ -114,7 +114,7 @@ const FinanceSidebar = ({ profile }: FinanceSidebarProps) => {
               </div>
             </div>
             <button
-              className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#a37f49] rounded-full flex items-center justify-center border-2 border-white`}
+              className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[var(--color-primary)] rounded-full flex items-center justify-center border-2 border-white`}
               aria-label={t("sidebar.editProfile")}
             >
               <Pencil className="w-3.5 h-3.5 text-white" />
@@ -129,8 +129,8 @@ const FinanceSidebar = ({ profile }: FinanceSidebarProps) => {
 
           {/* Role Badge */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FDF6EC] rounded-full">
-            <Wallet className="w-4 h-4 text-[#a37f49]" />
-            <span className="text-sm font-medium text-[#a37f49]">
+            <Wallet className="w-4 h-4 text-[var(--color-primary)]" />
+            <span className="text-sm font-medium text-[var(--color-primary)]">
               {t("sidebar.financeManager")}
             </span>
           </div>

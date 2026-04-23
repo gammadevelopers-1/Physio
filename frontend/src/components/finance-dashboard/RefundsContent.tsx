@@ -174,7 +174,7 @@ const RefundsContent = () => {
                         {tab.label}
                         <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${
                           activeTab === tab.key
-                            ? "bg-[#a37f49] text-white"
+                            ? "bg-[var(--color-primary)] text-white"
                             : "bg-[#E5E7EB] text-[#6B7280]"
                         }`}>
                           {tab.count}

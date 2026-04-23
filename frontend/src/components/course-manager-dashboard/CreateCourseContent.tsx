@@ -1049,7 +1049,7 @@ const CreateCourseContent = () => {
                   {/* NELC Configuration */}
                   <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
                     <div className="flex items-center gap-2 mb-4">
-                      <ShieldCheck className="w-5 h-5 text-[#6b4e24]" />
+                      <ShieldCheck className="w-5 h-5 text-[var(--color-primary-dark)]" />
                       <h2 className="text-lg font-semibold text-[#1F2937]">
                         {t("createCourse.nelcConfig")}
                       </h2>
@@ -1207,7 +1207,7 @@ const CreateCourseContent = () => {
                   {/* TA Section */}
                   <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
                     <div className="flex items-center gap-2 mb-4">
-                      <Users className="w-5 h-5 text-[#6b4e24]" />
+                      <Users className="w-5 h-5 text-[var(--color-primary-dark)]" />
                       <h2 className="text-lg font-semibold text-[#1F2937]">
                         {t("createCourse.taAssignment")}
                       </h2>
@@ -1235,7 +1235,7 @@ const CreateCourseContent = () => {
                       </div>
                     ) : loadingTAs ? (
                       <div className="flex items-center justify-center py-6">
-                        <Loader2 className="w-5 h-5 text-[#6b4e24] animate-spin" />
+                        <Loader2 className="w-5 h-5 text-[var(--color-primary-dark)] animate-spin" />
                       </div>
                     ) : (
                       <div className="relative">

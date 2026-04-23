@@ -69,7 +69,7 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
       className="flex flex-col w-full group h-full"
     >
       {/* Card Header - with title, thumbnail (design cut), badges */}
-      <div className="relative bg-[#eef3f7] rounded-2xl p-4 h-[200px] flex flex-col justify-between overflow-hidden">
+      <div className="relative bg-[var(--color-surface-page)] rounded-2xl p-4 h-[200px] flex flex-col justify-between overflow-hidden">
         {/* Availability pill */}
         {course.availabilityStatus && course.availabilityStatus !== "open" && (
           <div
@@ -149,7 +149,7 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
             {isFree ? t("card.free") : `${price} SAR`}
           </span>
         </div>
-        <span className={`flex items-center gap-1 text-[#06080b] text-[14px] font-medium group-hover:text-[#a37f49] transition-colors ${isRTL ? "flex-row-reverse" : ""}`}>
+        <span className={`flex items-center gap-1 text-[#06080b] text-[14px] font-medium group-hover:text-[var(--color-primary)] transition-colors ${isRTL ? "flex-row-reverse" : ""}`}>
           {t("card.viewDetails")}
           {isRTL ? <ArrowLeft className="w-4 h-4" strokeWidth={1.5} /> : <ArrowRight className="w-4 h-4" strokeWidth={1.5} />}
         </span>

@@ -244,7 +244,7 @@ const MyTicketsContent = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t("myTicketsPage.searchPlaceholder")}
-                    className={`w-full sm:w-[260px] py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+                    className={`w-full sm:w-[260px] py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
                   />
                 </div>
               </div>
@@ -329,7 +329,7 @@ const MyTicketsContent = () => {
               <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
                 {/* Title */}
                 <div className="flex items-center gap-2 mb-4">
-                  <Send className="w-5 h-5 text-[#a37f49]" />
+                  <Send className="w-5 h-5 text-[var(--color-primary)]" />
                   <h3 className="text-base font-semibold text-[#111827]">
                     {t("myTicketsPage.quickReply")}
                   </h3>
@@ -339,7 +339,7 @@ const MyTicketsContent = () => {
                 <textarea
                   rows={3}
                   placeholder={t("myTicketsPage.quickReplyPlaceholder")}
-                  className="w-full px-4 py-3 border border-[#E5E7EB] rounded-xl text-[13px] text-[#374151] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#a37f49] resize-none mb-3"
+                  className="w-full px-4 py-3 border border-[#E5E7EB] rounded-xl text-[13px] text-[#374151] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[var(--color-primary)] resize-none mb-3"
                 />
 
                 {/* Macros + Send */}

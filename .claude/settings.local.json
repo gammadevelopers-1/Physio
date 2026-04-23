@@ -235,7 +235,23 @@
       "Bash(taskkill //F //FI \"WINDOWTITLE eq *next*\")",
       "Bash(taskkill //F //FI \"IMAGENAME eq node.exe\")",
       "Bash(bash infra/strapi/deploy.sh --skip-pull)",
-      "Bash(wait)"
+      "Bash(wait)",
+      "Bash(npx strapi *)",
+      "Bash(tasklist)",
+      "Bash(docker rmi *)",
+      "Bash(awk 'NR>=2199 && /^};/ {print NR; exit}' src/lib/api.ts)",
+      "Bash(gcloud storage *)",
+      "Bash(/c/cloud-sql-proxy/cloud-sql-proxy.exe --port 5433 nelc-elearning-platform-479319:us-central1:physioguidance-db)",
+      "Bash(bash infra/strapi/deploy.sh)",
+      "Bash(taskkill //PID 20136 //F)",
+      "Bash(taskkill //FI \"IMAGENAME eq docker-buildx.exe\" //F)",
+      "Bash(taskkill //FI \"IMAGENAME eq docker.exe\" //F)",
+      "Bash(gcloud run revisions list *)",
+      "Bash(taskkill //FI \"IMAGENAME eq cloud-sql-proxy.exe\" //F)",
+      "Bash(STRAPI_URL=\"https://physioguidance-cms-gw6zn2f4sq-uc.a.run.app\" STRAPI_API_TOKEN=\"3cc9554e5dbfb5a7c4920fafbb7904051fbf43b0cc52b6b7cba0bd94f44dcd2310a4b3b99158ef88ecee78930761f994b744bd12aa5fa4f3dd074c1f09fde5c0b3568ac0f69e65b75e7b3124a70c0defb45177ffd76b8c4d4810ac09eeb05ead4d10d8572e0ff1c0ccc2369c6e5cef90445c10bc8d2fef3442d59321b231fa22\" node scripts/seed-courses-page-labels.js)",
+      "Bash(awk -F: '$1 <= 895')",
+      "Bash(bash *)",
+      "Bash(git reset *)"
     ]
   }
 }

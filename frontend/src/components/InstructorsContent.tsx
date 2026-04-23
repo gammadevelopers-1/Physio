@@ -17,8 +17,8 @@ const InstructorCard = ({
   const isExternal = image.startsWith("http");
   return (
     <div className="flex flex-col gap-5 items-center w-full md:w-[230px]">
-      <div className="p-[5px] bg-[#EEF3F7] rounded-full">
-        <div className="p-[2.5px] bg-[#E5EDF4] rounded-full overflow-hidden">
+      <div className="p-[5px] bg-[var(--color-surface-page)] rounded-full">
+        <div className="p-[2.5px] bg-[var(--color-surface-card)] rounded-full overflow-hidden">
           <div className="relative w-[93px] h-[93px] rounded-full overflow-hidden">
             <Image
               src={image}
@@ -60,8 +60,8 @@ const MobileInstructorCard = ({
   const isExternal = image.startsWith("http");
   return (
     <div className="flex flex-col gap-4 items-center w-full">
-      <div className="p-[3.31px] bg-[#EEF3F7] rounded-full">
-        <div className="p-[1.65px] bg-[#E5EDF4] rounded-full overflow-hidden">
+      <div className="p-[3.31px] bg-[var(--color-surface-page)] rounded-full">
+        <div className="p-[1.65px] bg-[var(--color-surface-card)] rounded-full overflow-hidden">
           <div className="relative w-[70px] h-[70px] rounded-full overflow-hidden">
             <Image
               src={image}

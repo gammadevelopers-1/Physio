@@ -49,7 +49,7 @@ const FeedbackForm = ({ strapiData }: { strapiData?: FeedbackPage | null }) => {
   const charsSuffix = s("formCharactersLeftSuffix", "form.charactersLeftSuffix");
 
   return (
-    <section className="bg-[#EEF3F7] min-h-[calc(100vh-80px)] lg:min-h-0">
+    <section className="bg-[var(--color-surface-page)] min-h-[calc(100vh-80px)] lg:min-h-0">
       {/* Desktop Layout */}
       <div
         className="hidden lg:block"
@@ -181,8 +181,8 @@ const FeedbackForm = ({ strapiData }: { strapiData?: FeedbackPage | null }) => {
                     className="h-10 min-w-[80px] px-5 rounded-xl font-medium text-sm text-white"
                     style={{
                       background: isRTL
-                        ? "linear-gradient(to left, #a37f49, #6b4e24)"
-                        : "linear-gradient(to right, #a37f49, #6b4e24)",
+                        ? "linear-gradient(to left, var(--color-primary), var(--color-primary-dark))"
+                        : "linear-gradient(to right, var(--color-primary), var(--color-primary-dark))",
                     }}
                   >
                     {submitLabel}
@@ -308,8 +308,8 @@ const FeedbackForm = ({ strapiData }: { strapiData?: FeedbackPage | null }) => {
                 className="w-full h-12 rounded-xl font-medium text-base text-white"
                 style={{
                   background: isRTL
-                    ? "linear-gradient(to left, #a37f49, #6b4e24)"
-                    : "linear-gradient(to right, #a37f49, #6b4e24)",
+                    ? "linear-gradient(to left, var(--color-primary), var(--color-primary-dark))"
+                    : "linear-gradient(to right, var(--color-primary), var(--color-primary-dark))",
                 }}
               >
                 {submitLabel}

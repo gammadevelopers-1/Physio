@@ -370,7 +370,7 @@ const TADashboardContent = ({
 
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="w-8 h-8 border-2 border-[#a37f49] border-t-transparent rounded-full animate-spin" />
+                <div className="w-8 h-8 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
               </div>
             ) : todaySessions.length === 0 ? (
               <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">

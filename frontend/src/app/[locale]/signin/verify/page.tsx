@@ -197,7 +197,7 @@ function VerifyForm() {
     <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
       <AuthNavbar />
 
-      <main id="main-content" className="flex-1 bg-[#EEF3F7] px-4 py-10 md:px-16 md:py-20">
+      <main id="main-content" className="flex-1 bg-[var(--color-surface-page)] px-4 py-10 md:px-16 md:py-20">
         <div className="flex items-center justify-center w-full">
           <div
             className="bg-white rounded-[24px] overflow-hidden w-full max-w-[520px]"
@@ -212,8 +212,8 @@ function VerifyForm() {
             >
               {/* Shield Icon */}
               <div className="flex justify-center mb-6">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#a37f49]/10 to-[#a37f49]/20 flex items-center justify-center">
-                  <ShieldCheck className="w-8 h-8 text-[#a37f49]" />
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--color-primary)]/10 to-[var(--color-primary)]/20 flex items-center justify-center">
+                  <ShieldCheck className="w-8 h-8 text-[var(--color-primary)]" />
                 </div>
               </div>
 
@@ -234,7 +234,7 @@ function VerifyForm() {
                   {t("subtitle")}
                 </p>
                 <div className="inline-flex items-center gap-1.5 bg-[#f8fafc] px-3 py-1.5 rounded-full border border-[#e5e7eb]">
-                  <MailOpen className="w-3.5 h-3.5 text-[#a37f49]" />
+                  <MailOpen className="w-3.5 h-3.5 text-[var(--color-primary)]" />
                   <span
                     className="text-[#1a1a1a] font-medium"
                     style={{ fontSize: "13px" }}
@@ -287,15 +287,15 @@ function VerifyForm() {
                           error
                             ? "border-red-300 bg-red-50/50"
                             : digit
-                              ? "border-[#a37f49] bg-[#faf6f0]"
+                              ? "border-[var(--color-primary)] bg-[#faf6f0]"
                               : "border-[#e5e5e5] bg-white"
                         }
-                        focus:border-[#a37f49] focus:ring-2 focus:ring-[#a37f49]/20
+                        focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20
                         disabled:opacity-50 disabled:cursor-not-allowed
                         text-[#1a1a1a]`}
                       style={{
                         boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
-                        caretColor: "#a37f49",
+                        caretColor: "var(--color-primary)",
                       }}
                     />
                   ))}
@@ -310,8 +310,8 @@ function VerifyForm() {
                 className="w-full h-11 px-5 py-2 rounded-xl text-white font-medium text-sm text-center hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mb-4"
                 style={{
                   background: isRTL
-                    ? "linear-gradient(to left, #a37f49, #6b4e24)"
-                    : "linear-gradient(to right, #a37f49, #6b4e24)",
+                    ? "linear-gradient(to left, var(--color-primary), var(--color-primary-dark))"
+                    : "linear-gradient(to right, var(--color-primary), var(--color-primary-dark))",
                 }}
               >
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -332,7 +332,7 @@ function VerifyForm() {
                     type="button"
                     onClick={handleResend}
                     disabled={loading}
-                    className="text-[#a37f49] hover:text-[#6b4e24] font-medium transition-colors disabled:opacity-50"
+                    className="text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] font-medium transition-colors disabled:opacity-50"
                     style={{ fontSize: "14px" }}
                   >
                     {t("resendCode")}

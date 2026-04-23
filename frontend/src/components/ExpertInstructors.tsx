@@ -66,9 +66,9 @@ const ExpertInstructors = ({ instructors: strapiInstructors = [], sectionData }:
             {row1.map((instructor) => (
               <div
                 key={instructor.id}
-                className="p-[5px] bg-[#EEF3F7] rounded-full"
+                className="p-[5px] bg-[var(--color-surface-page)] rounded-full"
               >
-                <div className="p-[2.5px] bg-[#EEF3F7] rounded-full overflow-hidden">
+                <div className="p-[2.5px] bg-[var(--color-surface-page)] rounded-full overflow-hidden">
                   <div className="relative w-[93px] h-[93px] rounded-full overflow-hidden">
                     <Image
                       src={instructor.src}
@@ -91,9 +91,9 @@ const ExpertInstructors = ({ instructors: strapiInstructors = [], sectionData }:
             {row2.map((instructor) => (
               <div
                 key={instructor.id}
-                className="p-[5px] bg-[#EEF3F7] rounded-full"
+                className="p-[5px] bg-[var(--color-surface-page)] rounded-full"
               >
-                <div className="p-[2.5px] bg-[#EEF3F7] rounded-full overflow-hidden">
+                <div className="p-[2.5px] bg-[var(--color-surface-page)] rounded-full overflow-hidden">
                   <div className="relative w-[93px] h-[93px] rounded-full overflow-hidden">
                     <Image
                       src={instructor.src}

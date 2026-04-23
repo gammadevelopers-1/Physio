@@ -601,7 +601,7 @@ const SettingsContent = () => {
                       {/* Trusted Devices */}
                       {security.loading ? (
                         <div className="flex items-center justify-center py-8">
-                          <Loader2 className="w-6 h-6 animate-spin text-[#a37f49]" />
+                          <Loader2 className="w-6 h-6 animate-spin text-[var(--color-primary)]" />
                         </div>
                       ) : (
                         <TrustedDevicesSection
@@ -622,7 +622,7 @@ const SettingsContent = () => {
                     <div className="space-y-6">
                       {!notificationsLoaded ? (
                         <div className="flex items-center justify-center py-8">
-                          <Loader2 className="w-6 h-6 animate-spin text-[#a37f49]" />
+                          <Loader2 className="w-6 h-6 animate-spin text-[var(--color-primary)]" />
                         </div>
                       ) : (
                         <>

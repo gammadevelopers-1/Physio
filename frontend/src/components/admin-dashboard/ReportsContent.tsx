@@ -216,7 +216,7 @@ const ReportsContent = () => {
                         <Play className="w-4 h-4" />
                         <span className="text-sm font-medium">{t("reportsPage.generate")}</span>
                       </button>
-                      <button className="flex items-center gap-2 px-4 py-2.5 border border-[#a37f49] text-[#a37f49] rounded-lg hover:bg-[#FFF9F0] transition-colors">
+                      <button className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-primary)] text-[var(--color-primary)] rounded-lg hover:bg-[#FFF9F0] transition-colors">
                         <Clock className="w-4 h-4" />
                         <span className="text-sm font-medium">{t("reportsPage.schedule")}</span>
                       </button>

@@ -217,7 +217,7 @@ const CourseAssistantsManagePanel = ({
         {unassignedTAs.length > 0 && (
           <button
             onClick={() => setShowDropdown(!showDropdown)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#6b4e24] border border-[#a37f49] rounded-lg hover:bg-[#FFF8E6] transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--color-primary-dark)] border border-[var(--color-primary)] rounded-lg hover:bg-[#FFF8E6] transition-colors"
           >
             <UserPlus className="w-4 h-4" />
             {t("taManagement.assignTA")}
@@ -271,7 +271,7 @@ const CourseAssistantsManagePanel = ({
                   <span className="text-[#6B7280]">({ta.email})</span>
                 </span>
                 {assigning && (
-                  <Loader2 className="w-4 h-4 animate-spin text-[#6b4e24]" />
+                  <Loader2 className="w-4 h-4 animate-spin text-[var(--color-primary-dark)]" />
                 )}
               </button>
             ))}
@@ -282,7 +282,7 @@ const CourseAssistantsManagePanel = ({
       {/* TAs List */}
       {loading ? (
         <div className="flex items-center justify-center py-6">
-          <div className="w-6 h-6 border-2 border-[#a37f49] border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : sortedTAs.length === 0 ? (
         <p className="text-sm text-[#6B7280] text-center py-4">
@@ -304,7 +304,7 @@ const CourseAssistantsManagePanel = ({
                         handlePriorityChange(ta.userId, "up")
                       }
                       disabled={ta.priority <= minPriority}
-                      className="p-0.5 text-[#6B7280] hover:text-[#6b4e24] disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="p-0.5 text-[#6B7280] hover:text-[var(--color-primary-dark)] disabled:opacity-30 disabled:cursor-not-allowed"
                       title={t("taManagement.movePriorityUp")}
                     >
                       <ChevronUp className="w-3.5 h-3.5" />
@@ -314,7 +314,7 @@ const CourseAssistantsManagePanel = ({
                         handlePriorityChange(ta.userId, "down")
                       }
                       disabled={ta.priority >= maxPriority}
-                      className="p-0.5 text-[#6B7280] hover:text-[#6b4e24] disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="p-0.5 text-[#6B7280] hover:text-[var(--color-primary-dark)] disabled:opacity-30 disabled:cursor-not-allowed"
                       title={t("taManagement.movePriorityDown")}
                     >
                       <ChevronDown className="w-3.5 h-3.5" />
@@ -436,7 +436,7 @@ const CourseAssistantsManagePanel = ({
               }}
               placeholder={t("taManagement.rejectPlaceholder")}
               rows={4}
-              className="w-full px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#a37f49] focus:border-transparent resize-none text-[#1F2937] placeholder-[#9CA3AF]"
+              className="w-full px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none text-[#1F2937] placeholder-[#9CA3AF]"
               disabled={rejectingLoading}
             />
             <div className="flex items-center justify-between mt-2 mb-4">
@@ -458,7 +458,7 @@ const CourseAssistantsManagePanel = ({
               <button
                 onClick={() => handleReject(rejectingUserId)}
                 disabled={rejectingLoading || !rejectionReason.trim()}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#a37f49] rounded-lg hover:bg-[#8b6a3d] transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[var(--color-primary)] rounded-lg hover:bg-[#8b6a3d] transition-colors disabled:opacity-50"
               >
                 {rejectingLoading && (
                   <Loader2 className="w-4 h-4 animate-spin" />

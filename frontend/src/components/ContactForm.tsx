@@ -71,7 +71,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
 
   return (
     <section
-      className="overflow-hidden bg-[#F9FBFD] md:bg-[#EEF3F7]"
+      className="overflow-hidden bg-[#F9FBFD] md:bg-[var(--color-surface-page)]"
     >
       <div
         className="flex flex-col max-w-[1312px] mx-auto px-4 py-16 md:px-16 md:py-20"
@@ -118,7 +118,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                 {email && (
                   <div className="flex flex-col gap-2 md:gap-4 items-start">
                     <Mail
-                      className="w-6 h-6 text-[#a37f49]"
+                      className="w-6 h-6 text-[var(--color-primary)]"
                       strokeWidth={1.67}
                     />
                     <div className="flex flex-col gap-1 md:gap-2 items-start">
@@ -154,7 +154,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                 {phone && (
                   <div className="flex flex-col gap-2 md:gap-4 items-start">
                     <Phone
-                      className="w-6 h-6 text-[#a37f49]"
+                      className="w-6 h-6 text-[var(--color-primary)]"
                       strokeWidth={1.67}
                     />
                     <div className="flex flex-col gap-1 md:gap-2 items-start">
@@ -190,7 +190,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                 {addressTitle && (
                   <div className="flex flex-col gap-2 md:gap-4 items-start">
                     <MapPin
-                      className="w-6 h-6 text-[#a37f49]"
+                      className="w-6 h-6 text-[var(--color-primary)]"
                       strokeWidth={1.67}
                     />
                     <div className="flex flex-col gap-2 md:gap-4 items-start">
@@ -521,8 +521,8 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                   className="w-full md:w-auto h-12 md:h-10 md:min-w-[80px] px-5 rounded-xl font-medium text-sm text-white"
                   style={{
                     background: isRTL
-                      ? "linear-gradient(to left, #a37f49, #6b4e24)"
-                      : "linear-gradient(to right, #a37f49, #6b4e24)",
+                      ? "linear-gradient(to left, var(--color-primary), var(--color-primary-dark))"
+                      : "linear-gradient(to right, var(--color-primary), var(--color-primary-dark))",
                   }}
                 >
                   {s("formSubmitLabel", "form.submit")}

@@ -392,9 +392,12 @@
     "title": "Sign up/Register",
     "description": "Register new account.",
     "form": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
       "email": "Email",
       "password": "Password",
       "confirmPassword": "Confirm Password",
+      "passwordHint": "Must contain uppercase, lowercase, and number",
       "acceptTermsPrefix": "I accept",
       "termsAndConditions": "Terms & Conditions",
       "and": "and",
@@ -405,6 +408,10 @@
       "optional": "Optional",
       "scfhsPlaceholder": "Enter your Mumaris+ number",
       "scfhsHint": "You can add this later from your profile. Required for CPD certificate issuance."
+    },
+    "success": {
+      "title": "Registration Successful!",
+      "description": "Your account has been created. Redirecting to sign in..."
     },
     "footer": {
       "hasAccount": "Already have an account?",
@@ -6622,6 +6629,10 @@
     "failedLoadInstructors": "Failed to load instructors",
     "unsupportedStatusTransition": "Unsupported status transition",
     "fillRequiredFields": "Please fill in all required fields",
+    "firstLastNameMinLength": "First name and last name must be at least 2 characters",
+    "passwordMismatch": "Passwords do not match",
+    "acceptTerms": "Please accept the terms and conditions",
+    "genericError": "An error occurred. Please try again.",
     "passwordMinLength8": "Password must be at least 8 characters",
     "passwordComplexity": "Password must contain uppercase, lowercase, and a number",
     "userCreated": "User created successfully",

@@ -42,42 +42,42 @@ function SignUpForm() {
 
     // Validation
     if (!firstName || !lastName || !email || !password || !confirmPassword) {
-      const msg = "Please fill in all required fields";
+      const msg = tToasts("fillRequiredFields");
       setError(msg);
       toast.error(msg);
       return;
     }
 
     if (firstName.length < 2 || lastName.length < 2) {
-      const msg = "First name and last name must be at least 2 characters";
+      const msg = tToasts("firstLastNameMinLength");
       setError(msg);
       toast.error(msg);
       return;
     }
 
     if (password !== confirmPassword) {
-      const msg = "Passwords do not match";
+      const msg = tToasts("passwordMismatch");
       setError(msg);
       toast.error(msg);
       return;
     }
 
     if (password.length < 8) {
-      const msg = "Password must be at least 8 characters long";
+      const msg = tToasts("passwordMinLength8");
       setError(msg);
       toast.error(msg);
       return;
     }
 
     if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-      const msg = "Password must contain uppercase, lowercase, and a number";
+      const msg = tToasts("passwordComplexity");
       setError(msg);
       toast.error(msg);
       return;
     }
 
     if (!acceptTerms) {
-      const msg = "Please accept the terms and conditions";
+      const msg = tToasts("acceptTerms");
       setError(msg);
       toast.error(msg);
       return;
@@ -101,7 +101,7 @@ function SignUpForm() {
     } catch (err) {
       const message = err instanceof ApiError
         ? err.message
-        : "An error occurred. Please try again.";
+        : tToasts("genericError");
       setError(message);
       toast.error(message);
     } finally {
@@ -115,14 +115,14 @@ function SignUpForm() {
     return (
       <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
         <AuthNavbar />
-        <main id="main-content" className="flex-1 bg-[#EEF3F7] flex items-center justify-center px-4 py-10">
+        <main id="main-content" className="flex-1 bg-[var(--color-surface-page)] flex items-center justify-center px-4 py-10">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-lg">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
             <h1 className="text-xl font-semibold text-gray-900 mb-2">
-              Registration Successful!
+              {t("success.title")}
             </h1>
             <p className="text-gray-600 mb-4">
-              Your account has been created. Redirecting to sign in...
+              {t("success.description")}
             </p>
             <Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" />
           </div>
@@ -137,7 +137,7 @@ function SignUpForm() {
       <AuthNavbar />
 
       {/* Main Content */}
-      <main id="main-content" className="flex-1 bg-[#EEF3F7] px-4 py-10 md:px-16 md:py-20">
+      <main id="main-content" className="flex-1 bg-[var(--color-surface-page)] px-4 py-10 md:px-16 md:py-20">
         <div className="flex items-center justify-center w-full">
           {/* Auth Card Container */}
           <div
@@ -182,7 +182,7 @@ function SignUpForm() {
                         className="font-medium text-[#0a0a0a]"
                         style={{ fontSize: "14px", lineHeight: "20px" }}
                       >
-                        First Name *
+                        {t("form.firstName")} *
                       </label>
                       <input
                         type="text"
@@ -204,7 +204,7 @@ function SignUpForm() {
                         className="font-medium text-[#0a0a0a]"
                         style={{ fontSize: "14px", lineHeight: "20px" }}
                       >
-                        Last Name *
+                        {t("form.lastName")} *
                       </label>
                       <input
                         type="text"
@@ -309,7 +309,7 @@ function SignUpForm() {
                       </button>
                     </div>
                     <p className="text-xs text-gray-500">
-                      Must contain uppercase, lowercase, and number
+                      {t("form.passwordHint")}
                     </p>
                   </div>
 
@@ -357,7 +357,7 @@ function SignUpForm() {
                       type="button"
                       onClick={() => setAcceptTerms(!acceptTerms)}
                       disabled={loading}
-                      className={`w-4 h-4 mt-0.5 rounded border ${acceptTerms ? 'bg-[#a37f49] border-[#a37f49]' : 'bg-white border-[#d5d7da]'} flex items-center justify-center transition-colors shrink-0 disabled:opacity-50`}
+                      className={`w-4 h-4 mt-0.5 rounded border ${acceptTerms ? 'bg-[var(--color-primary)] border-[var(--color-primary)]' : 'bg-white border-[#d5d7da]'} flex items-center justify-center transition-colors shrink-0 disabled:opacity-50`}
                     >
                       {acceptTerms && (
                         <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -388,8 +388,8 @@ function SignUpForm() {
                     className="w-full h-10 px-5 py-2 rounded-xl text-white font-medium text-sm text-center hover:opacity-90 transition-opacity disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{
                       background: isRTL
-                        ? "linear-gradient(to left, #a37f49, #6b4e24)"
-                        : "linear-gradient(to right, #a37f49, #6b4e24)",
+                        ? "linear-gradient(to left, var(--color-primary), var(--color-primary-dark))"
+                        : "linear-gradient(to right, var(--color-primary), var(--color-primary-dark))",
                     }}
                   >
                     {loading && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -418,7 +418,7 @@ function SignUpForm() {
             </div>
 
             {/* Image Side - Second in DOM (RIGHT in LTR, LEFT in RTL) */}
-            <div className="hidden lg:flex flex-1 bg-[#e5edf4] items-center justify-center">
+            <div className="hidden lg:flex flex-1 bg-[var(--color-surface-card)] items-center justify-center">
               <div className="relative w-full h-full min-h-[635px]">
                 <Image
                   src="/signin_signup_image/signin_signup.svg"

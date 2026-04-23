@@ -523,7 +523,7 @@ const CourseDetailContent = ({
   if (!apiCourse) {
     return (
       <div className="min-h-screen bg-[var(--surface)] flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-[#a37f49] border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-2 border-[var(--color-primary)] border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -932,7 +932,7 @@ const CourseDetailContent = ({
   return (
     <>
       {/* Desktop Layout */}
-      <div className="hidden lg:block bg-[#EEF3F7]" dir={isRTL ? "rtl" : "ltr"}>
+      <div className="hidden lg:block bg-[var(--color-surface-page)]" dir={isRTL ? "rtl" : "ltr"}>
         {/* Main Content Area */}
         <div className="px-16 pt-6">
           <div className="max-w-[1200px] mx-auto">
@@ -1333,7 +1333,7 @@ const CourseDetailContent = ({
       </div>
 
       {/* Mobile Layout */}
-      <div className="lg:hidden pb-24 bg-[#EEF3F7]" dir={isRTL ? "rtl" : "ltr"}>
+      <div className="lg:hidden pb-24 bg-[var(--color-surface-page)]" dir={isRTL ? "rtl" : "ltr"}>
         {/* Breadcrumb */}
         <div className="px-4 pt-4">
           <div className="flex items-center gap-1 text-xs text-[#71717A] overflow-x-auto">
@@ -1370,7 +1370,7 @@ const CourseDetailContent = ({
           <div className="relative bg-white rounded-xl overflow-hidden mb-6">
             <div
               className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1`}
-              style={{ background: "linear-gradient(180deg, #AB842F 0%, #8E690A 100%)" }}
+              style={{ background: "linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-dark) 100%)" }}
             />
             <div className={`flex items-center p-3 ${isRTL ? "pr-4" : "pl-4"}`}>
               <div className={`flex-1 text-center ${isRTL ? "border-l" : "border-r"} border-[#E5E7EB]`}>

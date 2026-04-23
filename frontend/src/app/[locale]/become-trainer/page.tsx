@@ -28,7 +28,7 @@ export default async function BecomeTrainerPage({
   const sideLoadedData: SideLoadedData = { partners: [], featuredCourses: [], instructors: [], testimonials: [] };
 
   return (
-    <main id="main-content" className="min-h-screen bg-[#EEF3F7]">
+    <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
       <BecomeTrainerForm

@@ -23,7 +23,7 @@ const CourseCTA = ({
   const href = buttonHref || "/contact";
 
   return (
-    <section className="bg-[#EEF3F7] py-16 lg:py-20" dir={isRTL ? "rtl" : "ltr"}>
+    <section className="bg-[var(--color-surface-page)] py-16 lg:py-20" dir={isRTL ? "rtl" : "ltr"}>
       <div className="max-w-[800px] mx-auto px-4 text-center">
         {title && (
           <h2

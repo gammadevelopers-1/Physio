@@ -78,7 +78,7 @@ const FinanceRightSidebar = ({
       {/* Recent Transactions */}
       <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
         <div className="flex items-center gap-2 mb-4">
-          <CreditCard className="w-4 h-4 text-[#a37f49]" />
+          <CreditCard className="w-4 h-4 text-[var(--color-primary)]" />
           <h3 className="text-[15px] font-semibold text-[#111827]">
             {t("transactionFeed.title")}
           </h3>
@@ -128,7 +128,7 @@ const FinanceRightSidebar = ({
         <div className="mt-3 pt-3 border-t border-[#F3F4F6] text-center">
           <Link
             href={`/${locale}/dashboard/finance/payments`}
-            className="text-[13px] font-medium text-[#a37f49] hover:text-[#6b4e24] hover:underline"
+            className="text-[13px] font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline"
           >
             {t("transactionFeed.viewAll")}
           </Link>
@@ -181,12 +181,12 @@ const FinanceRightSidebar = ({
       <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Tag className="w-4 h-4 text-[#a37f49]" />
+            <Tag className="w-4 h-4 text-[var(--color-primary)]" />
             <h3 className="text-[15px] font-semibold text-[#111827]">
               {t("discounts.title")}
             </h3>
           </div>
-          <button className="text-[12px] font-medium text-[#a37f49] hover:text-[#6b4e24] hover:underline">
+          <button className="text-[12px] font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline">
             {t("discounts.createCoupon")}
           </button>
         </div>
@@ -226,26 +226,26 @@ const FinanceRightSidebar = ({
       {/* Quick Actions */}
       <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Zap className="w-4 h-4 text-[#a37f49]" />
+          <Zap className="w-4 h-4 text-[var(--color-primary)]" />
           <h3 className="text-[15px] font-semibold text-[#111827]">
             {t("quickActions.title")}
           </h3>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors">
+          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
             <FileText className="w-3.5 h-3.5" />
             {t("quickActions.createInvoice")}
           </button>
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors">
+          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
             <BarChart3 className="w-3.5 h-3.5" />
             {t("quickActions.exportReport")}
           </button>
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors">
+          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
             <Tag className="w-3.5 h-3.5" />
             {t("quickActions.addCoupon")}
           </button>
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors">
+          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
             <RotateCcw className="w-3.5 h-3.5" />
             {t("quickActions.processRefund")}
           </button>

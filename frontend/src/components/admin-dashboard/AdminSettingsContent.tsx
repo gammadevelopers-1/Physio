@@ -120,14 +120,14 @@ const AdminSettingsContent = () => {
                         onClick={() => setActiveTab(tab.id)}
                         className={`px-3 py-2.5 text-xs sm:text-sm font-medium relative transition-colors whitespace-nowrap flex items-center gap-1 ${
                           activeTab === tab.id
-                            ? "text-[#a37f49]"
+                            ? "text-[var(--color-primary)]"
                             : "text-[#6B7280] hover:text-[#374151]"
                         }`}
                       >
                         <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         {t(`settingsPage.tabs.${tab.id}`)}
                         {activeTab === tab.id && (
-                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#a37f49] rounded-t" />
+                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)] rounded-t" />
                         )}
                       </button>
                     );
@@ -150,7 +150,7 @@ const AdminSettingsContent = () => {
                             type="text"
                             value={platformName}
                             onChange={(e) => setPlatformName(e.target.value)}
-                            className="w-full h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
 
@@ -162,7 +162,7 @@ const AdminSettingsContent = () => {
                             type="email"
                             value={contactEmail}
                             onChange={(e) => setContactEmail(e.target.value)}
-                            className="w-full h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
 
@@ -173,7 +173,7 @@ const AdminSettingsContent = () => {
                           <select
                             value={timezone}
                             onChange={(e) => setTimezone(e.target.value)}
-                            className="w-full h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           >
                             <option value="Asia/Riyadh">Asia/Riyadh (UTC+3)</option>
                             <option value="Asia/Dubai">Asia/Dubai (UTC+4)</option>
@@ -214,7 +214,7 @@ const AdminSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setRequire2FA(!require2FA)}
-                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${require2FA ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${require2FA ? "bg-[var(--color-primary)]" : "bg-[#E5E7EB]"}`}
                           >
                             <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${require2FA ? "ms-auto" : ""}`} />
                           </button>
@@ -227,7 +227,7 @@ const AdminSettingsContent = () => {
                           <select
                             value={sessionTimeout}
                             onChange={(e) => setSessionTimeout(e.target.value)}
-                            className="w-full h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           >
                             <option value="15">15 minutes</option>
                             <option value="30">30 minutes</option>
@@ -243,7 +243,7 @@ const AdminSettingsContent = () => {
                           <select
                             value={passwordMinLength}
                             onChange={(e) => setPasswordMinLength(e.target.value)}
-                            className="w-full h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           >
                             <option value="6">6 characters</option>
                             <option value="8">8 characters</option>
@@ -271,7 +271,7 @@ const AdminSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setEmailNotifications(!emailNotifications)}
-                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${emailNotifications ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${emailNotifications ? "bg-[var(--color-primary)]" : "bg-[#E5E7EB]"}`}
                           >
                             <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${emailNotifications ? "ms-auto" : ""}`} />
                           </button>
@@ -288,7 +288,7 @@ const AdminSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setSmsNotifications(!smsNotifications)}
-                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${smsNotifications ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${smsNotifications ? "bg-[var(--color-primary)]" : "bg-[#E5E7EB]"}`}
                           >
                             <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${smsNotifications ? "ms-auto" : ""}`} />
                           </button>
@@ -363,7 +363,7 @@ const AdminSettingsContent = () => {
                               onChange={(e) => setMaintenanceMessage(e.target.value)}
                               rows={4}
                               placeholder={t("settingsPage.maintenance.defaultMessage")}
-                              className="w-full px-4 py-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                              className="w-full px-4 py-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                             />
                           </div>
                         )}

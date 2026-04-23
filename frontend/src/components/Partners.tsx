@@ -20,7 +20,7 @@ const Partners = ({ partners = [], sectionTitle }: PartnersProps) => {
   }
 
   return (
-    <section className="bg-[#EEF3F7] py-8 md:py-20 px-4 md:px-0 overflow-hidden">
+    <section className="bg-[var(--color-surface-page)] py-8 md:py-20 px-4 md:px-0 overflow-hidden">
       <div className="flex flex-col gap-6 md:gap-12 items-center">
         {/* Title — only renders when Strapi provides one */}
         {sectionTitle && (

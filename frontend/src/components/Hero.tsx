@@ -131,7 +131,7 @@ const Hero = ({ data }: HeroProps) => {
                       className="h-12 px-5 py-2 border border-[var(--outline-default)] rounded-xl text-sm font-medium bg-transparent whitespace-nowrap inline-flex items-center justify-center"
                     >
                       <span
-                        className="bg-gradient-to-r from-[#ab842f] to-[#8e690a] bg-clip-text"
+                        className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-dark)] bg-clip-text"
                         style={{ WebkitTextFillColor: "transparent" }}
                       >
                         {button2Label}
@@ -183,7 +183,7 @@ const Hero = ({ data }: HeroProps) => {
                           className="h-10 px-5 py-2 border border-[var(--outline-default)] rounded-xl text-sm font-medium bg-transparent whitespace-nowrap inline-flex items-center justify-center"
                         >
                           <span
-                            className="bg-gradient-to-r from-[#ab842f] to-[#8e690a] bg-clip-text"
+                            className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-dark)] bg-clip-text"
                             style={{ WebkitTextFillColor: "transparent" }}
                           >
                             {button2Label}

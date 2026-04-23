@@ -127,7 +127,7 @@ export default function NotificationBell() {
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="text-xs text-[#a37f49] hover:text-[#6b4e24] font-medium transition-colors"
+                    className="text-xs text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] font-medium transition-colors"
                   >
                     {t("markAllRead")}
                   </button>

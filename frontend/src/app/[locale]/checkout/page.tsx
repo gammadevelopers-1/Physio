@@ -199,7 +199,7 @@ export default function CheckoutPage() {
               {/* Course Card - Vertical Layout matching Figma */}
               <div className={`flex flex-col gap-4 w-full max-w-[304px] ${isRTL ? "ml-auto" : ""}`}>
                 {/* Course Image Card */}
-                <div className="relative bg-[#eef3f7] rounded-2xl overflow-hidden h-[183px] w-full p-4">
+                <div className="relative bg-[var(--color-surface-page)] rounded-2xl overflow-hidden h-[183px] w-full p-4">
                   {/* Image position: LEFT for RTL, RIGHT for LTR */}
                   <div className={`absolute ${isRTL ? "left-0" : "right-0"} top-1/2 -translate-y-1/2 w-[146px] h-[217px]`}>
                     <Image
@@ -302,7 +302,7 @@ export default function CheckoutPage() {
                   <div
                     className={`flex items-center justify-between p-[14px] transition-colors ${
                       paymentMethod === "credit"
-                        ? "bg-[#e5edf4] rounded-t-[11px]"
+                        ? "bg-[var(--color-surface-card)] rounded-t-[11px]"
                         : "bg-white"
                     }`}
                   >
@@ -347,7 +347,7 @@ export default function CheckoutPage() {
                   {/* Credit Card Fields - Surface/Container/Low background */}
                   {paymentMethod === "credit" && (
                     <div
-                      className="flex flex-col gap-[14px] p-[14px] bg-[#f9fbfd] border-t border-l border-r border-[#e5edf4]"
+                      className="flex flex-col gap-[14px] p-[14px] bg-[#f9fbfd] border-t border-l border-r border-[var(--color-surface-card)]"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <input
@@ -404,7 +404,7 @@ export default function CheckoutPage() {
                   <div
                     className={`flex items-center justify-between p-[14px] transition-colors ${
                       paymentMethod === "tabby"
-                        ? "bg-[#e5edf4]"
+                        ? "bg-[var(--color-surface-card)]"
                         : "bg-white"
                     }`}
                   >
@@ -439,7 +439,7 @@ export default function CheckoutPage() {
                   onClick={() => setSaveInfo(!saveInfo)}
                   className={`w-5 h-5 rounded border flex-shrink-0 mt-0.5 ${
                     saveInfo
-                      ? "bg-[#a37f49] border-[#a37f49]"
+                      ? "bg-[var(--color-primary)] border-[var(--color-primary)]"
                       : "bg-white border-[#d5d7da]"
                   } flex items-center justify-center transition-colors`}
                 >

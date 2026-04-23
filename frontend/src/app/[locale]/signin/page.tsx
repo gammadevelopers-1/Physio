@@ -45,7 +45,7 @@ function SignInForm() {
     } catch (err) {
       const message = err instanceof ApiError
         ? err.message
-        : "An error occurred. Please try again.";
+        : tToasts("genericError");
       setError(message);
       toast.error(message);
     } finally {
@@ -60,7 +60,7 @@ function SignInForm() {
       <AuthNavbar />
 
       {/* Main Content */}
-      <main id="main-content" className="flex-1 bg-[#EEF3F7] px-4 py-10 md:px-16 md:py-20">
+      <main id="main-content" className="flex-1 bg-[var(--color-surface-page)] px-4 py-10 md:px-16 md:py-20">
         <div className="flex items-center justify-center w-full">
           {/* Auth Card Container */}
           <div
@@ -173,7 +173,7 @@ function SignInForm() {
                       type="button"
                       onClick={() => setRememberMe(!rememberMe)}
                       disabled={loading}
-                      className={`w-4 h-4 rounded border ${rememberMe ? 'bg-[#a37f49] border-[#a37f49]' : 'bg-white border-[#d5d7da]'} flex items-center justify-center transition-colors shrink-0 disabled:opacity-50`}
+                      className={`w-4 h-4 rounded border ${rememberMe ? 'bg-[var(--color-primary)] border-[var(--color-primary)]' : 'bg-white border-[#d5d7da]'} flex items-center justify-center transition-colors shrink-0 disabled:opacity-50`}
                     >
                       {rememberMe && (
                         <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -196,8 +196,8 @@ function SignInForm() {
                     className="w-full h-10 px-5 py-2 rounded-xl text-white font-medium text-sm text-center hover:opacity-90 transition-opacity disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{
                       background: isRTL
-                        ? "linear-gradient(to left, #a37f49, #6b4e24)"
-                        : "linear-gradient(to right, #a37f49, #6b4e24)",
+                        ? "linear-gradient(to left, var(--color-primary), var(--color-primary-dark))"
+                        : "linear-gradient(to right, var(--color-primary), var(--color-primary-dark))",
                     }}
                   >
                     {loading && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -226,7 +226,7 @@ function SignInForm() {
             </div>
 
             {/* Image Side - Second in DOM (RIGHT in LTR, LEFT in RTL) */}
-            <div className="hidden lg:flex flex-1 bg-[#e5edf4] items-center justify-center">
+            <div className="hidden lg:flex flex-1 bg-[var(--color-surface-card)] items-center justify-center">
               <div className="relative w-full h-full min-h-[635px]">
                 <Image
                   src="/signin_signup_image/signin_signup.svg"

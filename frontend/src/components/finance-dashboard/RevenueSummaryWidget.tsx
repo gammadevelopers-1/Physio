@@ -80,7 +80,7 @@ const RevenueSummaryWidget = ({ data }: RevenueSummaryWidgetProps) => {
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-[#F3F4F6]">
         <div className="flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-[#a37f49]" />
+          <TrendingUp className="w-5 h-5 text-[var(--color-primary)]" />
           <h3 className="text-base font-semibold text-[#111827]">
             {t("revenueSummary.title")}
           </h3>
@@ -102,7 +102,7 @@ const RevenueSummaryWidget = ({ data }: RevenueSummaryWidgetProps) => {
               </button>
             ))}
           </div>
-          <button className="text-sm font-medium text-[#a37f49] hover:text-[#6b4e24] hover:underline">
+          <button className="text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline">
             {t("revenueSummary.viewDetails")}
           </button>
         </div>

@@ -96,7 +96,7 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
                   <div className="flex gap-4 items-center" dir={isRTL ? "rtl" : "ltr"}>
                     {socialLinks.map(({ url, Icon }, idx) => (
                       <Link key={idx} href={url} target="_blank" rel="noopener noreferrer">
-                        <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
+                        <div className="p-2 bg-[var(--color-surface-page)] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
                           <Icon
                             className="w-6 h-6 text-[var(--on-surface-variant)]"
                             strokeWidth={1.5}

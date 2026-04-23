@@ -125,12 +125,12 @@ function ResetPasswordForm() {
     return (
       <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
         <AuthNavbar />
-        <main className="flex-1 bg-[#EEF3F7] flex items-center justify-center">
+        <main className="flex-1 bg-[var(--color-surface-page)] flex items-center justify-center">
           <div className="text-center">
             <p className="text-[#6B7280] mb-4">{t("noEmail")}</p>
             <Link
               href={`/${locale}/forgot-password`}
-              className="text-[#a37f49] hover:underline font-medium"
+              className="text-[var(--color-primary)] hover:underline font-medium"
             >
               {t("goToForgotPassword")}
             </Link>
@@ -147,7 +147,7 @@ function ResetPasswordForm() {
 
       <main
         id="main-content"
-        className="flex-1 bg-[#EEF3F7] px-4 py-10 md:px-16 md:py-20"
+        className="flex-1 bg-[var(--color-surface-page)] px-4 py-10 md:px-16 md:py-20"
       >
         <div className="flex items-center justify-center w-full">
           <div
@@ -210,7 +210,7 @@ function ResetPasswordForm() {
                           onChange={(e) => handleCodeChange(i, e.target.value)}
                           onKeyDown={(e) => handleKeyDown(i, e)}
                           disabled={isSubmitting}
-                          className="w-11 h-12 text-center text-lg font-semibold border border-[#e5e5e5] rounded-lg outline-none focus:border-[#a37f49] focus:ring-1 focus:ring-[#a37f49] transition-colors disabled:opacity-50"
+                          className="w-11 h-12 text-center text-lg font-semibold border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors disabled:opacity-50"
                         />
                       ))}
                     </div>
@@ -224,7 +224,7 @@ function ResetPasswordForm() {
                           type="button"
                           onClick={handleResend}
                           disabled={isResending}
-                          className="text-xs text-[#a37f49] hover:underline disabled:opacity-50"
+                          className="text-xs text-[var(--color-primary)] hover:underline disabled:opacity-50"
                         >
                           {isResending ? t("resending") : t("resendCode")}
                         </button>
@@ -297,8 +297,8 @@ function ResetPasswordForm() {
                     className="w-full h-10 px-5 py-2 rounded-xl text-white font-medium text-sm text-center hover:opacity-90 transition-opacity disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{
                       background: isRTL
-                        ? "linear-gradient(to left, #a37f49, #6b4e24)"
-                        : "linear-gradient(to right, #a37f49, #6b4e24)",
+                        ? "linear-gradient(to left, var(--color-primary), var(--color-primary-dark))"
+                        : "linear-gradient(to right, var(--color-primary), var(--color-primary-dark))",
                     }}
                   >
                     {isSubmitting && (
@@ -311,7 +311,7 @@ function ResetPasswordForm() {
             </div>
 
             {/* Image Side */}
-            <div className="hidden lg:flex flex-1 bg-[#e5edf4] items-center justify-center">
+            <div className="hidden lg:flex flex-1 bg-[var(--color-surface-card)] items-center justify-center">
               <div className="relative w-full h-full min-h-[635px]">
                 <Image
                   src="/signin_signup_image/signin_signup.svg"

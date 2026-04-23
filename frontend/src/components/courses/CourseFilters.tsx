@@ -163,7 +163,7 @@ const CourseFilters = ({
 
   if (variant === "mobile") {
     return (
-      <div className="bg-[#EEF3F7] rounded-xl p-4 mb-6">
+      <div className="bg-[var(--color-surface-page)] rounded-xl p-4 mb-6">
         {showSearchBar && searchPlaceholder && (
           <div className="relative mb-4">
             <Search
@@ -348,7 +348,7 @@ const CourseFilters = ({
 
   return (
     <div
-      className={`bg-[#EEF3F7] rounded-xl p-5 w-[240px] flex-shrink-0 ${isRTL ? "text-right" : "text-left"}`}
+      className={`bg-[var(--color-surface-page)] rounded-xl p-5 w-[240px] flex-shrink-0 ${isRTL ? "text-right" : "text-left"}`}
     >
       {sidebarFilterTitle && (
         <h3 className="text-[#06080b] font-semibold text-base mb-4">

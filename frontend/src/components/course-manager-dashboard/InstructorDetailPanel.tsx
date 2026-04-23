@@ -111,7 +111,7 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB] bg-gradient-to-r from-[#F9FAFB] to-white">
           <div className="flex items-center gap-2">
-            <GraduationCap className="w-5 h-5 text-[#6b4e24]" />
+            <GraduationCap className="w-5 h-5 text-[var(--color-primary-dark)]" />
             <h2 className="text-lg font-semibold text-[#1F2937]">{t("instructorDetail.title")}</h2>
           </div>
           <button onClick={handleClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
@@ -180,17 +180,17 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                 {/* Quick Stats Row */}
                 <div className="grid grid-cols-3 gap-3 mt-3">
                   <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[#E5E7EB]">
-                    <BookOpen className="w-4 h-4 text-[#6b4e24] mx-auto mb-1" />
+                    <BookOpen className="w-4 h-4 text-[var(--color-primary-dark)] mx-auto mb-1" />
                     <p className="text-xl font-bold text-[#1F2937]">{data.coursesCount}</p>
                     <p className="text-[10px] text-[#6B7280]">{t("instructorDetail.courses")}</p>
                   </div>
                   <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[#E5E7EB]">
-                    <Users className="w-4 h-4 text-[#6b4e24] mx-auto mb-1" />
+                    <Users className="w-4 h-4 text-[var(--color-primary-dark)] mx-auto mb-1" />
                     <p className="text-xl font-bold text-[#1F2937]">{data.totalStudents}</p>
                     <p className="text-[10px] text-[#6B7280]">{t("instructorDetail.students")}</p>
                   </div>
                   <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[#E5E7EB]">
-                    <Calendar className="w-4 h-4 text-[#6b4e24] mx-auto mb-1" />
+                    <Calendar className="w-4 h-4 text-[var(--color-primary-dark)] mx-auto mb-1" />
                     <p className="text-xl font-bold text-[#1F2937]">{data.sessions.total}</p>
                     <p className="text-[10px] text-[#6B7280]">{t("instructorDetail.lectures")}</p>
                   </div>

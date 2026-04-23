@@ -81,7 +81,7 @@ const Testimonials = ({ testimonials: strapiTestimonials = [], sectionData }: Te
           </div>
 
           {/* Testimonials Card */}
-          <div className="bg-[#EEF3F7] rounded-3xl p-8 w-full shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+          <div className="bg-[var(--color-surface-page)] rounded-3xl p-8 w-full shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
             <div
               className={`flex items-start w-full ${
                 visibleTestimonials.length >= 3
@@ -151,7 +151,7 @@ const Testimonials = ({ testimonials: strapiTestimonials = [], sectionData }: Te
                   className={`w-3 h-3 rounded-full transition-all duration-300 ${
                     currentSlide === index
                       ? "bg-[var(--surface-container-primary)]"
-                      : "bg-[#EEF3F7] "
+                      : "bg-[var(--color-surface-page)] "
                   }`}
                 />
               ))}
@@ -210,7 +210,7 @@ const Testimonials = ({ testimonials: strapiTestimonials = [], sectionData }: Te
           )}
 
           {/* Testimonial Card - Single card on mobile/tablet */}
-          <div className="bg-[#EEF3F7] rounded-3xl p-6 w-full shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+          <div className="bg-[var(--color-surface-page)] rounded-3xl p-6 w-full shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
             <div
               className={`flex flex-col gap-16 overflow-hidden ${isRTL ? "items-start text-right" : "items-start"}`}
             >
@@ -257,7 +257,7 @@ const Testimonials = ({ testimonials: strapiTestimonials = [], sectionData }: Te
                   className={`w-2 h-2 rounded-full transition-all duration-300 ${
                     currentSlide === index
                       ? "bg-[var(--blue-brand-blue)]"
-                      : "bg-[#EEF3F7]"
+                      : "bg-[var(--color-surface-page)]"
                   }`}
                 />
               ))}

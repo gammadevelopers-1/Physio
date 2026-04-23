@@ -392,9 +392,12 @@
     "title": "قم بالتسجيل/التسجيل",
     "description": "تسجيل حساب جديد.",
     "form": {
+      "firstName": "الاسم الأول",
+      "lastName": "الاسم الأخير",
       "email": "بريد إلكتروني",
       "password": "كلمة المرور",
       "confirmPassword": "تأكيد كلمة المرور",
+      "passwordHint": "يجب أن تحتوي على أحرف كبيرة وصغيرة ورقم",
       "acceptTermsPrefix": "أوافق على",
       "termsAndConditions": "الشروط والأحكام",
       "and": "و",
@@ -405,6 +408,10 @@
       "optional": "اختياري",
       "scfhsPlaceholder": "أدخل رقم ممارس بلس",
       "scfhsHint": "يمكنك إضافته لاحقاً من ملفك الشخصي. مطلوب لإصدار شهادة التطوير المهني المستمر."
+    },
+    "success": {
+      "title": "تم التسجيل بنجاح!",
+      "description": "تم إنشاء حسابك. جارٍ التحويل إلى تسجيل الدخول..."
     },
     "footer": {
       "hasAccount": "هل لديك حساب بالفعل؟",
@@ -6838,6 +6845,10 @@
     "failedLoadInstructors": "فشل تحميل المدربين",
     "unsupportedStatusTransition": "انتقال حالة غير مدعوم",
     "fillRequiredFields": "يرجى ملء جميع الحقول المطلوبة",
+    "firstLastNameMinLength": "يجب أن يتكون الاسم الأول والاسم الأخير من حرفين على الأقل",
+    "passwordMismatch": "كلمات المرور غير متطابقة",
+    "acceptTerms": "يرجى قبول الشروط والأحكام",
+    "genericError": "حدث خطأ. يرجى المحاولة مرة أخرى.",
     "passwordMinLength8": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
     "passwordComplexity": "يجب أن تحتوي كلمة المرور على حرف كبير وصغير ورقم",
     "userCreated": "تم إنشاء المستخدم بنجاح",

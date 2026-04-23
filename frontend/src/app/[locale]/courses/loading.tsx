@@ -14,7 +14,7 @@ export default function CoursesLoading() {
 
             <div className="flex gap-8">
               {/* Sidebar */}
-              <div className="bg-[#EEF3F7] rounded-xl p-5 w-[240px] flex-shrink-0 space-y-6">
+              <div className="bg-[var(--color-surface-page)] rounded-xl p-5 w-[240px] flex-shrink-0 space-y-6">
                 <Skeleton className="h-5 w-28" />
                 <Skeleton className="h-10 w-full" />
                 {Array.from({ length: 5 }).map((_, i) => (

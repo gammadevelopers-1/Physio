@@ -138,7 +138,7 @@ const NELCContent = ({ strapiData }: { strapiData?: NELCPage | null }) => {
                         </div>
                       )}
                       <div
-                        className={`bg-[#EEF3F7] rounded-[16px] p-4 min-h-[140px] md:h-[140px] w-[285px] md:w-[317px] ${imageUrl ? "-mt-24" : ""} relative z-10 flex flex-col gap-[10px] items-center text-center shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]`}
+                        className={`bg-[var(--color-surface-page)] rounded-[16px] p-4 min-h-[140px] md:h-[140px] w-[285px] md:w-[317px] ${imageUrl ? "-mt-24" : ""} relative z-10 flex flex-col gap-[10px] items-center text-center shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]`}
                       >
                         <h3 className="font-semibold text-[#06080B] text-[18px] md:text-[20px]">
                           {card.title}

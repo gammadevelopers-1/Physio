@@ -93,7 +93,7 @@ const FinanceSettingsContent = () => {
                 </p>
                 <Link
                   href={`/${locale}/dashboard/settings/security`}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#a37f49] bg-[#a37f49]/10 hover:bg-[#a37f49]/20 rounded-lg transition-colors mt-3"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--color-primary)] bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 rounded-lg transition-colors mt-3"
                 >
                   <Shield className="w-4 h-4" />
                   Personal Security Settings
@@ -113,14 +113,14 @@ const FinanceSettingsContent = () => {
                           onClick={() => setActiveTab(tab.key)}
                           className={`px-3 py-2.5 text-xs sm:text-sm font-medium relative transition-colors whitespace-nowrap flex items-center gap-1 ${
                             activeTab === tab.key
-                              ? "text-[#a37f49]"
+                              ? "text-[var(--color-primary)]"
                               : "text-[#6B7280] hover:text-[#374151]"
                           }`}
                         >
                           <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           {tab.label}
                           {activeTab === tab.key && (
-                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#a37f49] rounded-t" />
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)] rounded-t" />
                           )}
                         </button>
                       );
@@ -172,7 +172,7 @@ const FinanceSettingsContent = () => {
                                 </div>
                                 <button
                                   onClick={() => setGatewayEnabled((prev) => ({ ...prev, [gw.key]: !prev[gw.key] }))}
-                                  className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${enabled ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
+                                  className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${enabled ? "bg-[var(--color-primary)]" : "bg-[#E5E7EB]"}`}
                                 >
                                   <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${enabled ? "ms-auto" : ""}`} />
                                 </button>
@@ -226,20 +226,20 @@ const FinanceSettingsContent = () => {
                       <div className="max-w-md space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-[#374151] mb-1">{t("settingsPage.currency.primaryCurrency")}</label>
-                          <select className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]">
+                          <select className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
                             <option>{t("settingsPage.currency.sar")}</option>
                           </select>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-[#374151] mb-1">{t("settingsPage.currency.displayFormat")}</label>
-                          <select className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]">
+                          <select className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
                             <option>{t("currencyFormats.sarFirst")}</option>
                             <option>{t("currencyFormats.sarLast")}</option>
                           </select>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-[#374151] mb-1">{t("settingsPage.currency.decimalPlaces")}</label>
-                          <select className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]">
+                          <select className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
                             <option>2</option>
                             <option>0</option>
                           </select>
@@ -265,7 +265,7 @@ const FinanceSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setVatEnabled(!vatEnabled)}
-                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${vatEnabled ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${vatEnabled ? "bg-[var(--color-primary)]" : "bg-[#E5E7EB]"}`}
                           >
                             <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${vatEnabled ? "ms-auto" : ""}`} />
                           </button>
@@ -276,7 +276,7 @@ const FinanceSettingsContent = () => {
                             type="number"
                             value={vatRate}
                             onChange={(e) => setVatRate(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <div className="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
@@ -285,7 +285,7 @@ const FinanceSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setTaxInclusive(!taxInclusive)}
-                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${taxInclusive ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${taxInclusive ? "bg-[var(--color-primary)]" : "bg-[#E5E7EB]"}`}
                           >
                             <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${taxInclusive ? "ms-auto" : ""}`} />
                           </button>
@@ -296,7 +296,7 @@ const FinanceSettingsContent = () => {
                             type="text"
                             value={taxNumber}
                             onChange={(e) => setTaxNumber(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <button className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
@@ -320,7 +320,7 @@ const FinanceSettingsContent = () => {
                             type="number"
                             value={fullRefundDays}
                             onChange={(e) => setFullRefundDays(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <div>
@@ -329,7 +329,7 @@ const FinanceSettingsContent = () => {
                             type="number"
                             value={partialRefundDays}
                             onChange={(e) => setPartialRefundDays(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <div>
@@ -338,7 +338,7 @@ const FinanceSettingsContent = () => {
                             type="number"
                             value={partialRefundPercent}
                             onChange={(e) => setPartialRefundPercent(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <div>
@@ -347,7 +347,7 @@ const FinanceSettingsContent = () => {
                             type="number"
                             value={bnplDeduction}
                             onChange={(e) => setBnplDeduction(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <div>
@@ -356,7 +356,7 @@ const FinanceSettingsContent = () => {
                             type="number"
                             value={adminFee}
                             onChange={(e) => setAdminFee(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <div>
@@ -365,7 +365,7 @@ const FinanceSettingsContent = () => {
                             type="number"
                             value={autoApproveBelow}
                             onChange={(e) => setAutoApproveBelow(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <button className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">

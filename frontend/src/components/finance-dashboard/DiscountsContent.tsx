@@ -189,7 +189,7 @@ const DiscountsContent = () => {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <div className="w-10 h-10 bg-[#FDF6EC] rounded-lg flex items-center justify-center">
-                            <Tag className="w-5 h-5 text-[#a37f49]" />
+                            <Tag className="w-5 h-5 text-[var(--color-primary)]" />
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
@@ -245,7 +245,7 @@ const DiscountsContent = () => {
                         </div>
                         <div className="h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-[#a37f49] rounded-full"
+                            className="h-full bg-[var(--color-primary)] rounded-full"
                             style={{ width: `${Math.min((coupon.usedCount / coupon.usageLimit) * 100, 100)}%` }}
                           />
                         </div>
@@ -269,7 +269,7 @@ const DiscountsContent = () => {
               {/* Usage Analytics */}
               <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
                 <div className="flex items-center gap-2 mb-4">
-                  <BarChart3 className="w-5 h-5 text-[#a37f49]" />
+                  <BarChart3 className="w-5 h-5 text-[var(--color-primary)]" />
                   <h3 className="text-base font-semibold text-[#111827]">{t("discountsPage.analytics.title")}</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -279,7 +279,7 @@ const DiscountsContent = () => {
                   </div>
                   <div className="p-4 bg-[#DCFCE7] rounded-xl text-center">
                     <p className="text-2xl font-bold text-[#16A34A]">+12%</p>
-                    <p className="text-[12px] text-[#a37f49]">{t("discountsPage.analytics.revenueLift")}</p>
+                    <p className="text-[12px] text-[var(--color-primary)]">{t("discountsPage.analytics.revenueLift")}</p>
                   </div>
                   <div className="p-4 bg-[#FEF9C3] rounded-xl text-center">
                     <p className="text-2xl font-bold text-[#CA8A04]">3.2%</p>
@@ -305,11 +305,11 @@ const DiscountsContent = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.code")}</label>
-                <input type="text" placeholder={t("discountsPage.form.codePlaceholder")} className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]" />
+                <input type="text" placeholder={t("discountsPage.form.codePlaceholder")} className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.type")}</label>
-                <select className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]">
+                <select className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
                   <option value="percentage">{t("discountsPage.form.percentage")}</option>
                   <option value="fixed">{t("discountsPage.form.fixedAmount")}</option>
                 </select>
@@ -317,16 +317,16 @@ const DiscountsContent = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.usageLimit")}</label>
-                  <input type="number" placeholder="100" className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]" />
+                  <input type="number" placeholder="100" className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.expiryDate")}</label>
-                  <input type="date" className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]" />
+                  <input type="date" className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.minOrder")}</label>
-                <input type="number" placeholder="0" className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]" />
+                <input type="number" placeholder="0" className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
               </div>
             </div>
             <div className="flex gap-3 mt-6">

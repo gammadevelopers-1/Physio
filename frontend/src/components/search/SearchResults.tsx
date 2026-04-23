@@ -154,7 +154,7 @@ const CourseResultCard = ({ course, isRTL, searchQuery }: CourseResultCardProps)
     <Link href={`/${locale}/courses/${course.slug}`} className="group block">
       <div className="flex flex-col gap-4 p-4 bg-white border border-[var(--outline-subtle)] rounded-2xl hover:shadow-lg hover:border-[var(--surface-container-primary-2)]/30 transition-all duration-300">
         {/* Card Header */}
-        <div className="relative bg-[#eef3f7] rounded-xl p-4 h-[140px] flex flex-col justify-between overflow-hidden">
+        <div className="relative bg-[var(--color-surface-page)] rounded-xl p-4 h-[140px] flex flex-col justify-between overflow-hidden">
           <span className={`absolute top-3 ${isRTL ? "right-3" : "left-3"} bg-[var(--surface-container-primary-2)] text-white text-xs px-2.5 py-1 rounded-full font-medium`}>
             {t("results.course")}
           </span>

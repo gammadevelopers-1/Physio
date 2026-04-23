@@ -6,6 +6,15 @@
 :root {
   color-scheme: light only;
 
+  /* Theme Tokens (overridden by Strapi at runtime via <style> tag in <head>)
+     These serve as fallback defaults if Strapi is unreachable. */
+  --color-primary: #a37f49;
+  --color-primary-dark: #6b4e24;
+  --color-surface-page: #EEF3F7;
+  --color-surface-card: #e5edf4;
+  --color-text-primary: #171717;
+  --color-text-secondary: #737373;
+
   /* Font Sizes */
   --font-sizes-12: 0.75rem;
   --font-sizes-14: 0.875rem;
@@ -135,7 +144,7 @@
   /* Surface */
   --surface-default: var(--blue-blue-50);
   --surface-intense: var(--white);
-  --surface-container-default: #EEF3F7;
+  --surface-container-default: var(--color-surface-page);
   --surface-container-high: var(--blue-blue-200);
   --surface-container-low: var(--blue-blue-50);
   --surface-container-lowest: var(--white);
@@ -177,13 +186,14 @@ body {
   font-family: var(--font-noto-sans-arabic), "Noto Sans Arabic", Arial, sans-serif;
 }
 
-/* Gold Gradient Button */
+/* Primary Gradient Button (theme-aware) */
 .btn-gold {
-  background: linear-gradient(to right, #a37f49, #6b4e24);
+  background: linear-gradient(to right, var(--color-primary), var(--color-primary-dark));
 }
 
 .btn-gold:hover {
-  background: linear-gradient(to right, #8e6d3d, #5a411e);
+  background: linear-gradient(to right, var(--color-primary-dark), var(--color-primary-dark));
+  filter: brightness(0.95);
 }
 
 /* Marquee Animation */

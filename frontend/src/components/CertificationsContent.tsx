@@ -102,7 +102,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
 
       {/* Accreditation Cards Section */}
       {hasAccreditation && (
-        <section className="bg-[#EEF3F7] px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
+        <section className="bg-[var(--color-surface-page)] px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
           <div className="max-w-[1312px] mx-auto">
             <div className={`grid grid-cols-1 gap-6 ${hasNelcCard && hasScfhsCard ? "md:grid-cols-2" : "md:max-w-[640px] md:mx-auto"}`}>
               {/* NELC Card */}
@@ -195,7 +195,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
       {hasVerification && (
         <section className="bg-white px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
           <div className="max-w-[1312px] mx-auto">
-            <div className="bg-[#EEF3F7] rounded-[24px] p-6 md:p-12 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+            <div className="bg-[var(--color-surface-page)] rounded-[24px] p-6 md:p-12 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
               <div className="flex flex-col md:flex-row items-center gap-8">
                 {(verificationTitle || verificationSubtitle || verificationButtonLabel) && (
                   <CertificateVerifyForm
@@ -230,7 +230,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
 
       {/* How to Claim CME Hours Section */}
       {hasClaimCME && (
-        <section className="bg-[#EEF3F7] px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
+        <section className="bg-[var(--color-surface-page)] px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
           <div className="max-w-[1312px] mx-auto">
             {claimCMETitle && (
               <h2
@@ -252,7 +252,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
                     >
                       {iconUrl && (
                         <div className="relative h-[56px] w-[65px]">
-                          <div className={`absolute ${isRTL ? "left-0" : "right-0"} top-[7px] w-[50px] h-[49px] bg-[#EEF3F7] rounded-tl-[18px] rounded-tr-[5px] rounded-br-[10px] rounded-bl-[5px]`} />
+                          <div className={`absolute ${isRTL ? "left-0" : "right-0"} top-[7px] w-[50px] h-[49px] bg-[var(--color-surface-page)] rounded-tl-[18px] rounded-tr-[5px] rounded-br-[10px] rounded-bl-[5px]`} />
                           <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center`}>
                             <Image
                               src={iconUrl}
@@ -372,7 +372,7 @@ function CertificateVerifyForm({
             onChange={(e) => setCertInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleVerify()}
             placeholder={placeholderLabel || ""}
-            className={`w-full h-[48px] px-4 border border-[#C8D5E1] rounded-lg text-[14px] text-[#171717] placeholder:text-[#C8D5E1] focus:outline-none focus:border-[#a37f49] ${isRTL ? "text-right" : "text-left"}`}
+            className={`w-full h-[48px] px-4 border border-[#C8D5E1] rounded-lg text-[14px] text-[#171717] placeholder:text-[#C8D5E1] focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "text-right" : "text-left"}`}
             dir={isRTL ? "rtl" : "ltr"}
           />
           {buttonLabel && (

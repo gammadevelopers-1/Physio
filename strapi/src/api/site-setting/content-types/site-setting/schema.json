@@ -95,6 +95,36 @@
       "type": "component",
       "repeatable": true,
       "component": "elements.payment-method-item"
+    },
+    "themePrimaryColor": {
+      "type": "string",
+      "default": "#a37f49",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "themePrimaryDark": {
+      "type": "string",
+      "default": "#6b4e24",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "themeSurfacePage": {
+      "type": "string",
+      "default": "#EEF3F7",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "themeSurfaceCard": {
+      "type": "string",
+      "default": "#e5edf4",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "themeTextPrimary": {
+      "type": "string",
+      "default": "#171717",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "themeTextSecondary": {
+      "type": "string",
+      "default": "#737373",
+      "pluginOptions": { "i18n": { "localized": false } }
     }
   }
 }

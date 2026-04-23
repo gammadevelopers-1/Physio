@@ -145,7 +145,7 @@ export default async function AboutPage({
 
       {/* Section 2: Compliance & Standards Section */}
       {hasCompliance && (
-        <section className="bg-[#EEF3F7] px-4 py-12 md:px-12 md:py-20 lg:px-16 lg:py-24">
+        <section className="bg-[var(--color-surface-page)] px-4 py-12 md:px-12 md:py-20 lg:px-16 lg:py-24">
           <div className={`flex flex-col items-center justify-center max-w-[800px] mx-auto text-center ${isRTL ? "text-right" : ""}`}>
             {data?.complianceTitle && (
               <h2 className="text-[var(--on-surface-default)] mb-6 md:mb-8 text-[30px] lg:text-[48px] font-semibold leading-[100%] tracking-[-0.15px] lg:tracking-[-0.24px] text-center w-full">
@@ -233,7 +233,7 @@ export default async function AboutPage({
                         {data?.learningReadMoreLabel && card.linkUrl && (
                           <Link
                             href={card.linkUrl}
-                            className={`inline-flex items-center justify-center gap-2 text-[#a37f49] font-medium hover:opacity-80 transition-opacity h-10 px-5 py-2 rounded-xl text-[14px] ${isRTL ? "flex-row-reverse" : ""}`}
+                            className={`inline-flex items-center justify-center gap-2 text-[var(--color-primary)] font-medium hover:opacity-80 transition-opacity h-10 px-5 py-2 rounded-xl text-[14px] ${isRTL ? "flex-row-reverse" : ""}`}
                           >
                             {data.learningReadMoreLabel}
                             {isRTL ? (
@@ -256,7 +256,7 @@ export default async function AboutPage({
 
       {/* Section 4: Platform Capabilities Section */}
       {hasCapabilities && (
-        <section className="bg-[#EEF3F7] px-4 py-12 md:px-12 md:py-20 lg:px-16 lg:py-24">
+        <section className="bg-[var(--color-surface-page)] px-4 py-12 md:px-12 md:py-20 lg:px-16 lg:py-24">
           <div className="flex flex-col items-center justify-center max-w-[1200px] mx-auto">
             {data?.capabilitiesTitle && (
               <h2 className="text-[var(--on-surface-default)] mb-3 md:mb-4 text-center text-[30px] lg:text-[48px] font-semibold leading-[100%] tracking-[-0.15px] lg:tracking-[-0.24px]">

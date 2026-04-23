@@ -121,7 +121,7 @@ const TASidebar = () => {
             <div ref={avatarMenuRef}>
               <button
                 onClick={() => setAvatarMenuOpen((v) => !v)}
-                className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-gradient-to-r from-[#a37f49] to-[#6b4e24] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:from-[#8e6d3d] hover:to-[#5a411e] transition-colors`}
+                className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-dark)] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:from-[#8e6d3d] hover:to-[#5a411e] transition-colors`}
                 aria-label={t("sidebar.editProfile")}
                 aria-haspopup="true"
                 aria-expanded={avatarMenuOpen}
@@ -159,7 +159,7 @@ const TASidebar = () => {
 
           {/* Role Badge */}
           <div className="px-3 py-1 bg-[#FFF8E6] rounded-full">
-            <span className="text-sm font-medium text-[#6b4e24]">
+            <span className="text-sm font-medium text-[var(--color-primary-dark)]">
               Teaching Assistant
             </span>
           </div>
@@ -188,12 +188,12 @@ const TASidebar = () => {
                 aria-current={active ? "page" : undefined}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                   active
-                    ? "bg-[#FFF8E6] text-[#6b4e24]"
+                    ? "bg-[#FFF8E6] text-[var(--color-primary-dark)]"
                     : "text-[#4B5563] hover:bg-[#F9FAFB]"
                 }`}
               >
                 <Icon
-                  className={`w-5 h-5 ${active ? "text-[#6b4e24]" : "text-[#6B7280]"}`}
+                  className={`w-5 h-5 ${active ? "text-[var(--color-primary-dark)]" : "text-[#6B7280]"}`}
                 />
                 <span className={`text-sm ${active ? "font-medium" : ""}`}>
                   {item.label}

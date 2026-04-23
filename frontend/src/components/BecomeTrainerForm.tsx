@@ -75,10 +75,10 @@ const Checkbox = ({
   isRTL?: boolean;
 }) => (
   <label className={`flex items-center gap-2 cursor-pointer ${isRTL ? "flex-row-reverse" : ""}`}>
-    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors bg-white ${checked ? 'border-[#a37f49]' : 'border-[#C8D5E1]'}`}>
+    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors bg-white ${checked ? 'border-[var(--color-primary)]' : 'border-[#C8D5E1]'}`}>
       {checked && (
         <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-          <path d="M1 5L4.5 8.5L11 1.5" stroke="#a37f49" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M1 5L4.5 8.5L11 1.5" stroke="var(--color-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       )}
     </div>
@@ -160,7 +160,7 @@ const Dropdown = ({
                   key={option.value}
                   type="button"
                   onClick={() => onSelect(field, option.value)}
-                  className="w-full px-4 py-2.5 hover:bg-[#EEF3F7] transition-colors flex items-center gap-2"
+                  className="w-full px-4 py-2.5 hover:bg-[var(--color-surface-page)] transition-colors flex items-center gap-2"
                   style={{ fontSize: "16px" }}
                 >
                   {showFlag && option.value === "Saudi Arabia" && <Image src="/icons/flag.svg" alt="SA" width={20} height={20} className="rounded-sm" />}
@@ -236,7 +236,7 @@ const FileUpload = ({
           </div>
         ) : (
           <>
-            <div className="w-12 h-12 rounded-full bg-[#EEF3F7] flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-[var(--color-surface-page)] flex items-center justify-center">
               <CloudUpload className="w-6 h-6 text-[#6B7280]" strokeWidth={1.5} />
             </div>
             <div className="text-center">
@@ -667,9 +667,9 @@ const BecomeTrainerForm = ({
   // Loading state
   if (checkingStatus) {
     return (
-      <section className="bg-[#EEF3F7] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
+      <section className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#a37f49] mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)] mx-auto mb-4" />
           <p className="text-[#6B7280]">Loading...</p>
         </div>
       </section>
@@ -682,14 +682,14 @@ const BecomeTrainerForm = ({
   // Not logged in
   if (!isAuthenticated) {
     return (
-      <section className="bg-[#EEF3F7] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
+      <section className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
         <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
-          <AlertCircle className="w-12 h-12 text-[#a37f49] mx-auto mb-4" />
+          <AlertCircle className="w-12 h-12 text-[var(--color-primary)] mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-[#1F2937] mb-2">{tt("loginRequired", "Login Required")}</h2>
           <p className="text-[#6B7280] mb-6">{tt("loginRequiredDesc", "You need to sign in to submit a trainer application.")}</p>
           <Link
             href={`/${locale}/signin?redirect=/${locale}/become-trainer`}
-            className="inline-block px-6 py-3 bg-[#a37f49] text-white rounded-xl font-medium hover:bg-[#8b6a3d] transition-colors"
+            className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white rounded-xl font-medium hover:bg-[#8b6a3d] transition-colors"
           >
             {tt("signIn", "Sign In to Apply")}
           </Link>
@@ -701,7 +701,7 @@ const BecomeTrainerForm = ({
   // Already an instructor
   if (isInstructor) {
     return (
-      <section className="bg-[#EEF3F7] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
+      <section className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
         <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
           <CheckCircle2 className="w-12 h-12 text-[#16A34A] mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-[#1F2937] mb-2">{tt("alreadyTrainer", "You're Already a Trainer!")}</h2>
@@ -721,7 +721,7 @@ const BecomeTrainerForm = ({
   if (existingApplication) {
     const status = existingApplication.status;
     return (
-      <section className="bg-[#EEF3F7] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
+      <section className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
         <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
           <Clock className="w-12 h-12 text-[#F59E0B] mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-[#1F2937] mb-2">
@@ -742,7 +742,7 @@ const BecomeTrainerForm = ({
           </p>
           <Link
             href={`/${locale}/dashboard/student/applications`}
-            className="inline-block px-6 py-3 bg-[#a37f49] text-white rounded-xl font-medium hover:bg-[#8b6a3d] transition-colors"
+            className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white rounded-xl font-medium hover:bg-[#8b6a3d] transition-colors"
           >
             {tt("viewApplications", "View My Applications")}
           </Link>
@@ -754,14 +754,14 @@ const BecomeTrainerForm = ({
   // Success state
   if (submitSuccess) {
     return (
-      <section className="bg-[#EEF3F7] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
+      <section className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
         <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
           <CheckCircle2 className="w-12 h-12 text-[#16A34A] mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-[#1F2937] mb-2">{tt("submitSuccess", "Application Submitted!")}</h2>
           <p className="text-[#6B7280] mb-6">{tt("submitSuccessDesc", "We'll review your application and notify you within a few business days.")}</p>
           <Link
             href={`/${locale}/dashboard/student/applications`}
-            className="inline-block px-6 py-3 bg-[#a37f49] text-white rounded-xl font-medium hover:bg-[#8b6a3d] transition-colors"
+            className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white rounded-xl font-medium hover:bg-[#8b6a3d] transition-colors"
           >
             {tt("viewApplications", "View My Applications")}
           </Link>
@@ -771,7 +771,7 @@ const BecomeTrainerForm = ({
   }
 
   return (
-    <section className="bg-[#EEF3F7] min-h-screen" dir={isRTL ? "rtl" : "ltr"}>
+    <section className="bg-[var(--color-surface-page)] min-h-screen" dir={isRTL ? "rtl" : "ltr"}>
       {/* Desktop Layout */}
       <div className="hidden lg:block" style={{ padding: "48px 64px" }}>
         <div className="max-w-[1000px] mx-auto">
@@ -806,7 +806,7 @@ const BecomeTrainerForm = ({
                   <span className="text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>{labels.photo}</span>
                   <div className="flex items-center gap-6">
                     <div
-                      className="w-12 h-12 rounded-full bg-[#EEF3F7] flex items-center justify-center overflow-hidden cursor-pointer"
+                      className="w-12 h-12 rounded-full bg-[var(--color-surface-page)] flex items-center justify-center overflow-hidden cursor-pointer"
                       onClick={() => photoInputRef.current?.click()}
                     >
                       {formData.photoPreview ? (
@@ -818,7 +818,7 @@ const BecomeTrainerForm = ({
                     <button
                       type="button"
                       onClick={() => photoInputRef.current?.click()}
-                      className="px-5 py-2 border border-[#a37f49] rounded-lg text-sm font-medium text-[#a37f49] hover:bg-[#fdf8f3]"
+                      className="px-5 py-2 border border-[var(--color-primary)] rounded-lg text-sm font-medium text-[var(--color-primary)] hover:bg-[#fdf8f3]"
                     >
                       {locale === "ar" ? "رفع الصورة" : "Upload Photo"}
                     </button>
@@ -913,7 +913,7 @@ const BecomeTrainerForm = ({
                                 setFormData((prev) => ({ ...prev, countryCode: code }));
                                 setOpenDropdown(null);
                               }}
-                              className={`w-full px-4 py-2 hover:bg-[#EEF3F7] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                              className={`w-full px-4 py-2 hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                             >
                               {code}
                             </button>
@@ -1073,12 +1073,12 @@ const BecomeTrainerForm = ({
                   <button
                     type="button"
                     onClick={() => photoInputRef.current?.click()}
-                    className="px-5 py-2 border border-[#a37f49] rounded-lg text-sm font-medium text-[#a37f49] hover:bg-[#fdf8f3]"
+                    className="px-5 py-2 border border-[var(--color-primary)] rounded-lg text-sm font-medium text-[var(--color-primary)] hover:bg-[#fdf8f3]"
                   >
                     {locale === "ar" ? "رفع الصورة" : "Upload Photo"}
                   </button>
                   <div
-                    className="w-12 h-12 rounded-full bg-[#EEF3F7] flex items-center justify-center overflow-hidden cursor-pointer"
+                    className="w-12 h-12 rounded-full bg-[var(--color-surface-page)] flex items-center justify-center overflow-hidden cursor-pointer"
                     onClick={() => photoInputRef.current?.click()}
                   >
                     {formData.photoPreview ? (
@@ -1150,7 +1150,7 @@ const BecomeTrainerForm = ({
                               setFormData((prev) => ({ ...prev, countryCode: code }));
                               setOpenDropdown(null);
                             }}
-                            className={`w-full px-4 py-2 hover:bg-[#EEF3F7] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                            className={`w-full px-4 py-2 hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                           >
                             {code}
                           </button>

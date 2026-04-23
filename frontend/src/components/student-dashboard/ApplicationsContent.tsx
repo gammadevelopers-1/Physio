@@ -111,7 +111,7 @@ const ApplicationsContent = () => {
           {/* Loading */}
           {isLoading && (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-[#a37f49]" />
+              <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
             </div>
           )}
 
@@ -134,7 +134,7 @@ const ApplicationsContent = () => {
               </p>
               <Link
                 href={`/${locale}/become-trainer`}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#a37f49] text-white rounded-xl text-sm font-medium hover:bg-[#8b6a3d] transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-primary)] text-white rounded-xl text-sm font-medium hover:bg-[#8b6a3d] transition-colors"
               >
                 {t("applicationsPage.becomeTrainer") || "Become a Trainer"}
                 <ArrowIcon className="w-4 h-4" />
@@ -218,7 +218,7 @@ const ApplicationsContent = () => {
                         )}
                         <Link
                           href={`/${locale}/become-trainer`}
-                          className="inline-flex items-center gap-2 px-4 py-2 border border-[#a37f49] text-[#a37f49] rounded-lg text-sm font-medium hover:bg-[#FFFBF0] transition-colors"
+                          className="inline-flex items-center gap-2 px-4 py-2 border border-[var(--color-primary)] text-[var(--color-primary)] rounded-lg text-sm font-medium hover:bg-[#FFFBF0] transition-colors"
                         >
                           {t("applicationsPage.reapply") || "Reapply"}
                           <ArrowIcon className="w-4 h-4" />

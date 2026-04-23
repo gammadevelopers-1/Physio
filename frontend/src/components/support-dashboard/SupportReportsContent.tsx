@@ -168,14 +168,14 @@ const SupportReportsContent = () => {
                       onClick={() => setSelectedReport(report.key)}
                       className={`p-4 rounded-xl border text-left transition-all ${
                         isSelected
-                          ? "bg-[#FDF6EC] border-[#a37f49] ring-1 ring-[#a37f49]"
+                          ? "bg-[#FDF6EC] border-[var(--color-primary)] ring-1 ring-[var(--color-primary)]"
                           : "bg-white border-[#E5E7EB] hover:border-[#D1D5DB]"
                       }`}
                     >
                       <div className={`w-10 h-10 ${report.iconBg} rounded-lg flex items-center justify-center mb-3`}>
                         <Icon className={`w-5 h-5 ${report.iconColor}`} />
                       </div>
-                      <p className={`text-sm font-semibold ${isSelected ? "text-[#a37f49]" : "text-[#111827]"}`}>
+                      <p className={`text-sm font-semibold ${isSelected ? "text-[var(--color-primary)]" : "text-[#111827]"}`}>
                         {report.title}
                       </p>
                       <p className="text-[12px] text-[#6B7280] mt-0.5">{report.description}</p>
@@ -196,7 +196,7 @@ const SupportReportsContent = () => {
                     <select
                       value={period}
                       onChange={(e) => setPeriod(e.target.value)}
-                      className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#a37f49]"
+                      className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[var(--color-primary)]"
                     >
                       <option value="thisWeek">{t("reportsPage.filters.thisWeek")}</option>
                       <option value="lastWeek">{t("reportsPage.filters.lastWeek")}</option>
@@ -210,7 +210,7 @@ const SupportReportsContent = () => {
                     <select
                       value={groupBy}
                       onChange={(e) => setGroupBy(e.target.value)}
-                      className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#a37f49]"
+                      className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[var(--color-primary)]"
                     >
                       <option value="byCategory">{t("reportsPage.filters.byCategory")}</option>
                       <option value="byAgent">{t("reportsPage.filters.byAgent")}</option>

@@ -148,7 +148,7 @@ const CourseAssistantsSuggestPanel = ({
         {unassignedTAs.length > 0 && (
           <button
             onClick={() => setShowDropdown(!showDropdown)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#6b4e24] border border-[#a37f49] rounded-lg hover:bg-[#FFF8E6] transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--color-primary-dark)] border border-[var(--color-primary)] rounded-lg hover:bg-[#FFF8E6] transition-colors"
           >
             <UserPlus className="w-4 h-4" />
             {t("taPanel.suggestTA")}
@@ -206,7 +206,7 @@ const CourseAssistantsSuggestPanel = ({
                   <span className="text-[#6B7280]">({ta.email})</span>
                 </span>
                 {suggesting && (
-                  <Loader2 className="w-4 h-4 animate-spin text-[#6b4e24]" />
+                  <Loader2 className="w-4 h-4 animate-spin text-[var(--color-primary-dark)]" />
                 )}
               </button>
             ))}
@@ -217,7 +217,7 @@ const CourseAssistantsSuggestPanel = ({
       {/* Current TAs List */}
       {loading ? (
         <div className="flex items-center justify-center py-6">
-          <div className="w-6 h-6 border-2 border-[#a37f49] border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : tas.length === 0 ? (
         <p className="text-sm text-[#6B7280] text-center py-4">

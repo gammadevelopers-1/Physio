@@ -170,6 +170,12 @@ export interface SiteSettings {
   footerSupportTitle: string | null;
   logo: StrapiMedia | null;
   paymentMethods: PaymentMethodItem[] | null;
+  themePrimaryColor: string | null;
+  themePrimaryDark: string | null;
+  themeSurfacePage: string | null;
+  themeSurfaceCard: string | null;
+  themeTextPrimary: string | null;
+  themeTextSecondary: string | null;
   locale: string;
   createdAt: string;
   updatedAt: string;

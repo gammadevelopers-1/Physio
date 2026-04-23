@@ -319,7 +319,7 @@ const TAAttendanceView = ({
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-[#a37f49]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">

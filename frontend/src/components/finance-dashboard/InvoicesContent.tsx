@@ -197,7 +197,7 @@ const InvoicesContent = () => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={t("paymentsTable.searchPlaceholder")}
-                        className={`w-full sm:w-[260px] py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+                        className={`w-full sm:w-[260px] py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
                       />
                     </div>
                   </div>
@@ -221,7 +221,7 @@ const InvoicesContent = () => {
                       {filteredInvoices.map((inv) => (
                         <tr key={inv.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB] transition-colors">
                           <td className="py-3 px-4">
-                            <span className="text-[13px] font-medium text-[#a37f49]">{inv.invoiceNumber}</span>
+                            <span className="text-[13px] font-medium text-[var(--color-primary)]">{inv.invoiceNumber}</span>
                           </td>
                           <td className="py-3 px-4 text-[13px] text-[#4B5563]">{inv.date}</td>
                           <td className="py-3 px-4 text-[13px] text-[#374151] font-medium">{inv.customer}</td>

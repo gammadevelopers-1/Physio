@@ -44,7 +44,7 @@ const LatestBlogs = ({ blogs }: LatestBlogsProps) => {
                     />
                   </div>
                   <div className="p-5">
-                    <span className="inline-block px-3 py-1 text-xs font-medium text-[#002D87] bg-[#EEF3F7] rounded-full mb-3">
+                    <span className="inline-block px-3 py-1 text-xs font-medium text-[#002D87] bg-[var(--color-surface-page)] rounded-full mb-3">
                       {blog.category}
                     </span>
                     <h3 className="font-medium text-white line-clamp-2" style={{ fontSize: "16px" }}>
@@ -80,7 +80,7 @@ const LatestBlogs = ({ blogs }: LatestBlogsProps) => {
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="inline-block px-2 py-0.5 text-[10px] font-medium text-[#002D87] bg-[#EEF3F7] rounded-full mb-1">
+                  <span className="inline-block px-2 py-0.5 text-[10px] font-medium text-[#002D87] bg-[var(--color-surface-page)] rounded-full mb-1">
                     {blog.category}
                   </span>
                   <h3 className="font-medium text-white text-sm line-clamp-2">

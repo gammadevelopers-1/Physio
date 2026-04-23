@@ -28,7 +28,7 @@ export default async function CertificationsPage({
 
   return (
     <main id="main-content" className="min-h-screen bg-white pb-20 lg:pb-0">
-      <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
+      <Navbar siteSettings={siteSettings} navLinks={navbarLinks} footerLinks={footerLinks} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
       <CertificationsContent strapiData={certificationsPage} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'after-section-1')} sideLoadedData={sideLoadedData} />

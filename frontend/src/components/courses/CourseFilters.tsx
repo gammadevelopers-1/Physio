@@ -237,9 +237,9 @@ const CourseFilters = ({
   // ─── Desktop sidebar ──────────────────────────────────────
   const labelClass = "flex items-center gap-3 py-2 cursor-pointer w-full";
   const radioClass =
-    "w-4 h-4 border-[#D4D4D8] text-[var(--color-text-primary)] focus:ring-0 cursor-pointer flex-shrink-0";
+    "w-4 h-4 border-[var(--color-border)] text-[var(--color-text-primary)] focus:ring-0 cursor-pointer flex-shrink-0";
   const checkboxClass =
-    "w-4 h-4 rounded border-[#D4D4D8] text-[var(--color-text-primary)] focus:ring-0 cursor-pointer flex-shrink-0";
+    "w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-text-primary)] focus:ring-0 cursor-pointer flex-shrink-0";
   const sectionTitle =
     "text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-2";
   const divider = <div className="h-px bg-[var(--color-border)] my-4" />;

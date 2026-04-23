@@ -768,7 +768,7 @@ const AssessmentsContent = () => {
                               <ClipboardList className="w-5 h-5 text-[#3B82F6]" />
                             </div>
                             <div>
-                              <p className="text-2xl font-bold text-[var(--color-text-primary)]">{allAssessments.length}</p>
+                              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{allAssessments.length}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.stats.total") || "Total Assessments"}</p>
                             </div>
                           </div>
@@ -779,7 +779,7 @@ const AssessmentsContent = () => {
                               <Check className="w-5 h-5 text-[#22C55E]" />
                             </div>
                             <div>
-                              <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                                 {allAssessments.filter((a) => a.status === "published").length}
                               </p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.stats.active") || "Published"}</p>
@@ -792,7 +792,7 @@ const AssessmentsContent = () => {
                               <Users className="w-5 h-5 text-[#7C3AED]" />
                             </div>
                             <div>
-                              <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                                 {allAssessments.reduce((sum, a) => sum + (a.submissionCount ?? 0), 0)}
                               </p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.stats.submissions") || "Submissions"}</p>
@@ -805,7 +805,7 @@ const AssessmentsContent = () => {
                               <BarChart3 className="w-5 h-5 text-[#D97706]" />
                             </div>
                             <div>
-                              <p className="text-2xl font-bold text-[var(--color-text-primary)]">{courses.length}</p>
+                              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{courses.length}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.stats.courses") || "Courses"}</p>
                             </div>
                           </div>
@@ -987,7 +987,7 @@ const AssessmentsContent = () => {
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                         <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                           <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.stats.total")}</p>
-                          <p className="text-2xl font-bold text-[var(--color-text-primary)] mt-1">{assessments.length}</p>
+                          <p className="text-2xl font-bold text-[var(--color-text-secondary)] mt-1">{assessments.length}</p>
                         </div>
                         <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                           <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.stats.active")}</p>
@@ -1128,7 +1128,7 @@ const AssessmentsContent = () => {
                                               onClick={() => toggleSettings(assessment)}
                                             >
                                               <td className="px-4 py-3">
-                                                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{assessment.title}</p>
+                                                <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{assessment.title}</p>
                                                 {assessment.durationMinutes && (
                                                   <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
                                                     {assessment.durationMinutes} min
@@ -1404,7 +1404,7 @@ const AssessmentsContent = () => {
                                             </div>
                                           ) : (
                                             <>
-                                              <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                                                 {sub.studentFirstName} {sub.studentLastName}
                                               </p>
                                               <p className="text-xs text-[var(--color-text-secondary)]">{sub.studentEmail}</p>
@@ -1499,7 +1499,7 @@ const AssessmentsContent = () => {
                                                 </button>
                                               )}
                                               <div>
-                                                <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                                                <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                                                   {effectiveRow.studentFirstName} {effectiveRow.studentLastName}
                                                 </p>
                                                 <p className="text-xs text-[var(--color-text-secondary)]">{effectiveRow.studentEmail}</p>
@@ -1636,7 +1636,7 @@ const AssessmentsContent = () => {
                     <Users className="w-5 h-5 text-[#3B82F6]" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                    <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                       {sub.studentFirstName} {sub.studentLastName}
                     </p>
                     <p className="text-xs text-[var(--color-text-secondary)]">{sub.studentEmail}</p>
@@ -1645,7 +1645,7 @@ const AssessmentsContent = () => {
                 {assessment && (
                   <div className="p-3 bg-[#F9FAFB] rounded-lg">
                     <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.table.assessment")}</p>
-                    <p className="text-sm font-medium text-[var(--color-text-primary)]">{assessment.title}</p>
+                    <p className="text-sm font-medium text-[var(--color-text-secondary)]">{assessment.title}</p>
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-4">
@@ -1694,7 +1694,7 @@ const AssessmentsContent = () => {
                   <div className="p-3 bg-[#F9FAFB] rounded-lg">
                     <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.submissions.submitted")}</p>
                     {sub.submittedAt ? (
-                      <p className="text-sm text-[var(--color-text-primary)]">
+                      <p className="text-sm text-[var(--color-text-secondary)]">
                         {new Date(sub.submittedAt).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                       </p>
                     ) : (
@@ -1704,7 +1704,7 @@ const AssessmentsContent = () => {
                   {sub.gradedAt && (
                     <div className="p-3 bg-[#F9FAFB] rounded-lg">
                       <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.submissions.graded")}</p>
-                      <p className="text-sm text-[var(--color-text-primary)]">
+                      <p className="text-sm text-[var(--color-text-secondary)]">
                         {new Date(sub.gradedAt).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                       </p>
                     </div>
@@ -1753,7 +1753,7 @@ const AssessmentsContent = () => {
                                   <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#3B82F6] text-white text-[10px] font-bold flex-shrink-0">
                                     {idx + 1}
                                   </span>
-                                  <p className="text-sm text-[var(--color-text-primary)] font-medium">
+                                  <p className="text-sm text-[var(--color-text-secondary)] font-medium">
                                     {isRTL && q.questionTextAr ? q.questionTextAr : q.questionText}
                                   </p>
                                 </div>
@@ -1968,7 +1968,7 @@ const AssessmentsContent = () => {
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-[var(--color-text-primary)] font-medium">{isRTL && q.questionTextAr ? q.questionTextAr : q.questionText}</p>
+                          <p className="text-sm text-[var(--color-text-secondary)] font-medium">{isRTL && q.questionTextAr ? q.questionTextAr : q.questionText}</p>
                         </div>
                         <span className="text-xs font-semibold text-[var(--color-text-secondary)] whitespace-nowrap">{q.marks} {t("assessmentsPage.table.marks") || "marks"}</span>
                       </div>

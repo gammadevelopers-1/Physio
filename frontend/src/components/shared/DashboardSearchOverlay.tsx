@@ -340,7 +340,7 @@ export default function DashboardSearchOverlay({
                   className="w-full text-start px-3 py-2.5 rounded-lg hover:bg-[#F3F4F6] flex items-center justify-between group transition-colors"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                    <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">
                       {course.title}
                     </p>
                     <p className="text-xs text-[var(--color-text-secondary)]">
@@ -369,7 +369,7 @@ export default function DashboardSearchOverlay({
                   className="w-full text-start px-3 py-2.5 rounded-lg hover:bg-[#F3F4F6] flex items-center justify-between group transition-colors"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                    <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">
                       {blog.title}
                     </p>
                     <p className="text-xs text-[var(--color-text-secondary)] truncate">
@@ -404,7 +404,7 @@ export default function DashboardSearchOverlay({
                       </span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                      <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">
                         {getUserDisplayName(user)}
                       </p>
                       <p className="text-xs text-[var(--color-text-secondary)] truncate">

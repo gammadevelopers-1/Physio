@@ -78,7 +78,7 @@ const CertificateQueue = ({
                   <Star className="w-4 h-4 text-[#D4A520] fill-[#D4A520]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                     {cert.studentName}
                   </p>
                   <p className="text-xs text-[var(--color-text-secondary)] truncate">

@@ -1,7 +1,6 @@
 import Navbar from "@/components/Navbar";
 import BecomeTrainerForm from "@/components/BecomeTrainerForm";
 import Footer from "@/components/Footer";
-import BottomNav from "@/components/BottomNav";
 import { setRequestLocale } from "next-intl/server";
 import { getBecomeTrainerPageData } from "@/lib/strapi";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
@@ -29,7 +28,7 @@ export default async function BecomeTrainerPage({
 
   return (
     <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
-      <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
+      <Navbar siteSettings={siteSettings} navLinks={navbarLinks} footerLinks={footerLinks} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
       <BecomeTrainerForm
         pageTitle={data?.pageTitle}
@@ -74,7 +73,6 @@ export default async function BecomeTrainerPage({
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'after-section-1')} sideLoadedData={sideLoadedData} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'bottom')} sideLoadedData={sideLoadedData} />
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
-      <BottomNav />
     </main>
   );
 }

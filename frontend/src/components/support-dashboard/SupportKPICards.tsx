@@ -122,7 +122,7 @@ const SupportKPICards = ({ data }: SupportKPICardsProps) => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">{card.label}</p>
-              <p className="text-xl font-bold text-[var(--color-text-primary)]">{card.value}</p>
+              <p className="text-xl font-bold text-[var(--color-text-secondary)]">{card.value}</p>
               <div className="flex items-center gap-1 mt-1">
                 {card.trendIcon === "down" && (
                   <TrendingDown className="w-3 h-3 text-[#16A34A]" />

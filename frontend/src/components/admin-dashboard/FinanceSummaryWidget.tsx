@@ -56,7 +56,7 @@ const FinanceSummaryWidget = ({ data }: FinanceSummaryWidgetProps) => {
       {/* Revenue Cards */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="text-center">
-          <p className="text-3xl font-bold text-[var(--color-text-primary)]">
+          <p className="text-3xl font-bold text-[var(--color-text-secondary)]">
             {formatCurrency(data.grossRevenue)}
           </p>
           <p className="text-sm text-[var(--color-text-secondary)]">
@@ -64,7 +64,7 @@ const FinanceSummaryWidget = ({ data }: FinanceSummaryWidgetProps) => {
           </p>
         </div>
         <div className="text-center">
-          <p className="text-3xl font-bold text-[var(--color-text-primary)]">
+          <p className="text-3xl font-bold text-[var(--color-text-secondary)]">
             {formatCurrency(data.netRevenue)}
           </p>
           <p className="text-sm text-[var(--color-text-secondary)]">

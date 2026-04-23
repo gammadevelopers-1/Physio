@@ -134,7 +134,7 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
       </div>
 
       {/* Description */}
-      <p className={`text-[var(--color-text-primary)] text-[14px] leading-[20px] mt-3 line-clamp-2 ${isRTL ? "text-right" : "text-left"}`}>
+      <p className={`text-[var(--color-text-secondary)] text-[14px] leading-[20px] mt-3 line-clamp-2 ${isRTL ? "text-right" : "text-left"}`}>
         {description}
       </p>
 

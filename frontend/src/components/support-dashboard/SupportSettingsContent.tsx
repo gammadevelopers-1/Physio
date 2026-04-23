@@ -308,7 +308,7 @@ const SupportSettingsContent = () => {
                                     )}
                                   </div>
                                   <div>
-                                    <p className={`text-sm font-semibold ${isActive ? "text-[var(--color-primary)]" : "text-[var(--color-text-primary)]"}`}>
+                                    <p className={`text-sm font-semibold ${isActive ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)]"}`}>
                                       {rule.title}
                                     </p>
                                     <p className="text-[12px] text-[var(--color-text-secondary)] mt-0.5">
@@ -357,7 +357,7 @@ const SupportSettingsContent = () => {
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">{macro.name}</p>
+                                  <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{macro.name}</p>
                                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#EFF6FF] text-[#3B82F6]">
                                     {macro.category}
                                   </span>
@@ -393,7 +393,7 @@ const SupportSettingsContent = () => {
                         <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("settingsPage.notifications.email")}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("settingsPage.notifications.email")}</p>
                               <p className="text-[12px] text-[var(--color-text-secondary)] mt-0.5">{t("settingsPage.notifications.emailDesc")}</p>
                             </div>
                             <button
@@ -407,7 +407,7 @@ const SupportSettingsContent = () => {
                         <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("settingsPage.notifications.sms")}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("settingsPage.notifications.sms")}</p>
                               <p className="text-[12px] text-[var(--color-text-secondary)] mt-0.5">{t("settingsPage.notifications.smsDesc")}</p>
                             </div>
                             <button
@@ -421,7 +421,7 @@ const SupportSettingsContent = () => {
                         <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("settingsPage.notifications.whatsapp")}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("settingsPage.notifications.whatsapp")}</p>
                               <p className="text-[12px] text-[var(--color-text-secondary)] mt-0.5">{t("settingsPage.notifications.whatsappDesc")}</p>
                             </div>
                             <button

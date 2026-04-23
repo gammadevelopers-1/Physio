@@ -267,7 +267,7 @@ function ExportModal({
                   />
                 </div>
                 <div className="flex-1 text-start">
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                     {fmt.label}
                   </p>
                   <p className="text-xs text-[var(--color-text-secondary)]">{fmt.desc}</p>

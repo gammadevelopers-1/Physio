@@ -145,7 +145,7 @@ const SchedulesSessionsWidget = ({
                 <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{session.time}</p>
               </div>
               <div className="flex-1">
-                <p className="text-[13px] font-medium text-[var(--color-text-primary)]">{session.title}</p>
+                <p className="text-[13px] font-medium text-[var(--color-text-secondary)]">{session.title}</p>
                 <div className="flex items-center gap-2 mt-1">
                   {session.hasConflict ? (
                     <span className="flex items-center gap-1 text-[11px] font-medium text-[#EF4444]">

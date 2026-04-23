@@ -1,7 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import BottomNav from "@/components/BottomNav";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { CoursesPageContent } from "@/components/courses";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
@@ -33,7 +32,7 @@ export default async function CoursesPage({
 
   return (
     <main id="main-content" className="min-h-screen bg-white overflow-x-hidden">
-      <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
+      <Navbar siteSettings={siteSettings} navLinks={navbarLinks} footerLinks={footerLinks} />
 
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
 
@@ -81,7 +80,6 @@ export default async function CoursesPage({
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'bottom')} sideLoadedData={sideLoadedData} />
 
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
-      <BottomNav />
       <WhatsAppButton phoneNumber={siteSettings?.whatsappNumber} />
     </main>
   );

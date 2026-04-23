@@ -206,7 +206,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
         </p>
         {nextSession ? (
           <div className="mt-2">
-            <p className="text-xs font-medium text-[var(--color-text-primary)] truncate">
+            <p className="text-xs font-medium text-[var(--color-text-secondary)] truncate">
               {nextSession.title}
             </p>
             <p className="text-[10px] text-[var(--color-text-secondary)] truncate mt-0.5">

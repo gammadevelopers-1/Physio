@@ -84,7 +84,7 @@ const ContentReviewQueue = ({
                   <typeConfig.icon className={`w-4 h-4 ${typeConfig.color}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-[var(--color-text-primary)] truncate">
+                  <p className="text-[13px] font-medium text-[var(--color-text-secondary)] truncate">
                     {item.title}
                   </p>
                   <p className="text-[11px] text-[var(--color-text-secondary)] truncate">

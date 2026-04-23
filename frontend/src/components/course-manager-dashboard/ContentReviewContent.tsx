@@ -374,7 +374,7 @@ const ContentReviewContent = () => {
                     <Clock className="w-5 h-5 text-[#F59E0B]" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.pending}</p>
+                    <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.pending}</p>
                     <p className="text-xs text-[var(--color-text-secondary)]">{t("contentReviewPage.stats.pending")}</p>
                   </div>
                 </div>
@@ -383,7 +383,7 @@ const ContentReviewContent = () => {
                     <MessageSquare className="w-5 h-5 text-[#D97706]" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.changesRequested}</p>
+                    <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.changesRequested}</p>
                     <p className="text-xs text-[var(--color-text-secondary)]">{t("contentReviewPage.stats.changesRequested")}</p>
                   </div>
                 </div>
@@ -392,7 +392,7 @@ const ContentReviewContent = () => {
                     <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.approved}</p>
+                    <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.approved}</p>
                     <p className="text-xs text-[var(--color-text-secondary)]">{t("contentReviewPage.stats.approved")}</p>
                   </div>
                 </div>
@@ -401,7 +401,7 @@ const ContentReviewContent = () => {
                     <XCircle className="w-5 h-5 text-[#EF4444]" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.rejected}</p>
+                    <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.rejected}</p>
                     <p className="text-xs text-[var(--color-text-secondary)]">{t("contentReviewPage.stats.rejected")}</p>
                   </div>
                 </div>
@@ -632,7 +632,7 @@ const ContentReviewContent = () => {
                                     </div>
                                     <div className="min-w-0">
                                       <div className="flex items-center gap-2">
-                                        <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                                        <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">
                                           {item.title}
                                         </p>
                                         {isChangesRequested && (
@@ -822,7 +822,7 @@ const ContentReviewContent = () => {
                                               <XCircle className="w-5 h-5 text-[#EF4444] flex-shrink-0 mt-0.5" />
                                             )}
                                             <div className="min-w-0 flex-1">
-                                              <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                                                 {CHECK_LABEL_KEYS[check.rule] ? t(`contentReviewPage.checkLabels.${CHECK_LABEL_KEYS[check.rule]}`) : check.rule}
                                               </p>
                                               <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">

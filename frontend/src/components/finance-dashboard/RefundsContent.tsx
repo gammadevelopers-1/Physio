@@ -138,7 +138,7 @@ const RefundsContent = () => {
                       </div>
                       <div>
                         <p className="text-xs text-[var(--color-text-secondary)] font-medium">{stat.label}</p>
-                        <p className="text-xl font-bold text-[var(--color-text-primary)]">{stat.value}</p>
+                        <p className="text-xl font-bold text-[var(--color-text-secondary)]">{stat.value}</p>
                       </div>
                     </div>
                   );
@@ -194,13 +194,13 @@ const RefundsContent = () => {
                             <RotateCcw className="w-4 h-4 text-[#EA580C]" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{refund.customer}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{refund.customer}</p>
                             <p className="text-[12px] text-[var(--color-text-secondary)]">{refund.course} - {refund.reason}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className={`${isRTL ? "text-left" : "text-right"}`}>
-                            <p className="text-sm font-semibold text-[var(--color-text-primary)]">{refund.refundAmount}</p>
+                            <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{refund.refundAmount}</p>
                             {refund.originalAmount !== refund.refundAmount && (
                               <p className="text-[11px] text-[var(--color-text-secondary)] line-through">{refund.originalAmount}</p>
                             )}

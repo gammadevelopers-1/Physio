@@ -267,7 +267,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                       <div key={r.id} className="border border-[var(--color-border)] rounded-lg p-4 bg-[#FAFAFA]">
                         <div className="flex items-start justify-between mb-2 gap-3">
                           <div>
-                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{r.studentName}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{r.studentName}</p>
                             <p className="text-xs text-[var(--color-text-secondary)]">{formatDate(r.createdAt)}</p>
                           </div>
                           <div className="flex items-center gap-0.5 flex-shrink-0">

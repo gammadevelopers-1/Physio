@@ -583,7 +583,7 @@ const CourseManagerCourseDetailContent = ({
                         {t("courseDetail.deliveryType")}
                       </span>
                     </div>
-                    <p className="text-lg font-semibold text-[var(--color-text-primary)] capitalize">
+                    <p className="text-lg font-semibold text-[var(--color-text-secondary)] capitalize">
                       {t(`courseDetail.delivery.${course.deliveryType}`)}
                     </p>
                   </div>
@@ -594,7 +594,7 @@ const CourseManagerCourseDetailContent = ({
                         {t("courseDetail.maxEnrollment")}
                       </span>
                     </div>
-                    <p className="text-lg font-semibold text-[var(--color-text-primary)]">
+                    <p className="text-lg font-semibold text-[var(--color-text-secondary)]">
                       {course.maxEnrollment ?? "—"}
                     </p>
                   </div>
@@ -605,7 +605,7 @@ const CourseManagerCourseDetailContent = ({
                         {t("courseDetail.startDate")}
                       </span>
                     </div>
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
                       {formatDate(course.startDate)}
                     </p>
                   </div>
@@ -616,7 +616,7 @@ const CourseManagerCourseDetailContent = ({
                         {t("courseDetail.endDate")}
                       </span>
                     </div>
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
                       {formatDate(course.endDate)}
                     </p>
                   </div>
@@ -627,7 +627,7 @@ const CourseManagerCourseDetailContent = ({
                         CME/CPD Hours
                       </span>
                     </div>
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
                       {course.cmeHours || "—"}
                     </p>
                   </div>
@@ -757,7 +757,7 @@ const CourseManagerCourseDetailContent = ({
                                         >
                                           {getMaterialIcon(mat.type)}
                                           <div className="flex-1 min-w-0">
-                                            <p className="text-sm text-[var(--color-text-primary)] truncate">{mat.title}</p>
+                                            <p className="text-sm text-[var(--color-text-secondary)] truncate">{mat.title}</p>
                                             <p className="text-xs text-[var(--color-text-secondary)]">
                                               {mat.type} • {formatFileSize(mat.fileSize)}
                                               {mat.wcagStatus && (
@@ -822,7 +822,7 @@ const CourseManagerCourseDetailContent = ({
                                           >
                                             <ClipboardCheck className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
                                             <div className="flex-1 min-w-0">
-                                              <p className="text-sm text-[var(--color-text-primary)] truncate">{ma.title}</p>
+                                              <p className="text-sm text-[var(--color-text-secondary)] truncate">{ma.title}</p>
                                               <p className="text-xs text-[var(--color-text-secondary)]">
                                                 {ma.totalMarks} {t("courseDetail.marks") || "marks"}
                                               </p>
@@ -920,7 +920,7 @@ const CourseManagerCourseDetailContent = ({
                           <div key={r.id} className="border border-[var(--color-border)] rounded-lg p-4 bg-[#FAFAFA]">
                             <div className="flex items-start justify-between mb-2">
                               <div>
-                                <p className="text-sm font-medium text-[var(--color-text-primary)]">{r.studentName}</p>
+                                <p className="text-sm font-medium text-[var(--color-text-secondary)]">{r.studentName}</p>
                                 <p className="text-xs text-[var(--color-text-secondary)]">{formatDate(r.createdAt)}</p>
                               </div>
                               <div className="flex items-center gap-0.5">
@@ -976,7 +976,7 @@ const CourseManagerCourseDetailContent = ({
             <p className="text-sm text-[var(--color-text-secondary)] mb-2">
               {t("courseDetail.removeMaterialDesc")}
             </p>
-            <p className="text-sm font-medium text-[var(--color-text-primary)] mb-4">
+            <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-4">
               &ldquo;{removingMaterial.title}&rdquo;
             </p>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">

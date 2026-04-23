@@ -197,7 +197,7 @@ const AlertsActivitySidebar = ({
               <div className="flex items-start gap-3">
                 {getAlertIcon(alert.type)}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                     {alert.title}
                   </p>
                   <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
@@ -243,7 +243,7 @@ const AlertsActivitySidebar = ({
             <div key={activity.id} className="flex items-start gap-3">
               {getActivityIcon(activity.type)}
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-[var(--color-text-primary)]">
+                <p className="text-sm text-[var(--color-text-secondary)]">
                   <span className="font-medium">{activity.user}</span>{" "}
                   {activity.action}
                 </p>
@@ -311,7 +311,7 @@ const AlertsActivitySidebar = ({
           {/* Revenue Cards */}
           <div className="grid grid-cols-2 gap-4 mb-5">
             <div className="text-center">
-              <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                 {finance.grossRevenue >= 1000
                   ? `${(finance.grossRevenue / 1000).toFixed(0)}K`
                   : finance.grossRevenue.toLocaleString()}
@@ -321,7 +321,7 @@ const AlertsActivitySidebar = ({
               </p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                 {finance.netRevenue >= 1000
                   ? `${(finance.netRevenue / 1000).toFixed(0)}K`
                   : finance.netRevenue.toLocaleString()}

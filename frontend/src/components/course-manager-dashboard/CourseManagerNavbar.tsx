@@ -251,7 +251,7 @@ const CourseManagerNavbar = ({ manager }: CourseManagerNavbarProps) => {
                 />
               </div>
               <div>
-                <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                   {manager.name}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)]">

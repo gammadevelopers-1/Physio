@@ -29,7 +29,7 @@ export default async function ContactPage({
 
   return (
     <main id="main-content" className="min-h-screen bg-[var(--surface)] pb-16 lg:pb-0">
-      <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
+      <Navbar siteSettings={siteSettings} navLinks={navbarLinks} footerLinks={footerLinks} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
       <ContactForm strapiData={contactPage} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'after-section-1')} sideLoadedData={sideLoadedData} />

@@ -44,7 +44,7 @@ export default function LocaleSwitchOverlay() {
     >
       <div className="flex flex-col items-center gap-3">
         <Loader2
-          className="w-10 h-10 animate-spin text-[var(--gold-gold-500)]"
+          className="w-10 h-10 animate-spin text-[var(--color-primary)]"
           strokeWidth={2.5}
         />
       </div>

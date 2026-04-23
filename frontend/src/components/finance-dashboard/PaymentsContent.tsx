@@ -128,7 +128,7 @@ const PaymentsContent = () => {
                         <p className="text-xs text-[var(--color-text-secondary)] font-medium">
                           {stat.label}
                         </p>
-                        <p className="text-xl font-bold text-[var(--color-text-primary)]">
+                        <p className="text-xl font-bold text-[var(--color-text-secondary)]">
                           {stat.value}
                         </p>
                         <div className="flex items-center gap-1 mt-0.5">

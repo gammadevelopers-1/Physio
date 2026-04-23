@@ -119,7 +119,7 @@ const AdminCoursesContent = () => {
               {/* Stats Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
-                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">{total}</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{total}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("coursesPage.stats.total")}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">

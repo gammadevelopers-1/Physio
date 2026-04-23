@@ -170,7 +170,7 @@ export default function NotificationBell() {
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                      <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">
                         {t.has(`types.${notif.type}.title`) ? t(`types.${notif.type}.title`) : notif.title}
                       </p>
                       <p className="text-xs text-[var(--color-text-secondary)] line-clamp-2 mt-0.5">

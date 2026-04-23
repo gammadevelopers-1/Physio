@@ -52,7 +52,7 @@ const RefundsQueueWidget = ({ refunds }: RefundsQueueWidgetProps) => {
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-medium text-[var(--color-text-primary)]">
+                <p className="text-[13px] font-medium text-[var(--color-text-secondary)]">
                   {refund.customer}
                 </p>
                 <p className="text-[11px] text-[var(--color-text-secondary)] truncate">
@@ -62,7 +62,7 @@ const RefundsQueueWidget = ({ refunds }: RefundsQueueWidgetProps) => {
 
               {/* Amount */}
               <div className={`${isRTL ? "text-left" : "text-right"} flex-shrink-0`}>
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
                   {refund.refundAmount}
                 </p>
                 {refund.originalAmount !== refund.refundAmount && (

@@ -930,7 +930,7 @@ const UsersContent = () => {
               {/* Stats Cards */}
               <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
-                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.total}</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.total}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("usersPage.stats.total")}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
@@ -1056,7 +1056,7 @@ const UsersContent = () => {
                                     <span className="text-sm font-medium text-white">{getInitials(user)}</span>
                                   </div>
                                   <div className="min-w-0">
-                                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{getUserName(user)}</p>
+                                    <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{getUserName(user)}</p>
                                     <p className="text-xs text-[var(--color-text-secondary)] truncate">{user.email}</p>
                                     {user.scfhsNumber && (
                                       <p className="text-[10px] text-[var(--color-text-secondary)] font-mono truncate">{user.scfhsNumber}</p>

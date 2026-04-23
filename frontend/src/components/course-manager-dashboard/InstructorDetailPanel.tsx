@@ -181,17 +181,17 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                 <div className="grid grid-cols-3 gap-3 mt-3">
                   <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[var(--color-border)]">
                     <BookOpen className="w-4 h-4 text-[var(--color-primary-dark)] mx-auto mb-1" />
-                    <p className="text-xl font-bold text-[var(--color-text-primary)]">{data.coursesCount}</p>
+                    <p className="text-xl font-bold text-[var(--color-text-secondary)]">{data.coursesCount}</p>
                     <p className="text-[10px] text-[var(--color-text-secondary)]">{t("instructorDetail.courses")}</p>
                   </div>
                   <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[var(--color-border)]">
                     <Users className="w-4 h-4 text-[var(--color-primary-dark)] mx-auto mb-1" />
-                    <p className="text-xl font-bold text-[var(--color-text-primary)]">{data.totalStudents}</p>
+                    <p className="text-xl font-bold text-[var(--color-text-secondary)]">{data.totalStudents}</p>
                     <p className="text-[10px] text-[var(--color-text-secondary)]">{t("instructorDetail.students")}</p>
                   </div>
                   <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[var(--color-border)]">
                     <Calendar className="w-4 h-4 text-[var(--color-primary-dark)] mx-auto mb-1" />
-                    <p className="text-xl font-bold text-[var(--color-text-primary)]">{data.sessions.total}</p>
+                    <p className="text-xl font-bold text-[var(--color-text-secondary)]">{data.sessions.total}</p>
                     <p className="text-[10px] text-[var(--color-text-secondary)]">{t("instructorDetail.lectures")}</p>
                   </div>
                 </div>

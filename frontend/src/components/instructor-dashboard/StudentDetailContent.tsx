@@ -392,7 +392,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                         <div className="w-10 h-10 mx-auto rounded-lg bg-[#DBEAFE] flex items-center justify-center mb-2">
                           <BookOpen className="w-5 h-5 text-[#3B82F6]" />
                         </div>
-                        <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                        <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                           {stats.totalCourses}
                         </p>
                         <p className="text-xs text-[var(--color-text-secondary)]">
@@ -403,7 +403,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                         <div className="w-10 h-10 mx-auto rounded-lg bg-[#DCFCE7] flex items-center justify-center mb-2">
                           <CheckCircle className="w-5 h-5 text-[#22C55E]" />
                         </div>
-                        <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                        <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                           {stats.completedCourses}
                         </p>
                         <p className="text-xs text-[var(--color-text-secondary)]">
@@ -414,7 +414,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                         <div className="w-10 h-10 mx-auto rounded-lg bg-[#FEF9C3] flex items-center justify-center mb-2">
                           <TrendingUp className="w-5 h-5 text-[#EAB308]" />
                         </div>
-                        <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                        <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                           {stats.avgAttendance}%
                         </p>
                         <p className="text-xs text-[var(--color-text-secondary)]">
@@ -425,7 +425,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                         <div className="w-10 h-10 mx-auto rounded-lg bg-[#E0E7FF] flex items-center justify-center mb-2">
                           <FileText className="w-5 h-5 text-[#6366F1]" />
                         </div>
-                        <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                        <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                           {stats.avgScore > 0 ? `${stats.avgScore}%` : "-"}
                         </p>
                         <p className="text-xs text-[var(--color-text-secondary)]">
@@ -436,7 +436,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                         <div className="w-10 h-10 mx-auto rounded-lg bg-[#FEF3C7] flex items-center justify-center mb-2">
                           <Award className="w-5 h-5 text-[#D4A520]" />
                         </div>
-                        <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                        <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                           {stats.avgProgress}%
                         </p>
                         <p className="text-xs text-[var(--color-text-secondary)]">
@@ -611,7 +611,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                 {/* Attendance Stats */}
                                 <div className="grid grid-cols-5 gap-2">
                                   <div className="bg-[#F9FAFB] rounded-lg p-2.5 text-center">
-                                    <p className="text-base font-bold text-[var(--color-text-primary)]">{cp.attendance.totalSessions}</p>
+                                    <p className="text-base font-bold text-[var(--color-text-secondary)]">{cp.attendance.totalSessions}</p>
                                     <p className="text-[10px] text-[var(--color-text-secondary)]">{t("studentDetail.total")}</p>
                                   </div>
                                   <div className="bg-[#DCFCE7] rounded-lg p-2.5 text-center">

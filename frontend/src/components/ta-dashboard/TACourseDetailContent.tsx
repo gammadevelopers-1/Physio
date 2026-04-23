@@ -229,7 +229,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                         <Users className="w-5 h-5 text-[#3B82F6]" />
                       </div>
                       <div>
-                        <p className="text-lg font-bold text-[var(--color-text-primary)]">{enrollments.length}</p>
+                        <p className="text-lg font-bold text-[var(--color-text-secondary)]">{enrollments.length}</p>
                         <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.students")}</p>
                       </div>
                     </div>
@@ -238,7 +238,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                         <Calendar className="w-5 h-5 text-[#D4A520]" />
                       </div>
                       <div>
-                        <p className="text-lg font-bold text-[var(--color-text-primary)]">
+                        <p className="text-lg font-bold text-[var(--color-text-secondary)]">
                           {sessions.filter((s) => s.status === "completed").length}/{sessions.length}
                         </p>
                         <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.sessions")}</p>
@@ -249,7 +249,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                         <BarChart3 className="w-5 h-5 text-[#22C55E]" />
                       </div>
                       <div>
-                        <p className="text-lg font-bold text-[var(--color-text-primary)]">
+                        <p className="text-lg font-bold text-[var(--color-text-secondary)]">
                           {enrollments.length > 0
                             ? Math.round(enrollments.reduce((sum, e) => sum + e.progress, 0) / enrollments.length)
                             : 0}%
@@ -262,7 +262,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                         <Clock className="w-5 h-5 text-[#9333EA]" />
                       </div>
                       <div>
-                        <p className="text-lg font-bold text-[var(--color-text-primary)]">
+                        <p className="text-lg font-bold text-[var(--color-text-secondary)]">
                           {formatDuration(course.startDate, course.endDate)}
                         </p>
                         <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.duration")}</p>
@@ -308,27 +308,27 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                           <div className="p-4 bg-[#F9FAFB] rounded-lg">
                             <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.deliveryTypeLabel")}</p>
-                            <p className="text-sm font-medium text-[var(--color-text-primary)] capitalize">{t(`courses.delivery.${course.deliveryType}`)}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)] capitalize">{t(`courses.delivery.${course.deliveryType}`)}</p>
                           </div>
                           <div className="p-4 bg-[#F9FAFB] rounded-lg">
                             <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.statusLabel")}</p>
-                            <p className="text-sm font-medium text-[var(--color-text-primary)] capitalize">{t(`courses.status.${course.status}`)}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)] capitalize">{t(`courses.status.${course.status}`)}</p>
                           </div>
                           <div className="p-4 bg-[#F9FAFB] rounded-lg">
                             <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.maxEnrollmentLabel")}</p>
-                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{course.maxEnrollment || "—"}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{course.maxEnrollment || "—"}</p>
                           </div>
                           <div className="p-4 bg-[#F9FAFB] rounded-lg">
                             <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.startDate")}</p>
-                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{formatDate(course.startDate)}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{formatDate(course.startDate)}</p>
                           </div>
                           <div className="p-4 bg-[#F9FAFB] rounded-lg">
                             <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.endDate")}</p>
-                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{formatDate(course.endDate)}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{formatDate(course.endDate)}</p>
                           </div>
                           <div className="p-4 bg-[#F9FAFB] rounded-lg">
                             <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.enrollmentCount")}</p>
-                            <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                               {enrollments.length}{course.maxEnrollment ? ` / ${course.maxEnrollment}` : ""}
                             </p>
                           </div>
@@ -349,7 +349,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                                   {idx + 1}
                                 </span>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                                  <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">
                                     {locale === "ar" && mod.titleAr ? mod.titleAr : mod.title}
                                   </p>
                                 </div>
@@ -450,7 +450,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                                     {sessionTypeIcon(session.type)}
                                   </div>
                                   <div className="min-w-0">
-                                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{session.title}</p>
+                                    <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{session.title}</p>
                                     <p className="text-xs text-[var(--color-text-secondary)]">
                                       {formatSessionDate(session.scheduledAt)} &bull;{" "}
                                       {formatSessionTime(session.scheduledAt, session.durationMinutes)} &bull;{" "}

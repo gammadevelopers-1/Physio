@@ -1,6 +1,5 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import BottomNav from "@/components/BottomNav";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { ArchivedPageContent } from "@/components/courses";
 
@@ -15,7 +14,6 @@ export default function ArchivedPage() {
       <Navbar />
       <ArchivedPageContent />
       <Footer />
-      <BottomNav />
       <WhatsAppButton />
     </main>
   );

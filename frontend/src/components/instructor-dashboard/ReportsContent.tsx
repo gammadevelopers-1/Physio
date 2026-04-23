@@ -259,7 +259,7 @@ function ExportModal({
                   />
                 </div>
                 <div className="flex-1 text-start">
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                     {fmt.label}
                   </p>
                   <p className="text-xs text-[var(--color-text-secondary)]">{fmt.desc}</p>
@@ -434,7 +434,7 @@ const ReportsContent = () => {
                         <rt.icon className={`w-5 h-5 ${rt.iconColor}`} />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                        <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
                           {t(`reports.${rt.id}Report`)}
                         </p>
                         <p className="text-xs text-[var(--color-text-secondary)]">

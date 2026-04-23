@@ -74,7 +74,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
           <FileText className="w-8 h-8 text-[#002D87]" />
         </div>
         <div>
-          <p className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
+          <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-1">
             {material.title}
           </p>
           <p className="text-xs text-[var(--color-text-secondary)]">

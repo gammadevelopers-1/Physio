@@ -44,7 +44,7 @@ const NELCContent = ({ strapiData }: { strapiData?: NELCPage | null }) => {
                         </h1>
                       )}
                       {heroDescription && (
-                        <p className="text-[var(--color-text-primary)] leading-7 text-[18px] md:text-[20px]">
+                        <p className="text-[var(--color-text-secondary)] leading-7 text-[18px] md:text-[20px]">
                           {heroDescription}
                         </p>
                       )}
@@ -110,7 +110,7 @@ const NELCContent = ({ strapiData }: { strapiData?: NELCPage | null }) => {
                   </h2>
                 )}
                 {complianceDescription && (
-                  <p className="text-[var(--color-text-primary)] text-center leading-7 text-[18px] md:text-[20px]">
+                  <p className="text-[var(--color-text-secondary)] text-center leading-7 text-[18px] md:text-[20px]">
                     {complianceDescription}
                   </p>
                 )}
@@ -144,7 +144,7 @@ const NELCContent = ({ strapiData }: { strapiData?: NELCPage | null }) => {
                           {card.title}
                         </h3>
                         {card.description && (
-                          <p className="text-[var(--color-text-primary)] text-[16px] leading-6">
+                          <p className="text-[var(--color-text-secondary)] text-[16px] leading-6">
                             {card.description}
                           </p>
                         )}

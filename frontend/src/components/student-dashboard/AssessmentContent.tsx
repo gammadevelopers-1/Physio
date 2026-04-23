@@ -449,11 +449,11 @@ const AssessmentContent = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("assessment.score")}</p>
-                  <p className="text-lg font-bold text-[var(--color-text-primary)]">{score}/{assessment.totalMarks}</p>
+                  <p className="text-lg font-bold text-[var(--color-text-secondary)]">{score}/{assessment.totalMarks}</p>
                 </div>
                 <div>
                   <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("assessment.percentage")}</p>
-                  <p className="text-lg font-bold text-[var(--color-text-primary)]">{pct.toFixed(1)}%</p>
+                  <p className="text-lg font-bold text-[var(--color-text-secondary)]">{pct.toFixed(1)}%</p>
                 </div>
               </div>
             </div>
@@ -541,11 +541,11 @@ const AssessmentContent = () => {
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("assessment.score")}</p>
-                  <p className="text-lg font-bold text-[var(--color-text-primary)]">{reviewData.score}/{reviewData.totalMarks}</p>
+                  <p className="text-lg font-bold text-[var(--color-text-secondary)]">{reviewData.score}/{reviewData.totalMarks}</p>
                 </div>
                 <div>
                   <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("assessment.percentage")}</p>
-                  <p className="text-lg font-bold text-[var(--color-text-primary)]">{reviewData.percentage.toFixed(1)}%</p>
+                  <p className="text-lg font-bold text-[var(--color-text-secondary)]">{reviewData.percentage.toFixed(1)}%</p>
                 </div>
                 <div>
                   <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("assessment.status")}</p>
@@ -615,11 +615,11 @@ const AssessmentContent = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("assessment.score")}</p>
-                    <p className="text-lg font-bold text-[var(--color-text-primary)]">{result.score}/{result.totalMarks}</p>
+                    <p className="text-lg font-bold text-[var(--color-text-secondary)]">{result.score}/{result.totalMarks}</p>
                   </div>
                   <div>
                     <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("assessment.percentage")}</p>
-                    <p className="text-lg font-bold text-[var(--color-text-primary)]">{result.percentage.toFixed(1)}%</p>
+                    <p className="text-lg font-bold text-[var(--color-text-secondary)]">{result.percentage.toFixed(1)}%</p>
                   </div>
                 </div>
               </div>
@@ -689,16 +689,16 @@ const AssessmentContent = () => {
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">{t("assessment.totalMarks")}</p>
-              <p className="text-base font-semibold text-[var(--color-text-primary)]">{assessment.totalMarks}</p>
+              <p className="text-base font-semibold text-[var(--color-text-secondary)]">{assessment.totalMarks}</p>
             </div>
             <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">{t("assessment.passingMarks")}</p>
-              <p className="text-base font-semibold text-[var(--color-text-primary)]">{assessment.passingMarks}</p>
+              <p className="text-base font-semibold text-[var(--color-text-secondary)]">{assessment.passingMarks}</p>
             </div>
             {assessment.dueDate && (
               <div className="col-span-2 bg-white rounded-xl border border-[var(--color-border)] p-4">
                 <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">{t("assessment.deadline") || "Deadline"}</p>
-                <p className="text-base font-semibold text-[var(--color-text-primary)]">
+                <p className="text-base font-semibold text-[var(--color-text-secondary)]">
                   {new Date(assessment.dueDate).toLocaleString(locale === "ar" ? "ar-SA" : "en-US", { timeZone: "Asia/Riyadh" })} (KSA)
                 </p>
               </div>
@@ -961,7 +961,7 @@ const AssessmentContent = () => {
               </div>
 
               <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 mb-6">
-                <p className="text-base sm:text-lg font-medium text-[var(--color-text-primary)] mb-6">
+                <p className="text-base sm:text-lg font-medium text-[var(--color-text-secondary)] mb-6">
                   {isRTL && reviewQuestion.questionTextAr
                     ? reviewQuestion.questionTextAr
                     : reviewQuestion.questionText}
@@ -1171,7 +1171,7 @@ const AssessmentContent = () => {
                     ? t("assessment.autoGradedScore")
                     : t("assessment.score")}
                 </p>
-                <p className="text-lg font-bold text-[var(--color-text-primary)]">
+                <p className="text-lg font-bold text-[var(--color-text-secondary)]">
                   {result.score}/{result.totalMarks}
                 </p>
               </div>
@@ -1179,7 +1179,7 @@ const AssessmentContent = () => {
                 <p className="text-xs text-[var(--color-text-secondary)] mb-1">
                   {t("assessment.percentage")}
                 </p>
-                <p className="text-lg font-bold text-[var(--color-text-primary)]">
+                <p className="text-lg font-bold text-[var(--color-text-secondary)]">
                   {result.percentage.toFixed(1)}%
                 </p>
               </div>
@@ -1220,7 +1220,7 @@ const AssessmentContent = () => {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-[var(--color-text-primary)] truncate">
+                        <p className="text-sm text-[var(--color-text-secondary)] truncate">
                           Q{i + 1}. {ga.questionText}
                         </p>
                         <p className="text-xs text-[var(--color-text-secondary)]">
@@ -1276,7 +1276,7 @@ const AssessmentContent = () => {
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                        <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                           {attempt.attemptNumber === 1
                             ? (t("assessment.originalAttempt") || "Original attempt")
                             : (t("assessment.retakeNum", { n: attempt.attemptNumber - 1 }) || `Retake ${attempt.attemptNumber - 1}`)}
@@ -1410,7 +1410,7 @@ const AssessmentContent = () => {
               <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">
                 {t("assessment.totalMarks")}
               </p>
-              <p className="text-base font-semibold text-[var(--color-text-primary)]">
+              <p className="text-base font-semibold text-[var(--color-text-secondary)]">
                 {assessment.totalMarks}
               </p>
             </div>
@@ -1418,7 +1418,7 @@ const AssessmentContent = () => {
               <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">
                 {t("assessment.passingMarks")}
               </p>
-              <p className="text-base font-semibold text-[var(--color-text-primary)]">
+              <p className="text-base font-semibold text-[var(--color-text-secondary)]">
                 {assessment.passingMarks}
               </p>
             </div>
@@ -1426,7 +1426,7 @@ const AssessmentContent = () => {
               <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">
                 {t("assessment.questionsCount")}
               </p>
-              <p className="text-base font-semibold text-[var(--color-text-primary)]">
+              <p className="text-base font-semibold text-[var(--color-text-secondary)]">
                 {assessment.questions.length}
               </p>
             </div>
@@ -1434,7 +1434,7 @@ const AssessmentContent = () => {
               <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">
                 {t("assessment.timeLimit")}
               </p>
-              <p className="text-base font-semibold text-[var(--color-text-primary)]">
+              <p className="text-base font-semibold text-[var(--color-text-secondary)]">
                 {assessment.durationMinutes
                   ? `${assessment.durationMinutes} ${t("assessment.minutes")}`
                   : t("assessment.noTimeLimit")}
@@ -1447,7 +1447,7 @@ const AssessmentContent = () => {
             <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">
               {t("assessment.attemptsUsed")}
             </p>
-            <p className="text-base font-semibold text-[var(--color-text-primary)]">
+            <p className="text-base font-semibold text-[var(--color-text-secondary)]">
               {assessment.attemptsTaken} /{" "}
               {assessment.attemptsAllowed ?? t("assessment.unlimited")}
             </p>
@@ -1697,7 +1697,7 @@ const AssessmentContent = () => {
 
           {/* Question Content */}
           <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 mb-6">
-            <p className="text-base sm:text-lg font-medium text-[var(--color-text-primary)] mb-6">
+            <p className="text-base sm:text-lg font-medium text-[var(--color-text-secondary)] mb-6">
               {isRTL && question.questionTextAr
                 ? question.questionTextAr
                 : question.questionText}

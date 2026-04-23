@@ -81,7 +81,7 @@ const AssessmentsNeedingAttention = ({
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">
                   {sub.studentName}
                 </p>
                 <p className="text-[11px] text-[var(--color-text-secondary)] truncate mb-0.5">

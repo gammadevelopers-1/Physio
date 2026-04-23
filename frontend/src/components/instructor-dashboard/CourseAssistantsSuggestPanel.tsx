@@ -231,7 +231,7 @@ const CourseAssistantsSuggestPanel = ({
               className="flex items-center justify-between px-3 py-2.5 bg-[#F9FAFB] rounded-lg"
             >
               <div>
-                <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                   {ta.firstName} {ta.lastName}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)]">{ta.email}</p>

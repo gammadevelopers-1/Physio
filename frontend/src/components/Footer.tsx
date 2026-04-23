@@ -82,7 +82,7 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
 
                 {hasDescription && (
                   <p
-                    className="text-[var(--on-surface-default)] leading-6"
+                    className="text-[var(--color-text-secondary)] leading-6"
                     style={{
                       fontSize: "var(--typeface-font-styles-paragraph-text)",
                     }}
@@ -98,7 +98,7 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
                       <Link key={idx} href={url} target="_blank" rel="noopener noreferrer">
                         <div className="p-2 bg-[var(--color-surface-page)] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
                           <Icon
-                            className="w-6 h-6 text-[var(--on-surface-variant)]"
+                            className="w-6 h-6 text-[var(--color-icon)]"
                             strokeWidth={1.5}
                           />
                         </div>
@@ -114,7 +114,7 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
               <div className={`flex flex-col gap-4 w-[250px] ${isRTL ? "items-start text-right" : "items-start"}`}>
                 {siteSettings?.footerPlatformTitle && (
                   <h3
-                    className="text-[var(--on-surface-variant)] font-semibold"
+                    className="text-[var(--color-text-primary)] font-semibold"
                     style={{ fontSize: "var(--typeface-font-styles-heading-h4)" }}
                   >
                     {siteSettings.footerPlatformTitle}
@@ -138,7 +138,7 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
               <div className={`flex flex-col gap-4 w-[250px] ${isRTL ? "items-start text-right" : "items-start"}`}>
                 {siteSettings?.footerOrganizationTitle && (
                   <h3
-                    className="text-[var(--on-surface-variant)] font-semibold"
+                    className="text-[var(--color-text-primary)] font-semibold"
                     style={{ fontSize: "var(--typeface-font-styles-heading-h4)" }}
                   >
                     {siteSettings.footerOrganizationTitle}
@@ -162,7 +162,7 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
               <div className={`flex flex-col gap-4 w-[250px] ${isRTL ? "items-start text-right" : "items-start"}`}>
                 {siteSettings?.footerSupportTitle && (
                   <h3
-                    className="text-[var(--on-surface-variant)] font-semibold"
+                    className="text-[var(--color-text-primary)] font-semibold"
                     style={{ fontSize: "var(--typeface-font-styles-heading-h4)" }}
                   >
                     {siteSettings.footerSupportTitle}
@@ -194,7 +194,7 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
             {/* Copyright */}
             {hasCopyright && (
               <div className="flex gap-1 items-center">
-                <Copyright className="w-5 h-5 text-[var(--color-text-secondary)]" strokeWidth={1.5} />
+                <Copyright className="w-5 h-5 text-[var(--color-icon)]" strokeWidth={1.5} />
                 <span
                   className="text-[var(--on-surface-variant)] text-center"
                   style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
@@ -213,7 +213,7 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
                   return (
                     <div
                       key={method.id}
-                      className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden"
+                      className="relative w-[35px] h-[24px] bg-white border border-[var(--color-border)] rounded overflow-hidden"
                     >
                       <Image
                         src={src}

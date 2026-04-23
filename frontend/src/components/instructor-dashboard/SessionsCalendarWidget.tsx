@@ -214,7 +214,7 @@ const SessionsCalendarWidget = ({
 
         <div className="px-2 py-1.5">
           {/* Title + status */}
-          <p className={`text-[11px] font-semibold leading-tight truncate ${isCompleted || isCancelled ? "text-[var(--color-text-secondary)]" : "text-[var(--color-text-primary)]"}`}>
+          <p className={`text-[11px] font-semibold leading-tight truncate ${isCompleted || isCancelled ? "text-[var(--color-text-secondary)]" : "text-[var(--color-text-secondary)]"}`}>
             {session.title}
           </p>
 

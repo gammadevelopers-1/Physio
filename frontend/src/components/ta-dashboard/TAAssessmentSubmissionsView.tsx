@@ -181,7 +181,7 @@ const TAAssessmentSubmissionsView = ({
                                     {submission.answers.map((a, idx) => (
                                       <div key={idx} className="bg-white rounded-lg border border-[var(--color-border)] px-3 py-2">
                                         <p className="text-xs text-[var(--color-text-secondary)] mb-1">Q{idx + 1}</p>
-                                        <p className="text-sm text-[var(--color-text-primary)]">{a.answer || "—"}</p>
+                                        <p className="text-sm text-[var(--color-text-secondary)]">{a.answer || "—"}</p>
                                       </div>
                                     ))}
                                   </div>

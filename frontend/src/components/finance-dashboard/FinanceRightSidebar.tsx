@@ -165,7 +165,7 @@ const FinanceRightSidebar = ({
                 <AlertTriangle className="w-4 h-4 text-[#EA580C] flex-shrink-0 mt-0.5" />
               )}
               <div>
-                <p className="text-[12px] font-medium text-[var(--color-text-primary)]">
+                <p className="text-[12px] font-medium text-[var(--color-text-secondary)]">
                   {alert.title}
                 </p>
                 <p className="text-[11px] text-[var(--color-text-secondary)]">
@@ -198,7 +198,7 @@ const FinanceRightSidebar = ({
               className="flex items-center justify-between p-2.5 bg-[#F9FAFB] rounded-lg border border-[#F3F4F6]"
             >
               <div>
-                <p className="text-[13px] font-medium text-[var(--color-text-primary)]">
+                <p className="text-[13px] font-medium text-[var(--color-text-secondary)]">
                   {coupon.code}
                 </p>
                 <p className="text-[11px] text-[var(--color-text-secondary)]">

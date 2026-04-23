@@ -72,7 +72,7 @@ const MobileFilterDrawer = ({
       >
         {/* Drawer Handle */}
         <div className="flex justify-center pt-3 pb-2">
-          <div className="w-12 h-1.5 bg-[#D4D4D8] rounded-full" />
+          <div className="w-12 h-1.5 bg-[var(--color-border)] rounded-full" />
         </div>
 
         {/* Drawer Header */}

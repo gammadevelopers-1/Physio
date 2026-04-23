@@ -114,7 +114,7 @@ function SettingRow({
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3 border-b border-[#F3F4F6] last:border-0">
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-[var(--color-text-primary)]">{label}</p>
+        <p className="text-sm font-medium text-[var(--color-text-secondary)]">{label}</p>
         {description && (
           <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{description}</p>
         )}

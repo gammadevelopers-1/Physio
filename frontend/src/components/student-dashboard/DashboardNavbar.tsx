@@ -251,7 +251,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
                 />
               </div>
               <div>
-                <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                   {user.name}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)]">

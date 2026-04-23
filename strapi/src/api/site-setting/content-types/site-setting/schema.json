@@ -91,6 +91,14 @@
         }
       }
     },
+    "footerMenuTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
     "paymentMethods": {
       "type": "component",
       "repeatable": true,
@@ -134,6 +142,11 @@
     "themeBorderSubtle": {
       "type": "string",
       "default": "#C8D5E1",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "themeIconColor": {
+      "type": "string",
+      "default": "#737373",
       "pluginOptions": { "i18n": { "localized": false } }
     }
   }

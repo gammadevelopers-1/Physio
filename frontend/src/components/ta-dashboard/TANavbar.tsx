@@ -183,7 +183,7 @@ const TANavbar = () => {
                 <Image src={avatar || "/images/default-avatar.png"} alt={name} width={40} height={40} className="object-cover w-full h-full" unoptimized={!!avatar} />
               </div>
               <div>
-                <p className="text-sm font-medium text-[var(--color-text-primary)]">{name}</p>
+                <p className="text-sm font-medium text-[var(--color-text-secondary)]">{name}</p>
                 <p className="text-xs text-[var(--color-text-secondary)]">{tDashboard("title")}</p>
               </div>
             </div>

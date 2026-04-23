@@ -224,13 +224,13 @@ const AdminMobileSidebar = ({ admin }: AdminMobileSidebarProps) => {
             {/* Stats Row */}
             <div className="mt-6 flex justify-around py-4 border-t border-[var(--color-border)]">
               <div className="text-center">
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">
+                <p className="text-xl font-bold text-[var(--color-text-secondary)]">
                   {admin.totalUsers.toLocaleString()}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.users")}</p>
               </div>
               <div className="text-center">
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">
+                <p className="text-xl font-bold text-[var(--color-text-secondary)]">
                   {admin.totalCourses}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.courses")}</p>

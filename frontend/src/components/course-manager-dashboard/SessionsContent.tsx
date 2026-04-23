@@ -1101,7 +1101,7 @@ const SessionsContent = () => {
             {actionSuccess ? (
               <div className="text-center py-6">
                 <Check className="w-8 h-8 text-[#22C55E] mx-auto mb-2" />
-                <p className="text-sm font-medium text-[var(--color-text-primary)]">Session cancelled</p>
+                <p className="text-sm font-medium text-[var(--color-text-secondary)]">Session cancelled</p>
               </div>
             ) : (
               <>
@@ -1135,7 +1135,7 @@ const SessionsContent = () => {
             {actionSuccess ? (
               <div className="text-center py-6">
                 <Check className="w-8 h-8 text-[#22C55E] mx-auto mb-2" />
-                <p className="text-sm font-medium text-[var(--color-text-primary)]">Session rescheduled</p>
+                <p className="text-sm font-medium text-[var(--color-text-secondary)]">Session rescheduled</p>
               </div>
             ) : (
               <>
@@ -1169,7 +1169,7 @@ const SessionsContent = () => {
             {actionSuccess ? (
               <div className="text-center py-6">
                 <Check className="w-8 h-8 text-[#22C55E] mx-auto mb-2" />
-                <p className="text-sm font-medium text-[var(--color-text-primary)]">Substitute assigned</p>
+                <p className="text-sm font-medium text-[var(--color-text-secondary)]">Substitute assigned</p>
               </div>
             ) : (
               <>

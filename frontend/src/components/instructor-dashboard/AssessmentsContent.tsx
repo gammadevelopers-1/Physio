@@ -1376,7 +1376,7 @@ const GradeModal = ({
                           {t("assessments.studentsAnswer")}
                         </p>
                         <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-4 mb-3">
-                          <p className="text-sm text-[var(--color-text-primary)] whitespace-pre-wrap leading-relaxed">
+                          <p className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap leading-relaxed">
                             {answer.answer || "-"}
                           </p>
                         </div>
@@ -1433,7 +1433,7 @@ const GradeModal = ({
                           <p className="text-xs font-semibold text-[var(--color-text-secondary)] mb-1 uppercase tracking-wide">
                             {t("assessments.studentAnswer")}
                           </p>
-                          <p className="text-sm text-[var(--color-text-primary)] pl-2">{answer.answer}</p>
+                          <p className="text-sm text-[var(--color-text-secondary)] pl-2">{answer.answer}</p>
                         </div>
                         {question && (
                           <div className="mb-1.5">
@@ -1995,7 +1995,7 @@ const AssessmentsContent = () => {
                           <ClipboardList className="w-5 h-5 text-[#3B82F6]" />
                         </div>
                         <div>
-                          <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.total}</p>
+                          <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.total}</p>
                           <p className="text-xs text-[var(--color-text-secondary)]">{t("assessments.total")}</p>
                         </div>
                       </div>
@@ -2006,7 +2006,7 @@ const AssessmentsContent = () => {
                           <CheckCircle className="w-5 h-5 text-[#22C55E]" />
                         </div>
                         <div>
-                          <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.published}</p>
+                          <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.published}</p>
                           <p className="text-xs text-[var(--color-text-secondary)]">{t("assessments.published")}</p>
                         </div>
                       </div>
@@ -2017,7 +2017,7 @@ const AssessmentsContent = () => {
                           <Clock className="w-5 h-5 text-[#EAB308]" />
                         </div>
                         <div>
-                          <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.draft}</p>
+                          <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.draft}</p>
                           <p className="text-xs text-[var(--color-text-secondary)]">{t("assessments.drafts")}</p>
                         </div>
                       </div>
@@ -2594,7 +2594,7 @@ const AssessmentsContent = () => {
                                       {getQuestionTypeIcon(question.type)}
                                     </div>
                                     <div className="flex-1">
-                                      <p className="text-sm text-[var(--color-text-primary)]">
+                                      <p className="text-sm text-[var(--color-text-secondary)]">
                                         {question.questionText}
                                       </p>
                                       {/* MCQ options */}
@@ -3079,7 +3079,7 @@ const AssessmentsContent = () => {
                             {/* Summary */}
                             <div className="flex items-center gap-4 p-3 bg-[#F9FAFB] rounded-xl">
                               <div className="text-center">
-                                <p className="text-lg font-bold text-[var(--color-text-primary)]">
+                                <p className="text-lg font-bold text-[var(--color-text-secondary)]">
                                   {itemAnalysis.totalSubmissions}
                                 </p>
                                 <p className="text-xs text-[var(--color-text-secondary)]">
@@ -3087,7 +3087,7 @@ const AssessmentsContent = () => {
                                 </p>
                               </div>
                               <div className="text-center">
-                                <p className="text-lg font-bold text-[var(--color-text-primary)]">
+                                <p className="text-lg font-bold text-[var(--color-text-secondary)]">
                                   {itemAnalysis.questions.length}
                                 </p>
                                 <p className="text-xs text-[var(--color-text-secondary)]">

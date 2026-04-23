@@ -833,7 +833,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           <Users className="w-5 h-5 text-[#3B82F6]" />
                         </div>
                         <div>
-                          <p className="text-lg font-bold text-[var(--color-text-primary)]">{enrollments.length}</p>
+                          <p className="text-lg font-bold text-[var(--color-text-secondary)]">{enrollments.length}</p>
                           <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.students")}</p>
                         </div>
                       </div>
@@ -843,7 +843,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                             <Calendar className="w-5 h-5 text-[#D4A520]" />
                           </div>
                           <div>
-                            <p className="text-lg font-bold text-[var(--color-text-primary)]">
+                            <p className="text-lg font-bold text-[var(--color-text-secondary)]">
                               {sessions.filter((s) => s.status === "completed").length}/{sessions.length}
                             </p>
                             <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.sessions")}</p>
@@ -855,7 +855,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           <BarChart3 className="w-5 h-5 text-[#22C55E]" />
                         </div>
                         <div>
-                          <p className="text-lg font-bold text-[var(--color-text-primary)]">
+                          <p className="text-lg font-bold text-[var(--color-text-secondary)]">
                             {enrollments.length > 0
                               ? Math.round(enrollments.reduce((sum, e) => sum + e.progress, 0) / enrollments.length)
                               : 0}%
@@ -868,7 +868,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           <Clock className="w-5 h-5 text-[#9333EA]" />
                         </div>
                         <div>
-                          <p className="text-lg font-bold text-[var(--color-text-primary)]">
+                          <p className="text-lg font-bold text-[var(--color-text-secondary)]">
                             {formatDuration(course.startDate, course.endDate)}
                           </p>
                           <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.duration")}</p>
@@ -927,31 +927,31 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
                               <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.deliveryTypeLabel")}</p>
-                              <p className="text-sm font-medium text-[var(--color-text-primary)] capitalize">{t(`courses.delivery.${course.deliveryType}`)}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)] capitalize">{t(`courses.delivery.${course.deliveryType}`)}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
                               <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.statusLabel")}</p>
-                              <p className="text-sm font-medium text-[var(--color-text-primary)] capitalize">{t(`courses.status.${course.status}`)}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)] capitalize">{t(`courses.status.${course.status}`)}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
                               <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.maxEnrollmentLabel")}</p>
-                              <p className="text-sm font-medium text-[var(--color-text-primary)]">{course.maxEnrollment || "—"}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">{course.maxEnrollment || "—"}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
                               <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.startDate")}</p>
-                              <p className="text-sm font-medium text-[var(--color-text-primary)]">{formatDateLocal(course.startDate, calendarFormat, locale)}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">{formatDateLocal(course.startDate, calendarFormat, locale)}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
                               <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.endDate")}</p>
-                              <p className="text-sm font-medium text-[var(--color-text-primary)]">{formatDateLocal(course.endDate, calendarFormat, locale)}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">{formatDateLocal(course.endDate, calendarFormat, locale)}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
                               <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.cmeHoursLabel") || "CME/CPD Hours"}</p>
-                              <p className="text-sm font-medium text-[var(--color-text-primary)]">{course.cmeHours || "—"}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">{course.cmeHours || "—"}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
                               <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.enrollmentCount")}</p>
-                              <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                                 {enrollments.length}{course.maxEnrollment ? ` / ${course.maxEnrollment}` : ""}
                               </p>
                             </div>
@@ -1101,7 +1101,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                           >
                                             {getMaterialIcon(mat.type)}
                                             <div className="flex-1 min-w-0">
-                                              <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{mat.title}</p>
+                                              <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{mat.title}</p>
                                               <p className="text-xs text-[var(--color-text-secondary)]">
                                                 {mat.type.toUpperCase()}
                                                 {mat.fileSize ? ` · ${formatFileSize(mat.fileSize)}` : ""}
@@ -1170,7 +1170,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                             >
                                               <ClipboardCheck className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
                                               <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{ma.title}</p>
+                                                <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{ma.title}</p>
                                                 <p className="text-xs text-[var(--color-text-secondary)]">
                                                   {ma.totalMarks} {t("courseDetail.marks") || "marks"}
                                                 </p>
@@ -1249,7 +1249,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     return (
                                       <tr key={enrollment.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
                                         <td className="px-3 py-3">
-                                          <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                                          <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                                             {enrollment.studentFirstName} {enrollment.studentLastName}
                                           </p>
                                           <p className="text-[11px] text-[var(--color-text-secondary)]">{enrollment.studentEmail}</p>
@@ -1346,7 +1346,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 </div>
                                 <div>
                                   <div className="flex items-center gap-2">
-                                    <p className="text-sm font-medium text-[var(--color-text-primary)]">{session.title}</p>
+                                    <p className="text-sm font-medium text-[var(--color-text-secondary)]">{session.title}</p>
                                     <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${getSessionStatusColor(session.status)}`}>
                                       {t(`courseDetail.sessionStatus.${session.status}`)}
                                     </span>
@@ -1451,28 +1451,28 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               <div className="w-10 h-10 mx-auto mb-2 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
                                 <Users className="w-5 h-5 text-[#3B82F6]" />
                               </div>
-                              <p className="text-2xl font-bold text-[var(--color-text-primary)]">{analytics.total}</p>
+                              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.total}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.totalEnrolled")}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
                               <div className="w-10 h-10 mx-auto mb-2 bg-[#DCFCE7] rounded-lg flex items-center justify-center">
                                 <UserCheck className="w-5 h-5 text-[#22C55E]" />
                               </div>
-                              <p className="text-2xl font-bold text-[var(--color-text-primary)]">{analytics.active}</p>
+                              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.active}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.activeStudents")}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
                               <div className="w-10 h-10 mx-auto mb-2 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
                                 <TrendingUp className="w-5 h-5 text-[#3B82F6]" />
                               </div>
-                              <p className="text-2xl font-bold text-[var(--color-text-primary)]">{analytics.completed}</p>
+                              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.completed}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.completedStudents")}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
                               <div className="w-10 h-10 mx-auto mb-2 bg-[#FEE2E2] rounded-lg flex items-center justify-center">
                                 <UserX className="w-5 h-5 text-[#EF4444]" />
                               </div>
-                              <p className="text-2xl font-bold text-[var(--color-text-primary)]">{analytics.dropped}</p>
+                              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.dropped}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.droppedStudents")}</p>
                             </div>
                           </div>
@@ -1537,7 +1537,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">{t("courseDetail.sessionStats")}</h3>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
-                              <p className="text-2xl font-bold text-[var(--color-text-primary)]">{analytics.totalSessions}</p>
+                              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.totalSessions}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.totalSessionsLabel")}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
@@ -1871,7 +1871,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       </div>
                       {getMaterialIcon(mat.type)}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{mat.title}</p>
+                        <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{mat.title}</p>
                         <p className="text-xs text-[var(--color-text-secondary)]">
                           {mat.type.toUpperCase()}
                           {mat.fileSize ? ` · ${formatFileSize(mat.fileSize)}` : ""}

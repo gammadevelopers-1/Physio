@@ -205,7 +205,7 @@ const AdminSettingsContent = () => {
 
                         <div className="flex items-center justify-between py-4 border-b border-[var(--color-border)]">
                           <div>
-                            <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                               {t("settingsPage.auth.require2FA")}
                             </p>
                             <p className="text-sm text-[var(--color-text-secondary)]">
@@ -262,7 +262,7 @@ const AdminSettingsContent = () => {
 
                         <div className="flex items-center justify-between py-4 border-b border-[var(--color-border)]">
                           <div>
-                            <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                               {t("settingsPage.notifications.email")}
                             </p>
                             <p className="text-sm text-[var(--color-text-secondary)]">
@@ -279,7 +279,7 @@ const AdminSettingsContent = () => {
 
                         <div className="flex items-center justify-between py-4 border-b border-[var(--color-border)]">
                           <div>
-                            <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                               {t("settingsPage.notifications.sms")}
                             </p>
                             <p className="text-sm text-[var(--color-text-secondary)]">
@@ -338,7 +338,7 @@ const AdminSettingsContent = () => {
 
                         <div className={`flex items-center justify-between py-4 px-4 rounded-lg border ${maintenanceMode ? "bg-[#FEE2E2] border-[#FCA5A5]" : "bg-[#F9FAFB] border-[var(--color-border)]"}`}>
                           <div>
-                            <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                               {t("settingsPage.maintenance.mode")}
                             </p>
                             <p className="text-sm text-[var(--color-text-secondary)]">
@@ -383,7 +383,7 @@ const AdminSettingsContent = () => {
                                 <span className="text-sm font-bold text-[#3B82F6]">Z</span>
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("settingsPage.integrations.zoom")}</p>
+                                <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("settingsPage.integrations.zoom")}</p>
                                 <p className="text-xs text-[var(--color-text-secondary)]">{t("settingsPage.integrations.connected")}</p>
                               </div>
                             </div>
@@ -398,7 +398,7 @@ const AdminSettingsContent = () => {
                                 <span className="text-sm font-bold text-[#16A34A]">T</span>
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("settingsPage.integrations.tapPayments")}</p>
+                                <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("settingsPage.integrations.tapPayments")}</p>
                                 <p className="text-xs text-[var(--color-text-secondary)]">{t("settingsPage.integrations.connected")}</p>
                               </div>
                             </div>
@@ -413,7 +413,7 @@ const AdminSettingsContent = () => {
                                 <span className="text-sm font-bold text-[var(--color-text-secondary)]">U</span>
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("settingsPage.integrations.unifonicSms")}</p>
+                                <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("settingsPage.integrations.unifonicSms")}</p>
                                 <p className="text-xs text-[var(--color-text-secondary)]">{t("settingsPage.integrations.notConnected")}</p>
                               </div>
                             </div>

@@ -118,13 +118,13 @@ function SignUpForm() {
         <main id="main-content" className="flex-1 bg-[var(--color-surface-page)] flex items-center justify-center px-4 py-10">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-lg">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+            <h1 className="text-xl font-semibold text-[var(--color-text-primary)] mb-2">
               {t("success.title")}
             </h1>
-            <p className="text-gray-600 mb-4">
+            <p className="text-[var(--color-text-secondary)] mb-4">
               {t("success.description")}
             </p>
-            <Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" />
+            <Loader2 className="w-6 h-6 animate-spin mx-auto text-[var(--color-icon)]" />
           </div>
         </main>
         <Footer />
@@ -299,7 +299,7 @@ function SignUpForm() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        className="absolute end-3 top-1/2 -translate-y-1/2 text-[var(--color-icon)] hover:text-[var(--color-text-secondary)] transition-colors"
                       >
                         {showPassword ? (
                           <EyeOff className="w-4 h-4" />
@@ -308,7 +308,7 @@ function SignUpForm() {
                         )}
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-[var(--color-text-secondary)]">
                       {t("form.passwordHint")}
                     </p>
                   </div>
@@ -340,7 +340,7 @@ function SignUpForm() {
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        className="absolute end-3 top-1/2 -translate-y-1/2 text-[var(--color-icon)] hover:text-[var(--color-text-secondary)] transition-colors"
                       >
                         {showConfirmPassword ? (
                           <EyeOff className="w-4 h-4" />

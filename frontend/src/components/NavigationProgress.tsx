@@ -76,10 +76,11 @@ export default function NavigationProgress() {
       style={{ opacity: visible ? 1 : 0, transition: "opacity 200ms ease-out" }}
     >
       <div
-        className="h-full bg-[var(--gold-gold-500)] shadow-[0_0_8px_rgba(212,165,32,0.6)]"
+        className="h-full bg-[var(--color-primary)]"
         style={{
           width: `${progress}%`,
           transition: "width 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+          boxShadow: "0 0 8px color-mix(in srgb, var(--color-primary) 60%, transparent)",
         }}
       />
     </div>

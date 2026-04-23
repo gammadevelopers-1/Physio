@@ -181,7 +181,7 @@ const AtRiskLearners = ({
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">
                   {learner.name}
                 </p>
                 {learner.course && (

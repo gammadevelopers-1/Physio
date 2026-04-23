@@ -154,7 +154,7 @@ const DiscountsContent = () => {
                       </div>
                       <div>
                         <p className="text-xs text-[var(--color-text-secondary)] font-medium">{stat.label}</p>
-                        <p className="text-xl font-bold text-[var(--color-text-primary)]">{stat.value}</p>
+                        <p className="text-xl font-bold text-[var(--color-text-secondary)]">{stat.value}</p>
                       </div>
                     </div>
                   );
@@ -193,7 +193,7 @@ const DiscountsContent = () => {
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <p className="text-sm font-bold text-[var(--color-text-primary)] font-mono">{coupon.code}</p>
+                              <p className="text-sm font-bold text-[var(--color-text-secondary)] font-mono">{coupon.code}</p>
                               <button className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]">
                                 <Copy className="w-3.5 h-3.5" />
                               </button>
@@ -274,7 +274,7 @@ const DiscountsContent = () => {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="p-4 bg-[#F9FAFB] rounded-xl text-center">
-                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">342</p>
+                    <p className="text-2xl font-bold text-[var(--color-text-secondary)]">342</p>
                     <p className="text-[12px] text-[var(--color-text-secondary)]">{t("discountsPage.analytics.totalUsage")}</p>
                   </div>
                   <div className="p-4 bg-[#DCFCE7] rounded-xl text-center">

@@ -261,7 +261,7 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
                 )}
               </div>
               <div>
-                <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                   {profile.name}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)]">

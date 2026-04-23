@@ -56,7 +56,7 @@ const InputField = ({
         />
       </div>
     </div>
-    {withDivider && <div className="w-full h-px bg-[#F0F0F0]" />}
+    {withDivider && <div className="w-full h-px bg-[var(--color-border)]" />}
   </>
 );
 
@@ -171,7 +171,7 @@ const Dropdown = ({
           )}
         </div>
       </div>
-      {withDivider && <div className="w-full h-px bg-[#F0F0F0]" />}
+      {withDivider && <div className="w-full h-px bg-[var(--color-border)]" />}
     </>
   );
 };
@@ -689,7 +689,7 @@ const BecomeTrainerForm = ({
           <p className="text-[var(--color-text-secondary)] mb-6">{tt("loginRequiredDesc", "You need to sign in to submit a trainer application.")}</p>
           <Link
             href={`/${locale}/signin?redirect=/${locale}/become-trainer`}
-            className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white rounded-xl font-medium hover:bg-[#8b6a3d] transition-colors"
+            className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white rounded-xl font-medium hover:bg-[var(--color-primary-dark)] transition-colors"
           >
             {tt("signIn", "Sign In to Apply")}
           </Link>
@@ -742,7 +742,7 @@ const BecomeTrainerForm = ({
           </p>
           <Link
             href={`/${locale}/dashboard/student/applications`}
-            className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white rounded-xl font-medium hover:bg-[#8b6a3d] transition-colors"
+            className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white rounded-xl font-medium hover:bg-[var(--color-primary-dark)] transition-colors"
           >
             {tt("viewApplications", "View My Applications")}
           </Link>
@@ -761,7 +761,7 @@ const BecomeTrainerForm = ({
           <p className="text-[var(--color-text-secondary)] mb-6">{tt("submitSuccessDesc", "We'll review your application and notify you within a few business days.")}</p>
           <Link
             href={`/${locale}/dashboard/student/applications`}
-            className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white rounded-xl font-medium hover:bg-[#8b6a3d] transition-colors"
+            className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white rounded-xl font-medium hover:bg-[var(--color-primary-dark)] transition-colors"
           >
             {tt("viewApplications", "View My Applications")}
           </Link>
@@ -797,7 +797,7 @@ const BecomeTrainerForm = ({
               </h2>
 
                {/* Divider */}
-               <div className="w-full h-px bg-[#F0F0F0]" />
+               <div className="w-full h-px bg-[var(--color-border)]" />
 
               <div className="flex flex-col">
                 {/* Photo Upload */}
@@ -818,7 +818,7 @@ const BecomeTrainerForm = ({
                     <button
                       type="button"
                       onClick={() => photoInputRef.current?.click()}
-                      className="px-5 py-2 border border-[var(--color-primary)] rounded-lg text-sm font-medium text-[var(--color-primary)] hover:bg-[#fdf8f3]"
+                      className="px-5 py-2 border border-[var(--color-primary)] rounded-lg text-sm font-medium text-[var(--color-primary)] hover:bg-[color-mix(in srgb, var(--color-primary) 10%, transparent)]"
                     >
                       {locale === "ar" ? "رفع الصورة" : "Upload Photo"}
                     </button>
@@ -833,7 +833,7 @@ const BecomeTrainerForm = ({
                 </div>
 
                 {/* Divider */}
-                <div className="w-full h-px bg-[#F0F0F0]" />
+                <div className="w-full h-px bg-[var(--color-border)]" />
 
                 {/* Full Name - Two inputs */}
                 <div className="flex items-start py-6 justify-between">
@@ -863,7 +863,7 @@ const BecomeTrainerForm = ({
                 </div>
 
                 {/* Divider */}
-                <div className="w-full h-px bg-[#F0F0F0]" />
+                <div className="w-full h-px bg-[var(--color-border)]" />
 
                 {/* Email Address */}
                 <div className="flex items-start py-6 justify-between">
@@ -934,7 +934,7 @@ const BecomeTrainerForm = ({
                 </div>
 
                 {/* Divider */}
-                <div className="w-full h-px bg-[#F0F0F0]" />
+                <div className="w-full h-px bg-[var(--color-border)]" />
 
                 <Dropdown label={labels.gender} field="gender" options={genderOptions} translationKey="gender" required value={formData.gender} isOpen={openDropdown === "gender"} onToggle={() => setOpenDropdown(openDropdown === "gender" ? null : "gender")} onSelect={handleDropdownSelect} t={t} />
                 <Dropdown label={labels.nationality} field="nationality" options={nationalityOptions} translationKey="nationality" withDivider={false} required showFlag value={formData.nationality} isOpen={openDropdown === "nationality"} onToggle={() => setOpenDropdown(openDropdown === "nationality" ? null : "nationality")} onSelect={handleDropdownSelect} t={t} />
@@ -967,14 +967,14 @@ const BecomeTrainerForm = ({
                     )}
                   </div>
                 </div>
-                <div className="w-full h-px bg-[#F0F0F0]" />
+                <div className="w-full h-px bg-[var(--color-border)]" />
 
                 <InputField label={labels.twitter} name="twitter" withDivider={false} value={formData.twitter} onChange={handleInputChange} isRTL={isRTL} />
                 <InputField label={labels.linkedIn} name="linkedIn" withDivider={false} value={formData.linkedIn} onChange={handleInputChange} isRTL={isRTL} />
               </div>
 
               {/* Divider */}
-              <div className="w-full h-px bg-[#F0F0F0] my-10" />
+              <div className="w-full h-px bg-[var(--color-border)] my-10" />
 
               {/* Resume Section */}
               <h2 className="font-semibold text-[var(--on-surface-default)] mb-3" style={{ fontSize: "30px" }}>
@@ -1006,7 +1006,7 @@ const BecomeTrainerForm = ({
               )}
 
               {/* Divider */}
-              <div className="w-full h-px bg-[#F0F0F0] my-10" />
+              <div className="w-full h-px bg-[var(--color-border)] my-10" />
 
               {/* Bank Account Section */}
               <h2 className="font-semibold text-[var(--on-surface-default)] mb-3" style={{ fontSize: "30px" }}>
@@ -1014,7 +1014,7 @@ const BecomeTrainerForm = ({
               </h2>
 
               {/* Thin divider under heading */}
-              <div className="w-full h-px bg-[#F0F0F0]" />
+              <div className="w-full h-px bg-[var(--color-border)]" />
 
               <div className="flex flex-col ">
                 <InputField label={labels.accountHolder} name="accountHolderName" required value={formData.accountHolderName} onChange={handleInputChange} isRTL={isRTL} />
@@ -1023,7 +1023,7 @@ const BecomeTrainerForm = ({
               </div>
 
               {/* Divider */}
-              <div className="w-full h-px bg-[#F0F0F0] my-10" />
+              <div className="w-full h-px bg-[var(--color-border)] my-10" />
 
               {/* Submit Buttons */}
               <div className="flex gap-3 justify-end">
@@ -1063,7 +1063,7 @@ const BecomeTrainerForm = ({
               {labels.profileTitle}
             </h2>
              {/* Divider */}
-             <div className="w-full h-px bg-[#F0F0F0] my-2" />
+             <div className="w-full h-px bg-[var(--color-border)] my-2" />
 
             <div className="flex flex-col gap-5">
               {/* Photo Upload */}
@@ -1073,7 +1073,7 @@ const BecomeTrainerForm = ({
                   <button
                     type="button"
                     onClick={() => photoInputRef.current?.click()}
-                    className="px-5 py-2 border border-[var(--color-primary)] rounded-lg text-sm font-medium text-[var(--color-primary)] hover:bg-[#fdf8f3]"
+                    className="px-5 py-2 border border-[var(--color-primary)] rounded-lg text-sm font-medium text-[var(--color-primary)] hover:bg-[color-mix(in srgb, var(--color-primary) 10%, transparent)]"
                   >
                     {locale === "ar" ? "رفع الصورة" : "Upload Photo"}
                   </button>
@@ -1091,7 +1091,7 @@ const BecomeTrainerForm = ({
               </div>
 
               {/* Divider */}
-              <div className="w-full h-px bg-[#F0F0F0] my-2" />
+              <div className="w-full h-px bg-[var(--color-border)] my-2" />
 
               {/* Full Name */}
               <div className="flex flex-col gap-3">
@@ -1119,7 +1119,7 @@ const BecomeTrainerForm = ({
               </div>
 
                {/* Divider */}
-            <div className="w-full h-px bg-[#F0F0F0] my-1" />
+            <div className="w-full h-px bg-[var(--color-border)] my-1" />
 
               <InputField label={labels.email} name="email" type="email" required icon={<Mail className="w-5 h-5" strokeWidth={1.5} />} withDivider={false} value={formData.email} onChange={handleInputChange} isRTL={isRTL} />
 
@@ -1171,7 +1171,7 @@ const BecomeTrainerForm = ({
               </div>
 
                {/* Divider */}
-            <div className="w-full h-px bg-[#F0F0F0] " />
+            <div className="w-full h-px bg-[var(--color-border)] " />
 
               <Dropdown label={labels.gender} field="gender" options={genderOptions} translationKey="gender" required value={formData.gender} isOpen={openDropdown === "gender"} onToggle={() => setOpenDropdown(openDropdown === "gender" ? null : "gender")} onSelect={handleDropdownSelect} t={t} />
               <Dropdown label={labels.nationality} field="nationality" options={nationalityOptions} translationKey="nationality" required showFlag withDivider={false} value={formData.nationality} isOpen={openDropdown === "nationality"} onToggle={() => setOpenDropdown(openDropdown === "nationality" ? null : "nationality")} onSelect={handleDropdownSelect} t={t} />
@@ -1203,14 +1203,14 @@ const BecomeTrainerForm = ({
                 )}
               </div>
                {/* Divider */}
-            <div className="w-full h-px bg-[#F0F0F0] " />
+            <div className="w-full h-px bg-[var(--color-border)] " />
 
               <InputField label={labels.twitter} name="twitter" withDivider={false} value={formData.twitter} onChange={handleInputChange} isRTL={isRTL} />
               <InputField label={labels.linkedIn} name="linkedIn" withDivider={false} value={formData.linkedIn} onChange={handleInputChange} isRTL={isRTL} />
             </div>
 
             {/* Divider */}
-            <div className="w-full h-px bg-[#F0F0F0] my-8" />
+            <div className="w-full h-px bg-[var(--color-border)] my-8" />
 
             {/* Resume Section */}
             <h2 className="font-semibold text-[var(--on-surface-default)] mb-2" style={{ fontSize: "24px" }}>
@@ -1242,7 +1242,7 @@ const BecomeTrainerForm = ({
             )}
 
              {/* Divider */}
-             <div className="w-full h-px bg-[#F0F0F0] my-8" />
+             <div className="w-full h-px bg-[var(--color-border)] my-8" />
 
             {/* Bank Account Section */}
             <h2 className="font-semibold text-[var(--on-surface-default)] my-6 pt-6" style={{ fontSize: "24px" }}>
@@ -1250,7 +1250,7 @@ const BecomeTrainerForm = ({
             </h2>
 
              {/* Divider */}
-             <div className="w-full h-px bg-[#F0F0F0] " />
+             <div className="w-full h-px bg-[var(--color-border)] " />
 
             <div className="flex flex-col ">
               <InputField label={labels.accountHolder} name="accountHolderName" required value={formData.accountHolderName} onChange={handleInputChange} isRTL={isRTL} />

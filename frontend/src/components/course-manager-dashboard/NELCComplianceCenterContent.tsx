@@ -540,7 +540,7 @@ const NELCComplianceCenterContent = () => {
                                 }}
                               >
                                 <td className="px-4 py-3">
-                                  <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                                     {course.courseTitle}
                                   </p>
                                 </td>
@@ -614,7 +614,7 @@ const NELCComplianceCenterContent = () => {
                                                     <CatIcon className={`w-4 h-4 ${catConfig.text}`} />
                                                   </div>
                                                   <div className="flex-1 min-w-0">
-                                                    <p className="text-xs font-semibold text-[var(--color-text-primary)] truncate">
+                                                    <p className="text-xs font-semibold text-[var(--color-text-secondary)] truncate">
                                                       {translateCategoryLabel(cat.label, isRTL)}
                                                     </p>
                                                     <span className={`inline-flex items-center gap-1 text-[10px] font-medium ${catConfig.text}`}>
@@ -638,7 +638,7 @@ const NELCComplianceCenterContent = () => {
                                                         <div key={check.rule} className="flex items-start gap-2">
                                                           <ChkIcon className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${chkConfig.text}`} />
                                                           <div className="min-w-0">
-                                                            <p className="text-xs font-medium text-[var(--color-text-primary)]">
+                                                            <p className="text-xs font-medium text-[var(--color-text-secondary)]">
                                                               {translateRule(check.rule, isRTL)}
                                                             </p>
                                                             <p className="text-[10px] text-[var(--color-text-secondary)]">{translateNelcDetail(check.detail, isRTL)}</p>
@@ -775,7 +775,7 @@ const NELCComplianceCenterContent = () => {
                                     }
                                   >
                                     <td className="px-4 py-3">
-                                      <p className="text-sm font-medium text-[var(--color-text-primary)]">{vc.sessionTitle}</p>
+                                      <p className="text-sm font-medium text-[var(--color-text-secondary)]">{vc.sessionTitle}</p>
                                       <p className="text-xs text-[var(--color-text-secondary)]">
                                         {vc.scheduledAt
                                           ? formatDateHijri(vc.scheduledAt, calendarFormat, { locale })
@@ -862,7 +862,7 @@ const NELCComplianceCenterContent = () => {
                                                   className={`w-4 h-4 mt-0.5 flex-shrink-0 ${checkConfig.text}`}
                                                 />
                                                 <div>
-                                                  <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                                                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                                                     {translateRule(check.rule, isRTL)}
                                                   </p>
                                                   <p className="text-xs text-[var(--color-text-secondary)]">{translateNelcDetail(check.detail, isRTL)}</p>

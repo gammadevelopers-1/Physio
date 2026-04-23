@@ -22,9 +22,14 @@ import { profileApi } from "@/lib/api";
 interface NavbarProps {
   siteSettings?: SiteSettings | null;
   navLinks?: NavigationLink[];
+  footerLinks?: {
+    platform: NavigationLink[];
+    organization: NavigationLink[];
+    support: NavigationLink[];
+  };
 }
 
-const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
+const Navbar = ({ siteSettings, navLinks = [], footerLinks }: NavbarProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const t = useTranslations("navbar");
   const locale = useLocale();
@@ -80,7 +85,7 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
                 <Link
                   key={link.id}
                   href={link.url.startsWith('/') ? `/${locale}${link.url.replace(/^\/(en|ar)/, '')}` : link.url}
-                  className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap"
+                  className="text-[var(--color-text-primary)] text-base leading-6 hover:text-[var(--color-primary)] transition-colors whitespace-nowrap"
                 >
                   {link.label}
                 </Link>
@@ -94,7 +99,7 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
           {/* Language Toggle - Always visible */}
           <button
             onClick={switchLocale}
-            className="flex items-center gap-2 text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors cursor-pointer"
+            className="flex items-center gap-2 text-[var(--color-icon)] hover:text-[var(--color-primary)] transition-colors cursor-pointer"
           >
             <Globe className="w-5 h-5" strokeWidth={1.67} />
             <span className="text-base leading-6">
@@ -109,7 +114,7 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
           {siteSettings?.showSearchBar !== false && (
             <Link
               href={`/${locale}/search`}
-              className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+              className="hidden lg:flex items-center justify-center text-[var(--color-icon)] hover:text-[var(--color-primary)] transition-colors"
             >
               <Search className="w-5 h-5" strokeWidth={1.67} />
             </Link>
@@ -118,7 +123,7 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
           {/* Cart Icon - Hidden on mobile/tablet */}
           <Link
             href={`/${locale}/checkout`}
-            className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+            className="hidden lg:flex items-center justify-center text-[var(--color-icon)] hover:text-[var(--color-primary)] transition-colors"
           >
             <ShoppingCart className="w-5 h-5" strokeWidth={1.67} />
           </Link>
@@ -141,7 +146,7 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
 
           {/* Hamburger Menu - Visible only on mobile/tablet */}
           <button
-            className="flex lg:hidden items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+            className="flex lg:hidden items-center justify-center text-[var(--color-icon)] hover:text-[var(--color-primary)] transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -164,7 +169,7 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
                 <Link
                   key={link.id}
                   href={link.url.startsWith('/') ? `/${locale}${link.url.replace(/^\/(en|ar)/, '')}` : link.url}
-                  className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
+                  className="py-3 text-[var(--color-text-primary)] text-base leading-6 hover:text-[var(--color-primary)] transition-colors border-b border-[var(--outline-subtle)]"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {link.label}
@@ -176,7 +181,7 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
               {siteSettings?.showSearchBar !== false && (
                 <Link
                   href={`/${locale}/search`}
-                  className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+                  className="flex items-center justify-center text-[var(--color-icon)] hover:text-[var(--color-primary)] transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <Search className="w-5 h-5" strokeWidth={1.67} />
@@ -184,7 +189,7 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
               )}
               <Link
                 href={`/${locale}/checkout`}
-                className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+                className="flex items-center justify-center text-[var(--color-icon)] hover:text-[var(--color-primary)] transition-colors"
               >
                 <ShoppingCart className="w-5 h-5" strokeWidth={1.67} />
               </Link>
@@ -209,7 +214,7 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
           </div>
         </div>
       )}
-      <BottomNav />
+      <BottomNav siteSettings={siteSettings} footerLinks={footerLinks} />
     </nav>
   );
 };

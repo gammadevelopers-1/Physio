@@ -147,7 +147,7 @@ const FinanceSettingsContent = () => {
                                     <CreditCard className="w-5 h-5 text-white" />
                                   </div>
                                   <div>
-                                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">{gw.name}</p>
+                                    <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{gw.name}</p>
                                     <div className="flex items-center gap-2 mt-0.5">
                                       {enabled ? (
                                         <span className="flex items-center gap-1 text-[11px] font-medium text-[#16A34A]">
@@ -261,7 +261,7 @@ const FinanceSettingsContent = () => {
                       <div className="max-w-md space-y-4">
                         <div className="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
                           <div>
-                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("settingsPage.tax.vatEnabled")}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("settingsPage.tax.vatEnabled")}</p>
                           </div>
                           <button
                             onClick={() => setVatEnabled(!vatEnabled)}
@@ -281,7 +281,7 @@ const FinanceSettingsContent = () => {
                         </div>
                         <div className="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
                           <div>
-                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("settingsPage.tax.taxInclusive")}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("settingsPage.tax.taxInclusive")}</p>
                           </div>
                           <button
                             onClick={() => setTaxInclusive(!taxInclusive)}

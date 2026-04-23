@@ -257,7 +257,7 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
                 />
               </div>
               <div>
-                <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                   {instructor.name}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)]">

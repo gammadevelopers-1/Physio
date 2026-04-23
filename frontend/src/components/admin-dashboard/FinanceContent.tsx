@@ -171,7 +171,7 @@ const FinanceContent = () => {
                       <span className="text-sm font-medium">{Math.abs(stats.grossTrend)}%</span>
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                  <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                     {(stats.grossRevenue / 1000).toFixed(0)}K
                   </p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("financePage.stats.gross")}</p>
@@ -191,7 +191,7 @@ const FinanceContent = () => {
                       <span className="text-sm font-medium">{Math.abs(stats.netTrend)}%</span>
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                  <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                     {(stats.netRevenue / 1000).toFixed(0)}K
                   </p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("financePage.stats.net")}</p>
@@ -211,7 +211,7 @@ const FinanceContent = () => {
                       <span className="text-sm font-medium">{Math.abs(stats.refundTrend)}%</span>
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                  <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                     {(stats.refunds / 1000).toFixed(0)}K
                   </p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("financePage.stats.refunds")}</p>
@@ -231,7 +231,7 @@ const FinanceContent = () => {
                       <span className="text-sm font-medium">{Math.abs(stats.aovTrend)}%</span>
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                  <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                     {stats.avgOrderValue.toLocaleString()}
                   </p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("financePage.stats.aov")}</p>

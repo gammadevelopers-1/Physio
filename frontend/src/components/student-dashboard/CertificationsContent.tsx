@@ -237,7 +237,7 @@ function CertificateCard({
                 <p className="text-[10px] sm:text-xs text-[#D4A520] mb-0.5">
                   {t("certifications.accreditedBy")}
                 </p>
-                <p className="text-xs sm:text-sm text-[var(--color-text-primary)] font-medium truncate">
+                <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] font-medium truncate">
                   NELC
                 </p>
               </div>

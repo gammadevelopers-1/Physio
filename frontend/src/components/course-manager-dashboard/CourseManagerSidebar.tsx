@@ -234,15 +234,15 @@ const CourseManagerSidebar = ({ manager, pendingReviews: pendingReviewsProp }: C
         {/* Stats Row */}
         <div className="mt-6 flex justify-around py-4 border-t border-[var(--color-border)]">
           <div className="text-center">
-            <p className="text-xl font-bold text-[var(--color-text-primary)]">{manager.totalCourses}</p>
+            <p className="text-xl font-bold text-[var(--color-text-secondary)]">{manager.totalCourses}</p>
             <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.courses")}</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-[var(--color-text-primary)]">{manager.totalEnrollments}</p>
+            <p className="text-xl font-bold text-[var(--color-text-secondary)]">{manager.totalEnrollments}</p>
             <p className="text-xs text-[var(--color-text-secondary)]">{t("kpi.totalEnrollments")}</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-[var(--color-text-primary)]">{manager.totalInstructors}</p>
+            <p className="text-xl font-bold text-[var(--color-text-secondary)]">{manager.totalInstructors}</p>
             <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.instructors")}</p>
           </div>
         </div>

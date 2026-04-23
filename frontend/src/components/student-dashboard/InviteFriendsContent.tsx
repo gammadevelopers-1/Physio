@@ -314,7 +314,7 @@ const InviteFriendsContent = () => {
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm text-[var(--color-text-primary)] truncate mb-1">
+                                <p className="text-sm text-[var(--color-text-secondary)] truncate mb-1">
                                   {invite.email}
                                 </p>
                                 <span

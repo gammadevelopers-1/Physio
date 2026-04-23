@@ -396,7 +396,7 @@ export default function ManagerAllReviewsContent() {
                           <div className="flex items-start justify-between gap-3 mb-2">
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap mb-1">
-                                <p className="text-sm font-semibold text-[var(--color-text-primary)]">{r.studentName}</p>
+                                <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{r.studentName}</p>
                                 {statusBadge(r.moderationStatus)}
                                 {r.isPublished ? (
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700">
@@ -565,7 +565,7 @@ export default function ManagerAllReviewsContent() {
                 ))}
               </div>
               {modal.reviewText ? (
-                <p dir="auto" className="text-sm text-[var(--color-text-primary)] whitespace-pre-line">{modal.reviewText}</p>
+                <p dir="auto" className="text-sm text-[var(--color-text-secondary)] whitespace-pre-line">{modal.reviewText}</p>
               ) : (
                 <p className="text-sm text-[var(--color-text-secondary)] italic">{isRTL ? "لا يوجد نص" : "No text"}</p>
               )}

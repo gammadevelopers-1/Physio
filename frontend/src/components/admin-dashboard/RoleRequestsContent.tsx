@@ -141,7 +141,7 @@ const RoleRequestsContent = () => {
           {/* Stats Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
             <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
-              <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.total}</p>
+              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.total}</p>
               <p className="text-sm text-[var(--color-text-secondary)]">{t("roleRequestsPage.stats.total") || "Total"}</p>
             </div>
             <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
@@ -242,7 +242,7 @@ const RoleRequestsContent = () => {
                             className="border-b border-[var(--color-border)] hover:bg-[#F9FAFB] transition-colors cursor-pointer"
                           >
                             <td className="px-4 py-3">
-                              <p className="text-sm font-medium text-[var(--color-text-primary)]">{getApplicantName(request)}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">{getApplicantName(request)}</p>
                             </td>
                             <td className="px-4 py-3">
                               <p className="text-sm text-[var(--color-text-secondary)]">{request.user?.email || "-"}</p>
@@ -289,7 +289,7 @@ const RoleRequestsContent = () => {
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{getApplicantName(request)}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{getApplicantName(request)}</p>
                             <p className="text-xs text-[var(--color-text-secondary)] truncate">{request.user?.email}</p>
                           </div>
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 ${config.badgeBg} ${config.badgeText}`}>

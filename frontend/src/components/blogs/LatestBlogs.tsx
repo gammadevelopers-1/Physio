@@ -27,7 +27,7 @@ const LatestBlogs = ({ blogs }: LatestBlogsProps) => {
           <h2 className="font-semibold text-white mb-2" style={{ fontSize: "48px" }}>
             Latest Blogs
           </h2>
-          <p className="text-gray-400 mb-10" style={{ fontSize: "20px" }}>
+          <p className="text-[var(--color-text-secondary)] mb-10" style={{ fontSize: "20px" }}>
             Insights, Updates, and Best Practices in Healthcare Education
           </p>
 
@@ -63,7 +63,7 @@ const LatestBlogs = ({ blogs }: LatestBlogsProps) => {
         <h2 className="font-semibold text-white mb-1" style={{ fontSize: "24px" }}>
           Latest Blogs
         </h2>
-        <p className="text-gray-400 text-sm mb-6">
+        <p className="text-[var(--color-text-secondary)] text-sm mb-6">
           Insights, Updates, and Best Practices in Healthcare Education
         </p>
 

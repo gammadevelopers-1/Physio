@@ -571,7 +571,7 @@ function AttendanceModal({
                     <div key={e.studentId} className="px-4 py-3 space-y-2">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                          <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                             {e.studentFirstName} {e.studentLastName}
                           </p>
                           <p className="text-xs text-[var(--color-text-secondary)]">{e.studentEmail}</p>

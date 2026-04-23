@@ -163,7 +163,7 @@ const SupportMobileSidebar = ({ profile }: SupportMobileSidebarProps) => {
             {/* Stats Row */}
             <div className="mt-6 flex justify-around py-4 border-t border-[var(--color-border)]">
               <div className="text-center">
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">
+                <p className="text-xl font-bold text-[var(--color-text-secondary)]">
                   {profile.resolved}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)]">
@@ -179,7 +179,7 @@ const SupportMobileSidebar = ({ profile }: SupportMobileSidebarProps) => {
                 </p>
               </div>
               <div className="text-center">
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">
+                <p className="text-xl font-bold text-[var(--color-text-secondary)]">
                   {profile.avgFRT}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)]">

@@ -111,7 +111,7 @@ const InstructorsManagementWidget = ({
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-medium text-[var(--color-text-primary)] truncate">
+                <p className="text-[13px] font-medium text-[var(--color-text-secondary)] truncate">
                   {instructor.name}
                 </p>
                 <p className="text-[11px] text-[var(--color-text-secondary)]">

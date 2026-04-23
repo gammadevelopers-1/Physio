@@ -134,7 +134,7 @@ const ApplicationsContent = () => {
               </p>
               <Link
                 href={`/${locale}/become-trainer`}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-primary)] text-white rounded-xl text-sm font-medium hover:bg-[#8b6a3d] transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-primary)] text-white rounded-xl text-sm font-medium hover:bg-[var(--color-primary-dark)] transition-colors"
               >
                 {t("applicationsPage.becomeTrainer") || "Become a Trainer"}
                 <ArrowIcon className="w-4 h-4" />

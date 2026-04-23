@@ -38,7 +38,7 @@ function StatCard({
           <Icon className="w-5 h-5" />
         </div>
         <div>
-          <p className="text-2xl font-bold text-[var(--color-text-primary)]">{value}</p>
+          <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{value}</p>
           <p className="text-xs text-[var(--color-text-secondary)]">{label}</p>
         </div>
       </div>
@@ -135,7 +135,7 @@ function CourseRow({
   return (
     <tr className="border-b border-[#F3F4F6] last:border-0 hover:bg-[#F9FAFB] transition-colors">
       <td className="py-3 px-3">
-        <p className="text-sm font-medium text-[var(--color-text-primary)]">
+        <p className="text-sm font-medium text-[var(--color-text-secondary)]">
           {isRTL && course.courseTitleAr
             ? course.courseTitleAr
             : course.courseTitle}

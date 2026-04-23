@@ -167,7 +167,7 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
                   <CatIcon className={`w-3.5 h-3.5 ${cfg.text}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{t.has(`cat_${cat.category}`) ? t(`cat_${cat.category}`) : cat.label}</p>
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{t.has(`cat_${cat.category}`) ? t(`cat_${cat.category}`) : cat.label}</p>
                   <p className="text-xs text-[var(--color-text-secondary)]">{t("checks", { passed: passedChecks, total: cat.checks.length })}</p>
                 </div>
                 <StatusIcon className={`w-4 h-4 flex-shrink-0 ${cfg.text}`} />

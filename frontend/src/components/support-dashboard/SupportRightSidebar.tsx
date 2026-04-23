@@ -117,7 +117,7 @@ const SupportRightSidebar = () => {
 
         <div className="grid grid-cols-3 gap-2">
           <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
-            <p className="text-sm font-semibold text-[var(--color-text-primary)]">156</p>
+            <p className="text-sm font-semibold text-[var(--color-text-secondary)]">156</p>
             <p className="text-[10px] text-[var(--color-text-secondary)]">
               {t("csatSection.responses")}
             </p>
@@ -129,7 +129,7 @@ const SupportRightSidebar = () => {
             </p>
           </div>
           <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
-            <p className="text-sm font-semibold text-[var(--color-text-primary)]">4.7</p>
+            <p className="text-sm font-semibold text-[var(--color-text-secondary)]">4.7</p>
             <p className="text-[10px] text-[var(--color-text-secondary)]">
               {t("csatSection.avgRating")}
             </p>
@@ -213,7 +213,7 @@ const SupportRightSidebar = () => {
                 <AlertTriangle className="w-4 h-4 text-[#EA580C] flex-shrink-0 mt-0.5" />
               )}
               <div>
-                <p className="text-[12px] font-medium text-[var(--color-text-primary)]">
+                <p className="text-[12px] font-medium text-[var(--color-text-secondary)]">
                   {t(alert.titleKey)}
                 </p>
                 <p className="text-[11px] text-[var(--color-text-secondary)]">

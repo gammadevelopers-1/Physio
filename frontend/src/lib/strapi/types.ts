@@ -168,6 +168,7 @@ export interface SiteSettings {
   footerPlatformTitle: string | null;
   footerOrganizationTitle: string | null;
   footerSupportTitle: string | null;
+  footerMenuTitle: string | null;
   logo: StrapiMedia | null;
   paymentMethods: PaymentMethodItem[] | null;
   themePrimaryColor: string | null;
@@ -178,6 +179,7 @@ export interface SiteSettings {
   themeTextSecondary: string | null;
   themeBorderColor: string | null;
   themeBorderSubtle: string | null;
+  themeIconColor: string | null;
   locale: string;
   createdAt: string;
   updatedAt: string;

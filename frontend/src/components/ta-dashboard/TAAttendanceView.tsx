@@ -450,7 +450,7 @@ const TAAttendanceView = ({
                   <div key={record.studentId} className="px-4 py-3 space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                        <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                           {record.studentFirstName} {record.studentLastName}
                         </p>
                         <p className="text-xs text-[var(--color-text-secondary)]">{record.studentEmail}</p>

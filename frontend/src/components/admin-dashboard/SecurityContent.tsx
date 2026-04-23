@@ -87,7 +87,7 @@ const SecurityContent = () => {
                   <div className="flex items-center gap-2 mb-2">
                     <Lock className="w-5 h-5 text-[#D97706]" />
                   </div>
-                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.failedLogins24h}</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.failedLogins24h}</p>
                   <p className="text-xs text-[var(--color-text-secondary)]">{t("securityPage.stats.failedLogins")}</p>
                 </div>
 
@@ -95,7 +95,7 @@ const SecurityContent = () => {
                   <div className="flex items-center gap-2 mb-2">
                     <Ban className="w-5 h-5 text-[#DC2626]" />
                   </div>
-                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.ipsBlocked}</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.ipsBlocked}</p>
                   <p className="text-xs text-[var(--color-text-secondary)]">{t("securityPage.stats.ipsBlocked")}</p>
                 </div>
 
@@ -103,7 +103,7 @@ const SecurityContent = () => {
                   <div className="flex items-center gap-2 mb-2">
                     <Users className="w-5 h-5 text-[#3B82F6]" />
                   </div>
-                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.activeSessions}</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.activeSessions}</p>
                   <p className="text-xs text-[var(--color-text-secondary)]">{t("securityPage.stats.activeSessions")}</p>
                 </div>
 
@@ -111,7 +111,7 @@ const SecurityContent = () => {
                   <div className="flex items-center gap-2 mb-2">
                     <KeyRound className="w-5 h-5 text-[#16A34A]" />
                   </div>
-                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.twoFaAdoption}%</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.twoFaAdoption}%</p>
                   <p className="text-xs text-[var(--color-text-secondary)]">{t("securityPage.stats.twoFa")}</p>
                 </div>
 
@@ -119,7 +119,7 @@ const SecurityContent = () => {
                   <div className="flex items-center gap-2 mb-2">
                     <Shield className="w-5 h-5 text-[#8B5CF6]" />
                   </div>
-                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.securityScore}%</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.securityScore}%</p>
                   <p className="text-xs text-[var(--color-text-secondary)]">{t("securityPage.stats.score")}</p>
                 </div>
               </div>

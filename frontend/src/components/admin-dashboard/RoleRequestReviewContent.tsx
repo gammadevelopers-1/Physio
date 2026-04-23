@@ -217,7 +217,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
                     <p className="text-xs font-semibold text-[var(--color-text-secondary)] mb-1 uppercase tracking-wider">
                       {t("roleRequestReviewPage.adminNote") || "Admin Note"}
                     </p>
-                    <p className="text-sm text-[var(--color-text-primary)]">{application.reviewNote}</p>
+                    <p className="text-sm text-[var(--color-text-secondary)]">{application.reviewNote}</p>
                   </div>
                 )}
               </div>
@@ -285,7 +285,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
                           <Download className="w-5 h-5 text-[#002D87]" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{file.filename || file.type}</p>
+                          <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{file.filename || file.type}</p>
                           <p className="text-xs text-[var(--color-text-secondary)] capitalize">{file.type}</p>
                         </div>
                       </a>
@@ -447,7 +447,7 @@ function InfoField({ icon: Icon, label, value, className = "" }: { icon: React.C
       </div>
       <div className="min-w-0">
         <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">{label}</p>
-        <p className="text-sm font-medium text-[var(--color-text-primary)] break-all">{value || "—"}</p>
+        <p className="text-sm font-medium text-[var(--color-text-secondary)] break-all">{value || "—"}</p>
       </div>
     </div>
   );

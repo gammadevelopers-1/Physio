@@ -323,7 +323,7 @@ const CourseAssistantsManagePanel = ({
                 )}
 
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">
                     {ta.firstName} {ta.lastName}
                     {ta.otherCourseCount > 0 && (
                       <span
@@ -458,7 +458,7 @@ const CourseAssistantsManagePanel = ({
               <button
                 onClick={() => handleReject(rejectingUserId)}
                 disabled={rejectingLoading || !rejectionReason.trim()}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[var(--color-primary)] rounded-lg hover:bg-[#8b6a3d] transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[var(--color-primary)] rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-50"
               >
                 {rejectingLoading && (
                   <Loader2 className="w-4 h-4 animate-spin" />

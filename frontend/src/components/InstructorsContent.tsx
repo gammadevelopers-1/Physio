@@ -75,7 +75,7 @@ const MobileInstructorCard = ({
       </div>
       <div className="flex flex-col gap-1 items-center text-center w-full px-4">
         <h3 className="font-semibold text-[var(--color-text-primary)] text-[16px]">{name}</h3>
-        <p className="text-[var(--color-text-primary)] text-[14px] leading-5">{title}</p>
+        <p className="text-[var(--color-text-secondary)] text-[14px] leading-5">{title}</p>
       </div>
     </div>
   );

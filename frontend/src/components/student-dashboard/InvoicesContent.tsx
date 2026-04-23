@@ -264,7 +264,7 @@ const InvoicesContent = () => {
                               <p className="text-[var(--color-text-secondary)] text-xs mb-0.5">
                                 {t("invoices.amount")}
                               </p>
-                              <p className="text-[var(--color-text-primary)]">
+                              <p className="text-[var(--color-text-secondary)]">
                                 {invoice.amount.toFixed(2)}
                               </p>
                             </div>
@@ -272,7 +272,7 @@ const InvoicesContent = () => {
                               <p className="text-[var(--color-text-secondary)] text-xs mb-0.5">
                                 {t("invoices.date")}
                               </p>
-                              <p className="text-[var(--color-text-primary)]">{invoice.date}</p>
+                              <p className="text-[var(--color-text-secondary)]">{invoice.date}</p>
                             </div>
                             <div className="col-span-2">
                               <p className="text-[var(--color-text-secondary)] text-xs mb-0.5">

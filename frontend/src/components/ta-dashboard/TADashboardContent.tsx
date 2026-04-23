@@ -349,7 +349,7 @@ const TADashboardContent = ({
               </div>
               <div>
                 <p className="text-sm text-[var(--color-text-secondary)]">{card.label}</p>
-                <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                   {loading ? "—" : card.value}
                 </p>
               </div>

@@ -161,7 +161,7 @@ const RecentFeedbackWidget = ({
                       {feedback.learnerInitials}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                      <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                         {feedback.learnerName}
                       </p>
                       <p className="text-[10px] text-[var(--color-text-secondary)]">

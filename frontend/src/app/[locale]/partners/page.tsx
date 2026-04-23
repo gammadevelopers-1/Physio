@@ -30,7 +30,7 @@ export default async function AcademicPartnersPage({
 
   return (
     <main id="main-content" className="min-h-screen bg-[var(--surface-default)] pb-20 lg:pb-0">
-      <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
+      <Navbar siteSettings={siteSettings} navLinks={navbarLinks} footerLinks={footerLinks} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
       <PartnersContent partners={partners} strapiData={partnersPage} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'after-section-1')} sideLoadedData={sideLoadedData} />

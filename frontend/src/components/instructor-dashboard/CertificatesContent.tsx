@@ -131,7 +131,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, t }: ReviewModalProp
                 {initials}
               </div>
               <div>
-                <p className="text-sm font-medium text-[var(--color-text-primary)]">{studentName}</p>
+                <p className="text-sm font-medium text-[var(--color-text-secondary)]">{studentName}</p>
                 <p className="text-xs text-[var(--color-text-secondary)]">{cert.studentEmail}</p>
                 <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.requested")}: {formatDateHijri(cert.createdAt, calendarFormat, { locale })}</p>
               </div>
@@ -146,7 +146,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, t }: ReviewModalProp
               <div className="flex items-center gap-3">
                 <Calendar className={`w-5 h-5 ${attendanceMet ? "text-[#22C55E]" : "text-[#EF4444]"}`} />
                 <div>
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("certificates.attendanceRequirement")}</p>
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("certificates.attendanceRequirement")}</p>
                   <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.required")}: 70%</p>
                 </div>
               </div>
@@ -160,7 +160,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, t }: ReviewModalProp
               <div className="flex items-center gap-3">
                 <ClipboardCheck className={`w-5 h-5 ${assessmentMet ? "text-[#22C55E]" : "text-[#EF4444]"}`} />
                 <div>
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("certificates.assessmentRequirement")}</p>
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("certificates.assessmentRequirement")}</p>
                   <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.required")}: {t("certificates.allPassed")}</p>
                 </div>
               </div>
@@ -174,7 +174,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, t }: ReviewModalProp
               <div className="flex items-center gap-3">
                 <BookOpen className={`w-5 h-5 ${completionMet ? "text-[#22C55E]" : "text-[#EF4444]"}`} />
                 <div>
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">{t("certificates.completionRequirement")}</p>
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("certificates.completionRequirement")}</p>
                   <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.required")}: 100%</p>
                 </div>
               </div>
@@ -638,7 +638,7 @@ const CertificatesContent = () => {
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center"><Award className="w-5 h-5 text-[#3B82F6]" /></div>
                     <div>
-                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.total}</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.total}</p>
                       <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.totalRequests")}</p>
                     </div>
                   </div>
@@ -647,7 +647,7 @@ const CertificatesContent = () => {
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#FEF9C3] flex items-center justify-center"><Clock className="w-5 h-5 text-[#EAB308]" /></div>
                     <div>
-                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.pending}</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.pending}</p>
                       <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.pending")}</p>
                     </div>
                   </div>
@@ -656,7 +656,7 @@ const CertificatesContent = () => {
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center"><FileCheck className="w-5 h-5 text-[#22C55E]" /></div>
                     <div>
-                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.approved}</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.approved}</p>
                       <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.approved")}</p>
                     </div>
                   </div>
@@ -665,7 +665,7 @@ const CertificatesContent = () => {
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#FFEDD5] flex items-center justify-center"><PauseCircle className="w-5 h-5 text-[#F97316]" /></div>
                     <div>
-                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.held}</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.held}</p>
                       <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.held")}</p>
                     </div>
                   </div>
@@ -828,7 +828,7 @@ const CertificatesContent = () => {
                                         {getInitials(cert)}
                                       </div>
                                       <div className="min-w-0">
-                                        <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{getStudentName(cert)}</p>
+                                        <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{getStudentName(cert)}</p>
                                         <p className="text-xs text-[var(--color-text-secondary)] truncate">{cert.studentEmail}</p>
                                       </div>
                                     </div>
@@ -950,7 +950,7 @@ const CertificatesContent = () => {
                                   {getInitials(cert)}
                                 </div>
                                 <div>
-                                  <p className="text-sm font-medium text-[var(--color-text-primary)]">{getStudentName(cert)}</p>
+                                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">{getStudentName(cert)}</p>
                                   <p className="text-xs text-[var(--color-text-secondary)]">{courseNameMap[cert.courseId] || ""}</p>
                                 </div>
                               </div>

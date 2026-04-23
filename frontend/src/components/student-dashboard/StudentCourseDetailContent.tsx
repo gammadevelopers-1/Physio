@@ -327,7 +327,7 @@ const StudentCourseDetailContent = () => {
                           <p className="text-xs text-[var(--color-text-secondary)]">
                             {t("courseDetail.modules")}
                           </p>
-                          <p className="text-lg font-semibold text-[var(--color-text-primary)]">
+                          <p className="text-lg font-semibold text-[var(--color-text-secondary)]">
                             {data.modules.filter((m) => m.isCompleted).length}/
                             {data.modules.length}
                           </p>
@@ -360,7 +360,7 @@ const StudentCourseDetailContent = () => {
                             <p className="text-xs text-[var(--color-text-secondary)]">
                               {t("courseDetail.attendance")}
                             </p>
-                            <p className="text-lg font-semibold text-[var(--color-text-primary)]">
+                            <p className="text-lg font-semibold text-[var(--color-text-secondary)]">
                               {data.attendanceSummary
                                 ? `${data.attendanceSummary.attended}/${data.attendanceSummary.total}`
                                 : "0/0"}
@@ -392,7 +392,7 @@ const StudentCourseDetailContent = () => {
                           <p className="text-xs text-[var(--color-text-secondary)]">
                             {t("courseDetail.assessments")}
                           </p>
-                          <p className="text-lg font-semibold text-[var(--color-text-primary)]">
+                          <p className="text-lg font-semibold text-[var(--color-text-secondary)]">
                             {data.assessmentSummary
                               ? `${data.assessmentSummary.completed}/${data.assessmentSummary.total}`
                               : `${data.assessments.length}`}
@@ -421,7 +421,7 @@ const StudentCourseDetailContent = () => {
                           <p className="text-xs text-[var(--color-text-secondary)]">
                             {t("courseDetail.status")}
                           </p>
-                          <p className="text-lg font-semibold text-[var(--color-text-primary)] capitalize">
+                          <p className="text-lg font-semibold text-[var(--color-text-secondary)] capitalize">
                             {data.enrollment.status === "active"
                               ? t("myCourses.inProgress")
                               : data.enrollment.status === "completed"
@@ -566,7 +566,7 @@ const StudentCourseDetailContent = () => {
                                     </div>
                                   )}
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                                    <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">
                                       {isRTL && module.titleAr
                                         ? module.titleAr
                                         : module.title}
@@ -663,7 +663,7 @@ const StudentCourseDetailContent = () => {
                               <div key={record.sessionId} className="px-4 sm:px-6 py-3">
                                 <div className="flex items-center gap-3">
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                                    <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">
                                       {record.sessionTitle}
                                     </p>
                                     <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--color-text-secondary)] mt-1">
@@ -729,7 +729,7 @@ const StudentCourseDetailContent = () => {
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                                 {session.title}
                               </p>
                               <div className="flex flex-wrap gap-3 text-xs text-[var(--color-text-secondary)] mt-1">
@@ -902,7 +902,7 @@ const StudentCourseDetailContent = () => {
                               <Circle className="w-5 h-5 text-[var(--color-text-secondary)] flex-shrink-0" />
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className={`text-sm font-medium ${isFailed ? "text-[#DC2626]" : "text-[var(--color-text-primary)]"}`}>
+                              <p className={`text-sm font-medium ${isFailed ? "text-[#DC2626]" : "text-[var(--color-text-secondary)]"}`}>
                                 {assessment.title}
                               </p>
                               <div className="flex items-center gap-3 text-xs text-[var(--color-text-secondary)] mt-0.5">
@@ -929,7 +929,7 @@ const StudentCourseDetailContent = () => {
                             {assessment.submission ? (
                               <div className="flex items-center gap-3 flex-shrink-0">
                                 <div className="text-right">
-                                  <p className={`text-sm font-semibold ${isFailed ? "text-[#DC2626]" : "text-[var(--color-text-primary)]"}`}>
+                                  <p className={`text-sm font-semibold ${isFailed ? "text-[#DC2626]" : "text-[var(--color-text-secondary)]"}`}>
                                     {assessment.submission.score != null
                                       ? `${assessment.submission.score}/${assessment.submission.totalMarks}`
                                       : "—"}

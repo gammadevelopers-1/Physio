@@ -225,7 +225,7 @@ const KnowledgeBaseContent = () => {
                           <Icon className={`w-5 h-5 ${stat.textColor}`} />
                         </div>
                       </div>
-                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                      <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                         {stat.value}
                       </p>
                       <p className="text-sm text-[var(--color-text-secondary)] mt-1">

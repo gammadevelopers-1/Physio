@@ -170,7 +170,7 @@ const FinanceReportsContent = () => {
                       <div className={`w-10 h-10 ${report.iconBg} rounded-lg flex items-center justify-center mb-3`}>
                         <Icon className={`w-5 h-5 ${report.iconColor}`} />
                       </div>
-                      <p className={`text-sm font-semibold ${isSelected ? "text-[var(--color-primary)]" : "text-[var(--color-text-primary)]"}`}>
+                      <p className={`text-sm font-semibold ${isSelected ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)]"}`}>
                         {report.title}
                       </p>
                       <p className="text-[12px] text-[var(--color-text-secondary)] mt-0.5">{report.description}</p>

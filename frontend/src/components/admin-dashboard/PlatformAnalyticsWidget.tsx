@@ -89,7 +89,7 @@ const PlatformAnalyticsWidget = ({ data }: PlatformAnalyticsWidgetProps) => {
             key={metric.id}
             className="bg-[#F9FAFB] rounded-lg p-4 text-center"
           >
-            <p className="text-2xl font-bold text-[var(--color-text-primary)]">{metric.value}%</p>
+            <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{metric.value}%</p>
             <p className="text-xs text-[var(--color-text-secondary)] mt-1">{metric.label}</p>
           </div>
         ))}

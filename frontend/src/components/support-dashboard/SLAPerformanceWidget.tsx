@@ -146,7 +146,7 @@ const SLAPerformanceWidget = () => {
 
                 {/* Agent Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-[var(--color-text-primary)]">
+                  <p className="text-[13px] font-medium text-[var(--color-text-secondary)]">
                     {t(`sla.agents.${agent.nameKey}`)}
                   </p>
                   <p className="text-[11px] text-[var(--color-text-secondary)]">
@@ -157,7 +157,7 @@ const SLAPerformanceWidget = () => {
                 {/* Stats */}
                 <div className="flex items-center gap-4 flex-shrink-0">
                   <div className="text-center">
-                    <p className="text-[13px] font-semibold text-[var(--color-text-primary)]">
+                    <p className="text-[13px] font-semibold text-[var(--color-text-secondary)]">
                       {agent.openTickets}
                     </p>
                     <p className="text-[10px] text-[var(--color-text-secondary)]">
@@ -165,7 +165,7 @@ const SLAPerformanceWidget = () => {
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-[13px] font-semibold text-[var(--color-text-primary)]">
+                    <p className="text-[13px] font-semibold text-[var(--color-text-secondary)]">
                       {agent.avgResponse}
                     </p>
                     <p className="text-[10px] text-[var(--color-text-secondary)]">

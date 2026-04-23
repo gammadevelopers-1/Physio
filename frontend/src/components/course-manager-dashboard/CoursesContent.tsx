@@ -258,7 +258,7 @@ const CoursesContent = () => {
                   <p className="text-xs text-[var(--color-text-secondary)]">
                     {t("coursesPage.stats.total")}
                   </p>
-                  <p className="text-2xl font-bold text-[var(--color-text-primary)] mt-1">
+                  <p className="text-2xl font-bold text-[var(--color-text-secondary)] mt-1">
                     {loading ? "—" : total}
                   </p>
                 </div>
@@ -274,7 +274,7 @@ const CoursesContent = () => {
                   <p className="text-xs text-[var(--color-text-secondary)]">
                     {t("coursesPage.stats.totalEnrollments")}
                   </p>
-                  <p className="text-2xl font-bold text-[var(--color-text-primary)] mt-1">
+                  <p className="text-2xl font-bold text-[var(--color-text-secondary)] mt-1">
                     {loading ? "—" : totalEnrolled}
                   </p>
                 </div>

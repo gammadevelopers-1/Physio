@@ -187,7 +187,7 @@ function AllReviewsModal({
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className={`w-4 h-4 ${i < Math.floor(avgRating) ? "text-[#B8860B] fill-[#B8860B]" : "text-[var(--color-border)] fill-[var(--color-border)]"}`}
+                    className={`w-4 h-4 ${i < Math.floor(avgRating) ? "text-[var(--color-primary)] fill-[var(--color-primary)]" : "text-[var(--color-border)] fill-[var(--color-border)]"}`}
                   />
                 ))}
               </div>
@@ -241,7 +241,7 @@ function AllReviewsModal({
                   onClick={() => setStarFilter(starFilter === s ? null : s)}
                   disabled={c === 0}
                   className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                    starFilter === s ? "bg-[#B8860B] text-white" : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
+                    starFilter === s ? "bg-[var(--color-primary)] text-white" : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
                   }`}
                 >
                   {s} <Star className="w-3 h-3 fill-current" /> ({c})
@@ -261,7 +261,7 @@ function AllReviewsModal({
                 <div key={s} className="flex items-center gap-2 text-xs">
                   <span className="w-4 text-[var(--color-text-secondary)]">{s}★</span>
                   <div className="flex-1 h-2 bg-[#F3F4F6] rounded-full overflow-hidden">
-                    <div className="h-full bg-[#B8860B]" style={{ width: `${pct}%` }} />
+                    <div className="h-full bg-[var(--color-primary)]" style={{ width: `${pct}%` }} />
                   </div>
                   <span className="w-8 text-right text-[var(--color-text-secondary)] tabular-nums">{c}</span>
                 </div>
@@ -292,14 +292,14 @@ function AllReviewsModal({
                   className="py-4 first:pt-0 last:pb-0"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <p className="font-medium text-[14px] text-[var(--color-text-primary)]">{r.studentName}</p>
+                    <p className="font-medium text-[14px] text-[var(--color-text-secondary)]">{r.studentName}</p>
                     <p className="text-[12px] text-[var(--color-text-secondary)]">{formatDate(r.createdAt)}</p>
                   </div>
                   <div className={`flex items-center gap-0.5 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
                     {[...Array(5)].map((_, si) => (
                       <Star
                         key={si}
-                        className={`w-3.5 h-3.5 ${si < r.rating ? "text-[#B8860B] fill-[#B8860B]" : "text-[var(--color-border)] fill-[var(--color-border)]"}`}
+                        className={`w-3.5 h-3.5 ${si < r.rating ? "text-[var(--color-primary)] fill-[var(--color-primary)]" : "text-[var(--color-border)] fill-[var(--color-border)]"}`}
                       />
                     ))}
                   </div>
@@ -539,7 +539,7 @@ const CourseDetailContent = ({
             <span className={`${sizeClass} text-[var(--color-text-primary)]`}>{t("languages.english")}</span>
           </div>
         )}
-        {lang === "both" && <div className="w-px h-4 bg-[#D4D4D8]" />}
+        {lang === "both" && <div className="w-px h-4 bg-[var(--color-border)]" />}
         {(lang === "ar" || lang === "both") && (
           <div className="flex items-center gap-1.5">
             <Globe className="w-4 h-4 text-[var(--color-text-secondary)]" />
@@ -787,7 +787,7 @@ const CourseDetailContent = ({
           {objectives.map((item, index) => (
             <div key={index} className={`flex items-start ${isMobile ? "gap-2.5" : "gap-3"}`}>
               <Check className={`${isMobile ? "w-4 h-4" : "w-5 h-5"} text-[var(--color-text-primary)] flex-shrink-0 mt-0.5`} />
-              <p className={`text-[var(--color-text-primary)] ${isMobile ? "text-sm" : "text-base"} ${isRTL ? "text-right" : "text-left"}`}>{item}</p>
+              <p className={`text-[var(--color-text-secondary)] ${isMobile ? "text-sm" : "text-base"} ${isRTL ? "text-right" : "text-left"}`}>{item}</p>
             </div>
           ))}
         </div>
@@ -867,7 +867,7 @@ const CourseDetailContent = ({
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`w-4 h-4 ${i < Math.floor(apiCourse.avgRating) ? "text-[#B8860B] fill-[#B8860B]" : "text-[var(--color-border)] fill-[var(--color-border)]"}`}
+                  className={`w-4 h-4 ${i < Math.floor(apiCourse.avgRating) ? "text-[var(--color-primary)] fill-[var(--color-primary)]" : "text-[var(--color-border)] fill-[var(--color-border)]"}`}
                 />
               ))}
             </div>
@@ -880,7 +880,7 @@ const CourseDetailContent = ({
               {apiCourse.ratings.map((review, index) => (
                 <div key={index} className="py-4 first:pt-0 last:pb-0">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="font-medium text-[14px] text-[var(--color-text-primary)]">{review.studentName}</p>
+                    <p className="font-medium text-[14px] text-[var(--color-text-secondary)]">{review.studentName}</p>
                     <p className="text-[12px] text-[var(--color-text-secondary)]">
                       {new Date(review.createdAt).toLocaleDateString(
                         locale === "ar" ? "ar-SA" : "en-US",
@@ -892,7 +892,7 @@ const CourseDetailContent = ({
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-3 h-3 ${i < review.rating ? "text-[#B8860B] fill-[#B8860B]" : "text-[var(--color-border)] fill-[var(--color-border)]"}`}
+                        className={`w-3 h-3 ${i < review.rating ? "text-[var(--color-primary)] fill-[var(--color-primary)]" : "text-[var(--color-border)] fill-[var(--color-border)]"}`}
                       />
                     ))}
                   </div>
@@ -908,7 +908,7 @@ const CourseDetailContent = ({
               <div className="mt-6 flex justify-center">
                 <button
                   onClick={() => setReviewsModalOpen(true)}
-                  className="px-6 py-2.5 rounded-full border-2 border-[#B8860B] text-[#B8860B] text-sm font-semibold hover:bg-[#B8860B] hover:text-white transition-colors"
+                  className="px-6 py-2.5 rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] text-sm font-semibold hover:bg-[var(--color-primary)] hover:text-white transition-colors"
                 >
                   {isRTL ? `عرض كل المراجعات (${apiCourse.totalRatings})` : `View all reviews (${apiCourse.totalRatings})`}
                 </button>
@@ -1018,7 +1018,7 @@ const CourseDetailContent = ({
                       <div className="flex items-start gap-3">
                         <Calendar className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
                         <div className={isRTL ? "text-right" : "text-left"}>
-                          <p className="text-sm font-semibold text-[var(--color-text-primary)]">{t("courseDetails.registrationDeadline")}</p>
+                          <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.registrationDeadline")}</p>
                           <p className="text-sm text-[var(--color-text-secondary)]">{formatDate(apiCourse.enrollmentDeadline)}</p>
                         </div>
                       </div>
@@ -1026,35 +1026,35 @@ const CourseDetailContent = ({
                     <div className="flex items-start gap-3">
                       <Globe className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
                       <div className={isRTL ? "text-right" : "text-left"}>
-                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">{t("courseDetails.language")}</p>
+                        <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.language")}</p>
                         <p className="text-sm text-[var(--color-text-secondary)]">{getLanguageLabel()}</p>
                       </div>
                     </div>
                     {apiCourse.startDate && (
                       <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
                         <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
-                        <p className={`text-sm font-semibold text-[var(--color-text-primary)] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.startTime")}</p>
+                        <p className={`text-sm font-semibold text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.startTime")}</p>
                         <p className={`text-sm text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{formatDate(apiCourse.startDate)}</p>
                       </div>
                     )}
                     {apiCourse.endDate && (
                       <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
                         <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
-                        <p className={`text-sm font-semibold text-[var(--color-text-primary)] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.endTime")}</p>
+                        <p className={`text-sm font-semibold text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.endTime")}</p>
                         <p className={`text-sm text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{formatDate(apiCourse.endDate)}</p>
                       </div>
                     )}
                     <div className="flex items-start gap-3">
                       <Clock className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
                       <div className={isRTL ? "text-right" : "text-left"}>
-                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">{t("courseDetails.duration")}</p>
+                        <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.duration")}</p>
                         <p className="text-sm text-[var(--color-text-secondary)]">{apiCourse.totalHours} {t("courseDetails.hours")}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
                       <Video className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
                       <div className={isRTL ? "text-right" : "text-left"}>
-                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">{locale === "ar" ? "نوع التقديم" : "Delivery Type"}</p>
+                        <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{locale === "ar" ? "نوع التقديم" : "Delivery Type"}</p>
                         <p className="text-sm text-[var(--color-text-secondary)]">{getDeliveryLabel()}</p>
                       </div>
                     </div>
@@ -1062,7 +1062,7 @@ const CourseDetailContent = ({
                       <div className="flex items-start gap-3">
                         <Award className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
                         <div className={isRTL ? "text-right" : "text-left"}>
-                          <p className="text-sm font-semibold text-[var(--color-text-primary)]">{locale === "ar" ? "ساعات CME" : "CME Hours"}</p>
+                          <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{locale === "ar" ? "ساعات CME" : "CME Hours"}</p>
                           <p className="text-sm text-[var(--color-text-secondary)]">{apiCmeHours} {t("courseDetails.hours")}</p>
                         </div>
                       </div>
@@ -1070,7 +1070,7 @@ const CourseDetailContent = ({
                     {showVenue && getVenue() && (
                       <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
                         <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
-                        <p className={`text-sm font-semibold text-[var(--color-text-primary)] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.venue")}</p>
+                        <p className={`text-sm font-semibold text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.venue")}</p>
                         <p className={`text-sm text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{getVenue()}</p>
                       </div>
                     )}
@@ -1079,7 +1079,7 @@ const CourseDetailContent = ({
                   {/* Target Audience — inline */}
                   {getTargetAudience().length > 0 && (
                     <div className={`mt-6 pt-6 border-t border-[var(--color-border)] ${isRTL ? "text-right" : "text-left"}`}>
-                      <p className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
+                      <p className="text-sm font-semibold text-[var(--color-text-secondary)] mb-3">
                         {targetAudienceHeading || t("targetAudience") || "Target Audience"}
                       </p>
                       <div className={`flex flex-wrap gap-2 ${isRTL ? "justify-end" : "justify-start"}`}>
@@ -1165,15 +1165,15 @@ const CourseDetailContent = ({
                       <div className="border border-[var(--color-border-subtle)] rounded-xl p-4 mb-4">
                         <div className="flex items-start justify-between">
                           <div className={isRTL ? "text-right" : "text-left"}>
-                            <p className="text-sm text-[var(--color-text-primary)]">
+                            <p className="text-sm text-[var(--color-text-secondary)]">
                               {t("pricingCard.asLowAs")}{" "}
                               <span className="font-semibold">
                                 <Image src="/icons/rayal-icon.svg" alt="SAR" width={12} height={13} className="inline -mt-0.5" />
                                 {" "}{(apiPrice / 4).toFixed(2)}{t("pricingCard.perMonth")}
                               </span>
                             </p>
-                            <p className="text-sm text-[var(--color-text-primary)]">{t("pricingCard.interestFree")}</p>
-                            <p className="text-sm text-[var(--color-text-primary)]">
+                            <p className="text-sm text-[var(--color-text-secondary)]">{t("pricingCard.interestFree")}</p>
+                            <p className="text-sm text-[var(--color-text-secondary)]">
                               {t("pricingCard.shariahCompliant")}{" "}
                               <Link href="#" className="font-semibold underline">{t("pricingCard.learnMore")}</Link>
                             </p>
@@ -1265,13 +1265,13 @@ const CourseDetailContent = ({
                       <div className="flex items-center justify-center gap-3 flex-wrap">
                         <span className="text-sm text-[var(--color-text-secondary)]">{t("pricingCard.securePayment")}</span>
                         <div className="flex items-center gap-2">
-                          <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
+                          <div className="relative w-[35px] h-[24px] bg-white border border-[var(--color-border)] rounded overflow-hidden">
                             <Image src="/payment icons/Mastercard.svg" alt="Mastercard" fill className="object-contain p-[5px]" />
                           </div>
-                          <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
+                          <div className="relative w-[35px] h-[24px] bg-white border border-[var(--color-border)] rounded overflow-hidden">
                             <Image src="/payment icons/Visa.svg" alt="Visa" fill className="object-contain p-[6px]" />
                           </div>
-                          <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
+                          <div className="relative w-[35px] h-[24px] bg-white border border-[var(--color-border)] rounded overflow-hidden">
                             <Image src="/payment icons/image 474.svg" alt="Mada" fill className="object-contain p-[5px]" />
                           </div>
                           <div className="relative w-[35px] h-[24px]">
@@ -1374,12 +1374,12 @@ const CourseDetailContent = ({
             />
             <div className={`flex items-center p-3 ${isRTL ? "pr-4" : "pl-4"}`}>
               <div className={`flex-1 text-center ${isRTL ? "border-l" : "border-r"} border-[var(--color-border)]`}>
-                <p className="font-bold text-[var(--color-text-primary)]">{apiCourse.avgRating.toFixed(1)}</p>
+                <p className="font-bold text-[var(--color-text-secondary)]">{apiCourse.avgRating.toFixed(1)}</p>
                 <div className={`flex items-center justify-center gap-0.5 mb-0.5 ${isRTL ? "flex-row-reverse" : ""}`}>
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-3 h-3 ${i < Math.floor(apiCourse.avgRating) ? "text-[#B8860B] fill-[#B8860B]" : "text-[var(--color-border)] fill-[var(--color-border)]"}`}
+                      className={`w-3 h-3 ${i < Math.floor(apiCourse.avgRating) ? "text-[var(--color-primary)] fill-[var(--color-primary)]" : "text-[var(--color-border)] fill-[var(--color-border)]"}`}
                     />
                   ))}
                 </div>
@@ -1387,7 +1387,7 @@ const CourseDetailContent = ({
               </div>
               <div className="flex-1 text-center">
                 <Users className="w-4 h-4 text-[var(--color-text-secondary)] mx-auto mb-0.5" />
-                <p className="font-bold text-[var(--color-text-primary)]">{apiCourse.enrolledCount}+</p>
+                <p className="font-bold text-[var(--color-text-secondary)]">{apiCourse.enrolledCount}+</p>
                 <p className="text-[10px] text-[var(--color-text-secondary)]">{t("statsBar.learners")}</p>
               </div>
             </div>
@@ -1446,11 +1446,11 @@ const CourseDetailContent = ({
               <div className="border border-[var(--color-border-subtle)] rounded-xl p-3 mb-4">
                 <div className="flex items-start justify-between">
                   <div className={isRTL ? "text-right" : "text-left"}>
-                    <p className="text-sm text-[var(--color-text-primary)]">
+                    <p className="text-sm text-[var(--color-text-secondary)]">
                       {t("pricingCard.asLowAs")} <span className="font-semibold">{(apiPrice / 4).toFixed(2)}{t("pricingCard.perMonth")}</span>
                     </p>
-                    <p className="text-xs text-[var(--color-text-primary)]">{t("pricingCard.interestFree")}</p>
-                    <p className="text-xs text-[var(--color-text-primary)]">
+                    <p className="text-xs text-[var(--color-text-secondary)]">{t("pricingCard.interestFree")}</p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">
                       {t("pricingCard.shariahCompliant")} <Link href="#" className="font-semibold underline">{t("pricingCard.learnMore")}</Link>
                     </p>
                   </div>
@@ -1579,7 +1579,7 @@ const CourseDetailContent = ({
                 <div className="flex items-center gap-3">
                   <Calendar className="w-4 h-4 text-[var(--color-text-secondary)]" />
                   <div className={isRTL ? "text-right" : "text-left"}>
-                    <p className="text-xs font-semibold text-[var(--color-text-primary)]">{t("courseDetails.registrationDeadline")}</p>
+                    <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.registrationDeadline")}</p>
                     <p className="text-sm text-[var(--color-text-secondary)]">{formatDate(apiCourse.enrollmentDeadline)}</p>
                   </div>
                 </div>
@@ -1587,21 +1587,21 @@ const CourseDetailContent = ({
               <div className="flex items-center gap-3">
                 <Globe className="w-4 h-4 text-[var(--color-text-secondary)]" />
                 <div className={isRTL ? "text-right" : "text-left"}>
-                  <p className="text-xs font-semibold text-[var(--color-text-primary)]">{t("courseDetails.language")}</p>
+                  <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.language")}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{getLanguageLabel()}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <Clock className="w-4 h-4 text-[var(--color-text-secondary)]" />
                 <div className={isRTL ? "text-right" : "text-left"}>
-                  <p className="text-xs font-semibold text-[var(--color-text-primary)]">{t("courseDetails.duration")}</p>
+                  <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.duration")}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{apiCourse.totalHours} {t("courseDetails.hours")}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <Video className="w-4 h-4 text-[var(--color-text-secondary)]" />
                 <div className={isRTL ? "text-right" : "text-left"}>
-                  <p className="text-xs font-semibold text-[var(--color-text-primary)]">{locale === "ar" ? "نوع التقديم" : "Delivery Type"}</p>
+                  <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{locale === "ar" ? "نوع التقديم" : "Delivery Type"}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{getDeliveryLabel()}</p>
                 </div>
               </div>
@@ -1609,7 +1609,7 @@ const CourseDetailContent = ({
                 <div className="flex items-center gap-3">
                   <Award className="w-4 h-4 text-[var(--color-text-secondary)]" />
                   <div className={isRTL ? "text-right" : "text-left"}>
-                    <p className="text-xs font-semibold text-[var(--color-text-primary)]">{locale === "ar" ? "ساعات CME" : "CME Hours"}</p>
+                    <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{locale === "ar" ? "ساعات CME" : "CME Hours"}</p>
                     <p className="text-sm text-[var(--color-text-secondary)]">{apiCmeHours} {t("courseDetails.hours")}</p>
                   </div>
                 </div>
@@ -1618,7 +1618,7 @@ const CourseDetailContent = ({
                 <div className="flex items-center gap-3">
                   <MapPin className="w-4 h-4 text-[var(--color-text-secondary)]" />
                   <div className={isRTL ? "text-right" : "text-left"}>
-                    <p className="text-xs font-semibold text-[var(--color-text-primary)]">{t("courseDetails.venue")}</p>
+                    <p className="text-xs font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.venue")}</p>
                     <p className="text-sm text-[var(--color-text-secondary)]">{getVenue()}</p>
                   </div>
                 </div>
@@ -1627,7 +1627,7 @@ const CourseDetailContent = ({
             {/* Target Audience — inline in course details (mobile) */}
             {getTargetAudience().length > 0 && (
               <div className={`mt-4 pt-4 border-t border-[var(--color-border)] ${isRTL ? "text-right" : "text-left"}`}>
-                <p className="text-xs font-semibold text-[var(--color-text-primary)] mb-2">
+                <p className="text-xs font-semibold text-[var(--color-text-secondary)] mb-2">
                   {targetAudienceHeading || t("targetAudience") || "Target Audience"}
                 </p>
                 <div className={`flex flex-wrap gap-1.5 ${isRTL ? "justify-end" : "justify-start"}`}>

@@ -163,7 +163,7 @@ const InvoicesContent = () => {
                       </div>
                       <div>
                         <p className="text-xs text-[var(--color-text-secondary)] font-medium">{stat.label}</p>
-                        <p className="text-xl font-bold text-[var(--color-text-primary)]">{stat.value}</p>
+                        <p className="text-xl font-bold text-[var(--color-text-secondary)]">{stat.value}</p>
                       </div>
                     </div>
                   );
@@ -295,7 +295,7 @@ const InvoicesContent = () => {
                         <div className={`w-2.5 h-2.5 rounded-full ${item.color}`} />
                         <p className="text-[12px] text-[var(--color-text-secondary)] font-medium">{item.label}</p>
                       </div>
-                      <p className="text-lg font-bold text-[var(--color-text-primary)]">{item.count} {t("invoicesLabel")}</p>
+                      <p className="text-lg font-bold text-[var(--color-text-secondary)]">{item.count} {t("invoicesLabel")}</p>
                       <p className="text-[13px] text-[var(--color-text-secondary)]">{item.amount}</p>
                     </div>
                   ))}

@@ -252,7 +252,7 @@ const InstructorsContent = () => {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-xs text-[var(--color-text-secondary)]">{t("instructorsPage.stats.total")}</p>
-                  <p className="text-2xl font-bold text-[var(--color-text-primary)] mt-1">{stats.total}</p>
+                  <p className="text-2xl font-bold text-[var(--color-text-secondary)] mt-1">{stats.total}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-xs text-[var(--color-text-secondary)]">{t("instructorsPage.stats.available")}</p>
@@ -376,21 +376,21 @@ const InstructorsContent = () => {
                             <div className="flex items-center justify-center gap-1 text-[var(--color-text-secondary)] mb-1">
                               <BookOpen className="w-3.5 h-3.5" />
                             </div>
-                            <p className="text-lg font-bold text-[var(--color-text-primary)]">{instructor.coursesCount}</p>
+                            <p className="text-lg font-bold text-[var(--color-text-secondary)]">{instructor.coursesCount}</p>
                             <p className="text-[10px] text-[var(--color-text-secondary)]">{t("instructorsPage.courses")}</p>
                           </div>
                           <div className="text-center">
                             <div className="flex items-center justify-center gap-1 text-[var(--color-text-secondary)] mb-1">
                               <Users className="w-3.5 h-3.5" />
                             </div>
-                            <p className="text-lg font-bold text-[var(--color-text-primary)]">{instructor.studentsCount}</p>
+                            <p className="text-lg font-bold text-[var(--color-text-secondary)]">{instructor.studentsCount}</p>
                             <p className="text-[10px] text-[var(--color-text-secondary)]">{t("instructorsPage.students")}</p>
                           </div>
                           <div className="text-center">
                             <div className="flex items-center justify-center gap-1 text-[var(--color-text-secondary)] mb-1">
                               <Star className="w-3.5 h-3.5" />
                             </div>
-                            <p className="text-lg font-bold text-[var(--color-text-primary)]">{instructor.avgRating?.toFixed(1) || "—"}</p>
+                            <p className="text-lg font-bold text-[var(--color-text-secondary)]">{instructor.avgRating?.toFixed(1) || "—"}</p>
                             <p className="text-[10px] text-[var(--color-text-secondary)]">{t("instructorsPage.rating")}</p>
                           </div>
                         </div>

@@ -178,7 +178,7 @@ export default function CertificateVerifyContent({
             {/* Certificate Title */}
             <div className="text-center mb-6">
               <p className="text-xs text-[var(--color-text-secondary)] uppercase tracking-widest mb-1">Certificate of Attendance</p>
-              <p className="text-lg font-bold text-[var(--color-text-primary)]">{result.studentName}</p>
+              <p className="text-lg font-bold text-[var(--color-text-secondary)]">{result.studentName}</p>
               <p className="text-sm text-[var(--color-text-secondary)] mt-1">for completing</p>
               <p className="text-base font-semibold text-[#002D87] mt-1">{courseName}</p>
             </div>
@@ -188,14 +188,14 @@ export default function CertificateVerifyContent({
               <div className="bg-[#F9FAFB] rounded-xl p-4 text-center">
                 <Calendar className="w-5 h-5 text-[#002D87] mx-auto mb-2" />
                 <p className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider mb-1">Date Issued</p>
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">{formattedDate}</p>
+                <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{formattedDate}</p>
               </div>
 
               {result.totalHours && result.totalHours > 0 ? (
                 <div className="bg-[#F9FAFB] rounded-xl p-4 text-center">
                   <Clock className="w-5 h-5 text-[#D4A520] mx-auto mb-2" />
                   <p className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider mb-1">CME Hours</p>
-                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">{result.totalHours} Hours</p>
+                  <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{result.totalHours} Hours</p>
                 </div>
               ) : (
                 <div className="bg-[#F9FAFB] rounded-xl p-4 text-center">

@@ -1067,7 +1067,7 @@ const CreateCourseContent = () => {
                             <Check className="w-4 h-4 text-[#22C55E]" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{item.label}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{item.label}</p>
                             <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{item.desc}</p>
                           </div>
                         </div>
@@ -1113,7 +1113,7 @@ const CreateCourseContent = () => {
                                   : (selectedInstructor.email || "").substring(0, 2).toUpperCase()}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                                <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">
                                   {[selectedInstructor.firstName, selectedInstructor.lastName].filter(Boolean).join(" ") || selectedInstructor.email}
                                 </p>
                                 <p className="text-[11px] text-[var(--color-text-secondary)] truncate">{selectedInstructor.email}</p>
@@ -1172,7 +1172,7 @@ const CreateCourseContent = () => {
                                         {initials}
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{name}</p>
+                                        <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{name}</p>
                                         <p className="text-[11px] text-[var(--color-text-secondary)] truncate">{inst.email}</p>
                                       </div>
                                       {inst.status && (
@@ -1225,7 +1225,7 @@ const CreateCourseContent = () => {
                               : (selectedTA.email || "").substring(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-[var(--color-text-primary)]">{[selectedTA.firstName, selectedTA.lastName].filter(Boolean).join(" ")}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{[selectedTA.firstName, selectedTA.lastName].filter(Boolean).join(" ")}</p>
                             <p className="text-[11px] text-[var(--color-text-secondary)]">{selectedTA.email}</p>
                           </div>
                         </div>
@@ -1289,7 +1289,7 @@ const CreateCourseContent = () => {
                                         {initials}
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{name}</p>
+                                        <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{name}</p>
                                         <p className="text-[11px] text-[var(--color-text-secondary)] truncate">{ta.email}</p>
                                       </div>
                                     </button>
@@ -1591,7 +1591,7 @@ const CreateCourseContent = () => {
                         </h3>
                         {selectedInstructor ? (
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                               {[
                                 selectedInstructor.firstName,
                                 selectedInstructor.lastName,
@@ -1618,7 +1618,7 @@ const CreateCourseContent = () => {
                           {t("createCourse.taAssignment")}
                         </h3>
                         {selectedTA ? (
-                          <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                          <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                             {[selectedTA.firstName, selectedTA.lastName]
                               .filter(Boolean)
                               .join(" ")}{" "}

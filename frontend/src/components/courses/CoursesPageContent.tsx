@@ -200,7 +200,7 @@ const CoursesPageContent = ({
               <div className="flex-1">
                 {loading ? (
                   <div className="flex items-center justify-center py-16">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#B8860B]" />
+                    <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
                   </div>
                 ) : paginatedCourses.length > 0 ? (
                   <>
@@ -221,7 +221,7 @@ const CoursesPageContent = ({
                   (emptyStateTitle || emptyStateMessage) && (
                     <div className="text-center py-16">
                       {emptyStateTitle && (
-                        <p className="text-[var(--color-text-primary)] text-xl font-semibold mb-2">
+                        <p className="text-[var(--color-text-secondary)] text-xl font-semibold mb-2">
                           {emptyStateTitle}
                         </p>
                       )}
@@ -271,7 +271,7 @@ const CoursesPageContent = ({
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-[#B8860B]" />
+              <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
             </div>
           ) : paginatedCoursesMobile.length > 0 ? (
             <>
@@ -293,7 +293,7 @@ const CoursesPageContent = ({
             (emptyStateTitle || emptyStateMessage) && (
               <div className="text-center py-12">
                 {emptyStateTitle && (
-                  <p className="text-[var(--color-text-primary)] text-lg font-semibold mb-2">
+                  <p className="text-[var(--color-text-secondary)] text-lg font-semibold mb-2">
                     {emptyStateTitle}
                   </p>
                 )}

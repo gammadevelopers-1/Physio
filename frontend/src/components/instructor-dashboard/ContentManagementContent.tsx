@@ -268,7 +268,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
             {file ? (
               <div>
                 <Check className="w-8 h-8 mx-auto mb-2 text-[#22C55E]" />
-                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{file.name}</p>
+                <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{file.name}</p>
                 <p className="text-xs text-[var(--color-text-secondary)] mt-1">
                   {formatFileSize(file.size)} &bull; {detectedType?.toUpperCase()}
                 </p>
@@ -463,7 +463,7 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
 
           {/* Current file info */}
           <div className="p-3 bg-[#F9FAFB] rounded-lg mb-4">
-            <p className="text-sm font-medium text-[var(--color-text-primary)]">{material.title}</p>
+            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{material.title}</p>
             <p className="text-xs text-[var(--color-text-secondary)] mt-1">
               v{material.version} &bull; {formatFileSize(material.fileSize)} &bull; {material.type.toUpperCase()}
             </p>
@@ -491,7 +491,7 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
             {file ? (
               <div>
                 <Check className="w-6 h-6 mx-auto mb-2 text-[#22C55E]" />
-                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{file.name}</p>
+                <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{file.name}</p>
                 <p className="text-xs text-[var(--color-text-secondary)] mt-1">{formatFileSize(file.size)}</p>
               </div>
             ) : (
@@ -790,7 +790,7 @@ const DeleteConfirm = ({ material, onClose, onDeleted, t }: DeleteConfirmProps) 
           </div>
           <h3 id="delete-modal-title" className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">{t("content.deleteConfirmTitle")}</h3>
           <p className="text-sm text-[var(--color-text-secondary)] mb-1">{t("content.deleteConfirmDesc")}</p>
-          <p className="text-sm font-medium text-[var(--color-text-primary)] mb-6">&ldquo;{material.title}&rdquo;</p>
+          <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-6">&ldquo;{material.title}&rdquo;</p>
 
           <div className="flex gap-3">
             <button onClick={onClose} disabled={deleting} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50">
@@ -1137,7 +1137,7 @@ const ContentManagementContent = () => {
                       <FolderOpen className="w-5 h-5 text-[#3B82F6]" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.totalFiles}</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.totalFiles}</p>
                       <p className="text-xs text-[var(--color-text-secondary)]">{t("content.totalFiles")}</p>
                     </div>
                   </div>
@@ -1148,7 +1148,7 @@ const ContentManagementContent = () => {
                       <HardDrive className="w-5 h-5 text-[#6366F1]" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.totalStorage}</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.totalStorage}</p>
                       <p className="text-xs text-[var(--color-text-secondary)]">{t("content.storageUsed")}</p>
                     </div>
                   </div>
@@ -1159,7 +1159,7 @@ const ContentManagementContent = () => {
                       <Check className="w-5 h-5 text-[#22C55E]" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.liveFiles}</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.liveFiles}</p>
                       <p className="text-xs text-[var(--color-text-secondary)]">{t("content.liveContent")}</p>
                     </div>
                   </div>
@@ -1170,7 +1170,7 @@ const ContentManagementContent = () => {
                       <FileCheck className="w-5 h-5 text-[#EC4899]" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">{stats.wcagPass}</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.wcagPass}</p>
                       <p className="text-xs text-[var(--color-text-secondary)]">{t("content.wcagCompliant")}</p>
                     </div>
                   </div>
@@ -1368,7 +1368,7 @@ const ContentManagementContent = () => {
                                       {getFileIcon(m.type)}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                      <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{m.title}</p>
+                                      <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{m.title}</p>
                                       <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
                                         <span>v{m.version}</span>
                                         <span>&bull;</span>
@@ -1514,7 +1514,7 @@ const ContentManagementContent = () => {
                             </div>
 
                             <div className="p-4">
-                              <p className="text-sm font-medium text-[var(--color-text-primary)] truncate mb-1">{m.title}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate mb-1">{m.title}</p>
                               <p className="text-xs text-[var(--color-text-secondary)] truncate mb-3">{courseNameMap[m.courseId] || ""}</p>
 
                               <div className="flex items-center justify-between mb-3">

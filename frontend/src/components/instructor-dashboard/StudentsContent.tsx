@@ -333,7 +333,7 @@ const StudentsContent = () => {
                           <Users className="w-5 h-5 text-[#3B82F6]" />
                         </div>
                         <div>
-                          <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                          <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                             {stats.total}
                           </p>
                           <p className="text-xs text-[var(--color-text-secondary)]">
@@ -348,7 +348,7 @@ const StudentsContent = () => {
                           <CheckCircle className="w-5 h-5 text-[#22C55E]" />
                         </div>
                         <div>
-                          <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                          <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                             {stats.good}
                           </p>
                           <p className="text-xs text-[var(--color-text-secondary)]">
@@ -363,7 +363,7 @@ const StudentsContent = () => {
                           <AlertTriangle className="w-5 h-5 text-[#EAB308]" />
                         </div>
                         <div>
-                          <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                          <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                             {stats.atRisk}
                           </p>
                           <p className="text-xs text-[var(--color-text-secondary)]">
@@ -378,7 +378,7 @@ const StudentsContent = () => {
                           <UserX className="w-5 h-5 text-[#EF4444]" />
                         </div>
                         <div>
-                          <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                          <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                             {stats.inactive}
                           </p>
                           <p className="text-xs text-[var(--color-text-secondary)]">
@@ -535,7 +535,7 @@ const StudentsContent = () => {
                                 >
                                   <td className="px-3 py-3">
                                     <div className="max-w-[200px]">
-                                      <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                                      <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">
                                         {student.firstName || ""}{" "}
                                         {student.lastName || ""}
                                       </p>
@@ -676,7 +676,7 @@ const StudentsContent = () => {
                                   {getInitials(student.firstName, student.lastName)}
                                 </div>
                                 <div>
-                                  <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                                     {student.firstName || ""}{" "}
                                     {student.lastName || ""}
                                   </p>

@@ -390,7 +390,7 @@ const InstructorTabs = ({
                     <Upload className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                    <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                       {t("content.dragDrop")}
                     </p>
                     <p className="text-xs text-[var(--color-text-secondary)] mt-1">
@@ -475,7 +475,7 @@ const InstructorTabs = ({
                               {getFileIcon(file.type)}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{file.name}</p>
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{file.name}</p>
                               {file.size && (
                                 <p className="text-xs text-[var(--color-text-secondary)]">{file.size}</p>
                               )}

@@ -231,7 +231,7 @@ const TeamContent = () => {
                           <Icon className={`w-5 h-5 ${stat.textColor}`} />
                         </div>
                       </div>
-                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                      <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                         {stat.value}
                       </p>
                       <p className="text-sm text-[var(--color-text-secondary)] mt-1">
@@ -328,7 +328,7 @@ const TeamContent = () => {
                     {/* Stats Row */}
                     <div className="grid grid-cols-3 gap-2 mb-4 py-3 border-t border-b border-[var(--color-border)]">
                       <div className="text-center">
-                        <p className="text-lg font-bold text-[var(--color-text-primary)]">
+                        <p className="text-lg font-bold text-[var(--color-text-secondary)]">
                           {agent.openTickets}
                         </p>
                         <p className="text-[11px] text-[var(--color-text-secondary)]">
@@ -336,7 +336,7 @@ const TeamContent = () => {
                         </p>
                       </div>
                       <div className="text-center">
-                        <p className="text-lg font-bold text-[var(--color-text-primary)]">
+                        <p className="text-lg font-bold text-[var(--color-text-secondary)]">
                           {agent.avgResponse}
                         </p>
                         <p className="text-[11px] text-[var(--color-text-secondary)]">
@@ -344,7 +344,7 @@ const TeamContent = () => {
                         </p>
                       </div>
                       <div className="text-center">
-                        <p className="text-lg font-bold text-[var(--color-text-primary)]">
+                        <p className="text-lg font-bold text-[var(--color-text-secondary)]">
                           {agent.csat}%
                         </p>
                         <p className="text-[11px] text-[var(--color-text-secondary)]">
@@ -411,7 +411,7 @@ const TeamContent = () => {
                     <p className="text-sm text-[var(--color-text-secondary)] mb-1">
                       {t("teamPage.performanceCards.bestResponseTime")}
                     </p>
-                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">1.0h</p>
+                    <p className="text-2xl font-bold text-[var(--color-text-secondary)]">1.0h</p>
                     <p className="text-xs text-[var(--color-text-secondary)] mt-1">
                       {t("names.hanaAlSaud")}
                     </p>
@@ -422,7 +422,7 @@ const TeamContent = () => {
                     <p className="text-sm text-[var(--color-text-secondary)] mb-1">
                       {t("teamPage.performanceCards.highestCSAT")}
                     </p>
-                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">96%</p>
+                    <p className="text-2xl font-bold text-[var(--color-text-secondary)]">96%</p>
                     <p className="text-xs text-[var(--color-text-secondary)] mt-1">
                       {t("names.hanaAlSaud")}
                     </p>
@@ -433,7 +433,7 @@ const TeamContent = () => {
                     <p className="text-sm text-[var(--color-text-secondary)] mb-1">
                       {t("teamPage.performanceCards.mostResolved")}
                     </p>
-                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">45</p>
+                    <p className="text-2xl font-bold text-[var(--color-text-secondary)]">45</p>
                     <p className="text-xs text-[var(--color-text-secondary)] mt-1">
                       {t("names.mohammedAli")}
                     </p>

@@ -355,7 +355,7 @@ function ShareMaterialsModal({
               {courseMaterials.map((m) => (
                 <div key={m.id} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{m.title}</p>
+                    <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{m.title}</p>
                     <p className="text-xs text-[var(--color-text-secondary)]">{m.type}</p>
                   </div>
                   <button

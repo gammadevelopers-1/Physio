@@ -154,7 +154,7 @@ const ArchivedPageContent = () => {
               <div className="flex-1">
                 {loading ? (
                   <div className="flex items-center justify-center py-16">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#B8860B]" />
+                    <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
                   </div>
                 ) : paginatedCourses.length > 0 ? (
                   <>
@@ -210,7 +210,7 @@ const ArchivedPageContent = () => {
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-[#B8860B]" />
+              <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
             </div>
           ) : paginatedCoursesMobile.length > 0 ? (
             <>

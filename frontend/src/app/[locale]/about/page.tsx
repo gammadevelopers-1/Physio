@@ -1,6 +1,5 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import BottomNav from "@/components/BottomNav";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -56,7 +55,7 @@ export default async function AboutPage({
 
   return (
     <main id="main-content" className="min-h-screen bg-[var(--surface-default)] pb-20 lg:pb-0">
-      <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
+      <Navbar siteSettings={siteSettings} navLinks={navbarLinks} footerLinks={footerLinks} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
 
       {/* Section 1: About Hero Section */}
@@ -156,7 +155,7 @@ export default async function AboutPage({
             {complianceItems.length > 0 && (
               <div className="flex flex-col mb-8 md:mb-10">
                 {complianceItems.map((item) => (
-                  <p key={item.id} className="text-[#000] lg:text-[var(--on-surface-variant)] text-[18px] lg:text-[20px] font-normal leading-[28px]">
+                  <p key={item.id} className="text-[var(--color-text-secondary)] text-[18px] lg:text-[20px] font-normal leading-[28px]">
                     {item.text}
                   </p>
                 ))}
@@ -311,7 +310,6 @@ export default async function AboutPage({
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'bottom')} sideLoadedData={sideLoadedData} />
 
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
-      <BottomNav />
     </main>
   );
 }

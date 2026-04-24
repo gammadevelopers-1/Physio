@@ -89,7 +89,7 @@ export function UpcomingEventsBlock({ data }: UpcomingEventsBlockProps) {
             {events.map((evt) => (
               <div
                 key={evt.id}
-                className="flex flex-col bg-white rounded-2xl border border-[var(--outline-subtle)] shadow-sm overflow-hidden"
+                className="flex flex-col bg-[var(--color-surface-card)] rounded-2xl border border-[var(--outline-subtle)] shadow-sm overflow-hidden"
               >
                 {evt.image && (
                   <div className="w-full h-40 overflow-hidden">
@@ -137,7 +137,7 @@ export function UpcomingEventsBlock({ data }: UpcomingEventsBlockProps) {
             {events.map((evt) => (
               <div
                 key={evt.id}
-                className="flex gap-4 p-4 bg-white rounded-xl border border-[var(--outline-subtle)] shadow-sm"
+                className="flex gap-4 p-4 bg-[var(--color-surface-card)] rounded-xl border border-[var(--outline-subtle)] shadow-sm"
               >
                 {evt.image && (
                   <img

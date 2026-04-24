@@ -82,9 +82,9 @@ const InviteFriendsContent = () => {
       case "accepted":
         return "text-[#15803D] bg-[#15803D]/10";
       case "pending":
-        return "text-[var(--color-text-secondary)] bg-[#F3F4F6]";
+        return "text-[var(--color-text-secondary)] bg-[var(--color-border-subtle)]";
       default:
-        return "text-[var(--color-text-secondary)] bg-[#F3F4F6]";
+        return "text-[var(--color-text-secondary)] bg-[var(--color-border-subtle)]";
     }
   };
 
@@ -167,7 +167,7 @@ const InviteFriendsContent = () => {
                         />
                         <button
                           type="submit"
-                          className="px-6 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+                          className="px-6 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
                         >
                           {t("inviteFriends.sendInvite")}
                         </button>
@@ -275,14 +275,14 @@ const InviteFriendsContent = () => {
                                 <td className="py-4 px-4 relative">
                                   <button
                                     onClick={() => toggleMenu(invite.id)}
-                                    className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
+                                    className="p-1 hover:bg-[var(--color-border-subtle)] rounded transition-colors"
                                     aria-label={t("inviteFriends.moreOptions")}
                                   >
                                     <MoreVertical className="w-5 h-5 text-[var(--color-text-secondary)]" />
                                   </button>
                                   {openMenuId === invite.id && (
                                     <div
-                                      className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
+                                      className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                     >
                                       <button
                                         className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
@@ -326,14 +326,14 @@ const InviteFriendsContent = () => {
                               <div className="relative">
                                 <button
                                   onClick={() => toggleMenu(invite.id)}
-                                  className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
+                                  className="p-1 hover:bg-[var(--color-border-subtle)] rounded transition-colors"
                                   aria-label={t("inviteFriends.moreOptions")}
                                 >
                                   <MoreVertical className="w-5 h-5 text-[var(--color-text-secondary)]" />
                                 </button>
                                 {openMenuId === invite.id && (
                                   <div
-                                    className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
+                                    className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                   >
                                     <button
                                       className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}

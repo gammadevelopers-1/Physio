@@ -138,7 +138,7 @@ const LogsContent = () => {
   const getActionIcon = (type: string) => {
     switch (type) {
       case "auth":
-        return <LogIn className="w-4 h-4 text-[#3B82F6]" />;
+        return <LogIn className="w-4 h-4 text-[var(--color-primary)]" />;
       case "user":
         return <User className="w-4 h-4 text-[#8B5CF6]" />;
       case "course":
@@ -152,7 +152,7 @@ const LogsContent = () => {
       case "security":
         return <Shield className="w-4 h-4 text-[#DC2626]" />;
       case "system":
-        return <ClipboardList className="w-4 h-4 text-[#002D87]" />;
+        return <ClipboardList className="w-4 h-4 text-[var(--color-primary)]" />;
       default:
         return <ClipboardList className="w-4 h-4 text-[var(--color-text-secondary)]" />;
     }
@@ -163,19 +163,19 @@ const LogsContent = () => {
       case "create":
         return "bg-[#DCFCE7] text-[#16A34A]";
       case "update":
-        return "bg-[#DBEAFE] text-[#1D4ED8]";
+        return "bg-[var(--color-border-subtle)] text-[#1D4ED8]";
       case "delete":
         return "bg-[#FEE2E2] text-[#DC2626]";
       case "login":
-        return "bg-[#F0F7FF] text-[#002D87]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-primary)]";
       case "logout":
-        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
       case "export":
         return "bg-[#EDE9FE] text-[#7C3AED]";
       case "block":
         return "bg-[#FEE2E2] text-[#DC2626]";
       default:
-        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -350,7 +350,7 @@ const LogsContent = () => {
                     <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[var(--color-surface-page)]">
                       {t("logsPage.previous")}
                     </button>
-                    <button className="px-3 py-1.5 text-sm btn-gold text-white rounded">1</button>
+                    <button className="px-3 py-1.5 text-sm btn-gold text-[var(--color-button-text)] rounded">1</button>
                     <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[var(--color-surface-page)]">2</button>
                     <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[var(--color-surface-page)]">3</button>
                     <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[var(--color-surface-page)]">

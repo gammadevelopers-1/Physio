@@ -70,7 +70,7 @@ export function RelatedPagesBlock({ data }: RelatedPagesBlockProps) {
             <a
               key={page.id}
               href={page.url}
-              className="flex flex-col bg-white rounded-2xl border border-[var(--outline-subtle)] shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+              className="flex flex-col bg-[var(--color-surface-card)] rounded-2xl border border-[var(--outline-subtle)] shadow-sm overflow-hidden hover:shadow-md transition-shadow"
             >
               {page.thumbnail && (
                 <div className="w-full h-40 overflow-hidden">

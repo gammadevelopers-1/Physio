@@ -37,7 +37,7 @@ export default async function ContactPage({
       <div className="hidden lg:block">
         <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
       </div>
-      <WhatsAppButton phoneNumber={siteSettings?.whatsappNumber} />
+      <WhatsAppButton phoneNumber={siteSettings?.whatsappNumber} enabled={siteSettings?.showWhatsappButton} />
     </main>
   );
 }

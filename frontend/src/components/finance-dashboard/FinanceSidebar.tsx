@@ -179,12 +179,12 @@ const FinanceSidebar = ({ profile }: FinanceSidebarProps) => {
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                   active
-                    ? "bg-[#F0F7FF] text-[#002D87]"
+                    ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
                     : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                 }`}
               >
                 <Icon
-                  className={`w-5 h-5 ${active ? "text-[#002D87]" : "text-[var(--color-text-secondary)]"}`}
+                  className={`w-5 h-5 ${active ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)]"}`}
                 />
                 <span
                   className={`text-sm flex-1 ${active ? "font-medium" : ""}`}

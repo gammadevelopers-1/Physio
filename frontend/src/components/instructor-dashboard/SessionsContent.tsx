@@ -316,9 +316,9 @@ function AttendanceModal({
       case "present": return "bg-[#DCFCE7] text-[#16A34A]";
       case "absent": return "bg-[#FEE2E2] text-[#EF4444]";
       case "late": return "bg-[#FEF3C7] text-[#D97706]";
-      case "excused": return "bg-[#EFF6FF] text-[#3B82F6]";
-      case "unmarked": return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
-      default: return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+      case "excused": return "bg-[var(--color-border-subtle)] text-[var(--color-primary)]";
+      case "unmarked": return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
+      default: return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -421,7 +421,7 @@ function AttendanceModal({
           </h2>
           <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{session.title}</p>
         </div>
-        <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
+        <button onClick={onClose} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors">
           <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
@@ -434,15 +434,15 @@ function AttendanceModal({
         <>
           {/* Zoom sync bar */}
           {isZoomSession && !attendanceLocked && (session.status === "ended" || session.status === "completed") && (
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--color-border)] bg-[#EFF6FF]">
-              <div className="flex items-center gap-2 text-xs text-[#3B82F6]">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--color-border)] bg-[var(--color-border-subtle)]">
+              <div className="flex items-center gap-2 text-xs text-[var(--color-primary)]">
                 <Video className="w-3.5 h-3.5" />
                 <span>Zoom Lecture</span>
               </div>
               <button
                 onClick={handleSyncZoom}
                 disabled={syncing || attendanceLocked}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#3B82F6] hover:text-white transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg hover:bg-[var(--color-primary)] hover:text-white transition-colors disabled:opacity-50"
               >
                 {syncing ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -588,7 +588,7 @@ function AttendanceModal({
                               className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
                                 currentStatus === status
                                   ? `${getStatusColor(status)} ring-2 ring-offset-1 ring-current`
-                                  : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
+                                  : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
                               } ${isVerifiedReadOnly ? "cursor-default opacity-70" : ""}`}
                             >
                               {t(`sessionsPage.attendance.${status}`)}
@@ -605,7 +605,7 @@ function AttendanceModal({
                             setLocalNotes((prev) => ({ ...prev, [e.studentId]: ev.target.value }))
                           }
                           placeholder={t("sessionsPage.attendance.notePlaceholder")}
-                          className="w-full px-2.5 py-1.5 border border-[var(--color-border)] rounded text-xs text-[var(--color-text-secondary)] placeholder:text-[var(--color-text-secondary)] focus:ring-1 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+                          className="w-full px-2.5 py-1.5 border border-[var(--color-border)] rounded text-xs text-[var(--color-text-secondary)] placeholder:text-[var(--color-text-secondary)] focus:ring-1 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none"
                         />
                       )}
                       {/* Zoom sync timing data + timeline bar */}
@@ -635,7 +635,7 @@ function AttendanceModal({
                             if (presPercent === 0 && !rec.joinedAt) return null;
                             return (
                               <div className="flex items-center gap-2">
-                                <div className="flex-1 relative h-2 bg-[#F3F4F6] rounded-full overflow-hidden">
+                                <div className="flex-1 relative h-2 bg-[var(--color-border-subtle)] rounded-full overflow-hidden">
                                   <div
                                     className={`absolute top-0 left-0 h-full rounded-full ${presPercent >= 70 ? "bg-[#16A34A]" : "bg-[#EF4444]"}`}
                                     style={{ width: `${Math.max(2, presPercent)}%` }}
@@ -702,7 +702,7 @@ function AttendanceModal({
                           }))
                         }
                         disabled={attendanceLocked}
-                        className="flex-1 px-2 py-1.5 text-xs border border-[var(--color-border)] rounded-lg bg-white text-[var(--color-text-secondary)] disabled:opacity-50"
+                        className="flex-1 px-2 py-1.5 text-xs border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] disabled:opacity-50"
                       >
                         <option value="">{locale === "ar" ? "اختر طالب" : "Select student"}</option>
                         {enrollments
@@ -716,7 +716,7 @@ function AttendanceModal({
                       <button
                         onClick={() => handleManualAssign(p.zoomUserEmail)}
                         disabled={!manualAssignments[p.zoomUserEmail] || assigningEmail === p.zoomUserEmail || attendanceLocked}
-                        className="px-3 py-1.5 text-xs font-medium bg-[#3B82F6] text-white rounded-lg disabled:opacity-40 hover:bg-[#2563EB] transition-colors shrink-0"
+                        className="px-3 py-1.5 text-xs font-medium bg-[var(--color-primary)] text-white rounded-lg disabled:opacity-40 hover:bg-[var(--color-primary-dark)] transition-colors shrink-0"
                       >
                         {assigningEmail === p.zoomUserEmail ? "..." : locale === "ar" ? "تعيين" : "Assign"}
                       </button>
@@ -747,7 +747,7 @@ function AttendanceModal({
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg disabled:opacity-50"
                 >
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   {t("sessionsPage.attendance.save")}
@@ -847,7 +847,7 @@ function RecordingsModal({
           </h2>
           <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{session.title}</p>
         </div>
-        <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
+        <button onClick={onClose} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors">
           <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
@@ -868,7 +868,7 @@ function RecordingsModal({
           {recordings.map((rec) => (
             <div key={rec.id} className="p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="px-2 py-0.5 bg-[#EFF6FF] text-[#3B82F6] text-[10px] font-medium rounded">
+                <span className="px-2 py-0.5 bg-[var(--color-border-subtle)] text-[var(--color-primary)] text-[10px] font-medium rounded">
                   {formatRecordingType(rec.recordingType)}
                 </span>
                 <div className="flex items-center gap-2">
@@ -877,7 +877,7 @@ function RecordingsModal({
                       href={rec.playUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#3B82F6] hover:text-white transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg hover:bg-[var(--color-primary)] hover:text-white transition-colors"
                     >
                       <Play className="w-3 h-3" />
                       {t("sessionsPage.recordings.play")}
@@ -954,7 +954,7 @@ function CancelSessionModal({
         <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
           {t("sessionsPage.cancelSession.title")}
         </h2>
-        <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
+        <button onClick={onClose} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors">
           <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
@@ -1019,7 +1019,7 @@ function DeleteSessionModal({
         <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
           {t("sessionsPage.deleteModal.title")}
         </h2>
-        <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
+        <button onClick={onClose} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors">
           <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
@@ -1073,7 +1073,7 @@ function EndSessionModal({
         <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
           {t("sessionsPage.endModal.title")}
         </h2>
-        <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
+        <button onClick={onClose} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors">
           <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
@@ -1085,8 +1085,8 @@ function EndSessionModal({
           </p>
         </div>
         {hasZoom && (
-          <div className="flex items-start gap-3 p-3 bg-[#EFF6FF] rounded-lg">
-            <Video className="w-5 h-5 text-[#3B82F6] flex-shrink-0 mt-0.5" />
+          <div className="flex items-start gap-3 p-3 bg-[var(--color-border-subtle)] rounded-lg">
+            <Video className="w-5 h-5 text-[var(--color-primary)] flex-shrink-0 mt-0.5" />
             <p className="text-sm text-[#1E40AF]">
               {t("sessionsPage.endModal.zoomWarning")}
             </p>
@@ -1244,7 +1244,7 @@ function ScheduleSessionModal({
         <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
           {t("sessionsPage.scheduleSessionTitle")}
         </h2>
-        <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
+        <button onClick={onClose} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors">
           <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
@@ -1354,8 +1354,8 @@ function ScheduleSessionModal({
                 onClick={() => setType(opt)}
                 className={`flex flex-col items-center gap-1.5 p-3 rounded-lg transition-colors ${
                   type === opt
-                    ? "border-2 border-[#3B82F6] bg-[#EFF6FF] text-[#3B82F6]"
-                    : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[#3B82F6] hover:bg-[#EFF6FF] hover:text-[#3B82F6]"
+                    ? "border-2 border-[var(--color-primary)] bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
+                    : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] hover:text-[var(--color-primary)]"
                 }`}
               >
                 {opt === "zoom" && <Video className="w-5 h-5" />}
@@ -1371,8 +1371,8 @@ function ScheduleSessionModal({
 
         {/* Zoom auto-create info */}
         {(type === "zoom" || type === "hybrid") && (
-          <div className="flex items-start gap-2 p-3 bg-[#EFF6FF] rounded-lg">
-            <Video className="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5" />
+          <div className="flex items-start gap-2 p-3 bg-[var(--color-border-subtle)] rounded-lg">
+            <Video className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0 mt-0.5" />
             <p className="text-xs text-[#1E40AF]">
               {t("sessionsPage.zoomAutoCreate")}
             </p>
@@ -1429,7 +1429,7 @@ function ScheduleSessionModal({
         <button
           onClick={handleSubmit}
           disabled={saving || !courseId || !title.trim() || !date || !time}
-          className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg disabled:opacity-50"
         >
           {saving && <Loader2 className="w-4 h-4 animate-spin" />}
           {t("sessionsPage.form.schedule")}
@@ -1477,11 +1477,11 @@ function SessionCard({
   const { calendarFormat } = useCalendarPreference();
   const getStatusBadge = (status: string) => {
     const styles: Record<string, { bg: string; text: string; label: string }> = {
-      scheduled: { bg: "bg-[#EFF6FF]", text: "text-[#3B82F6]", label: t("sessionsPage.statusUpcoming") },
+      scheduled: { bg: "bg-[var(--color-border-subtle)]", text: "text-[var(--color-primary)]", label: t("sessionsPage.statusUpcoming") },
       live: { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: t("sessionsPage.statusLive") },
       ended: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessionsPage.statusEnded") },
       completed: { bg: "bg-[#DCFCE7]", text: "text-[#22C55E]", label: t("sessionsPage.statusCompleted") },
-      cancelled: { bg: "bg-[#F3F4F6]", text: "text-[var(--color-text-secondary)]", label: t("sessionsPage.statusCancelled") },
+      cancelled: { bg: "bg-[var(--color-border-subtle)]", text: "text-[var(--color-text-secondary)]", label: t("sessionsPage.statusCancelled") },
       missed: { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: t("sessionsPage.statusMissed") },
       rescheduled: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessionsPage.statusRescheduled") },
     };
@@ -1499,7 +1499,7 @@ function SessionCard({
 
   const getTypeBadgeStyle = (type: string) => {
     const styles: Record<string, string> = {
-      zoom: "bg-[#EFF6FF] text-[#3B82F6]",
+      zoom: "bg-[var(--color-border-subtle)] text-[var(--color-primary)]",
       onsite: "bg-[#DCFCE7] text-[#22C55E]",
       hybrid: "bg-[#F3E8FF] text-[#9333EA]",
     };
@@ -1518,7 +1518,7 @@ function SessionCard({
       {/* Main row */}
       <div className="flex items-center gap-3">
         {/* Type icon */}
-        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${isPast ? "bg-[#F3F4F6] text-[var(--color-text-secondary)]" : getTypeBadgeStyle(session.type)}`}>
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${isPast ? "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]" : getTypeBadgeStyle(session.type)}`}>
           {getTypeIcon(session.type)}
         </div>
 
@@ -1579,7 +1579,7 @@ function SessionCard({
               <button
                 onClick={onStart}
                 disabled={actionLoading}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#3B82F6] text-white text-xs font-medium rounded-lg hover:bg-[#2563EB] disabled:opacity-50 transition-colors"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg hover:bg-[var(--color-primary-dark)] disabled:opacity-50 transition-colors"
               >
                 {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
                 {t("sessionsPage.start")}
@@ -1610,7 +1610,7 @@ function SessionCard({
                 <ClipboardCheck className="w-3.5 h-3.5" />
               </button>
               {session.zoomLink && (
-                <a href={session.zoomLink} target="_blank" rel="noopener noreferrer" className="p-1.5 border border-[#BFDBFE] rounded-lg text-[#3B82F6] hover:bg-[#EFF6FF] transition-colors" title={t("sessionsPage.rejoinZoom")}>
+                <a href={session.zoomLink} target="_blank" rel="noopener noreferrer" className="p-1.5 border border-[#BFDBFE] rounded-lg text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] transition-colors" title={t("sessionsPage.rejoinZoom")}>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               )}
@@ -1750,7 +1750,7 @@ function EditSessionModal({
         <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
           {t("sessionsPage.editModal.title")}
         </h2>
-        <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
+        <button onClick={onClose} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors">
           <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
@@ -1871,7 +1871,7 @@ function EditSessionModal({
         <button
           onClick={handleSave}
           disabled={saving || !title.trim() || !date || !time}
-          className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg disabled:opacity-50"
         >
           {saving && <Loader2 className="w-4 h-4 animate-spin" />}
           {t("sessionsPage.editModal.save")}
@@ -2255,12 +2255,12 @@ const SessionsContent = () => {
 
   const getCalendarDotColor = (status: string) => {
     switch (status) {
-      case "scheduled": return "bg-[#3B82F6]";
+      case "scheduled": return "bg-[var(--color-primary)]";
       case "live": return "bg-[#EF4444]";
       case "ended": return "bg-[#D97706]";
       case "completed": return "bg-[#22C55E]";
       case "cancelled": return "bg-[var(--color-text-secondary)]";
-      default: return "bg-[#3B82F6]";
+      default: return "bg-[var(--color-primary)]";
     }
   };
 
@@ -2308,7 +2308,7 @@ const SessionsContent = () => {
           {hasMore && (
             <button
               onClick={() => setPastLimit(l => l + 10)}
-              className="w-full py-3 text-xs font-medium text-[#3B82F6] hover:bg-[#F0F7FF] transition-colors border-t border-[var(--color-border)]"
+              className="w-full py-3 text-xs font-medium text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] transition-colors border-t border-[var(--color-border)]"
             >
               Show more ({groupSessions.length - (limit || 0)} remaining)
             </button>
@@ -2343,12 +2343,12 @@ const SessionsContent = () => {
                 </div>
                 <div className="flex items-center gap-3">
                   {/* View Toggle */}
-                  <div className="flex items-center bg-white border border-[var(--color-border)] rounded-lg p-1">
+                  <div className="flex items-center bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg p-1">
                     <button
                       onClick={() => setViewMode("list")}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                         viewMode === "list"
-                          ? "btn-gold text-white"
+                          ? "btn-gold text-[var(--color-button-text)]"
                           : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                       }`}
                     >
@@ -2359,7 +2359,7 @@ const SessionsContent = () => {
                       onClick={() => setViewMode("calendar")}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                         viewMode === "calendar"
-                          ? "btn-gold text-white"
+                          ? "btn-gold text-[var(--color-button-text)]"
                           : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                       }`}
                     >
@@ -2369,7 +2369,7 @@ const SessionsContent = () => {
                   </div>
                   <button
                     onClick={() => setShowScheduleModal(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                     {t("sessionsPage.scheduleSession")}
@@ -2386,7 +2386,7 @@ const SessionsContent = () => {
                 <select
                   value={filterCourse}
                   onChange={(e) => setFilterCourse(e.target.value)}
-                  className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-white"
+                  className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
                 >
                   <option value="all">{t("sessionsPage.allCourses")}</option>
                   {courses.map((c) => (
@@ -2396,7 +2396,7 @@ const SessionsContent = () => {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-white"
+                  className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
                 >
                   <option value="all">{t("sessionsPage.allStatuses")}</option>
                   <option value="scheduled">{t("sessionsPage.statusUpcoming")}</option>
@@ -2443,7 +2443,7 @@ const SessionsContent = () => {
                   <p className="text-sm text-[#EF4444] mb-3">{error}</p>
                   <button
                     onClick={fetchData}
-                    className="px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg"
+                    className="px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg"
                   >
                     {t("sessionsPage.retry")}
                   </button>
@@ -2466,7 +2466,7 @@ const SessionsContent = () => {
                   <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
                     <button
                       onClick={goToPrevMonth}
-                      className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
+                      className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
                     >
                       {isRTL ? <ChevronRight className="w-5 h-5 text-[var(--color-text-secondary)]" /> : <ChevronLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />}
                     </button>
@@ -2475,7 +2475,7 @@ const SessionsContent = () => {
                     </h2>
                     <button
                       onClick={goToNextMonth}
-                      className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
+                      className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
                     >
                       {isRTL ? <ChevronLeft className="w-5 h-5 text-[var(--color-text-secondary)]" /> : <ChevronRight className="w-5 h-5 text-[var(--color-text-secondary)]" />}
                     </button>
@@ -2485,7 +2485,7 @@ const SessionsContent = () => {
                   <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
                     <div className="flex items-center gap-4">
                       <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary)]" />
                         {t("sessionsPage.statusUpcoming")}
                       </span>
                       <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
@@ -2503,7 +2503,7 @@ const SessionsContent = () => {
                     </div>
                     <button
                       onClick={() => setCalendarFormat(useHijri ? "gregorian" : "hijri")}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border border-[var(--color-border)] hover:bg-white transition-colors text-[var(--color-text-secondary)]"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border border-[var(--color-border)] hover:bg-[var(--color-surface-card)] transition-colors text-[var(--color-text-secondary)]"
                     >
                       {useHijri ? (t("sessionsPage.gregorian") || "Gregorian") : (t("sessionsPage.hijri") || "Hijri")}
                     </button>
@@ -2534,10 +2534,10 @@ const SessionsContent = () => {
                       return (
                         <div
                           key={day}
-                          className={`min-h-[100px] p-2 border-b border-r border-[var(--color-border)] ${isToday ? "bg-[#EFF6FF]" : ""}`}
+                          className={`min-h-[100px] p-2 border-b border-r border-[var(--color-border)] ${isToday ? "bg-[var(--color-border-subtle)]" : ""}`}
                         >
                           <span className={`inline-flex items-center justify-center w-7 h-7 text-sm ${
-                            isToday ? "bg-[#3B82F6] text-white rounded-full font-semibold" : "text-[var(--color-text-primary)]"
+                            isToday ? "bg-[var(--color-primary)] text-white rounded-full font-semibold" : "text-[var(--color-text-primary)]"
                           }`}>
                             {day}
                           </span>
@@ -2608,7 +2608,7 @@ const SessionsContent = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Reason *</label>
-                <textarea value={rescheduleForm.reason} onChange={(e) => setRescheduleForm(d => ({ ...d, reason: e.target.value }))} rows={2} placeholder="Why is this lecture being rescheduled?" className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none" />
+                <textarea value={rescheduleForm.reason} onChange={(e) => setRescheduleForm(d => ({ ...d, reason: e.target.value }))} rows={2} placeholder="Why is this lecture being rescheduled?" className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -2617,15 +2617,15 @@ const SessionsContent = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">New Time *</label>
-                  <input type="time" value={rescheduleForm.time} onChange={(e) => setRescheduleForm(d => ({ ...d, time: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]" />
+                  <input type="time" value={rescheduleForm.time} onChange={(e) => setRescheduleForm(d => ({ ...d, time: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Duration</label>
                 <div className="flex items-center gap-2">
-                  <input type="number" min={0} value={rescheduleForm.durationHours} onChange={(e) => setRescheduleForm(d => ({ ...d, durationHours: Math.max(0, Number(e.target.value)) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6]" />
+                  <input type="number" min={0} value={rescheduleForm.durationHours} onChange={(e) => setRescheduleForm(d => ({ ...d, durationHours: Math.max(0, Number(e.target.value)) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
                   <span className="text-sm text-[var(--color-text-secondary)]">hrs</span>
-                  <input type="number" min={0} max={59} value={rescheduleForm.durationMins} onChange={(e) => setRescheduleForm(d => ({ ...d, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6]" />
+                  <input type="number" min={0} max={59} value={rescheduleForm.durationMins} onChange={(e) => setRescheduleForm(d => ({ ...d, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
                   <span className="text-sm text-[var(--color-text-secondary)]">min</span>
                 </div>
               </div>

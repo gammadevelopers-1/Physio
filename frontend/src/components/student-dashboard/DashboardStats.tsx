@@ -247,7 +247,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
                 className={`mt-2 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                   isJoinable
                     ? "bg-[#2D8CFF] text-white hover:bg-[#1A73E8]"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-[var(--color-border)] text-[var(--color-icon)] cursor-not-allowed"
                 }`}
               >
                 {joiningZoom ? <Loader2 className="w-3 h-3 animate-spin" /> : <Video className="w-3 h-3" />}

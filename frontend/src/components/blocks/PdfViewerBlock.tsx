@@ -66,7 +66,7 @@ export function PdfViewerBlock({ data }: PdfViewerBlockProps) {
               <a
                 href={pdfUrl}
                 download
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--surface-container-primary)] text-white text-sm font-medium"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--color-primary)] text-white text-sm font-medium"
               >
                 {data.downloadLabel || "Download PDF"}
               </a>

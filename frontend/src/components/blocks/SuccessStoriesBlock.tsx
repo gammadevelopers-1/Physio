@@ -63,7 +63,7 @@ export function SuccessStoriesBlock({ data }: SuccessStoriesBlockProps) {
           {data.stories?.map((story) => (
             <div
               key={story.id}
-              className="flex flex-col gap-4 p-6 bg-white rounded-2xl border border-[var(--outline-subtle)] shadow-sm"
+              className="flex flex-col gap-4 p-6 bg-[var(--color-surface-card)] rounded-2xl border border-[var(--outline-subtle)] shadow-sm"
             >
               <div className="flex items-center gap-4">
                 {story.image && (

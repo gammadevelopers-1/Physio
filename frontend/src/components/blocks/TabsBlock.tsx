@@ -59,7 +59,7 @@ export function TabsBlock({ data }: TabsBlockProps) {
                 className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
                   idx === activeIndex
                     ? isVertical
-                      ? "bg-[var(--surface-container-primary)]/10 text-[var(--surface-container-primary)] rounded-lg"
+                      ? "bg-[var(--color-primary)]/10 text-[var(--surface-container-primary)] rounded-lg"
                       : "text-[var(--surface-container-primary)] border-b-2 border-[var(--surface-container-primary)]"
                     : "text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)]"
                 }`}

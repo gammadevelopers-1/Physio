@@ -75,7 +75,7 @@ const REPORT_TYPES: ReportTypeConfig[] = [
   {
     id: "gradebook",
     icon: BookOpen,
-    iconBg: "bg-[#E0E7FF]",
+    iconBg: "bg-[var(--color-border-subtle)]",
     iconColor: "text-[#6366F1]",
     requiresCourse: true,
     supportsDateRange: false,
@@ -83,8 +83,8 @@ const REPORT_TYPES: ReportTypeConfig[] = [
   {
     id: "enrollment",
     icon: Users,
-    iconBg: "bg-[#DBEAFE]",
-    iconColor: "text-[#3B82F6]",
+    iconBg: "bg-[var(--color-border-subtle)]",
+    iconColor: "text-[var(--color-primary)]",
     requiresCourse: false,
     supportsDateRange: false,
   },
@@ -180,7 +180,7 @@ function ExportModal({
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors"
+              className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -197,7 +197,7 @@ function ExportModal({
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             >
               {reportType.requiresCourse ? (
                 <option value="">{t("reportsPage.chooseCourse")}</option>
@@ -247,21 +247,21 @@ function ExportModal({
                 onClick={() => setSelectedFormat(fmt.id)}
                 className={`w-full flex items-center gap-4 p-3 border rounded-xl transition-colors ${
                   selectedFormat === fmt.id
-                    ? "border-[#3B82F6] bg-[#EFF6FF]"
-                    : "border-[var(--color-border)] hover:border-[#3B82F6] hover:bg-[#EFF6FF]"
+                    ? "border-[var(--color-primary)] bg-[var(--color-border-subtle)]"
+                    : "border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-border-subtle)]"
                 }`}
               >
                 <div
                   className={`w-9 h-9 rounded-lg flex items-center justify-center ${
                     selectedFormat === fmt.id
-                      ? "bg-white"
-                      : "bg-[#F3F4F6]"
+                      ? "bg-[var(--color-surface-card)]"
+                      : "bg-[var(--color-border-subtle)]"
                   }`}
                 >
                   <fmt.icon
                     className={`w-4 h-4 ${
                       selectedFormat === fmt.id
-                        ? "text-[#3B82F6]"
+                        ? "text-[var(--color-primary)]"
                         : "text-[var(--color-text-secondary)]"
                     }`}
                   />
@@ -273,7 +273,7 @@ function ExportModal({
                   <p className="text-xs text-[var(--color-text-secondary)]">{fmt.desc}</p>
                 </div>
                 {selectedFormat === fmt.id && (
-                  <div className="w-5 h-5 rounded-full bg-[#3B82F6] flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-full bg-[var(--color-primary)] flex items-center justify-center">
                     <svg
                       className="w-3 h-3 text-white"
                       fill="none"
@@ -306,8 +306,8 @@ function ExportModal({
               disabled={!canGenerate || generating}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 canGenerate && !generating
-                  ? "btn-gold text-white"
-                  : "bg-[#F3F4F6] text-[var(--color-text-secondary)] cursor-not-allowed"
+                  ? "btn-gold text-[var(--color-button-text)]"
+                  : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] cursor-not-allowed"
               }`}
             >
               {generating ? (
@@ -482,7 +482,7 @@ const ReportsContent = () => {
                       value={filterCourse}
                       onChange={(e) => setFilterCourse(e.target.value)}
                       disabled={loadingCourses}
-                      className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] disabled:opacity-50"
+                      className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
                     >
                       <option value="">{t("reportsPage.allCourses")}</option>
                       {courses.map((c) => (
@@ -498,7 +498,7 @@ const ReportsContent = () => {
                       onChange={(e) =>
                         setFilterFormat(e.target.value as ReportFormat)
                       }
-                      className="md:w-40 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="md:w-40 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     >
                       <option value="pdf">PDF</option>
                       <option value="csv">CSV</option>
@@ -509,7 +509,7 @@ const ReportsContent = () => {
                   <button
                     onClick={fetchCourses}
                     disabled={loadingCourses}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                   >
                     <RefreshCw
                       className={`w-4 h-4 ${loadingCourses ? "animate-spin" : ""}`}
@@ -542,13 +542,13 @@ const ReportsContent = () => {
                       className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 animate-pulse"
                     >
                       <div className="flex items-start gap-4 mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-gray-200" />
+                        <div className="w-12 h-12 rounded-xl bg-[var(--color-border)]" />
                         <div className="flex-1 space-y-2">
-                          <div className="h-4 w-2/3 bg-gray-200 rounded" />
-                          <div className="h-3 w-full bg-gray-100 rounded" />
+                          <div className="h-4 w-2/3 bg-[var(--color-border)] rounded" />
+                          <div className="h-3 w-full bg-[var(--color-border-subtle)] rounded" />
                         </div>
                       </div>
-                      <div className="h-10 bg-gray-100 rounded-lg" />
+                      <div className="h-10 bg-[var(--color-border-subtle)] rounded-lg" />
                     </div>
                   ))}
                 </div>
@@ -590,11 +590,11 @@ const ReportsContent = () => {
                           </span>
                         )}
                         {rt.supportsDateRange && (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#EFF6FF] text-[#1D4ED8] rounded text-xs font-medium">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-[var(--color-border-subtle)] text-[#1D4ED8] rounded text-xs font-medium">
                             {t("reportsPage.dateRangeSupported")}
                           </span>
                         )}
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#F3F4F6] text-[var(--color-text-secondary)] rounded text-xs font-medium">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] rounded text-xs font-medium">
                           CSV / PDF / Excel
                         </span>
                       </div>
@@ -602,7 +602,7 @@ const ReportsContent = () => {
                       {/* Download Action */}
                       <button
                         onClick={() => setExportModal(rt)}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#EFF6FF] text-[#3B82F6] rounded-lg text-sm font-medium hover:bg-[#DBEAFE] transition-colors"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--color-border-subtle)] text-[var(--color-primary)] rounded-lg text-sm font-medium hover:bg-[var(--color-border-subtle)] transition-colors"
                       >
                         <Download className="w-4 h-4" />
                         {t("reportsPage.exportReport")}

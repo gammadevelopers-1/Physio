@@ -102,7 +102,7 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
 
       {/* Slide Panel */}
       <div
-        className={`fixed inset-y-0 ${isRTL ? "left-0" : "right-0"} z-50 w-full max-w-[440px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${
+        className={`fixed inset-y-0 ${isRTL ? "left-0" : "right-0"} z-50 w-full max-w-[440px] bg-[var(--color-surface-card)] shadow-2xl flex flex-col transition-transform duration-300 ease-out ${
           visible
             ? "translate-x-0"
             : isRTL ? "-translate-x-full" : "translate-x-full"
@@ -114,7 +114,7 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
             <GraduationCap className="w-5 h-5 text-[var(--color-primary-dark)]" />
             <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("instructorDetail.title")}</h2>
           </div>
-          <button onClick={handleClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
+          <button onClick={handleClose} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors">
             <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
@@ -123,7 +123,7 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
         <div className="flex-1 overflow-y-auto">
           {loading && (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+              <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin" />
             </div>
           )}
 
@@ -162,14 +162,14 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                 {/* Performance KPIs */}
                 <div className="grid grid-cols-2 gap-3 mt-4">
                   <div className={`rounded-xl p-4 text-center border ${getRateBg(data.completionRate)} border-transparent`}>
-                    <TrendingUp className="w-5 h-5 text-[#3B82F6] mx-auto mb-1.5" />
+                    <TrendingUp className="w-5 h-5 text-[var(--color-primary)] mx-auto mb-1.5" />
                     <p className={`text-2xl font-bold ${getRateColor(data.completionRate)}`}>
                       {data.completionRate}%
                     </p>
                     <p className="text-[11px] text-[var(--color-text-secondary)] mt-1">{t("instructorDetail.completionRate")}</p>
                   </div>
                   <div className={`rounded-xl p-4 text-center border ${getRateBg(data.attendanceRate)} border-transparent`}>
-                    <BarChart3 className="w-5 h-5 text-[#3B82F6] mx-auto mb-1.5" />
+                    <BarChart3 className="w-5 h-5 text-[var(--color-primary)] mx-auto mb-1.5" />
                     <p className={`text-2xl font-bold ${getRateColor(data.attendanceRate)}`}>
                       {data.attendanceRate}%
                     </p>
@@ -247,7 +247,7 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                     <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
                       {t("instructorDetail.courses")}
                     </h4>
-                    <span className="text-xs text-[var(--color-text-secondary)] bg-[#F3F4F6] px-2 py-0.5 rounded-full">
+                    <span className="text-xs text-[var(--color-text-secondary)] bg-[var(--color-border-subtle)] px-2 py-0.5 rounded-full">
                       {data.courses.length}
                     </span>
                   </div>
@@ -259,10 +259,10 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                           course.status === "active"
                             ? "bg-[#D1FAE5] text-[#065F46]"
                             : course.status === "draft"
-                            ? "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
+                            ? "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                             : course.status === "completed"
-                            ? "bg-[#EFF6FF] text-[#3B82F6]"
-                            : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
+                            ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
+                            : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                         }`}>
                           {t(`coursesPage.status.${course.status}` as Parameters<typeof t>[0])}
                         </span>

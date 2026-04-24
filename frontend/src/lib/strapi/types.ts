@@ -161,6 +161,7 @@ export interface SiteSettings {
   copyrightText: string | null;
   whatsappNumber: string | null;
   showSearchBar: boolean | null;
+  showWhatsappButton: boolean | null;
   instagramUrl: string | null;
   twitterUrl: string | null;
   linkedinUrl: string | null;
@@ -181,6 +182,7 @@ export interface SiteSettings {
   themeBorderSubtle: string | null;
   themeIconColor: string | null;
   themeFooterBackground: string | null;
+  themeButtonText: string | null;
   locale: string;
   createdAt: string;
   updatedAt: string;

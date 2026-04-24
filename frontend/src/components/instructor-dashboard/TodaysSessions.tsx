@@ -55,7 +55,7 @@ const TodaysSessions = ({
       <div className="p-4 sm:p-5">
         {sessions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
-            <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
+            <div className="w-12 h-12 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mb-3">
               <Calendar className="w-6 h-6 text-[var(--color-text-secondary)]" />
             </div>
             <h3 className="text-sm font-medium text-[var(--color-text-primary)] mb-1">

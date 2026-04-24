@@ -85,7 +85,7 @@ export default async function Home({
           footerLinks={footerLinks}
         />
       </div>
-      <WhatsAppButton phoneNumber={siteSettings?.whatsappNumber} />
+      <WhatsAppButton phoneNumber={siteSettings?.whatsappNumber} enabled={siteSettings?.showWhatsappButton} />
     </main>
   );
 }

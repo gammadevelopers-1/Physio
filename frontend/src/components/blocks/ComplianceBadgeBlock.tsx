@@ -76,7 +76,7 @@ export function ComplianceBadgeBlock({ data }: ComplianceBadgeBlockProps) {
           {data.badges?.map((badge) => (
             <div
               key={badge.id}
-              className={`flex ${variant === "detailed" ? "flex-col p-6 bg-white rounded-2xl border border-[var(--outline-subtle)] shadow-sm" : "flex-col items-center"} gap-3`}
+              className={`flex ${variant === "detailed" ? "flex-col p-6 bg-[var(--color-surface-card)] rounded-2xl border border-[var(--outline-subtle)] shadow-sm" : "flex-col items-center"} gap-3`}
             >
               {badge.badgeImage && (
                 <img

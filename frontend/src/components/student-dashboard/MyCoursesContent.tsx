@@ -136,7 +136,7 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("myCourses.reviewTitle")}</h3>
-            <button onClick={onClose} className="p-1 hover:bg-[#F3F4F6] rounded">
+            <button onClick={onClose} className="p-1 hover:bg-[var(--color-border-subtle)] rounded">
               <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
             </button>
           </div>
@@ -174,7 +174,7 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
               maxLength={2000}
               dir="auto"
               placeholder={t("myCourses.reviewTextPlaceholder")}
-              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
             />
             <p className="text-xs text-[var(--color-text-secondary)] mt-1">{reviewText.length} / 2000</p>
           </div>
@@ -189,7 +189,7 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
             <button
               onClick={handleSubmit}
               disabled={submitting || rating < 1}
-              className="px-4 py-2 text-sm font-medium text-white bg-[#3B82F6] rounded-lg hover:bg-[#2563EB] transition-colors cursor-pointer disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-white bg-[var(--color-primary)] rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors cursor-pointer disabled:opacity-50"
             >
               {submitting ? t("myCourses.reviewSubmitting") : t("myCourses.reviewSubmit")}
             </button>
@@ -333,7 +333,7 @@ const MyCoursesContent = () => {
                       className={`px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
                         activeTab === tab.key
                           ? "bg-[var(--color-text-primary)] text-white"
-                          : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
+                          : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
                       }`}
                     >
                       {tab.label}
@@ -370,7 +370,7 @@ const MyCoursesContent = () => {
                     {activeTab === "all" && (
                       <Link
                         href={`/${locale}/courses`}
-                        className="px-5 py-2 sm:px-6 sm:py-2.5 btn-gold text-white text-xs sm:text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
+                        className="px-5 py-2 sm:px-6 sm:py-2.5 btn-gold text-[var(--color-button-text)] text-xs sm:text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
                       >
                         {t("myCourses.viewCourses")}
                       </Link>
@@ -410,7 +410,7 @@ const MyCoursesContent = () => {
                                     : "in_progress",
                               })
                             }
-                            className={`absolute top-2 ${isRTL ? "left-2" : "right-2"} z-10 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50 transition-colors`}
+                            className={`absolute top-2 ${isRTL ? "left-2" : "right-2"} z-10 w-8 h-8 bg-[var(--color-surface-card)] rounded-full flex items-center justify-center shadow-md hover:bg-[var(--color-surface-page)] transition-colors`}
                             aria-label={
                               isFavourite(course.id)
                                 ? t("favourites.removeFromFavourites")
@@ -418,7 +418,7 @@ const MyCoursesContent = () => {
                             }
                           >
                             <Heart
-                              className={`w-4 h-4 ${isFavourite(course.id) ? "text-red-500 fill-red-500" : "text-gray-400"}`}
+                              className={`w-4 h-4 ${isFavourite(course.id) ? "text-red-500 fill-red-500" : "text-[var(--color-icon)]"}`}
                             />
                           </button>
 
@@ -443,7 +443,7 @@ const MyCoursesContent = () => {
                           )}
 
                           {/* Thumbnail */}
-                          <div className="w-full h-[120px] sm:h-[140px] bg-gray-100">
+                          <div className="w-full h-[120px] sm:h-[140px] bg-[var(--color-border-subtle)]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={

@@ -58,7 +58,7 @@ const PaymentsInvoicesTable = ({
   });
 
   const gatewayStyles: Record<string, string> = {
-    Tap: "bg-[#EFF6FF] text-[#3B82F6]",
+    Tap: "bg-[var(--color-border-subtle)] text-[var(--color-primary)]",
     Moyasar: "bg-[#CFFAFE] text-[#0891B2]",
     Tamara: "bg-[#EDE9FE] text-[#8B5CF6]",
     Tabby: "bg-[#FEF3C7] text-[#D97706]",
@@ -82,7 +82,7 @@ const PaymentsInvoicesTable = ({
           </h3>
         </div>
         {showExport && (
-          <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium btn-gold text-white rounded-lg transition-colors">
+          <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium btn-gold text-[var(--color-button-text)] rounded-lg transition-colors">
             <Download className="w-4 h-4" />
             {t("paymentsTable.export")}
           </button>
@@ -95,7 +95,7 @@ const PaymentsInvoicesTable = ({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-white focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
+            className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
           >
             <option value="all">{t("paymentsTable.filters.allStatus")}</option>
             <option value="paid">{t("paymentsTable.filters.paid")}</option>
@@ -107,7 +107,7 @@ const PaymentsInvoicesTable = ({
           <select
             value={gatewayFilter}
             onChange={(e) => setGatewayFilter(e.target.value)}
-            className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-white focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
+            className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
           >
             <option value="all">
               {t("paymentsTable.filters.allGateways")}

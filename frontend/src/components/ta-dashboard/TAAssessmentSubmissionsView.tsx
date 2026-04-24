@@ -84,7 +84,7 @@ const TAAssessmentSubmissionsView = ({
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
-          className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors"
+          className="p-2 rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
@@ -197,7 +197,7 @@ const TAAssessmentSubmissionsView = ({
                                         href={f.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center gap-2 text-sm text-[#3B82F6] hover:underline"
+                                        className="flex items-center gap-2 text-sm text-[var(--color-primary)] hover:underline"
                                       >
                                         <Paperclip className="w-3.5 h-3.5" />
                                         {f.name}

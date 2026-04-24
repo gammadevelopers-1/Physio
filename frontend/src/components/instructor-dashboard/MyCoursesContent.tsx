@@ -138,10 +138,10 @@ const MyCoursesContent = () => {
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       active: "bg-[#DCFCE7] text-[#22C55E]",
-      draft: "bg-[#F3F4F6] text-[var(--color-text-secondary)]",
+      draft: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
       pending_review: "bg-[#EEF2FF] text-[#6366F1]",
       changes_requested: "bg-[#FEF3C7] text-[#D97706]",
-      completed: "bg-[#EFF6FF] text-[#3B82F6]",
+      completed: "bg-[var(--color-border-subtle)] text-[var(--color-primary)]",
       archived: "bg-[var(--color-text-secondary)] text-[#F9FAFB]",
     };
     return styles[status] || styles.draft;
@@ -204,7 +204,7 @@ const MyCoursesContent = () => {
                         clearTimeout(debounceRef.current);
                         debounceRef.current = setTimeout(() => setSearchQuery(e.target.value), 300);
                       }}
-                      className="w-full pl-10 pr-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                     />
                   </div>
 
@@ -213,7 +213,7 @@ const MyCoursesContent = () => {
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     >
                       <option value="all">
                         {t("courses.filters.allStatus")}
@@ -241,7 +241,7 @@ const MyCoursesContent = () => {
                     <select
                       value={deliveryFilter}
                       onChange={(e) => setDeliveryFilter(e.target.value)}
-                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     >
                       <option value="all">
                         {t("courses.filters.allDelivery")}
@@ -263,7 +263,7 @@ const MyCoursesContent = () => {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     >
                       <option value="newest">
                         {t("courses.sort.newest")}
@@ -280,17 +280,17 @@ const MyCoursesContent = () => {
                     </select>
 
                     {/* View Toggle */}
-                    <div className="flex items-center bg-white border border-[var(--color-border)] rounded-lg p-0.5">
+                    <div className="flex items-center bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg p-0.5">
                       <button
                         onClick={() => setViewMode("grid")}
-                        className={`p-2 rounded-md transition-colors ${viewMode === "grid" ? "bg-[#3B82F6] text-white" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"}`}
+                        className={`p-2 rounded-md transition-colors ${viewMode === "grid" ? "bg-[var(--color-primary)] text-white" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"}`}
                         title={t("courses.gridView")}
                       >
                         <LayoutGrid className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => setViewMode("list")}
-                        className={`p-2 rounded-md transition-colors ${viewMode === "list" ? "bg-[#3B82F6] text-white" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"}`}
+                        className={`p-2 rounded-md transition-colors ${viewMode === "list" ? "bg-[var(--color-primary)] text-white" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"}`}
                         title={t("courses.listView")}
                       >
                         <List className="w-4 h-4" />
@@ -311,7 +311,7 @@ const MyCoursesContent = () => {
                 <DashboardError message={error} onRetry={refetch} />
               ) : courses.length === 0 ? (
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
-                  <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mx-auto mb-4">
                     <BookOpen className="w-8 h-8 text-[var(--color-text-secondary)]" />
                   </div>
                   <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
@@ -352,7 +352,7 @@ const MyCoursesContent = () => {
                                 <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${getStatusBadge(course.status)}`}>
                                   {t(`courses.status.${course.status}`)}
                                 </span>
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/90 rounded-md text-xs font-medium text-[var(--color-text-secondary)]">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[var(--color-surface-card)]/90 rounded-md text-xs font-medium text-[var(--color-text-secondary)]">
                                   {getDeliveryIcon(course.deliveryType)}
                                   {t(`courses.delivery.${course.deliveryType}`)}
                                 </span>
@@ -418,7 +418,7 @@ const MyCoursesContent = () => {
                               <div className="flex gap-2 mt-auto">
                                 <Link
                                   href={`/${locale}/dashboard/instructor/courses/${course.id}`}
-                                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors"
                                 >
                                   {t("courses.viewDetails")}
                                   {locale === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -540,7 +540,7 @@ const MyCoursesContent = () => {
                               onClick={() => setCurrentPage(page)}
                               className={`w-9 h-9 rounded-lg text-sm font-medium ${
                                 page === currentPage
-                                  ? "bg-[#3B82F6] text-white"
+                                  ? "bg-[var(--color-primary)] text-white"
                                   : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                               }`}
                             >

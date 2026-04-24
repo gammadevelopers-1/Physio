@@ -42,7 +42,7 @@ const BlogPagination = ({ currentPage, totalPages, onPageChange, variant = "desk
               onClick={() => onPageChange(page)}
               className={`w-8 h-8 rounded-lg text-xs font-medium ${
                 currentPage === page
-                  ? "bg-[#F4F4F5] text-[var(--on-surface-default)]"
+                  ? "bg-[var(--color-border-subtle)] text-[var(--on-surface-default)]"
                   : "text-[var(--on-surface-variant)]"
               }`}
             >
@@ -70,7 +70,7 @@ const BlogPagination = ({ currentPage, totalPages, onPageChange, variant = "desk
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="px-5 py-2.5 rounded-full border border-[var(--color-border)] text-sm font-medium text-[var(--on-surface-default)] hover:bg-[#F4F4F5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-5 py-2.5 rounded-full border border-[var(--color-border)] text-sm font-medium text-[var(--on-surface-default)] hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span className="flex items-center gap-2" dir="ltr" style={{ display: "inline-flex", direction: "ltr" }}>
           <ArrowLeft className="w-4 h-4" />
@@ -85,8 +85,8 @@ const BlogPagination = ({ currentPage, totalPages, onPageChange, variant = "desk
             onClick={() => onPageChange(page)}
             className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
               currentPage === page
-                ? "bg-[#F4F4F5] text-[var(--on-surface-default)]"
-                : "text-[var(--on-surface-variant)] hover:bg-[#F4F4F5]"
+                ? "bg-[var(--color-border-subtle)] text-[var(--on-surface-default)]"
+                : "text-[var(--on-surface-variant)] hover:bg-[var(--color-border-subtle)]"
             }`}
           >
             {page}
@@ -97,7 +97,7 @@ const BlogPagination = ({ currentPage, totalPages, onPageChange, variant = "desk
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="px-5 py-2.5 rounded-full border border-[var(--color-border)] text-sm font-medium text-[var(--on-surface-default)] hover:bg-[#F4F4F5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-5 py-2.5 rounded-full border border-[var(--color-border)] text-sm font-medium text-[var(--on-surface-default)] hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span className="flex items-center gap-2" dir="ltr" style={{ display: "inline-flex", direction: "ltr" }}>
           {t("pagination.continue")}

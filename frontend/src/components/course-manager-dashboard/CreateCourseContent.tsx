@@ -64,7 +64,7 @@ function StepIndicator({
                   isCompleted
                     ? "bg-[#22C55E] text-white"
                     : isCurrent
-                      ? "bg-[#3B82F6] text-white"
+                      ? "bg-[var(--color-primary)] text-white"
                       : "bg-[var(--color-border)] text-[var(--color-text-secondary)]"
                 }`}
               >
@@ -73,7 +73,7 @@ function StepIndicator({
               <span
                 className={`mt-1.5 text-xs font-medium text-center whitespace-nowrap hidden sm:block ${
                   isCurrent
-                    ? "text-[#3B82F6]"
+                    ? "text-[var(--color-primary)]"
                     : isCompleted
                       ? "text-[#22C55E]"
                       : "text-[var(--color-text-secondary)]"
@@ -415,8 +415,8 @@ const CreateCourseContent = () => {
   const selectedTA = availableTAs.find((ta) => ta.id === selectedTAId);
 
   const inputClass =
-    "w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]";
-  const selectClass = `${inputClass} bg-white`;
+    "w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]";
+  const selectClass = `${inputClass} bg-[var(--color-surface-card)]`;
 
   const formatDate = (dateStr: string) => {
     return formatDateHijri(dateStr, calendarFormat, { locale });
@@ -598,7 +598,7 @@ const CreateCourseContent = () => {
                         <button
                           type="button"
                           onClick={removeThumbnail}
-                          className="absolute top-2 right-2 p-1 bg-white/90 rounded-full text-[var(--color-text-secondary)] hover:bg-white hover:text-red-500 transition-colors"
+                          className="absolute top-2 right-2 p-1 bg-[var(--color-surface-card)]/90 rounded-full text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-card)] hover:text-red-500 transition-colors"
                           aria-label={tA("removeImage")}
                         >
                           <X className="w-4 h-4" />
@@ -608,7 +608,7 @@ const CreateCourseContent = () => {
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-full max-w-md h-48 border-2 border-dashed border-[var(--color-border)] rounded-lg flex flex-col items-center justify-center text-[var(--color-text-secondary)] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                        className="w-full max-w-md h-48 border-2 border-dashed border-[var(--color-border)] rounded-lg flex flex-col items-center justify-center text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors"
                       >
                         <ImagePlus className="w-8 h-8 mb-2" />
                         <span className="text-sm font-medium">
@@ -663,7 +663,7 @@ const CreateCourseContent = () => {
                                 next[i] = e.target.value;
                                 setObjectives(next);
                               }}
-                              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                              className="flex-1 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
                               placeholder={`${t("createCourse.objectivePlaceholder")} ${i + 1}`}
                             />
                             <button type="button" onClick={() => setObjectives(objectives.filter((_, j) => j !== i))}
@@ -685,7 +685,7 @@ const CreateCourseContent = () => {
                                 next[i] = e.target.value;
                                 setObjectivesAr(next);
                               }}
-                              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                              className="flex-1 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
                               dir="rtl"
                               placeholder={`${i + 1}`}
                             />
@@ -710,7 +710,7 @@ const CreateCourseContent = () => {
                                 next[i] = e.target.value;
                                 setFeatures(next);
                               }}
-                              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                              className="flex-1 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
                               placeholder={`${t("createCourse.featurePlaceholder")} ${i + 1}`}
                             />
                             <button type="button" onClick={() => setFeatures(features.filter((_, j) => j !== i))}
@@ -732,7 +732,7 @@ const CreateCourseContent = () => {
                                 next[i] = e.target.value;
                                 setFeaturesAr(next);
                               }}
-                              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                              className="flex-1 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
                               dir="rtl"
                               placeholder={`${i + 1}`}
                             />
@@ -757,7 +757,7 @@ const CreateCourseContent = () => {
                                 next[i] = e.target.value;
                                 setTargetAudience(next);
                               }}
-                              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                              className="flex-1 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
                               placeholder={`${t("createCourse.audiencePlaceholder")} ${i + 1}`}
                             />
                             <button type="button" onClick={() => setTargetAudience(targetAudience.filter((_, j) => j !== i))}
@@ -779,7 +779,7 @@ const CreateCourseContent = () => {
                                 next[i] = e.target.value;
                                 setTargetAudienceAr(next);
                               }}
-                              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                              className="flex-1 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
                               dir="rtl"
                               placeholder={`${i + 1}`}
                             />
@@ -849,7 +849,7 @@ const CreateCourseContent = () => {
                               type="checkbox"
                               checked={showContents}
                               onChange={(e) => setShowContents(e.target.checked)}
-                              className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
+                              className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                             />
                             <div>
                               <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("createCourse.showContentsLabel")}</p>
@@ -868,7 +868,7 @@ const CreateCourseContent = () => {
                             type="checkbox"
                             checked={visibleOnPublicSite}
                             onChange={(e) => setVisibleOnPublicSite(e.target.checked)}
-                            className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
+                            className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                           />
                           <div>
                             <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("createCourse.visibleOnPublicLabel")}</p>
@@ -1095,7 +1095,7 @@ const CreateCourseContent = () => {
 
                     {loadingInstructors ? (
                       <div className="flex items-center justify-center py-8">
-                        <Loader2 className="w-6 h-6 text-[#3B82F6] animate-spin" />
+                        <Loader2 className="w-6 h-6 text-[var(--color-primary)] animate-spin" />
                       </div>
                     ) : (
                       <div className="relative">
@@ -1103,7 +1103,7 @@ const CreateCourseContent = () => {
                         <button
                           type="button"
                           onClick={() => setInstructorDropdownOpen(!instructorDropdownOpen)}
-                          className="w-full flex items-center gap-3 p-3 border border-[var(--color-border)] rounded-xl bg-white hover:border-[#3B82F6] transition-colors text-start"
+                          className="w-full flex items-center gap-3 p-3 border border-[var(--color-border)] rounded-xl bg-[var(--color-surface-card)] hover:border-[var(--color-primary)] transition-colors text-start"
                         >
                           {selectedInstructor ? (
                             <>
@@ -1119,7 +1119,7 @@ const CreateCourseContent = () => {
                                 <p className="text-[11px] text-[var(--color-text-secondary)] truncate">{selectedInstructor.email}</p>
                               </div>
                               {selectedInstructor.status && (
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${statusBadgeBg[selectedInstructor.status] || "bg-[#F3F4F6] text-[var(--color-text-secondary)]"}`}>
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${statusBadgeBg[selectedInstructor.status] || "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"}`}>
                                   {t(`instructorsPage.status.${selectedInstructor.status}` as Parameters<typeof t>[0])}
                                 </span>
                               )}
@@ -1132,7 +1132,7 @@ const CreateCourseContent = () => {
 
                         {/* Dropdown */}
                         {instructorDropdownOpen && (
-                          <div className="absolute z-20 mt-1 w-full bg-white border border-[var(--color-border)] rounded-xl shadow-lg max-h-[280px] overflow-hidden">
+                          <div className="absolute z-20 mt-1 w-full bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl shadow-lg max-h-[280px] overflow-hidden">
                             {/* Search */}
                             <div className="p-2 border-b border-[var(--color-border)]">
                               <div className="relative">
@@ -1142,7 +1142,7 @@ const CreateCourseContent = () => {
                                   value={instructorSearch}
                                   onChange={(e) => setInstructorSearch(e.target.value)}
                                   placeholder={isRTL ? "بحث..." : "Search..."}
-                                  className="w-full ps-8 pe-3 py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                  className="w-full ps-8 pe-3 py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                                   autoFocus
                                 />
                               </div>
@@ -1166,7 +1166,7 @@ const CreateCourseContent = () => {
                                       key={inst.id}
                                       type="button"
                                       onClick={() => { setInstructorId(inst.id); setInstructorDropdownOpen(false); setInstructorSearch(""); }}
-                                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-start transition-colors ${isSelected ? "bg-[#EFF6FF]" : "hover:bg-[var(--color-surface-page)]"}`}
+                                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-start transition-colors ${isSelected ? "bg-[var(--color-border-subtle)]" : "hover:bg-[var(--color-surface-page)]"}`}
                                     >
                                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center text-white text-[11px] font-semibold flex-shrink-0">
                                         {initials}
@@ -1181,7 +1181,7 @@ const CreateCourseContent = () => {
                                           {t(`instructorsPage.status.${inst.status}` as Parameters<typeof t>[0])}
                                         </span>
                                       )}
-                                      {isSelected && <Check className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />}
+                                      {isSelected && <Check className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0" />}
                                     </button>
                                   );
                                 })}
@@ -1211,7 +1211,7 @@ const CreateCourseContent = () => {
                       <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                         {t("createCourse.taAssignment")}
                       </h2>
-                      <span className="text-xs text-[var(--color-text-secondary)] bg-[#F3F4F6] px-2 py-0.5 rounded-full">
+                      <span className="text-xs text-[var(--color-text-secondary)] bg-[var(--color-border-subtle)] px-2 py-0.5 rounded-full">
                         {t("createCourse.optional")}
                       </span>
                     </div>
@@ -1242,14 +1242,14 @@ const CreateCourseContent = () => {
                         <button
                           type="button"
                           onClick={() => setTaDropdownOpen(!taDropdownOpen)}
-                          className="w-full flex items-center gap-3 p-3 border border-[var(--color-border)] rounded-xl bg-white hover:border-[#D97706] transition-colors text-start"
+                          className="w-full flex items-center gap-3 p-3 border border-[var(--color-border)] rounded-xl bg-[var(--color-surface-card)] hover:border-[#D97706] transition-colors text-start"
                         >
                           <span className="text-sm text-[var(--color-text-secondary)]">{t("createCourse.noneSelected")}</span>
                           <ChevronDown className={`w-4 h-4 text-[var(--color-text-secondary)] ms-auto transition-transform ${taDropdownOpen ? "rotate-180" : ""}`} />
                         </button>
 
                         {taDropdownOpen && (
-                          <div className="absolute z-20 mt-1 w-full bg-white border border-[var(--color-border)] rounded-xl shadow-lg max-h-[280px] overflow-hidden">
+                          <div className="absolute z-20 mt-1 w-full bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl shadow-lg max-h-[280px] overflow-hidden">
                             <div className="p-2 border-b border-[var(--color-border)]">
                               <div className="relative">
                                 <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
@@ -1563,19 +1563,19 @@ const CreateCourseContent = () => {
                           )}
                           <div className="sm:col-span-2 flex items-center gap-4 flex-wrap">
                             <span
-                              className={`px-2 py-1 text-xs rounded-full ${nelcAccreditation ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}
+                              className={`px-2 py-1 text-xs rounded-full ${nelcAccreditation ? "bg-green-50 text-green-700" : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"}`}
                             >
                               {nelcAccreditation ? "\u2713" : "\u2717"}{" "}
                               {t("createCourse.nelcAccreditation")}
                             </span>
                             <span
-                              className={`px-2 py-1 text-xs rounded-full ${bilingualContent ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}
+                              className={`px-2 py-1 text-xs rounded-full ${bilingualContent ? "bg-green-50 text-green-700" : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"}`}
                             >
                               {bilingualContent ? "\u2713" : "\u2717"}{" "}
                               {t("createCourse.bilingualContent")}
                             </span>
                             <span
-                              className={`px-2 py-1 text-xs rounded-full ${wcagCompliant ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}
+                              className={`px-2 py-1 text-xs rounded-full ${wcagCompliant ? "bg-green-50 text-green-700" : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"}`}
                             >
                               {wcagCompliant ? "\u2713" : "\u2717"}{" "}
                               {t("createCourse.wcagCompliant")}
@@ -1601,7 +1601,7 @@ const CreateCourseContent = () => {
                               ({selectedInstructor.email})
                             </p>
                             {selectedInstructor.status && (
-                              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-50 border border-[var(--color-border)]">
+                              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-[var(--color-surface-page)] border border-[var(--color-border)]">
                                 <span className={`w-1.5 h-1.5 rounded-full ${getStatusColor(selectedInstructor.status)}`} />
                                 {getInstructorStatusLabel(selectedInstructor.status, t)}
                               </span>
@@ -1652,7 +1652,7 @@ const CreateCourseContent = () => {
                   <button
                     type="button"
                     onClick={goNext}
-                    className="inline-flex items-center gap-1.5 px-5 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors"
                   >
                     {t("createCourse.next")}
                     {isRTL ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
@@ -1662,7 +1662,7 @@ const CreateCourseContent = () => {
                     type="button"
                     onClick={handleSubmit}
                     disabled={submitting}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
                   >
                     {submitting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

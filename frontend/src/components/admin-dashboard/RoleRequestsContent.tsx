@@ -174,7 +174,7 @@ const RoleRequestsContent = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm bg-white outline-none focus:border-[#002D87]"
+                className="h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)] outline-none focus:border-[#002D87]"
               >
                 <option value="all">{t("roleRequestsPage.filterAll") || "All Status"}</option>
                 <option value="PENDING">{t("roleRequestsPage.filterPending") || "Pending"}</option>
@@ -196,7 +196,7 @@ const RoleRequestsContent = () => {
           <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-[#002D87]" />
+                <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
               </div>
             ) : requests.length === 0 ? (
               <div className="text-center py-16">
@@ -262,7 +262,7 @@ const RoleRequestsContent = () => {
                             <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                               <Link
                                 href={`/${locale}/dashboard/admin/role-requests/${request.id}`}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#002D87] bg-[#EFF6FF] rounded-lg hover:bg-[#DBEAFE] transition-colors"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--color-primary)] bg-[var(--color-border-subtle)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
                               >
                                 <Eye className="w-3.5 h-3.5" />
                                 {t("roleRequestsPage.review") || "Review"}
@@ -326,7 +326,7 @@ const RoleRequestsContent = () => {
                             onClick={() => setCurrentPage(page)}
                             className={`w-8 h-8 rounded-lg text-sm font-medium ${
                               page === currentPage
-                                ? "bg-[#002D87] text-white"
+                                ? "bg-[var(--color-primary)] text-white"
                                 : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                             }`}
                           >

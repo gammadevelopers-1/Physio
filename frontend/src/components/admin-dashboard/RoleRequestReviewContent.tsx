@@ -181,7 +181,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
           {/* Loading */}
           {isLoading && (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-[#002D87]" />
+              <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
             </div>
           )}
 
@@ -281,8 +281,8 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
                       >
-                        <div className="w-10 h-10 bg-[#EFF6FF] rounded-lg flex items-center justify-center shrink-0">
-                          <Download className="w-5 h-5 text-[#002D87]" />
+                        <div className="w-10 h-10 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center shrink-0">
+                          <Download className="w-5 h-5 text-[var(--color-primary)]" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{file.filename || file.type}</p>
@@ -442,7 +442,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
 function InfoField({ icon: Icon, label, value, className = "" }: { icon: React.ComponentType<{ className?: string }>; label: string; value?: string | null; className?: string }) {
   return (
     <div className={`flex items-start gap-3 ${className}`}>
-      <div className="w-9 h-9 bg-[#F3F4F6] rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+      <div className="w-9 h-9 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center shrink-0 mt-0.5">
         <Icon className="w-4 h-4 text-[var(--color-text-secondary)]" />
       </div>
       <div className="min-w-0">

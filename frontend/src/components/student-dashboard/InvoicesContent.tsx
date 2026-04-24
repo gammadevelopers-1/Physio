@@ -113,7 +113,7 @@ const InvoicesContent = () => {
                 {invoices.length === 0 ? (
                   // Empty State
                   <div className="flex flex-col items-center justify-center py-10 sm:py-16">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mb-3 sm:mb-4">
                       <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--color-text-secondary)]" />
                     </div>
                     <h3 className="text-sm sm:text-base font-medium text-[var(--color-text-primary)] mb-1">
@@ -190,14 +190,14 @@ const InvoicesContent = () => {
                             <td className="py-4 px-4 relative">
                               <button
                                 onClick={() => toggleMenu(invoice.id)}
-                                className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
+                                className="p-1 hover:bg-[var(--color-border-subtle)] rounded transition-colors"
                                 aria-label={t("invoices.moreOptions")}
                               >
                                 <MoreVertical className="w-5 h-5 text-[var(--color-text-secondary)]" />
                               </button>
                               {openMenuId === invoice.id && (
                                 <div
-                                  className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
+                                  className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                 >
                                   <button
                                     className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
@@ -234,14 +234,14 @@ const InvoicesContent = () => {
                             <div className="relative">
                               <button
                                 onClick={() => toggleMenu(invoice.id)}
-                                className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
+                                className="p-1 hover:bg-[var(--color-border-subtle)] rounded transition-colors"
                                 aria-label={t("invoices.moreOptions")}
                               >
                                 <MoreVertical className="w-5 h-5 text-[var(--color-text-secondary)]" />
                               </button>
                               {openMenuId === invoice.id && (
                                 <div
-                                  className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
+                                  className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                 >
                                   <button
                                     className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}

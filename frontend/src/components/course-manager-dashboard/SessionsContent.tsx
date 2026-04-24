@@ -118,7 +118,7 @@ function ScheduleSessionModal({
         <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
           {t("sessionsPage.scheduleSessionTitle")}
         </h2>
-        <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
+        <button onClick={onClose} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors">
           <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
@@ -131,7 +131,7 @@ function ScheduleSessionModal({
           <select
             value={courseId}
             onChange={(e) => setCourseId(e.target.value)}
-            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-white"
+            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
           >
             <option value="">{t("sessionsPage.form.selectCourse")}</option>
             {courses.map((c) => (
@@ -205,8 +205,8 @@ function ScheduleSessionModal({
                 onClick={() => setType(opt)}
                 className={`flex flex-col items-center gap-1.5 p-3 rounded-lg transition-colors ${
                   type === opt
-                    ? "border-2 border-[#3B82F6] bg-[#EFF6FF] text-[#3B82F6]"
-                    : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[#3B82F6]"
+                    ? "border-2 border-[var(--color-primary)] bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
+                    : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)]"
                 }`}
               >
                 {opt === "zoom" && <Video className="w-5 h-5" />}
@@ -220,8 +220,8 @@ function ScheduleSessionModal({
 
         {/* Zoom info */}
         {(type === "zoom" || type === "hybrid") && (
-          <div className="flex items-start gap-2 p-3 bg-[#EFF6FF] rounded-lg">
-            <Video className="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5" />
+          <div className="flex items-start gap-2 p-3 bg-[var(--color-border-subtle)] rounded-lg">
+            <Video className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0 mt-0.5" />
             <p className="text-xs text-[#1E40AF]">
               {t("sessionsPage.zoomAutoCreate") || "Zoom meeting will be auto-created for the instructor."}
             </p>
@@ -263,7 +263,7 @@ function ScheduleSessionModal({
         <button
           onClick={handleSubmit}
           disabled={saving || !courseId || !title.trim() || !date || !time}
-          className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg disabled:opacity-50"
         >
           {saving && <Loader2 className="w-4 h-4 animate-spin" />}
           {t("sessionsPage.form.schedule")}
@@ -457,11 +457,11 @@ const SessionsContent = () => {
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, { bg: string; text: string; label: string }> = {
-      scheduled: { bg: "bg-[#EFF6FF]", text: "text-[#3B82F6]", label: t("sessionsPage.statusUpcoming") },
+      scheduled: { bg: "bg-[var(--color-border-subtle)]", text: "text-[var(--color-primary)]", label: t("sessionsPage.statusUpcoming") },
       live: { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: t("sessionsPage.statusLive") },
       ended: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessionsPage.statusEnded") },
       completed: { bg: "bg-[#DCFCE7]", text: "text-[#22C55E]", label: t("sessionsPage.statusCompleted") },
-      cancelled: { bg: "bg-[#F3F4F6]", text: "text-[var(--color-text-secondary)]", label: t("sessionsPage.statusCancelled") },
+      cancelled: { bg: "bg-[var(--color-border-subtle)]", text: "text-[var(--color-text-secondary)]", label: t("sessionsPage.statusCancelled") },
       missed: { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: "Missed" },
       rescheduled: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: "Rescheduled" },
     };
@@ -481,7 +481,7 @@ const SessionsContent = () => {
 
   const getTypeBadgeStyle = (type: string) => {
     const styles: Record<string, string> = {
-      zoom: "bg-[#EFF6FF] text-[#3B82F6]",
+      zoom: "bg-[var(--color-border-subtle)] text-[var(--color-primary)]",
       onsite: "bg-[#DCFCE7] text-[#22C55E]",
       hybrid: "bg-[#F3E8FF] text-[#9333EA]",
     };
@@ -676,7 +676,7 @@ const SessionsContent = () => {
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${dimmed ? "bg-[#F3F4F6] text-[var(--color-text-secondary)]" : getTypeBadgeStyle(session.type)}`}>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${dimmed ? "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]" : getTypeBadgeStyle(session.type)}`}>
               {getTypeIcon(session.type)}
             </div>
             <div>
@@ -759,12 +759,12 @@ const SessionsContent = () => {
             <div className="relative">
               <button
                 onClick={(e) => { e.stopPropagation(); setActionDropdown(actionDropdown === session.id ? null : session.id); }}
-                className="p-1.5 hover:bg-[#F3F4F6] rounded-lg transition-colors"
+                className="p-1.5 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
               >
                 <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
               </button>
               {actionDropdown === session.id && (
-                <div className={`absolute ${isRTL ? "left-0" : "right-0"} top-full mt-1 w-48 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 py-1`}>
+                <div className={`absolute ${isRTL ? "left-0" : "right-0"} top-full mt-1 w-48 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg z-10 py-1`}>
                   {(session.status === "completed" || session.status === "ended" || session.status === "cancelled") && (
                     <button
                       onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setAttendanceModal({ id: session.id, title: session.title, courseId: session.courseId }); }}
@@ -825,7 +825,7 @@ const SessionsContent = () => {
                 </div>
                 <button
                   onClick={() => setShowScheduleModal(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg"
                 >
                   <CalendarDays className="w-4 h-4" />
                   {t("sessionsPage.scheduleSession")}
@@ -834,17 +834,17 @@ const SessionsContent = () => {
 
               {/* Filters row */}
               <div className="flex items-center gap-3 flex-wrap mb-6">
-                <div className="flex items-center bg-white border border-[var(--color-border)] rounded-lg p-1">
+                <div className="flex items-center bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg p-1">
                   <button
                     onClick={() => setViewMode("list")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "list" ? "btn-gold text-white" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"}`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "list" ? "btn-gold text-[var(--color-button-text)]" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"}`}
                   >
                     <List className="w-4 h-4" />
                     {t("sessionsPage.listView")}
                   </button>
                   <button
                     onClick={() => setViewMode("calendar")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "calendar" ? "btn-gold text-white" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"}`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "calendar" ? "btn-gold text-[var(--color-button-text)]" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"}`}
                   >
                     <Calendar className="w-4 h-4" />
                     {t("sessionsPage.calendarView")}
@@ -853,7 +853,7 @@ const SessionsContent = () => {
                 <select
                   value={statusFilter}
                   onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                  className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-white"
+                  className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
                 >
                   <option value="">{t("sessionsPage.allStatuses")}</option>
                   <option value="scheduled">{t("sessionsPage.statusUpcoming")}</option>
@@ -865,7 +865,7 @@ const SessionsContent = () => {
                 <select
                   value={instructorFilter}
                   onChange={(e) => { setInstructorFilter(e.target.value); setCurrentPage(1); }}
-                  className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-white"
+                  className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
                 >
                   <option value="">{t("sessionsPage.allInstructors")}</option>
                   {instructors.map((inst) => (
@@ -874,7 +874,7 @@ const SessionsContent = () => {
                 </select>
                 <button
                   onClick={() => setShowMoreFilters(!showMoreFilters)}
-                  className="px-3 py-2 text-sm text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#EFF6FF] transition-colors"
+                  className="px-3 py-2 text-sm text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
                 >
                   {showMoreFilters ? t("sessionsPage.lessFilters") : t("sessionsPage.moreFilters")}
                 </button>
@@ -882,14 +882,14 @@ const SessionsContent = () => {
 
               {/* Advanced Filters Panel */}
               {showMoreFilters && (
-                <div className="bg-white border border-[var(--color-border)] rounded-xl p-4 mb-4">
+                <div className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl p-4 mb-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div>
                       <label className="block text-xs text-[var(--color-text-secondary)] mb-1">{t("sessionsPage.filterByCourse")}</label>
                       <select
                         value={courseFilter}
                         onChange={(e) => { setCourseFilter(e.target.value); setCurrentPage(1); }}
-                        className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-white"
+                        className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
                       >
                         <option value="">{t("sessionsPage.allCourses")}</option>
                         {coursesList.map((c) => (
@@ -902,7 +902,7 @@ const SessionsContent = () => {
                       <select
                         value={typeFilter}
                         onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
-                        className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-white"
+                        className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
                       >
                         <option value="">{t("sessionsPage.allTypes")}</option>
                         <option value="zoom">{t("sessionsPage.typeZoom")}</option>
@@ -969,7 +969,7 @@ const SessionsContent = () => {
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
                   <p className="text-sm text-[var(--color-text-secondary)] mb-4">{error}</p>
-                  <button onClick={refetch} className="px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg">{t("dashboard.retry")}</button>
+                  <button onClick={refetch} className="px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg">{t("dashboard.retry")}</button>
                 </div>
               )}
 
@@ -1013,7 +1013,7 @@ const SessionsContent = () => {
                       >
                         <div className="flex items-center gap-2">
                           <h2 className="text-base font-semibold text-[var(--color-text-primary)]">{t("sessionsPage.past")}</h2>
-                          <span className="text-xs font-medium text-[var(--color-text-secondary)] bg-[#F3F4F6] px-2 py-0.5 rounded-full">{pastSessions.length}</span>
+                          <span className="text-xs font-medium text-[var(--color-text-secondary)] bg-[var(--color-border-subtle)] px-2 py-0.5 rounded-full">{pastSessions.length}</span>
                         </div>
                         <ChevronDown className={`w-5 h-5 text-[var(--color-text-secondary)] transition-transform ${showPast ? "rotate-180" : ""}`} />
                       </button>
@@ -1039,14 +1039,14 @@ const SessionsContent = () => {
               {!loading && !error && viewMode === "calendar" && (
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                   <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
-                    <button onClick={goToPrevMonth} className="p-2 hover:bg-[#F3F4F6] rounded-lg">{isRTL ? <ChevronRight className="w-5 h-5 text-[var(--color-text-secondary)]" /> : <ChevronLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />}</button>
+                    <button onClick={goToPrevMonth} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg">{isRTL ? <ChevronRight className="w-5 h-5 text-[var(--color-text-secondary)]" /> : <ChevronLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />}</button>
                     <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{calendarData.headerLabel}</h2>
-                    <button onClick={goToNextMonth} className="p-2 hover:bg-[#F3F4F6] rounded-lg">{isRTL ? <ChevronLeft className="w-5 h-5 text-[var(--color-text-secondary)]" /> : <ChevronRight className="w-5 h-5 text-[var(--color-text-secondary)]" />}</button>
+                    <button onClick={goToNextMonth} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg">{isRTL ? <ChevronLeft className="w-5 h-5 text-[var(--color-text-secondary)]" /> : <ChevronRight className="w-5 h-5 text-[var(--color-text-secondary)]" />}</button>
                   </div>
                   <div className="flex items-center justify-end px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
                     <button
                       onClick={() => setCalendarFormat(useHijri ? "gregorian" : "hijri")}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border border-[var(--color-border)] hover:bg-white transition-colors text-[var(--color-text-secondary)]"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border border-[var(--color-border)] hover:bg-[var(--color-surface-card)] transition-colors text-[var(--color-text-secondary)]"
                     >
                       {useHijri ? (t("sessionsPage.gregorian") || "Gregorian") : (t("sessionsPage.hijri") || "Hijri")}
                     </button>
@@ -1061,8 +1061,8 @@ const SessionsContent = () => {
                       const todayObj = new Date();
                       const isToday = gDate.getDate() === todayObj.getDate() && gDate.getMonth() === todayObj.getMonth() && gDate.getFullYear() === todayObj.getFullYear();
                       return (
-                        <div key={day} className={`min-h-[100px] p-2 border-b border-r border-[var(--color-border)] ${isToday ? "bg-[#EFF6FF]" : ""}`}>
-                          <span className={`inline-flex items-center justify-center w-7 h-7 text-sm ${isToday ? "bg-[#3B82F6] text-white rounded-full font-semibold" : "text-[var(--color-text-primary)]"}`}>{day}</span>
+                        <div key={day} className={`min-h-[100px] p-2 border-b border-r border-[var(--color-border)] ${isToday ? "bg-[var(--color-border-subtle)]" : ""}`}>
+                          <span className={`inline-flex items-center justify-center w-7 h-7 text-sm ${isToday ? "bg-[var(--color-primary)] text-white rounded-full font-semibold" : "text-[var(--color-text-primary)]"}`}>{day}</span>
                           <div className="mt-1 space-y-1">
                             {daySessions.slice(0, 2).map((session) => (<div key={session.id} className={`px-1.5 py-0.5 rounded text-[10px] truncate ${getTypeBadgeStyle(session.type)}`} title={session.title}>{session.title}</div>))}
                             {daySessions.length > 2 && (<div className="text-[10px] text-[var(--color-text-secondary)] px-1.5">+{daySessions.length - 2} {isRTL ? "أكثر" : "more"}</div>)}
@@ -1096,7 +1096,7 @@ const SessionsContent = () => {
           <div className="bg-[var(--color-surface-card)] rounded-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Cancel Session</h3>
-              <button onClick={() => setCancelModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg"><X className="w-5 h-5 text-[var(--color-text-secondary)]" /></button>
+              <button onClick={() => setCancelModal(null)} className="p-1 hover:bg-[var(--color-border-subtle)] rounded-lg"><X className="w-5 h-5 text-[var(--color-text-secondary)]" /></button>
             </div>
             {actionSuccess ? (
               <div className="text-center py-6">
@@ -1110,7 +1110,7 @@ const SessionsContent = () => {
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
                   placeholder="Reason for cancellation..."
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[#3B82F6] outline-none resize-none h-24"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[var(--color-primary)] outline-none resize-none h-24"
                 />
                 <div className="flex justify-end gap-3">
                   <button onClick={() => setCancelModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)]">Close</button>
@@ -1130,7 +1130,7 @@ const SessionsContent = () => {
           <div className="bg-[var(--color-surface-card)] rounded-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Reschedule Session</h3>
-              <button onClick={() => setRescheduleModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg"><X className="w-5 h-5 text-[var(--color-text-secondary)]" /></button>
+              <button onClick={() => setRescheduleModal(null)} className="p-1 hover:bg-[var(--color-border-subtle)] rounded-lg"><X className="w-5 h-5 text-[var(--color-text-secondary)]" /></button>
             </div>
             {actionSuccess ? (
               <div className="text-center py-6">
@@ -1164,7 +1164,7 @@ const SessionsContent = () => {
           <div className="bg-[var(--color-surface-card)] rounded-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Assign Substitute</h3>
-              <button onClick={() => setSubstituteModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg"><X className="w-5 h-5 text-[var(--color-text-secondary)]" /></button>
+              <button onClick={() => setSubstituteModal(null)} className="p-1 hover:bg-[var(--color-border-subtle)] rounded-lg"><X className="w-5 h-5 text-[var(--color-text-secondary)]" /></button>
             </div>
             {actionSuccess ? (
               <div className="text-center py-6">
@@ -1177,7 +1177,7 @@ const SessionsContent = () => {
                 <select
                   value={substituteId}
                   onChange={(e) => setSubstituteId(e.target.value)}
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[#3B82F6] outline-none"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[var(--color-primary)] outline-none"
                 >
                   <option value="">Select instructor...</option>
                   {instructors.map((inst) => (
@@ -1205,14 +1205,14 @@ const SessionsContent = () => {
                 <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("sessionsPage.attendanceTitle")}</h3>
                 <p className="text-sm text-[var(--color-text-secondary)]">{attendanceModal.title}</p>
               </div>
-              <button onClick={() => setAttendanceModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
+              <button onClick={() => setAttendanceModal(null)} className="p-1 hover:bg-[var(--color-border-subtle)] rounded-lg">
                 <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
             </div>
 
             {attendanceLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 text-[#3B82F6] animate-spin" />
+                <Loader2 className="w-6 h-6 text-[var(--color-primary)] animate-spin" />
               </div>
             ) : attendanceData.length === 0 ? (
               <div className="text-center py-12">
@@ -1269,14 +1269,14 @@ const SessionsContent = () => {
                           present: "bg-[#D1FAE5] text-[#065F46]",
                           absent: "bg-[#FEE2E2] text-[#991B1B]",
                           late: "bg-[#FEF3C7] text-[#92400E]",
-                          excused: "bg-[#DBEAFE] text-[#1E40AF]",
+                          excused: "bg-[var(--color-border-subtle)] text-[#1E40AF]",
                         };
                         const presPercent = (record as any).presencePercent;
                         return (
                           <tr key={`${record.studentId}-${idx}`} className="hover:bg-[var(--color-surface-page)]">
                             <td className="px-3 py-2 text-[var(--color-text-primary)]">{name}</td>
                             <td className="px-3 py-2">
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColors[record.status] || "bg-[#F3F4F6] text-[var(--color-text-secondary)]"}`}>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColors[record.status] || "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"}`}>
                                 {record.status}
                               </span>
                             </td>
@@ -1311,7 +1311,7 @@ const SessionsContent = () => {
                 <select
                   value={exportFormat}
                   onChange={(e) => setExportFormat(e.target.value as "csv" | "pdf" | "xlsx")}
-                  className="px-2 py-2 text-xs border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] bg-white focus:ring-1 focus:ring-[#3B82F6] outline-none"
+                  className="px-2 py-2 text-xs border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none"
                 >
                   <option value="csv">CSV</option>
                   <option value="pdf">PDF</option>

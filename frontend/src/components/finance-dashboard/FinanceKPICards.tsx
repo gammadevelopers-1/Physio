@@ -57,8 +57,8 @@ const FinanceKPICards = ({ data }: FinanceKPICardsProps) => {
       value: formatCurrency(data.netRevenue),
       subLabel: t("kpi.afterRefunds"),
       icon: BarChart3,
-      iconBg: "bg-[#EFF6FF]",
-      iconColor: "text-[#3B82F6]",
+      iconBg: "bg-[var(--color-border-subtle)]",
+      iconColor: "text-[var(--color-primary)]",
     },
     {
       id: "avgOrderValue",

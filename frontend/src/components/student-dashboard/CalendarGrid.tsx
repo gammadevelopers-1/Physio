@@ -119,7 +119,7 @@ const CalendarGrid = ({
         <div className="flex items-center gap-2">
           <button
             onClick={onPrevMonth}
-            className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
+            className="p-1.5 rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
             aria-label={t("calendarPage.previousMonth")}
           >
             <PrevIcon className="w-5 h-5 text-[var(--color-text-secondary)]" />
@@ -129,7 +129,7 @@ const CalendarGrid = ({
           </h2>
           <button
             onClick={onNextMonth}
-            className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
+            className="p-1.5 rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
             aria-label={t("calendarPage.nextMonth")}
           >
             <NextIcon className="w-5 h-5 text-[var(--color-text-secondary)]" />
@@ -138,7 +138,7 @@ const CalendarGrid = ({
 
         <button
           onClick={onToday}
-          className="px-3 py-1.5 text-xs font-medium text-[#002D87] border border-[#002D87] rounded-lg hover:bg-[#F0F7FF] transition-colors"
+          className="px-3 py-1.5 text-xs font-medium text-[var(--color-primary)] border border-[#002D87] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
         >
           {t("calendarPage.today")}
         </button>
@@ -179,9 +179,9 @@ const CalendarGrid = ({
               <span
                 className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-sm transition-colors ${
                   isSelected
-                    ? "bg-[#002D87] text-white font-medium"
+                    ? "bg-[var(--color-primary)] text-white font-medium"
                     : isToday
-                      ? "ring-2 ring-[#002D87] text-[#002D87] font-medium"
+                      ? "ring-2 ring-[#002D87] text-[var(--color-primary)] font-medium"
                       : isCurrentMonth
                         ? "text-[var(--color-text-primary)]"
                         : "text-[var(--color-text-secondary)]"

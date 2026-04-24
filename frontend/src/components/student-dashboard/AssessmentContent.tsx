@@ -373,7 +373,7 @@ const AssessmentContent = () => {
         color: "bg-amber-50 text-amber-700",
       },
     };
-    return map[type] || { label: type, color: "bg-gray-50 text-gray-700" };
+    return map[type] || { label: type, color: "bg-[var(--color-surface-page)] text-[var(--color-text-primary)]" };
   };
 
   // ─── Loading / Error ────────────────────────────────────
@@ -394,7 +394,7 @@ const AssessmentContent = () => {
           <p className="text-[var(--color-text-secondary)] mb-4">{error}</p>
           <Link
             href={`/${locale}/dashboard/student/courses/${courseId}`}
-            className="text-sm text-[#002D87] hover:underline"
+            className="text-sm text-[var(--color-primary)] hover:underline"
           >
             {t("courseDetail.backToCourses")}
           </Link>
@@ -466,7 +466,7 @@ const AssessmentContent = () => {
           <div className="flex flex-col gap-3 mt-4">
             <Link
               href={`/${locale}/dashboard/student/courses/${courseId}`}
-              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 btn-gold text-white text-sm font-medium rounded-lg"
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg"
             >
               {t("assessment.backToCourse")}
             </Link>
@@ -481,7 +481,7 @@ const AssessmentContent = () => {
                   }).catch(() => {}).finally(() => setReviewLoading(false));
                 }}
                 disabled={reviewLoading}
-                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 border border-[#002D87] text-[#002D87] text-sm font-medium rounded-lg hover:bg-[#F0F7FF] transition-colors disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 border border-[#002D87] text-[var(--color-primary)] text-sm font-medium rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-60"
               >
                 {reviewLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
                 {t("assessment.reviewAnswers")}
@@ -505,12 +505,12 @@ const AssessmentContent = () => {
     if (reviewMode && reviewData) {
       return (
         <div className="min-h-screen bg-[var(--color-surface-page)]" dir={isRTL ? "rtl" : "ltr"}>
-          <div className="bg-white border-b border-[var(--color-border)] px-4 py-3">
+          <div className="bg-[var(--color-surface-card)] border-b border-[var(--color-border)] px-4 py-3">
             <div className="max-w-[700px] mx-auto flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Link
                   href={`/${locale}/dashboard/student/courses/${courseId}`}
-                  className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
                 >
                   <BackIcon className="w-5 h-5 text-[var(--color-text-secondary)]" />
                 </Link>
@@ -564,11 +564,11 @@ const AssessmentContent = () => {
                   {reviewData.submissionFiles.map((f) => (
                     <div key={f.id} className="flex items-center justify-between p-3 bg-[var(--color-surface-page)] rounded-lg">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <FileText className="w-4 h-4 text-[#3B82F6] shrink-0" />
+                        <FileText className="w-4 h-4 text-[var(--color-primary)] shrink-0" />
                         <span className="text-sm text-[var(--color-text-secondary)] truncate">{f.fileName}</span>
                         <span className="text-xs text-[var(--color-text-secondary)] shrink-0">{(f.fileSize / 1024).toFixed(0)} KB</span>
                       </div>
-                      <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 text-[#3B82F6] hover:bg-[#EFF6FF] rounded">
+                      <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] rounded">
                         <Download className="w-4 h-4" />
                       </a>
                     </div>
@@ -579,7 +579,7 @@ const AssessmentContent = () => {
 
             <Link
               href={`/${locale}/dashboard/student/courses/${courseId}`}
-              className="inline-flex items-center justify-center gap-2 w-full px-6 py-2.5 btn-gold text-white text-sm font-medium rounded-lg"
+              className="inline-flex items-center justify-center gap-2 w-full px-6 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg"
             >
               {t("assessment.backToCourse")}
             </Link>
@@ -628,7 +628,7 @@ const AssessmentContent = () => {
             <div className="flex flex-col gap-3">
               <Link
                 href={`/${locale}/dashboard/student/courses/${courseId}`}
-                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 btn-gold text-white text-sm font-medium rounded-lg"
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg"
               >
                 {t("assessment.backToCourse")}
               </Link>
@@ -636,7 +636,7 @@ const AssessmentContent = () => {
                 <button
                   onClick={handleLoadReview}
                   disabled={reviewLoading}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-2.5 border border-[#002D87] text-[#002D87] text-sm font-medium rounded-lg hover:bg-[#F0F7FF] transition-colors disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-2.5 border border-[#002D87] text-[var(--color-primary)] text-sm font-medium rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-60"
                 >
                   {reviewLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
                   {t("assessment.reviewAnswers")}
@@ -680,7 +680,7 @@ const AssessmentContent = () => {
           {/* Already Submitted Banner */}
           {hasExistingSubmission && !result && (
             <div className="flex items-center gap-2 p-4 bg-blue-50 border border-blue-200 rounded-xl mb-4">
-              <CheckCircle2 className="w-5 h-5 text-[#002D87] flex-shrink-0" />
+              <CheckCircle2 className="w-5 h-5 text-[var(--color-primary)] flex-shrink-0" />
               <p className="text-sm font-medium text-[#1E3A8A]">{t("assessment.assignmentSubmitted") || "Assignment already submitted"}</p>
             </div>
           )}
@@ -721,11 +721,11 @@ const AssessmentContent = () => {
                 {assessment.assignmentFiles.map((f) => (
                   <div key={f.id} className="flex items-center justify-between p-3 bg-[var(--color-surface-page)] rounded-lg">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <FileText className="w-4 h-4 text-[#3B82F6] shrink-0" />
+                      <FileText className="w-4 h-4 text-[var(--color-primary)] shrink-0" />
                       <span className="text-sm text-[var(--color-text-secondary)] truncate">{f.fileName}</span>
                       <span className="text-xs text-[var(--color-text-secondary)] shrink-0">{(f.fileSize / 1024).toFixed(0)} KB</span>
                     </div>
-                    <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 px-3 py-1.5 text-sm text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors">
+                    <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 px-3 py-1.5 text-sm text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors">
                       <Download className="w-4 h-4" />
                       {t("assessment.downloadFile") || "Download"}
                     </a>
@@ -740,7 +740,7 @@ const AssessmentContent = () => {
             <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 mb-6">
               <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">{t("assessment.uploadFiles") || "Upload Your Files"}</h3>
 
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[var(--color-border)] rounded-xl cursor-pointer hover:border-[#3B82F6] hover:bg-[#EFF6FF] transition-colors mb-3">
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[var(--color-border)] rounded-xl cursor-pointer hover:border-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] transition-colors mb-3">
                 <div className="flex flex-col items-center">
                   <Upload className="w-8 h-8 text-[var(--color-text-secondary)] mb-1" />
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("assessment.dragDropFiles") || "Click to select files"}</p>
@@ -801,7 +801,7 @@ const AssessmentContent = () => {
               {/* Upload progress */}
               {assignmentUploading && (
                 <div className="w-full bg-[var(--color-border)] rounded-full h-2 mb-4">
-                  <div className="bg-[#3B82F6] h-2 rounded-full transition-all" style={{ width: `${assignmentUploadPct}%` }} />
+                  <div className="bg-[var(--color-primary)] h-2 rounded-full transition-all" style={{ width: `${assignmentUploadPct}%` }} />
                 </div>
               )}
 
@@ -809,7 +809,7 @@ const AssessmentContent = () => {
               <button
                 onClick={handleAssignmentSubmit}
                 disabled={assignmentFiles.length === 0 || assignmentUploading}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 btn-gold text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {assignmentUploading ? (
                   <>
@@ -854,12 +854,12 @@ const AssessmentContent = () => {
     return (
       <div className="min-h-screen bg-[var(--color-surface-page)]" dir={isRTL ? "rtl" : "ltr"}>
         {/* Top Bar */}
-        <div className="bg-white border-b border-[var(--color-border)] px-4 py-3">
+        <div className="bg-[var(--color-surface-card)] border-b border-[var(--color-border)] px-4 py-3">
           <div className="max-w-[900px] mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Link
                 href={`/${locale}/dashboard/student/courses/${courseId}`}
-                className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
+                className="p-1.5 rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
               >
                 <BackIcon className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </Link>
@@ -876,7 +876,7 @@ const AssessmentContent = () => {
 
         {/* Attempt Selector */}
         {reviewableAttempts.length > 1 && (
-          <div className="bg-white border-b border-[var(--color-border)] px-4 py-2">
+          <div className="bg-[var(--color-surface-card)] border-b border-[var(--color-border)] px-4 py-2">
             <div className="max-w-[900px] mx-auto flex items-center gap-2 overflow-x-auto">
               {reviewableAttempts.map((attempt) => {
                 const isActive = attempt.id === reviewAttemptId;
@@ -888,8 +888,8 @@ const AssessmentContent = () => {
                     disabled={reviewLoading}
                     className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-60 ${
                       isActive
-                        ? "bg-[#002D87] text-white"
-                        : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
+                        ? "bg-[var(--color-primary)] text-white"
+                        : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
                     }`}
                   >
                     {attempt.attemptNumber === 1
@@ -900,7 +900,7 @@ const AssessmentContent = () => {
                     </span>
                     {attempt.isEffective && (
                       <span className={`px-1 py-0.5 rounded text-[9px] font-bold ${
-                        isActive ? "bg-white/20 text-white" : "bg-[#DCFCE7] text-[#15803D]"
+                        isActive ? "bg-[var(--color-surface-card)]/20 text-white" : "bg-[#DCFCE7] text-[#15803D]"
                       }`}>
                         {t("assessment.effective") || "Effective"}
                       </span>
@@ -915,7 +915,7 @@ const AssessmentContent = () => {
         <div className="max-w-[900px] mx-auto px-4 py-6 sm:py-8 relative">
           {/* Loading overlay when switching attempts */}
           {reviewLoading && (
-            <div className="absolute inset-0 bg-white/60 flex items-center justify-center z-10 rounded-xl">
+            <div className="absolute inset-0 bg-[var(--color-surface-card)]/60 flex items-center justify-center z-10 rounded-xl">
               <Loader2 className="w-6 h-6 text-[var(--color-text-secondary)] animate-spin" />
             </div>
           )}
@@ -1109,12 +1109,12 @@ const AssessmentContent = () => {
                       onClick={() => setCurrentQuestion(index)}
                       className={`w-8 h-8 rounded-full text-xs font-medium transition-colors ${
                         index === currentQuestion
-                          ? "bg-[#002D87] text-white"
+                          ? "bg-[var(--color-primary)] text-white"
                           : ans?.isCorrect === true
                             ? "bg-[#16A34A] text-white"
                             : ans?.isCorrect === false
                               ? "bg-[#DC2626] text-white"
-                              : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
+                              : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                       }`}
                     >
                       {index + 1}
@@ -1191,7 +1191,7 @@ const AssessmentContent = () => {
             <div className="mb-6 text-start">
               <button
                 onClick={() => setShowBreakdown(!showBreakdown)}
-                className="flex items-center gap-2 text-sm text-[#002D87] hover:underline mx-auto mb-3"
+                className="flex items-center gap-2 text-sm text-[var(--color-primary)] hover:underline mx-auto mb-3"
               >
                 {showBreakdown
                   ? t("assessment.hideBreakdown")
@@ -1248,7 +1248,7 @@ const AssessmentContent = () => {
                 <FileText className="w-4 h-4 text-[var(--color-text-secondary)]" />
                 {t("assessment.attemptsHistory") || "Attempts History"}
                 {assessment.retakeScorePolicy && (
-                  <span className="text-[10px] uppercase font-semibold text-[var(--color-text-secondary)] bg-[#F3F4F6] px-2 py-0.5 rounded">
+                  <span className="text-[10px] uppercase font-semibold text-[var(--color-text-secondary)] bg-[var(--color-border-subtle)] px-2 py-0.5 rounded">
                     {assessment.retakeScorePolicy === "average"
                       ? (t("assessment.policyAverage") || "Average of all attempts")
                       : assessment.retakeScorePolicy === "latest"
@@ -1270,7 +1270,7 @@ const AssessmentContent = () => {
                     >
                       <div className="flex-shrink-0">
                         <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${
-                          attempt.attemptNumber === 1 ? "bg-[#EFF6FF] text-[#3B82F6]" : "bg-[#F3E8FF] text-[#7C3AED]"
+                          attempt.attemptNumber === 1 ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]" : "bg-[#F3E8FF] text-[#7C3AED]"
                         }`}>
                           {attempt.attemptNumber}
                         </span>
@@ -1305,7 +1305,7 @@ const AssessmentContent = () => {
                           </span>
                         )}
                         {assessment.retakeScorePolicy === "average" && attempt.score !== null && (
-                          <span className="text-[10px] font-semibold text-[var(--color-text-secondary)] bg-[#F3F4F6] px-1.5 py-0.5 rounded">
+                          <span className="text-[10px] font-semibold text-[var(--color-text-secondary)] bg-[var(--color-border-subtle)] px-1.5 py-0.5 rounded">
                             {t("assessment.includedInAvg") || "In avg"}
                           </span>
                         )}
@@ -1321,7 +1321,7 @@ const AssessmentContent = () => {
           <div className="flex flex-col gap-3">
             <Link
               href={`/${locale}/dashboard/student/courses/${courseId}`}
-              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 btn-gold text-white text-sm font-medium rounded-lg"
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg"
             >
               {t("assessment.backToCourse")}
             </Link>
@@ -1342,7 +1342,7 @@ const AssessmentContent = () => {
               <button
                 onClick={handleLoadReview}
                 disabled={reviewLoading}
-                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 border border-[#002D87] text-[#002D87] text-sm font-medium rounded-lg hover:bg-[#F0F7FF] transition-colors disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 border border-[#002D87] text-[var(--color-primary)] text-sm font-medium rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-60"
               >
                 {reviewLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -1478,7 +1478,7 @@ const AssessmentContent = () => {
           {/* Saved progress notice */}
           {Object.keys(answers).length > 0 && (
             <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg mb-6">
-              <CheckCircle2 className="w-4 h-4 text-[#002D87] flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0 mt-0.5" />
               <p className="text-xs text-[#1E3A8A]">
                 {t("assessment.savedProgressNotice", {
                   count: Object.keys(answers).length,
@@ -1490,7 +1490,7 @@ const AssessmentContent = () => {
           {/* Start button */}
           <button
             onClick={() => setAssessmentStarted(true)}
-            className="w-full flex items-center justify-center gap-2 px-6 py-3 btn-gold text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
           >
             {t("assessment.startAssessment")}
           </button>
@@ -1516,7 +1516,7 @@ const AssessmentContent = () => {
           </p>
           <Link
             href={`/${locale}/dashboard/student/courses/${courseId}`}
-            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 btn-gold text-white text-sm font-medium rounded-lg"
+            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg"
           >
             {t("assessment.backToCourse")}
           </Link>
@@ -1531,25 +1531,25 @@ const AssessmentContent = () => {
 
   // Helper: get dot color for question navigation
   const getDotClass = (q: (typeof assessment.questions)[0], index: number) => {
-    if (index === currentQuestion) return "bg-[#002D87] text-white";
+    if (index === currentQuestion) return "bg-[var(--color-primary)] text-white";
     const isAnswered = !!answers[q.id];
     const isFlagged = flagged.has(q.id);
 
     if (isAnswered && isFlagged) return "bg-[#D4A520] text-white ring-2 ring-[#16A34A]";
     if (isFlagged) return "bg-[#FBBF24] text-[var(--color-text-primary)]";
     if (isAnswered) return "bg-[#16A34A] text-white";
-    return "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]";
+    return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]";
   };
 
   return (
     <div className="min-h-screen bg-[var(--color-surface-page)]" dir={isRTL ? "rtl" : "ltr"}>
       {/* Top Bar */}
-      <div className="bg-white border-b border-[var(--color-border)] px-4 py-3">
+      <div className="bg-[var(--color-surface-card)] border-b border-[var(--color-border)] px-4 py-3">
         <div className="max-w-[1100px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href={`/${locale}/dashboard/student/courses/${courseId}`}
-              className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
+              className="p-1.5 rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
             >
               <BackIcon className="w-5 h-5 text-[var(--color-text-secondary)]" />
             </Link>
@@ -1576,12 +1576,12 @@ const AssessmentContent = () => {
               <div
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${
                   assessment?.timeLimitEnforced === false
-                    ? "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
+                    ? "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                     : timeLeft < 60
                       ? "bg-red-50 text-[#DC2626]"
                       : timeLeft < 300
                         ? "bg-yellow-50 text-[#D4A520]"
-                        : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
+                        : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                 }`}
                 title={
                   assessment?.timeLimitEnforced === false
@@ -1648,7 +1648,7 @@ const AssessmentContent = () => {
                 {t("assessment.flagged")}
               </div>
               <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
-                <div className="w-3 h-3 rounded-full bg-[#F3F4F6]" />
+                <div className="w-3 h-3 rounded-full bg-[var(--color-border-subtle)]" />
                 {t("assessment.unanswered")}
               </div>
             </div>
@@ -1670,7 +1670,7 @@ const AssessmentContent = () => {
                   ? t("assessment.mark")
                   : t("assessment.marks")}
                 {question.isMultiSelect && (
-                  <span className="ml-2 text-[#002D87]">
+                  <span className="ml-2 text-[var(--color-primary)]">
                     ({t("assessment.selectMultiple")})
                   </span>
                 )}
@@ -1722,25 +1722,25 @@ const AssessmentContent = () => {
                       }
                       className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors text-start ${
                         isSelected
-                          ? "border-[#002D87] bg-[#F0F7FF]"
+                          ? "border-[#002D87] bg-[var(--color-border-subtle)]"
                           : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
                       }`}
                     >
                       <div
                         className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                           isSelected
-                            ? "border-[#002D87] bg-[#002D87]"
+                            ? "border-[#002D87] bg-[var(--color-primary)]"
                             : "border-[var(--color-border)]"
                         }`}
                       >
                         {isSelected && (
-                          <div className="w-2 h-2 bg-white rounded-full" />
+                          <div className="w-2 h-2 bg-[var(--color-surface-card)] rounded-full" />
                         )}
                       </div>
                       <span
                         className={`text-sm ${
                           isSelected
-                            ? "text-[#002D87] font-medium"
+                            ? "text-[var(--color-primary)] font-medium"
                             : "text-[var(--color-text-secondary)]"
                         }`}
                       >
@@ -1774,14 +1774,14 @@ const AssessmentContent = () => {
                       }
                       className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors text-start ${
                         isSelected
-                          ? "border-[#002D87] bg-[#F0F7FF]"
+                          ? "border-[#002D87] bg-[var(--color-border-subtle)]"
                           : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
                       }`}
                     >
                       <div
                         className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
                           isSelected
-                            ? "border-[#002D87] bg-[#002D87]"
+                            ? "border-[#002D87] bg-[var(--color-primary)]"
                             : "border-[var(--color-border)]"
                         }`}
                       >
@@ -1792,7 +1792,7 @@ const AssessmentContent = () => {
                       <span
                         className={`text-sm ${
                           isSelected
-                            ? "text-[#002D87] font-medium"
+                            ? "text-[var(--color-primary)] font-medium"
                             : "text-[var(--color-text-secondary)]"
                         }`}
                       >
@@ -1823,25 +1823,25 @@ const AssessmentContent = () => {
                       }
                       className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors text-start ${
                         isSelected
-                          ? "border-[#002D87] bg-[#F0F7FF]"
+                          ? "border-[#002D87] bg-[var(--color-border-subtle)]"
                           : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
                       }`}
                     >
                       <div
                         className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                           isSelected
-                            ? "border-[#002D87] bg-[#002D87]"
+                            ? "border-[#002D87] bg-[var(--color-primary)]"
                             : "border-[var(--color-border)]"
                         }`}
                       >
                         {isSelected && (
-                          <div className="w-2 h-2 bg-white rounded-full" />
+                          <div className="w-2 h-2 bg-[var(--color-surface-card)] rounded-full" />
                         )}
                       </div>
                       <span
                         className={`text-sm ${
                           isSelected
-                            ? "text-[#002D87] font-medium"
+                            ? "text-[var(--color-primary)] font-medium"
                             : "text-[var(--color-text-secondary)]"
                         }`}
                       >
@@ -1951,7 +1951,7 @@ const AssessmentContent = () => {
                           return updated;
                         })
                       }
-                      className="p-1 hover:bg-gray-200 rounded flex-shrink-0"
+                      className="p-1 hover:bg-[var(--color-border)] rounded flex-shrink-0"
                     >
                       <X className="w-4 h-4 text-[var(--color-text-secondary)]" />
                     </button>
@@ -2026,7 +2026,7 @@ const AssessmentContent = () => {
                 <button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium disabled:opacity-60"
+                  className="flex items-center gap-2 px-6 py-2.5 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium disabled:opacity-60"
                 >
                   {submitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

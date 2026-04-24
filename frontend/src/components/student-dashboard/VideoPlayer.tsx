@@ -866,7 +866,7 @@ export default function VideoPlayer({
             </p>
             <button
               onClick={cancelAutoAdvance}
-              className="px-5 py-2 border border-white/40 text-white rounded-lg hover:bg-white/10 transition-colors text-sm"
+              className="px-5 py-2 border border-white/40 text-white rounded-lg hover:bg-[var(--color-surface-card)]/10 transition-colors text-sm"
             >
               {t("cancel")}
             </button>
@@ -884,7 +884,7 @@ export default function VideoPlayer({
             {/* Seek Bar */}
             <div
               ref={seekBarRef}
-              className="relative w-full h-1.5 bg-white/20 rounded-full cursor-pointer group/seek mb-3 hover:h-2.5 transition-all"
+              className="relative w-full h-1.5 bg-[var(--color-surface-card)]/20 rounded-full cursor-pointer group/seek mb-3 hover:h-2.5 transition-all"
               onClick={handleSeekBarClick}
               onMouseMove={handleSeekBarHover}
               onMouseLeave={handleSeekBarLeave}
@@ -897,7 +897,7 @@ export default function VideoPlayer({
             >
               {/* Buffered */}
               <div
-                className="absolute top-0 h-full bg-white/30 rounded-full"
+                className="absolute top-0 h-full bg-[var(--color-surface-card)]/30 rounded-full"
                 style={{
                   [isRTL ? "right" : "left"]: 0,
                   width: `${bufferedPercent}%`,
@@ -906,7 +906,7 @@ export default function VideoPlayer({
 
               {/* Furthest Watched Marker (NELC) */}
               <div
-                className="absolute top-0 h-full bg-white/15 rounded-full"
+                className="absolute top-0 h-full bg-[var(--color-surface-card)]/15 rounded-full"
                 style={{
                   [isRTL ? "right" : "left"]: 0,
                   width: `${furthestPercent}%`,
@@ -936,7 +936,7 @@ export default function VideoPlayer({
               {/* Furthest Watched Marker Dot */}
               {furthestPercent > 0 && furthestPercent < 100 && (
                 <div
-                  className="absolute top-1/2 -translate-y-1/2 w-2 h-2 bg-white/70 rounded-full"
+                  className="absolute top-1/2 -translate-y-1/2 w-2 h-2 bg-[var(--color-surface-card)]/70 rounded-full"
                   style={{
                     [isRTL ? "right" : "left"]: `${furthestPercent}%`,
                     transform: "translate(-50%, -50%)",
@@ -1016,7 +1016,7 @@ export default function VideoPlayer({
                 >
                   <div
                     ref={volumeBarRef}
-                    className="relative w-full h-1 bg-white/30 rounded-full cursor-pointer"
+                    className="relative w-full h-1 bg-[var(--color-surface-card)]/30 rounded-full cursor-pointer"
                     onClick={handleVolumeChange}
                     role="slider"
                     aria-valuenow={Math.round((isMuted ? 0 : volume) * 100)}
@@ -1026,7 +1026,7 @@ export default function VideoPlayer({
                     tabIndex={0}
                   >
                     <div
-                      className="absolute top-0 h-full bg-white rounded-full"
+                      className="absolute top-0 h-full bg-[var(--color-surface-card)] rounded-full"
                       style={{
                         [isRTL ? "right" : "left"]: 0,
                         width: `${(isMuted ? 0 : volume) * 100}%`,
@@ -1067,8 +1067,8 @@ export default function VideoPlayer({
                         role="menuitem"
                         className={`w-full text-start px-3 py-1.5 text-sm transition-colors ${
                           s === speed
-                            ? "text-[#D4A520] bg-white/10"
-                            : "text-white hover:bg-white/10"
+                            ? "text-[#D4A520] bg-[var(--color-surface-card)]/10"
+                            : "text-white hover:bg-[var(--color-surface-card)]/10"
                         }`}
                       >
                         {s}x
@@ -1084,7 +1084,7 @@ export default function VideoPlayer({
                   onClick={toggleCaptions}
                   className={`p-1.5 transition-colors rounded ${
                     captionsOn
-                      ? "text-[#002D87] bg-white/90"
+                      ? "text-[var(--color-primary)] bg-[var(--color-surface-card)]/90"
                       : "text-white hover:text-[#D4A520]"
                   }`}
                   aria-label={captionsOn ? t("captionsOn") : t("captionsOff")}
@@ -1130,8 +1130,8 @@ export default function VideoPlayer({
                             role="menuitem"
                             className={`w-full text-start px-3 py-1.5 text-sm transition-colors ${
                               selectedVariant?.id === variant.id
-                                ? "text-[#D4A520] bg-white/10"
-                                : "text-white hover:bg-white/10"
+                                ? "text-[#D4A520] bg-[var(--color-surface-card)]/10"
+                                : "text-white hover:bg-[var(--color-surface-card)]/10"
                             }`}
                           >
                             {getResolutionLabel(variant.resolution)}
@@ -1184,7 +1184,7 @@ export default function VideoPlayer({
         <div className="mt-3">
           <button
             onClick={handleToggleTranscript}
-            className="inline-flex items-center gap-1.5 text-sm text-[#002D87] hover:underline"
+            className="inline-flex items-center gap-1.5 text-sm text-[var(--color-primary)] hover:underline"
             aria-label={t("transcriptToggle")}
           >
             {loadingTranscript ? (

@@ -85,7 +85,7 @@ const SLAPerformanceWidget = () => {
             {t("sla.title")}
           </h3>
         </div>
-        <button className="text-sm font-medium text-[#3B82F6] hover:text-[#2563EB] hover:underline flex items-center gap-1">
+        <button className="text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline flex items-center gap-1">
           {t("sla.viewDetails")}
           <ArrowRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
         </button>

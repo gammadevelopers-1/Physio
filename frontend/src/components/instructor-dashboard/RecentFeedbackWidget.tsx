@@ -73,7 +73,7 @@ const RecentFeedbackWidget = ({
         };
       case "neutral":
         return {
-          bg: "bg-[#F3F4F6]",
+          bg: "bg-[var(--color-border-subtle)]",
           border: "border-[var(--color-text-secondary)]",
           text: "text-[var(--color-text-secondary)]",
           dot: "bg-[var(--color-text-secondary)]",
@@ -87,7 +87,7 @@ const RecentFeedbackWidget = ({
         };
       default:
         return {
-          bg: "bg-[#F3F4F6]",
+          bg: "bg-[var(--color-border-subtle)]",
           border: "border-[var(--color-text-secondary)]",
           text: "text-[var(--color-text-secondary)]",
           dot: "bg-[var(--color-text-secondary)]",
@@ -114,7 +114,7 @@ const RecentFeedbackWidget = ({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-[#3B82F6]" />
+            <MessageSquare className="w-5 h-5 text-[var(--color-primary)]" />
             {t("feedback.title")}
           </h3>
         </div>
@@ -197,7 +197,7 @@ const RecentFeedbackWidget = ({
         </div>
 
         {/* View All Link */}
-        <button className="w-full flex items-center justify-center gap-1 mt-4 py-2.5 text-sm font-medium text-[#3B82F6] hover:underline">
+        <button className="w-full flex items-center justify-center gap-1 mt-4 py-2.5 text-sm font-medium text-[var(--color-primary)] hover:underline">
           {t("feedback.viewAll")}
           {locale === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
         </button>

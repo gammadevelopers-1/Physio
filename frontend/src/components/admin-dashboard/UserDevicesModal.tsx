@@ -90,7 +90,7 @@ export default function UserDevicesModal({ user, onClose }: UserDevicesModalProp
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#002D87] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center">
                 <span className="text-sm font-medium text-white">{getInitials(user)}</span>
               </div>
               <div>
@@ -98,7 +98,7 @@ export default function UserDevicesModal({ user, onClose }: UserDevicesModalProp
                 <p className="text-xs text-[var(--color-text-secondary)]">{t("trustedDevices.title")}</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg">
+            <button onClick={onClose} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg">
               <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
             </button>
           </div>
@@ -106,7 +106,7 @@ export default function UserDevicesModal({ user, onClose }: UserDevicesModalProp
           {/* Content */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-[#002D87]" />
+              <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
             </div>
           ) : (
             <TrustedDevicesSection

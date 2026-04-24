@@ -44,7 +44,7 @@ const UpcomingSessionsWidget = ({ sessions }: UpcomingSessionsWidgetProps) => {
           </h3>
         </div>
         {totalCount > 0 && (
-          <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 bg-[#EFF6FF] text-[#3B82F6] text-xs font-semibold rounded-full">
+          <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 bg-[var(--color-border-subtle)] text-[var(--color-primary)] text-xs font-semibold rounded-full">
             {totalCount}
           </span>
         )}
@@ -54,7 +54,7 @@ const UpcomingSessionsWidget = ({ sessions }: UpcomingSessionsWidgetProps) => {
       <div className="p-4 sm:p-5">
         {sessions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8">
-            <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
+            <div className="w-12 h-12 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mb-3">
               <Calendar className="w-6 h-6 text-[var(--color-text-secondary)]" />
             </div>
             <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
@@ -110,7 +110,7 @@ const UpcomingSessionsWidget = ({ sessions }: UpcomingSessionsWidgetProps) => {
                       {t("schedules.conflict")}
                     </span>
                   ) : session.type === "zoom" ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#DBEAFE] text-[var(--functional-blue-600)] text-[11px] font-medium rounded">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[var(--color-border-subtle)] text-[var(--functional-blue-600)] text-[11px] font-medium rounded">
                       <Video className="w-3 h-3" />
                       {t("schedules.zoom")}
                     </span>

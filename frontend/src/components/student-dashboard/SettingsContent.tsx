@@ -52,14 +52,14 @@ function ToggleSwitch({
       onClick={() => onChange(!enabled)}
       className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors min-h-[44px] min-w-[44px] ${
         disabled
-          ? "bg-gray-200 cursor-not-allowed opacity-50"
+          ? "bg-[var(--color-border)] cursor-not-allowed opacity-50"
           : enabled
-            ? "bg-[#002D87]"
+            ? "bg-[var(--color-primary)]"
             : "bg-gray-300"
       }`}
     >
       <span
-        className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+        className={`inline-block h-5 w-5 transform rounded-full bg-[var(--color-surface-card)] transition-transform ${
           enabled ? "translate-x-6" : "translate-x-1"
         }`}
       />
@@ -85,8 +85,8 @@ function ButtonGroup({
           onClick={() => onChange(opt.value)}
           className={`px-4 py-2 text-sm rounded-lg border transition-colors min-h-[44px] ${
             value === opt.value
-              ? "bg-[#002D87] text-white border-[#002D87]"
-              : "bg-white text-[var(--color-text-primary)] border-[var(--color-border)] hover:border-[#002D87]"
+              ? "bg-[var(--color-primary)] text-white border-[#002D87]"
+              : "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] border-[var(--color-border)] hover:border-[#002D87]"
           }`}
         >
           {opt.label}
@@ -583,14 +583,14 @@ const SettingsContent = () => {
               <OfflineBanner />
 
               {/* Tabs */}
-              <div className="flex gap-1 mb-6 bg-[#F3F4F6] rounded-lg p-1 overflow-x-auto">
+              <div className="flex gap-1 mb-6 bg-[var(--color-border-subtle)] rounded-lg p-1 overflow-x-auto">
                 {tabs.map((tab) => (
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
                     className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                       activeTab === tab.key
-                        ? "bg-white text-[var(--color-text-primary)] shadow-sm"
+                        ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
                         : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                     }`}
                   >
@@ -610,7 +610,7 @@ const SettingsContent = () => {
                   <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6">
                     <div className="flex-shrink-0 flex justify-center sm:justify-start">
                       <div className="relative">
-                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-gray-100">
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-[var(--color-border-subtle)]">
                           <Image
                             src={
                               userData.avatar || "/images/default-avatar.png"
@@ -632,7 +632,7 @@ const SettingsContent = () => {
                         <div ref={avatarMenuRef}>
                           <button
                             onClick={() => setAvatarMenuOpen((v) => !v)}
-                            className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#002D87] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-[#001d5e] transition-colors`}
+                            className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[var(--color-primary)] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-[#001d5e] transition-colors`}
                             aria-label={t("settings.changePhoto")}
                           >
                             <Pencil className="w-3.5 h-3.5 text-white" />
@@ -641,7 +641,7 @@ const SettingsContent = () => {
                             <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`}>
                               <button
                                 onClick={() => { settingsAvatarRef.current?.click(); setAvatarMenuOpen(false); }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors cursor-pointer"
                               >
                                 <Upload className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                 {t("settings.uploadPhoto")}
@@ -676,7 +676,7 @@ const SettingsContent = () => {
                           value={formData.firstName}
                           onChange={handleInputChange}
                           aria-label={t("settings.firstName")}
-                          className={`w-full px-4 py-2.5 bg-[#F3F4F6] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                          className={`w-full px-4 py-2.5 bg-[var(--color-border-subtle)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                         />
                       </div>
                       <div>
@@ -693,7 +693,7 @@ const SettingsContent = () => {
                           value={formData.lastName}
                           onChange={handleInputChange}
                           aria-label={t("settings.lastName")}
-                          className={`w-full px-4 py-2.5 bg-[#F3F4F6] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                          className={`w-full px-4 py-2.5 bg-[var(--color-border-subtle)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                         />
                       </div>
                     </div>
@@ -714,7 +714,7 @@ const SettingsContent = () => {
                       value={formData.email}
                       readOnly
                       aria-label={t("settings.email")}
-                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-gray-50 cursor-not-allowed ${isRTL ? "text-right" : ""}`}
+                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-[var(--color-surface-page)] cursor-not-allowed ${isRTL ? "text-right" : ""}`}
                     />
                   </div>
 
@@ -734,7 +734,7 @@ const SettingsContent = () => {
                       onChange={handleInputChange}
                       aria-label={t("settings.scfhsNumber")}
                       placeholder={t("settings.scfhsPlaceholder")}
-                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                     />
                   </div>
 
@@ -790,7 +790,7 @@ const SettingsContent = () => {
                       </button>
                       {nationalityOpen && (
                         <div
-                          className={`absolute top-full ${isRTL ? "right-0" : "left-0"} w-full mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10`}
+                          className={`absolute top-full ${isRTL ? "right-0" : "left-0"} w-full mt-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg z-10`}
                         >
                           {nationalities.map((nationality) => (
                             <button
@@ -799,7 +799,7 @@ const SettingsContent = () => {
                               onClick={() =>
                                 handleNationalitySelect(nationality.value)
                               }
-                              className={`w-full px-4 py-2.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"} ${formData.nationality === nationality.value ? "bg-[#F3F4F6]" : ""}`}
+                              className={`w-full px-4 py-2.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"} ${formData.nationality === nationality.value ? "bg-[var(--color-border-subtle)]" : ""}`}
                             >
                               {t(nationality.labelKey)}
                             </button>
@@ -840,14 +840,14 @@ const SettingsContent = () => {
                       </button>
                       {genderOpen && (
                         <div
-                          className={`absolute top-full ${isRTL ? "right-0" : "left-0"} w-full mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10`}
+                          className={`absolute top-full ${isRTL ? "right-0" : "left-0"} w-full mt-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg z-10`}
                         >
                           {genders.map((gender) => (
                             <button
                               key={gender.value}
                               type="button"
                               onClick={() => handleGenderSelect(gender.value)}
-                              className={`w-full px-4 py-2.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"} ${formData.gender === gender.value ? "bg-[#F3F4F6]" : ""}`}
+                              className={`w-full px-4 py-2.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"} ${formData.gender === gender.value ? "bg-[var(--color-border-subtle)]" : ""}`}
                             >
                               {t(gender.labelKey)}
                             </button>
@@ -931,7 +931,7 @@ const SettingsContent = () => {
                           setSaving(false);
                         }
                       }}
-                      className="px-6 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-60"
+                      className="px-6 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-60"
                     >
                       {saving ? (
                         <Loader2 className="w-4 h-4 animate-spin" />

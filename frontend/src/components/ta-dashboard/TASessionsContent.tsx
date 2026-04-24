@@ -170,7 +170,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
       live: "bg-red-50 text-red-700",
       ended: "bg-yellow-50 text-yellow-700",
       completed: "bg-green-50 text-green-700",
-      cancelled: "bg-gray-50 text-gray-500",
+      cancelled: "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]",
       missed: "bg-red-50 text-red-700",
       rescheduled: "bg-yellow-50 text-yellow-700",
     };
@@ -202,12 +202,12 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
 
   const getCalendarDotColor = (status: string) => {
     switch (status) {
-      case "scheduled": return "bg-[#3B82F6]";
+      case "scheduled": return "bg-[var(--color-primary)]";
       case "live": return "bg-[#EF4444]";
       case "ended": return "bg-[#D97706]";
       case "completed": return "bg-[#22C55E]";
       case "cancelled": return "bg-[var(--color-text-secondary)]";
-      default: return "bg-[#3B82F6]";
+      default: return "bg-[var(--color-primary)]";
     }
   };
 
@@ -256,7 +256,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
                   window.open(session.zoomLink!, "_blank");
                 }
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 btn-gold text-white rounded-lg text-xs font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 btn-gold text-[var(--color-button-text)] rounded-lg text-xs font-medium transition-colors"
             >
               <Video className="w-3.5 h-3.5" />
               {t("sessions.joinZoom")}
@@ -316,12 +316,12 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
         </div>
         <div className="flex items-center gap-3">
           {/* View Toggle */}
-          <div className="flex items-center bg-white border border-[var(--color-border)] rounded-lg p-1">
+          <div className="flex items-center bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg p-1">
             <button
               onClick={() => setViewMode("list")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 viewMode === "list"
-                  ? "btn-gold text-white"
+                  ? "btn-gold text-[var(--color-button-text)]"
                   : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
               }`}
             >
@@ -332,7 +332,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
               onClick={() => setViewMode("calendar")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 viewMode === "calendar"
-                  ? "btn-gold text-white"
+                  ? "btn-gold text-[var(--color-button-text)]"
                   : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
               }`}
             >
@@ -352,7 +352,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
         <select
           value={courseFilter}
           onChange={(e) => setCourseFilter(e.target.value)}
-          className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-white"
+          className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
         >
           <option value="all">{t("sessions.allCourses")}</option>
           {uniqueCourses.map(([id, name]) => (
@@ -362,7 +362,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-white"
+          className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
         >
           <option value="all">{t("sessions.allStatuses")}</option>
           <option value="scheduled">{t("sessions.scheduled")}</option>
@@ -374,13 +374,13 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
           type="date"
           value={filterDateFrom}
           onChange={(e) => setFilterDateFrom(e.target.value)}
-          className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-white"
+          className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
         />
         <input
           type="date"
           value={filterDateTo}
           onChange={(e) => setFilterDateTo(e.target.value)}
-          className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-white"
+          className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
         />
         {(filterDateFrom || filterDateTo) && (
           <button
@@ -421,7 +421,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
           <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
             <button
               onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))}
-              className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
+              className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
             >
               <ChevronLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />
             </button>
@@ -430,7 +430,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
             </h2>
             <button
               onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))}
-              className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
+              className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
             >
               <ChevronRight className="w-5 h-5 text-[var(--color-text-secondary)]" />
             </button>
@@ -439,7 +439,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
           {/* Legend */}
           <div className="flex items-center gap-4 px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
             <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary)]" />
               {t("sessions.scheduled")}
             </span>
             <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
@@ -480,11 +480,11 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
               return (
                 <div
                   key={day}
-                  className={`min-h-[100px] p-2 border-b border-r border-[var(--color-border)] ${isToday ? "bg-[#EFF6FF]" : ""}`}
+                  className={`min-h-[100px] p-2 border-b border-r border-[var(--color-border)] ${isToday ? "bg-[var(--color-border-subtle)]" : ""}`}
                 >
                   <span
                     className={`inline-flex items-center justify-center w-7 h-7 text-sm ${
-                      isToday ? "bg-[#3B82F6] text-white rounded-full font-semibold" : "text-[var(--color-text-primary)]"
+                      isToday ? "bg-[var(--color-primary)] text-white rounded-full font-semibold" : "text-[var(--color-text-primary)]"
                     }`}
                   >
                     {day}

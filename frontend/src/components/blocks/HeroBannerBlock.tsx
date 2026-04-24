@@ -40,7 +40,7 @@ export function HeroBannerBlock({ data }: HeroBannerBlockProps) {
   const hasButtons = data.buttons && data.buttons.length > 0;
 
   return (
-    <section className="relative bg-[var(--surface-intense)] overflow-hidden">
+    <section className="relative bg-[var(--color-surface-page)] overflow-hidden">
       {/* Background image */}
       {data.backgroundImage && (
         <div className="absolute inset-0 z-0">
@@ -89,7 +89,7 @@ export function HeroBannerBlock({ data }: HeroBannerBlockProps) {
                   key={btn.id}
                   href={resolveHref(btn.url, locale) || `/${locale}`}
                   className={i === 0
-                    ? "h-12 px-5 py-2 btn-gold text-white rounded-xl text-sm font-medium whitespace-nowrap inline-flex items-center justify-center"
+                    ? "h-12 px-5 py-2 btn-gold text-[var(--color-button-text)] rounded-xl text-sm font-medium whitespace-nowrap inline-flex items-center justify-center"
                     : "h-12 px-5 py-2 border border-[var(--outline-default)] rounded-xl text-sm font-medium bg-transparent whitespace-nowrap inline-flex items-center justify-center text-[var(--color-primary)]"
                   }
                 >

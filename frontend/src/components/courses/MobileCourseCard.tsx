@@ -109,7 +109,7 @@ const MobileCourseCard = ({
 
         {/* Bottom row */}
         <div className="flex items-center justify-between w-full z-10">
-          <div className="flex items-center gap-2 bg-[var(--color-text-primary)] rounded-full px-3 py-1">
+          <div className="flex items-center gap-2 bg-[var(--color-primary)] rounded-full px-3 py-1">
             <DeliveryIcon
               className="w-4 h-4 text-white"
               strokeWidth={1.5}
@@ -136,7 +136,7 @@ const MobileCourseCard = ({
       <div
         className={`flex flex-wrap gap-2 w-full ${isRTL ? "justify-end" : "justify-start"}`}
       >
-        <div className="flex items-center gap-1 bg-[#f4f4f5] rounded-lg px-2 py-1">
+        <div className="flex items-center gap-1 bg-[var(--color-border-subtle)] rounded-lg px-2 py-1">
           <Calendar
             className="w-4 h-4 text-[var(--color-text-secondary)]"
             strokeWidth={1.5}
@@ -145,14 +145,14 @@ const MobileCourseCard = ({
             {formattedDate}
           </span>
         </div>
-        <div className="flex items-center gap-1 bg-[#f4f4f5] rounded-lg px-2 py-1">
+        <div className="flex items-center gap-1 bg-[var(--color-border-subtle)] rounded-lg px-2 py-1">
           <Clock className="w-4 h-4 text-[var(--color-text-secondary)]" strokeWidth={1.5} />
           <span className="text-[var(--color-text-secondary)] text-sm leading-5">
             {hoursLabel}
           </span>
         </div>
         {(course.sessionCount ?? 0) > 0 && (
-          <div className="flex items-center gap-1 bg-[#f4f4f5] rounded-lg px-2 py-1">
+          <div className="flex items-center gap-1 bg-[var(--color-border-subtle)] rounded-lg px-2 py-1">
             <Video
               className="w-4 h-4 text-[var(--color-text-secondary)]"
               strokeWidth={1.5}
@@ -207,7 +207,7 @@ const MobileCourseCard = ({
           )}
         </div>
 
-        <span className="flex items-center gap-2 h-10 px-5 py-2 bg-[var(--color-text-primary)] text-white rounded-xl text-sm font-medium group-hover:bg-[var(--color-text-primary)] transition-colors">
+        <span className="flex items-center gap-2 h-10 px-5 py-2 bg-[var(--color-primary)] text-white rounded-xl text-sm font-medium group-hover:bg-[var(--color-primary-dark)] transition-colors">
           <span>{t("card.viewDetails")}</span>
           {isRTL ? (
             <ArrowLeft

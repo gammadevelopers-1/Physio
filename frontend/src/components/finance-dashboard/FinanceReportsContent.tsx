@@ -49,8 +49,8 @@ const FinanceReportsContent = () => {
       title: t("reportsPage.reportTypes.payments"),
       description: t("reportsPage.reportTypes.paymentsDesc"),
       icon: CreditCard,
-      iconBg: "bg-[#EFF6FF]",
-      iconColor: "text-[#3B82F6]",
+      iconBg: "bg-[var(--color-border-subtle)]",
+      iconColor: "text-[var(--color-primary)]",
     },
     {
       key: "refunds",
@@ -164,7 +164,7 @@ const FinanceReportsContent = () => {
                       className={`p-4 rounded-xl border text-left transition-all ${
                         isSelected
                           ? "bg-[#FDF6EC] border-[var(--color-primary)] ring-1 ring-[var(--color-primary)]"
-                          : "bg-white border-[var(--color-border)] hover:border-[var(--color-border)]"
+                          : "bg-[var(--color-surface-card)] border-[var(--color-border)] hover:border-[var(--color-border)]"
                       }`}
                     >
                       <div className={`w-10 h-10 ${report.iconBg} rounded-lg flex items-center justify-center mb-3`}>
@@ -191,7 +191,7 @@ const FinanceReportsContent = () => {
                     <select
                       value={period}
                       onChange={(e) => setPeriod(e.target.value)}
-                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-white focus:outline-none focus:border-[var(--color-primary)]"
+                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)]"
                     >
                       <option value="thisMonth">{t("reportsPage.filters.thisMonth")}</option>
                       <option value="lastMonth">{t("reportsPage.filters.lastMonth")}</option>
@@ -205,7 +205,7 @@ const FinanceReportsContent = () => {
                     <select
                       value={groupBy}
                       onChange={(e) => setGroupBy(e.target.value)}
-                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-white focus:outline-none focus:border-[var(--color-primary)]"
+                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)]"
                     >
                       <option value="byCourse">{t("reportsPage.filters.byCourse")}</option>
                       <option value="byInstructor">{t("reportsPage.filters.byInstructor")}</option>
@@ -214,7 +214,7 @@ const FinanceReportsContent = () => {
                     </select>
                   </div>
                   <div className="sm:ml-auto flex items-end">
-                    <button className="flex items-center gap-1.5 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                    <button className="flex items-center gap-1.5 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors">
                       <BarChart3 className="w-4 h-4" />
                       {t("reportsPage.generateReport")}
                     </button>

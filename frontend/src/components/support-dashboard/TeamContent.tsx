@@ -112,8 +112,8 @@ const TeamContent = () => {
       label: t("teamPage.stats.totalAgents"),
       value: "6",
       icon: Users,
-      bgColor: "bg-[#EFF6FF]",
-      textColor: "text-[#3B82F6]",
+      bgColor: "bg-[var(--color-border-subtle)]",
+      textColor: "text-[var(--color-primary)]",
     },
     {
       label: t("teamPage.stats.online"),
@@ -254,12 +254,12 @@ const TeamContent = () => {
                     placeholder={t("teamPage.searchPlaceholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full sm:w-[280px] h-10 ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
+                    className={`w-full sm:w-[280px] h-10 ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent`}
                   />
                 </div>
 
                 {/* Add Agent Button */}
-                <button className="btn-gold text-white h-10 px-4 rounded-lg text-sm font-medium flex items-center gap-2">
+                <button className="btn-gold text-[var(--color-button-text)] h-10 px-4 rounded-lg text-sm font-medium flex items-center gap-2">
                   <Plus className="w-4 h-4" />
                   {t("teamPage.addAgent")}
                 </button>
@@ -274,7 +274,7 @@ const TeamContent = () => {
                     className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                       activeTab === tab.key
                         ? "bg-[var(--color-text-primary)] text-white"
-                        : "bg-white text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
+                        : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
                     }`}
                   >
                     {tab.label}
@@ -399,7 +399,7 @@ const TeamContent = () => {
               {/* Performance Overview Section */}
               <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
                 <div className="flex items-center gap-2 mb-5">
-                  <TrendingUp className="w-5 h-5 text-[#3B82F6]" />
+                  <TrendingUp className="w-5 h-5 text-[var(--color-primary)]" />
                   <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
                     {t("teamPage.performance")}
                   </h2>

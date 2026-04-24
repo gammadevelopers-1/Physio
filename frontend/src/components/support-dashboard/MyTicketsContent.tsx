@@ -47,8 +47,8 @@ const MyTicketsContent = () => {
       label: t("myTicketsPage.stats.assigned"),
       value: "8",
       icon: Inbox,
-      iconBg: "bg-[#EFF6FF]",
-      iconColor: "text-[#3B82F6]",
+      iconBg: "bg-[var(--color-border-subtle)]",
+      iconColor: "text-[var(--color-primary)]",
     },
     {
       label: t("myTicketsPage.stats.inProgress"),
@@ -140,11 +140,11 @@ const MyTicketsContent = () => {
   };
 
   const statusStyles: Record<string, string> = {
-    new: "bg-[#EFF6FF] text-[#3B82F6]",
+    new: "bg-[var(--color-border-subtle)] text-[var(--color-primary)]",
     inProgress: "bg-[#FEF9C3] text-[#EAB308]",
     waiting: "bg-[#FFEDD5] text-[#F97316]",
     resolved: "bg-[#DCFCE7] text-[#22C55E]",
-    closed: "bg-[#F3F4F6] text-[var(--color-text-secondary)]",
+    closed: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
   };
 
   const getSlaColor = (sla: string): string => {
@@ -220,14 +220,14 @@ const MyTicketsContent = () => {
 
               {/* Tabs + Search */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-                <div className="flex gap-1 bg-[#F3F4F6] rounded-lg p-0.5">
+                <div className="flex gap-1 bg-[var(--color-border-subtle)] rounded-lg p-0.5">
                   {tabs.map((tab) => (
                     <button
                       key={tab.key}
                       onClick={() => setActiveTab(tab.key)}
                       className={`px-4 py-1.5 text-[13px] font-medium rounded-md transition-colors whitespace-nowrap ${
                         activeTab === tab.key
-                          ? "bg-white text-[var(--color-text-primary)] shadow-sm"
+                          ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
                           : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                       }`}
                     >
@@ -264,7 +264,7 @@ const MyTicketsContent = () => {
                       {/* Top Row: Ticket ID + Subject */}
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="min-w-0">
-                          <span className="text-[13px] font-medium text-[#3B82F6] cursor-pointer hover:underline">
+                          <span className="text-[13px] font-medium text-[var(--color-primary)] cursor-pointer hover:underline">
                             #{ticket.id}
                           </span>
                           <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mt-0.5 truncate">
@@ -278,7 +278,7 @@ const MyTicketsContent = () => {
                         <span className="text-[13px] text-[var(--color-text-secondary)]">
                           {ticket.customer}
                         </span>
-                        <span className="bg-[#F3F4F6] text-[var(--color-text-secondary)] text-[10px] px-2 py-0.5 rounded-md font-medium">
+                        <span className="bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] text-[10px] px-2 py-0.5 rounded-md font-medium">
                           {t(
                             `allTicketsPage.filters.categories.${ticket.category}`
                           )}
@@ -346,19 +346,19 @@ const MyTicketsContent = () => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   {/* Macro Pills */}
                   <div className="flex items-center gap-2 flex-wrap">
-                    <button className="px-3 py-1.5 text-[12px] font-medium text-[var(--color-text-secondary)] bg-[#F3F4F6] rounded-full hover:bg-[var(--color-border)] transition-colors">
+                    <button className="px-3 py-1.5 text-[12px] font-medium text-[var(--color-text-secondary)] bg-[var(--color-border-subtle)] rounded-full hover:bg-[var(--color-border)] transition-colors">
                       {t("myTicketsPage.macros.acknowledgement")}
                     </button>
-                    <button className="px-3 py-1.5 text-[12px] font-medium text-[var(--color-text-secondary)] bg-[#F3F4F6] rounded-full hover:bg-[var(--color-border)] transition-colors">
+                    <button className="px-3 py-1.5 text-[12px] font-medium text-[var(--color-text-secondary)] bg-[var(--color-border-subtle)] rounded-full hover:bg-[var(--color-border)] transition-colors">
                       {t("myTicketsPage.macros.needMoreInfo")}
                     </button>
-                    <button className="px-3 py-1.5 text-[12px] font-medium text-[var(--color-text-secondary)] bg-[#F3F4F6] rounded-full hover:bg-[var(--color-border)] transition-colors">
+                    <button className="px-3 py-1.5 text-[12px] font-medium text-[var(--color-text-secondary)] bg-[var(--color-border-subtle)] rounded-full hover:bg-[var(--color-border)] transition-colors">
                       {t("myTicketsPage.macros.resolved")}
                     </button>
                   </div>
 
                   {/* Send Button */}
-                  <button className="flex items-center gap-1.5 px-5 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                  <button className="flex items-center gap-1.5 px-5 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors">
                     <Send className="w-4 h-4" />
                     {t("myTicketsPage.send")}
                   </button>

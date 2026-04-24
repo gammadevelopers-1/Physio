@@ -179,7 +179,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
       case "inactive":
         return "bg-[#FEE2E2] text-[#EF4444]";
       default:
-        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -268,7 +268,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
 
   const getInterventionIcon = (type: InterventionType) => {
     switch (type) {
-      case "email": return <Mail className="w-4 h-4 text-[#3B82F6]" />;
+      case "email": return <Mail className="w-4 h-4 text-[var(--color-primary)]" />;
       case "makeup_session": return <Calendar className="w-4 h-4 text-[#8B5CF6]" />;
       case "ticket": return <Ticket className="w-4 h-4 text-[#F59E0B]" />;
     }
@@ -311,7 +311,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
               {/* Loading */}
               {loading && (
                 <div className="flex items-center justify-center py-20">
-                  <RefreshCw className="w-6 h-6 text-[#3B82F6] animate-spin" />
+                  <RefreshCw className="w-6 h-6 text-[var(--color-primary)] animate-spin" />
                   <span className="ml-3 text-sm text-[var(--color-text-secondary)]">
                     {t("studentDetail.loading") || "Loading student details..."}
                   </span>
@@ -389,8 +389,8 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                   {stats && (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                       <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-center">
-                        <div className="w-10 h-10 mx-auto rounded-lg bg-[#DBEAFE] flex items-center justify-center mb-2">
-                          <BookOpen className="w-5 h-5 text-[#3B82F6]" />
+                        <div className="w-10 h-10 mx-auto rounded-lg bg-[var(--color-border-subtle)] flex items-center justify-center mb-2">
+                          <BookOpen className="w-5 h-5 text-[var(--color-primary)]" />
                         </div>
                         <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
                           {stats.totalCourses}
@@ -422,7 +422,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                         </p>
                       </div>
                       <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-center">
-                        <div className="w-10 h-10 mx-auto rounded-lg bg-[#E0E7FF] flex items-center justify-center mb-2">
+                        <div className="w-10 h-10 mx-auto rounded-lg bg-[var(--color-border-subtle)] flex items-center justify-center mb-2">
                           <FileText className="w-5 h-5 text-[#6366F1]" />
                         </div>
                         <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
@@ -455,13 +455,13 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                           onClick={() => setActiveTab(tab.id)}
                           className={`px-5 py-3 text-sm font-medium relative transition-colors whitespace-nowrap ${
                             activeTab === tab.id
-                              ? "text-[#3B82F6]"
+                              ? "text-[var(--color-primary)]"
                               : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                           }`}
                         >
                           {tab.label}
                           {activeTab === tab.id && (
-                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3B82F6] rounded-t" />
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)] rounded-t" />
                           )}
                         </button>
                       ))}
@@ -502,8 +502,8 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                           enrollment.status === "completed"
                                             ? "bg-[#DCFCE7] text-[#22C55E]"
                                             : enrollment.status === "active"
-                                              ? "bg-[#DBEAFE] text-[#3B82F6]"
-                                              : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
+                                              ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
+                                              : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                                         }`}
                                       >
                                         {enrollment.status === "completed"
@@ -515,7 +515,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                     </div>
                                     <Link
                                       href={`/${locale}/dashboard/instructor/courses/${enrollment.courseId}`}
-                                      className="text-[#3B82F6] hover:underline text-sm font-medium flex items-center gap-1"
+                                      className="text-[var(--color-primary)] hover:underline text-sm font-medium flex items-center gap-1"
                                     >
                                       {t("studentDetail.viewCourse")}
                                       <ChevronRight className="w-4 h-4" />
@@ -534,7 +534,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                           enrollment.progress >= 80
                                             ? "bg-[#22C55E]"
                                             : enrollment.progress >= 50
-                                              ? "bg-[#3B82F6]"
+                                              ? "bg-[var(--color-primary)]"
                                               : "bg-[#EAB308]"
                                         }`}
                                         style={{
@@ -599,8 +599,8 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                   )}
                                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                                     cp.enrollmentStatus === "completed" ? "bg-[#DCFCE7] text-[#166534]"
-                                    : cp.enrollmentStatus === "active" ? "bg-[#EFF6FF] text-[#3B82F6]"
-                                    : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
+                                    : cp.enrollmentStatus === "active" ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
+                                    : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                                   }`}>
                                     {cp.enrollmentStatus === "completed" ? t("studentDetail.enrollmentCompleted") : cp.enrollmentStatus === "active" ? t("studentDetail.enrollmentInProgress") : cp.enrollmentStatus}
                                   </span>
@@ -626,7 +626,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                     <p className="text-base font-bold text-[#EAB308]">{cp.attendance.late}</p>
                                     <p className="text-[10px] text-[#854D0E]">{t("studentDetail.late")}</p>
                                   </div>
-                                  <div className="bg-[#F3F4F6] rounded-lg p-2.5 text-center">
+                                  <div className="bg-[var(--color-border-subtle)] rounded-lg p-2.5 text-center">
                                     <p className="text-base font-bold text-[var(--color-text-secondary)]">{cp.attendance.excused}</p>
                                     <p className="text-[10px] text-[var(--color-text-secondary)]">{t("studentDetail.excused")}</p>
                                   </div>
@@ -661,7 +661,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                     <div className="flex-1 h-2.5 bg-[var(--color-border)] rounded-full overflow-hidden">
                                       <div
                                         className={`h-full rounded-full transition-all ${
-                                          cp.assessmentAverage >= 70 ? "bg-[#3B82F6]"
+                                          cp.assessmentAverage >= 70 ? "bg-[var(--color-primary)]"
                                           : cp.assessmentAverage >= 50 ? "bg-[#EAB308]"
                                           : "bg-[#EF4444]"
                                         }`}
@@ -669,7 +669,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                       />
                                     </div>
                                     <span className={`text-sm font-bold w-12 text-right ${
-                                      cp.assessmentAverage >= 70 ? "text-[#3B82F6]"
+                                      cp.assessmentAverage >= 70 ? "text-[var(--color-primary)]"
                                       : cp.assessmentAverage >= 50 ? "text-[#EAB308]"
                                       : "text-[#EF4444]"
                                     }`}>
@@ -704,7 +704,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                                   r.status === "present" ? "bg-[#DCFCE7] text-[#166534]"
                                                   : r.status === "absent" ? "bg-[#FEE2E2] text-[#991B1B]"
                                                   : r.status === "late" ? "bg-[#FEF9C3] text-[#854D0E]"
-                                                  : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
+                                                  : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                                                 }`}>
                                                   {t(`studentDetail.status${r.status.charAt(0).toUpperCase() + r.status.slice(1)}`)}
                                                 </span>
@@ -832,7 +832,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                             </h3>
                             <button
                               onClick={() => setShowAddForm(!showAddForm)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors"
                             >
                               <Plus className="w-4 h-4" />
                               {t("studentDetail.addIntervention")}
@@ -850,7 +850,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                 <select
                                   value={interventionType}
                                   onChange={(e) => setInterventionType(e.target.value as InterventionType)}
-                                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+                                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none"
                                 >
                                   <option value="email">{t("studentDetail.interventionEmail")}</option>
                                   <option value="makeup_session">{t("studentDetail.interventionMakeup")}</option>
@@ -867,7 +867,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                   <select
                                     value={interventionCourseId}
                                     onChange={(e) => setInterventionCourseId(e.target.value)}
-                                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+                                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none"
                                   >
                                     <option value="">{t("studentDetail.interventionAnyCourse")}</option>
                                     {student.enrollments.map((e) => (
@@ -890,7 +890,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                   placeholder={t("studentDetail.interventionNotePlaceholder")}
                                   maxLength={2000}
                                   rows={3}
-                                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none resize-none"
+                                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none resize-none"
                                 />
                               </div>
 
@@ -905,7 +905,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                 <button
                                   onClick={handleSubmitIntervention}
                                   disabled={submittingIntervention}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors disabled:opacity-50"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-50"
                                 >
                                   {submittingIntervention && <Loader2 className="w-4 h-4 animate-spin" />}
                                   {t("studentDetail.submitIntervention")}
@@ -929,7 +929,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                   key={iv.id}
                                   className="flex items-start gap-3 p-3 bg-[var(--color-surface-page)] rounded-xl border border-[var(--color-border)]"
                                 >
-                                  <div className="w-9 h-9 rounded-lg bg-white border border-[var(--color-border)] flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <div className="w-9 h-9 rounded-lg bg-[var(--color-surface-card)] border border-[var(--color-border)] flex items-center justify-center flex-shrink-0 mt-0.5">
                                     {getInterventionIcon(iv.type)}
                                   </div>
                                   <div className="flex-1 min-w-0">
@@ -938,7 +938,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                         {getInterventionLabel(iv.type)}
                                       </span>
                                       {iv.courseName && (
-                                        <span className="text-[11px] text-[var(--color-text-secondary)] bg-[#F3F4F6] px-1.5 py-0.5 rounded">
+                                        <span className="text-[11px] text-[var(--color-text-secondary)] bg-[var(--color-border-subtle)] px-1.5 py-0.5 rounded">
                                           {iv.courseName}
                                         </span>
                                       )}
@@ -973,7 +973,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("studentDetail.makeupModalTitle")}</h3>
-                <button onClick={() => setMakeupModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded">
+                <button onClick={() => setMakeupModal(null)} className="p-1 hover:bg-[var(--color-border-subtle)] rounded">
                   <UserX className="w-5 h-5 text-[var(--color-text-secondary)]" />
                 </button>
               </div>
@@ -984,7 +984,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                     type="text"
                     value={makeupData.title}
                     onChange={(e) => setMakeupData(d => ({ ...d, title: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -1001,7 +1001,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                       type="time"
                       value={makeupData.time}
                       onChange={(e) => setMakeupData(d => ({ ...d, time: e.target.value }))}
-                      className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                      className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -1012,7 +1012,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                     value={makeupData.duration}
                     onChange={(e) => setMakeupData(d => ({ ...d, duration: e.target.value }))}
                     min={15}
-                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                   />
                 </div>
                 <p className="text-xs text-[var(--color-text-secondary)]">{t("studentDetail.makeupNote")}</p>

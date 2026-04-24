@@ -105,8 +105,8 @@ const CatalogOverviewWidget = ({
       "bg-[var(--functional-amber-500)]/10 text-[var(--functional-amber-600)]",
     completed:
       "bg-[var(--functional-blue-400)]/10 text-[var(--functional-blue-600)]",
-    archived: "bg-[#F3F4F6] text-[var(--on-surface-variant)]",
-    draft: "bg-[#F3F4F6] text-[var(--on-surface-variant)]",
+    archived: "bg-[var(--color-border-subtle)] text-[var(--on-surface-variant)]",
+    draft: "bg-[var(--color-border-subtle)] text-[var(--on-surface-variant)]",
     pending_review:
       "bg-[var(--functional-amber-500)]/10 text-[var(--functional-amber-600)]",
   };
@@ -185,7 +185,7 @@ const CatalogOverviewWidget = ({
                       </div>
                       <div className="h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-[#3B82F6] rounded-full"
+                          className="h-full bg-[var(--color-primary)] rounded-full"
                           style={{ width: `${(barValue / maxEnrollment) * 100}%`, opacity: fillPercent < 100 ? 0.6 : 1 }}
                         />
                       </div>
@@ -227,7 +227,7 @@ const CatalogOverviewWidget = ({
             {displayCourses.map((course) => (
               <tr
                 key={course.id}
-                className="border-b border-[#F3F4F6] hover:bg-[#F3F4F6] transition-colors"
+                className="border-b border-[#F3F4F6] hover:bg-[var(--color-border-subtle)] transition-colors"
               >
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-3">

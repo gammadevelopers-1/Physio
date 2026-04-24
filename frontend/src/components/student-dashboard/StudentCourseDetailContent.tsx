@@ -147,8 +147,8 @@ const StudentCourseDetailContent = () => {
       case "present": return { bg: "bg-[#DCFCE7]", text: "text-[#16A34A]", label: t("courseDetail.statusPresent") };
       case "absent": return { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: t("courseDetail.statusAbsent") };
       case "late": return { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("courseDetail.statusLate") };
-      case "excused": return { bg: "bg-[#EFF6FF]", text: "text-[#3B82F6]", label: t("courseDetail.statusExcused") };
-      default: return { bg: "bg-[#F3F4F6]", text: "text-[var(--color-text-secondary)]", label: status };
+      case "excused": return { bg: "bg-[var(--color-border-subtle)]", text: "text-[var(--color-primary)]", label: t("courseDetail.statusExcused") };
+      default: return { bg: "bg-[var(--color-border-subtle)]", text: "text-[var(--color-text-secondary)]", label: status };
     }
   };
 
@@ -206,7 +206,7 @@ const StudentCourseDetailContent = () => {
                   <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
                     <div className="flex flex-col sm:flex-row gap-4">
                       {/* Thumbnail */}
-                      <div className="w-full sm:w-[200px] h-[120px] sm:h-[130px] bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                      <div className="w-full sm:w-[200px] h-[120px] sm:h-[130px] bg-[var(--color-border-subtle)] rounded-lg overflow-hidden flex-shrink-0">
                         {data.course.thumbnail ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -282,7 +282,7 @@ const StudentCourseDetailContent = () => {
                     <div className="mt-4 flex flex-col sm:flex-row gap-3">
                       <Link
                         href={`/${locale}/dashboard/student/courses/${courseId}/learn`}
-                        className="inline-flex items-center justify-center gap-2 px-6 py-2.5 btn-gold text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
+                        className="inline-flex items-center justify-center gap-2 px-6 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
                       >
                         <Play className="w-4 h-4" />
                         {data.enrollment.progress > 0
@@ -320,8 +320,8 @@ const StudentCourseDetailContent = () => {
                     {/* Modules */}
                     <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#F0F7FF] rounded-lg flex items-center justify-center">
-                          <BookOpen className="w-5 h-5 text-[#002D87]" />
+                        <div className="w-10 h-10 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center">
+                          <BookOpen className="w-5 h-5 text-[var(--color-primary)]" />
                         </div>
                         <div>
                           <p className="text-xs text-[var(--color-text-secondary)]">
@@ -559,7 +559,7 @@ const StudentCourseDetailContent = () => {
                                       <CheckCircle2 className="w-5 h-5 text-[#16A34A]" />
                                     </div>
                                   ) : (
-                                    <div className="w-8 h-8 rounded-full bg-[#F3F4F6] flex items-center justify-center flex-shrink-0">
+                                    <div className="w-8 h-8 rounded-full bg-[var(--color-border-subtle)] flex items-center justify-center flex-shrink-0">
                                       <span className="text-xs font-medium text-[var(--color-text-secondary)]">
                                         {index + 1}
                                       </span>
@@ -751,7 +751,7 @@ const StudentCourseDetailContent = () => {
                                   type="button"
                                   onClick={() => handleJoinZoom(session.id)}
                                   disabled={joiningSessionId === session.id}
-                                  className="inline-flex items-center gap-1 mt-2 text-xs text-[#002D87] hover:underline disabled:opacity-60"
+                                  className="inline-flex items-center gap-1 mt-2 text-xs text-[var(--color-primary)] hover:underline disabled:opacity-60"
                                 >
                                   {joiningSessionId === session.id ? (
                                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -791,7 +791,7 @@ const StudentCourseDetailContent = () => {
                             key={session.id}
                             className={`flex items-start gap-3 p-3 rounded-lg border ${wasAbsent ? "border-[#FCA5A5] bg-[#FEF2F2]" : "border-[var(--color-border)]"}`}
                           >
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${wasAbsent ? "bg-[#FEE2E2]" : "bg-[#F3F4F6]"}`}>
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${wasAbsent ? "bg-[#FEE2E2]" : "bg-[var(--color-border-subtle)]"}`}>
                               {wasAbsent ? (
                                 <XCircle className="w-5 h-5 text-[#EF4444]" />
                               ) : (
@@ -819,7 +819,7 @@ const StudentCourseDetailContent = () => {
                             </div>
                             <button
                               onClick={() => handleViewRecordings(session.id)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#002D87] border border-[var(--color-border)] rounded-lg hover:bg-[#F0F7FF] transition-colors flex-shrink-0"
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[var(--color-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors flex-shrink-0"
                             >
                               <Film className="w-3 h-3" />
                               {t("courseDetail.viewRecording")}
@@ -830,7 +830,7 @@ const StudentCourseDetailContent = () => {
                       {completedSessions.length > pastPage && (
                         <button
                           onClick={() => setPastPage(p => p + 10)}
-                          className="w-full mt-3 py-2 text-xs font-medium text-[#3B82F6] hover:bg-[#F0F7FF] rounded-lg transition-colors"
+                          className="w-full mt-3 py-2 text-xs font-medium text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
                         >
                           Show more ({completedSessions.length - pastPage} remaining)
                         </button>
@@ -847,7 +847,7 @@ const StudentCourseDetailContent = () => {
                       <div className="space-y-3">
                         {inactiveSessions.map((session) => (
                           <div key={session.id} className="flex items-start gap-3 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-page)]">
-                            <div className="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center flex-shrink-0">
+                            <div className="w-10 h-10 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center flex-shrink-0">
                               <XCircle className="w-5 h-5 text-[var(--color-text-secondary)]" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -954,7 +954,7 @@ const StudentCourseDetailContent = () => {
                                   {isGraded && (
                                     <Link
                                       href={`/${locale}/dashboard/student/courses/${courseId}/assessment/${assessment.id}?review=true`}
-                                      className="text-xs text-[#002D87] hover:underline"
+                                      className="text-xs text-[var(--color-primary)] hover:underline"
                                     >
                                       {t("courseDetail.review")}
                                     </Link>
@@ -976,7 +976,7 @@ const StudentCourseDetailContent = () => {
                             ) : (
                               <Link
                                 href={`/${locale}/dashboard/student/courses/${courseId}/assessment/${assessment.id}`}
-                                className="text-xs text-[#002D87] hover:underline flex-shrink-0"
+                                className="text-xs text-[var(--color-primary)] hover:underline flex-shrink-0"
                               >
                                 {t("courseDetail.takeAssessment")}
                               </Link>
@@ -1009,7 +1009,7 @@ const StudentCourseDetailContent = () => {
               </h2>
               <button
                 onClick={() => setRecordingsModalSession(null)}
-                className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
+                className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
@@ -1031,7 +1031,7 @@ const StudentCourseDetailContent = () => {
                 {recordings.map((rec) => (
                   <div key={rec.id} className="p-4 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="px-2 py-0.5 bg-[#EFF6FF] text-[#3B82F6] text-[10px] font-medium rounded">
+                      <span className="px-2 py-0.5 bg-[var(--color-border-subtle)] text-[var(--color-primary)] text-[10px] font-medium rounded">
                         {rec.recordingType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
                       </span>
                       <div className="flex items-center gap-2">
@@ -1040,7 +1040,7 @@ const StudentCourseDetailContent = () => {
                             href={rec.playUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#3B82F6] hover:text-white transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg hover:bg-[var(--color-primary)] hover:text-white transition-colors"
                           >
                             <Play className="w-3 h-3" />
                             {t("courseDetail.viewRecording")}

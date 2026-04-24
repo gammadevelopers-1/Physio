@@ -12,7 +12,7 @@ interface StatsNumbersBlockProps {
 
 export function StatsNumbersBlock({ data }: StatsNumbersBlockProps) {
   return (
-    <section className="px-4 lg:px-16 py-12 lg:py-20 bg-[var(--surface-intense)]">
+    <section className="px-4 lg:px-16 py-12 lg:py-20 bg-[var(--color-surface-page)]">
       <div className="max-w-[1280px] mx-auto flex flex-col gap-8 items-center">
         {/* Optional title and description */}
         {(data.title || data.description) && (
@@ -45,7 +45,7 @@ export function StatsNumbersBlock({ data }: StatsNumbersBlockProps) {
           {data.items.map((item) => (
             <div
               key={item.id}
-              className="flex flex-col items-center text-center gap-2 p-6 bg-white rounded-2xl shadow-sm"
+              className="flex flex-col items-center text-center gap-2 p-6 bg-[var(--color-surface-card)] rounded-2xl shadow-sm"
             >
               <span
                 className="font-bold text-[var(--on-surface-default)]"

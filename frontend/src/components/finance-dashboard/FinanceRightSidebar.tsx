@@ -213,7 +213,7 @@ const FinanceRightSidebar = ({
                 className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
                   coupon.status === "active"
                     ? "bg-[#DCFCE7] text-[#16A34A]"
-                    : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
+                    : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                 }`}
               >
                 {t(`discounts.${coupon.status}`)}

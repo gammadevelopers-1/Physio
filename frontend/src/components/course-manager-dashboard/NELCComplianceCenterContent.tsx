@@ -396,7 +396,7 @@ const NELCComplianceCenterContent = () => {
             <p className="text-sm text-[var(--color-text-secondary)] mb-4">{error}</p>
             <button
               onClick={refetch}
-              className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg"
+              className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg"
             >
               <RefreshCw className="w-4 h-4" />
               {t("dashboard.retry")}
@@ -433,7 +433,7 @@ const NELCComplianceCenterContent = () => {
               {/* Summary Bar */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-center">
-                  <p className="text-3xl font-bold text-[#3B82F6]">{overallPercentage}%</p>
+                  <p className="text-3xl font-bold text-[var(--color-primary)]">{overallPercentage}%</p>
                   <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("nelc.overallCompliance")}</p>
                 </div>
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-center">
@@ -460,13 +460,13 @@ const NELCComplianceCenterContent = () => {
                     placeholder={t("catalog.searchPlaceholder")}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none`}
+                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none`}
                   />
                 </div>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("catalog.allStatus")}</option>
                   <option value="passed">{t("nelc.passed")}</option>
@@ -476,7 +476,7 @@ const NELCComplianceCenterContent = () => {
                 <select
                   value={deliveryFilter}
                   onChange={(e) => setDeliveryFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("sessionsPage.allTypes")}</option>
                   <option value="zoom">{t("coursesPage.delivery.zoom")}</option>
@@ -489,7 +489,7 @@ const NELCComplianceCenterContent = () => {
               {/* Courses Tab Content */}
               {filtered.length === 0 ? (
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
-                  <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mx-auto mb-4">
                     <ShieldCheck className="w-8 h-8 text-[var(--color-text-secondary)]" />
                   </div>
                   <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">{t("nelc.noCourses")}</h3>
@@ -577,14 +577,14 @@ const NELCComplianceCenterContent = () => {
                                   <td colSpan={5} className="px-4 py-4 bg-[var(--color-surface-page)]">
                                     {scorecardLoading[course.courseId] ? (
                                       <div className="flex items-center gap-2 py-6 justify-center">
-                                        <Loader2 className="w-4 h-4 text-[#3B82F6] animate-spin" />
+                                        <Loader2 className="w-4 h-4 text-[var(--color-primary)] animate-spin" />
                                         <span className="text-sm text-[var(--color-text-secondary)]">{t("nelc.loadingScorecard")}</span>
                                       </div>
                                     ) : scorecards[course.courseId] ? (
                                       <>
                                         {/* Score summary */}
                                         <div className="flex items-center gap-3 mb-4">
-                                          <div className="text-2xl font-bold text-[#3B82F6]">
+                                          <div className="text-2xl font-bold text-[var(--color-primary)]">
                                             {scorecards[course.courseId].overallScore}%
                                           </div>
                                           <span className="text-sm text-[var(--color-text-secondary)]">{t("nelc.overallScore")}</span>
@@ -668,7 +668,7 @@ const NELCComplianceCenterContent = () => {
                                           handleDownloadEvidence(course.courseId);
                                         }}
                                         disabled={downloadingId === course.courseId}
-                                        className="inline-flex items-center gap-2 px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] disabled:bg-[#93C5FD] text-white text-sm font-medium rounded-lg transition-colors"
+                                        className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] disabled:bg-[#93C5FD] text-white text-sm font-medium rounded-lg transition-colors"
                                         title={t("nelc.bundleContents")}
                                       >
                                         {downloadingId === course.courseId ? (
@@ -693,7 +693,7 @@ const NELCComplianceCenterContent = () => {
                       <button
                         onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
-                        className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <ChevronLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
                       </button>
@@ -701,7 +701,7 @@ const NELCComplianceCenterContent = () => {
                       <button
                         onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage >= totalPages}
-                        className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <ChevronRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
                       </button>
@@ -714,12 +714,12 @@ const NELCComplianceCenterContent = () => {
                 <>
                   {vcLoading ? (
                     <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
-                      <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin mx-auto mb-3" />
+                      <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin mx-auto mb-3" />
                       <p className="text-sm text-[var(--color-text-secondary)]">{t("dashboard.loading")}</p>
                     </div>
                   ) : filteredVc.length === 0 ? (
                     <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
-                      <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
+                      <div className="w-16 h-16 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mx-auto mb-4">
                         <Video className="w-8 h-8 text-[var(--color-text-secondary)]" />
                       </div>
                       <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">

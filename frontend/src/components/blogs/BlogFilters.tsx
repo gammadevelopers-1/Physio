@@ -30,7 +30,7 @@ const BlogFilters = ({
         <button
           onClick={() => onCategoryChange("All")}
           className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${activeCategory === "All"
-            ? "bg-[#F4F4F5] text-[var(--on-surface-default)]"
+            ? "bg-[var(--color-primary)] text-white"
             : "text-[var(--on-surface-default)]"
             }`}
         >
@@ -41,7 +41,7 @@ const BlogFilters = ({
             key={cat.slug}
             onClick={() => onCategoryChange(cat.slug)}
             className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${activeCategory === cat.slug
-              ? "bg-[#F4F4F5] text-[var(--on-surface-default)]"
+              ? "bg-[var(--color-primary)] text-white"
               : "text-[var(--on-surface-default)]"
               }`}
           >
@@ -57,8 +57,8 @@ const BlogFilters = ({
       <button
         onClick={() => onCategoryChange("All")}
         className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === "All"
-          ? "bg-[#F4F4F5] text-[var(--on-surface-default)]"
-          : "text-[var(--on-surface-default)] hover:bg-[#F4F4F5]"
+          ? "bg-[var(--color-primary)] text-white"
+          : "text-[var(--on-surface-default)] hover:bg-[var(--color-border-subtle)]"
           }`}
       >
         {allLabel}
@@ -68,8 +68,8 @@ const BlogFilters = ({
           key={cat.slug}
           onClick={() => onCategoryChange(cat.slug)}
           className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === cat.slug
-            ? "bg-[#F4F4F5] text-[var(--on-surface-default)]"
-            : "text-[var(--on-surface-default)] hover:bg-[#F4F4F5]"
+            ? "bg-[var(--color-primary)] text-white"
+            : "text-[var(--on-surface-default)] hover:bg-[var(--color-border-subtle)]"
             }`}
         >
           {cat.title}

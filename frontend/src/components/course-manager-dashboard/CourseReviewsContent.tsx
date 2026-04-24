@@ -170,7 +170,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                       return (
                         <div key={s} className="flex items-center gap-2 text-xs">
                           <span className="w-6 text-[var(--color-text-secondary)]">{s}★</span>
-                          <div className="flex-1 h-2 bg-[#F3F4F6] rounded-full overflow-hidden">
+                          <div className="flex-1 h-2 bg-[var(--color-border-subtle)] rounded-full overflow-hidden">
                             <div className="h-full bg-[#FBBF24]" style={{ width: `${pct}%` }} />
                           </div>
                           <span className="w-10 text-end text-[var(--color-text-secondary)] tabular-nums">{c}</span>
@@ -196,7 +196,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                       }}
                       onBlur={() => setSearch(searchInput)}
                       placeholder={isRTL ? "ابحث باسم الطالب أو نص المراجعة..." : "Search by student name or review text..."}
-                      className={`w-full ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"} py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6]`}
+                      className={`w-full ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"} py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]`}
                     />
                   </div>
 
@@ -206,7 +206,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                     <select
                       value={sort}
                       onChange={(e) => setSort(e.target.value as SortOption)}
-                      className="text-sm border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
+                      className="text-sm border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-surface-card)]"
                     >
                       <option value="newest">{isRTL ? "الأحدث" : "Newest"}</option>
                       <option value="oldest">{isRTL ? "الأقدم" : "Oldest"}</option>
@@ -221,7 +221,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                   <button
                     onClick={() => setStarFilter(null)}
                     className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                      starFilter === null ? "bg-[var(--color-text-primary)] text-white" : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
+                      starFilter === null ? "bg-[var(--color-text-primary)] text-white" : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
                     }`}
                   >
                     {isRTL ? "الكل" : "All"} ({totalRatings})
@@ -234,7 +234,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                         onClick={() => setStarFilter(starFilter === s ? null : s)}
                         disabled={c === 0}
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                          starFilter === s ? "bg-[#FBBF24] text-white" : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
+                          starFilter === s ? "bg-[#FBBF24] text-white" : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
                         }`}
                       >
                         {s} <Star className="w-3 h-3 fill-current" /> ({c})
@@ -252,7 +252,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                   </div>
                 ) : reviews.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="w-14 h-14 rounded-xl bg-[#F3F4F6] flex items-center justify-center mb-3">
+                    <div className="w-14 h-14 rounded-xl bg-[var(--color-border-subtle)] flex items-center justify-center mb-3">
                       <Star className="w-7 h-7 text-[var(--color-text-secondary)]" />
                     </div>
                     <p className="text-sm text-[var(--color-text-secondary)]">
@@ -299,7 +299,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                       <button
                         onClick={() => fetchReviews(page - 1)}
                         disabled={page <= 1}
-                        className="p-1.5 rounded hover:bg-[#F3F4F6] disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="p-1.5 rounded hover:bg-[var(--color-border-subtle)] disabled:opacity-40 disabled:cursor-not-allowed"
                         aria-label={isRTL ? "السابق" : "Previous"}
                       >
                         {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -312,7 +312,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                             key={p}
                             onClick={() => fetchReviews(p)}
                             className={`min-w-[28px] h-7 px-2 text-xs font-medium rounded ${
-                              p === page ? "bg-[var(--color-text-primary)] text-white" : "text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
+                              p === page ? "bg-[var(--color-text-primary)] text-white" : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                             }`}
                           >
                             {p}
@@ -322,7 +322,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                       <button
                         onClick={() => fetchReviews(page + 1)}
                         disabled={page >= totalPages}
-                        className="p-1.5 rounded hover:bg-[#F3F4F6] disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="p-1.5 rounded hover:bg-[var(--color-border-subtle)] disabled:opacity-40 disabled:cursor-not-allowed"
                         aria-label={isRTL ? "التالي" : "Next"}
                       >
                         {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}

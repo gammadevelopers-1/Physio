@@ -65,7 +65,7 @@ export default function CertificateVerifyContent({
     return (
       <div className="min-h-screen bg-[#F8F9FC] flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#002D87] mx-auto mb-3" />
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)] mx-auto mb-3" />
           <p className="text-sm text-[var(--color-text-secondary)]">{t("verify.verifying")}</p>
         </div>
       </div>
@@ -88,7 +88,7 @@ export default function CertificateVerifyContent({
             </p>
             <Link
               href={`/${locale}`}
-              className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-[#002D87] rounded-lg hover:bg-[#001E5C] transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-[var(--color-primary)] rounded-lg hover:bg-[#001E5C] transition-colors"
             >
               {t("verify.backToHome")}
             </Link>
@@ -128,7 +128,7 @@ export default function CertificateVerifyContent({
           {result.verified ? (
             <div className="bg-gradient-to-r from-[#002D87] to-[#0046D4] px-8 py-6">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-white/15 rounded-full flex items-center justify-center flex-shrink-0">
+                <div className="w-14 h-14 bg-[var(--color-surface-card)]/15 rounded-full flex items-center justify-center flex-shrink-0">
                   <BadgeCheck className="w-7 h-7 text-white" />
                 </div>
                 <div>
@@ -144,7 +144,7 @@ export default function CertificateVerifyContent({
           ) : (
             <div className="bg-gradient-to-r from-[#D97706] to-[#F59E0B] px-8 py-6">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-white/15 rounded-full flex items-center justify-center flex-shrink-0">
+                <div className="w-14 h-14 bg-[var(--color-surface-card)]/15 rounded-full flex items-center justify-center flex-shrink-0">
                   <Shield className="w-7 h-7 text-white" />
                 </div>
                 <div>
@@ -163,7 +163,7 @@ export default function CertificateVerifyContent({
           <div className="px-8 py-7">
             {/* Certificate ID */}
             <div className="text-center mb-6">
-              <span className="inline-block px-5 py-2 bg-[#F0F4FF] text-[#002D87] font-mono text-sm font-bold rounded-full border border-[#D6E0F5]">
+              <span className="inline-block px-5 py-2 bg-[#F0F4FF] text-[var(--color-primary)] font-mono text-sm font-bold rounded-full border border-[#D6E0F5]">
                 {result.certificateId}
               </span>
             </div>
@@ -180,13 +180,13 @@ export default function CertificateVerifyContent({
               <p className="text-xs text-[var(--color-text-secondary)] uppercase tracking-widest mb-1">Certificate of Attendance</p>
               <p className="text-lg font-bold text-[var(--color-text-secondary)]">{result.studentName}</p>
               <p className="text-sm text-[var(--color-text-secondary)] mt-1">for completing</p>
-              <p className="text-base font-semibold text-[#002D87] mt-1">{courseName}</p>
+              <p className="text-base font-semibold text-[var(--color-primary)] mt-1">{courseName}</p>
             </div>
 
             {/* Details Grid */}
             <div className="grid grid-cols-2 gap-4 mt-6">
               <div className="bg-[var(--color-surface-page)] rounded-xl p-4 text-center">
-                <Calendar className="w-5 h-5 text-[#002D87] mx-auto mb-2" />
+                <Calendar className="w-5 h-5 text-[var(--color-primary)] mx-auto mb-2" />
                 <p className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider mb-1">Date Issued</p>
                 <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{formattedDate}</p>
               </div>
@@ -222,7 +222,7 @@ export default function CertificateVerifyContent({
             </div>
             <Link
               href={`/${locale}`}
-              className="text-xs text-[#002D87] font-medium hover:underline transition-colors"
+              className="text-xs text-[var(--color-primary)] font-medium hover:underline transition-colors"
             >
               {t("verify.backToHome")}
             </Link>

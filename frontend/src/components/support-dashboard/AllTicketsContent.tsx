@@ -58,8 +58,8 @@ const AllTicketsContent = () => {
       label: t("allTicketsPage.stats.totalTickets"),
       value: "384",
       icon: FileText,
-      iconBg: "bg-[#EFF6FF]",
-      iconColor: "text-[#3B82F6]",
+      iconBg: "bg-[var(--color-border-subtle)]",
+      iconColor: "text-[var(--color-primary)]",
     },
     {
       label: t("allTicketsPage.stats.open"),
@@ -191,11 +191,11 @@ const AllTicketsContent = () => {
   };
 
   const statusStyles: Record<string, string> = {
-    new: "bg-[#EFF6FF] text-[#3B82F6]",
+    new: "bg-[var(--color-border-subtle)] text-[var(--color-primary)]",
     inProgress: "bg-[#FEF9C3] text-[#EAB308]",
     waiting: "bg-[#FFEDD5] text-[#F97316]",
     resolved: "bg-[#DCFCE7] text-[#22C55E]",
-    closed: "bg-[#F3F4F6] text-[var(--color-text-secondary)]",
+    closed: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
   };
 
   const filteredTickets = tickets.filter((ticket) => {
@@ -280,14 +280,14 @@ const AllTicketsContent = () => {
               <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
                 {/* Tabs */}
                 <div className="px-5 py-4 border-b border-[#F3F4F6]">
-                  <div className="flex gap-1 bg-[#F3F4F6] rounded-lg p-0.5 w-fit overflow-x-auto">
+                  <div className="flex gap-1 bg-[var(--color-border-subtle)] rounded-lg p-0.5 w-fit overflow-x-auto">
                     {tabs.map((tab) => (
                       <button
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}
                         className={`px-4 py-1.5 text-[13px] font-medium rounded-md transition-colors flex items-center gap-2 whitespace-nowrap ${
                           activeTab === tab.key
-                            ? "bg-white text-[var(--color-text-primary)] shadow-sm"
+                            ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
                             : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                         }`}
                       >
@@ -313,7 +313,7 @@ const AllTicketsContent = () => {
                     <select
                       value={categoryFilter}
                       onChange={(e) => setCategoryFilter(e.target.value)}
-                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-primary)] bg-white"
+                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-primary)] bg-[var(--color-surface-card)]"
                     >
                       <option value="all">
                         {t("allTicketsPage.filters.allCategories")}
@@ -339,7 +339,7 @@ const AllTicketsContent = () => {
                     <select
                       value={priorityFilter}
                       onChange={(e) => setPriorityFilter(e.target.value)}
-                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-primary)] bg-white"
+                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-primary)] bg-[var(--color-surface-card)]"
                     >
                       <option value="all">
                         {t("allTicketsPage.filters.allPriorities")}
@@ -370,7 +370,7 @@ const AllTicketsContent = () => {
                     </div>
 
                     {/* New Ticket Button */}
-                    <button className="flex items-center gap-1.5 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap">
+                    <button className="flex items-center gap-1.5 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors whitespace-nowrap">
                       <Plus className="w-4 h-4" />
                       {t("allTicketsPage.newTicket")}
                     </button>
@@ -433,7 +433,7 @@ const AllTicketsContent = () => {
                         >
                           {/* Ticket # */}
                           <td className="py-3 px-4">
-                            <span className="text-[13px] font-medium text-[#3B82F6] cursor-pointer hover:underline">
+                            <span className="text-[13px] font-medium text-[var(--color-primary)] cursor-pointer hover:underline">
                               #{ticket.id}
                             </span>
                           </td>
@@ -456,7 +456,7 @@ const AllTicketsContent = () => {
                           </td>
                           {/* Category */}
                           <td className="py-3 px-4 hidden md:table-cell">
-                            <span className="bg-[#F3F4F6] text-[var(--color-text-secondary)] text-[10px] px-2 py-0.5 rounded-md font-medium">
+                            <span className="bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] text-[10px] px-2 py-0.5 rounded-md font-medium">
                               {t(
                                 `allTicketsPage.filters.categories.${ticket.category}`
                               )}

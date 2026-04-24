@@ -68,7 +68,7 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; bar: string }> =
   available: { bg: "bg-[#D1FAE5]", text: "text-[#065F46]", bar: "bg-[#22C55E]" },
   busy: { bg: "bg-[#FEF3C7]", text: "text-[#92400E]", bar: "bg-[#F59E0B]" },
   overloaded: { bg: "bg-[#FEE2E2]", text: "text-[#991B1B]", bar: "bg-[#EF4444]" },
-  on_leave: { bg: "bg-[#E0E7FF]", text: "text-[#3730A3]", bar: "bg-[#6366F1]" },
+  on_leave: { bg: "bg-[var(--color-border-subtle)]", text: "text-[#3730A3]", bar: "bg-[#6366F1]" },
 };
 
 const InstructorsContent = () => {
@@ -277,13 +277,13 @@ const InstructorsContent = () => {
                     placeholder={t("instructorsPage.searchPlaceholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
+                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent`}
                   />
                 </div>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("instructorsPage.filters.allStatus")}</option>
                   <option value="available">{t("instructorsPage.filters.available")}</option>
@@ -304,7 +304,7 @@ const InstructorsContent = () => {
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
                   <p className="text-sm text-[var(--color-text-secondary)] mb-4">{error}</p>
-                  <button onClick={fetchRoster} className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg">
+                  <button onClick={fetchRoster} className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg">
                     <RefreshCw className="w-4 h-4" />{t("dashboard.retry")}
                   </button>
                 </div>
@@ -312,7 +312,7 @@ const InstructorsContent = () => {
 
               {!loading && !error && filtered.length === 0 && (
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
-                  <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mx-auto mb-4">
                     <User className="w-8 h-8 text-[var(--color-text-secondary)]" />
                   </div>
                   <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">{t("instructorsPage.noInstructors")}</h3>
@@ -331,7 +331,7 @@ const InstructorsContent = () => {
                         {/* Badges row */}
                         <div className="h-6 mb-2 flex items-center gap-2">
                           {instructor.isMyInstructor && (
-                            <span className="inline-flex items-center px-2 py-0.5 bg-[#EFF6FF] text-[#3B82F6] text-[10px] font-semibold rounded-full">
+                            <span className="inline-flex items-center px-2 py-0.5 bg-[var(--color-border-subtle)] text-[var(--color-primary)] text-[10px] font-semibold rounded-full">
                               {isRTL ? "مدربي" : "My Instructor"}
                             </span>
                           )}
@@ -352,16 +352,16 @@ const InstructorsContent = () => {
                               }}
                             />
                           ) : null}
-                          <div className={`w-12 h-12 bg-[#EFF6FF] rounded-full flex items-center justify-center flex-shrink-0 ${instructor.avatar ? 'hidden' : ''}`}>
-                            <span className="text-sm font-semibold text-[#3B82F6]">{getInitials(instructor)}</span>
+                          <div className={`w-12 h-12 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center flex-shrink-0 ${instructor.avatar ? 'hidden' : ''}`}>
+                            <span className="text-sm font-semibold text-[var(--color-primary)]">{getInitials(instructor)}</span>
                           </div>
                           <div className="min-w-0">
                             <h3 className="text-sm font-semibold text-[var(--color-text-primary)] truncate">{getName(instructor)}</h3>
                             <p className="text-xs text-[var(--color-text-secondary)] truncate">{instructor.email}</p>
                             {(instructor.department || instructor.specialty) && (
                               <div className="flex flex-wrap gap-1 mt-1">
-                                {instructor.department && <span className="px-1.5 py-0.5 bg-[#F3F4F6] text-[var(--color-text-secondary)] text-[9px] rounded">{instructor.department}</span>}
-                                {instructor.specialty && <span className="px-1.5 py-0.5 bg-[#EFF6FF] text-[#3B82F6] text-[9px] rounded">{instructor.specialty}</span>}
+                                {instructor.department && <span className="px-1.5 py-0.5 bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] text-[9px] rounded">{instructor.department}</span>}
+                                {instructor.specialty && <span className="px-1.5 py-0.5 bg-[var(--color-border-subtle)] text-[var(--color-primary)] text-[9px] rounded">{instructor.specialty}</span>}
                               </div>
                             )}
                           </div>

@@ -87,14 +87,14 @@ const RevenueSummaryWidget = ({ data }: RevenueSummaryWidgetProps) => {
         </div>
         <div className="flex items-center gap-2">
           {/* Time Filter Tabs */}
-          <div className="flex bg-[#F3F4F6] rounded-lg p-0.5">
+          <div className="flex bg-[var(--color-border-subtle)] rounded-lg p-0.5">
             {timeFilters.map((filter) => (
               <button
                 key={filter.key}
                 onClick={() => setTimeFilter(filter.key)}
                 className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                   timeFilter === filter.key
-                    ? "bg-white text-[var(--color-text-primary)] shadow-sm"
+                    ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
                     : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                 }`}
               >
@@ -193,7 +193,7 @@ const RevenueSummaryWidget = ({ data }: RevenueSummaryWidgetProps) => {
                 <div className="flex items-center justify-between mb-1">
                   <span className="flex items-center gap-2 text-[13px] text-[var(--color-text-secondary)]">
                     {index === 0 ? (
-                      <CreditCard className="w-3.5 h-3.5 text-[#3B82F6]" />
+                      <CreditCard className="w-3.5 h-3.5 text-[var(--color-primary)]" />
                     ) : (
                       <Landmark className="w-3.5 h-3.5 text-[#22C55E]" />
                     )}

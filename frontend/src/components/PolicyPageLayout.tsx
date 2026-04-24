@@ -79,7 +79,7 @@ const PolicyPageLayout = ({ title, lastUpdated, sections, isRTL, emptyMessage }:
 
       {/* Empty state when Strapi returns no sections */}
       {sections.length === 0 ? (
-        <div className="bg-white rounded-2xl p-6 md:p-8 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+        <div className="bg-[var(--color-surface-card)] rounded-2xl p-6 md:p-8 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
           <p
             className="leading-7 text-[var(--on-surface-default)] text-center"
             style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
@@ -93,7 +93,7 @@ const PolicyPageLayout = ({ title, lastUpdated, sections, isRTL, emptyMessage }:
         {/* Sidebar Navigation - Hidden on mobile */}
         <div className="hidden lg:block lg:w-[320px] xl:w-[395px] shrink-0">
           <div
-            className="bg-white rounded-2xl p-8 sticky top-24 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]"
+            className="bg-[var(--color-surface-card)] rounded-2xl p-8 sticky top-24 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]"
           >
             <nav className="flex flex-col gap-6">
               {sections.map((section, index) => (
@@ -117,7 +117,7 @@ const PolicyPageLayout = ({ title, lastUpdated, sections, isRTL, emptyMessage }:
         {/* Main Content */}
         <div className="flex-1 min-w-0">
           <div
-            className="bg-white rounded-2xl p-6 md:p-8 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]"
+            className="bg-[var(--color-surface-card)] rounded-2xl p-6 md:p-8 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]"
           >
             <div className="flex flex-col gap-12">
               {sections.map((section) => (

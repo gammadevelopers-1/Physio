@@ -78,7 +78,7 @@ const ReviewsOverviewWidget = ({ overall, topCourses }: ReviewsOverviewWidgetPro
         </div>
         <Link
           href={`/${locale}/dashboard/manager/reviews`}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--on-surface-default)] bg-[var(--color-surface-page)] hover:bg-[#F3F4F6] border border-[var(--color-border)] rounded-lg transition-colors flex-shrink-0"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--on-surface-default)] bg-[var(--color-surface-page)] hover:bg-[var(--color-border-subtle)] border border-[var(--color-border)] rounded-lg transition-colors flex-shrink-0"
         >
           <span className="hidden sm:inline">{t("moderate")}</span>
           <ArrowIcon className="w-3.5 h-3.5" />

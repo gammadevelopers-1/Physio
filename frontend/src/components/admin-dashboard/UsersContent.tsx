@@ -168,12 +168,12 @@ function CreateUserModal({
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#002D87] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center">
               <UserPlus className="w-5 h-5 text-white" />
             </div>
             <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Create New User</h2>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg">
+          <button onClick={onClose} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg">
             <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
@@ -261,7 +261,7 @@ function CreateUserModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 h-10 btn-gold text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 h-10 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>
@@ -334,7 +334,7 @@ function EditUserModal({
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#002D87] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center">
               <Edit className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -345,7 +345,7 @@ function EditUserModal({
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg">
+          <button onClick={onClose} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg">
             <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
@@ -394,7 +394,7 @@ function EditUserModal({
               }`}
             >
               <span
-                className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                className={`absolute top-0.5 w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-transform ${
                   form.isActive ? "left-[22px]" : "left-[2px]"
                 }`}
               />
@@ -411,7 +411,7 @@ function EditUserModal({
               }`}
             >
               <span
-                className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                className={`absolute top-0.5 w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-transform ${
                   form.isVerified ? "left-[22px]" : "left-[2px]"
                 }`}
               />
@@ -429,7 +429,7 @@ function EditUserModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 h-10 btn-gold text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 h-10 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>
@@ -598,7 +598,7 @@ function ManageRolesModal({
       case "super_admin":
         return "bg-[var(--color-text-primary)] text-white";
       case "instructor":
-        return "bg-[#DBEAFE] text-[#1D4ED8]";
+        return "bg-[var(--color-border-subtle)] text-[#1D4ED8]";
       case "student":
         return "bg-[#DCFCE7] text-[#16A34A]";
       case "teaching_assistant":
@@ -608,9 +608,9 @@ function ManageRolesModal({
       case "finance":
         return "bg-[#FEF3C7] text-[#D97706]";
       case "support":
-        return "bg-[#DBEAFE] text-[#2563EB]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-primary-dark)]";
       default:
-        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -619,7 +619,7 @@ function ManageRolesModal({
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#002D87] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center">
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -627,7 +627,7 @@ function ManageRolesModal({
               <p className="text-xs text-[var(--color-text-secondary)]">{getUserName(user)}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg">
+          <button onClick={onClose} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg">
             <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
@@ -658,7 +658,7 @@ function ManageRolesModal({
                     <button
                       onClick={() => handleSetActiveRole(role)}
                       disabled={isLoading}
-                      className="text-xs text-[#002D87] hover:underline disabled:opacity-50"
+                      className="text-xs text-[var(--color-primary)] hover:underline disabled:opacity-50"
                     >
                       Set Active
                     </button>
@@ -824,7 +824,7 @@ const UsersContent = () => {
       case "super_admin":
         return "bg-[var(--color-text-primary)] text-white";
       case "instructor":
-        return "bg-[#DBEAFE] text-[#1D4ED8]";
+        return "bg-[var(--color-border-subtle)] text-[#1D4ED8]";
       case "student":
         return "bg-[#DCFCE7] text-[#16A34A]";
       case "teaching_assistant":
@@ -834,9 +834,9 @@ const UsersContent = () => {
       case "finance":
         return "bg-[#FEF3C7] text-[#D97706]";
       case "support":
-        return "bg-[#DBEAFE] text-[#2563EB]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-primary-dark)]";
       default:
-        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -849,9 +849,9 @@ const UsersContent = () => {
       case "pending":
         return "bg-[#FEF3C7] text-[#D97706]";
       case "inactive":
-        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
       default:
-        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -861,7 +861,7 @@ const UsersContent = () => {
       case "super_admin":
         return "bg-[var(--color-text-primary)]";
       case "instructor":
-        return "bg-[#3B82F6]";
+        return "bg-[var(--color-primary)]";
       case "student":
         return "bg-[#22C55E]";
       case "teaching_assistant":
@@ -871,7 +871,7 @@ const UsersContent = () => {
       case "finance":
         return "bg-[#D97706]";
       case "support":
-        return "bg-[#2563EB]";
+        return "bg-[var(--color-primary-dark)]";
       default:
         return "bg-[var(--color-text-secondary)]";
     }
@@ -920,7 +920,7 @@ const UsersContent = () => {
                 </div>
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="flex items-center gap-2 px-4 py-2.5 btn-gold text-white rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 btn-gold text-[var(--color-button-text)] rounded-lg transition-colors"
                 >
                   <Plus className="w-5 h-5" />
                   <span className="text-sm font-medium">{t("usersPage.addUser")}</span>
@@ -993,7 +993,7 @@ const UsersContent = () => {
               {/* Loading State */}
               {isLoadingUsers && (
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-[#002D87] mb-3" />
+                  <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)] mb-3" />
                   <p className="text-sm text-[var(--color-text-secondary)]">Loading users...</p>
                 </div>
               )}
@@ -1005,7 +1005,7 @@ const UsersContent = () => {
                   <p className="text-sm text-[#DC2626] mb-4">{fetchError}</p>
                   <button
                     onClick={fetchUsers}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#002D87] rounded-lg hover:bg-[#001d5a] transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[var(--color-primary)] rounded-lg hover:bg-[#001d5a] transition-colors"
                   >
                     <RefreshCw className="w-4 h-4" />
                     Retry
@@ -1090,7 +1090,7 @@ const UsersContent = () => {
                                       e.stopPropagation();
                                       setOpenDropdownId(openDropdownId === user.id ? null : user.id);
                                     }}
-                                    className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
+                                    className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
                                   >
                                     <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                   </button>
@@ -1194,7 +1194,7 @@ const UsersContent = () => {
                               onClick={() => setCurrentPage(p)}
                               className={`w-8 h-8 text-sm rounded-lg ${
                                 p === currentPage
-                                  ? "bg-[#002D87] text-white"
+                                  ? "bg-[var(--color-primary)] text-white"
                                   : "border border-[var(--color-border)] hover:bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]"
                               }`}
                             >

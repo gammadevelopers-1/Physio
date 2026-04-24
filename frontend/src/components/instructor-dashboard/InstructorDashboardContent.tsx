@@ -340,7 +340,7 @@ function ShareMaterialsModal({
       <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl w-full max-w-md max-h-[70vh] flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
           <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("shareMaterials.title")}</h3>
-          <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg">
+          <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg">
             <span className="text-lg">&times;</span>
           </button>
         </div>
@@ -363,7 +363,7 @@ function ShareMaterialsModal({
                     disabled={toggling === m.id}
                     className={`relative w-10 h-5 rounded-full transition-colors ${sharedIds.has(m.id) ? "bg-[#22C55E]" : "bg-[var(--color-border)]"} ${toggling === m.id ? "opacity-50" : ""}`}
                   >
-                    <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${sharedIds.has(m.id) ? "translate-x-5" : "translate-x-0.5"}`} />
+                    <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-[var(--color-surface-card)] shadow transition-transform ${sharedIds.has(m.id) ? "translate-x-5" : "translate-x-0.5"}`} />
                   </button>
                 </div>
               ))}
@@ -371,7 +371,7 @@ function ShareMaterialsModal({
           )}
         </div>
         <div className="p-4 border-t border-[var(--color-border)]">
-          <button onClick={onClose} className="w-full px-4 py-2 bg-[#3B82F6] text-white rounded-lg text-sm font-medium hover:bg-[#2563EB]">
+          <button onClick={onClose} className="w-full px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg text-sm font-medium hover:bg-[var(--color-primary-dark)]">
             {t("shareMaterials.done")}
           </button>
         </div>

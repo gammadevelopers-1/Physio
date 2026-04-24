@@ -26,8 +26,8 @@ const SupportRightSidebar = () => {
     {
       id: "1",
       icon: ClipboardList,
-      iconBg: "bg-[#EFF6FF]",
-      iconColor: "text-[#3B82F6]",
+      iconBg: "bg-[var(--color-border-subtle)]",
+      iconColor: "text-[var(--color-primary)]",
       textKey: "activity.ticketCreated",
       timeKey: "activity.time.2min",
     },
@@ -140,7 +140,7 @@ const SupportRightSidebar = () => {
       {/* Activity Feed */}
       <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
-          <ClipboardList className="w-4 h-4 text-[#3B82F6]" />
+          <ClipboardList className="w-4 h-4 text-[var(--color-primary)]" />
           <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
             {t("activity.title")}
           </h3>
@@ -175,7 +175,7 @@ const SupportRightSidebar = () => {
         <div className="mt-3 pt-3 border-t border-[#F3F4F6] text-center">
           <Link
             href={`/${locale}/dashboard/support/activity`}
-            className="text-[13px] font-medium text-[#3B82F6] hover:text-[#2563EB] hover:underline flex items-center justify-center gap-1"
+            className="text-[13px] font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline flex items-center justify-center gap-1"
           >
             {t("activity.viewAll")}
             <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
@@ -228,7 +228,7 @@ const SupportRightSidebar = () => {
       {/* Quick Actions */}
       <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Zap className="w-4 h-4 text-[#3B82F6]" />
+          <Zap className="w-4 h-4 text-[var(--color-primary)]" />
           <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
             {t("quickActions.title")}
           </h3>
@@ -240,7 +240,7 @@ const SupportRightSidebar = () => {
             return (
               <button
                 key={action.id}
-                className="flex items-center justify-center gap-1.5 p-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#EFF6FF] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                className="flex items-center justify-center gap-1.5 p-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors"
               >
                 <Icon className="w-3.5 h-3.5" />
                 {t(action.labelKey)}

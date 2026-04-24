@@ -57,7 +57,7 @@ const NELCContent = ({ strapiData }: { strapiData?: NELCPage | null }) => {
                       {infoBadges.map((badge) => (
                         <div
                           key={badge.id}
-                          className="bg-[#F9FBFD] rounded-[10px] px-3 py-2 flex items-start gap-3 w-full md:flex-1 md:min-w-[180px]"
+                          className="bg-[var(--color-border-subtle)] rounded-[10px] px-3 py-2 flex items-start gap-3 w-full md:flex-1 md:min-w-[180px]"
                         >
                           <div className="w-1 self-stretch bg-[var(--color-border-subtle)] rounded" />
                           <div className="flex flex-col">

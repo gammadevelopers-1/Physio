@@ -64,7 +64,7 @@ const SchedulesSessionsWidget = ({
             {t("schedules.title")}
           </h3>
         </div>
-        <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors">
+        <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors">
           <Plus className="w-4 h-4" />
           {t("schedules.schedule")}
         </button>
@@ -79,13 +79,13 @@ const SchedulesSessionsWidget = ({
             <div className="flex gap-1">
               <button
                 onClick={onPrevMonth}
-                className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[#F3F4F6] transition-colors"
+                className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[var(--color-border-subtle)] transition-colors"
               >
                 <ChevronLeft className={`w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "rotate-180" : ""}`} />
               </button>
               <button
                 onClick={onNextMonth}
-                className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[#F3F4F6] transition-colors"
+                className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[var(--color-border-subtle)] transition-colors"
               >
                 <ChevronRight className={`w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "rotate-180" : ""}`} />
               </button>
@@ -106,8 +106,8 @@ const SchedulesSessionsWidget = ({
                 key={index}
                 className={`relative py-2 text-[13px] rounded-md cursor-pointer transition-colors ${
                   day.isToday
-                    ? "bg-[#3B82F6] text-white font-semibold"
-                    : "text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
+                    ? "bg-[var(--color-primary)] text-white font-semibold"
+                    : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                 }`}
               >
                 {day.day > 0 ? day.day : ""}
@@ -117,8 +117,8 @@ const SchedulesSessionsWidget = ({
                       day.hasConflict
                         ? "bg-[#EF4444]"
                         : day.isToday
-                          ? "bg-white"
-                          : "bg-[#3B82F6]"
+                          ? "bg-[var(--color-surface-card)]"
+                          : "bg-[var(--color-primary)]"
                     }`}
                   />
                 )}
@@ -137,7 +137,7 @@ const SchedulesSessionsWidget = ({
                   ? "bg-[#FEE2E2] border-s-3 border-[#EF4444]"
                   : session.type === "onsite"
                     ? "bg-[var(--color-surface-page)] border-s-3 border-[#22C55E]"
-                    : "bg-[var(--color-surface-page)] border-s-3 border-[#3B82F6]"
+                    : "bg-[var(--color-surface-page)] border-s-3 border-[var(--color-primary)]"
               }`}
               style={{ borderInlineStartWidth: "3px" }}
             >
@@ -157,7 +157,7 @@ const SchedulesSessionsWidget = ({
                       <span
                         className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded ${
                           session.type === "zoom"
-                            ? "bg-[#DBEAFE] text-[#3B82F6]"
+                            ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
                             : "bg-[#DCFCE7] text-[#22C55E]"
                         }`}
                       >

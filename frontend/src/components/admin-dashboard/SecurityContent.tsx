@@ -101,7 +101,7 @@ const SecurityContent = () => {
 
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Users className="w-5 h-5 text-[#3B82F6]" />
+                    <Users className="w-5 h-5 text-[var(--color-primary)]" />
                   </div>
                   <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.activeSessions}</p>
                   <p className="text-xs text-[var(--color-text-secondary)]">{t("securityPage.stats.activeSessions")}</p>
@@ -133,7 +133,7 @@ const SecurityContent = () => {
                       onClick={() => setActiveTab(tab)}
                       className={`px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
                         activeTab === tab
-                          ? "text-[#002D87] border-b-2 border-[#002D87]"
+                          ? "text-[var(--color-primary)] border-b-2 border-[#002D87]"
                           : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                       }`}
                     >
@@ -245,7 +245,7 @@ const SecurityContent = () => {
                         <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                           {t("securityPage.blockedIps")}
                         </h3>
-                        <button className="flex items-center gap-2 px-3 py-2 text-sm text-[#002D87] border border-[#002D87] rounded-lg hover:bg-[#F0F7FF]">
+                        <button className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-primary)] border border-[#002D87] rounded-lg hover:bg-[var(--color-border-subtle)]">
                           <Plus className="w-4 h-4" />
                           {t("securityPage.addToBlocklist")}
                         </button>
@@ -276,7 +276,7 @@ const SecurityContent = () => {
                               <td className="px-4 py-4 text-sm text-[var(--color-text-primary)] font-mono">{ip.ip}</td>
                               <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)]">{ip.reason}</td>
                               <td className="px-4 py-4">
-                                <span className={`px-2 py-1 text-xs font-medium rounded ${ip.type === "auto" ? "bg-[#DBEAFE] text-[#1D4ED8]" : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"}`}>
+                                <span className={`px-2 py-1 text-xs font-medium rounded ${ip.type === "auto" ? "bg-[var(--color-border-subtle)] text-[#1D4ED8]" : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"}`}>
                                   {ip.type}
                                 </span>
                               </td>

@@ -249,7 +249,7 @@ const TADashboardContent = ({
       live: "bg-red-50 text-red-700",
       ended: "bg-yellow-50 text-yellow-700",
       completed: "bg-green-50 text-green-700",
-      cancelled: "bg-gray-50 text-gray-500",
+      cancelled: "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]",
     };
     return styles[status] || styles.scheduled;
   };
@@ -269,7 +269,7 @@ const TADashboardContent = ({
       active: "bg-green-50 text-green-700",
       completed: "bg-blue-50 text-blue-700",
     };
-    return map[status] || "bg-gray-50 text-gray-600";
+    return map[status] || "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]";
   };
 
   const getCourseStatusLabel = (status: string) => {
@@ -310,8 +310,8 @@ const TADashboardContent = ({
       label: t("home.kpi.todaysSessions"),
       value: todaySessions.length,
       icon: Calendar,
-      iconBg: "bg-[#DBEAFE]",
-      iconColor: "text-[#3B82F6]",
+      iconBg: "bg-[var(--color-border-subtle)]",
+      iconColor: "text-[var(--color-primary)]",
     },
     {
       label: t("home.kpi.thisWeek"),
@@ -324,7 +324,7 @@ const TADashboardContent = ({
       label: t("home.kpi.upcoming"),
       value: upcomingSessions.length,
       icon: Clock,
-      iconBg: "bg-[#E0E7FF]",
+      iconBg: "bg-[var(--color-border-subtle)]",
       iconColor: "text-[#6366F1]",
     },
   ];
@@ -426,7 +426,7 @@ const TADashboardContent = ({
                               window.open(session.zoomLink!, "_blank");
                             }
                           }}
-                          className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white rounded-lg text-sm font-medium transition-colors"
+                          className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium transition-colors"
                         >
                           <Video className="w-4 h-4" />
                           {t("sessions.joinZoom")}
@@ -486,7 +486,7 @@ const TADashboardContent = ({
                   {t("home.notifications.title")}
                 </h3>
                 {unreadCount > 0 && (
-                  <span className="text-xs font-medium text-[#3B82F6] bg-[#EFF6FF] px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-medium text-[var(--color-primary)] bg-[var(--color-border-subtle)] px-2 py-0.5 rounded-full">
                     {unreadCount}
                   </span>
                 )}
@@ -496,7 +496,7 @@ const TADashboardContent = ({
                   {unreadCount > 0 && (
                     <button
                       onClick={handleMarkAllRead}
-                      className="text-[11px] text-[#3B82F6] hover:text-[#2563EB] font-medium transition-colors"
+                      className="text-[11px] text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] font-medium transition-colors"
                     >
                       {t("home.notifications.markAllRead")}
                     </button>
@@ -513,7 +513,7 @@ const TADashboardContent = ({
 
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-6">
-                <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
+                <div className="w-12 h-12 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mb-3">
                   <Bell className="w-6 h-6 text-[var(--color-text-secondary)]" />
                 </div>
                 <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
@@ -530,7 +530,7 @@ const TADashboardContent = ({
                     key={notification.id}
                     className={`p-3 rounded-lg border transition-colors ${
                       !notification.isRead
-                        ? "bg-[#EFF6FF] border-[#DBEAFE]"
+                        ? "bg-[var(--color-border-subtle)] border-[#DBEAFE]"
                         : "bg-[var(--color-surface-page)] border-transparent hover:border-[var(--color-border)]"
                     }`}
                   >
@@ -539,7 +539,7 @@ const TADashboardContent = ({
                         {notification.title}
                       </h4>
                       {!notification.isRead && (
-                        <span className="w-2 h-2 rounded-full bg-[#3B82F6] flex-shrink-0 mt-1.5" />
+                        <span className="w-2 h-2 rounded-full bg-[var(--color-primary)] flex-shrink-0 mt-1.5" />
                       )}
                     </div>
                     <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed line-clamp-2">
@@ -565,7 +565,7 @@ const TADashboardContent = ({
               </h3>
               <Link
                 href={`/${locale}/dashboard/teaching-assistant/sessions`}
-                className="text-xs text-[#3B82F6] hover:text-[#2563EB] font-medium transition-colors"
+                className="text-xs text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] font-medium transition-colors"
               >
                 {t("home.upcomingSessions.viewAll")} &rarr;
               </Link>
@@ -573,7 +573,7 @@ const TADashboardContent = ({
 
             {upcomingSessions.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-6">
-                <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
+                <div className="w-12 h-12 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mb-3">
                   <Calendar className="w-6 h-6 text-[var(--color-text-secondary)]" />
                 </div>
                 <p className="text-xs text-[var(--color-text-secondary)] text-center">
@@ -619,7 +619,7 @@ const TADashboardContent = ({
               </h3>
               <Link
                 href={`/${locale}/dashboard/teaching-assistant/courses`}
-                className="text-xs text-[#3B82F6] hover:text-[#2563EB] font-medium transition-colors"
+                className="text-xs text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] font-medium transition-colors"
               >
                 {t("home.coursesOverview.viewAll")} &rarr;
               </Link>
@@ -627,7 +627,7 @@ const TADashboardContent = ({
 
             {courses.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-6">
-                <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
+                <div className="w-12 h-12 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mb-3">
                   <BookOpen className="w-6 h-6 text-[var(--color-text-secondary)]" />
                 </div>
                 <p className="text-xs text-[var(--color-text-secondary)] text-center">

@@ -115,7 +115,7 @@ export default function CaptionEditor({
             <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("captions.title")}</h3>
             <p className="text-sm text-[var(--color-text-secondary)] truncate max-w-[400px]">{materialTitle}</p>
           </div>
-          <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg">
+          <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -124,14 +124,14 @@ export default function CaptionEditor({
         <div className="flex border-b border-[var(--color-border)]">
           <button
             onClick={() => setTab("editor")}
-            className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${tab === "editor" ? "text-[#3B82F6] border-b-2 border-[#3B82F6]" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"}`}
+            className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${tab === "editor" ? "text-[var(--color-primary)] border-b-2 border-[var(--color-primary)]" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"}`}
           >
             <FileText className="w-4 h-4 inline me-1.5" />
             {t("captions.editorTab")}
           </button>
           <button
             onClick={() => setTab("upload")}
-            className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${tab === "upload" ? "text-[#3B82F6] border-b-2 border-[#3B82F6]" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"}`}
+            className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${tab === "upload" ? "text-[var(--color-primary)] border-b-2 border-[var(--color-primary)]" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"}`}
           >
             <Upload className="w-4 h-4 inline me-1.5" />
             {t("captions.uploadTab")}
@@ -142,7 +142,7 @@ export default function CaptionEditor({
         <div className="flex-1 overflow-y-auto p-4">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 text-[#3B82F6] animate-spin" />
+              <Loader2 className="w-6 h-6 text-[var(--color-primary)] animate-spin" />
             </div>
           ) : tab === "editor" ? (
             <div className="space-y-3">
@@ -158,7 +158,7 @@ export default function CaptionEditor({
                         type="text"
                         value={entry.startTime}
                         onChange={(e) => updateEntry(i, "startTime", e.target.value)}
-                        className="w-[130px] px-2 py-1.5 border border-[var(--color-border)] rounded text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
+                        className="w-[130px] px-2 py-1.5 border border-[var(--color-border)] rounded text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
                         placeholder="00:00:00.000"
                       />
                       <span className="text-[var(--color-text-secondary)] text-xs pt-1.5">&rarr;</span>
@@ -166,7 +166,7 @@ export default function CaptionEditor({
                         type="text"
                         value={entry.endTime}
                         onChange={(e) => updateEntry(i, "endTime", e.target.value)}
-                        className="w-[130px] px-2 py-1.5 border border-[var(--color-border)] rounded text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
+                        className="w-[130px] px-2 py-1.5 border border-[var(--color-border)] rounded text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
                         placeholder="00:00:05.000"
                       />
                     </div>
@@ -174,7 +174,7 @@ export default function CaptionEditor({
                       value={entry.text}
                       onChange={(e) => updateEntry(i, "text", e.target.value)}
                       rows={2}
-                      className="w-full px-2 py-1.5 border border-[var(--color-border)] rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#3B82F6] resize-none"
+                      className="w-full px-2 py-1.5 border border-[var(--color-border)] rounded text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] resize-none"
                     />
                   </div>
                   <button
@@ -187,7 +187,7 @@ export default function CaptionEditor({
               ))}
               <button
                 onClick={addEntry}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 text-sm text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 {t("captions.addEntry")}
@@ -197,7 +197,7 @@ export default function CaptionEditor({
             <div className="flex flex-col items-center justify-center py-12">
               <Upload className="w-12 h-12 text-[var(--color-border)] mb-4" />
               <p className="text-sm text-[var(--color-text-secondary)] mb-4">{t("captions.uploadDesc")}</p>
-              <label className="px-4 py-2.5 bg-[#3B82F6] text-white rounded-lg text-sm font-medium hover:bg-[#2563EB] cursor-pointer">
+              <label className="px-4 py-2.5 bg-[var(--color-primary)] text-white rounded-lg text-sm font-medium hover:bg-[var(--color-primary-dark)] cursor-pointer">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin inline me-1.5" /> : <Upload className="w-4 h-4 inline me-1.5" />}
                 {t("captions.selectFile")}
                 <input
@@ -223,7 +223,7 @@ export default function CaptionEditor({
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-1.5 px-4 py-2 bg-[#3B82F6] text-white rounded-lg text-sm font-medium hover:bg-[#2563EB] disabled:opacity-50"
+              className="flex items-center gap-1.5 px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg text-sm font-medium hover:bg-[var(--color-primary-dark)] disabled:opacity-50"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {t("captions.save")}

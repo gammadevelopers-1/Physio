@@ -5,13 +5,15 @@ import { useLocale } from "next-intl";
 
 interface WhatsAppButtonProps {
   phoneNumber?: string | null;
+  enabled?: boolean | null;
 }
 
-const WhatsAppButton = ({ phoneNumber }: WhatsAppButtonProps) => {
+const WhatsAppButton = ({ phoneNumber, enabled = true }: WhatsAppButtonProps) => {
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  // Hide the button entirely when no number is configured in Strapi
+  // Hide the button when disabled in Strapi OR no number configured
+  if (enabled === false) return null;
   if (!phoneNumber || !phoneNumber.trim()) return null;
 
   const handleWhatsAppClick = () => {

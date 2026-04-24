@@ -269,7 +269,7 @@ const SupportSettingsContent = () => {
                           </tbody>
                         </table>
                       </div>
-                      <button className="mt-4 flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                      <button className="mt-4 flex items-center gap-1.5 px-4 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors">
                         <Save className="w-4 h-4" />
                         {t("settingsPage.save")}
                       </button>
@@ -325,14 +325,14 @@ const SupportSettingsContent = () => {
                                     enabled ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"
                                   }`}
                                 >
-                                  <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${enabled ? "ms-auto" : ""}`} />
+                                  <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${enabled ? "ms-auto" : ""}`} />
                                 </button>
                               </div>
                             </div>
                           );
                         })}
                       </div>
-                      <button className="mt-4 flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                      <button className="mt-4 flex items-center gap-1.5 px-4 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors">
                         <Save className="w-4 h-4" />
                         {t("settingsPage.save")}
                       </button>
@@ -346,7 +346,7 @@ const SupportSettingsContent = () => {
                         <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                           {t("settingsPage.macros.title")}
                         </h3>
-                        <button className="flex items-center gap-1.5 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                        <button className="flex items-center gap-1.5 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors">
                           <Plus className="w-4 h-4" />
                           {t("settingsPage.macros.addMacro")}
                         </button>
@@ -358,14 +358,14 @@ const SupportSettingsContent = () => {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
                                   <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{macro.name}</p>
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#EFF6FF] text-[#3B82F6]">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--color-border-subtle)] text-[var(--color-primary)]">
                                     {macro.category}
                                   </span>
                                 </div>
                                 <p className="text-[13px] text-[var(--color-text-secondary)] line-clamp-2">{macro.content}</p>
                               </div>
                               <div className="flex items-center gap-2 flex-shrink-0">
-                                <button className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors">
+                                <button className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors">
                                   <Pencil className="w-4 h-4" />
                                 </button>
                                 <button className="p-2 text-[var(--color-text-secondary)] hover:text-[#DC2626] hover:bg-[#FEE2E2] rounded-lg transition-colors">
@@ -376,7 +376,7 @@ const SupportSettingsContent = () => {
                           </div>
                         ))}
                       </div>
-                      <button className="mt-4 flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                      <button className="mt-4 flex items-center gap-1.5 px-4 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors">
                         <Save className="w-4 h-4" />
                         {t("settingsPage.save")}
                       </button>
@@ -400,7 +400,7 @@ const SupportSettingsContent = () => {
                               onClick={() => setEmailNotif(!emailNotif)}
                               className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${emailNotif ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                             >
-                              <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${emailNotif ? "ms-auto" : ""}`} />
+                              <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${emailNotif ? "ms-auto" : ""}`} />
                             </button>
                           </div>
                         </div>
@@ -414,7 +414,7 @@ const SupportSettingsContent = () => {
                               onClick={() => setSmsNotif(!smsNotif)}
                               className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${smsNotif ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                             >
-                              <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${smsNotif ? "ms-auto" : ""}`} />
+                              <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${smsNotif ? "ms-auto" : ""}`} />
                             </button>
                           </div>
                         </div>
@@ -428,12 +428,12 @@ const SupportSettingsContent = () => {
                               onClick={() => setWhatsappNotif(!whatsappNotif)}
                               className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${whatsappNotif ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                             >
-                              <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${whatsappNotif ? "ms-auto" : ""}`} />
+                              <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${whatsappNotif ? "ms-auto" : ""}`} />
                             </button>
                           </div>
                         </div>
                       </div>
-                      <button className="mt-4 flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                      <button className="mt-4 flex items-center gap-1.5 px-4 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors">
                         <Save className="w-4 h-4" />
                         {t("settingsPage.save")}
                       </button>
@@ -447,7 +447,7 @@ const SupportSettingsContent = () => {
                         <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                           {t("settingsPage.categories.title")}
                         </h3>
-                        <button className="flex items-center gap-1.5 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                        <button className="flex items-center gap-1.5 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors">
                           <Plus className="w-4 h-4" />
                           {t("settingsPage.categories.addCategory")}
                         </button>
@@ -478,7 +478,7 @@ const SupportSettingsContent = () => {
                                 <td className="py-3 px-5 text-[13px] font-semibold text-[var(--color-text-primary)]">{category.tickets}</td>
                                 <td className="py-3 px-5">
                                   <div className="flex items-center gap-2">
-                                    <button className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors">
+                                    <button className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors">
                                       <Pencil className="w-3.5 h-3.5" />
                                     </button>
                                     <button className="p-1.5 text-[var(--color-text-secondary)] hover:text-[#DC2626] hover:bg-[#FEE2E2] rounded-lg transition-colors">
@@ -491,7 +491,7 @@ const SupportSettingsContent = () => {
                           </tbody>
                         </table>
                       </div>
-                      <button className="mt-4 flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                      <button className="mt-4 flex items-center gap-1.5 px-4 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors">
                         <Save className="w-4 h-4" />
                         {t("settingsPage.save")}
                       </button>

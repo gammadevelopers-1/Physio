@@ -27,13 +27,13 @@ const UserManagementWidget = ({ users }: UserManagementWidgetProps) => {
       case "admin":
         return "bg-[var(--color-text-primary)] text-white";
       case "instructor":
-        return "bg-[#DBEAFE] text-[#1D4ED8]";
+        return "bg-[var(--color-border-subtle)] text-[#1D4ED8]";
       case "student":
         return "bg-[#DCFCE7] text-[#16A34A]";
       case "manager":
         return "bg-[#EDE9FE] text-[#7C3AED]";
       default:
-        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -46,7 +46,7 @@ const UserManagementWidget = ({ users }: UserManagementWidgetProps) => {
       case "pending":
         return "bg-[#FEF3C7] text-[#D97706]";
       default:
-        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -55,7 +55,7 @@ const UserManagementWidget = ({ users }: UserManagementWidgetProps) => {
       case "admin":
         return "bg-[var(--color-text-primary)]";
       case "instructor":
-        return "bg-[#3B82F6]";
+        return "bg-[var(--color-primary)]";
       case "student":
         return "bg-[#22C55E]";
       case "manager":
@@ -70,7 +70,7 @@ const UserManagementWidget = ({ users }: UserManagementWidgetProps) => {
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-[#002D87]" />
+          <Users className="w-5 h-5 text-[var(--color-primary)]" />
           <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("userManagement.title")}
           </h3>

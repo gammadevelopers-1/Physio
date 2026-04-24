@@ -71,7 +71,7 @@ export function DownloadResourcesBlock({ data }: DownloadResourcesBlockProps) {
           {data.resources?.map((res) => (
             <div
               key={res.id}
-              className="flex flex-col gap-3 p-5 bg-white rounded-2xl border border-[var(--outline-subtle)] shadow-sm"
+              className="flex flex-col gap-3 p-5 bg-[var(--color-surface-card)] rounded-2xl border border-[var(--outline-subtle)] shadow-sm"
             >
               <div className="text-3xl">{res.icon || "\uD83D\uDCC4"}</div>
               <h3

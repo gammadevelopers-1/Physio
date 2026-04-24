@@ -108,7 +108,7 @@ export function CountdownTimerBlock({ data }: CountdownTimerBlockProps) {
                     ? "border border-[var(--outline-subtle)] text-[var(--on-surface-default)] hover:bg-gray-50"
                     : btn.variant === "secondary"
                       ? "bg-gray-100 text-[var(--on-surface-default)] hover:bg-gray-200"
-                      : "bg-[var(--surface-container-primary)] text-white"
+                      : "bg-[var(--color-primary)] text-white"
                 }`}
                 {...(btn.openInNewTab
                   ? { target: "_blank", rel: "noopener noreferrer" }

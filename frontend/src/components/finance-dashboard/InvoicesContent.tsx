@@ -55,8 +55,8 @@ const InvoicesContent = () => {
       label: t("invoicesPage.stats.totalInvoices"),
       value: "156",
       icon: FileText,
-      iconBg: "bg-[#EFF6FF]",
-      iconColor: "text-[#3B82F6]",
+      iconBg: "bg-[var(--color-border-subtle)]",
+      iconColor: "text-[var(--color-primary)]",
     },
     {
       label: t("invoicesPage.stats.paidInvoices"),
@@ -91,10 +91,10 @@ const InvoicesContent = () => {
   ];
 
   const statusStyles: Record<string, string> = {
-    issued: "bg-[#EFF6FF] text-[#3B82F6]",
+    issued: "bg-[var(--color-border-subtle)] text-[var(--color-primary)]",
     paid: "bg-[#DCFCE7] text-[#16A34A]",
     overdue: "bg-[#FEE2E2] text-[#DC2626]",
-    draft: "bg-[#F3F4F6] text-[var(--color-text-secondary)]",
+    draft: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
   };
 
   const tabs = [
@@ -146,7 +146,7 @@ const InvoicesContent = () => {
                     {t("invoicesPage.subtitle")}
                   </p>
                 </div>
-                <button className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                <button className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors">
                   <Plus className="w-4 h-4" />
                   {t("invoicesPage.createInvoice")}
                 </button>
@@ -175,14 +175,14 @@ const InvoicesContent = () => {
                 {/* Tabs + Search */}
                 <div className="px-5 py-4 border-b border-[#F3F4F6]">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div className="flex gap-1 bg-[#F3F4F6] rounded-lg p-0.5">
+                    <div className="flex gap-1 bg-[var(--color-border-subtle)] rounded-lg p-0.5">
                       {tabs.map((tab) => (
                         <button
                           key={tab.key}
                           onClick={() => setActiveTab(tab.key)}
                           className={`px-3 py-1.5 text-[13px] font-medium rounded-md transition-colors ${
                             activeTab === tab.key
-                              ? "bg-white text-[var(--color-text-primary)] shadow-sm"
+                              ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
                               : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                           }`}
                         >

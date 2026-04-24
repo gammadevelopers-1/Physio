@@ -49,8 +49,8 @@ function getRoleConfig(role: string) {
   return (
     ROLE_CONFIG[role] || {
       icon: GraduationCap,
-      color: 'text-gray-600',
-      bgColor: 'bg-gray-100',
+      color: 'text-[var(--color-text-secondary)]',
+      bgColor: 'bg-[var(--color-border-subtle)]',
     }
   );
 }
@@ -116,7 +116,7 @@ export function UserMenu() {
       <DropdownMenuTrigger asChild>
         <button
           disabled={switching || isLoading}
-          className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-50"
         >
           <div
             className={`w-8 h-8 rounded-full ${activeConfig.bgColor} flex items-center justify-center flex-shrink-0`}
@@ -126,15 +126,15 @@ export function UserMenu() {
             </span>
           </div>
           <div className={`hidden md:flex flex-col ${isRTL ? 'items-end' : 'items-start'}`}>
-            <span className="text-sm font-medium text-gray-900 leading-tight">
+            <span className="text-sm font-medium text-[var(--color-text-primary)] leading-tight">
               {user.firstName || user.email.split('@')[0]}
             </span>
-            <span className="text-xs text-gray-500 flex items-center gap-1 leading-tight">
+            <span className="text-xs text-[var(--color-text-secondary)] flex items-center gap-1 leading-tight">
               <ActiveIcon className={`w-3 h-3 ${activeConfig.color}`} />
               {getRoleLabel(user.activeRole)}
             </span>
           </div>
-          <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
+          <ChevronDown className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
         </button>
       </DropdownMenuTrigger>
 
@@ -143,18 +143,18 @@ export function UserMenu() {
         className="w-64 rounded-xl py-2"
       >
         {/* User Info Header */}
-        <div className={`px-4 py-3 border-b border-gray-100 ${isRTL ? 'text-right' : 'text-left'}`}>
-          <p className="text-sm font-medium text-gray-900 truncate">
+        <div className={`px-4 py-3 border-b border-[var(--color-border)] ${isRTL ? 'text-right' : 'text-left'}`}>
+          <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
             {user.firstName} {user.lastName}
           </p>
-          <p className="text-xs text-gray-500 truncate">{user.email}</p>
+          <p className="text-xs text-[var(--color-text-secondary)] truncate">{user.email}</p>
         </div>
 
         {/* Dashboard Link */}
         <DropdownMenuItem asChild>
           <Link
             href={`/${locale}${dashboardPath}`}
-            className="flex items-center gap-3 px-4 py-2 text-gray-700"
+            className="flex items-center gap-3 px-4 py-2 text-[var(--color-text-primary)]"
           >
             <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
             <span className="text-sm">{t('dashboard')}</span>
@@ -165,7 +165,7 @@ export function UserMenu() {
         {hasMultipleRoles && (
           <>
             <DropdownMenuSeparator />
-            <div className={`px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
+            <div className={`px-4 py-2 text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider ${isRTL ? 'text-right' : 'text-left'}`}>
               {t('switchRole')}
             </div>
             {user.roles.map((role) => {
@@ -178,19 +178,19 @@ export function UserMenu() {
                   key={role}
                   onClick={() => handleSwitchRole(role)}
                   disabled={switching}
-                  className={`flex items-center gap-3 px-4 py-2 ${isActive ? 'bg-gray-50' : ''}`}
+                  className={`flex items-center gap-3 px-4 py-2 ${isActive ? 'bg-[var(--color-surface-page)]' : ''}`}
                 >
                   <div
                     className={`w-6 h-6 rounded-full ${config.bgColor} flex items-center justify-center flex-shrink-0`}
                   >
                     <Icon className={`w-3.5 h-3.5 ${config.color}`} />
                   </div>
-                  <span className="flex-1 text-sm text-gray-700 truncate">
+                  <span className="flex-1 text-sm text-[var(--color-text-primary)] truncate">
                     {getRoleLabel(role)}
                   </span>
                   {isActive && <Check className="w-4 h-4 text-green-600 flex-shrink-0" />}
                   {switching && role !== user.activeRole && (
-                    <Loader2 className="w-4 h-4 animate-spin text-gray-400 flex-shrink-0" />
+                    <Loader2 className="w-4 h-4 animate-spin text-[var(--color-icon)] flex-shrink-0" />
                   )}
                 </DropdownMenuItem>
               );
@@ -203,7 +203,7 @@ export function UserMenu() {
         <DropdownMenuItem asChild>
           <Link
             href={`/${locale}/settings`}
-            className="flex items-center gap-3 px-4 py-2 text-gray-700"
+            className="flex items-center gap-3 px-4 py-2 text-[var(--color-text-primary)]"
           >
             <Settings className="w-4 h-4 flex-shrink-0" />
             <span className="text-sm">{t('settings')}</span>

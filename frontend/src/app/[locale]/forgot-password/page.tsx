@@ -63,7 +63,7 @@ export default function ForgotPasswordPage() {
             {/* Form Side */}
             <div className="flex-1 flex items-center justify-center px-6 py-12 lg:px-[108px] lg:py-[67px]">
               <div
-                className="w-full max-w-[400px] bg-white rounded-xl p-6"
+                className="w-full max-w-[400px] bg-[var(--color-surface-card)] rounded-xl p-6"
                 dir={isRTL ? "rtl" : "ltr"}
               >
                 {/* Back link */}
@@ -107,7 +107,7 @@ export default function ForgotPasswordPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       disabled={isSubmitting}
-                      className="w-full min-h-[36px] px-3 py-[7.5px] bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full min-h-[36px] px-3 py-[7.5px] bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{
                         boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
                         fontSize: "14px",

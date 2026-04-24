@@ -174,7 +174,7 @@ const CourseFilters = ({
               placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className={`w-full ${isRTL ? "pr-10 pl-4 text-right" : "pl-10 pr-4"} py-2.5 bg-white rounded-lg text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] outline-none`}
+              className={`w-full ${isRTL ? "pr-10 pl-4 text-right" : "pl-10 pr-4"} py-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] outline-none`}
               dir={isRTL ? "rtl" : "ltr"}
             />
           </div>
@@ -188,8 +188,8 @@ const CourseFilters = ({
                 onClick={() => handleTypeToggle(type)}
                 className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   selectedTypes.includes(type)
-                    ? "bg-[var(--color-text-primary)] text-white"
-                    : "bg-white text-[var(--color-text-primary)]"
+                    ? "bg-[var(--color-primary)] text-white"
+                    : "bg-[var(--color-surface-page)] text-[var(--color-text-primary)] border border-[var(--color-border)]"
                 }`}
               >
                 {deliveryLabelMap[type]}
@@ -207,8 +207,8 @@ const CourseFilters = ({
                   }
                   className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                     selectedPricing === o.value
-                      ? "bg-[var(--color-text-primary)] text-white"
-                      : "bg-white text-[var(--color-text-primary)]"
+                      ? "bg-[var(--color-primary)] text-white"
+                      : "bg-[var(--color-surface-page)] text-[var(--color-text-primary)] border border-[var(--color-border)]"
                   }`}
                 >
                   {o.label}
@@ -222,8 +222,8 @@ const CourseFilters = ({
                 onClick={() => onSortByChange(sortBy === o.value ? "" : o.value)}
                 className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   sortBy === o.value
-                    ? "bg-[var(--color-text-primary)] text-white"
-                    : "bg-white text-[var(--color-text-primary)]"
+                    ? "bg-[var(--color-primary)] text-white"
+                    : "bg-[var(--color-surface-page)] text-[var(--color-text-primary)] border border-[var(--color-border)]"
                 }`}
               >
                 {o.label}
@@ -237,9 +237,9 @@ const CourseFilters = ({
   // ─── Desktop sidebar ──────────────────────────────────────
   const labelClass = "flex items-center gap-3 py-2 cursor-pointer w-full";
   const radioClass =
-    "w-4 h-4 border-[var(--color-border)] text-[var(--color-text-primary)] focus:ring-0 cursor-pointer flex-shrink-0";
+    "w-4 h-4 border-[var(--color-border)] accent-[var(--color-primary)] focus:ring-0 cursor-pointer flex-shrink-0";
   const checkboxClass =
-    "w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-text-primary)] focus:ring-0 cursor-pointer flex-shrink-0";
+    "w-4 h-4 rounded border-[var(--color-border)] accent-[var(--color-primary)] focus:ring-0 cursor-pointer flex-shrink-0";
   const sectionTitle =
     "text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-2";
   const divider = <div className="h-px bg-[var(--color-border)] my-4" />;
@@ -348,7 +348,7 @@ const CourseFilters = ({
 
   return (
     <div
-      className={`bg-[var(--color-surface-page)] rounded-xl p-5 w-[240px] flex-shrink-0 ${isRTL ? "text-right" : "text-left"}`}
+      className={`bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl p-5 w-[240px] flex-shrink-0 ${isRTL ? "text-right" : "text-left"}`}
     >
       {sidebarFilterTitle && (
         <h3 className="text-[var(--color-text-primary)] font-semibold text-base mb-4">
@@ -366,7 +366,7 @@ const CourseFilters = ({
             placeholder={searchPlaceholder}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className={`w-full ${isRTL ? "pr-10 pl-4 text-right" : "pl-10 pr-4"} py-2.5 bg-white rounded-lg text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] outline-none`}
+            className={`w-full ${isRTL ? "pr-10 pl-4 text-right" : "pl-10 pr-4"} py-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] outline-none`}
             dir={isRTL ? "rtl" : "ltr"}
           />
         </div>

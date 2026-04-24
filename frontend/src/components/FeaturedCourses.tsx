@@ -97,7 +97,7 @@ const FeaturedCourses = ({ sectionData }: FeaturedCoursesProps) => {
         )}
 
         {/* Desktop Courses Grid - 4 columns (1280px+) */}
-        <div className="hidden xl:flex bg-white flex-col gap-[64px] items-start w-full">
+        <div className="hidden xl:flex flex-col gap-[64px] items-start w-full">
           <div
             className="grid grid-cols-4 gap-[32px] w-full"
             dir={isRTL ? "rtl" : "ltr"}

@@ -33,7 +33,7 @@ const InstructorCalendarWidget = ({
 
         {events.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8">
-            <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
+            <div className="w-12 h-12 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mb-3">
               <Calendar className="w-6 h-6 text-[var(--color-text-secondary)]" />
             </div>
             <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
@@ -50,7 +50,7 @@ const InstructorCalendarWidget = ({
                 event.status === "completed"
                   ? "p-3.5 border border-[#BBF7D0] bg-[#F0FDF4] rounded-xl opacity-70"
                   : event.status === "cancelled"
-                    ? "p-3.5 border border-[var(--color-border)] bg-[#F3F4F6] rounded-xl opacity-50"
+                    ? "p-3.5 border border-[var(--color-border)] bg-[var(--color-border-subtle)] rounded-xl opacity-50"
                     : event.status === "live"
                       ? "p-3.5 border border-[#FECACA] bg-[#FEF2F2] rounded-xl ring-1 ring-[#EF4444]"
                       : "p-3.5 border border-[var(--color-border)] rounded-xl";
@@ -103,13 +103,13 @@ const InstructorCalendarWidget = ({
                           href={event.zoomLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6] text-white text-[13px] font-medium rounded-lg hover:bg-[#2563EB] transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-primary)] text-white text-[13px] font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors"
                         >
                           <Video className="w-3.5 h-3.5" />
                           {t("calendar.zoom")}
                         </a>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[#3B82F6]">
+                        <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[var(--color-primary)]">
                           <Video className="w-3.5 h-3.5" />
                           {t("calendar.zoom")}
                         </span>

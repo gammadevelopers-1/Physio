@@ -75,7 +75,7 @@ const FeedbackForm = ({ strapiData }: { strapiData?: FeedbackPage | null }) => {
 
             {/* Form Column - Second in DOM (appears on RIGHT in LTR, LEFT in RTL) */}
             <div
-              className="flex-1 bg-white p-8 rounded-3xl max-w-[500px]"
+              className="flex-1 bg-[var(--color-surface-card)] p-8 rounded-3xl max-w-[500px]"
               style={{
                 boxShadow:
                   "-2px 8px 2px 0px rgba(0,0,0,0), -1px 5px 2px 0px rgba(0,0,0,0.01), -1px 3px 2px 0px rgba(0,0,0,0.03), 0px 1px 1px 0px rgba(0,0,0,0.05), 0px 0px 1px 0px rgba(0,0,0,0.06)",
@@ -98,7 +98,7 @@ const FeedbackForm = ({ strapiData }: { strapiData?: FeedbackPage | null }) => {
                     value={formData.fullName}
                     onChange={handleInputChange}
                     required
-                    className="w-full h-12 px-3.5 py-2.5 bg-white border border-[var(--color-border-subtle)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
+                    className="w-full h-12 px-3.5 py-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
                   />
                 </div>
 
@@ -123,7 +123,7 @@ const FeedbackForm = ({ strapiData }: { strapiData?: FeedbackPage | null }) => {
                       value={formData.email}
                       onChange={handleInputChange}
                       required
-                      className={`w-full h-12 py-2.5 bg-white border border-[var(--color-border-subtle)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "pr-12 pl-3.5" : "pl-12 pr-3.5"}`}
+                      className={`w-full h-12 py-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "pr-12 pl-3.5" : "pl-12 pr-3.5"}`}
                     />
                   </div>
                 </div>
@@ -143,7 +143,7 @@ const FeedbackForm = ({ strapiData }: { strapiData?: FeedbackPage | null }) => {
                     name="subject"
                     value={formData.subject}
                     onChange={handleInputChange}
-                    className="w-full h-12 px-3.5 py-2.5 bg-white border border-[var(--color-border-subtle)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
+                    className="w-full h-12 px-3.5 py-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
                   />
                 </div>
 
@@ -162,7 +162,7 @@ const FeedbackForm = ({ strapiData }: { strapiData?: FeedbackPage | null }) => {
                       name="description"
                       value={formData.description}
                       onChange={handleInputChange}
-                      className="w-full h-[140px] px-3.5 py-2.5 bg-white border border-[var(--color-border-subtle)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] resize-none"
+                      className="w-full h-[140px] px-3.5 py-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] resize-none"
                     />
                     <span
                       className={`absolute bottom-2.5 leading-4 text-xs text-[var(--on-surface-variant)] ${isRTL ? "left-3.5" : "right-3.5"}`}
@@ -215,7 +215,7 @@ const FeedbackForm = ({ strapiData }: { strapiData?: FeedbackPage | null }) => {
 
           {/* Form Card */}
           <div
-            className="bg-white p-6 rounded-2xl"
+            className="bg-[var(--color-surface-card)] p-6 rounded-2xl"
             style={{
               boxShadow:
                 "-2px 8px 2px 0px rgba(0,0,0,0), -1px 5px 2px 0px rgba(0,0,0,0.01), -1px 3px 2px 0px rgba(0,0,0,0.03), 0px 1px 1px 0px rgba(0,0,0,0.05), 0px 0px 1px 0px rgba(0,0,0,0.06)",
@@ -235,7 +235,7 @@ const FeedbackForm = ({ strapiData }: { strapiData?: FeedbackPage | null }) => {
                   value={formData.fullName}
                   onChange={handleInputChange}
                   required
-                  className="w-full h-11 px-3.5 py-2.5 bg-white border border-[var(--color-border-subtle)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
+                  className="w-full h-11 px-3.5 py-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
                 />
               </div>
 
@@ -257,7 +257,7 @@ const FeedbackForm = ({ strapiData }: { strapiData?: FeedbackPage | null }) => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className={`w-full h-11 py-2.5 bg-white border border-[var(--color-border-subtle)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "pr-12 pl-3.5" : "pl-12 pr-3.5"}`}
+                    className={`w-full h-11 py-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "pr-12 pl-3.5" : "pl-12 pr-3.5"}`}
                   />
                 </div>
               </div>
@@ -274,7 +274,7 @@ const FeedbackForm = ({ strapiData }: { strapiData?: FeedbackPage | null }) => {
                   name="subject"
                   value={formData.subject}
                   onChange={handleInputChange}
-                  className="w-full h-11 px-3.5 py-2.5 bg-white border border-[var(--color-border-subtle)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
+                  className="w-full h-11 px-3.5 py-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
                 />
               </div>
 
@@ -290,7 +290,7 @@ const FeedbackForm = ({ strapiData }: { strapiData?: FeedbackPage | null }) => {
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
-                    className="w-full h-[120px] px-3.5 py-2.5 bg-white border border-[var(--color-border-subtle)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] resize-none"
+                    className="w-full h-[120px] px-3.5 py-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] resize-none"
                   />
                   <span
                     className={`absolute bottom-2.5 leading-4 text-xs text-[var(--on-surface-variant)] ${isRTL ? "left-3.5" : "right-3.5"}`}

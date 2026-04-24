@@ -58,7 +58,7 @@ export function CpdCalculatorBlock({ data }: CpdCalculatorBlockProps) {
           {data.tiers?.map((tier) => (
             <div
               key={tier.id}
-              className="flex items-center justify-between p-4 bg-white rounded-xl border border-[var(--outline-subtle)]"
+              className="flex items-center justify-between p-4 bg-[var(--color-surface-card)] rounded-xl border border-[var(--outline-subtle)]"
             >
               <div className="flex flex-col gap-1">
                 <h3 className="font-semibold text-sm text-[var(--on-surface-default)]">
@@ -76,7 +76,7 @@ export function CpdCalculatorBlock({ data }: CpdCalculatorBlockProps) {
             </div>
           ))}
 
-          <div className="flex items-center justify-between p-4 bg-[var(--surface-container-primary)]/5 rounded-xl border-2 border-[var(--surface-container-primary)]">
+          <div className="flex items-center justify-between p-4 bg-[var(--color-primary)]/5 rounded-xl border-2 border-[var(--surface-container-primary)]">
             <span className="font-semibold text-[var(--on-surface-default)]">
               {data.totalLabel || "Total"}
             </span>

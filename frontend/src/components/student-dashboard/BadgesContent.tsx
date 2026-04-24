@@ -49,7 +49,7 @@ const BadgesContent = () => {
                 {mockBadgesData.length === 0 ? (
                   // Empty State
                   <div className="flex flex-col items-center justify-center py-10 sm:py-16">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mb-3 sm:mb-4">
                       <Award className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--color-text-secondary)]" />
                     </div>
                     <h3 className="text-sm sm:text-base font-medium text-[var(--color-text-primary)] mb-1">

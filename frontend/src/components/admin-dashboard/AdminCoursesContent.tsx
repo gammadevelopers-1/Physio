@@ -61,9 +61,9 @@ const AdminCoursesContent = () => {
       case "active":
         return "bg-[#DCFCE7] text-[#16A34A]";
       case "draft":
-        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
       case "completed":
-        return "bg-[#DBEAFE] text-[#1D4ED8]";
+        return "bg-[var(--color-border-subtle)] text-[#1D4ED8]";
       case "archived":
         return "bg-[#FEF3C7] text-[#D97706]";
       case "pending_review":
@@ -71,7 +71,7 @@ const AdminCoursesContent = () => {
       case "changes_requested":
         return "bg-[#FEE2E2] text-[#DC2626]";
       default:
-        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -127,7 +127,7 @@ const AdminCoursesContent = () => {
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("coursesPage.stats.active")}</p>
                 </div>
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
-                  <p className="text-2xl font-bold text-[#3B82F6]">{enrollmentsCount}</p>
+                  <p className="text-2xl font-bold text-[var(--color-primary)]">{enrollmentsCount}</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">{t("coursesPage.stats.enrollments")}</p>
                 </div>
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
@@ -170,13 +170,13 @@ const AdminCoursesContent = () => {
                   <div className="flex items-center gap-1 border border-[var(--color-border)] rounded-lg p-1">
                     <button
                       onClick={() => setViewMode("grid")}
-                      className={`p-2 rounded ${viewMode === "grid" ? "btn-gold text-white" : "text-[var(--color-text-secondary)]"}`}
+                      className={`p-2 rounded ${viewMode === "grid" ? "btn-gold text-[var(--color-button-text)]" : "text-[var(--color-text-secondary)]"}`}
                     >
                       <Grid className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setViewMode("list")}
-                      className={`p-2 rounded ${viewMode === "list" ? "btn-gold text-white" : "text-[var(--color-text-secondary)]"}`}
+                      className={`p-2 rounded ${viewMode === "list" ? "btn-gold text-[var(--color-button-text)]" : "text-[var(--color-text-secondary)]"}`}
                     >
                       <List className="w-4 h-4" />
                     </button>
@@ -187,7 +187,7 @@ const AdminCoursesContent = () => {
               {/* Loading State */}
               {loading && (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 text-[#002D87] animate-spin" />
+                  <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin" />
                 </div>
               )}
 
@@ -197,7 +197,7 @@ const AdminCoursesContent = () => {
                   <p className="text-red-600 mb-4">{t("coursesPage.error")}</p>
                   <button
                     onClick={refetch}
-                    className="px-4 py-2 btn-gold text-white rounded-lg"
+                    className="px-4 py-2 btn-gold text-[var(--color-button-text)] rounded-lg"
                   >
                     {t("coursesPage.retry")}
                   </button>
@@ -272,7 +272,7 @@ const AdminCoursesContent = () => {
                                       openDropdownId === course.id ? null : course.id
                                     )
                                   }
-                                  className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
+                                  className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
                                 >
                                   <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                 </button>

@@ -57,7 +57,7 @@ export function BlogPostsGridBlock({ data }: BlogPostsGridBlockProps) {
           {Array.from({ length: data.maxItems || 6 }).map((_, i) => (
             <div
               key={i}
-              className="bg-white rounded-2xl border border-[var(--outline-subtle)] overflow-hidden shadow-sm animate-pulse"
+              className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--outline-subtle)] overflow-hidden shadow-sm animate-pulse"
             >
               <div className="w-full h-48 bg-gray-200" />
               <div className="p-5 flex flex-col gap-3">

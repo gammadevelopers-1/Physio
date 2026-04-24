@@ -113,7 +113,7 @@ export default function NotificationBell() {
       {/* Dropdown panel */}
       {isOpen && (
         <div
-          className={`absolute top-full mt-2 w-[360px] bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] z-50 ${
+          className={`absolute top-full mt-2 w-[360px] bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] z-50 ${
             isRTL ? "left-0" : "right-0"
           }`}
         >
@@ -134,7 +134,7 @@ export default function NotificationBell() {
                 )}
                 <button
                   onClick={clearAll}
-                  className="text-xs text-[var(--color-text-secondary)] hover:text-[#EF4444] font-medium transition-colors"
+                  className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] font-medium transition-colors"
                 >
                   {t("clearAll")}
                 </button>
@@ -157,7 +157,7 @@ export default function NotificationBell() {
                   key={notif.id}
                   onClick={() => handleNotificationClick(notif)}
                   className={`w-full text-left px-4 py-3 border-b border-[var(--outline-subtle)] last:border-b-0 hover:bg-[var(--color-surface-page)] transition-colors ${
-                    !notif.isRead ? "bg-[#EFF6FF]" : ""
+                    !notif.isRead ? "bg-[var(--color-border-subtle)]" : ""
                   }`}
                 >
                   <div className="flex gap-3">

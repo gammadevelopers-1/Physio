@@ -120,7 +120,7 @@ const Hero = ({ data }: HeroProps) => {
                   {button1Label && (
                     <Link
                       href={button1Href || "#"}
-                      className="h-12 px-5 py-2 btn-gold text-white rounded-xl text-sm font-medium whitespace-nowrap inline-flex items-center justify-center"
+                      className="h-12 px-5 py-2 btn-gold text-[var(--color-button-text)] rounded-xl text-sm font-medium whitespace-nowrap inline-flex items-center justify-center"
                     >
                       {button1Label}
                     </Link>

@@ -52,7 +52,7 @@ const CalendarPanel = ({ events }: CalendarPanelProps) => {
 
         {events.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8">
-            <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
+            <div className="w-12 h-12 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mb-3">
               <Calendar className="w-6 h-6 text-[var(--color-text-secondary)]" />
             </div>
             <h3 className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
@@ -115,7 +115,7 @@ const CalendarPanel = ({ events }: CalendarPanelProps) => {
                         className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                           joinable
                             ? "bg-[#2D8CFF] text-white hover:bg-[#1A73E8]"
-                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : "bg-[var(--color-border-subtle)] text-[var(--color-icon)] cursor-not-allowed"
                         }`}
                       >
                         {joiningSessionId === event.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Video className="w-3 h-3" />}
@@ -134,7 +134,7 @@ const CalendarPanel = ({ events }: CalendarPanelProps) => {
                     {/* Add to Calendar (.ics) */}
                     <button
                       onClick={() => downloadIcs(event)}
-                      className="flex items-center gap-1 px-2 py-1.5 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[#F3F4F6] rounded-lg transition-colors ml-auto"
+                      className="flex items-center gap-1 px-2 py-1.5 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors ml-auto"
                       aria-label={t("calendar.addToCalendar")}
                     >
                       <Download className="w-3 h-3" />

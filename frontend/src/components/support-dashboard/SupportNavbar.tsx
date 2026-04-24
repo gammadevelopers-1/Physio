@@ -105,7 +105,7 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-[var(--surface-intense)] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] px-4 py-3 lg:px-16 lg:py-5">
+    <nav className="sticky top-0 z-50 w-full bg-[var(--color-surface-page)] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] px-4 py-3 lg:px-16 lg:py-5">
       <div className="flex items-center justify-between w-full">
         {/* Logo + Nav Links */}
         <div className="flex items-center gap-8">
@@ -236,7 +236,7 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 right-0 bg-[var(--surface-intense)] border-t border-[var(--outline-subtle)] shadow-lg max-h-[calc(100vh-80px)] overflow-y-auto">
+        <div className="lg:hidden absolute top-full left-0 right-0 bg-[var(--color-surface-page)] border-t border-[var(--outline-subtle)] shadow-lg max-h-[calc(100vh-80px)] overflow-y-auto">
           <div className="flex flex-col px-4 py-4">
             {/* User Info */}
             <div className="flex items-center gap-3 pb-4 mb-4 border-b border-[var(--outline-subtle)]">
@@ -283,12 +283,12 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                       isActive
-                        ? "bg-[#F0F7FF] text-[#002D87]"
+                        ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
                         : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                     }`}
                   >
                     <Icon
-                      className={`w-5 h-5 ${isActive ? "text-[#002D87]" : "text-[var(--color-text-secondary)]"}`}
+                      className={`w-5 h-5 ${isActive ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)]"}`}
                     />
                     <span
                       className={`text-sm flex-1 ${isActive ? "font-medium" : ""}`}

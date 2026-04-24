@@ -47,8 +47,8 @@ const SupportKPICards = ({ data }: SupportKPICardsProps) => {
         low: data.lowPriority,
       }),
       icon: ClipboardList,
-      iconBg: "bg-[#EFF6FF]",
-      iconColor: "text-[#3B82F6]",
+      iconBg: "bg-[var(--color-border-subtle)]",
+      iconColor: "text-[var(--color-primary)]",
       metaColor: "text-[var(--color-text-secondary)]",
     },
     {

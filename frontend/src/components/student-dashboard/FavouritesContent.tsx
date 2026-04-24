@@ -69,7 +69,7 @@ const FavouritesContent = () => {
                 {favourites.length === 0 ? (
                   // Empty State
                   <div className="flex flex-col items-center justify-center py-10 sm:py-16">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mb-3 sm:mb-4">
                       <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--color-text-secondary)]" />
                     </div>
                     <h3 className="text-sm sm:text-base font-medium text-[var(--color-text-primary)] mb-1">
@@ -80,7 +80,7 @@ const FavouritesContent = () => {
                     </p>
                     <Link
                       href={`/${locale}/courses`}
-                      className="px-5 py-2 sm:px-6 sm:py-2.5 btn-gold text-white text-xs sm:text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
+                      className="px-5 py-2 sm:px-6 sm:py-2.5 btn-gold text-[var(--color-button-text)] text-xs sm:text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
                     >
                       {t("favourites.viewCourses")}
                     </Link>
@@ -96,14 +96,14 @@ const FavouritesContent = () => {
                         {/* Remove from Favourites Button */}
                         <button
                           onClick={() => removeFavourite(course.id)}
-                          className={`absolute top-2 ${isRTL ? "left-2" : "right-2"} z-10 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-colors`}
+                          className={`absolute top-2 ${isRTL ? "left-2" : "right-2"} z-10 w-8 h-8 bg-[var(--color-surface-card)] rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-colors`}
                           aria-label={t("favourites.removeFromFavourites")}
                         >
                           <Heart className="w-4 h-4 text-red-500 fill-red-500" />
                         </button>
 
                         {/* Course Thumbnail */}
-                        <div className="w-full h-[120px] sm:h-[140px] bg-gray-100">
+                        <div className="w-full h-[120px] sm:h-[140px] bg-[var(--color-border-subtle)]">
                           <Image
                             src={course.thumbnail}
                             alt={course.title}

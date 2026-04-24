@@ -207,7 +207,7 @@ function CertificateCard({
 
         {/* Certificate ID (for approved) */}
         {isApproved && (
-          <p className={`text-xs font-mono text-[#002D87] bg-[#F0F7FF] px-2 py-1 rounded mb-3 inline-block text-start`}>
+          <p className={`text-xs font-mono text-[var(--color-primary)] bg-[var(--color-border-subtle)] px-2 py-1 rounded mb-3 inline-block text-start`}>
             {t("certifications.certificateId", { id: formatCertId(certificate.id) })}
           </p>
         )}
@@ -215,7 +215,7 @@ function CertificateCard({
         {/* Approved: Certificate thumbnail + accreditation + download */}
         {isApproved && (
           <>
-            <div className="w-full h-[140px] sm:h-[180px] bg-gray-50 rounded-lg overflow-hidden mb-3 sm:mb-4 flex items-center justify-center">
+            <div className="w-full h-[140px] sm:h-[180px] bg-[var(--color-surface-page)] rounded-lg overflow-hidden mb-3 sm:mb-4 flex items-center justify-center">
               <Award className="w-16 h-16 text-[#D4A520] opacity-30" />
             </div>
 

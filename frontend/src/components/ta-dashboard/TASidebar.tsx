@@ -101,7 +101,7 @@ const TASidebar = () => {
         <div className="flex flex-col items-center">
           {/* Avatar with edit button */}
           <div className="relative mb-3">
-            <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100">
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-[var(--color-border-subtle)]">
               <Image
                 src={avatar || "/images/default-avatar.png"}
                 alt={name}
@@ -132,7 +132,7 @@ const TASidebar = () => {
                 <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`} role="menu">
                   <button
                     onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors cursor-pointer"
                     role="menuitem"
                   >
                     <Upload className="w-4 h-4 text-[var(--color-text-secondary)]" />

@@ -102,7 +102,7 @@ const FinanceContent = () => {
       case "failed":
         return "bg-[#FEE2E2] text-[#DC2626]";
       default:
-        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -179,8 +179,8 @@ const FinanceContent = () => {
 
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 bg-[#DBEAFE] rounded-lg flex items-center justify-center">
-                      <TrendingUp className="w-5 h-5 text-[#3B82F6]" />
+                    <div className="w-10 h-10 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center">
+                      <TrendingUp className="w-5 h-5 text-[var(--color-primary)]" />
                     </div>
                     <div className={`flex items-center gap-1 ${stats.netTrend > 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
                       {stats.netTrend > 0 ? (
@@ -260,7 +260,7 @@ const FinanceContent = () => {
                         <span className="text-sm font-medium text-[var(--color-text-primary)]">72%</span>
                       </div>
                       <div className="h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
-                        <div className="h-full bg-[#3B82F6] rounded-full" style={{ width: "72%" }} />
+                        <div className="h-full bg-[var(--color-primary)] rounded-full" style={{ width: "72%" }} />
                       </div>
                     </div>
                     <div>

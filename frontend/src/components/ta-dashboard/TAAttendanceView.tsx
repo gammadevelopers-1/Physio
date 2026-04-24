@@ -50,9 +50,9 @@ const getStatusColor = (status: AttendanceStatus) => {
     case "present": return "bg-[#DCFCE7] text-[#16A34A]";
     case "absent": return "bg-[#FEE2E2] text-[#EF4444]";
     case "late": return "bg-[#FEF3C7] text-[#D97706]";
-    case "excused": return "bg-[#EFF6FF] text-[#3B82F6]";
-    case "unmarked": return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
-    default: return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+    case "excused": return "bg-[var(--color-border-subtle)] text-[var(--color-primary)]";
+    case "unmarked": return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
+    default: return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
   }
 };
 
@@ -307,7 +307,7 @@ const TAAttendanceView = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors">
+          <button onClick={onBack} className="p-2 rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors">
             <ArrowLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
           <div>
@@ -325,15 +325,15 @@ const TAAttendanceView = ({
         <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
           {/* Zoom sync bar */}
           {isZoomSession && !attendanceLocked && isPostSession && (
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--color-border)] bg-[#EFF6FF]">
-              <div className="flex items-center gap-2 text-xs text-[#3B82F6]">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--color-border)] bg-[var(--color-border-subtle)]">
+              <div className="flex items-center gap-2 text-xs text-[var(--color-primary)]">
                 <Video className="w-3.5 h-3.5" />
                 <span>Zoom Lecture</span>
               </div>
               <button
                 onClick={handleSyncZoom}
                 disabled={syncing || attendanceLocked}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#3B82F6] hover:text-white transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg hover:bg-[var(--color-primary)] hover:text-white transition-colors disabled:opacity-50"
               >
                 {syncing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
                 {syncing ? "Syncing..." : "Sync from Zoom"}
@@ -419,7 +419,7 @@ const TAAttendanceView = ({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t("attendance.searchPlaceholder")}
-                  className="w-full pl-10 pr-4 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20"
+                  className="w-full pl-10 pr-4 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20"
                 />
               </div>
             </div>
@@ -467,7 +467,7 @@ const TAAttendanceView = ({
                             className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
                               currentStatus === status
                                 ? `${getStatusColor(status)} ring-2 ring-offset-1 ring-current`
-                                : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
+                                : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
                             } ${isVerifiedReadOnly ? "cursor-default opacity-70" : ""}`}
                           >
                             {t(`attendance.${status}`)}
@@ -508,7 +508,7 @@ const TAAttendanceView = ({
                       if (presPercent === 0 && !record.joinedAt) return null;
                       return (
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 relative h-2 bg-[#F3F4F6] rounded-full overflow-hidden">
+                          <div className="flex-1 relative h-2 bg-[var(--color-border-subtle)] rounded-full overflow-hidden">
                             <div
                               className={`absolute top-0 left-0 h-full rounded-full ${presPercent >= 70 ? "bg-[#16A34A]" : "bg-[#EF4444]"}`}
                               style={{ width: `${Math.max(2, presPercent)}%` }}
@@ -561,7 +561,7 @@ const TAAttendanceView = ({
                           value={manualAssignments[p.zoomUserEmail] || ""}
                           onChange={(e) => setManualAssignments((prev) => ({ ...prev, [p.zoomUserEmail]: e.target.value }))}
                           disabled={attendanceLocked}
-                          className="flex-1 px-2 py-1.5 text-xs border border-[var(--color-border)] rounded-lg bg-white text-[var(--color-text-secondary)] disabled:opacity-50"
+                          className="flex-1 px-2 py-1.5 text-xs border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] disabled:opacity-50"
                         >
                           <option value="">{locale === "ar" ? "اختر طالب" : "Select student"}</option>
                           {records.filter((r) => !markedStudentIds.has(r.studentId)).map((r) => (
@@ -573,7 +573,7 @@ const TAAttendanceView = ({
                         <button
                           onClick={() => handleManualAssign(p.zoomUserEmail)}
                           disabled={!manualAssignments[p.zoomUserEmail] || assigningEmail === p.zoomUserEmail || attendanceLocked}
-                          className="px-3 py-1.5 text-xs font-medium bg-[#3B82F6] text-white rounded-lg disabled:opacity-40 hover:bg-[#2563EB] transition-colors shrink-0"
+                          className="px-3 py-1.5 text-xs font-medium bg-[var(--color-primary)] text-white rounded-lg disabled:opacity-40 hover:bg-[var(--color-primary-dark)] transition-colors shrink-0"
                         >
                           {assigningEmail === p.zoomUserEmail ? "..." : locale === "ar" ? "تعيين" : "Assign"}
                         </button>
@@ -597,7 +597,7 @@ const TAAttendanceView = ({
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg disabled:opacity-50"
                 >
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   Save

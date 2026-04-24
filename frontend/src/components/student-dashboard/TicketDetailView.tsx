@@ -32,7 +32,7 @@ function StatusBadge({
     new: "bg-blue-50 text-blue-700",
     in_progress: "bg-yellow-50 text-yellow-700",
     resolved: "bg-green-50 text-green-700",
-    closed: "bg-gray-100 text-gray-500",
+    closed: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
   };
 
   const icons: Record<string, React.ReactNode> = {
@@ -70,8 +70,8 @@ function ReplyBubble({
       <div
         className={`max-w-[85%] sm:max-w-[75%] ${
           isStaff
-            ? "bg-[#F3F4F6] rounded-tl-sm"
-            : "bg-[#002D87] text-white rounded-tr-sm"
+            ? "bg-[var(--color-border-subtle)] rounded-tl-sm"
+            : "bg-[var(--color-primary)] text-white rounded-tr-sm"
         } rounded-2xl p-3 sm:p-4`}
       >
         <div className="flex items-center gap-1.5 mb-1">
@@ -162,7 +162,7 @@ function SatisfactionRating({
               className={`w-6 h-6 transition-colors ${
                 star <= (hoveredStar || rating)
                   ? "text-yellow-400 fill-yellow-400"
-                  : "text-gray-300"
+                  : "text-[var(--color-icon)]"
               }`}
             />
           </button>
@@ -334,7 +334,7 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
                         <button
                           onClick={handleSendReply}
                           disabled={sending || !replyText.trim()}
-                          className="p-2.5 bg-[#002D87] text-white rounded-lg hover:bg-[#001f5c] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                          className="p-2.5 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[#001f5c] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                         >
                           {sending ? (
                             <Loader2 className="w-4 h-4 animate-spin" />

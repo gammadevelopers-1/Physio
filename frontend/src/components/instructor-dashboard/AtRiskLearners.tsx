@@ -78,7 +78,7 @@ const AtRiskLearners = ({
       case "inactive":
         return "bg-[#FEF9C3] text-[#EAB308]";
       default:
-        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -157,7 +157,7 @@ const AtRiskLearners = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowSettings(true)}
-              className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors"
+              className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
               title={t("atRisk.thresholdSettings")}
             >
               <Settings className="w-4 h-4" />
@@ -255,7 +255,7 @@ const AtRiskLearners = ({
         {/* View All Link */}
         <button
           onClick={() => router.push(`/${locale}/dashboard/instructor/students`)}
-          className="w-full flex items-center justify-center gap-1 mt-4 py-2.5 text-sm font-medium text-[#3B82F6] hover:underline"
+          className="w-full flex items-center justify-center gap-1 mt-4 py-2.5 text-sm font-medium text-[var(--color-primary)] hover:underline"
         >
           {t("atRisk.viewAll")} ({totalCount})
           {locale === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -327,7 +327,7 @@ function ThresholdSettingsModal({
           <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("atRisk.thresholdSettings")}
           </h3>
-          <button onClick={onClose} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
+          <button onClick={onClose} className="p-1 hover:bg-[var(--color-border-subtle)] rounded-lg">
             <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
@@ -341,7 +341,7 @@ function ThresholdSettingsModal({
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             >
               {courses.map((c) => (
                 <option key={c.value} value={c.value}>{c.label}</option>
@@ -359,7 +359,7 @@ function ThresholdSettingsModal({
                 type="number"
                 value={attendance}
                 onChange={(e) => setAttendance(e.target.value)}
-                className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 min={0}
                 max={100}
               />
@@ -377,7 +377,7 @@ function ThresholdSettingsModal({
                 type="number"
                 value={score}
                 onChange={(e) => setScore(e.target.value)}
-                className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 min={0}
                 max={100}
               />
@@ -395,7 +395,7 @@ function ThresholdSettingsModal({
                 type="number"
                 value={inactivity}
                 onChange={(e) => setInactivity(e.target.value)}
-                className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 min={1}
                 max={90}
               />
@@ -415,7 +415,7 @@ function ThresholdSettingsModal({
             <button
               onClick={handleSave}
               disabled={saving || !selectedCourse}
-              className="flex-1 px-4 py-2.5 btn-gold text-white rounded-lg text-sm font-medium disabled:opacity-50"
+              className="flex-1 px-4 py-2.5 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium disabled:opacity-50"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : t("atRisk.saveThresholds")}
             </button>

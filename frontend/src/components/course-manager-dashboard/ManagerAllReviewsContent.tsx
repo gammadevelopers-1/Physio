@@ -289,14 +289,14 @@ export default function ManagerAllReviewsContent() {
                       className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                         tab === ti.key
                           ? "bg-[var(--color-text-primary)] text-white"
-                          : "text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
+                          : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                       }`}
                     >
                       {ti.label}
                       {ti.count !== undefined && ti.count > 0 && (
                         <span
                           className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                            tab === ti.key ? "bg-white/20" : "bg-[var(--color-border)] text-[var(--color-text-secondary)]"
+                            tab === ti.key ? "bg-[var(--color-surface-card)]/20" : "bg-[var(--color-border)] text-[var(--color-text-secondary)]"
                           }`}
                         >
                           {ti.count}
@@ -319,7 +319,7 @@ export default function ManagerAllReviewsContent() {
                       onKeyDown={(e) => { if (e.key === "Enter") setSearch(searchInput); }}
                       onBlur={() => setSearch(searchInput)}
                       placeholder={isRTL ? "بحث باسم الطالب أو الدورة أو نص المراجعة..." : "Search by student, course, or review text..."}
-                      className={`w-full ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"} py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6]`}
+                      className={`w-full ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"} py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]`}
                     />
                   </div>
 
@@ -328,7 +328,7 @@ export default function ManagerAllReviewsContent() {
                     <select
                       value={courseFilter}
                       onChange={(e) => setCourseFilter(e.target.value)}
-                      className="text-sm border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white max-w-[240px]"
+                      className="text-sm border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-surface-card)] max-w-[240px]"
                     >
                       <option value="">{isRTL ? "كل الدورات" : "All courses"}</option>
                       {courseOptions.map((c) => (
@@ -346,7 +346,7 @@ export default function ManagerAllReviewsContent() {
                       <select
                         value={publishedFilter}
                         onChange={(e) => setPublishedFilter(e.target.value as typeof publishedFilter)}
-                        className="text-sm border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
+                        className="text-sm border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-surface-card)]"
                       >
                         <option value="all">{isRTL ? "الكل" : "All"}</option>
                         <option value="published">{isRTL ? "منشورة" : "Published"}</option>
@@ -360,7 +360,7 @@ export default function ManagerAllReviewsContent() {
                     <select
                       value={sort}
                       onChange={(e) => setSort(e.target.value as SortOption)}
-                      className="text-sm border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
+                      className="text-sm border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-surface-card)]"
                     >
                       <option value="newest">{isRTL ? "الأحدث" : "Newest"}</option>
                       <option value="oldest">{isRTL ? "الأقدم" : "Oldest"}</option>
@@ -379,7 +379,7 @@ export default function ManagerAllReviewsContent() {
                   </div>
                 ) : reviews.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="w-14 h-14 rounded-xl bg-[#F3F4F6] flex items-center justify-center mb-3">
+                    <div className="w-14 h-14 rounded-xl bg-[var(--color-border-subtle)] flex items-center justify-center mb-3">
                       <Star className="w-7 h-7 text-[var(--color-text-secondary)]" />
                     </div>
                     <p className="text-sm text-[var(--color-text-secondary)]">
@@ -404,7 +404,7 @@ export default function ManagerAllReviewsContent() {
                                     {isRTL ? "منشورة" : "Published"}
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600">
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]">
                                     <EyeOff className="w-3 h-3" />
                                     {isRTL ? "غير منشورة" : "Unpublished"}
                                   </span>
@@ -412,7 +412,7 @@ export default function ManagerAllReviewsContent() {
                               </div>
                               <Link
                                 href={`/${locale}/dashboard/manager/courses/${r.courseId}`}
-                                className="text-xs text-[var(--color-text-secondary)] hover:text-[#3B82F6] hover:underline truncate inline-block max-w-full"
+                                className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:underline truncate inline-block max-w-full"
                               >
                                 {courseTitle}
                               </Link>
@@ -435,7 +435,7 @@ export default function ManagerAllReviewsContent() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <button
                               onClick={() => setModal(r)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                             >
                               <Eye className="w-3.5 h-3.5" />
                               {isRTL ? "عرض" : "View"}
@@ -464,7 +464,7 @@ export default function ManagerAllReviewsContent() {
                               <button
                                 onClick={() => handleTogglePublish(r)}
                                 disabled={isBusy}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] disabled:opacity-60"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-60"
                               >
                                 {r.isPublished ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                                 {r.isPublished
@@ -501,7 +501,7 @@ export default function ManagerAllReviewsContent() {
                       <button
                         onClick={() => fetchReviews(page - 1)}
                         disabled={page <= 1}
-                        className="p-1.5 rounded hover:bg-[#F3F4F6] disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="p-1.5 rounded hover:bg-[var(--color-border-subtle)] disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                       </button>
@@ -513,7 +513,7 @@ export default function ManagerAllReviewsContent() {
                             key={p}
                             onClick={() => fetchReviews(p)}
                             className={`min-w-[28px] h-7 px-2 text-xs font-medium rounded ${
-                              p === page ? "bg-[var(--color-text-primary)] text-white" : "text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
+                              p === page ? "bg-[var(--color-text-primary)] text-white" : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                             }`}
                           >
                             {p}
@@ -523,7 +523,7 @@ export default function ManagerAllReviewsContent() {
                       <button
                         onClick={() => fetchReviews(page + 1)}
                         disabled={page >= totalPages}
-                        className="p-1.5 rounded hover:bg-[#F3F4F6] disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="p-1.5 rounded hover:bg-[var(--color-border-subtle)] disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                       </button>
@@ -554,7 +554,7 @@ export default function ManagerAllReviewsContent() {
                   {isRTL && modal.courseTitleAr ? modal.courseTitleAr : modal.courseTitle}
                 </p>
               </div>
-              <button onClick={() => setModal(null)} className="p-1 rounded hover:bg-[#F3F4F6]">
+              <button onClick={() => setModal(null)} className="p-1 rounded hover:bg-[var(--color-border-subtle)]">
                 <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
             </div>

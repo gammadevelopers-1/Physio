@@ -56,13 +56,13 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
           <div className="max-w-[1312px] mx-auto">
             {breadcrumb && (
               <div className="flex items-center gap-1 mb-6">
-                <Link href="/" className="text-[#525252]">
+                <Link href="/" className="text-[var(--color-text-secondary)]">
                   <Home size={24} />
                 </Link>
                 {isRTL ? (
-                  <ChevronLeft size={14} className="text-[#525252]" />
+                  <ChevronLeft size={14} className="text-[var(--color-text-secondary)]" />
                 ) : (
-                  <ChevronRight size={14} className="text-[#525252]" />
+                  <ChevronRight size={14} className="text-[var(--color-text-secondary)]" />
                 )}
                 <span className="text-[var(--color-text-primary)] text-[14px]">{breadcrumb}</span>
               </div>
@@ -107,7 +107,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
             <div className={`grid grid-cols-1 gap-6 ${hasNelcCard && hasScfhsCard ? "md:grid-cols-2" : "md:max-w-[640px] md:mx-auto"}`}>
               {/* NELC Card */}
               {hasNelcCard && (
-                <div className="bg-white rounded-[20px] p-8 md:p-16 flex flex-col items-center gap-6 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+                <div className="bg-[var(--color-surface-card)] rounded-[20px] p-8 md:p-16 flex flex-col items-center gap-6 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
                   {nelcLogoUrl && (
                     <div className="h-[80px] flex items-center justify-center">
                       <Image
@@ -148,7 +148,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
 
               {/* SCFHS Card */}
               {hasScfhsCard && (
-                <div className="bg-white rounded-[20px] p-8 md:p-16 flex flex-col items-center gap-6 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+                <div className="bg-[var(--color-surface-card)] rounded-[20px] p-8 md:p-16 flex flex-col items-center gap-6 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
                   {scfhsLogoUrl && (
                     <div className="h-[80px] flex items-center justify-center">
                       <Image
@@ -195,7 +195,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
       {hasVerification && (
         <section className="bg-[var(--color-surface-page)] px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
           <div className="max-w-[1312px] mx-auto">
-            <div className="bg-[var(--color-surface-page)] rounded-[24px] p-6 md:p-12 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+            <div className="bg-[var(--color-surface-card)] rounded-[24px] p-6 md:p-12 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
               <div className="flex flex-col md:flex-row items-center gap-8">
                 {(verificationTitle || verificationSubtitle || verificationButtonLabel) && (
                   <CertificateVerifyForm
@@ -248,7 +248,7 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
                   return (
                     <div
                       key={step.id}
-                      className="bg-white rounded-[16px] px-8 py-6 flex flex-col items-center gap-2 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]"
+                      className="bg-[var(--color-surface-card)] rounded-[16px] px-8 py-6 flex flex-col items-center gap-2 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]"
                     >
                       {iconUrl && (
                         <div className="relative h-[56px] w-[65px]">
@@ -354,7 +354,7 @@ function CertificateVerifyForm({
 
   return (
     <div className="w-full md:w-1/2 flex items-center justify-center">
-      <div className="bg-white rounded-xl p-6 w-full max-w-[400px]">
+      <div className="bg-[var(--color-surface-card)] rounded-xl p-6 w-full max-w-[400px]">
         {(titleLabel || subtitleLabel) && (
           <div className="flex flex-col gap-1 mb-5">
             {titleLabel && (

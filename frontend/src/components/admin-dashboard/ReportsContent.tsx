@@ -146,16 +146,16 @@ const ReportsContent = () => {
                     />
                   </div>
                   <div className="flex items-center gap-2 sm:ml-auto">
-                    <button className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg">
+                    <button className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg">
                       {t("reportsPage.presets.today")}
                     </button>
-                    <button className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg">
+                    <button className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg">
                       {t("reportsPage.presets.week")}
                     </button>
-                    <button className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg">
+                    <button className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg">
                       {t("reportsPage.presets.month")}
                     </button>
-                    <button className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg">
+                    <button className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg">
                       {t("reportsPage.presets.year")}
                     </button>
                   </div>
@@ -212,7 +212,7 @@ const ReportsContent = () => {
                         <option value="excel">Excel</option>
                         <option value="csv">CSV</option>
                       </select>
-                      <button className="flex items-center gap-2 px-4 py-2.5 btn-gold text-white rounded-lg transition-colors">
+                      <button className="flex items-center gap-2 px-4 py-2.5 btn-gold text-[var(--color-button-text)] rounded-lg transition-colors">
                         <Play className="w-4 h-4" />
                         <span className="text-sm font-medium">{t("reportsPage.generate")}</span>
                       </button>
@@ -261,7 +261,7 @@ const ReportsContent = () => {
                             {report.name}
                           </td>
                           <td className="px-4 py-4">
-                            <span className="px-2.5 py-1 text-xs font-medium rounded bg-[#F3F4F6] text-[var(--color-text-secondary)]">
+                            <span className="px-2.5 py-1 text-xs font-medium rounded bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]">
                               {report.frequency}
                             </span>
                           </td>

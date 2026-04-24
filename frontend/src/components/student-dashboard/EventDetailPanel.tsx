@@ -216,7 +216,7 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
                       className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
                         joinable
                           ? "bg-[#2D8CFF] text-white hover:bg-[#1A73E8]"
-                          : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "bg-[var(--color-border-subtle)] text-[var(--color-icon)] cursor-not-allowed"
                       }`}
                     >
                       {joiningSessionId === event.id ? (
@@ -266,7 +266,7 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
                   {/* Add to Calendar */}
                   <button
                     onClick={() => downloadIcs(event)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F3F4F6] transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
                   >
                     <Download className="w-3.5 h-3.5" />
                     {t("calendarPage.addToCalendar")}

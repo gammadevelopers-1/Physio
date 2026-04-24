@@ -138,7 +138,7 @@ const CertificateQueue = ({
                 {/* View Button */}
                 <button
                   onClick={() => handlePreview(cert.id)}
-                  className="p-1.5 text-[var(--color-text-secondary)] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded transition-colors"
+                  className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] rounded transition-colors"
                   aria-label={t("certificates.preview")}
                 >
                   <Eye className="w-3.5 h-3.5" />
@@ -151,7 +151,7 @@ const CertificateQueue = ({
         {/* View All Footer */}
         <Link
           href={`/${locale}/dashboard/manager/certificates`}
-          className="w-full flex items-center justify-center gap-1 mt-4 py-2.5 text-sm font-medium text-[#3B82F6] hover:underline"
+          className="w-full flex items-center justify-center gap-1 mt-4 py-2.5 text-sm font-medium text-[var(--color-primary)] hover:underline"
         >
           {t("certificates.reviewAll")} ({totalCount})
           <ChevronRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />

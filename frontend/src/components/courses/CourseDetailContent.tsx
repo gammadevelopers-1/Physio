@@ -173,7 +173,7 @@ function AllReviewsModal({
       dir={isRTL ? "rtl" : "ltr"}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col"
+        className="bg-[var(--color-surface-card)] rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -199,7 +199,7 @@ function AllReviewsModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors"
+            className="p-2 rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
             aria-label={isRTL ? "إغلاق" : "Close"}
           >
             <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
@@ -214,7 +214,7 @@ function AllReviewsModal({
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as typeof sort)}
-              className="text-sm border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
+              className="text-sm border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-surface-page)]"
             >
               <option value="highest">{isRTL ? "الأعلى تقييماً" : "Highest rated"}</option>
               <option value="lowest">{isRTL ? "الأقل تقييماً" : "Lowest rated"}</option>
@@ -228,7 +228,7 @@ function AllReviewsModal({
             <button
               onClick={() => setStarFilter(null)}
               className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                starFilter === null ? "bg-[var(--color-text-primary)] text-white" : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
+                starFilter === null ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
               }`}
             >
               {isRTL ? "الكل" : "All"}
@@ -241,7 +241,7 @@ function AllReviewsModal({
                   onClick={() => setStarFilter(starFilter === s ? null : s)}
                   disabled={c === 0}
                   className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                    starFilter === s ? "bg-[var(--color-primary)] text-white" : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
+                    starFilter === s ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
                   }`}
                 >
                   {s} <Star className="w-3 h-3 fill-current" /> ({c})
@@ -260,7 +260,7 @@ function AllReviewsModal({
               return (
                 <div key={s} className="flex items-center gap-2 text-xs">
                   <span className="w-4 text-[var(--color-text-secondary)]">{s}★</span>
-                  <div className="flex-1 h-2 bg-[#F3F4F6] rounded-full overflow-hidden">
+                  <div className="flex-1 h-2 bg-[var(--color-border-subtle)] rounded-full overflow-hidden">
                     <div className="h-full bg-[var(--color-primary)]" style={{ width: `${pct}%` }} />
                   </div>
                   <span className="w-8 text-right text-[var(--color-text-secondary)] tabular-nums">{c}</span>
@@ -278,7 +278,7 @@ function AllReviewsModal({
             </div>
           ) : reviews.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-14 h-14 rounded-xl bg-[#F3F4F6] flex items-center justify-center mb-3">
+              <div className="w-14 h-14 rounded-xl bg-[var(--color-border-subtle)] flex items-center justify-center mb-3">
                 <Star className="w-7 h-7 text-[var(--color-text-secondary)]" />
               </div>
               <p className="text-sm text-[var(--color-text-secondary)]">{isRTL ? "لا توجد مراجعات مطابقة" : "No matching reviews"}</p>
@@ -326,7 +326,7 @@ function AllReviewsModal({
               <button
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[var(--color-text-primary)] text-white text-sm font-medium hover:bg-[var(--color-text-primary)] transition-colors disabled:opacity-60"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[var(--color-primary)] text-white text-sm font-medium hover:bg-[var(--color-text-primary)] transition-colors disabled:opacity-60"
               >
                 {loadingMore && <Loader2 className="w-4 h-4 animate-spin" />}
                 {isRTL ? "تحميل المزيد" : "Load more"}
@@ -596,7 +596,7 @@ const CourseDetailContent = ({
     };
 
     return (
-      <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl border border-[var(--outline-subtle)] p-6 mb-8"}`}>
+      <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl border border-[var(--outline-subtle)] p-6 mb-8"}`}>
         <h2 className={`${isMobile ? "text-lg" : "text-[20px]"} font-semibold mb-4 ${isRTL ? "text-right" : "text-left"}`}>
           {scheduleHeading || t("schedule") || "Schedule"}
         </h2>
@@ -612,7 +612,7 @@ const CourseDetailContent = ({
                 <select
                   value={sessionFilterCity}
                   onChange={(e) => setSessionFilterCity(e.target.value)}
-                  className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                  className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-page)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
                   <option value="">{locale === "ar" ? "كل المدن" : "All cities"}</option>
                   {uniqueCities.map((city) => (
@@ -631,7 +631,7 @@ const CourseDetailContent = ({
                 <select
                   value={sessionFilterMonth}
                   onChange={(e) => setSessionFilterMonth(e.target.value)}
-                  className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                  className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-page)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
                   <option value="">{locale === "ar" ? "كل الأشهر" : "All months"}</option>
                   {uniqueMonths.map((m) => (
@@ -665,7 +665,7 @@ const CourseDetailContent = ({
             </div>
           ) : (
             filteredSessions.map((session) => (
-              <div key={session.id} className={`flex items-center justify-between p-3 bg-[#f4f4f5] rounded-lg ${isRTL ? "flex-row-reverse" : ""}`}>
+              <div key={session.id} className={`flex items-center justify-between p-3 bg-[var(--color-border-subtle)] rounded-lg ${isRTL ? "flex-row-reverse" : ""}`}>
                 <div className={isRTL ? "text-right" : "text-left"}>
                   <p className="font-medium text-[14px]">{session.title}</p>
                   <p className="text-[13px] text-[var(--color-text-secondary)]">
@@ -705,7 +705,7 @@ const CourseDetailContent = ({
     const previewModules = apiCourse.modules.slice(0, 2);
     const remaining = totalCount - previewModules.length;
     return (
-      <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl border border-[var(--outline-subtle)] p-6 mb-8"}`}>
+      <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl border border-[var(--outline-subtle)] p-6 mb-8"}`}>
         <div className={`flex items-center justify-between mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
           <h2 className={`${isMobile ? "text-lg" : "text-[20px]"} font-semibold`}>
             {contentsHeading || t("contents") || "Contents"} {totalCount}
@@ -734,7 +734,7 @@ const CourseDetailContent = ({
                 <div className="flex flex-col divide-y divide-[var(--outline-subtle)]">
                   {mod.materials.map((mat) => (
                     <div key={mat.id} className={`flex items-center gap-2 p-3 ${isRTL ? "flex-row-reverse" : ""}`}>
-                      <span className="text-[11px] text-[var(--color-text-secondary)] uppercase bg-[#F3F4F6] px-2 py-0.5 rounded">{mat.type}</span>
+                      <span className="text-[11px] text-[var(--color-text-secondary)] uppercase bg-[var(--color-border-subtle)] px-2 py-0.5 rounded">{mat.type}</span>
                       <span className="text-[13px] text-[var(--color-text-secondary)]">{mat.title}</span>
                     </div>
                   ))}
@@ -761,7 +761,7 @@ const CourseDetailContent = ({
     const overview = getOverview();
     if (!overview) return null;
     return (
-      <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
+      <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} ${isRTL ? "text-right" : "text-left"}`}>
           {overviewHeading || t("overview") || "Overview"}
         </h2>
@@ -779,7 +779,7 @@ const CourseDetailContent = ({
     const objectives = getObjectives();
     if (!objectives.length) return null;
     return (
-      <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
+      <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} ${isRTL ? "text-right" : "text-left"}`}>
           {objectivesHeading || t("whatYouWillLearn.title")}
         </h2>
@@ -800,7 +800,7 @@ const CourseDetailContent = ({
     const audience = getTargetAudience();
     if (!audience.length) return null;
     return (
-      <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
+      <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} ${isRTL ? "text-right" : "text-left"}`}>
           {targetAudienceHeading || t("targetAudience") || "Target Audience"}
         </h2>
@@ -808,7 +808,7 @@ const CourseDetailContent = ({
           {audience.map((item, index) => (
             <span
               key={index}
-              className="inline-flex items-center px-3 py-1.5 bg-[#F4F4F5] text-[var(--color-text-secondary)] text-sm rounded-full"
+              className="inline-flex items-center px-3 py-1.5 bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] text-sm rounded-full"
             >
               {item}
             </span>
@@ -822,7 +822,7 @@ const CourseDetailContent = ({
   const renderRequirements = (isMobile: boolean = false) => {
     if (!showRequirements) return null;
     return (
-      <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
+      <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} ${isRTL ? "text-right" : "text-left"}`}>
           {requirementsHeading || t("requirements") || "Requirements"}
         </h2>
@@ -857,7 +857,7 @@ const CourseDetailContent = ({
   // Reviews section renderer — always shows, with empty state
   const renderReviews = (isMobile: boolean = false) => {
     return (
-      <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
+      <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <div className={`flex items-center justify-between mb-6 ${isRTL ? "flex-row-reverse" : ""}`}>
           <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg" : "text-xl"}`}>
             {reviewsHeading || t("reviews")}
@@ -917,7 +917,7 @@ const CourseDetailContent = ({
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="w-14 h-14 rounded-xl bg-[#F3F4F6] flex items-center justify-center mb-3">
+            <div className="w-14 h-14 rounded-xl bg-[var(--color-border-subtle)] flex items-center justify-center mb-3">
               <Star className="w-7 h-7 text-[var(--color-text-secondary)]" />
             </div>
             <p className="text-sm text-[var(--color-text-secondary)]">
@@ -974,7 +974,7 @@ const CourseDetailContent = ({
                 {(apiSessionCount > 0 || apiRemainingSeats !== null) && (
                   <div className={`flex flex-wrap items-center gap-3 mb-6 ${isRTL ? "justify-start" : ""}`}>
                     {apiSessionCount > 0 && (
-                      <div className="flex items-center gap-1.5 bg-[#F3F4F6] text-[var(--color-text-secondary)] px-3 py-1.5 rounded-full text-sm">
+                      <div className="flex items-center gap-1.5 bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] px-3 py-1.5 rounded-full text-sm">
                         <Video className="w-4 h-4" />
                         {apiSessionCount} {tCourses("card.sessions")}
                       </div>
@@ -1010,7 +1010,7 @@ const CourseDetailContent = ({
                 {renderNotices()}
 
                 {/* Course Details — placed in left column to fill space next to pricing card */}
-                <div className="bg-white rounded-2xl p-8 mb-8 mt-6">
+                <div className="bg-[var(--color-surface-card)] rounded-2xl p-8 mb-8 mt-6">
                   <h2 className={`font-bold text-[var(--color-text-primary)] text-xl mb-6 ${isRTL ? "text-right" : "text-left"}`}>{courseDetailsHeading || t("courseDetails.title")}</h2>
 
                   <div className="grid grid-cols-2 gap-x-12 gap-y-6">
@@ -1031,14 +1031,14 @@ const CourseDetailContent = ({
                       </div>
                     </div>
                     {apiCourse.startDate && (
-                      <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
+                      <div className={`relative bg-[var(--color-border-subtle)] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
                         <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
                         <p className={`text-sm font-semibold text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.startTime")}</p>
                         <p className={`text-sm text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{formatDate(apiCourse.startDate)}</p>
                       </div>
                     )}
                     {apiCourse.endDate && (
-                      <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
+                      <div className={`relative bg-[var(--color-border-subtle)] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
                         <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
                         <p className={`text-sm font-semibold text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.endTime")}</p>
                         <p className={`text-sm text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{formatDate(apiCourse.endDate)}</p>
@@ -1068,7 +1068,7 @@ const CourseDetailContent = ({
                       </div>
                     )}
                     {showVenue && getVenue() && (
-                      <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
+                      <div className={`relative bg-[var(--color-border-subtle)] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
                         <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[var(--color-border-subtle)]`} />
                         <p className={`text-sm font-semibold text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.venue")}</p>
                         <p className={`text-sm text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{getVenue()}</p>
@@ -1086,7 +1086,7 @@ const CourseDetailContent = ({
                         {getTargetAudience().map((item, idx) => (
                           <span
                             key={idx}
-                            className="px-3 py-1 rounded-full bg-[#F4F4F5] text-[var(--color-text-secondary)] text-xs font-medium"
+                            className="px-3 py-1 rounded-full bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] text-xs font-medium"
                           >
                             {item}
                           </span>
@@ -1099,7 +1099,7 @@ const CourseDetailContent = ({
 
               {/* Pricing Card */}
               <div className="w-[360px] flex-shrink-0">
-                <div className="bg-white shadow-sm border border-[var(--color-border)] rounded-2xl sticky top-24">
+                <div className="bg-[var(--color-surface-card)] shadow-sm border border-[var(--color-border)] rounded-2xl sticky top-24">
                   {/* Course Image */}
                   <div className="p-4 pb-0">
                     <div className="relative h-[200px] rounded-xl overflow-hidden">
@@ -1147,13 +1147,13 @@ const CourseDetailContent = ({
                       <div className="flex items-center gap-2 relative">
                         <button
                           onClick={handleShare}
-                          className="p-2.5 rounded-full bg-[#F4F4F5] hover:bg-[var(--color-border)] transition-colors"
+                          className="p-2.5 rounded-full bg-[var(--color-border-subtle)] hover:bg-[var(--color-border)] transition-colors"
                           aria-label="Share course"
                         >
                           <Share2 className="w-4 h-4 text-[var(--color-text-secondary)]" />
                         </button>
                         {shareTooltip && (
-                          <span className="absolute -bottom-8 right-0 bg-[var(--color-text-primary)] text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                          <span className="absolute -bottom-8 right-0 bg-[var(--color-primary)] text-white text-xs px-2 py-1 rounded whitespace-nowrap">
                             {locale === "ar" ? "تم نسخ الرابط" : "Link copied"}
                           </span>
                         )}
@@ -1265,13 +1265,13 @@ const CourseDetailContent = ({
                       <div className="flex items-center justify-center gap-3 flex-wrap">
                         <span className="text-sm text-[var(--color-text-secondary)]">{t("pricingCard.securePayment")}</span>
                         <div className="flex items-center gap-2">
-                          <div className="relative w-[35px] h-[24px] bg-white border border-[var(--color-border)] rounded overflow-hidden">
+                          <div className="relative w-[35px] h-[24px] bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded overflow-hidden">
                             <Image src="/payment icons/Mastercard.svg" alt="Mastercard" fill className="object-contain p-[5px]" />
                           </div>
-                          <div className="relative w-[35px] h-[24px] bg-white border border-[var(--color-border)] rounded overflow-hidden">
+                          <div className="relative w-[35px] h-[24px] bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded overflow-hidden">
                             <Image src="/payment icons/Visa.svg" alt="Visa" fill className="object-contain p-[6px]" />
                           </div>
-                          <div className="relative w-[35px] h-[24px] bg-white border border-[var(--color-border)] rounded overflow-hidden">
+                          <div className="relative w-[35px] h-[24px] bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded overflow-hidden">
                             <Image src="/payment icons/image 474.svg" alt="Mada" fill className="object-contain p-[5px]" />
                           </div>
                           <div className="relative w-[35px] h-[24px]">
@@ -1367,7 +1367,7 @@ const CourseDetailContent = ({
           </div>
 
           {/* Stats */}
-          <div className="relative bg-white rounded-xl overflow-hidden mb-6">
+          <div className="relative bg-[var(--color-surface-card)] rounded-xl overflow-hidden mb-6">
             <div
               className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1`}
               style={{ background: "linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-dark) 100%)" }}
@@ -1394,7 +1394,7 @@ const CourseDetailContent = ({
           </div>
 
           {/* Price Card */}
-          <div className="bg-white border border-[var(--color-border)] rounded-xl p-4 mb-6">
+          <div className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl p-4 mb-6">
             <div className="flex items-center justify-between mb-4">
               <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
                 {apiIsFree ? (
@@ -1409,13 +1409,13 @@ const CourseDetailContent = ({
               <div className="flex items-center gap-2 relative">
                 <button
                   onClick={handleShare}
-                  className="p-2 rounded-full bg-[#F4F4F5] hover:bg-[var(--color-border)]"
+                  className="p-2 rounded-full bg-[var(--color-border-subtle)] hover:bg-[var(--color-border)]"
                   aria-label="Share course"
                 >
                   <Share2 className="w-4 h-4 text-[var(--color-text-secondary)]" />
                 </button>
                 {shareTooltip && (
-                  <span className="absolute -bottom-8 right-0 bg-[var(--color-text-primary)] text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                  <span className="absolute -bottom-8 right-0 bg-[var(--color-primary)] text-white text-xs px-2 py-1 rounded whitespace-nowrap">
                     {locale === "ar" ? "تم نسخ الرابط" : "Link copied"}
                   </span>
                 )}
@@ -1538,7 +1538,7 @@ const CourseDetailContent = ({
           {(apiSessionCount > 0 || apiRemainingSeats !== null) && (
             <div className="flex flex-wrap items-center gap-2 mb-4">
               {apiSessionCount > 0 && (
-                <div className="flex items-center gap-1 bg-[#F3F4F6] text-[var(--color-text-secondary)] px-2.5 py-1 rounded-full text-xs">
+                <div className="flex items-center gap-1 bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] px-2.5 py-1 rounded-full text-xs">
                   <Video className="w-3.5 h-3.5" />
                   {apiSessionCount} {tCourses("card.sessions")}
                 </div>
@@ -1572,7 +1572,7 @@ const CourseDetailContent = ({
 
         {/* Course Details */}
         <section className="px-4 py-6">
-          <div className="bg-white rounded-xl p-4 mb-4">
+          <div className="bg-[var(--color-surface-card)] rounded-xl p-4 mb-4">
             <h2 className={`font-bold text-[var(--color-text-primary)] text-lg mb-4 ${isRTL ? "text-right" : "text-left"}`}>{courseDetailsHeading || t("courseDetails.title")}</h2>
             <div className="space-y-4">
               {apiCourse.enrollmentDeadline && (
@@ -1634,7 +1634,7 @@ const CourseDetailContent = ({
                   {getTargetAudience().map((item, idx) => (
                     <span
                       key={idx}
-                      className="px-2.5 py-1 rounded-full bg-[#F4F4F5] text-[var(--color-text-secondary)] text-xs font-medium"
+                      className="px-2.5 py-1 rounded-full bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] text-xs font-medium"
                     >
                       {item}
                     </span>

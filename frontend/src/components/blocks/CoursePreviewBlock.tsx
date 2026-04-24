@@ -116,7 +116,7 @@ export function CoursePreviewBlock({ data }: CoursePreviewBlockProps) {
           {data.enrollUrl && (
             <a
               href={data.enrollUrl}
-              className="mt-2 inline-block w-fit px-8 py-3 rounded-full bg-[var(--surface-container-primary)] text-white text-sm font-medium"
+              className="mt-2 inline-block w-fit px-8 py-3 rounded-full bg-[var(--color-primary)] text-white text-sm font-medium"
             >
               {data.enrollLabel || "Enroll Now"}
             </a>

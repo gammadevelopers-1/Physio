@@ -199,7 +199,7 @@ const ApplicationsContent = () => {
                         </div>
                         <button
                           onClick={() => switchRole("INSTRUCTOR")}
-                          className="px-4 py-2 bg-[#002D87] text-white rounded-lg text-sm font-medium hover:bg-[#001A52] transition-colors whitespace-nowrap"
+                          className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg text-sm font-medium hover:bg-[#001A52] transition-colors whitespace-nowrap"
                         >
                           {t("applicationsPage.switchRole") || "Switch to Instructor"}
                         </button>

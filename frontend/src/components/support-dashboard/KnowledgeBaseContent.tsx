@@ -108,8 +108,8 @@ const KnowledgeBaseContent = () => {
       label: t("kbPage.stats.totalArticles"),
       value: "48",
       icon: BookOpen,
-      bgColor: "bg-[#EFF6FF]",
-      textColor: "text-[#3B82F6]",
+      bgColor: "bg-[var(--color-border-subtle)]",
+      textColor: "text-[var(--color-primary)]",
     },
     {
       label: t("kbPage.stats.published"),
@@ -153,7 +153,7 @@ const KnowledgeBaseContent = () => {
   const getCategoryStyle = (category: string) => {
     switch (category) {
       case "billing":
-        return "bg-[#EFF6FF] text-[#3B82F6]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-primary)]";
       case "login":
         return "bg-[#EDE9FE] text-[#8B5CF6]";
       case "content":
@@ -161,7 +161,7 @@ const KnowledgeBaseContent = () => {
       case "technical":
         return "bg-[#FEF9C3] text-[#CA8A04]";
       default:
-        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -248,12 +248,12 @@ const KnowledgeBaseContent = () => {
                     placeholder={t("kbPage.searchPlaceholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full sm:w-[280px] h-10 ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
+                    className={`w-full sm:w-[280px] h-10 ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent`}
                   />
                 </div>
 
                 {/* New Article Button */}
-                <button className="btn-gold text-white h-10 px-4 rounded-lg text-sm font-medium flex items-center gap-2">
+                <button className="btn-gold text-[var(--color-button-text)] h-10 px-4 rounded-lg text-sm font-medium flex items-center gap-2">
                   <Plus className="w-4 h-4" />
                   {t("kbPage.newArticle")}
                 </button>
@@ -268,7 +268,7 @@ const KnowledgeBaseContent = () => {
                     className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                       activeTab === tab.key
                         ? "bg-[var(--color-text-primary)] text-white"
-                        : "bg-white text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
+                        : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
                     }`}
                   >
                     {tab.label}
@@ -302,7 +302,7 @@ const KnowledgeBaseContent = () => {
                               openActionId === article.id ? null : article.id
                             )
                           }
-                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F3F4F6] transition-colors"
+                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
                         >
                           <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
                         </button>
@@ -347,7 +347,7 @@ const KnowledgeBaseContent = () => {
                           : t("kbPage.visibility.internal")}
                       </span>
                       {article.status === "draft" && (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F3F4F6] text-[var(--color-text-secondary)]">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]">
                           {t("kbPage.status.draft")}
                         </span>
                       )}

@@ -56,7 +56,7 @@ export function TimelineBlock({ data }: TimelineBlockProps) {
             <div key={step.id} className="flex gap-4">
               {/* Timeline line & dot */}
               <div className="flex flex-col items-center">
-                <div className="w-10 h-10 rounded-full bg-[var(--surface-container-primary)] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
                   {step.icon || index + 1}
                 </div>
                 {index < (data.steps?.length || 0) - 1 && (

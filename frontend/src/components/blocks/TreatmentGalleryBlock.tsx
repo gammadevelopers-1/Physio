@@ -70,7 +70,7 @@ export function TreatmentGalleryBlock({ data }: TreatmentGalleryBlockProps) {
           {data.techniques?.map((tech) => (
             <div
               key={tech.id}
-              className="flex flex-col bg-white rounded-2xl border border-[var(--outline-subtle)] shadow-sm overflow-hidden"
+              className="flex flex-col bg-[var(--color-surface-card)] rounded-2xl border border-[var(--outline-subtle)] shadow-sm overflow-hidden"
             >
               {tech.image && (
                 <div className="w-full h-48 overflow-hidden">

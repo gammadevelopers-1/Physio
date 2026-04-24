@@ -233,7 +233,7 @@ function VerifyForm() {
                 >
                   {t("subtitle")}
                 </p>
-                <div className="inline-flex items-center gap-1.5 bg-[#f8fafc] px-3 py-1.5 rounded-full border border-[var(--color-border)]">
+                <div className="inline-flex items-center gap-1.5 bg-[var(--color-border-subtle)] px-3 py-1.5 rounded-full border border-[var(--color-border)]">
                   <MailOpen className="w-3.5 h-3.5 text-[var(--color-primary)]" />
                   <span
                     className="text-[var(--color-text-primary)] font-medium"
@@ -287,8 +287,8 @@ function VerifyForm() {
                           error
                             ? "border-red-300 bg-red-50/50"
                             : digit
-                              ? "border-[var(--color-primary)] bg-[#faf6f0]"
-                              : "border-[var(--color-border)] bg-white"
+                              ? "border-[var(--color-primary)] bg-[var(--color-border-subtle)]"
+                              : "border-[var(--color-border)] bg-[var(--color-surface-page)]"
                         }
                         focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20
                         disabled:opacity-50 disabled:cursor-not-allowed

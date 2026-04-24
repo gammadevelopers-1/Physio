@@ -42,13 +42,13 @@ const ContentReviewQueue = ({
   const displayCount = totalCount ?? items.length;
 
   const typeIcons: Record<string, { icon: typeof Video; bg: string; color: string }> = {
-    video: { icon: Video, bg: "bg-[#DBEAFE]", color: "text-[#3B82F6]" },
+    video: { icon: Video, bg: "bg-[var(--color-border-subtle)]", color: "text-[var(--color-primary)]" },
     pdf: { icon: FileText, bg: "bg-[#FEE2E2]", color: "text-[#EF4444]" },
     document: { icon: File, bg: "bg-[#FEF3C7]", color: "text-[#F59E0B]" },
     image: { icon: ImageIcon, bg: "bg-[#D1FAE5]", color: "text-[#10B981]" },
     quiz: { icon: HelpCircle, bg: "bg-[#FFEDD5]", color: "text-[#F97316]" },
   };
-  const defaultTypeIcon = { icon: File, bg: "bg-[#F3F4F6]", color: "text-[var(--color-text-secondary)]" };
+  const defaultTypeIcon = { icon: File, bg: "bg-[var(--color-border-subtle)]", color: "text-[var(--color-text-secondary)]" };
 
   return (
     <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
@@ -113,13 +113,13 @@ const ContentReviewQueue = ({
                 </button>
                 <button
                   onClick={() => onReject(item.id)}
-                  className="flex-1 py-1.5 px-2 bg-white text-[#EF4444] text-[11px] font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEF2F2] transition-colors"
+                  className="flex-1 py-1.5 px-2 bg-[var(--color-surface-card)] text-[#EF4444] text-[11px] font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEF2F2] transition-colors"
                 >
                   {t("contentReview.reject")}
                 </button>
                 <button
                   onClick={() => onPreview(item.id)}
-                  className="py-1.5 px-2 bg-[#F3F4F6] text-[var(--color-text-secondary)] text-[11px] font-medium rounded-md hover:bg-[var(--color-border)] transition-colors"
+                  className="py-1.5 px-2 bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] text-[11px] font-medium rounded-md hover:bg-[var(--color-border)] transition-colors"
                   aria-label={tA("preview")}
                 >
                   <Eye className="w-3.5 h-3.5" />
@@ -133,7 +133,7 @@ const ContentReviewQueue = ({
         <div className="text-center pt-3 border-t border-[var(--color-border)] mt-3">
           <Link
             href={`/${locale}/dashboard/manager/content-review`}
-            className="text-[13px] font-medium text-[#3B82F6] hover:underline inline-flex items-center gap-1"
+            className="text-[13px] font-medium text-[var(--color-primary)] hover:underline inline-flex items-center gap-1"
           >
             {t("contentReview.viewAll")}
             <ChevronRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />

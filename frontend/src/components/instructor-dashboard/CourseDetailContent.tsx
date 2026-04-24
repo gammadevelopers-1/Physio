@@ -132,7 +132,7 @@ function formatSessionDateLocal(iso: string, calendarFormat: CalendarFormat, loc
 }
 
 function getModuleIcon(type: string) {
-  if (type === "video") return <Play className="w-4 h-4 text-[#3B82F6]" />;
+  if (type === "video") return <Play className="w-4 h-4 text-[var(--color-primary)]" />;
   if (type === "quiz") return <BookOpen className="w-4 h-4 text-[#F59E0B]" />;
   if (type === "mixed") return <BarChart3 className="w-4 h-4 text-[#8B5CF6]" />;
   return <FileText className="w-4 h-4 text-[var(--color-text-secondary)]" />;
@@ -140,13 +140,13 @@ function getModuleIcon(type: string) {
 
 function getSessionStatusColor(status: string) {
   switch (status) {
-    case "scheduled": return "bg-[#EFF6FF] text-[#3B82F6]";
+    case "scheduled": return "bg-[var(--color-border-subtle)] text-[var(--color-primary)]";
     case "live": return "bg-[#FEF3C7] text-[#D97706]";
     case "completed": return "bg-[#DCFCE7] text-[#22C55E]";
     case "cancelled": return "bg-[#FEE2E2] text-[#EF4444]";
     case "missed": return "bg-[#FEE2E2] text-[#EF4444]";
     case "rescheduled": return "bg-[#FEF3C7] text-[#D97706]";
-    default: return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+    default: return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
   }
 }
 
@@ -340,7 +340,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   // ─── Module Material Helpers ──────────────────────────────
 
   const getMaterialIcon = (type: string) => {
-    if (type === "video") return <Video className="w-4 h-4 text-[#3B82F6]" />;
+    if (type === "video") return <Video className="w-4 h-4 text-[var(--color-primary)]" />;
     if (type === "pdf") return <FileText className="w-4 h-4 text-[#EF4444]" />;
     if (type === "image") return <ImageIcon className="w-4 h-4 text-[#22C55E]" />;
     return <FileText className="w-4 h-4 text-[var(--color-text-secondary)]" />;
@@ -811,13 +811,13 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               : course.status === "draft"
                               ? "bg-[#FEF3C7] text-[#D4A520]"
                               : course.status === "completed"
-                              ? "bg-[#EFF6FF] text-[#3B82F6]"
-                              : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
+                              ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
+                              : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                           }`}
                         >
                           {t(`courses.status.${course.status}`)}
                         </span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/90 rounded-md text-xs font-medium text-[var(--color-text-secondary)]">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[var(--color-surface-card)]/90 rounded-md text-xs font-medium text-[var(--color-text-secondary)]">
                           {deliveryIcon}
                           {t(`courses.delivery.${course.deliveryType}`)}
                         </span>
@@ -829,8 +829,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   <div className="p-4 border-t border-[var(--color-border)]">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
-                          <Users className="w-5 h-5 text-[#3B82F6]" />
+                        <div className="w-10 h-10 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center">
+                          <Users className="w-5 h-5 text-[var(--color-primary)]" />
                         </div>
                         <div>
                           <p className="text-lg font-bold text-[var(--color-text-secondary)]">{enrollments.length}</p>
@@ -888,12 +888,12 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         role="tab"
                         aria-selected={activeTab === tab.id}
                         className={`px-5 py-3.5 text-sm font-medium whitespace-nowrap relative transition-colors ${
-                          activeTab === tab.id ? "text-[#3B82F6]" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
+                          activeTab === tab.id ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                         }`}
                       >
                         {tab.label}
                         {activeTab === tab.id && (
-                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3B82F6]" />
+                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)]" />
                         )}
                       </button>
                     ))}
@@ -960,7 +960,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         {!isCourseReadOnly && (
                           <button
                             onClick={() => setActiveTab("settings")}
-                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#EFF6FF] transition-colors"
+                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
                           >
                             <Edit className="w-4 h-4" />
                             {t("courseDetail.editCourse")}
@@ -1075,7 +1075,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                       {!isCourseReadOnly && (
                                         <button
                                           onClick={() => openAddMaterialModal(mod.id)}
-                                          className="flex items-center gap-1 text-xs text-[#3B82F6] hover:text-[#2563EB] font-medium"
+                                          className="flex items-center gap-1 text-xs text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] font-medium"
                                         >
                                           <Plus className="w-3 h-3" />
                                           {t("courseDetail.addMaterial")}
@@ -1085,7 +1085,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
 
                                     {loadingModuleMaterials[mod.id] ? (
                                       <div className="flex items-center justify-center py-4">
-                                        <Loader2 className="w-5 h-5 text-[#3B82F6] animate-spin" />
+                                        <Loader2 className="w-5 h-5 text-[var(--color-primary)] animate-spin" />
                                       </div>
                                     ) : (moduleMaterials[mod.id] || []).length === 0 ? (
                                       <div className="text-center py-4">
@@ -1122,10 +1122,10 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                               {mat.type === "video" && mat.fileUrl && (
                                                 <button
                                                   onClick={() => setPreviewVideo({ url: mat.fileUrl!, title: mat.title })}
-                                                  className="p-1 hover:bg-[#DBEAFE] rounded"
+                                                  className="p-1 hover:bg-[var(--color-border-subtle)] rounded"
                                                   aria-label={t("courseDetail.previewVideo") || "Preview video"}
                                                 >
-                                                  <Play className="w-3.5 h-3.5 text-[#3B82F6]" />
+                                                  <Play className="w-3.5 h-3.5 text-[var(--color-primary)]" />
                                                 </button>
                                               )}
                                               {mat.fileUrl && (
@@ -1183,7 +1183,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                               {(ma.submissionCount ?? 0) > 0 && (
                                                 <Link
                                                   href={`/${locale}/dashboard/instructor/assessments`}
-                                                  className="text-[10px] text-[#3B82F6] hover:text-[#2563EB] font-medium whitespace-nowrap"
+                                                  className="text-[10px] text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] font-medium whitespace-nowrap"
                                                 >
                                                   {ma.submissionCount} {t("courseDetail.viewSubmissions") || "submissions"}
                                                 </Link>
@@ -1201,7 +1201,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         {!isCourseReadOnly && (
                           <button
                             onClick={openAddModule}
-                            className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                            className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors"
                           >
                             <Plus className="w-4 h-4" />
                             {t("courseDetail.addModule")}
@@ -1242,7 +1242,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     const progress = enrollment.progress;
                                     const statusColors: Record<string, string> = {
                                       active: "bg-[#DCFCE7] text-[#22C55E]",
-                                      completed: "bg-[#EFF6FF] text-[#3B82F6]",
+                                      completed: "bg-[var(--color-border-subtle)] text-[var(--color-primary)]",
                                       dropped: "bg-[#FEE2E2] text-[#EF4444]",
                                       suspended: "bg-[#FEF3C7] text-[#D97706]",
                                     };
@@ -1260,7 +1260,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                             <div className="flex-1 h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
                                               <div
                                                 className={`h-full rounded-full ${
-                                                  progress >= 75 ? "bg-[#22C55E]" : progress >= 50 ? "bg-[#3B82F6]" : progress >= 25 ? "bg-[#F59E0B]" : "bg-[#EF4444]"
+                                                  progress >= 75 ? "bg-[#22C55E]" : progress >= 50 ? "bg-[var(--color-primary)]" : progress >= 25 ? "bg-[#F59E0B]" : "bg-[#EF4444]"
                                                 }`}
                                                 style={{ width: `${progress}%` }}
                                               />
@@ -1269,7 +1269,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                           </div>
                                         </td>
                                         <td className="px-3 py-3 text-center">
-                                          <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${statusColors[enrollment.status] || "bg-[#F3F4F6] text-[var(--color-text-secondary)]"}`}>
+                                          <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${statusColors[enrollment.status] || "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"}`}>
                                             {t(`courseDetail.studentStatus.${enrollment.status}`)}
                                           </span>
                                         </td>
@@ -1279,7 +1279,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                         <td className="px-2 py-3 text-center">
                                           <Link
                                             href={`/${locale}/dashboard/instructor/students/${enrollment.studentId}`}
-                                            className="p-1.5 text-[var(--color-text-secondary)] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors inline-flex"
+                                            className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors inline-flex"
                                           >
                                             <Eye className="w-3.5 h-3.5" />
                                           </Link>
@@ -1334,10 +1334,10 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                             <div key={session.id} className="flex items-center justify-between p-4 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors">
                               <div className="flex items-center gap-3">
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                  session.type === "zoom" ? "bg-[#EFF6FF]" : session.type === "onsite" ? "bg-[#DCFCE7]" : "bg-[#F3E8FF]"
+                                  session.type === "zoom" ? "bg-[var(--color-border-subtle)]" : session.type === "onsite" ? "bg-[#DCFCE7]" : "bg-[#F3E8FF]"
                                 }`}>
                                   {session.type === "zoom" ? (
-                                    <Video className="w-5 h-5 text-[#3B82F6]" />
+                                    <Video className="w-5 h-5 text-[var(--color-primary)]" />
                                   ) : session.type === "onsite" ? (
                                     <MapPin className="w-5 h-5 text-[#22C55E]" />
                                   ) : (
@@ -1362,7 +1362,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 {session.status === "scheduled" && (
                                   <button
                                     onClick={() => handleStartSession(session.id)}
-                                    className="px-3 py-1.5 bg-[#3B82F6] text-white text-xs font-medium rounded-lg hover:bg-[#2563EB] transition-colors"
+                                    className="px-3 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors"
                                   >
                                     {t("courseDetail.startSession")}
                                   </button>
@@ -1380,7 +1380,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                         href={session.zoomLink}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="p-1.5 border border-[#BFDBFE] rounded-lg text-[#3B82F6] hover:bg-[#EFF6FF] transition-colors"
+                                        className="p-1.5 border border-[#BFDBFE] rounded-lg text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                                         title={t("courseDetail.rejoinZoom")}
                                       >
                                         <ExternalLink className="w-4 h-4" />
@@ -1392,7 +1392,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                   <>
                                     <button
                                       onClick={() => openEditSession(session)}
-                                      className="p-1.5 hover:bg-[#F3F4F6] rounded"
+                                      className="p-1.5 hover:bg-[var(--color-border-subtle)] rounded"
                                       aria-label={t("courseDetail.editSession")}
                                     >
                                       <Edit className="w-4 h-4 text-[var(--color-text-secondary)]" />
@@ -1432,7 +1432,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         {!isCourseReadOnly && (
                           <button
                             onClick={openAddSession}
-                            className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                            className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors"
                           >
                             <Plus className="w-4 h-4" />
                             {t("courseDetail.scheduleSession")}
@@ -1448,8 +1448,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">{t("courseDetail.enrollmentStats")}</h3>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
-                              <div className="w-10 h-10 mx-auto mb-2 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
-                                <Users className="w-5 h-5 text-[#3B82F6]" />
+                              <div className="w-10 h-10 mx-auto mb-2 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center">
+                                <Users className="w-5 h-5 text-[var(--color-primary)]" />
                               </div>
                               <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.total}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.totalEnrolled")}</p>
@@ -1462,8 +1462,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.activeStudents")}</p>
                             </div>
                             <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
-                              <div className="w-10 h-10 mx-auto mb-2 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
-                                <TrendingUp className="w-5 h-5 text-[#3B82F6]" />
+                              <div className="w-10 h-10 mx-auto mb-2 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center">
+                                <TrendingUp className="w-5 h-5 text-[var(--color-primary)]" />
                               </div>
                               <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.completed}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.completedStudents")}</p>
@@ -1497,9 +1497,9 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                             </div>
                             <div className="p-4 border border-[var(--color-border)] rounded-lg">
                               <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.avgProgress")}</p>
-                              <p className="text-2xl font-bold text-[#3B82F6]">{analytics.avgProgress}%</p>
+                              <p className="text-2xl font-bold text-[var(--color-primary)]">{analytics.avgProgress}%</p>
                               <div className="mt-2 w-full h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
-                                <div className="h-full bg-[#3B82F6] rounded-full" style={{ width: `${analytics.avgProgress}%` }} />
+                                <div className="h-full bg-[var(--color-primary)] rounded-full" style={{ width: `${analytics.avgProgress}%` }} />
                               </div>
                             </div>
                           </div>
@@ -1512,12 +1512,12 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               {[
                                 { label: "0-25%", count: analytics.dist.low, color: "bg-[#EF4444]" },
                                 { label: "26-50%", count: analytics.dist.mid, color: "bg-[#F59E0B]" },
-                                { label: "51-75%", count: analytics.dist.high, color: "bg-[#3B82F6]" },
+                                { label: "51-75%", count: analytics.dist.high, color: "bg-[var(--color-primary)]" },
                                 { label: "76-100%", count: analytics.dist.complete, color: "bg-[#22C55E]" },
                               ].map((bucket) => (
                                 <div key={bucket.label} className="flex items-center gap-3">
                                   <span className="text-xs text-[var(--color-text-secondary)] w-14">{bucket.label}</span>
-                                  <div className="flex-1 h-6 bg-[#F3F4F6] rounded-full overflow-hidden">
+                                  <div className="flex-1 h-6 bg-[var(--color-border-subtle)] rounded-full overflow-hidden">
                                     <div
                                       className={`h-full ${bucket.color} rounded-full flex items-center justify-end pr-2 transition-all`}
                                       style={{ width: analytics.total > 0 ? `${Math.max((bucket.count / analytics.total) * 100, bucket.count > 0 ? 8 : 0)}%` : "0%" }}
@@ -1545,7 +1545,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.completedSessionsLabel")}</p>
                             </div>
                             <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
-                              <p className="text-2xl font-bold text-[#3B82F6]">{analytics.scheduledSessions}</p>
+                              <p className="text-2xl font-bold text-[var(--color-primary)]">{analytics.scheduledSessions}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.scheduledSessionsLabel")}</p>
                             </div>
                             <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
@@ -1577,7 +1577,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 type="text"
                                 value={settingsForm.title}
                                 onChange={(e) => setSettingsForm((f) => ({ ...f, title: e.target.value }))}
-                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                               />
                             </div>
                             <div>
@@ -1587,7 +1587,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 dir="rtl"
                                 value={settingsForm.titleAr}
                                 onChange={(e) => setSettingsForm((f) => ({ ...f, titleAr: e.target.value }))}
-                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                               />
                             </div>
                             <div className="sm:col-span-2">
@@ -1596,7 +1596,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 value={settingsForm.description}
                                 onChange={(e) => setSettingsForm((f) => ({ ...f, description: e.target.value }))}
                                 rows={3}
-                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent resize-none"
+                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none"
                               />
                             </div>
                             <div className="sm:col-span-2">
@@ -1606,7 +1606,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 value={settingsForm.descriptionAr}
                                 onChange={(e) => setSettingsForm((f) => ({ ...f, descriptionAr: e.target.value }))}
                                 rows={3}
-                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent resize-none"
+                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none"
                               />
                             </div>
                             <div>
@@ -1668,7 +1668,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                             <button
                               onClick={handleSaveSettings}
                               disabled={settingsSaving || !settingsForm.title.trim()}
-                              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <Save className="w-4 h-4" />
                               {settingsSaving ? t("courseDetail.saving") : t("courseDetail.saveChanges")}
@@ -1733,7 +1733,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {moduleModal.editing ? t("courseDetail.editModule") : t("courseDetail.addModule")}
               </h3>
-              <button onClick={() => setModuleModal({ open: false, editing: null })} className="p-1 hover:bg-[#F3F4F6] rounded">
+              <button onClick={() => setModuleModal({ open: false, editing: null })} className="p-1 hover:bg-[var(--color-border-subtle)] rounded">
                 <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
             </div>
@@ -1744,7 +1744,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   type="text"
                   value={moduleForm.title}
                   onChange={(e) => setModuleForm((f) => ({ ...f, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                   placeholder={t("courseDetail.moduleTitlePlaceholder")}
                 />
               </div>
@@ -1755,7 +1755,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   dir="rtl"
                   value={moduleForm.titleAr}
                   onChange={(e) => setModuleForm((f) => ({ ...f, titleAr: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                 />
               </div>
               <div>
@@ -1763,7 +1763,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 <select
                   value={moduleForm.type}
                   onChange={(e) => setModuleForm((f) => ({ ...f, type: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent bg-white"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent bg-[var(--color-surface-card)]"
                 >
                   <option value="video">{t("courseDetail.moduleTypes.video")}</option>
                   <option value="document">{t("courseDetail.moduleTypes.document")}</option>
@@ -1780,7 +1780,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       min="0"
                       value={moduleForm.durationHours}
                       onChange={(e) => setModuleForm((f) => ({ ...f, durationHours: e.target.value }))}
-                      className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                      className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                       placeholder="1"
                     />
                     <span className="text-xs text-[var(--color-text-secondary)] mt-0.5 block">{t("courseDetail.hours")}</span>
@@ -1792,7 +1792,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       max="59"
                       value={moduleForm.durationMins}
                       onChange={(e) => setModuleForm((f) => ({ ...f, durationMins: e.target.value }))}
-                      className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                      className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                       placeholder="30"
                     />
                     <span className="text-xs text-[var(--color-text-secondary)] mt-0.5 block">{t("courseDetail.minutes")}</span>
@@ -1807,7 +1807,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
               <button
                 onClick={handleSaveModule}
                 disabled={moduleSaving || !moduleForm.title.trim()}
-                className="px-4 py-2 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-50"
               >
                 {moduleSaving ? t("courseDetail.saving") : t("courseDetail.saveModule")}
               </button>
@@ -1826,7 +1826,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
               </h3>
               <button
                 onClick={() => setAddMaterialModal({ open: false, moduleId: null })}
-                className="p-1 hover:bg-[#F3F4F6] rounded"
+                className="p-1 hover:bg-[var(--color-border-subtle)] rounded"
               >
                 <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
@@ -1837,7 +1837,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
 
             {loadingUnassigned ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 text-[#3B82F6] animate-spin" />
+                <Loader2 className="w-6 h-6 text-[var(--color-primary)] animate-spin" />
               </div>
             ) : unassignedMaterials.length === 0 ? (
               <div className="text-center py-8">
@@ -1858,13 +1858,13 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       }
                       className={`w-full flex items-center gap-3 p-3 rounded-lg border text-start transition-colors ${
                         isSelected
-                          ? "border-[#3B82F6] bg-[#EFF6FF]"
+                          ? "border-[var(--color-primary)] bg-[var(--color-border-subtle)]"
                           : "border-[var(--color-border)] hover:border-[var(--color-border)]"
                       }`}
                     >
                       <div
                         className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                          isSelected ? "border-[#3B82F6] bg-[#3B82F6]" : "border-[var(--color-border)]"
+                          isSelected ? "border-[var(--color-primary)] bg-[var(--color-primary)]" : "border-[var(--color-border)]"
                         }`}
                       >
                         {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -1893,7 +1893,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
               <button
                 onClick={handleAssignMaterials}
                 disabled={assigningMaterials || selectedMaterialIds.length === 0}
-                className="px-4 py-2 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-50"
               >
                 {assigningMaterials
                   ? t("courseDetail.saving")
@@ -1912,7 +1912,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {sessionModal.editing ? t("courseDetail.editSession") : t("courseDetail.scheduleSession")}
               </h3>
-              <button onClick={() => setSessionModal({ open: false, editing: null })} className="p-1 hover:bg-[#F3F4F6] rounded">
+              <button onClick={() => setSessionModal({ open: false, editing: null })} className="p-1 hover:bg-[var(--color-border-subtle)] rounded">
                 <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
             </div>
@@ -1923,7 +1923,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   type="text"
                   value={sessionForm.title}
                   onChange={(e) => setSessionForm((f) => ({ ...f, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                 />
               </div>
               <div>
@@ -1931,7 +1931,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 <select
                   value={sessionForm.type}
                   onChange={(e) => setSessionForm((f) => ({ ...f, type: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent bg-white"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent bg-[var(--color-surface-card)]"
                 >
                   <option value="zoom">{t("courseDetail.sessionTypes.zoom")}</option>
                   <option value="onsite">{t("courseDetail.sessionTypes.onsite")}</option>
@@ -1953,7 +1953,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                     min={0}
                     value={sessionForm.durationHours}
                     onChange={(e) => setSessionForm((f) => ({ ...f, durationHours: Math.max(0, Number(e.target.value)) }))}
-                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                   />
                   <span className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.durationHours")}</span>
                   <input
@@ -1962,7 +1962,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                     max={59}
                     value={sessionForm.durationMins}
                     onChange={(e) => setSessionForm((f) => ({ ...f, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))}
-                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                   />
                   <span className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.durationMinutes")}</span>
                 </div>
@@ -1972,11 +1972,11 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.roomName")}</label>
-                      <input type="text" value={sessionForm.roomName} onChange={(e) => setSessionForm((f) => ({ ...f, roomName: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
+                      <input type="text" value={sessionForm.roomName} onChange={(e) => setSessionForm((f) => ({ ...f, roomName: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.venueAddress")}</label>
-                      <input type="text" value={sessionForm.venueAddress} onChange={(e) => setSessionForm((f) => ({ ...f, venueAddress: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
+                      <input type="text" value={sessionForm.venueAddress} onChange={(e) => setSessionForm((f) => ({ ...f, venueAddress: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent" />
                     </div>
                   </div>
                   <div>
@@ -1997,7 +1997,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
               <button
                 onClick={handleSaveSession}
                 disabled={sessionSaving || !sessionForm.title.trim() || !sessionForm.scheduledAt}
-                className="px-4 py-2 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-50"
               >
                 {sessionSaving ? t("courseDetail.saving") : t("courseDetail.saveSession")}
               </button>
@@ -2012,7 +2012,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("courseDetail.cancelSession")}</h3>
-              <button onClick={() => setCancelModal({ open: false, sessionId: null })} className="p-1 hover:bg-[#F3F4F6] rounded">
+              <button onClick={() => setCancelModal({ open: false, sessionId: null })} className="p-1 hover:bg-[var(--color-border-subtle)] rounded">
                 <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
             </div>
@@ -2023,7 +2023,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent resize-none"
+                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none"
               />
             </div>
             <div className="flex justify-end gap-3 mt-4">
@@ -2048,7 +2048,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Reschedule Lecture</h3>
-              <button onClick={() => setRescheduleModal({ open: false, sessionId: null })} className="p-1 hover:bg-[#F3F4F6] rounded">
+              <button onClick={() => setRescheduleModal({ open: false, sessionId: null })} className="p-1 hover:bg-[var(--color-border-subtle)] rounded">
                 <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
             </div>
@@ -2060,7 +2060,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   onChange={(e) => setRescheduleData(d => ({ ...d, reason: e.target.value }))}
                   rows={2}
                   placeholder="Why is this lecture being rescheduled?"
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent resize-none"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -2077,16 +2077,16 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                     type="time"
                     value={rescheduleData.newTime}
                     onChange={(e) => setRescheduleData(d => ({ ...d, newTime: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                   />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.sessionDuration")}</label>
                 <div className="flex items-center gap-2">
-                  <input type="number" min={0} value={rescheduleData.durationHours} onChange={(e) => setRescheduleData(d => ({ ...d, durationHours: Math.max(0, Number(e.target.value)) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
+                  <input type="number" min={0} value={rescheduleData.durationHours} onChange={(e) => setRescheduleData(d => ({ ...d, durationHours: Math.max(0, Number(e.target.value)) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent" />
                   <span className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.durationHrs")}</span>
-                  <input type="number" min={0} max={59} value={rescheduleData.durationMins} onChange={(e) => setRescheduleData(d => ({ ...d, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
+                  <input type="number" min={0} max={59} value={rescheduleData.durationMins} onChange={(e) => setRescheduleData(d => ({ ...d, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent" />
                 </div>
               </div>
             </div>

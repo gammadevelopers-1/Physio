@@ -49,7 +49,7 @@ function getActionConfig(action: string) {
       return {
         icon: PlayCircle,
         color:
-          "bg-white border border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]",
+          "bg-[var(--color-surface-card)] border border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]",
         key: "resumeLesson" as const,
       };
     case "upload_assignment":
@@ -68,7 +68,7 @@ function getActionConfig(action: string) {
       return {
         icon: PlayCircle,
         color:
-          "bg-white border border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]",
+          "bg-[var(--color-surface-card)] border border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]",
         key: "startCourse" as const,
       };
   }
@@ -114,7 +114,7 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
 
       {courses.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16">
-          <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-4">
+          <div className="w-16 h-16 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mb-4">
             <ClipboardList className="w-8 h-8 text-[var(--color-text-secondary)]" />
           </div>
           <h3 className="text-base font-medium text-[var(--color-text-primary)] mb-1">
@@ -125,7 +125,7 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
           </p>
           <Link
             href={`/${locale}/courses`}
-            className="px-6 py-2.5 btn-gold text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
+            className="px-6 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
           >
             {t("recentCourses.viewCourses")}
           </Link>
@@ -150,7 +150,7 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
                 {/* Favourite Button */}
                 <button
                   onClick={() => toggleFavourite(course)}
-                  className={`absolute top-2 ${isRTL ? "left-2" : "right-2"} z-10 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors`}
+                  className={`absolute top-2 ${isRTL ? "left-2" : "right-2"} z-10 w-7 h-7 bg-[var(--color-surface-card)]/90 rounded-full flex items-center justify-center shadow-sm hover:bg-[var(--color-surface-card)] transition-colors`}
                   aria-label={
                     isFavourite(course.id)
                       ? t("favourites.removeFromFavourites")
@@ -158,12 +158,12 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
                   }
                 >
                   <Heart
-                    className={`w-3.5 h-3.5 ${isFavourite(course.id) ? "text-red-500 fill-red-500" : "text-gray-400"}`}
+                    className={`w-3.5 h-3.5 ${isFavourite(course.id) ? "text-red-500 fill-red-500" : "text-[var(--color-icon)]"}`}
                   />
                 </button>
 
                 {/* Thumbnail */}
-                <div className="w-full h-[130px] bg-gray-100">
+                <div className="w-full h-[130px] bg-[var(--color-border-subtle)]">
                   <img
                     src={course.thumbnail}
                     alt={course.title}
@@ -191,8 +191,8 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
                           className="w-5 h-5 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center">
-                          <User className="w-3 h-3 text-gray-400" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--color-border)] flex items-center justify-center">
+                          <User className="w-3 h-3 text-[var(--color-icon)]" />
                         </div>
                       )}
                       <span className="text-xs text-[var(--color-text-secondary)] truncate">

@@ -262,7 +262,7 @@ const CoursePerformance = ({
           <select
             value={deliveryFilter}
             onChange={(e) => setDeliveryFilter(e.target.value)}
-            className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] bg-white hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
+            className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
           >
             <option value="all">{t("performance.allDeliveryTypes")}</option>
             <option value="zoom">{t("performance.zoom")}</option>
@@ -274,7 +274,7 @@ const CoursePerformance = ({
             <select
               value={cohortFilter}
               onChange={(e) => setCohortFilter(e.target.value)}
-              className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] bg-white hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
+              className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
             >
               <option value="all">{t("performance.allCohorts")}</option>
               {cohorts.map((cohort) => (
@@ -286,7 +286,7 @@ const CoursePerformance = ({
           <select
             value={selectedCourse}
             onChange={(e) => setSelectedCourse(e.target.value)}
-            className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] bg-white hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
+            className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
           >
             {filteredCourses.map((course) => (
               <option key={course.value} value={course.value}>
@@ -300,8 +300,8 @@ const CoursePerformance = ({
       {/* Content */}
       <div className="p-4 sm:p-5 relative">
         {courseLoading && (
-          <div className="absolute inset-0 bg-white/70 z-10 flex items-center justify-center rounded-b-xl">
-            <div className="flex items-center gap-2 text-sm text-[#3B82F6]">
+          <div className="absolute inset-0 bg-[var(--color-surface-card)]/70 z-10 flex items-center justify-center rounded-b-xl">
+            <div className="flex items-center gap-2 text-sm text-[var(--color-primary)]">
               <Loader2 className="w-4 h-4 animate-spin" />
               {t("performance.loading")}
             </div>

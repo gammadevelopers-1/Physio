@@ -305,7 +305,7 @@ const CourseManagerCourseDetailContent = ({
 
   const getMaterialIcon = (type: string) => {
     switch (type) {
-      case "video": return <Video className="w-4 h-4 text-[#3B82F6]" />;
+      case "video": return <Video className="w-4 h-4 text-[var(--color-primary)]" />;
       case "pdf": return <FileText className="w-4 h-4 text-[#EF4444]" />;
       case "image": return <ImageIcon className="w-4 h-4 text-[#10B981]" />;
       default: return <File className="w-4 h-4 text-[#F59E0B]" />;
@@ -347,13 +347,13 @@ const CourseManagerCourseDetailContent = ({
         );
       case "completed":
         return (
-          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#DBEAFE] text-[#1D4ED8]">
+          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[var(--color-border-subtle)] text-[#1D4ED8]">
             {t("courseDetail.status.completed")}
           </span>
         );
       case "archived":
         return (
-          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#F3F4F6] text-[var(--color-text-secondary)]">
+          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]">
             {t("courseDetail.status.archived")}
           </span>
         );
@@ -381,7 +381,7 @@ const CourseManagerCourseDetailContent = ({
   const getDeliveryIcon = (type: string) => {
     switch (type) {
       case "zoom":
-        return <Video className="w-4 h-4 text-[#3B82F6]" />;
+        return <Video className="w-4 h-4 text-[var(--color-primary)]" />;
       case "onsite":
         return <MapPin className="w-4 h-4 text-[#16A34A]" />;
       case "blended":
@@ -422,7 +422,7 @@ const CourseManagerCourseDetailContent = ({
                   <p className="text-[var(--color-text-secondary)] mb-4">{error}</p>
                   <button
                     onClick={fetchCourse}
-                    className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white rounded-lg"
+                    className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] rounded-lg"
                   >
                     <RefreshCw className="w-4 h-4" />
                     {t("dashboard.retry")}
@@ -434,7 +434,7 @@ const CourseManagerCourseDetailContent = ({
                 {/* Back Link */}
                 <Link
                   href={`/${locale}/dashboard/manager/courses`}
-                  className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] hover:text-[#002D87] mb-4 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] mb-4 transition-colors"
                 >
                   <BackArrow className="w-4 h-4" />
                   {t("courseDetail.backToCourses")}
@@ -444,7 +444,7 @@ const CourseManagerCourseDetailContent = ({
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
                   {/* Thumbnail */}
                   {course.thumbnail && (
-                    <div className="relative h-48 sm:h-56 bg-[#F3F4F6]">
+                    <div className="relative h-48 sm:h-56 bg-[var(--color-border-subtle)]">
                       <Image
                         src={course.thumbnail}
                         alt={course.title}
@@ -534,7 +534,7 @@ const CourseManagerCourseDetailContent = ({
                         )}
                         <Link
                           href={`/${locale}/dashboard/manager/courses/${course.id}/edit`}
-                          className="inline-flex items-center gap-1.5 px-3 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors"
                         >
                           <Edit className="w-4 h-4" />
                           {t("courseDetail.editCourse")}
@@ -690,7 +690,7 @@ const CourseManagerCourseDetailContent = ({
                               onClick={() => toggleModule(mod.id)}
                             >
                               <div className="flex items-center gap-3">
-                                <span className="w-8 h-8 rounded-lg bg-[#F0F7FF] flex items-center justify-center text-sm font-semibold text-[#002D87]">
+                                <span className="w-8 h-8 rounded-lg bg-[var(--color-border-subtle)] flex items-center justify-center text-sm font-semibold text-[var(--color-primary)]">
                                   {idx + 1}
                                 </span>
                                 <div className={`text-start`}>
@@ -711,7 +711,7 @@ const CourseManagerCourseDetailContent = ({
                                     {formatDuration(mod.durationMinutes, locale)}
                                   </span>
                                 )}
-                                <span className="px-2 py-0.5 text-xs rounded bg-[#F3F4F6] text-[var(--color-text-secondary)] capitalize">
+                                <span className="px-2 py-0.5 text-xs rounded bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] capitalize">
                                   {mod.type}
                                 </span>
                                 {expandedModules.has(mod.id) ? (
@@ -745,7 +745,7 @@ const CourseManagerCourseDetailContent = ({
                                   </p>
                                   {loadingMaterials.has(mod.id) ? (
                                     <div className="flex items-center gap-2 py-2">
-                                      <Loader2 className="w-4 h-4 text-[#3B82F6] animate-spin" />
+                                      <Loader2 className="w-4 h-4 text-[var(--color-primary)] animate-spin" />
                                       <span className="text-xs text-[var(--color-text-secondary)]">{t("dashboard.loading")}</span>
                                     </div>
                                   ) : (moduleMaterials[mod.id] && moduleMaterials[mod.id].length > 0) ? (
@@ -769,10 +769,10 @@ const CourseManagerCourseDetailContent = ({
                                           </div>
                                           <span className={`px-2 py-0.5 text-[10px] font-medium rounded-full ${
                                             mat.status === "live" ? "bg-[#DCFCE7] text-[#16A34A]" :
-                                            mat.status === "pending_review" ? "bg-[#DBEAFE] text-[#1D4ED8]" :
+                                            mat.status === "pending_review" ? "bg-[var(--color-border-subtle)] text-[#1D4ED8]" :
                                             mat.status === "processing" ? "bg-[#FEF3C7] text-[#D97706]" :
                                             mat.status === "failed" ? "bg-[#FEE2E2] text-[#DC2626]" :
-                                            "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
+                                            "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                                           }`}>
                                             {mat.status.replace("_", " ")}
                                           </span>
@@ -782,7 +782,7 @@ const CourseManagerCourseDetailContent = ({
                                               target="_blank"
                                               rel="noopener noreferrer"
                                               onClick={(e) => e.stopPropagation()}
-                                              className="p-1 text-[var(--color-text-secondary)] hover:text-[#3B82F6] transition-colors"
+                                              className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
                                               title={t("courseDetail.viewContent")}
                                             >
                                               <Eye className="w-3.5 h-3.5" />
@@ -941,7 +941,7 @@ const CourseManagerCourseDetailContent = ({
                       <div className="mt-4 pt-4 border-t border-[var(--color-border)] flex items-center justify-center">
                         <Link
                           href={`/${locale}/dashboard/manager/courses/${courseId}/reviews`}
-                          className="inline-flex items-center gap-1.5 text-sm font-medium text-[#3B82F6] hover:text-[#2563EB]"
+                          className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)]"
                         >
                           {isRTL ? "عرض كل المراجعات" : "View all reviews"}
                           {isRTL ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
@@ -986,7 +986,7 @@ const CourseManagerCourseDetailContent = ({
               value={removeReason}
               onChange={(e) => setRemoveReason(e.target.value)}
               placeholder={t("courseDetail.removeReasonPlaceholder")}
-              className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] resize-none focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+              className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
               rows={3}
             />
             <div className="flex items-center justify-end gap-3 mt-4">

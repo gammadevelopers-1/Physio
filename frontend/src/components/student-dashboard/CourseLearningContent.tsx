@@ -70,8 +70,8 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
     // DOCX / PPTX / XLSX — browsers can't display natively
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-14 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-[#EFF6FF] flex items-center justify-center">
-          <FileText className="w-8 h-8 text-[#002D87]" />
+        <div className="w-16 h-16 rounded-2xl bg-[var(--color-border-subtle)] flex items-center justify-center">
+          <FileText className="w-8 h-8 text-[var(--color-primary)]" />
         </div>
         <div>
           <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-1">
@@ -84,7 +84,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
         <a
           href={material.fileUrl}
           download
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#002D87] text-white text-sm font-medium rounded-lg hover:bg-[#001f61] transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:bg-[#001f61] transition-colors"
         >
           <Download className="w-4 h-4" />
           Download to View
@@ -120,7 +120,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
         <a
           href={material.fileUrl}
           download
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[#002D87] border border-[#002D87] rounded-lg hover:bg-[#F0F7FF] transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--color-primary)] border border-[#002D87] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
         >
           <Download className="w-4 h-4" />
           Download
@@ -146,7 +146,7 @@ function ImageViewer({ material }: { material: ModuleMaterial }) {
         href={material.fileUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="absolute top-3 end-3 inline-flex items-center gap-1 px-3 py-1.5 bg-white/90 rounded-lg text-xs text-[var(--color-text-primary)] opacity-0 group-hover:opacity-100 transition-opacity shadow"
+        className="absolute top-3 end-3 inline-flex items-center gap-1 px-3 py-1.5 bg-[var(--color-surface-card)]/90 rounded-lg text-xs text-[var(--color-text-primary)] opacity-0 group-hover:opacity-100 transition-opacity shadow"
       >
         <Maximize2 className="w-3 h-3" />
         Full size
@@ -293,7 +293,7 @@ const CourseLearningContent = () => {
           <p className="text-[var(--color-text-secondary)] mb-4">{error || t("courseDetail.notFound")}</p>
           <Link
             href={`/${locale}/dashboard/student/courses`}
-            className="text-sm text-[#002D87] hover:underline"
+            className="text-sm text-[var(--color-primary)] hover:underline"
           >
             {t("courseDetail.backToCourses")}
           </Link>
@@ -316,12 +316,12 @@ const CourseLearningContent = () => {
       )}
 
       {/* Top Bar */}
-      <div className="bg-white border-b border-[var(--color-border)] px-4 py-3 sticky top-0 z-30">
+      <div className="bg-[var(--color-surface-card)] border-b border-[var(--color-border)] px-4 py-3 sticky top-0 z-30">
         <div className="max-w-[1440px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href={`/${locale}/dashboard/student/courses/${courseId}`}
-              className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
+              className="p-1.5 rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
               aria-label={tA("back")}
             >
               <BackIcon className="w-5 h-5 text-[var(--color-text-secondary)]" />
@@ -348,7 +348,7 @@ const CourseLearningContent = () => {
             </div>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors lg:hidden"
+              className="p-2 rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors lg:hidden"
               aria-label={tA("toggleModules")}
             >
               <BookOpen className="w-5 h-5 text-[var(--color-text-secondary)]" />
@@ -362,7 +362,7 @@ const CourseLearningContent = () => {
         <aside
           className={`${
             sidebarOpen ? "block" : "hidden"
-          } lg:block w-full lg:w-[300px] xl:w-[320px] flex-shrink-0 bg-white border-e border-[var(--color-border)] overflow-y-auto`}
+          } lg:block w-full lg:w-[300px] xl:w-[320px] flex-shrink-0 bg-[var(--color-surface-card)] border-e border-[var(--color-border)] overflow-y-auto`}
           style={{ maxHeight: "calc(100vh - 57px)", position: "sticky", top: 57 }}
         >
           <div className="p-4">
@@ -403,19 +403,19 @@ const CourseLearningContent = () => {
                       isLocked
                         ? "opacity-50 cursor-not-allowed"
                         : isActive
-                          ? "bg-[#EFF6FF] border border-[#BFDBFE]"
+                          ? "bg-[var(--color-border-subtle)] border border-[#BFDBFE]"
                           : "hover:bg-[var(--color-surface-page)] cursor-pointer"
                     }`}
                   >
                     {/* Step indicator */}
                     <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5
-                      bg-[#F3F4F6] text-[10px] font-semibold text-[var(--color-text-secondary)]">
+                      bg-[var(--color-border-subtle)] text-[10px] font-semibold text-[var(--color-text-secondary)]">
                       {module.isCompleted ? (
                         <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
                       ) : isLocked ? (
                         <Lock className="w-3 h-3 text-[var(--color-text-secondary)]" />
                       ) : (
-                        <span className={isActive ? "text-[#002D87]" : ""}>{index + 1}</span>
+                        <span className={isActive ? "text-[var(--color-primary)]" : ""}>{index + 1}</span>
                       )}
                     </div>
 
@@ -424,7 +424,7 @@ const CourseLearningContent = () => {
                         isLocked
                           ? "text-[var(--color-text-secondary)]"
                           : isActive
-                            ? "font-semibold text-[#002D87]"
+                            ? "font-semibold text-[var(--color-primary)]"
                             : module.isCompleted
                               ? "text-[var(--color-text-secondary)]"
                               : "font-medium text-[var(--color-text-primary)]"
@@ -432,7 +432,7 @@ const CourseLearningContent = () => {
                         {isRTL && module.titleAr ? module.titleAr : module.title}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
-                        <ModuleIcon className={`w-3 h-3 ${isActive && !module.isCompleted ? "text-[#002D87]" : iconColor}`} />
+                        <ModuleIcon className={`w-3 h-3 ${isActive && !module.isCompleted ? "text-[var(--color-primary)]" : iconColor}`} />
                         {module.durationMinutes && (
                           <span className="flex items-center gap-0.5 text-[11px] text-[var(--color-text-secondary)]">
                             <Clock className="w-3 h-3" />
@@ -494,7 +494,7 @@ const CourseLearningContent = () => {
                           onClick={() => setActiveMaterialIdx(idx)}
                           className={`flex items-center gap-1.5 px-4 py-3 text-sm whitespace-nowrap border-b-2 transition-colors ${
                             activeMaterialIdx === idx
-                              ? "border-[#002D87] text-[#002D87] font-medium"
+                              ? "border-[#002D87] text-[var(--color-primary)] font-medium"
                               : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                           }`}
                         >
@@ -527,7 +527,7 @@ const CourseLearningContent = () => {
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-14 text-center">
-                        <div className="w-16 h-16 bg-[#F3F4F6] rounded-2xl flex items-center justify-center mb-4">
+                        <div className="w-16 h-16 bg-[var(--color-border-subtle)] rounded-2xl flex items-center justify-center mb-4">
                           <BookOpen className="w-8 h-8 text-[var(--color-text-secondary)]" />
                         </div>
                         <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">
@@ -545,7 +545,7 @@ const CourseLearningContent = () => {
                         <div className="flex items-center gap-2 mb-4">
                           {(() => { const { Icon, color } = getModuleIcon(activeMaterial.type); return <Icon className={`w-4 h-4 ${color}`} />; })()}
                           <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{activeMaterial.title}</h3>
-                          <span className="ms-auto text-[11px] px-2 py-0.5 bg-[#F3F4F6] rounded-full text-[var(--color-text-secondary)] capitalize">
+                          <span className="ms-auto text-[11px] px-2 py-0.5 bg-[var(--color-border-subtle)] rounded-full text-[var(--color-text-secondary)] capitalize">
                             {typeBadge(activeMaterial.type)}
                           </span>
                         </div>

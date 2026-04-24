@@ -52,7 +52,7 @@ export function CardsGridBlock({ data }: CardsGridBlockProps) {
           {data.cards.map((card) => (
             <div
               key={card.id}
-              className="flex flex-col gap-4 bg-white rounded-2xl overflow-hidden shadow-sm border border-[var(--outline-subtle)]"
+              className="flex flex-col gap-4 bg-[var(--color-surface-card)] rounded-2xl overflow-hidden shadow-sm border border-[var(--outline-subtle)]"
             >
               {card.image && (
                 <div className="relative w-full h-48 overflow-hidden">

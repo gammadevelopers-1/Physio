@@ -71,7 +71,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
 
   return (
     <section
-      className="overflow-hidden bg-[#F9FBFD] md:bg-[var(--color-surface-page)]"
+      className="overflow-hidden bg-[var(--color-border-subtle)] md:bg-[var(--color-surface-page)]"
     >
       <div
         className="flex flex-col max-w-[1312px] mx-auto px-4 py-16 md:px-16 md:py-20"
@@ -234,7 +234,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
 
           {/* Right Column - Contact Form (Left in RTL) */}
           <div
-            className="bg-white p-5 rounded-3xl shadow-[_-2px_8px_2px_0px_rgba(0,0,0,0),_-1px_5px_2px_0px_rgba(0,0,0,0.01),_-1px_3px_2px_0px_rgba(0,0,0,0.03),_0px_1px_1px_0px_rgba(0,0,0,0.05),_0px_0px_1px_0px_rgba(0,0,0,0.06)] md:flex-1 md:p-8"
+            className="bg-[var(--color-surface-card)] p-5 rounded-3xl shadow-[_-2px_8px_2px_0px_rgba(0,0,0,0),_-1px_5px_2px_0px_rgba(0,0,0,0.01),_-1px_3px_2px_0px_rgba(0,0,0,0.03),_0px_1px_1px_0px_rgba(0,0,0,0.05),_0px_0px_1px_0px_rgba(0,0,0,0.06)] md:flex-1 md:p-8"
           >
             <form
               onSubmit={handleSubmit}
@@ -261,7 +261,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                     value={formData.fullName}
                     onChange={handleInputChange}
                     required
-                    className="w-full bg-white border border-[var(--color-border-subtle)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--color-border-subtle)]"
+                    className="w-full bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--color-primary)]"
                     style={{
                       padding: "10px 14px",
                       height: "44px",
@@ -295,7 +295,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                       value={formData.email}
                       onChange={handleInputChange}
                       required
-                      className="w-full bg-white border border-[var(--color-border-subtle)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--color-border-subtle)]"
+                      className="w-full bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--color-primary)]"
                       style={{
                         padding: isRTL ? "10px 48px 10px 14px" : "10px 14px 10px 48px",
                         height: "44px",
@@ -323,7 +323,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                     <button
                       type="button"
                       onClick={() => setIsIssueTypeOpen(!isIssueTypeOpen)}
-                      className={`w-full bg-white border border-[var(--color-border-subtle)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] flex items-center justify-between cursor-pointer ${isRTL ? "flex-row-reverse" : ""}`}
+                      className={`w-full bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] flex items-center justify-between cursor-pointer ${isRTL ? "flex-row-reverse" : ""}`}
                       style={{
                         padding: "10px 14px",
                         height: "44px",
@@ -350,7 +350,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                       />
                     </button>
                     {isIssueTypeOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[var(--color-border-subtle)] rounded-[10px] shadow-lg z-10">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-[10px] shadow-lg z-10">
                         {issueTypes.map((type) => (
                           <button
                             key={type.key}
@@ -392,7 +392,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                   >
                     {s("formPhoneLabel", "form.phoneNumber")} <span style={{ color: "#DC2626" }}>*</span>
                   </label>
-                  <div className="flex bg-white border border-[var(--color-border-subtle)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] overflow-hidden" style={{ height: "44px" }}>
+                  <div className="flex bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] overflow-hidden" style={{ height: "44px" }}>
                     <div className="relative">
                       <button
                         type="button"
@@ -411,7 +411,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                         />
                       </button>
                       {isCountryOpen && (
-                        <div className={`absolute top-full mt-1 bg-white border border-[var(--color-border-subtle)] rounded-lg shadow-lg z-10 min-w-[80px] ${isRTL ? "right-0" : "left-0"}`}>
+                        <div className={`absolute top-full mt-1 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[80px] ${isRTL ? "right-0" : "left-0"}`}>
                           {["SA", "AE", "US", "UK"].map((code) => (
                             <button
                               key={code}
@@ -466,7 +466,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                     name="subject"
                     value={formData.subject}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-[var(--color-border-subtle)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--color-border-subtle)]"
+                    className="w-full bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--color-primary)]"
                     style={{
                       padding: "10px 14px",
                       height: "44px",
@@ -494,7 +494,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                       name="description"
                       value={formData.description}
                       onChange={handleInputChange}
-                      className="w-full h-[140px] bg-white border border-[var(--color-border-subtle)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--color-border-subtle)] resize-none"
+                      className="w-full h-[140px] bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--color-primary)] resize-none"
                       style={{
                         padding: "10px 14px",
                         textAlign: isRTL ? "right" : "left",
@@ -542,7 +542,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
             }}
           >
             <div
-              className="w-full h-[400px] rounded-3xl overflow-hidden border border-[var(--outline-hover)] bg-white relative z-0"
+              className="w-full h-[400px] rounded-3xl overflow-hidden border border-[var(--color-border)] bg-[var(--color-surface-card)] relative z-0"
               style={{
                 boxShadow:
                   "-2px 8px 2px 0px rgba(0,0,0,0), -1px 5px 2px 0px rgba(0,0,0,0.01), -1px 3px 2px 0px rgba(0,0,0,0.03), 0px 1px 1px 0px rgba(0,0,0,0.05), 0px 0px 1px 0px rgba(0,0,0,0.06)",

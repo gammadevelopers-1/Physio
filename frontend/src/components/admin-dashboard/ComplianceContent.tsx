@@ -150,7 +150,7 @@ const ComplianceContent = () => {
                     {t("compliancePage.subtitle")}
                   </p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2.5 btn-gold text-white rounded-lg transition-colors">
+                <button className="flex items-center gap-2 px-4 py-2.5 btn-gold text-[var(--color-button-text)] rounded-lg transition-colors">
                   <Download className="w-5 h-5" />
                   <span className="text-sm font-medium">{t("compliancePage.exportReport")}</span>
                 </button>
@@ -176,7 +176,7 @@ const ComplianceContent = () => {
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="h-4 bg-[#F3F4F6] rounded-full overflow-hidden mt-6">
+                  <div className="h-4 bg-[var(--color-border-subtle)] rounded-full overflow-hidden mt-6">
                     <div className="h-full flex">
                       <div
                         className="bg-[#16A34A] transition-all"
@@ -271,7 +271,7 @@ const ComplianceContent = () => {
                         }
                       >
                         <div className="flex items-center gap-3">
-                          <FileText className="w-5 h-5 text-[#002D87]" />
+                          <FileText className="w-5 h-5 text-[var(--color-primary)]" />
                           <span className="font-medium text-[var(--color-text-primary)]">{category.name}</span>
                           <span className="text-sm text-[var(--color-text-secondary)]">
                             ({category.clauses.filter((c) => c.status === "pass").length}/{category.clauses.length})

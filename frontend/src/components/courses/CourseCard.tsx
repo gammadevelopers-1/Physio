@@ -112,7 +112,7 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
 
         {/* Bottom row - delivery badge only */}
         <div className="flex items-center w-full z-10">
-          <div className="flex items-center gap-1.5 bg-[var(--color-text-primary)] rounded-full px-3 py-1.5">
+          <div className="flex items-center gap-1.5 bg-[var(--color-primary)] rounded-full px-3 py-1.5">
             <DeliveryIcon className="w-3.5 h-3.5 text-white" strokeWidth={1.5} />
             <span className="text-white text-[12px] font-medium">{deliveryLabel}</span>
           </div>
@@ -121,12 +121,12 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
 
       {/* Meta tags row */}
       <div className={`flex flex-wrap gap-2 mt-3 ${isRTL ? "justify-end" : "justify-start"}`}>
-        <div className="flex items-center gap-1 bg-[#f4f4f5] rounded-lg px-2.5 py-1.5">
+        <div className="flex items-center gap-1 bg-[var(--color-border-subtle)] rounded-lg px-2.5 py-1.5">
           <Calendar className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" strokeWidth={1.5} />
           <span className="text-[var(--color-text-secondary)] text-[13px]">{formattedDate}</span>
         </div>
         {cmeLabel && (
-          <div className="flex items-center gap-1 bg-[#f4f4f5] rounded-lg px-2.5 py-1.5">
+          <div className="flex items-center gap-1 bg-[var(--color-border-subtle)] rounded-lg px-2.5 py-1.5">
             <Clock className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" strokeWidth={1.5} />
             <span className="text-[var(--color-text-secondary)] text-[13px]">{cmeLabel}</span>
           </div>

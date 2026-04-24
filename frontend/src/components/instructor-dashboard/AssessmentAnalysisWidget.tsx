@@ -41,7 +41,7 @@ const AssessmentAnalysisWidget = ({
       case "hard":
         return "bg-[#FEE2E2] text-[#EF4444]";
       default:
-        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -69,7 +69,7 @@ const AssessmentAnalysisWidget = ({
       {/* Header */}
       <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[var(--color-border)]">
         <div className="flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-[#3B82F6]" />
+          <BarChart3 className="w-5 h-5 text-[var(--color-primary)]" />
           <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)]">
             {t("assessmentAnalysis.title")}
           </h2>
@@ -80,7 +80,7 @@ const AssessmentAnalysisWidget = ({
             {t("assessmentAnalysis.preTest")}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-[#3B82F6]" />
+            <span className="w-3 h-3 rounded bg-[var(--color-primary)]" />
             {t("assessmentAnalysis.postTest")}
           </span>
         </div>
@@ -118,7 +118,7 @@ const AssessmentAnalysisWidget = ({
                     <div className="space-y-1.5">
                       {/* Pre-test bar */}
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-5 bg-[#F3F4F6] rounded-full overflow-hidden">
+                        <div className="flex-1 h-5 bg-[var(--color-border-subtle)] rounded-full overflow-hidden">
                           <div
                             className="h-full bg-[#93C5FD] rounded-full transition-all duration-500 flex items-center justify-end pe-2"
                             style={{ width: `${(assessment.preScore / maxScore) * 100}%` }}
@@ -131,9 +131,9 @@ const AssessmentAnalysisWidget = ({
                       </div>
                       {/* Post-test bar */}
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-5 bg-[#F3F4F6] rounded-full overflow-hidden">
+                        <div className="flex-1 h-5 bg-[var(--color-border-subtle)] rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-[#3B82F6] rounded-full transition-all duration-500 flex items-center justify-end pe-2"
+                            className="h-full bg-[var(--color-primary)] rounded-full transition-all duration-500 flex items-center justify-end pe-2"
                             style={{ width: `${(assessment.postScore / maxScore) * 100}%` }}
                           >
                             <span className="text-[10px] font-semibold text-white">
@@ -199,7 +199,7 @@ const AssessmentAnalysisWidget = ({
         <div className="mt-6 pt-4 border-t border-[var(--color-border)]">
           <button
             onClick={() => router.push(`/${locale}/dashboard/instructor/assessments`)}
-            className="w-full flex items-center justify-center gap-1 py-2.5 text-sm font-medium text-[#3B82F6] hover:underline"
+            className="w-full flex items-center justify-center gap-1 py-2.5 text-sm font-medium text-[var(--color-primary)] hover:underline"
           >
             {t("assessmentAnalysis.viewItemAnalysis")}
             {locale === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}

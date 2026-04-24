@@ -202,7 +202,7 @@ const StudentsContent = () => {
       case "inactive":
         return "bg-[#FEE2E2] text-[#EF4444]";
       default:
-        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -304,7 +304,7 @@ const StudentsContent = () => {
               {/* Loading / Error */}
               {loading && (
                 <div className="flex items-center justify-center py-20">
-                  <RefreshCw className="w-6 h-6 text-[#3B82F6] animate-spin" />
+                  <RefreshCw className="w-6 h-6 text-[var(--color-primary)] animate-spin" />
                   <span className="ml-3 text-sm text-[var(--color-text-secondary)]">
                     {t("students.loading") || "Loading students..."}
                   </span>
@@ -329,8 +329,8 @@ const StudentsContent = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center">
-                          <Users className="w-5 h-5 text-[#3B82F6]" />
+                        <div className="w-10 h-10 rounded-lg bg-[var(--color-border-subtle)] flex items-center justify-center">
+                          <Users className="w-5 h-5 text-[var(--color-primary)]" />
                         </div>
                         <div>
                           <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
@@ -401,7 +401,7 @@ const StudentsContent = () => {
                           placeholder={t("students.searchPlaceholder")}
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
+                          className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
                         />
                       </div>
 
@@ -420,7 +420,7 @@ const StudentsContent = () => {
                         <select
                           value={selectedCourse}
                           onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           <option value="all">{t("students.allCourses")}</option>
                           {courses.map((c) => (
@@ -430,7 +430,7 @@ const StudentsContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => setSelectedStatus(e.target.value)}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           {statusOptions.map((option) => (
                             <option key={option.id} value={option.id}>
@@ -446,7 +446,7 @@ const StudentsContent = () => {
                         <select
                           value={selectedCourse}
                           onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); }}
-                          className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           <option value="all">{t("students.allCourses")}</option>
                           {courses.map((c) => (
@@ -456,7 +456,7 @@ const StudentsContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => setSelectedStatus(e.target.value)}
-                          className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           {statusOptions.map((option) => (
                             <option key={option.id} value={option.id}>
@@ -589,7 +589,7 @@ const StudentsContent = () => {
                                   <td className="px-2 py-3 text-center">
                                     <Link
                                       href={`/${locale}/dashboard/instructor/students/${student.studentId}`}
-                                      className="p-1.5 text-[var(--color-text-secondary)] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors inline-flex"
+                                      className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors inline-flex"
                                       title={t("students.viewProfile")}
                                     >
                                       <Eye className="w-3.5 h-3.5" />
@@ -623,7 +623,7 @@ const StudentsContent = () => {
                                 setCurrentPage(Math.max(1, currentPage - 1))
                               }
                               disabled={currentPage === 1}
-                              className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {isRTL ? (
                                 <ChevronRight className="w-4 h-4" />
@@ -638,8 +638,8 @@ const StudentsContent = () => {
                                   onClick={() => setCurrentPage(page)}
                                   className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
                                     currentPage === page
-                                      ? "bg-[#3B82F6] text-white"
-                                      : "text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
+                                      ? "bg-[var(--color-primary)] text-white"
+                                      : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                                   }`}
                                 >
                                   {page}
@@ -651,7 +651,7 @@ const StudentsContent = () => {
                                 setCurrentPage(Math.min(totalPages, currentPage + 1))
                               }
                               disabled={currentPage === totalPages}
-                              className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {isRTL ? (
                                 <ChevronLeft className="w-4 h-4" />
@@ -758,7 +758,7 @@ const StudentsContent = () => {
 
                             <Link
                               href={`/${locale}/dashboard/instructor/students/${student.studentId}`}
-                              className="flex items-center justify-center gap-1.5 w-full px-3 py-2 bg-[#3B82F6] text-white rounded-lg text-sm font-medium hover:bg-[#2563EB] transition-colors"
+                              className="flex items-center justify-center gap-1.5 w-full px-3 py-2 bg-[var(--color-primary)] text-white rounded-lg text-sm font-medium hover:bg-[var(--color-primary-dark)] transition-colors"
                             >
                               <Eye className="w-4 h-4" />
                               {t("students.viewProfile")}
@@ -777,7 +777,7 @@ const StudentsContent = () => {
                                 setCurrentPage(Math.max(1, currentPage - 1))
                               }
                               disabled={currentPage === 1}
-                              className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors disabled:opacity-50"
+                              className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors disabled:opacity-50"
                             >
                               {isRTL ? (
                                 <ChevronRight className="w-4 h-4" />
@@ -792,7 +792,7 @@ const StudentsContent = () => {
                                 )
                               }
                               disabled={currentPage === totalPages}
-                              className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors disabled:opacity-50"
+                              className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors disabled:opacity-50"
                             >
                               {isRTL ? (
                                 <ChevronLeft className="w-4 h-4" />

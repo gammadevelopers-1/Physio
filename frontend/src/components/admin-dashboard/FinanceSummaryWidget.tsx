@@ -39,7 +39,7 @@ const FinanceSummaryWidget = ({ data }: FinanceSummaryWidgetProps) => {
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-[#002D87]" />
+          <DollarSign className="w-5 h-5 text-[var(--color-primary)]" />
           <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("finance.title")}
           </h3>

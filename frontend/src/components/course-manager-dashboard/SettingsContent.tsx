@@ -249,14 +249,14 @@ const SettingsContent = () => {
                       onClick={() => setActiveTab(tab.id)}
                       className={`px-5 py-3 text-sm font-medium relative transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                         activeTab === tab.id
-                          ? "text-[#3B82F6]"
+                          ? "text-[var(--color-primary)]"
                           : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                       }`}
                     >
                       <tab.icon className="w-4 h-4" />
                       {tab.label}
                       {activeTab === tab.id && (
-                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3B82F6] rounded-t" />
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)] rounded-t" />
                       )}
                     </button>
                   ))}
@@ -270,7 +270,7 @@ const SettingsContent = () => {
                       <div className="flex flex-col sm:flex-row items-start gap-4">
                         <div className="relative">
                           {user?.avatar ? (
-                            <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100">
+                            <div className="w-24 h-24 rounded-full overflow-hidden bg-[var(--color-border-subtle)]">
                               <Image
                                 src={user.avatar}
                                 alt={profileData.firstName}
@@ -295,7 +295,7 @@ const SettingsContent = () => {
                           <div ref={avatarMenuRef}>
                             <button
                               onClick={() => setAvatarMenuOpen((v) => !v)}
-                              className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#002D87] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-[#001d5e] transition-colors`}
+                              className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[var(--color-primary)] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-[#001d5e] transition-colors`}
                             >
                               <Pencil className="w-3.5 h-3.5 text-white" />
                             </button>
@@ -303,7 +303,7 @@ const SettingsContent = () => {
                               <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`}>
                                 <button
                                   onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors cursor-pointer"
                                 >
                                   <Upload className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                   {t("settingsPage.uploadPhoto")}
@@ -348,7 +348,7 @@ const SettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, firstName: e.target.value })
                               }
-                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                             />
                           </div>
                           <div>
@@ -362,7 +362,7 @@ const SettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, lastName: e.target.value })
                               }
-                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                             />
                           </div>
                           <div>
@@ -377,7 +377,7 @@ const SettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, firstNameAr: e.target.value })
                               }
-                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                             />
                           </div>
                           <div>
@@ -392,7 +392,7 @@ const SettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, lastNameAr: e.target.value })
                               }
-                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                             />
                           </div>
                           <div>
@@ -427,7 +427,7 @@ const SettingsContent = () => {
                                 onChange={(e) =>
                                   setProfileData({ ...profileData, phone: e.target.value })
                                 }
-                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                               />
                             </div>
                           </div>
@@ -452,7 +452,7 @@ const SettingsContent = () => {
                                 await profileApi.update({ language: newLocale }).catch(() => {});
                                 window.location.href = `/${newLocale}/dashboard/manager/settings`;
                               }}
-                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                             >
                               <option value="en">English</option>
                               <option value="ar">{"\u0627\u0644\u0639\u0631\u0628\u064A\u0629"}</option>
@@ -472,8 +472,8 @@ const SettingsContent = () => {
                             onClick={() => setCalendarFormat("gregorian")}
                             className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                               calendarFormat === "gregorian"
-                                ? "bg-[#002D87] text-white border-[#002D87]"
-                                : "bg-white text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
+                                ? "bg-[var(--color-primary)] text-white border-[#002D87]"
+                                : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
                             }`}
                           >
                             {t("settingsPage.profile.gregorian") || "Gregorian"} (ميلادي)
@@ -483,8 +483,8 @@ const SettingsContent = () => {
                             onClick={() => setCalendarFormat("hijri")}
                             className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                               calendarFormat === "hijri"
-                                ? "bg-[#002D87] text-white border-[#002D87]"
-                                : "bg-white text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
+                                ? "bg-[var(--color-primary)] text-white border-[#002D87]"
+                                : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
                             }`}
                           >
                             {t("settingsPage.profile.hijri") || "Hijri"} (هجري)
@@ -500,7 +500,7 @@ const SettingsContent = () => {
                         <button
                           onClick={handleSaveProfile}
                           disabled={saving}
-                          className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                          className="flex items-center gap-2 px-6 py-2.5 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                         >
                           {saving ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -536,7 +536,7 @@ const SettingsContent = () => {
                                 placeholder="••••••••"
                                 value={currentPassword}
                                 onChange={(e) => setCurrentPassword(e.target.value)}
-                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                               />
                               <button
                                 type="button"
@@ -565,7 +565,7 @@ const SettingsContent = () => {
                                 placeholder="••••••••"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
-                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                               />
                               <button
                                 type="button"
@@ -583,7 +583,7 @@ const SettingsContent = () => {
                           <button
                             onClick={handleChangePassword}
                             disabled={changingPassword || !currentPassword || !newPassword}
-                            className="flex items-center gap-2 px-4 py-2 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                            className="flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                           >
                             {changingPassword && <Loader2 className="w-4 h-4 animate-spin" />}
                             {t("settingsPage.security.updatePassword")}
@@ -639,11 +639,11 @@ const SettingsContent = () => {
                             <button
                               onClick={() => setEmailNotificationsOn(!emailNotificationsOn)}
                               className={`relative w-10 h-5 rounded-full transition-colors ${
-                                emailNotificationsOn ? "bg-[#3B82F6]" : "bg-[var(--color-border)]"
+                                emailNotificationsOn ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"
                               }`}
                             >
                               <span
-                                className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${
+                                className={`absolute top-0.5 w-4 h-4 bg-[var(--color-surface-card)] rounded-full transition-all ${
                                   emailNotificationsOn
                                     ? isRTL
                                       ? "left-0.5"
@@ -669,11 +669,11 @@ const SettingsContent = () => {
                             <button
                               onClick={() => setPushNotificationsOn(!pushNotificationsOn)}
                               className={`relative w-10 h-5 rounded-full transition-colors ${
-                                pushNotificationsOn ? "bg-[#3B82F6]" : "bg-[var(--color-border)]"
+                                pushNotificationsOn ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"
                               }`}
                             >
                               <span
-                                className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${
+                                className={`absolute top-0.5 w-4 h-4 bg-[var(--color-surface-card)] rounded-full transition-all ${
                                   pushNotificationsOn
                                     ? isRTL
                                       ? "left-0.5"
@@ -690,7 +690,7 @@ const SettingsContent = () => {
                             <button
                               onClick={handleSaveNotifications}
                               disabled={savingNotifications}
-                              className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                              className="flex items-center gap-2 px-6 py-2.5 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                             >
                               {savingNotifications ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />

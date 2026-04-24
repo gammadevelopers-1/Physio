@@ -115,7 +115,7 @@ const ActionsDropdown = ({ actions }: { actions: ActionItem[] }) => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
       <button
-        className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors"
+        className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
         aria-label="Actions"
       >
         <MoreVertical className="w-4 h-4" />
@@ -240,7 +240,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 id="upload-modal-title" className="text-lg font-semibold text-[var(--color-text-primary)]">{t("content.uploadTitle")}</h3>
-            <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors" aria-label={t("content.cancel")}>
+            <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors" aria-label={t("content.cancel")}>
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -252,7 +252,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
             onDragOver={handleDragOver}
             onClick={() => fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
-              file ? "border-[#22C55E] bg-[#F0FDF4]" : "border-[var(--color-border)] hover:border-[#3B82F6]"
+              file ? "border-[#22C55E] bg-[#F0FDF4]" : "border-[var(--color-border)] hover:border-[var(--color-primary)]"
             }`}
           >
             <input
@@ -281,8 +281,8 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
               </div>
             ) : (
               <div>
-                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[#EFF6FF] flex items-center justify-center">
-                  <Upload className="w-6 h-6 text-[#3B82F6]" />
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[var(--color-border-subtle)] flex items-center justify-center">
+                  <Upload className="w-6 h-6 text-[var(--color-primary)]" />
                 </div>
                 <p className="text-sm text-[var(--color-text-secondary)] mb-1">{t("content.dragDrop")}</p>
                 <p className="text-xs text-[var(--color-text-secondary)]">{t("content.orBrowse")}</p>
@@ -299,7 +299,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t("content.titlePlaceholder")}
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             />
           </div>
 
@@ -309,7 +309,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
             <select
               value={selectedCourseId}
               onChange={(e) => setSelectedCourseId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             >
               {courses.filter((c) => c.status !== "completed" && c.status !== "archived").map((c) => (
                 <option key={c.id} value={c.id}>{c.title}</option>
@@ -324,7 +324,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
               <select
                 value={selectedModuleId}
                 onChange={(e) => setSelectedModuleId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               >
                 <option value="">{t("content.noModule")}</option>
                 {courseModules.map((m) => (
@@ -346,12 +346,12 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
                 role="switch"
                 aria-checked={autoTranscribe}
                 onClick={() => setAutoTranscribe((v) => !v)}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:ring-offset-2 ${
-                  autoTranscribe ? "bg-[#3B82F6]" : "bg-[var(--color-border)]"
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 ${
+                  autoTranscribe ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"
                 }`}
               >
                 <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[var(--color-surface-card)] shadow ring-0 transition duration-200 ease-in-out ${
                     autoTranscribe ? "translate-x-5" : "translate-x-0"
                   }`}
                 />
@@ -368,7 +368,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
               </div>
               <div className="w-full bg-[var(--color-border)] rounded-full h-2">
                 <div
-                  className="bg-[#3B82F6] h-2 rounded-full transition-all duration-300"
+                  className="bg-[var(--color-primary)] h-2 rounded-full transition-all duration-300"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -378,11 +378,11 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
           {error && <p className="mt-3 text-sm text-[#EF4444]">{error}</p>}
 
           {/* WCAG Notice */}
-          <div className="mt-4 flex items-start gap-3 p-3 bg-[#EFF6FF] rounded-lg">
-            <FileCheck className="w-5 h-5 text-[#3B82F6] flex-shrink-0 mt-0.5" />
+          <div className="mt-4 flex items-start gap-3 p-3 bg-[var(--color-border-subtle)] rounded-lg">
+            <FileCheck className="w-5 h-5 text-[var(--color-primary)] flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-[#1D4ED8]">{t("content.wcagNotice")}</p>
-              <p className="text-xs text-[#3B82F6] mt-1">{t("content.wcagNoticeDesc")}</p>
+              <p className="text-xs text-[var(--color-primary)] mt-1">{t("content.wcagNoticeDesc")}</p>
             </div>
           </div>
 
@@ -394,7 +394,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
             <button
               onClick={handleUpload}
               disabled={uploading || !file || !title.trim() || !selectedCourseId || !detectedType}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
             >
               {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
               {uploading ? t("content.uploading") : t("content.upload")}
@@ -456,7 +456,7 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 id="replace-modal-title" className="text-lg font-semibold text-[var(--color-text-primary)]">{t("content.replaceTitle")}</h3>
-            <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors" aria-label={t("content.cancel")}>
+            <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors" aria-label={t("content.cancel")}>
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -475,7 +475,7 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
           <div
             onClick={() => fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer ${
-              file ? "border-[#22C55E] bg-[#F0FDF4]" : "border-[var(--color-border)] hover:border-[#3B82F6]"
+              file ? "border-[#22C55E] bg-[#F0FDF4]" : "border-[var(--color-border)] hover:border-[var(--color-primary)]"
             }`}
           >
             <input
@@ -511,7 +511,7 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
                 <span>{progress}%</span>
               </div>
               <div className="w-full bg-[var(--color-border)] rounded-full h-2">
-                <div className="bg-[#3B82F6] h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+                <div className="bg-[var(--color-primary)] h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
               </div>
             </div>
           )}
@@ -587,7 +587,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 id="edit-modal-title" className="text-lg font-semibold text-[var(--color-text-primary)]">{t("content.editTitle")}</h3>
-            <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors" aria-label={t("content.cancel")}>
+            <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors" aria-label={t("content.cancel")}>
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -599,7 +599,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             />
           </div>
 
@@ -610,7 +610,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
               material.wcagStatus === "pass" ? "bg-[#DCFCE7] text-[#22C55E]" :
               material.wcagStatus === "warning" ? "bg-[#FEF9C3] text-[#EAB308]" :
               material.wcagStatus === "fail" ? "bg-[#FEE2E2] text-[#EF4444]" :
-              "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
+              "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
             }`}>
               {material.wcagStatus === "pass" ? <Check className="w-3 h-3" /> :
                material.wcagStatus === "warning" ? <AlertTriangle className="w-3 h-3" /> :
@@ -658,7 +658,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                     href={material.captionsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
                   >
                     <Download className="w-3 h-3" />
                     {t("content.downloadCaptions")}
@@ -669,7 +669,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                     href={material.transcriptUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
                   >
                     <Download className="w-3 h-3" />
                     {t("content.downloadTranscript")}
@@ -689,7 +689,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                   value={captionsUrl}
                   onChange={(e) => setCaptionsUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
                 <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("content.captionsUrlHint")}</p>
               </div>
@@ -700,7 +700,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                   value={transcriptUrl}
                   onChange={(e) => setTranscriptUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
@@ -715,12 +715,12 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                   role="switch"
                   aria-checked={autoTranscribe}
                   onClick={() => setAutoTranscribe((v) => !v)}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:ring-offset-2 ${
-                    autoTranscribe ? "bg-[#3B82F6]" : "bg-[var(--color-border)]"
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 ${
+                    autoTranscribe ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"
                   }`}
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[var(--color-surface-card)] shadow ring-0 transition duration-200 ease-in-out ${
                       autoTranscribe ? "translate-x-5" : "translate-x-0"
                     }`}
                   />
@@ -743,7 +743,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
             <button
               onClick={handleSave}
               disabled={saving || !title.trim()}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 btn-gold text-white rounded-lg text-sm font-medium disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium disabled:opacity-50"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               {t("content.save")}
@@ -979,9 +979,9 @@ const ContentManagementContent = () => {
     switch (type) {
       case "video": return "bg-[#FEE2E2] text-[#EF4444]";
       case "pdf": return "bg-[#FFEDD5] text-[#F97316]";
-      case "document": return "bg-[#DBEAFE] text-[#3B82F6]";
+      case "document": return "bg-[var(--color-border-subtle)] text-[var(--color-primary)]";
       case "image": return "bg-[#D1FAE5] text-[#10B981]";
-      default: return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+      default: return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -990,9 +990,9 @@ const ContentManagementContent = () => {
       case "live": return "bg-[#DCFCE7] text-[#22C55E]";
       case "processing": return "bg-[#FEF9C3] text-[#EAB308]";
       case "failed": return "bg-[#FEE2E2] text-[#EF4444]";
-      case "pending_review": return "bg-[#DBEAFE] text-[#3B82F6]";
+      case "pending_review": return "bg-[var(--color-border-subtle)] text-[var(--color-primary)]";
       case "changes_requested": return "bg-[#FEF3C7] text-[#D97706]";
-      default: return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+      default: return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -1023,7 +1023,7 @@ const ContentManagementContent = () => {
     if (wcag === "pass" || wcag === "compliant") return "bg-[#DCFCE7] text-[#22C55E]";
     if (wcag === "warning") return "bg-[#FEF9C3] text-[#EAB308]";
     if (wcag === "fail") return "bg-[#FEE2E2] text-[#EF4444]";
-    return "bg-[#F3F4F6] text-[var(--color-text-secondary)]"; // pending (gray)
+    return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"; // pending (gray)
   };
 
   const getWcagIcon = (wcag: string) => {
@@ -1121,7 +1121,7 @@ const ContentManagementContent = () => {
                       }
                       setShowUploadModal(true);
                     }}
-                    className="flex items-center gap-2 px-4 py-2 btn-gold text-white rounded-lg transition-colors text-sm font-medium"
+                    className="flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] rounded-lg transition-colors text-sm font-medium"
                   >
                     <Upload className="w-4 h-4" />
                     {t("content.uploadNew")}
@@ -1133,8 +1133,8 @@ const ContentManagementContent = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center">
-                      <FolderOpen className="w-5 h-5 text-[#3B82F6]" />
+                    <div className="w-10 h-10 rounded-lg bg-[var(--color-border-subtle)] flex items-center justify-center">
+                      <FolderOpen className="w-5 h-5 text-[var(--color-primary)]" />
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.totalFiles}</p>
@@ -1144,7 +1144,7 @@ const ContentManagementContent = () => {
                 </div>
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#E0E7FF] flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-lg bg-[var(--color-border-subtle)] flex items-center justify-center">
                       <HardDrive className="w-5 h-5 text-[#6366F1]" />
                     </div>
                     <div>
@@ -1180,7 +1180,7 @@ const ContentManagementContent = () => {
               {/* Loading / Error states */}
               {loading && (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+                  <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin" />
                   <span className="ml-3 text-[var(--color-text-secondary)]">{t("content.loading")}</span>
                 </div>
               )}
@@ -1189,7 +1189,7 @@ const ContentManagementContent = () => {
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-8 text-center">
                   <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
                   <p className="text-[#EF4444] mb-4">{error}</p>
-                  <button onClick={refetch} className="px-4 py-2 btn-gold text-white rounded-lg text-sm">
+                  <button onClick={refetch} className="px-4 py-2 btn-gold text-[var(--color-button-text)] rounded-lg text-sm">
                     {t("content.retry")}
                   </button>
                 </div>
@@ -1207,7 +1207,7 @@ const ContentManagementContent = () => {
                           placeholder={t("content.searchPlaceholder")}
                           value={searchQuery}
                           onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                          className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
+                          className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
                         />
                       </div>
 
@@ -1225,13 +1225,13 @@ const ContentManagementContent = () => {
                         <div className="flex border border-[var(--color-border)] rounded-lg overflow-hidden">
                           <button
                             onClick={() => setViewMode("list")}
-                            className={`p-2.5 ${viewMode === "list" ? "bg-[#3B82F6] text-white" : "bg-white text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"}`}
+                            className={`p-2.5 ${viewMode === "list" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"}`}
                           >
                             <List className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => setViewMode("grid")}
-                            className={`p-2.5 ${viewMode === "grid" ? "bg-[#3B82F6] text-white" : "bg-white text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"}`}
+                            className={`p-2.5 ${viewMode === "grid" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"}`}
                           >
                             <Grid className="w-4 h-4" />
                           </button>
@@ -1243,7 +1243,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedCourse}
                           onChange={(e) => handleCourseChange(e.target.value)}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           <option value="all">{t("content.allCourses")}</option>
                           {courses.map((c) => (
@@ -1253,7 +1253,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedType}
                           onChange={(e) => { setSelectedType(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           {types.map((t) => (
                             <option key={t.id} value={t.id}>{t.name}</option>
@@ -1262,7 +1262,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           {statuses.map((s) => (
                             <option key={s.id} value={s.id}>{s.name}</option>
@@ -1277,7 +1277,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedCourse}
                           onChange={(e) => handleCourseChange(e.target.value)}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           <option value="all">{t("content.allCourses")}</option>
                           {courses.map((c) => (
@@ -1287,7 +1287,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedType}
                           onChange={(e) => { setSelectedType(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           {types.map((t) => (
                             <option key={t.id} value={t.id}>{t.name}</option>
@@ -1296,7 +1296,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           {statuses.map((s) => (
                             <option key={s.id} value={s.id}>{s.name}</option>
@@ -1315,7 +1315,7 @@ const ContentManagementContent = () => {
                       {courses.length > 0 && (
                         <button
                           onClick={() => setShowUploadModal(true)}
-                          className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white rounded-lg text-sm font-medium"
+                          className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium"
                         >
                           <Upload className="w-4 h-4" />
                           {t("content.uploadNew")}
@@ -1374,7 +1374,7 @@ const ContentManagementContent = () => {
                                         <span>&bull;</span>
                                         <span>{formatDateHijri(m.createdAt, calendarFormat, { locale })}</span>
                                         {m.version > 1 && (
-                                          <span className="px-1.5 py-0.5 bg-[#DBEAFE] text-[#3B82F6] rounded text-[10px] font-medium">
+                                          <span className="px-1.5 py-0.5 bg-[var(--color-border-subtle)] text-[var(--color-primary)] rounded text-[10px] font-medium">
                                             {t("content.newVersion")}
                                           </span>
                                         )}
@@ -1471,7 +1471,7 @@ const ContentManagementContent = () => {
                           <button
                             onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                             disabled={currentPage === 1}
-                            className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                           </button>
@@ -1481,7 +1481,7 @@ const ContentManagementContent = () => {
                           <button
                             onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                             disabled={currentPage >= totalPages}
-                            className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                           </button>
@@ -1500,14 +1500,14 @@ const ContentManagementContent = () => {
                             <div className={`h-32 flex items-center justify-center relative ${
                               m.type === "video" ? "bg-[#FEE2E2]" :
                               m.type === "pdf" ? "bg-[#FFEDD5]" :
-                              m.type === "image" ? "bg-[#D1FAE5]" : "bg-[#DBEAFE]"
+                              m.type === "image" ? "bg-[#D1FAE5]" : "bg-[var(--color-border-subtle)]"
                             }`}>
                               {m.type === "video" ? <Video className="w-12 h-12 text-[#EF4444] opacity-50" /> :
                                m.type === "pdf" ? <FileText className="w-12 h-12 text-[#F97316] opacity-50" /> :
                                m.type === "image" ? <Image className="w-12 h-12 text-[#10B981] opacity-50" /> :
-                               <File className="w-12 h-12 text-[#3B82F6] opacity-50" />}
+                               <File className="w-12 h-12 text-[var(--color-primary)] opacity-50" />}
                               {m.version > 1 && (
-                                <span className="absolute top-2 right-2 px-1.5 py-0.5 bg-[#3B82F6] text-white rounded text-[10px] font-medium">
+                                <span className="absolute top-2 right-2 px-1.5 py-0.5 bg-[var(--color-primary)] text-white rounded text-[10px] font-medium">
                                   v{m.version}
                                 </span>
                               )}
@@ -1590,7 +1590,7 @@ const ContentManagementContent = () => {
                           <button
                             onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                             disabled={currentPage === 1}
-                            className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50"
+                            className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg disabled:opacity-50"
                           >
                             {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                           </button>
@@ -1598,7 +1598,7 @@ const ContentManagementContent = () => {
                           <button
                             onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                             disabled={currentPage >= totalPages}
-                            className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50"
+                            className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg disabled:opacity-50"
                           >
                             {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                           </button>

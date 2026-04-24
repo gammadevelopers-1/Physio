@@ -42,7 +42,7 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
           <button
             type="button"
             onClick={() => goToStep(1)}
-            className="inline-flex items-center gap-1 text-sm text-[#3B82F6] hover:text-[#2563EB]"
+            className="inline-flex items-center gap-1 text-sm text-[var(--color-primary)] hover:text-[var(--color-primary-dark)]"
           >
             <Pencil className="w-3.5 h-3.5" />
             {t("editStep")}
@@ -99,7 +99,7 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
           <button
             type="button"
             onClick={() => goToStep(2)}
-            className="inline-flex items-center gap-1 text-sm text-[#3B82F6] hover:text-[#2563EB]"
+            className="inline-flex items-center gap-1 text-sm text-[var(--color-primary)] hover:text-[var(--color-primary-dark)]"
           >
             <Pencil className="w-3.5 h-3.5" />
             {t("editStep")}
@@ -136,7 +136,7 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
           <button
             type="button"
             onClick={() => goToStep(3)}
-            className="inline-flex items-center gap-1 text-sm text-[#3B82F6] hover:text-[#2563EB]"
+            className="inline-flex items-center gap-1 text-sm text-[var(--color-primary)] hover:text-[var(--color-primary-dark)]"
           >
             <Pencil className="w-3.5 h-3.5" />
             {t("editStep")}
@@ -183,7 +183,7 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
           type="button"
           onClick={onSubmit}
           disabled={state.saving}
-          className="px-6 py-2.5 bg-[#3B82F6] text-white rounded-lg text-sm font-medium hover:bg-[#2563EB] disabled:opacity-50 transition-colors flex items-center gap-2"
+          className="px-6 py-2.5 bg-[var(--color-primary)] text-white rounded-lg text-sm font-medium hover:bg-[var(--color-primary-dark)] disabled:opacity-50 transition-colors flex items-center gap-2"
         >
           {state.saving && <Loader2 className="w-4 h-4 animate-spin" />}
           {state.saving ? t("creatingCourse") : t("submit")}

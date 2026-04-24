@@ -63,7 +63,7 @@ const FinanceSettingsContent = () => {
   ];
 
   const gateways = [
-    { key: "tap", name: t("settingsPage.gateways.tap"), mode: "live", color: "bg-[#3B82F6]" },
+    { key: "tap", name: t("settingsPage.gateways.tap"), mode: "live", color: "bg-[var(--color-primary)]" },
     { key: "moyasar", name: t("settingsPage.gateways.moyasar"), mode: "live", color: "bg-[#0891B2]" },
     { key: "tamara", name: t("settingsPage.gateways.tamara"), mode: "test", color: "bg-[#8B5CF6]" },
     { key: "tabby", name: t("settingsPage.gateways.tabby"), mode: "test", color: "bg-[#D97706]" },
@@ -174,7 +174,7 @@ const FinanceSettingsContent = () => {
                                   onClick={() => setGatewayEnabled((prev) => ({ ...prev, [gw.key]: !prev[gw.key] }))}
                                   className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${enabled ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                                 >
-                                  <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${enabled ? "ms-auto" : ""}`} />
+                                  <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${enabled ? "ms-auto" : ""}`} />
                                 </button>
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -184,7 +184,7 @@ const FinanceSettingsContent = () => {
                                     type="password"
                                     defaultValue="sk_live_••••••••••••"
                                     readOnly
-                                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] bg-white"
+                                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] bg-[var(--color-surface-card)]"
                                   />
                                 </div>
                                 <div>
@@ -193,7 +193,7 @@ const FinanceSettingsContent = () => {
                                     type="password"
                                     defaultValue="pk_live_••••••••••••"
                                     readOnly
-                                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] bg-white"
+                                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] bg-[var(--color-surface-card)]"
                                   />
                                 </div>
                                 <div>
@@ -202,7 +202,7 @@ const FinanceSettingsContent = () => {
                                     type="text"
                                     defaultValue="MID-12345678"
                                     readOnly
-                                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] bg-white"
+                                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] bg-[var(--color-surface-card)]"
                                   />
                                 </div>
                               </div>
@@ -210,7 +210,7 @@ const FinanceSettingsContent = () => {
                           );
                         })}
                       </div>
-                      <button className="mt-4 flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                      <button className="mt-4 flex items-center gap-1.5 px-4 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors">
                         <Save className="w-4 h-4" />
                         {t("settingsPage.gateways.save")}
                       </button>
@@ -244,7 +244,7 @@ const FinanceSettingsContent = () => {
                             <option>0</option>
                           </select>
                         </div>
-                        <button className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                        <button className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors">
                           <Save className="w-4 h-4" />
                           {t("settingsPage.gateways.save")}
                         </button>
@@ -267,7 +267,7 @@ const FinanceSettingsContent = () => {
                             onClick={() => setVatEnabled(!vatEnabled)}
                             className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${vatEnabled ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                           >
-                            <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${vatEnabled ? "ms-auto" : ""}`} />
+                            <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${vatEnabled ? "ms-auto" : ""}`} />
                           </button>
                         </div>
                         <div>
@@ -287,7 +287,7 @@ const FinanceSettingsContent = () => {
                             onClick={() => setTaxInclusive(!taxInclusive)}
                             className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${taxInclusive ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                           >
-                            <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${taxInclusive ? "ms-auto" : ""}`} />
+                            <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${taxInclusive ? "ms-auto" : ""}`} />
                           </button>
                         </div>
                         <div>
@@ -299,7 +299,7 @@ const FinanceSettingsContent = () => {
                             className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
-                        <button className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                        <button className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors">
                           <Save className="w-4 h-4" />
                           {t("settingsPage.gateways.save")}
                         </button>
@@ -368,7 +368,7 @@ const FinanceSettingsContent = () => {
                             className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
-                        <button className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                        <button className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors">
                           <Save className="w-4 h-4" />
                           {t("settingsPage.refundPolicy.save")}
                         </button>

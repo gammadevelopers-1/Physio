@@ -73,8 +73,8 @@ const RefundsContent = () => {
       label: t("refundsPage.stats.refundRate"),
       value: "2.1%",
       icon: BarChart3,
-      iconBg: "bg-[#EFF6FF]",
-      iconColor: "text-[#3B82F6]",
+      iconBg: "bg-[var(--color-border-subtle)]",
+      iconColor: "text-[var(--color-primary)]",
     },
   ];
 
@@ -160,14 +160,14 @@ const RefundsContent = () => {
               {/* Tabs */}
               <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
                 <div className="px-5 py-4 border-b border-[#F3F4F6]">
-                  <div className="flex gap-1 bg-[#F3F4F6] rounded-lg p-0.5 w-fit">
+                  <div className="flex gap-1 bg-[var(--color-border-subtle)] rounded-lg p-0.5 w-fit">
                     {tabs.map((tab) => (
                       <button
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}
                         className={`px-4 py-1.5 text-[13px] font-medium rounded-md transition-colors flex items-center gap-2 ${
                           activeTab === tab.key
-                            ? "bg-white text-[var(--color-text-primary)] shadow-sm"
+                            ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
                             : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                         }`}
                       >
@@ -236,7 +236,7 @@ const RefundsContent = () => {
                               <Check className="w-3 h-3" />
                               {t("refundsQueue.approve")}
                             </button>
-                            <button className="flex items-center gap-1 px-3 py-1.5 bg-white text-[#DC2626] text-[12px] font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEE2E2] transition-colors">
+                            <button className="flex items-center gap-1 px-3 py-1.5 bg-[var(--color-surface-card)] text-[#DC2626] text-[12px] font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEE2E2] transition-colors">
                               <X className="w-3 h-3" />
                               {t("refundsQueue.reject")}
                             </button>

@@ -31,7 +31,7 @@ import { useContentReview } from "@/hooks/useContentReview";
 
 
 const TYPE_ICONS: Record<string, { icon: typeof Video; bg: string; color: string }> = {
-  video: { icon: Video, bg: "bg-[#DBEAFE]", color: "text-[#3B82F6]" },
+  video: { icon: Video, bg: "bg-[var(--color-border-subtle)]", color: "text-[var(--color-primary)]" },
   pdf: { icon: FileText, bg: "bg-[#FEE2E2]", color: "text-[#EF4444]" },
   document: { icon: File, bg: "bg-[#FEF3C7]", color: "text-[#F59E0B]" },
   image: { icon: ImageIcon, bg: "bg-[#D1FAE5]", color: "text-[#10B981]" },
@@ -337,7 +337,7 @@ const ContentReviewContent = () => {
             <p className="text-sm text-[var(--color-text-secondary)] mb-4">{error}</p>
             <button
               onClick={refetch}
-              className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg"
+              className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg"
             >
               <RefreshCw className="w-4 h-4" />
               {t("dashboard.retry")}
@@ -416,13 +416,13 @@ const ContentReviewContent = () => {
                     placeholder={t("contentReviewPage.searchPlaceholder")}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none`}
+                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none`}
                   />
                 </div>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("contentReviewPage.filters.allStatus")}</option>
                   <option value="pending_review">{t("contentReviewPage.filters.pending")}</option>
@@ -433,7 +433,7 @@ const ContentReviewContent = () => {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("contentReviewPage.filters.allTypes")}</option>
                   <option value="video">{t("contentReviewPage.filters.video")}</option>
@@ -443,7 +443,7 @@ const ContentReviewContent = () => {
                 <select
                   value={courseFilter}
                   onChange={(e) => setCourseFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("contentReviewPage.filters.allCourses")}</option>
                   {courses.map((course) => (
@@ -471,7 +471,7 @@ const ContentReviewContent = () => {
                       onChange={(e) => setCommentText(e.target.value)}
                       placeholder={t("contentReviewPage.commentPlaceholder")}
                       rows={4}
-                      className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none resize-none"
+                      className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none resize-none"
                     />
                     <div className="flex justify-end gap-3 mt-4">
                       <button
@@ -504,7 +504,7 @@ const ContentReviewContent = () => {
 
               {/* Bulk Action Bar */}
               {selectedIds.size > 0 && (
-                <div className="flex items-center gap-3 mb-4 p-3 bg-[#F0F7FF] border border-[#BFDBFE] rounded-lg">
+                <div className="flex items-center gap-3 mb-4 p-3 bg-[var(--color-border-subtle)] border border-[#BFDBFE] rounded-lg">
                   <span className="text-sm font-medium text-[#1E40AF]">
                     {t("contentReviewPage.bulkSelected", { count: selectedIds.size })}
                   </span>
@@ -519,7 +519,7 @@ const ContentReviewContent = () => {
                     <button
                       onClick={handleBulkReject}
                       disabled={bulkLoading}
-                      className="px-3 py-1.5 bg-white text-[#EF4444] text-xs font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEF2F2] transition-colors disabled:opacity-50"
+                      className="px-3 py-1.5 bg-[var(--color-surface-card)] text-[#EF4444] text-xs font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEF2F2] transition-colors disabled:opacity-50"
                     >
                       {t("contentReviewPage.bulkReject")}
                     </button>
@@ -536,7 +536,7 @@ const ContentReviewContent = () => {
               {/* Table */}
               {filtered.length === 0 ? (
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
-                  <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mx-auto mb-4">
                     <FileText className="w-8 h-8 text-[var(--color-text-secondary)]" />
                   </div>
                   <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
@@ -569,7 +569,7 @@ const ContentReviewContent = () => {
                               type="checkbox"
                               checked={filtered.length > 0 && selectedIds.size === filtered.length}
                               onChange={toggleSelectAll}
-                              className="w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
+                              className="w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                             />
                           </th>
                           <th className="px-1 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase"></th>
@@ -613,7 +613,7 @@ const ContentReviewContent = () => {
                                     type="checkbox"
                                     checked={selectedIds.has(item.id)}
                                     onChange={() => toggleSelect(item.id)}
-                                    className="w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
+                                    className="w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                                   />
                                 </td>
                                 <td className="px-1 py-3">
@@ -785,7 +785,7 @@ const ContentReviewContent = () => {
 
                                     {isChecklistLoading ? (
                                       <div className="flex items-center gap-2 py-4">
-                                        <Loader2 className="w-4 h-4 text-[#3B82F6] animate-spin" />
+                                        <Loader2 className="w-4 h-4 text-[var(--color-primary)] animate-spin" />
                                         <span className="text-sm text-[var(--color-text-secondary)]">
                                           {t("contentReviewPage.loadingChecklist")}
                                         </span>

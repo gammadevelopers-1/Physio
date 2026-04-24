@@ -86,7 +86,7 @@ const RefundsQueueWidget = ({ refunds }: RefundsQueueWidgetProps) => {
                   <Check className="w-3 h-3" />
                   {t("refundsQueue.approve")}
                 </button>
-                <button className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-white text-[#DC2626] text-[11px] font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEE2E2] transition-colors">
+                <button className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-[var(--color-surface-card)] text-[#DC2626] text-[11px] font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEE2E2] transition-colors">
                   <X className="w-3 h-3" />
                   {t("refundsQueue.reject")}
                 </button>

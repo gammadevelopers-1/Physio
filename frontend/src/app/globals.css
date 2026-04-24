@@ -18,6 +18,7 @@
   --color-border-subtle: #C8D5E1;
   --color-icon: #737373;
   --color-footer-bg: #ffffff;
+  --color-button-text: #ffffff;
 
   /* Font Sizes */
   --font-sizes-12: 0.75rem;
@@ -133,7 +134,7 @@
 
   /* On Surface */
   --on-surface-default: var(--color-text-primary);
-  --on-surface-inverse: var(--white);
+  --on-surface-inverse: var(--color-button-text);
   --on-surface-primary: var(--color-primary);
   --on-surface-secondary: var(--color-primary);
   --on-surface-variant: var(--color-text-secondary);
@@ -146,15 +147,15 @@
   --outline-subtle: var(--color-border-subtle);
 
   /* Surface */
-  --surface-default: var(--blue-blue-50);
-  --surface-intense: var(--white);
+  --surface-default: var(--color-surface-page);
+  --surface-intense: var(--color-surface-page);
   --surface-container-default: var(--color-surface-page);
-  --surface-container-high: var(--blue-blue-200);
-  --surface-container-low: var(--blue-blue-50);
-  --surface-container-lowest: var(--white);
-  --surface-container-primary: var(--blue-brand-blue);
-  --surface-container-primary-2: var(--gold-gold-500);
-  --surface-container-primary-subtle: var(--blue-blue-900);
+  --surface-container-high: var(--color-border-subtle);
+  --surface-container-low: var(--color-surface-card);
+  --surface-container-lowest: var(--color-surface-card);
+  --surface-container-primary: var(--color-primary);
+  --surface-container-primary-2: var(--color-primary);
+  --surface-container-primary-subtle: var(--color-primary-dark);
 
   /* Transparent */
   --transparent-primary: #002d871f;
@@ -193,6 +194,7 @@ body {
 /* Primary Gradient Button (theme-aware) */
 .btn-gold {
   background: linear-gradient(to right, var(--color-primary), var(--color-primary-dark));
+  color: var(--color-button-text);
 }
 
 .btn-gold:hover {
@@ -268,26 +270,26 @@ body {
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0.75em 0 0.5em;
-  color: #06080b;
+  color: var(--color-text-primary);
 }
 .course-overview-content h2 {
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0.75em 0 0.5em;
-  color: #06080b;
+  color: var(--color-text-primary);
 }
 .course-overview-content h3 {
   font-size: 1.1rem;
   font-weight: 600;
   margin: 0.5em 0 0.25em;
-  color: #06080b;
+  color: var(--color-text-primary);
 }
 .course-overview-content p {
   margin: 0.5em 0;
 }
 .course-overview-content strong {
   font-weight: 600;
-  color: #06080b;
+  color: var(--color-text-primary);
 }
 .course-overview-content em {
   font-style: italic;
@@ -306,10 +308,10 @@ body {
   margin: 0.25em 0;
 }
 .course-overview-content blockquote {
-  border-left: 3px solid #d1d5db;
+  border-left: 3px solid var(--color-border);
   padding-left: 1rem;
   margin: 0.75em 0;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-style: italic;
 }
 .course-overview-content[dir="rtl"] ul,
@@ -319,7 +321,7 @@ body {
 }
 .course-overview-content[dir="rtl"] blockquote {
   border-left: none;
-  border-right: 3px solid #d1d5db;
+  border-right: 3px solid var(--color-border);
   padding-left: 0;
   padding-right: 1rem;
 }

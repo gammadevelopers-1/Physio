@@ -63,8 +63,8 @@ const DiscountsContent = () => {
       label: t("discountsPage.stats.totalRedemptions"),
       value: "342",
       icon: ShoppingCart,
-      iconBg: "bg-[#EFF6FF]",
-      iconColor: "text-[#3B82F6]",
+      iconBg: "bg-[var(--color-border-subtle)]",
+      iconColor: "text-[var(--color-primary)]",
     },
     {
       label: t("discountsPage.stats.revenueLift"),
@@ -106,7 +106,7 @@ const DiscountsContent = () => {
 
   const statusStyles: Record<string, string> = {
     active: "bg-[#DCFCE7] text-[#16A34A]",
-    expired: "bg-[#F3F4F6] text-[var(--color-text-secondary)]",
+    expired: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
     disabled: "bg-[#FEE2E2] text-[#DC2626]",
   };
 
@@ -136,7 +136,7 @@ const DiscountsContent = () => {
                 </div>
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   {t("discountsPage.createCoupon")}
@@ -165,14 +165,14 @@ const DiscountsContent = () => {
               <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden mb-6">
                 {/* Tabs */}
                 <div className="px-5 py-4 border-b border-[#F3F4F6]">
-                  <div className="flex gap-1 bg-[#F3F4F6] rounded-lg p-0.5 w-fit">
+                  <div className="flex gap-1 bg-[var(--color-border-subtle)] rounded-lg p-0.5 w-fit">
                     {tabs.map((tab) => (
                       <button
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}
                         className={`px-4 py-1.5 text-[13px] font-medium rounded-md transition-colors ${
                           activeTab === tab.key
-                            ? "bg-white text-[var(--color-text-primary)] shadow-sm"
+                            ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
                             : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                         }`}
                       >
@@ -333,7 +333,7 @@ const DiscountsContent = () => {
               <button onClick={() => setShowCreateModal(false)} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
                 {t("discountsPage.form.cancel")}
               </button>
-              <button className="flex-1 px-4 py-2.5 btn-gold text-white rounded-lg text-sm font-medium">
+              <button className="flex-1 px-4 py-2.5 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium">
                 {t("discountsPage.form.create")}
               </button>
             </div>

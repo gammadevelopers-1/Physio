@@ -103,7 +103,7 @@ const MobileFilterDrawer = ({
         <div className="px-5 py-4 border-t border-[var(--outline-subtle)] bg-white">
           <button
             onClick={() => setIsOpen(false)}
-            className="w-full py-3.5 btn-gold text-white font-medium rounded-xl transition-colors"
+            className="w-full py-3.5 btn-gold text-[var(--color-button-text)] font-medium rounded-xl transition-colors"
           >
             {isRTL ? "تطبيق الفلاتر" : "Apply Filters"}
           </button>

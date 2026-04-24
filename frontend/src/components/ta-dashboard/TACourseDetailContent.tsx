@@ -66,17 +66,17 @@ function formatSessionTime(dateStr: string, durationMinutes: number) {
 
 const statusBadge = (status: string) => {
   const map: Record<string, string> = {
-    scheduled: "bg-[#EFF6FF] text-[#3B82F6]",
+    scheduled: "bg-[var(--color-border-subtle)] text-[var(--color-primary)]",
     live: "bg-[#FEF3C7] text-[#D97706]",
     completed: "bg-[#DCFCE7] text-[#22C55E]",
     cancelled: "bg-[#FEE2E2] text-[#EF4444]",
-    ended: "bg-[#F3F4F6] text-[var(--color-text-secondary)]",
+    ended: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
   };
-  return map[status] || "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+  return map[status] || "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
 };
 
 const sessionTypeIcon = (type: string) => {
-  if (type === "zoom") return <Video className="w-4 h-4 text-[#3B82F6]" />;
+  if (type === "zoom") return <Video className="w-4 h-4 text-[var(--color-primary)]" />;
   if (type === "onsite") return <MapPin className="w-4 h-4 text-[#22C55E]" />;
   return <BookOpen className="w-4 h-4 text-[#9333EA]" />;
 };
@@ -146,7 +146,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
 
           {loading && (
             <div className="flex-1 min-w-0 flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-[#3B82F6]" />
+              <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
             </div>
           )}
 
@@ -164,7 +164,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                 <p className="text-[var(--color-text-secondary)] mb-4">{error}</p>
                 <button
                   onClick={fetchData}
-                  className="px-4 py-2 bg-[#3B82F6] text-white text-sm rounded-lg hover:bg-[#2563EB]"
+                  className="px-4 py-2 bg-[var(--color-primary)] text-white text-sm rounded-lg hover:bg-[var(--color-primary-dark)]"
                 >
                   Retry
                 </button>
@@ -206,13 +206,13 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                             : course.status === "draft"
                             ? "bg-[#FEF3C7] text-[#D4A520]"
                             : course.status === "completed"
-                            ? "bg-[#EFF6FF] text-[#3B82F6]"
-                            : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
+                            ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
+                            : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                         }`}
                       >
                         {t(`courses.status.${course.status}`)}
                       </span>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/90 rounded-md text-xs font-medium text-[var(--color-text-secondary)]">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[var(--color-surface-card)]/90 rounded-md text-xs font-medium text-[var(--color-text-secondary)]">
                         {deliveryIcon}
                         {t(`courses.delivery.${course.deliveryType}`)}
                       </span>
@@ -225,8 +225,8 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                 <div className="p-4 border-t border-[var(--color-border)]">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
-                        <Users className="w-5 h-5 text-[#3B82F6]" />
+                      <div className="w-10 h-10 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center">
+                        <Users className="w-5 h-5 text-[var(--color-primary)]" />
                       </div>
                       <div>
                         <p className="text-lg font-bold text-[var(--color-text-secondary)]">{enrollments.length}</p>
@@ -282,12 +282,12 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                       role="tab"
                       aria-selected={activeTab === tab.id}
                       className={`px-5 py-3.5 text-sm font-medium whitespace-nowrap relative transition-colors ${
-                        activeTab === tab.id ? "text-[#3B82F6]" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
+                        activeTab === tab.id ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                       }`}
                     >
                       {tab.label}
                       {activeTab === tab.id && (
-                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3B82F6]" />
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)]" />
                       )}
                     </button>
                   ))}
@@ -345,7 +345,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                                 key={mod.id}
                                 className="flex items-center gap-3 p-3 bg-[var(--color-surface-page)] rounded-lg"
                               >
-                                <span className="w-7 h-7 flex items-center justify-center bg-[#EFF6FF] rounded-full text-xs font-medium text-[#3B82F6]">
+                                <span className="w-7 h-7 flex items-center justify-center bg-[var(--color-border-subtle)] rounded-full text-xs font-medium text-[var(--color-primary)]">
                                   {idx + 1}
                                 </span>
                                 <div className="flex-1 min-w-0">
@@ -399,7 +399,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                                     <div className="flex items-center gap-2">
                                       <div className="w-20 h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                                         <div
-                                          className="h-full bg-[#3B82F6] rounded-full"
+                                          className="h-full bg-[var(--color-primary)] rounded-full"
                                           style={{ width: `${e.progress}%` }}
                                         />
                                       </div>
@@ -412,8 +412,8 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                                         e.status === "active"
                                           ? "bg-[#DCFCE7] text-[#22C55E]"
                                           : e.status === "completed"
-                                          ? "bg-[#EFF6FF] text-[#3B82F6]"
-                                          : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"
+                                          ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
+                                          : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                                       }`}
                                     >
                                       {e.status}

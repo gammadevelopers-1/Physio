@@ -198,10 +198,10 @@ const CoursesContent = () => {
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       active: "bg-[#DCFCE7] text-[#22C55E]",
-      draft: "bg-[#F3F4F6] text-[var(--color-text-secondary)]",
+      draft: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
       pending_review: "bg-[#EEF2FF] text-[#6366F1]",
       changes_requested: "bg-[#FEF3C7] text-[#D97706]",
-      completed: "bg-[#EFF6FF] text-[#3B82F6]",
+      completed: "bg-[var(--color-border-subtle)] text-[var(--color-primary)]",
       archived: "bg-[#FEF3C7] text-[#D4A520]",
     };
     return styles[status] || styles.draft;
@@ -245,7 +245,7 @@ const CoursesContent = () => {
                 </div>
                 <Link
                   href={`/${locale}/dashboard/manager/courses/create`}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   {t("coursesPage.createCourse")}
@@ -290,14 +290,14 @@ const CoursesContent = () => {
                       placeholder={t("coursesPage.searchPlaceholder")}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
+                      className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent`}
                     />
                   </div>
                   <div className="flex flex-wrap gap-3">
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     >
                       <option value="all">
                         {t("coursesPage.filters.allStatus")}
@@ -325,7 +325,7 @@ const CoursesContent = () => {
                     <select
                       value={deliveryFilter}
                       onChange={(e) => setDeliveryFilter(e.target.value)}
-                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     >
                       <option value="all">
                         {t("coursesPage.filters.allDelivery")}
@@ -344,7 +344,7 @@ const CoursesContent = () => {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     >
                       <option value="newest">
                         {t("coursesPage.sort.newest")}
@@ -391,7 +391,7 @@ const CoursesContent = () => {
                 </div>
               ) : courses.length === 0 ? (
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
-                  <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mx-auto mb-4">
                     <BookOpen className="w-8 h-8 text-[var(--color-text-secondary)]" />
                   </div>
                   <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
@@ -402,7 +402,7 @@ const CoursesContent = () => {
                   </p>
                   <Link
                     href={`/${locale}/dashboard/manager/courses/create`}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                     {t("coursesPage.createCourse")}
@@ -438,7 +438,7 @@ const CoursesContent = () => {
                             >
                               {t(`coursesPage.status.${course.status}`)}
                             </span>
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/90 rounded-md text-xs font-medium text-[var(--color-text-secondary)]">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[var(--color-surface-card)]/90 rounded-md text-xs font-medium text-[var(--color-text-secondary)]">
                               {getDeliveryIcon(course.deliveryType)}
                               {t(
                                 `coursesPage.delivery.${course.deliveryType}`
@@ -451,7 +451,7 @@ const CoursesContent = () => {
                             <button
                               onClick={() => setOpenDropdown(openDropdown === course.id ? null : course.id)}
                               disabled={statusLoading === course.id}
-                              className="p-1.5 bg-white/90 rounded-lg text-[var(--color-text-secondary)] hover:bg-white transition-colors disabled:opacity-50"
+                              className="p-1.5 bg-[var(--color-surface-card)]/90 rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-card)] transition-colors disabled:opacity-50"
                               aria-label={tA("openActions")}
                               aria-haspopup="true"
                               aria-expanded={openDropdown === course.id}
@@ -522,7 +522,7 @@ const CoursesContent = () => {
                                   <>
                                     <button
                                       onClick={() => handleAction(course.id, "toggle_public", course.visibleOnPublicSite !== false)}
-                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors"
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                                       role="menuitem"
                                     >
                                       {course.visibleOnPublicSite !== false ? (
@@ -539,7 +539,7 @@ const CoursesContent = () => {
                                     </button>
                                     <button
                                       onClick={() => handleAction(course.id, "toggle_featured", course.isFeatured === true)}
-                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors"
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                                       role="menuitem"
                                     >
                                       <Star
@@ -551,7 +551,7 @@ const CoursesContent = () => {
                                     </button>
                                     <button
                                       onClick={() => handleAction(course.id, "complete")}
-                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#3B82F6] hover:bg-[#EFF6FF] transition-colors"
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                                       role="menuitem"
                                     >
                                       <CheckCircle className="w-3.5 h-3.5" />
@@ -573,7 +573,7 @@ const CoursesContent = () => {
                                   <>
                                     <button
                                       onClick={() => handleAction(course.id, "toggle_public", course.visibleOnPublicSite !== false)}
-                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors"
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                                       role="menuitem"
                                     >
                                       {course.visibleOnPublicSite !== false ? (
@@ -687,7 +687,7 @@ const CoursesContent = () => {
                           <div className="flex gap-2 mt-auto">
                             <Link
                               href={`/${locale}/dashboard/manager/courses/${course.id}`}
-                              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors"
                             >
                               {t("coursesPage.manage")}
                               <ChevronRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
@@ -728,7 +728,7 @@ const CoursesContent = () => {
                       value={requestChangesNote}
                       onChange={(e) => setRequestChangesNote(e.target.value)}
                       placeholder={t("coursesPage.actions.requestChangesPlaceholder")}
-                      className="w-full border border-[var(--color-border)] rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-h-[100px] resize-none"
+                      className="w-full border border-[var(--color-border)] rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] min-h-[100px] resize-none"
                     />
                     <div className="flex justify-end gap-3 mt-4">
                       <button
@@ -736,7 +736,7 @@ const CoursesContent = () => {
                           setRequestChangesId(null);
                           setRequestChangesNote("");
                         }}
-                        className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg transition-colors"
+                        className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
                       >
                         {t("coursesPage.actions.cancel")}
                       </button>

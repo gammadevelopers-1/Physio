@@ -34,7 +34,7 @@ const WizardStepIndicator = ({ currentStep, skipStep2 }: WizardStepIndicatorProp
                   isCompleted
                     ? "bg-[#22C55E] text-white"
                     : isCurrent
-                      ? "bg-[#3B82F6] text-white"
+                      ? "bg-[var(--color-primary)] text-white"
                       : "bg-[var(--color-border)] text-[var(--color-text-secondary)]"
                 }`}
               >
@@ -42,7 +42,7 @@ const WizardStepIndicator = ({ currentStep, skipStep2 }: WizardStepIndicatorProp
               </div>
               <span
                 className={`mt-1.5 text-xs font-medium text-center whitespace-nowrap ${
-                  isCurrent ? "text-[#3B82F6]" : isCompleted ? "text-[#22C55E]" : "text-[var(--color-text-secondary)]"
+                  isCurrent ? "text-[var(--color-primary)]" : isCompleted ? "text-[#22C55E]" : "text-[var(--color-text-secondary)]"
                 }`}
               >
                 {step.label}

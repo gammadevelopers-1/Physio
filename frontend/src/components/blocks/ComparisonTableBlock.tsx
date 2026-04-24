@@ -67,7 +67,7 @@ export function ComparisonTableBlock({ data }: ComparisonTableBlockProps) {
                 {data.columns?.map((col) => (
                   <th
                     key={col.id}
-                    className={`p-4 text-center border-b border-[var(--outline-subtle)] ${col.highlighted ? "bg-[var(--surface-container-primary)]/5" : ""}`}
+                    className={`p-4 text-center border-b border-[var(--outline-subtle)] ${col.highlighted ? "bg-[var(--color-primary)]/5" : ""}`}
                   >
                     <div className="font-semibold text-[var(--on-surface-default)]">
                       {col.heading}
@@ -95,7 +95,7 @@ export function ComparisonTableBlock({ data }: ComparisonTableBlockProps) {
                       return (
                         <td
                           key={col.id}
-                          className={`p-4 text-center text-sm ${col.highlighted ? "bg-[var(--surface-container-primary)]/5" : ""}`}
+                          className={`p-4 text-center text-sm ${col.highlighted ? "bg-[var(--color-primary)]/5" : ""}`}
                         >
                           {features[rowIdx] || "-"}
                         </td>
@@ -115,7 +115,7 @@ export function ComparisonTableBlock({ data }: ComparisonTableBlockProps) {
                         href={col.buttonUrl}
                         className={`inline-block px-6 py-2 rounded-full text-sm font-medium ${
                           col.highlighted
-                            ? "bg-[var(--surface-container-primary)] text-white"
+                            ? "bg-[var(--color-primary)] text-white"
                             : "border border-[var(--outline-subtle)] text-[var(--on-surface-default)] hover:bg-gray-50"
                         }`}
                       >

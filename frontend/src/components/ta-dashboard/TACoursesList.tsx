@@ -76,7 +76,7 @@ const TACoursesList = () => {
       case "pre_assigned":
         return "bg-blue-50 text-blue-700 border border-blue-200";
       default:
-        return "bg-gray-50 text-gray-700 border border-gray-200";
+        return "bg-[var(--color-surface-page)] text-[var(--color-text-primary)] border border-[var(--color-border)]";
     }
   };
 
@@ -134,7 +134,7 @@ const TACoursesList = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20"
+              className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20"
             >
               <option value="newest">{t("courses.sortNewest") || "Newest First"}</option>
               <option value="oldest">{t("courses.sortOldest") || "Oldest First"}</option>
@@ -152,8 +152,8 @@ const TACoursesList = () => {
             onClick={() => setFilter(f.key)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === f.key
-                ? "btn-gold text-white"
-                : "bg-white text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
+                ? "btn-gold text-[var(--color-button-text)]"
+                : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
             }`}
           >
             {f.label}
@@ -224,7 +224,7 @@ const TACoursesList = () => {
                     <div className="mt-auto">
                       <Link
                         href={`/${locale}/dashboard/teaching-assistant/courses/${course.courseId}`}
-                        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors"
                       >
                         {t("courses.viewDetails") || "View Details"}
                         {locale === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}

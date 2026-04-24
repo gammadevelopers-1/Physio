@@ -74,7 +74,7 @@ const AlertsActivitySidebar = ({
       case "warning":
         return <AlertTriangle className="w-5 h-5 text-[#D97706]" />;
       case "info":
-        return <Info className="w-5 h-5 text-[#3B82F6]" />;
+        return <Info className="w-5 h-5 text-[var(--color-primary)]" />;
       default:
         return <Bell className="w-5 h-5 text-[var(--color-text-secondary)]" />;
     }
@@ -87,9 +87,9 @@ const AlertsActivitySidebar = ({
       case "warning":
         return "bg-[#FEF3C7] border-[#FCD34D]";
       case "info":
-        return "bg-[#DBEAFE] border-[#93C5FD]";
+        return "bg-[var(--color-border-subtle)] border-[#93C5FD]";
       default:
-        return "bg-[#F3F4F6] border-[var(--color-border)]";
+        return "bg-[var(--color-border-subtle)] border-[var(--color-border)]";
     }
   };
 
@@ -97,8 +97,8 @@ const AlertsActivitySidebar = ({
     switch (type) {
       case "user":
         return (
-          <div className="w-8 h-8 rounded-full bg-[#DBEAFE] flex items-center justify-center">
-            <Users className="w-4 h-4 text-[#3B82F6]" />
+          <div className="w-8 h-8 rounded-full bg-[var(--color-border-subtle)] flex items-center justify-center">
+            <Users className="w-4 h-4 text-[var(--color-primary)]" />
           </div>
         );
       case "admin":
@@ -127,7 +127,7 @@ const AlertsActivitySidebar = ({
         );
       default:
         return (
-          <div className="w-8 h-8 rounded-full bg-[#F3F4F6] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-[var(--color-border-subtle)] flex items-center justify-center">
             <Zap className="w-4 h-4 text-[var(--color-text-secondary)]" />
           </div>
         );
@@ -179,7 +179,7 @@ const AlertsActivitySidebar = ({
       <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Bell className="w-5 h-5 text-[#002D87]" />
+            <Bell className="w-5 h-5 text-[var(--color-primary)]" />
             <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
               {t("alerts.title")}
             </h3>
@@ -231,7 +231,7 @@ const AlertsActivitySidebar = ({
       <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-[#002D87]" />
+            <Zap className="w-5 h-5 text-[var(--color-primary)]" />
             <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
               {t("activity.title")}
             </h3>
@@ -265,7 +265,7 @@ const AlertsActivitySidebar = ({
       {/* Quick Actions Section */}
       <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Zap className="w-5 h-5 text-[#002D87]" />
+          <Zap className="w-5 h-5 text-[var(--color-primary)]" />
           <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t("quickActions.title")}
           </h3>
@@ -294,7 +294,7 @@ const AlertsActivitySidebar = ({
           {/* Header */}
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-[#002D87]" />
+              <DollarSign className="w-5 h-5 text-[var(--color-primary)]" />
               <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                 {t("finance.title")}
               </h3>

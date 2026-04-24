@@ -229,9 +229,9 @@ const InstructorTabs = ({
       case "pdf":
         return "bg-[#FFEDD5] text-[#F97316]";
       case "image":
-        return "bg-[#E0E7FF] text-[#6366F1]";
+        return "bg-[var(--color-border-subtle)] text-[#6366F1]";
       default:
-        return "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+        return "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
     }
   };
 
@@ -245,9 +245,9 @@ const InstructorTabs = ({
       case "pending_review":
         return { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", icon: Clock };
       case "draft":
-        return { bg: "bg-[#F3F4F6]", text: "text-[var(--color-text-secondary)]", icon: File };
+        return { bg: "bg-[var(--color-border-subtle)]", text: "text-[var(--color-text-secondary)]", icon: File };
       default:
-        return { bg: "bg-[#F3F4F6]", text: "text-[var(--color-text-secondary)]", icon: File };
+        return { bg: "bg-[var(--color-border-subtle)]", text: "text-[var(--color-text-secondary)]", icon: File };
     }
   };
 
@@ -342,7 +342,7 @@ const InstructorTabs = ({
               aria-selected={activeTab === tab.id}
               className={`px-4 sm:px-5 py-3 text-xs sm:text-sm font-medium relative transition-colors whitespace-nowrap ${
                 activeTab === tab.id
-                  ? "text-[#3B82F6]"
+                  ? "text-[var(--color-primary)]"
                   : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
               }`}
             >
@@ -351,7 +351,7 @@ const InstructorTabs = ({
                 {tab.label}
               </span>
               {activeTab === tab.id && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3B82F6] rounded-t" />
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)] rounded-t" />
               )}
             </button>
           ))}
@@ -370,8 +370,8 @@ const InstructorTabs = ({
               onDrop={handleDrop}
               className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
                 isDragOver
-                  ? "border-[#3B82F6] bg-[#EFF6FF]"
-                  : "border-[var(--color-border)] hover:border-[#3B82F6] hover:bg-[var(--color-surface-page)]"
+                  ? "border-[var(--color-primary)] bg-[var(--color-border-subtle)]"
+                  : "border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-page)]"
               }`}
             >
               <input
@@ -385,7 +385,7 @@ const InstructorTabs = ({
               <label htmlFor="file-upload" className="cursor-pointer">
                 <div className="flex flex-col items-center gap-2">
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                    isDragOver ? "bg-[#3B82F6] text-white" : "bg-[#EFF6FF] text-[#3B82F6]"
+                    isDragOver ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
                   }`}>
                     <Upload className="w-6 h-6" />
                   </div>
@@ -398,7 +398,7 @@ const InstructorTabs = ({
                     </p>
                   </div>
                   <span
-                    className="mt-2 px-4 py-2 text-sm font-medium text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#EFF6FF] transition-colors inline-block"
+                    className="mt-2 px-4 py-2 text-sm font-medium text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors inline-block"
                   >
                     {t("content.browseFiles")}
                   </span>
@@ -417,7 +417,7 @@ const InstructorTabs = ({
 
             {/* Uploading indicator */}
             {uploading && (
-              <div className="flex items-center gap-2 p-3 bg-[#EFF6FF] rounded-lg text-sm text-[#3B82F6]">
+              <div className="flex items-center gap-2 p-3 bg-[var(--color-border-subtle)] rounded-lg text-sm text-[var(--color-primary)]">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 {t("content.uploading")}
               </div>

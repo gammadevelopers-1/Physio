@@ -162,25 +162,25 @@ const SessionsCalendarWidget = ({
       return "bg-[#FEF3C7] border-[#FDE68A]";
     }
     if (session.status === "cancelled") {
-      return "bg-[#F3F4F6] border-[var(--color-border)] opacity-50";
+      return "bg-[var(--color-border-subtle)] border-[var(--color-border)] opacity-50";
     }
     if (session.status === "live") {
       return "bg-[#FEF2F2] border-[#FECACA] ring-1 ring-[#EF4444]";
     }
     // scheduled
-    if (session.type === "zoom") return "bg-[#EFF6FF] border-[#BFDBFE] hover:border-[#3B82F6]";
+    if (session.type === "zoom") return "bg-[var(--color-border-subtle)] border-[#BFDBFE] hover:border-[var(--color-primary)]";
     if (session.type === "hybrid") return "bg-[#F5F3FF] border-[#DDD6FE] hover:border-[#8B5CF6]";
     return "bg-[#F0FDF4] border-[#BBF7D0] hover:border-[#22C55E]";
   };
 
   const getTypeIcon = (type: string) => {
-    if (type === "zoom") return <Video className="w-3 h-3 text-[#3B82F6]" />;
+    if (type === "zoom") return <Video className="w-3 h-3 text-[var(--color-primary)]" />;
     if (type === "hybrid") return <RefreshCw className="w-3 h-3 text-[#8B5CF6]" />;
     return <MapPin className="w-3 h-3 text-[#22C55E]" />;
   };
 
   const getTypeColor = (type: string) => {
-    if (type === "zoom") return "text-[#3B82F6]";
+    if (type === "zoom") return "text-[var(--color-primary)]";
     if (type === "hybrid") return "text-[#8B5CF6]";
     return "text-[#22C55E]";
   };
@@ -208,7 +208,7 @@ const SessionsCalendarWidget = ({
       >
         {/* Colored top bar by type */}
         <div className={`h-1 ${
-          session.type === "zoom" ? "bg-[#3B82F6]" :
+          session.type === "zoom" ? "bg-[var(--color-primary)]" :
           session.type === "hybrid" ? "bg-[#8B5CF6]" : "bg-[#22C55E]"
         }`} />
 
@@ -239,11 +239,11 @@ const SessionsCalendarWidget = ({
 
         {/* Action overlay on hover — hidden in readOnly mode */}
         {!readOnly && hoveredSession === session.id && !isCancelled && (
-          <div className={`${isMobile ? "flex items-center justify-center gap-1 px-2 pb-2" : "absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-sm border-t border-[var(--color-border)] p-1 flex items-center justify-center gap-1"}`}>
+          <div className={`${isMobile ? "flex items-center justify-center gap-1 px-2 pb-2" : "absolute inset-x-0 bottom-0 bg-[var(--color-surface-card)]/95 backdrop-blur-sm border-t border-[var(--color-border)] p-1 flex items-center justify-center gap-1"}`}>
             {isScheduled && (
               <button
                 onClick={(e) => { e.stopPropagation(); onStartSession?.(session.id); }}
-                className="p-1 bg-[#3B82F6] text-white rounded hover:bg-[#2563EB] transition-colors"
+                className="p-1 bg-[var(--color-primary)] text-white rounded hover:bg-[var(--color-primary-dark)] transition-colors"
                 title={t("sessionsCalendar.startSession")}
               >
                 <Play className="w-3 h-3" />
@@ -285,7 +285,7 @@ const SessionsCalendarWidget = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border-b border-[var(--color-border)] gap-3">
         <div className="flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-[#3B82F6]" />
+          <Calendar className="w-5 h-5 text-[var(--color-primary)]" />
           <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)]">
             {t("sessionsCalendar.title")}
           </h2>
@@ -311,7 +311,7 @@ const SessionsCalendarWidget = ({
           {currentWeekOffset !== 0 && (
             <button
               onClick={goToToday}
-              className="px-3 py-1.5 text-xs sm:text-sm font-medium text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#EFF6FF] transition-colors"
+              className="px-3 py-1.5 text-xs sm:text-sm font-medium text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
             >
               {t("sessionsCalendar.today")}
             </button>
@@ -329,12 +329,12 @@ const SessionsCalendarWidget = ({
                 {/* Day Header */}
                 <div
                   className={`text-center pb-2 mb-2 border-b border-[var(--color-border)] ${
-                    day.isToday ? "bg-[#EFF6FF] rounded-t-lg -mx-1 px-1 pt-1" : ""
+                    day.isToday ? "bg-[var(--color-border-subtle)] rounded-t-lg -mx-1 px-1 pt-1" : ""
                   }`}
                 >
                   <p
                     className={`text-xs font-medium ${
-                      day.isToday ? "text-[#3B82F6]" : "text-[var(--color-text-secondary)]"
+                      day.isToday ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)]"
                     }`}
                   >
                     {t(`sessionsCalendar.days.${dayKeys[index]}`)}
@@ -342,7 +342,7 @@ const SessionsCalendarWidget = ({
                   <p
                     className={`text-lg font-bold ${
                       day.isToday
-                        ? "text-[#3B82F6] bg-[#3B82F6] text-white w-8 h-8 rounded-full flex items-center justify-center mx-auto"
+                        ? "text-[var(--color-primary)] bg-[var(--color-primary)] text-white w-8 h-8 rounded-full flex items-center justify-center mx-auto"
                         : "text-[var(--color-text-primary)]"
                     }`}
                   >
@@ -378,7 +378,7 @@ const SessionsCalendarWidget = ({
                 key={index}
                 className={`flex-shrink-0 w-[140px] sm:w-[160px] rounded-lg border ${
                   day.isToday
-                    ? "border-[#3B82F6] bg-[#EFF6FF]"
+                    ? "border-[var(--color-primary)] bg-[var(--color-border-subtle)]"
                     : "border-[var(--color-border)]"
                 }`}
               >
@@ -390,20 +390,20 @@ const SessionsCalendarWidget = ({
                 >
                   <p
                     className={`text-xs font-medium ${
-                      day.isToday ? "text-[#3B82F6]" : "text-[var(--color-text-secondary)]"
+                      day.isToday ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)]"
                     }`}
                   >
                     {t(`sessionsCalendar.days.${dayKeys[index]}`)}
                   </p>
                   <p
                     className={`text-base font-bold ${
-                      day.isToday ? "text-[#3B82F6]" : "text-[var(--color-text-primary)]"
+                      day.isToday ? "text-[var(--color-primary)]" : "text-[var(--color-text-primary)]"
                     }`}
                   >
                     {day.dayNumber}
                   </p>
                   {day.isToday && (
-                    <span className="text-[10px] text-[#3B82F6] font-medium">
+                    <span className="text-[10px] text-[var(--color-primary)] font-medium">
                       {t("sessionsCalendar.todayLabel")}
                     </span>
                   )}
@@ -432,7 +432,7 @@ const SessionsCalendarWidget = ({
         {/* Legend */}
         <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-[var(--color-border)] flex-wrap">
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-[#EFF6FF] border border-[#BFDBFE]" />
+            <div className="w-3 h-3 rounded bg-[var(--color-border-subtle)] border border-[#BFDBFE]" />
             <span className="text-xs text-[var(--color-text-secondary)]">
               {t("sessionsCalendar.zoomSession")}
             </span>

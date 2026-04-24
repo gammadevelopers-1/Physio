@@ -31,8 +31,8 @@ const InstructorKPICards = ({ data }: InstructorKPICardsProps) => {
       label: t("kpi.totalStudents"),
       value: data.totalStudents,
       icon: Users,
-      iconBg: "bg-[#DBEAFE]",
-      iconColor: "text-[#3B82F6]",
+      iconBg: "bg-[var(--color-border-subtle)]",
+      iconColor: "text-[var(--color-primary)]",
     },
     {
       id: "todaysSessions",

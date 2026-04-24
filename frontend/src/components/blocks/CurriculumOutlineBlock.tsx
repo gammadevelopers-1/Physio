@@ -67,10 +67,10 @@ export function CurriculumOutlineBlock({ data }: CurriculumOutlineBlockProps) {
             return (
               <div
                 key={mod.id}
-                className="p-5 bg-white rounded-2xl border border-[var(--outline-subtle)] shadow-sm"
+                className="p-5 bg-[var(--color-surface-card)] rounded-2xl border border-[var(--outline-subtle)] shadow-sm"
               >
                 <div className="flex items-start gap-4">
-                  <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-[var(--surface-container-primary)] text-white text-sm font-bold">
+                  <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-[var(--color-primary)] text-white text-sm font-bold">
                     {index + 1}
                   </span>
                   <div className="flex flex-col gap-2 flex-1">
@@ -97,7 +97,7 @@ export function CurriculumOutlineBlock({ data }: CurriculumOutlineBlockProps) {
                         {lessonList.map((lesson, i) => (
                           <li
                             key={i}
-                            className="text-sm text-[var(--on-surface-default)] pl-4 relative before:content-[''] before:absolute before:left-0 before:top-2 before:w-1.5 before:h-1.5 before:rounded-full before:bg-[var(--surface-container-primary)]"
+                            className="text-sm text-[var(--on-surface-default)] pl-4 relative before:content-[''] before:absolute before:left-0 before:top-2 before:w-1.5 before:h-1.5 before:rounded-full before:bg-[var(--color-primary)]"
                           >
                             {lesson}
                           </li>

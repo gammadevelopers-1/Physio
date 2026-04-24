@@ -92,7 +92,7 @@ export function PricingTableBlock({ data }: PricingTableBlockProps) {
                     href={plan.buttonUrl}
                     className={`mt-auto text-center px-6 py-3 rounded-full text-sm font-medium ${
                       plan.highlighted
-                        ? "bg-[var(--surface-container-primary)] text-white"
+                        ? "bg-[var(--color-primary)] text-white"
                         : "border border-[var(--outline-subtle)] text-[var(--on-surface-default)] hover:bg-gray-50"
                     }`}
                   >

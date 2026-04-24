@@ -90,15 +90,15 @@ export default function VersionHistoryPanel({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#EFF6FF] flex items-center justify-center">
-              <History className="w-5 h-5 text-[#3B82F6]" />
+            <div className="w-10 h-10 rounded-lg bg-[var(--color-border-subtle)] flex items-center justify-center">
+              <History className="w-5 h-5 text-[var(--color-primary)]" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("versions.title")}</h3>
               <p className="text-sm text-[var(--color-text-secondary)] truncate max-w-[300px]">{materialTitle}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg">
+          <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -107,21 +107,21 @@ export default function VersionHistoryPanel({
         <div className="flex-1 overflow-y-auto p-4">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 text-[#3B82F6] animate-spin" />
+              <Loader2 className="w-6 h-6 text-[var(--color-primary)] animate-spin" />
             </div>
           ) : versions.length === 0 ? (
             <p className="text-sm text-[var(--color-text-secondary)] text-center py-8">{t("versions.noHistory")}</p>
           ) : (
             <div className="space-y-3">
               {versions.map((v) => (
-                <div key={v.id} className={`p-3 rounded-lg border ${v.isCurrent ? "border-[#3B82F6] bg-[#EFF6FF]" : "border-[var(--color-border)] bg-white"}`}>
+                <div key={v.id} className={`p-3 rounded-lg border ${v.isCurrent ? "border-[var(--color-primary)] bg-[var(--color-border-subtle)]" : "border-[var(--color-border)] bg-[var(--color-surface-card)]"}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${v.isCurrent ? "bg-[#3B82F6] text-white" : "bg-[#F3F4F6] text-[var(--color-text-secondary)]"}`}>
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${v.isCurrent ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"}`}>
                         v{v.version}
                       </span>
                       {v.isCurrent && (
-                        <span className="inline-flex items-center gap-1 text-xs text-[#3B82F6]">
+                        <span className="inline-flex items-center gap-1 text-xs text-[var(--color-primary)]">
                           <CheckCircle className="w-3 h-3" />
                           {t("versions.current")}
                         </span>
@@ -140,7 +140,7 @@ export default function VersionHistoryPanel({
                             <button
                               onClick={() => handleRollback(v.id)}
                               disabled={rolling === v.id}
-                              className="px-3 py-1 bg-[#3B82F6] text-white rounded-lg text-xs font-medium hover:bg-[#2563EB] disabled:opacity-50"
+                              className="px-3 py-1 bg-[var(--color-primary)] text-white rounded-lg text-xs font-medium hover:bg-[var(--color-primary-dark)] disabled:opacity-50"
                             >
                               {rolling === v.id ? <Loader2 className="w-3 h-3 animate-spin inline" /> : t("versions.confirm")}
                             </button>
@@ -154,7 +154,7 @@ export default function VersionHistoryPanel({
                         ) : (
                           <button
                             onClick={() => setConfirmId(v.id)}
-                            className="flex items-center gap-1 px-2 py-1 text-xs text-[var(--color-text-secondary)] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded transition-colors"
+                            className="flex items-center gap-1 px-2 py-1 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] rounded transition-colors"
                           >
                             <RotateCcw className="w-3 h-3" />
                             {t("versions.rollback")}

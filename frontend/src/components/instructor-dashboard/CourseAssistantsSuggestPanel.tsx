@@ -114,7 +114,7 @@ const CourseAssistantsSuggestPanel = ({
       case "rejected":
         return "bg-red-50 text-red-700 border-red-200";
       default:
-        return "bg-gray-50 text-gray-700 border-gray-200";
+        return "bg-[var(--color-surface-page)] text-[var(--color-text-primary)] border-[var(--color-border)]";
     }
   };
 

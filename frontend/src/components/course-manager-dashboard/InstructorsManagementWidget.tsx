@@ -151,7 +151,7 @@ const InstructorsManagementWidget = ({
           <div className="text-center pt-3 border-t border-[var(--color-border)] mt-3">
             <Link
               href={`/${locale}/dashboard/manager/instructors`}
-              className="text-[13px] font-medium text-[#3B82F6] hover:underline inline-flex items-center gap-1"
+              className="text-[13px] font-medium text-[var(--color-primary)] hover:underline inline-flex items-center gap-1"
             >
               {t("instructors.manageAll")}
               <ChevronRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />

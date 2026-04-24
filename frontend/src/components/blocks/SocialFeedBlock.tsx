@@ -74,7 +74,7 @@ export function SocialFeedBlock({ data }: SocialFeedBlockProps) {
               href={post.embedUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-col gap-3 p-5 bg-white rounded-2xl border border-[var(--outline-subtle)] shadow-sm hover:shadow-md transition-shadow"
+              className="flex flex-col gap-3 p-5 bg-[var(--color-surface-card)] rounded-2xl border border-[var(--outline-subtle)] shadow-sm hover:shadow-md transition-shadow"
             >
               <span
                 className={`inline-block w-fit px-3 py-1 rounded-full text-xs font-medium capitalize ${platformColors[post.platform] || "bg-gray-50 text-gray-600"}`}

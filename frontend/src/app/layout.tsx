@@ -32,6 +32,7 @@ const THEME_DEFAULTS = {
   borderSubtle: "#C8D5E1",
   iconColor: "#737373",
   footerBackground: "#ffffff",
+  buttonText: "#ffffff",
 };
 
 export default async function RootLayout({
@@ -51,9 +52,10 @@ export default async function RootLayout({
     borderSubtle: settings?.themeBorderSubtle || THEME_DEFAULTS.borderSubtle,
     iconColor: settings?.themeIconColor || THEME_DEFAULTS.iconColor,
     footerBackground: settings?.themeFooterBackground || THEME_DEFAULTS.footerBackground,
+    buttonText: settings?.themeButtonText || THEME_DEFAULTS.buttonText,
   };
 
-  const themeStyle = `:root{--color-primary:${theme.primary};--color-primary-dark:${theme.primaryDark};--color-surface-page:${theme.surfacePage};--color-surface-card:${theme.surfaceCard};--color-text-primary:${theme.textPrimary};--color-text-secondary:${theme.textSecondary};--color-border:${theme.borderColor};--color-border-subtle:${theme.borderSubtle};--color-icon:${theme.iconColor};--color-footer-bg:${theme.footerBackground};}`;
+  const themeStyle = `:root{--color-primary:${theme.primary};--color-primary-dark:${theme.primaryDark};--color-surface-page:${theme.surfacePage};--color-surface-card:${theme.surfaceCard};--color-text-primary:${theme.textPrimary};--color-text-secondary:${theme.textSecondary};--color-border:${theme.borderColor};--color-border-subtle:${theme.borderSubtle};--color-icon:${theme.iconColor};--color-footer-bg:${theme.footerBackground};--color-button-text:${theme.buttonText};}`;
 
   return (
     <html lang="en" suppressHydrationWarning>

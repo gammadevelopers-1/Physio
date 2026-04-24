@@ -216,7 +216,7 @@ const AdminSettingsContent = () => {
                             onClick={() => setRequire2FA(!require2FA)}
                             className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${require2FA ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                           >
-                            <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${require2FA ? "ms-auto" : ""}`} />
+                            <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${require2FA ? "ms-auto" : ""}`} />
                           </button>
                         </div>
 
@@ -273,7 +273,7 @@ const AdminSettingsContent = () => {
                             onClick={() => setEmailNotifications(!emailNotifications)}
                             className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${emailNotifications ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                           >
-                            <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${emailNotifications ? "ms-auto" : ""}`} />
+                            <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${emailNotifications ? "ms-auto" : ""}`} />
                           </button>
                         </div>
 
@@ -290,7 +290,7 @@ const AdminSettingsContent = () => {
                             onClick={() => setSmsNotifications(!smsNotifications)}
                             className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${smsNotifications ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                           >
-                            <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${smsNotifications ? "ms-auto" : ""}`} />
+                            <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${smsNotifications ? "ms-auto" : ""}`} />
                           </button>
                         </div>
                       </div>
@@ -349,7 +349,7 @@ const AdminSettingsContent = () => {
                             onClick={() => setMaintenanceMode(!maintenanceMode)}
                             className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${maintenanceMode ? "bg-[#DC2626]" : "bg-[var(--color-border)]"}`}
                           >
-                            <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${maintenanceMode ? "ms-auto" : ""}`} />
+                            <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${maintenanceMode ? "ms-auto" : ""}`} />
                           </button>
                         </div>
 
@@ -379,8 +379,8 @@ const AdminSettingsContent = () => {
                         <div className="space-y-4">
                           <div className="flex items-center justify-between p-4 bg-[var(--color-surface-page)] rounded-lg">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-[#DBEAFE] rounded-lg flex items-center justify-center">
-                                <span className="text-sm font-bold text-[#3B82F6]">Z</span>
+                              <div className="w-10 h-10 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center">
+                                <span className="text-sm font-bold text-[var(--color-primary)]">Z</span>
                               </div>
                               <div>
                                 <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("settingsPage.integrations.zoom")}</p>
@@ -409,7 +409,7 @@ const AdminSettingsContent = () => {
 
                           <div className="flex items-center justify-between p-4 bg-[var(--color-surface-page)] rounded-lg">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center">
+                              <div className="w-10 h-10 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center">
                                 <span className="text-sm font-bold text-[var(--color-text-secondary)]">U</span>
                               </div>
                               <div>
@@ -427,7 +427,7 @@ const AdminSettingsContent = () => {
 
                   {/* Save Button */}
                   <div className="mt-8 pt-6 border-t border-[var(--color-border)] flex justify-end">
-                    <button className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg transition-colors">
+                    <button className="flex items-center gap-2 px-6 py-2.5 btn-gold text-[var(--color-button-text)] rounded-lg transition-colors">
                       <Save className="w-5 h-5" />
                       <span className="text-sm font-medium">{t("settingsPage.saveChanges")}</span>
                     </button>

@@ -51,7 +51,7 @@ export function NewsletterBlock({ data }: NewsletterBlockProps) {
           />
           <button
             type="button"
-            className="px-6 py-3 rounded-full bg-[var(--surface-container-primary)] text-white text-sm font-medium"
+            className="px-6 py-3 rounded-full bg-[var(--color-primary)] text-white text-sm font-medium"
           >
             {data.submitLabel || "Subscribe"}
           </button>

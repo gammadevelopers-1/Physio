@@ -52,11 +52,11 @@ const SessionCard = ({
   const t = useTranslations("instructorDashboard");
 
   const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
-    scheduled: { bg: "bg-[#EFF6FF]", text: "text-[#3B82F6]", label: t("sessions.statusScheduled") },
+    scheduled: { bg: "bg-[var(--color-border-subtle)]", text: "text-[var(--color-primary)]", label: t("sessions.statusScheduled") },
     live: { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: t("sessions.statusLive") },
     ended: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessions.statusEnded") },
     completed: { bg: "bg-[#DCFCE7]", text: "text-[#22C55E]", label: t("sessions.statusCompleted") },
-    cancelled: { bg: "bg-[#F3F4F6]", text: "text-[var(--color-text-secondary)]", label: t("sessions.statusCancelled") || "Cancelled" },
+    cancelled: { bg: "bg-[var(--color-border-subtle)]", text: "text-[var(--color-text-secondary)]", label: t("sessions.statusCancelled") || "Cancelled" },
     missed: { bg: "bg-[#FEF2F2]", text: "text-[#EF4444]", label: t("sessions.statusMissed") },
     rescheduled: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessions.statusRescheduled") },
   };
@@ -69,7 +69,7 @@ const SessionCard = ({
                     session.type === "hybrid" ? t("sessions.hybridSession") :
                     t("sessions.onsite");
 
-  const typeBg = session.type === "zoom" ? "bg-[#EFF6FF] text-[#3B82F6]" :
+  const typeBg = session.type === "zoom" ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]" :
                  session.type === "hybrid" ? "bg-[#F3E8FF] text-[#9333EA]" :
                  "bg-[#DCFCE7] text-[#22C55E]";
 
@@ -88,7 +88,7 @@ const SessionCard = ({
         ? "border-[#EF4444]/30 bg-gradient-to-r from-[#FEF2F2] to-white shadow-sm"
         : isCompleted || isInactive
         ? "border-[var(--color-border)] bg-[var(--color-surface-page)] opacity-75"
-        : "border-[var(--color-border)] bg-white hover:border-[#3B82F6]/40 hover:shadow-sm"
+        : "border-[var(--color-border)] bg-[var(--color-surface-card)] hover:border-[var(--color-primary)]/40 hover:shadow-sm"
     }`}>
       <div className="flex items-center gap-4 p-4">
         {/* Type Icon */}
@@ -140,7 +140,7 @@ const SessionCard = ({
           {isScheduled && (
             <button
               onClick={onStart}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6] text-white text-xs font-medium rounded-lg hover:bg-[#2563EB] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors"
             >
               <Play className="w-3.5 h-3.5" />
               {t("sessions.startSession")}
@@ -161,7 +161,7 @@ const SessionCard = ({
                   href={session.zoomLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-1.5 text-[#3B82F6] border border-[#BFDBFE] rounded-lg hover:bg-[#EFF6FF] transition-colors"
+                  className="p-1.5 text-[var(--color-primary)] border border-[#BFDBFE] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
                   title="Rejoin Zoom"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />

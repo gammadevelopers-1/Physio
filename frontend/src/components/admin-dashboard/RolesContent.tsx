@@ -186,12 +186,12 @@ function CreateRoleModal({ onClose, onCreated }: { onClose: () => void; onCreate
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#002D87] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center">
               <Shield className="w-5 h-5 text-white" />
             </div>
             <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Create New Role</h2>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg">
+          <button onClick={onClose} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg">
             <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
@@ -232,7 +232,7 @@ function CreateRoleModal({ onClose, onCreated }: { onClose: () => void; onCreate
             <button type="button" onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
               Cancel
             </button>
-            <button type="submit" disabled={isSubmitting} className="flex-1 h-10 btn-gold text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2">
+            <button type="submit" disabled={isSubmitting} className="flex-1 h-10 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2">
               {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" />Creating...</> : "Create Role"}
             </button>
           </div>
@@ -277,7 +277,7 @@ function EditRoleModal({ role, onClose, onUpdated }: { role: RoleWithCount; onCl
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#002D87] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center">
               <Edit className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -285,7 +285,7 @@ function EditRoleModal({ role, onClose, onUpdated }: { role: RoleWithCount; onCl
               <p className="text-xs text-[var(--color-text-secondary)]">{role.name}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg">
+          <button onClick={onClose} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg">
             <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
           </button>
         </div>
@@ -313,7 +313,7 @@ function EditRoleModal({ role, onClose, onUpdated }: { role: RoleWithCount; onCl
             <button type="button" onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
               Cancel
             </button>
-            <button type="submit" disabled={isSubmitting} className="flex-1 h-10 btn-gold text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2">
+            <button type="submit" disabled={isSubmitting} className="flex-1 h-10 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2">
               {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : "Save Changes"}
             </button>
           </div>
@@ -455,7 +455,7 @@ const RolesContent = () => {
                 </div>
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="flex items-center gap-2 px-4 py-2.5 btn-gold text-white rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 btn-gold text-[var(--color-button-text)] rounded-lg transition-colors"
                 >
                   <Plus className="w-5 h-5" />
                   <span className="text-sm font-medium">{t("rolesPage.createRole")}</span>
@@ -465,7 +465,7 @@ const RolesContent = () => {
               {/* Loading State */}
               {isLoading && (
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-[#002D87] mb-3" />
+                  <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)] mb-3" />
                   <p className="text-sm text-[var(--color-text-secondary)]">Loading roles...</p>
                 </div>
               )}
@@ -477,7 +477,7 @@ const RolesContent = () => {
                   <p className="text-sm text-[#DC2626] mb-4">{fetchError}</p>
                   <button
                     onClick={fetchRoles}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#002D87] rounded-lg hover:bg-[#001d5a] transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[var(--color-primary)] rounded-lg hover:bg-[#001d5a] transition-colors"
                   >
                     <RefreshCw className="w-4 h-4" />
                     Retry
@@ -536,7 +536,7 @@ const RolesContent = () => {
                                   e.stopPropagation();
                                   setEditingRole(role);
                                 }}
-                                className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
+                                className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
                               >
                                 <Edit className="w-4 h-4 text-[var(--color-text-secondary)]" />
                               </button>

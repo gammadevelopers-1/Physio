@@ -67,7 +67,7 @@ function StatusBadge({
     new: "bg-blue-50 text-blue-700",
     in_progress: "bg-yellow-50 text-yellow-700",
     resolved: "bg-green-50 text-green-700",
-    closed: "bg-gray-100 text-gray-500",
+    closed: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
   };
 
   const icons: Record<string, React.ReactNode> = {
@@ -97,7 +97,7 @@ function PriorityBadge({
   const styles: Record<string, string> = {
     high: "bg-red-50 text-red-700",
     medium: "bg-orange-50 text-orange-700",
-    low: "bg-gray-50 text-gray-600",
+    low: "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]",
   };
 
   return (
@@ -287,7 +287,7 @@ function CreateTicketForm({
         <button
           type="button"
           onClick={onCancel}
-          className="p-1 hover:bg-gray-100 rounded"
+          className="p-1 hover:bg-[var(--color-border-subtle)] rounded"
         >
           <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
@@ -352,8 +352,8 @@ function CreateTicketForm({
                 onClick={() => setPriority(p)}
                 className={`flex-1 py-2 text-xs sm:text-sm font-medium rounded-lg border transition-colors ${
                   priority === p
-                    ? "border-[#002D87] bg-[#002D87] text-white"
-                    : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-gray-50"
+                    ? "border-[#002D87] bg-[var(--color-primary)] text-white"
+                    : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                 }`}
               >
                 {t(`supportPage.priority_${p}` as Parameters<typeof t>[0])}
@@ -414,7 +414,7 @@ function CreateTicketForm({
               <button
                 type="button"
                 onClick={() => setAttachmentFile(null)}
-                className="p-0.5 hover:bg-gray-200 rounded flex-shrink-0"
+                className="p-0.5 hover:bg-[var(--color-border)] rounded flex-shrink-0"
               >
                 <X className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
               </button>
@@ -442,7 +442,7 @@ function CreateTicketForm({
         <button
           type="submit"
           disabled={submitting || !subject.trim() || !description.trim()}
-          className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#002D87] text-white text-sm font-medium rounded-lg hover:bg-[#001f5c] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:bg-[#001f5c] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -499,7 +499,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
       <div className="flex flex-wrap gap-2 mb-4">
         <button
           onClick={() => setActiveCategory("all")}
-          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === "all" ? "bg-[#002D87] text-white" : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"}`}
+          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === "all" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"}`}
         >
           {t("supportPage.faq.allCategories")}
         </button>
@@ -507,7 +507,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === cat ? "bg-[#002D87] text-white" : "bg-[#F3F4F6] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"}`}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === cat ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"}`}
           >
             {t(`supportPage.category_${cat}` as Parameters<typeof t>[0])}
           </button>
@@ -529,7 +529,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
                 className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-[var(--color-surface-page)] transition-colors"
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-[#F3F4F6] text-[var(--color-text-secondary)] flex-shrink-0">
+                  <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] flex-shrink-0">
                     {t(`supportPage.category_${item.category}` as Parameters<typeof t>[0])}
                   </span>
                   <span className="text-sm font-medium text-[var(--color-text-primary)] truncate">{item.question}</span>
@@ -653,7 +653,7 @@ const SupportContent = () => {
                 {!showForm && (
                   <button
                     onClick={() => setShowForm(true)}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-[#002D87] text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-[#001f5c] transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 bg-[var(--color-primary)] text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-[#001f5c] transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                     {t("supportPage.newTicket")}
@@ -677,7 +677,7 @@ const SupportContent = () => {
                       onClick={() => setMainTab(tab.key)}
                       className={`flex items-center gap-1.5 px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors -mb-[1px] ${
                         mainTab === tab.key
-                          ? "border-[#002D87] text-[#002D87]"
+                          ? "border-[#002D87] text-[var(--color-primary)]"
                           : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                       }`}
                     >
@@ -716,8 +716,8 @@ const SupportContent = () => {
                           onClick={() => setStatusFilter(tab.key)}
                           className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
                             statusFilter === tab.key
-                              ? "bg-[#002D87] text-white"
-                              : "text-[var(--color-text-secondary)] hover:bg-gray-100"
+                              ? "bg-[var(--color-primary)] text-white"
+                              : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                           }`}
                         >
                           {t(tab.label as Parameters<typeof t>[0])}
@@ -729,7 +729,7 @@ const SupportContent = () => {
                     {loading ? (
                       <div className="space-y-3 py-4">
                         {[1, 2, 3].map((i) => (
-                          <div key={i} className="bg-[#F3F4F6] rounded-lg h-16 animate-pulse" />
+                          <div key={i} className="bg-[var(--color-border-subtle)] rounded-lg h-16 animate-pulse" />
                         ))}
                       </div>
                     ) : error ? (

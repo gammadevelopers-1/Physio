@@ -226,7 +226,7 @@ const CourseManagerDashboardContent = () => {
         <CourseManagerNavbar manager={manager} />
         <div className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin mx-auto mb-3" />
+            <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin mx-auto mb-3" />
             <p className="text-sm text-[var(--color-text-secondary)]">{t("dashboard.loading")}</p>
           </div>
         </div>
@@ -244,7 +244,7 @@ const CourseManagerDashboardContent = () => {
             <p className="text-sm text-[var(--color-text-secondary)] mb-4">{error}</p>
             <button
               onClick={refetch}
-              className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg"
+              className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg"
               aria-label={tA("refresh")}
             >
               <RefreshCw className="w-4 h-4" />

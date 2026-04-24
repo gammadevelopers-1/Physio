@@ -55,6 +55,11 @@
       "default": true,
       "pluginOptions": { "i18n": { "localized": false } }
     },
+    "showWhatsappButton": {
+      "type": "boolean",
+      "default": true,
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
     "instagramUrl": {
       "type": "string"
     },
@@ -150,6 +155,11 @@
       "pluginOptions": { "i18n": { "localized": false } }
     },
     "themeFooterBackground": {
+      "type": "string",
+      "default": "#ffffff",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "themeButtonText": {
       "type": "string",
       "default": "#ffffff",
       "pluginOptions": { "i18n": { "localized": false } }

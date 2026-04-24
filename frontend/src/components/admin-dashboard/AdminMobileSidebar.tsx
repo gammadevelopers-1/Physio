@@ -170,7 +170,7 @@ const AdminMobileSidebar = ({ admin }: AdminMobileSidebarProps) => {
             {/* Profile Section */}
             <div className="flex flex-col items-center">
               <div className="relative mb-3">
-                <div className="w-20 h-20 rounded-full overflow-hidden bg-[#002D87] flex items-center justify-center relative">
+                <div className="w-20 h-20 rounded-full overflow-hidden bg-[var(--color-primary)] flex items-center justify-center relative">
                   {admin.avatar ? (
                     <Image
                       src={admin.avatar}
@@ -202,7 +202,7 @@ const AdminMobileSidebar = ({ admin }: AdminMobileSidebarProps) => {
                 />
                 <button
                   onClick={() => avatarInputRef.current?.click()}
-                  className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#002D87] rounded-full flex items-center justify-center border-2 border-white`}
+                  className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[var(--color-primary)] rounded-full flex items-center justify-center border-2 border-white`}
                 >
                   <Pencil className="w-3.5 h-3.5 text-white" />
                 </button>
@@ -261,12 +261,12 @@ const AdminMobileSidebar = ({ admin }: AdminMobileSidebarProps) => {
                     onClick={() => setIsOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                       active
-                        ? "bg-[#F0F7FF] text-[#002D87]"
+                        ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
                         : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                     }`}
                   >
                     <Icon
-                      className={`w-5 h-5 ${active ? "text-[#002D87]" : "text-[var(--color-text-secondary)]"}`}
+                      className={`w-5 h-5 ${active ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)]"}`}
                     />
                     <span className={`text-sm flex-1 ${active ? "font-medium" : ""}`}>
                       {item.label}

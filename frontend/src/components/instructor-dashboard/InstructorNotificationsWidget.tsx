@@ -63,7 +63,7 @@ const InstructorNotificationsWidget = ({
             {t("notifications.title")}
           </h3>
           {unreadCount > 0 && (
-            <span className="text-xs font-medium text-[#3B82F6] bg-[#EFF6FF] px-2 py-0.5 rounded-full">
+            <span className="text-xs font-medium text-[var(--color-primary)] bg-[var(--color-border-subtle)] px-2 py-0.5 rounded-full">
               {unreadCount}
             </span>
           )}
@@ -73,7 +73,7 @@ const InstructorNotificationsWidget = ({
             {unreadCount > 0 && onMarkAllRead && (
               <button
                 onClick={onMarkAllRead}
-                className="text-[11px] text-[#3B82F6] hover:text-[#2563EB] font-medium transition-colors"
+                className="text-[11px] text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] font-medium transition-colors"
               >
                 {t("notifications.markAllRead")}
               </button>
@@ -92,7 +92,7 @@ const InstructorNotificationsWidget = ({
 
       {notifications.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8">
-          <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
+          <div className="w-12 h-12 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mb-3">
             <Bell className="w-6 h-6 text-[var(--color-text-secondary)]" />
           </div>
           <h4 className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
@@ -116,7 +116,7 @@ const InstructorNotificationsWidget = ({
               key={notification.id}
               className={`p-3 rounded-lg border transition-colors ${
                 !notification.read
-                  ? "bg-[#EFF6FF] border-[#DBEAFE]"
+                  ? "bg-[var(--color-border-subtle)] border-[#DBEAFE]"
                   : "bg-[var(--color-surface-page)] border-transparent hover:border-[var(--color-border)]"
               }`}
             >
@@ -125,7 +125,7 @@ const InstructorNotificationsWidget = ({
                   {tN.has(`types.${notification.type}.title`) ? tN(`types.${notification.type}.title`) : notification.title}
                 </h4>
                 {!notification.read && (
-                  <span className="w-2 h-2 rounded-full bg-[#3B82F6] flex-shrink-0 mt-1.5" />
+                  <span className="w-2 h-2 rounded-full bg-[var(--color-primary)] flex-shrink-0 mt-1.5" />
                 )}
               </div>
               <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed line-clamp-2">

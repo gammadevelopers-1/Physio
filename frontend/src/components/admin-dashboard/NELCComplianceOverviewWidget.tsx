@@ -64,7 +64,7 @@ const NELCComplianceOverviewWidget = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <FileText className="w-5 h-5 text-[#002D87]" />
+          <FileText className="w-5 h-5 text-[var(--color-primary)]" />
           <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
             {t("compliance.title")}
           </h3>
@@ -97,7 +97,7 @@ const NELCComplianceOverviewWidget = ({
       </div>
 
       {/* Progress Bar */}
-      <div className="h-3 bg-[#F3F4F6] rounded-full overflow-hidden mb-4">
+      <div className="h-3 bg-[var(--color-border-subtle)] rounded-full overflow-hidden mb-4">
         <div className="h-full flex">
           <div
             className="bg-[#16A34A] transition-all"

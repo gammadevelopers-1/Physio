@@ -57,7 +57,7 @@ export default async function CourseDetailPage({
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'bottom')} sideLoadedData={sideLoadedData} />
 
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
-      <WhatsAppButton phoneNumber={siteSettings?.whatsappNumber} />
+      <WhatsAppButton phoneNumber={siteSettings?.whatsappNumber} enabled={siteSettings?.showWhatsappButton} />
     </main>
   );
 }

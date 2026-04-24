@@ -48,7 +48,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               type="text"
               value={state.title}
               onChange={(e) => dispatch({ type: "SET_FIELD", field: "title", value: e.target.value })}
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none"
             />
           </div>
           <div>
@@ -61,7 +61,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               value={state.titleAr}
               onChange={(e) => dispatch({ type: "SET_FIELD", field: "titleAr", value: e.target.value })}
               dir="rtl"
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none"
             />
           </div>
         </div>
@@ -76,7 +76,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               value={state.description}
               onChange={(e) => dispatch({ type: "SET_FIELD", field: "description", value: e.target.value })}
               rows={4}
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none resize-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none resize-none"
             />
           </div>
           <div>
@@ -89,7 +89,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               onChange={(e) => dispatch({ type: "SET_FIELD", field: "descriptionAr", value: e.target.value })}
               rows={4}
               dir="rtl"
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none resize-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none resize-none"
             />
           </div>
         </div>
@@ -105,7 +105,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
             onChange={(e) =>
               dispatch({ type: "SET_FIELD", field: "deliveryType", value: e.target.value })
             }
-            className="w-full max-w-xs px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none bg-white"
+            className="w-full max-w-xs px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface-card)]"
           >
             <option value="zoom">Zoom</option>
             <option value="onsite">On-site</option>
@@ -166,13 +166,13 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
             <button
               type="button"
               onClick={() => dispatch({ type: "SET_FIELD", field: "thumbnail", value: "" })}
-              className="absolute top-2 end-2 p-1.5 bg-white rounded-full shadow text-[#EF4444] hover:bg-[#FEE2E2] text-sm font-bold"
+              className="absolute top-2 end-2 p-1.5 bg-[var(--color-surface-card)] rounded-full shadow text-[#EF4444] hover:bg-[#FEE2E2] text-sm font-bold"
             >
               X
             </button>
           </div>
         ) : (
-          <label className="flex flex-col items-center justify-center w-full max-w-md h-48 border-2 border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:border-[#3B82F6] hover:bg-[var(--color-surface-page)] transition-colors">
+          <label className="flex flex-col items-center justify-center w-full max-w-md h-48 border-2 border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-page)] transition-colors">
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"
@@ -181,7 +181,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               disabled={state.thumbnailUploading}
             />
             {state.thumbnailUploading ? (
-              <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+              <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin" />
             ) : (
               <>
                 <ImageIcon className="w-8 h-8 text-[var(--color-text-secondary)] mb-2" />

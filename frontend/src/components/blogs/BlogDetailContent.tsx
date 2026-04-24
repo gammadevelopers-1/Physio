@@ -37,7 +37,7 @@ const BlogDetailContent = ({ blogPost, latestBlogs, blogsPage }: BlogDetailConte
         </div>
         <Link
           href={`/${locale}/blogs`}
-          className="text-[#002D87] underline hover:no-underline"
+          className="text-[var(--color-primary)] underline hover:no-underline"
         >
           {isRTL ? "العودة إلى المدونات" : "Back to blogs"}
         </Link>
@@ -94,7 +94,7 @@ const BlogDetailContent = ({ blogPost, latestBlogs, blogsPage }: BlogDetailConte
 
                   {/* Read Time Pill */}
                   {readTime && (
-                    <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--on-surface-default)] bg-[#F4F4F5] rounded-md mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
+                    <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--on-surface-default)] bg-[var(--color-border-subtle)] rounded-md mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
                       <Clock className="w-4 h-4" />
                       {readTime}
                     </div>
@@ -164,14 +164,14 @@ const BlogDetailContent = ({ blogPost, latestBlogs, blogsPage }: BlogDetailConte
                     </p>
                   ),
                   blockquote: ({ children }) => (
-                    <blockquote className={`border-[#002D87] py-4 my-8 bg-[#F8FAFC] ${isRTL ? "border-r-4 pr-6 rounded-l-xl" : "border-l-4 pl-6 rounded-r-xl"}`}>
+                    <blockquote className={`border-[var(--color-primary)] py-4 my-8 bg-[var(--color-border-subtle)] ${isRTL ? "border-r-4 pr-6 rounded-l-xl" : "border-l-4 pl-6 rounded-r-xl"}`}>
                       {children}
                     </blockquote>
                   ),
                   strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
                   em: ({ children }) => <em className="italic">{children}</em>,
                   a: ({ children, href }) => (
-                    <a href={href} className="text-[#002D87] underline hover:no-underline" target="_blank" rel="noopener noreferrer">
+                    <a href={href} className="text-[var(--color-primary)] underline hover:no-underline" target="_blank" rel="noopener noreferrer">
                       {children}
                     </a>
                   ),
@@ -247,7 +247,7 @@ const BlogDetailContent = ({ blogPost, latestBlogs, blogsPage }: BlogDetailConte
           {/* Read Time Pill */}
           {readTime && (
             <div className={`flex ${isRTL ? "justify-end" : "justify-start"} mb-3`}>
-              <div className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-[var(--on-surface-default)] bg-[#F4F4F5] rounded ${isRTL ? "flex-row-reverse" : ""}`}>
+              <div className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-[var(--on-surface-default)] bg-[var(--color-border-subtle)] rounded ${isRTL ? "flex-row-reverse" : ""}`}>
                 <Clock className="w-3 h-3" />
                 {readTime}
               </div>
@@ -306,14 +306,14 @@ const BlogDetailContent = ({ blogPost, latestBlogs, blogsPage }: BlogDetailConte
                     </p>
                   ),
                   blockquote: ({ children }) => (
-                    <blockquote className={`border-[#002D87] py-3 my-6 bg-[#F8FAFC] ${isRTL ? "border-r-4 pr-4 rounded-l-xl" : "border-l-4 pl-4 rounded-r-xl"}`}>
+                    <blockquote className={`border-[var(--color-primary)] py-3 my-6 bg-[var(--color-border-subtle)] ${isRTL ? "border-r-4 pr-4 rounded-l-xl" : "border-l-4 pl-4 rounded-r-xl"}`}>
                       {children}
                     </blockquote>
                   ),
                   strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
                   em: ({ children }) => <em className="italic">{children}</em>,
                   a: ({ children, href }) => (
-                    <a href={href} className="text-[#002D87] underline hover:no-underline" target="_blank" rel="noopener noreferrer">
+                    <a href={href} className="text-[var(--color-primary)] underline hover:no-underline" target="_blank" rel="noopener noreferrer">
                       {children}
                     </a>
                   ),

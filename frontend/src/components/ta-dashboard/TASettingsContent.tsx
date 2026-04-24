@@ -284,14 +284,14 @@ const TASettingsContent = () => {
                     onClick={() => setActiveTab(tab.id)}
                     className={`px-5 py-3 text-sm font-medium relative transition-colors whitespace-nowrap flex items-center gap-1.5 ${
                       activeTab === tab.id
-                        ? "text-[#3B82F6]"
+                        ? "text-[var(--color-primary)]"
                         : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                     }`}
                   >
                     <tab.icon className="w-4 h-4" />
                     {tab.label}
                     {activeTab === tab.id && (
-                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3B82F6] rounded-t" />
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)] rounded-t" />
                     )}
                   </button>
                 ))}
@@ -305,7 +305,7 @@ const TASettingsContent = () => {
                     <div className="flex flex-col sm:flex-row items-start gap-4">
                       <div className="relative">
                         {user?.avatar ? (
-                          <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100">
+                          <div className="w-24 h-24 rounded-full overflow-hidden bg-[var(--color-border-subtle)]">
                             <Image
                               src={user.avatar}
                               alt={profileData.firstName}
@@ -338,7 +338,7 @@ const TASettingsContent = () => {
                             <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`}>
                               <button
                                 onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors cursor-pointer"
                               >
                                 <Upload className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                 {t("settings.uploadPhoto")}
@@ -381,7 +381,7 @@ const TASettingsContent = () => {
                             onChange={(e) =>
                               setProfileData({ ...profileData, firstName: e.target.value })
                             }
-                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                           />
                         </div>
                         <div>
@@ -395,7 +395,7 @@ const TASettingsContent = () => {
                             onChange={(e) =>
                               setProfileData({ ...profileData, lastName: e.target.value })
                             }
-                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                           />
                         </div>
                         <div>
@@ -430,7 +430,7 @@ const TASettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, phone: e.target.value })
                               }
-                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                             />
                           </div>
                         </div>
@@ -449,7 +449,7 @@ const TASettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, location: e.target.value })
                               }
-                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                             />
                           </div>
                         </div>
@@ -467,7 +467,7 @@ const TASettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, language: e.target.value })
                               }
-                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                             >
                               <option value="en">English</option>
                               <option value="ar">العربية</option>
@@ -489,7 +489,7 @@ const TASettingsContent = () => {
                           setProfileData({ ...profileData, bio: e.target.value })
                         }
                         rows={4}
-                        className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                        className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
                       />
                     </div>
 
@@ -498,7 +498,7 @@ const TASettingsContent = () => {
                       <button
                         onClick={handleSaveProfile}
                         disabled={saving}
-                        className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 px-6 py-2.5 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         {saving ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -534,7 +534,7 @@ const TASettingsContent = () => {
                               placeholder="••••••••"
                               value={currentPassword}
                               onChange={(e) => setCurrentPassword(e.target.value)}
-                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                             />
                             <button
                               type="button"
@@ -563,7 +563,7 @@ const TASettingsContent = () => {
                               placeholder="••••••••"
                               value={newPassword}
                               onChange={(e) => setNewPassword(e.target.value)}
-                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                             />
                             <button
                               type="button"
@@ -582,7 +582,7 @@ const TASettingsContent = () => {
                           type="button"
                           onClick={handleChangePassword}
                           disabled={changingPassword || !currentPassword || !newPassword}
-                          className="px-4 py-2 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                          className="px-4 py-2 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
                         >
                           {changingPassword && <Loader2 className="w-4 h-4 animate-spin" />}
                           {t("settings.updatePassword")}
@@ -645,12 +645,12 @@ const TASettingsContent = () => {
                               }
                               className={`relative w-10 h-5 rounded-full transition-colors ${
                                 notifications[item.key as keyof typeof notifications]
-                                  ? "bg-[#3B82F6]"
+                                  ? "bg-[var(--color-primary)]"
                                   : "bg-[var(--color-border)]"
                               }`}
                             >
                               <span
-                                className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${
+                                className={`absolute top-0.5 w-4 h-4 bg-[var(--color-surface-card)] rounded-full transition-all ${
                                   notifications[item.key as keyof typeof notifications]
                                     ? isRTL
                                       ? "left-0.5"
@@ -691,12 +691,12 @@ const TASettingsContent = () => {
                               }
                               className={`relative w-10 h-5 rounded-full transition-colors ${
                                 notifications[item.key as keyof typeof notifications]
-                                  ? "bg-[#3B82F6]"
+                                  ? "bg-[var(--color-primary)]"
                                   : "bg-[var(--color-border)]"
                               }`}
                             >
                               <span
-                                className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${
+                                className={`absolute top-0.5 w-4 h-4 bg-[var(--color-surface-card)] rounded-full transition-all ${
                                   notifications[item.key as keyof typeof notifications]
                                     ? isRTL
                                       ? "left-0.5"
@@ -736,12 +736,12 @@ const TASettingsContent = () => {
                               }
                               className={`relative w-10 h-5 rounded-full transition-colors ${
                                 notifications[item.key as keyof typeof notifications]
-                                  ? "bg-[#3B82F6]"
+                                  ? "bg-[var(--color-primary)]"
                                   : "bg-[var(--color-border)]"
                               }`}
                             >
                               <span
-                                className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${
+                                className={`absolute top-0.5 w-4 h-4 bg-[var(--color-surface-card)] rounded-full transition-all ${
                                   notifications[item.key as keyof typeof notifications]
                                     ? isRTL
                                       ? "left-0.5"
@@ -763,7 +763,7 @@ const TASettingsContent = () => {
                         type="button"
                         onClick={handleSaveNotifications}
                         disabled={savingNotifications}
-                        className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-6 py-2.5 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                       >
                         <Save className="w-4 h-4" />
                         {savingNotifications
@@ -788,7 +788,7 @@ const TASettingsContent = () => {
                           onChange={(e) =>
                             setPreferences({ ...preferences, dateFormat: e.target.value })
                           }
-                          className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                           <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -805,7 +805,7 @@ const TASettingsContent = () => {
                           onChange={(e) =>
                             setPreferences({ ...preferences, timeFormat: e.target.value })
                           }
-                          className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           <option value="12h">{t("settings.time12h")}</option>
                           <option value="24h">{t("settings.time24h")}</option>
@@ -821,7 +821,7 @@ const TASettingsContent = () => {
                           onChange={(e) =>
                             setPreferences({ ...preferences, timezone: e.target.value })
                           }
-                          className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           <option value="Asia/Riyadh">Saudi Arabia (UTC+3)</option>
                           <option value="Asia/Dubai">UAE / Gulf (UTC+4)</option>
@@ -842,7 +842,7 @@ const TASettingsContent = () => {
                         type="button"
                         onClick={handleSavePreferences}
                         disabled={savingPreferences}
-                        className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-6 py-2.5 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                       >
                         <Save className="w-4 h-4" />
                         {savingPreferences

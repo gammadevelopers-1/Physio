@@ -30,7 +30,7 @@ const AssessmentsNeedingAttention = ({
   const getOverdueColor = (days: number) => {
     if (days >= 7) return "text-[#EF4444] bg-[#FEE2E2]";
     if (days >= 3) return "text-[#F59E0B] bg-[#FEF3C7]";
-    return "text-[var(--color-text-secondary)] bg-[#F3F4F6]";
+    return "text-[var(--color-text-secondary)] bg-[var(--color-border-subtle)]";
   };
 
   if (totalCount === 0) {
@@ -42,7 +42,7 @@ const AssessmentsNeedingAttention = ({
               <ClipboardList className="w-5 h-5 text-[#F59E0B]" />
               {t("needsGrading.title")}
             </h3>
-            <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 bg-[#F3F4F6] text-[var(--color-text-secondary)] text-xs font-semibold rounded-full">
+            <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] text-xs font-semibold rounded-full">
               0
             </span>
           </div>
@@ -97,7 +97,7 @@ const AssessmentsNeedingAttention = ({
               {/* Grade button */}
               <Link
                 href={`/${locale}/dashboard/instructor/assessments`}
-                className="flex-shrink-0 px-3 py-1.5 bg-[#3B82F6] text-white text-xs font-medium rounded-lg hover:bg-[#2563EB] transition-colors"
+                className="flex-shrink-0 px-3 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors"
               >
                 {t("needsGrading.grade")}
               </Link>
@@ -108,7 +108,7 @@ const AssessmentsNeedingAttention = ({
         {/* View All Link */}
         <Link
           href={`/${locale}/dashboard/instructor/assessments`}
-          className="w-full flex items-center justify-center gap-1 mt-4 py-2.5 text-sm font-medium text-[#3B82F6] hover:underline"
+          className="w-full flex items-center justify-center gap-1 mt-4 py-2.5 text-sm font-medium text-[var(--color-primary)] hover:underline"
         >
           {t("needsGrading.viewAll")} ({totalCount})
           {locale === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}

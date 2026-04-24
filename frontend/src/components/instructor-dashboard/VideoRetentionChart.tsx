@@ -54,7 +54,7 @@ export default function VideoRetentionChart({
             <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("analytics.title")}</h3>
             <p className="text-sm text-[var(--color-text-secondary)] truncate max-w-[400px]">{materialTitle}</p>
           </div>
-          <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[#F3F4F6] rounded-lg">
+          <button onClick={onClose} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -63,7 +63,7 @@ export default function VideoRetentionChart({
         <div className="flex-1 overflow-y-auto p-4">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 text-[#3B82F6] animate-spin" />
+              <Loader2 className="w-6 h-6 text-[var(--color-primary)] animate-spin" />
             </div>
           ) : !data || data.totalViewers === 0 ? (
             <div className="text-center py-12">
@@ -74,8 +74,8 @@ export default function VideoRetentionChart({
             <>
               {/* Stats */}
               <div className="flex gap-4 mb-6">
-                <div className="flex items-center gap-2 px-3 py-2 bg-[#EFF6FF] rounded-lg">
-                  <Users className="w-4 h-4 text-[#3B82F6]" />
+                <div className="flex items-center gap-2 px-3 py-2 bg-[var(--color-border-subtle)] rounded-lg">
+                  <Users className="w-4 h-4 text-[var(--color-primary)]" />
                   <span className="text-sm font-medium text-[var(--color-text-primary)]">{data.totalViewers} {t("analytics.viewers")}</span>
                 </div>
                 {data.dropOffPoints.length > 0 && (
@@ -102,7 +102,7 @@ export default function VideoRetentionChart({
                         style={{ height: "100%" }}
                       >
                         <div
-                          className={`absolute bottom-0 left-0 right-0 rounded-t transition-colors ${isDropOff ? "bg-[#EF4444]" : "bg-[#3B82F6]"} hover:opacity-80`}
+                          className={`absolute bottom-0 left-0 right-0 rounded-t transition-colors ${isDropOff ? "bg-[#EF4444]" : "bg-[var(--color-primary)]"} hover:opacity-80`}
                           style={{ height: `${height}%`, minHeight: r.percent > 0 ? "2px" : "0" }}
                         />
                         {/* Tooltip */}

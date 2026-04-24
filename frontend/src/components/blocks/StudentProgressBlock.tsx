@@ -69,7 +69,7 @@ export function StudentProgressBlock({ data }: StudentProgressBlockProps) {
               return (
                 <div
                   key={metric.id}
-                  className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-[var(--outline-subtle)]"
+                  className="flex flex-col items-center gap-2 p-4 bg-[var(--color-surface-card)] rounded-2xl border border-[var(--outline-subtle)]"
                 >
                   <span className="text-3xl font-bold text-[var(--surface-container-primary)]">
                     {metric.value}{suffix}
@@ -123,7 +123,7 @@ export function StudentProgressBlock({ data }: StudentProgressBlockProps) {
                 </div>
                 <div className="w-full h-3 rounded-full bg-gray-200 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-[var(--surface-container-primary)]"
+                    className="h-full rounded-full bg-[var(--color-primary)]"
                     style={{ width: `${pct}%` }}
                   />
                 </div>

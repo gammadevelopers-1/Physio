@@ -511,23 +511,23 @@ const AssessmentsContent = () => {
 
   const getTypeBadge = (type: string) => {
     const styles: Record<string, string> = {
-      quiz: "bg-[#EFF6FF] text-[#3B82F6]",
+      quiz: "bg-[var(--color-border-subtle)] text-[var(--color-primary)]",
       exam: "bg-[#FEE2E2] text-[#EF4444]",
       assignment: "bg-[#DCFCE7] text-[#22C55E]",
       practical: "bg-[#F3E8FF] text-[#9333EA]",
     };
-    return styles[type] || "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+    return styles[type] || "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
   };
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       active: "bg-[#DCFCE7] text-[#22C55E]",
-      draft: "bg-[#F3F4F6] text-[var(--color-text-secondary)]",
+      draft: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
       published: "bg-[#DCFCE7] text-[#22C55E]",
       closed: "bg-[#FEF3C7] text-[#D4A520]",
       archived: "bg-[#FEF3C7] text-[#D4A520]",
     };
-    return styles[status] || "bg-[#F3F4F6] text-[var(--color-text-secondary)]";
+    return styles[status] || "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]";
   };
 
   /** Check if an assessment overrides course defaults */
@@ -552,11 +552,11 @@ const AssessmentsContent = () => {
         type="button"
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-          checked ? "bg-[#3B82F6]" : "bg-[var(--color-border)]"
+          checked ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"
         }`}
       >
         <span
-          className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
+          className={`inline-block h-3.5 w-3.5 rounded-full bg-[var(--color-surface-card)] transition-transform ${
             checked ? "translate-x-[18px]" : "translate-x-[3px]"
           }`}
         />
@@ -584,7 +584,7 @@ const AssessmentsContent = () => {
     }
     if (assessment.proctoringEnabled) {
       indicators.push(
-        <span key="proctor" className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-[#EFF6FF] text-[#3B82F6]">
+        <span key="proctor" className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-[var(--color-border-subtle)] text-[var(--color-primary)]">
           <Shield className="w-3 h-3" />
           {t("assessmentsPage.proctoring.enabled")}
         </span>
@@ -605,7 +605,7 @@ const AssessmentsContent = () => {
       {/* Time Settings */}
       <div className="bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] p-4">
         <div className="flex items-center gap-2 mb-3">
-          <Shield className="w-4 h-4 text-[#3B82F6]" />
+          <Shield className="w-4 h-4 text-[var(--color-primary)]" />
           <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
             {t("assessmentsPage.proctoring.timeLimitEnforced")}
           </h4>
@@ -645,7 +645,7 @@ const AssessmentsContent = () => {
             onChange={(e) =>
               setForm({ ...form, retakeScorePolicy: e.target.value })
             }
-            className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+            className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
           >
             <option value="highest">{t("assessmentsPage.retake.policies.highest")}</option>
             <option value="latest">{t("assessmentsPage.retake.policies.latest")}</option>
@@ -676,7 +676,7 @@ const AssessmentsContent = () => {
             <button
               onClick={handleSaveSettings}
               disabled={saving}
-              className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
             >
               {saving ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -691,7 +691,7 @@ const AssessmentsContent = () => {
               setExpandedId(null);
               setSettingsForm(null);
             }}
-            className="inline-flex items-center gap-2 px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -741,7 +741,7 @@ const AssessmentsContent = () => {
                   <select
                     value={selectedCourseId}
                     onChange={(e) => setSelectedCourseId(e.target.value)}
-                    className="w-full sm:w-96 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                    className="w-full sm:w-96 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   >
                     <option value="">{t("assessmentsPage.allCourses") || "All Courses"}</option>
                     {courses.map((c) => (
@@ -764,8 +764,8 @@ const AssessmentsContent = () => {
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                         <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center">
-                              <ClipboardList className="w-5 h-5 text-[#3B82F6]" />
+                            <div className="w-10 h-10 rounded-lg bg-[var(--color-border-subtle)] flex items-center justify-center">
+                              <ClipboardList className="w-5 h-5 text-[var(--color-primary)]" />
                             </div>
                             <div>
                               <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{allAssessments.length}</p>
@@ -832,9 +832,9 @@ const AssessmentsContent = () => {
                                 <button
                                   key={course.id}
                                   onClick={() => setSelectedCourseId(course.id)}
-                                  className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-start hover:border-[#3B82F6] hover:shadow-sm transition-all group"
+                                  className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-start hover:border-[var(--color-primary)] hover:shadow-sm transition-all group"
                                 >
-                                  <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3 truncate group-hover:text-[#3B82F6] transition-colors">
+                                  <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3 truncate group-hover:text-[var(--color-primary)] transition-colors">
                                     {course.title}
                                   </h4>
                                   <div className="flex items-center gap-4 text-xs text-[var(--color-text-secondary)]">
@@ -888,8 +888,8 @@ const AssessmentsContent = () => {
                       className="w-full flex items-center justify-between px-4 py-4 hover:bg-[var(--color-surface-page)] transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
-                          <Settings className="w-5 h-5 text-[#3B82F6]" />
+                        <div className="w-9 h-9 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center">
+                          <Settings className="w-5 h-5 text-[var(--color-primary)]" />
                         </div>
                         <div className="text-start">
                           <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
@@ -937,7 +937,7 @@ const AssessmentsContent = () => {
                             <button
                               onClick={handleSaveCourseDefaults}
                               disabled={savingDefaults}
-                              className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                              className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
                             >
                               {savingDefaults ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -960,8 +960,8 @@ const AssessmentsContent = () => {
                       onClick={() => setActiveTab("assessments")}
                       className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         activeTab === "assessments"
-                          ? "bg-[#3B82F6] text-white"
-                          : "text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
+                          ? "bg-[var(--color-primary)] text-white"
+                          : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                       }`}
                     >
                       <FileText className="w-4 h-4" />
@@ -971,8 +971,8 @@ const AssessmentsContent = () => {
                       onClick={() => setActiveTab("submissions")}
                       className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         activeTab === "submissions"
-                          ? "bg-[#3B82F6] text-white"
-                          : "text-[var(--color-text-secondary)] hover:bg-[#F3F4F6]"
+                          ? "bg-[var(--color-primary)] text-white"
+                          : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                       }`}
                     >
                       <Users className="w-4 h-4" />
@@ -997,10 +997,10 @@ const AssessmentsContent = () => {
                         </div>
                         <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                           <div className="flex items-center gap-1">
-                            <Users className="w-3 h-3 text-[#3B82F6]" />
+                            <Users className="w-3 h-3 text-[var(--color-primary)]" />
                             <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.stats.submissions") || "Submissions"}</p>
                           </div>
-                          <p className="text-2xl font-bold text-[#3B82F6] mt-1">
+                          <p className="text-2xl font-bold text-[var(--color-primary)] mt-1">
                             {assessments.reduce((sum, a) => sum + (a.submissionCount ?? 0), 0)}
                           </p>
                         </div>
@@ -1025,14 +1025,14 @@ const AssessmentsContent = () => {
                               placeholder={t("assessmentsPage.searchPlaceholder")}
                               value={searchQuery}
                               onChange={(e) => setSearchQuery(e.target.value)}
-                              className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
+                              className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent`}
                             />
                           </div>
                           <div className="flex gap-3">
                             <select
                               value={typeFilter}
                               onChange={(e) => setTypeFilter(e.target.value)}
-                              className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                              className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                             >
                               <option value="all">{t("assessmentsPage.filters.allTypes")}</option>
                               <option value="quiz">{t("assessmentsPage.filters.quiz")}</option>
@@ -1042,7 +1042,7 @@ const AssessmentsContent = () => {
                             <select
                               value={statusFilter}
                               onChange={(e) => setStatusFilter(e.target.value)}
-                              className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                              className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                             >
                               <option value="all">{t("assessmentsPage.filters.allStatus")}</option>
                               <option value="draft">{t("assessmentsPage.filters.draft")}</option>
@@ -1073,7 +1073,7 @@ const AssessmentsContent = () => {
                           <p className="text-sm text-[var(--color-text-secondary)] mb-4">{error}</p>
                           <button
                             onClick={fetchAssessments}
-                            className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg"
+                            className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg"
                           >
                             <RefreshCw className="w-4 h-4" />
                             {t("dashboard.retry")}
@@ -1156,7 +1156,7 @@ const AssessmentsContent = () => {
                                                 <DropdownMenu>
                                                   <DropdownMenuTrigger asChild>
                                                     <button
-                                                      className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[var(--color-text-secondary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                                      className="p-1.5 rounded-lg hover:bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                                                       title={t("assessmentsPage.table.actions")}
                                                     >
                                                       <MoreVertical className="w-4 h-4" />
@@ -1225,8 +1225,8 @@ const AssessmentsContent = () => {
                                       onClick={() => toggleSettings(assessment)}
                                       className={`p-1.5 rounded-lg transition-colors ${
                                         expandedId === assessment.id
-                                          ? "bg-[#3B82F6] text-white"
-                                          : "hover:bg-[#F3F4F6] text-[var(--color-text-secondary)]"
+                                          ? "bg-[var(--color-primary)] text-white"
+                                          : "hover:bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                                       }`}
                                     >
                                       {expandedId === assessment.id ? (
@@ -1253,7 +1253,7 @@ const AssessmentsContent = () => {
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
                                         <button
-                                          className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[var(--color-text-secondary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                          className="p-1.5 rounded-lg hover:bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                                           title={t("assessmentsPage.table.actions")}
                                         >
                                           <MoreVertical className="w-4 h-4" />
@@ -1298,7 +1298,7 @@ const AssessmentsContent = () => {
                       {/* Empty state */}
                       {!loading && !error && filteredAssessments.length === 0 && (
                         <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
-                          <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
+                          <div className="w-16 h-16 bg-[var(--color-border-subtle)] rounded-full flex items-center justify-center mx-auto mb-4">
                             <FileText className="w-8 h-8 text-[var(--color-text-secondary)]" />
                           </div>
                           <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
@@ -1323,7 +1323,7 @@ const AssessmentsContent = () => {
                         <select
                           value={selectedSubmissionAssessment}
                           onChange={(e) => setSelectedSubmissionAssessment(e.target.value)}
-                          className="w-full sm:w-80 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="w-full sm:w-80 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           <option value="">{t("assessmentsPage.submissions.selectPlaceholder")}</option>
                           {assessments.map((a) => (
@@ -1341,7 +1341,7 @@ const AssessmentsContent = () => {
 
                       {submissionsLoading && (
                         <div className="flex items-center justify-center py-12">
-                          <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+                          <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin" />
                         </div>
                       )}
 
@@ -1445,7 +1445,7 @@ const AssessmentsContent = () => {
                                         <td className="px-4 py-3 text-end">
                                           <button
                                             onClick={() => setViewingSubmission(sub)}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3B82F6] bg-[#EFF6FF] rounded-md hover:bg-[#DBEAFE] transition-colors"
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--color-primary)] bg-[var(--color-border-subtle)] rounded-md hover:bg-[var(--color-border-subtle)] transition-colors"
                                           >
                                             <Eye className="w-3.5 h-3.5" />
                                             {t("assessmentsPage.actions.view")}
@@ -1489,7 +1489,7 @@ const AssessmentsContent = () => {
                                                       return next;
                                                     });
                                                   }}
-                                                  className="p-0.5 hover:bg-[#F3F4F6] rounded"
+                                                  className="p-0.5 hover:bg-[var(--color-border-subtle)] rounded"
                                                 >
                                                   {isExpanded ? (
                                                     <ChevronUp className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
@@ -1554,7 +1554,7 @@ const AssessmentsContent = () => {
                                             <div className="inline-flex items-center gap-1.5">
                                               <button
                                                 onClick={() => setViewingSubmission(effectiveRow)}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3B82F6] bg-[#EFF6FF] rounded-md hover:bg-[#DBEAFE] transition-colors"
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--color-primary)] bg-[var(--color-border-subtle)] rounded-md hover:bg-[var(--color-border-subtle)] transition-colors"
                                               >
                                                 <Eye className="w-3.5 h-3.5" />
                                                 {t("assessmentsPage.actions.view")}
@@ -1562,7 +1562,7 @@ const AssessmentsContent = () => {
                                               {canEdit && anyGraded && subAssessment && (
                                                 effectiveRow.hasUnusedRetakeGrant ? (
                                                   <span
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] bg-[#F3F4F6] rounded-md cursor-not-allowed"
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] bg-[var(--color-border-subtle)] rounded-md cursor-not-allowed"
                                                     title={t("assessmentsPage.retakeModal.pendingTooltip") || "Retake already granted — waiting for the student to submit"}
                                                   >
                                                     <RotateCcw className="w-3.5 h-3.5" />
@@ -1626,14 +1626,14 @@ const AssessmentsContent = () => {
             <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
               <div className="flex items-center justify-between p-6 border-b border-[var(--color-border)]">
                 <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("assessmentsPage.submissions.details") || "Submission Details"}</h3>
-                <button onClick={() => setViewingSubmission(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
+                <button onClick={() => setViewingSubmission(null)} className="p-1 hover:bg-[var(--color-border-subtle)] rounded-lg">
                   <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#EFF6FF] flex items-center justify-center">
-                    <Users className="w-5 h-5 text-[#3B82F6]" />
+                  <div className="w-10 h-10 rounded-full bg-[var(--color-border-subtle)] flex items-center justify-center">
+                    <Users className="w-5 h-5 text-[var(--color-primary)]" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-[var(--color-text-secondary)]">
@@ -1728,12 +1728,12 @@ const AssessmentsContent = () => {
                 {isGraded && !isNotSubmitted && (
                   <div className="border-t border-[var(--color-border)] pt-4 mt-4">
                     <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3 flex items-center gap-2">
-                      <Eye className="w-4 h-4 text-[#3B82F6]" />
+                      <Eye className="w-4 h-4 text-[var(--color-primary)]" />
                       {t("assessmentsPage.submissions.studentAnswers") || "Student Answers"}
                     </h4>
                     {submissionQuestionsLoading ? (
                       <div className="flex items-center justify-center py-8">
-                        <Loader2 className="w-6 h-6 text-[#3B82F6] animate-spin" />
+                        <Loader2 className="w-6 h-6 text-[var(--color-primary)] animate-spin" />
                       </div>
                     ) : submissionQuestions.length === 0 ? (
                       <p className="text-sm text-[var(--color-text-secondary)] text-center py-4">
@@ -1750,7 +1750,7 @@ const AssessmentsContent = () => {
                             <div key={q.id} className="border border-[var(--color-border)] rounded-lg p-3">
                               <div className="flex items-start justify-between gap-3 mb-2">
                                 <div className="flex items-start gap-2 flex-1 min-w-0">
-                                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#3B82F6] text-white text-[10px] font-bold flex-shrink-0">
+                                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-bold flex-shrink-0">
                                     {idx + 1}
                                   </span>
                                   <p className="text-sm text-[var(--color-text-secondary)] font-medium">
@@ -1776,7 +1776,7 @@ const AssessmentsContent = () => {
                                 </div>
                                 {/* Show correct answer for comparison */}
                                 {q.options && q.options.length > 0 && (
-                                  <div className="p-2 rounded-md bg-[#EFF6FF] text-[#1E40AF] text-sm">
+                                  <div className="p-2 rounded-md bg-[var(--color-border-subtle)] text-[#1E40AF] text-sm">
                                     <p className="text-[10px] uppercase font-semibold mb-1 opacity-70">
                                       {t("assessmentsPage.preview.correctAnswer") || "Correct Answer"}
                                     </p>
@@ -1784,7 +1784,7 @@ const AssessmentsContent = () => {
                                   </div>
                                 )}
                                 {q.correctAnswer && (!q.options || q.options.length === 0) && (
-                                  <div className="p-2 rounded-md bg-[#EFF6FF] text-[#1E40AF] text-sm">
+                                  <div className="p-2 rounded-md bg-[var(--color-border-subtle)] text-[#1E40AF] text-sm">
                                     <p className="text-[10px] uppercase font-semibold mb-1 opacity-70">
                                       {t("assessmentsPage.preview.correctAnswer") || "Correct Answer"}
                                     </p>
@@ -1822,7 +1822,7 @@ const AssessmentsContent = () => {
               <div className="flex justify-end p-6 border-t border-[var(--color-border)]">
                 <button
                   onClick={() => setViewingSubmission(null)}
-                  className="px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
+                  className="px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
                 >
                   {t("assessmentsPage.submissions.close") || "Close"}
                 </button>
@@ -1837,8 +1837,8 @@ const AssessmentsContent = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full max-w-lg mx-4 p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-[#EFF6FF] flex items-center justify-center">
-                <Shield className="w-5 h-5 text-[#3B82F6]" />
+              <div className="w-10 h-10 rounded-full bg-[var(--color-border-subtle)] flex items-center justify-center">
+                <Shield className="w-5 h-5 text-[var(--color-primary)]" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
@@ -1856,7 +1856,7 @@ const AssessmentsContent = () => {
                 <select
                   value={overrideForm.studentId}
                   onChange={(e) => setOverrideForm({ ...overrideForm, studentId: e.target.value })}
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
                   <option value="">{t("assessmentsPage.override.selectStudent")}</option>
                   {overrideStudents.map((s) => (
@@ -1879,7 +1879,7 @@ const AssessmentsContent = () => {
                   min={1}
                   value={overrideForm.value}
                   onChange={(e) => setOverrideForm({ ...overrideForm, value: Math.max(1, parseInt(e.target.value) || 1) })}
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
               {/* Reason */}
@@ -1892,21 +1892,21 @@ const AssessmentsContent = () => {
                   onChange={(e) => setOverrideForm({ ...overrideForm, reason: e.target.value })}
                   rows={3}
                   placeholder={t("assessmentsPage.override.reasonPlaceholder")}
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
                 />
               </div>
             </div>
             <div className="flex items-center gap-3 justify-end mt-6">
               <button
                 onClick={() => { setOverrideModal(null); setOverrideForm({ studentId: "", overrideType: "time_extension", value: 30, reason: "" }); }}
-                className="px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
+                className="px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
               >
                 {t("assessmentsPage.override.cancel")}
               </button>
               <button
                 onClick={handleOverride}
                 disabled={overrideSubmitting || !overrideForm.studentId || !overrideForm.reason.trim()}
-                className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
               >
                 {overrideSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
                 {t("assessmentsPage.override.grant")}
@@ -1922,15 +1922,15 @@ const AssessmentsContent = () => {
           <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-6 border-b border-[var(--color-border)]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
-                  <Eye className="w-5 h-5 text-[#3B82F6]" />
+                <div className="w-10 h-10 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center">
+                  <Eye className="w-5 h-5 text-[var(--color-primary)]" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{t("assessmentsPage.preview.title") || "Assessment Preview"}</h3>
                   <p className="text-xs text-[var(--color-text-secondary)]">{previewAssessment.title}</p>
                 </div>
               </div>
-              <button onClick={() => { setPreviewAssessment(null); setPreviewQuestions([]); }} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
+              <button onClick={() => { setPreviewAssessment(null); setPreviewQuestions([]); }} className="p-1 hover:bg-[var(--color-border-subtle)] rounded-lg">
                 <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
             </div>
@@ -1938,7 +1938,7 @@ const AssessmentsContent = () => {
             <div className="flex-1 overflow-y-auto p-6">
               {previewLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+                  <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin" />
                 </div>
               ) : previewQuestions.length === 0 ? (
                 <div className="text-center py-12">
@@ -1952,10 +1952,10 @@ const AssessmentsContent = () => {
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#3B82F6] text-white text-xs font-bold">
+                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-primary)] text-white text-xs font-bold">
                               {idx + 1}
                             </span>
-                            <span className="text-[10px] uppercase font-semibold text-[var(--color-text-secondary)] bg-[#F3F4F6] px-2 py-0.5 rounded">
+                            <span className="text-[10px] uppercase font-semibold text-[var(--color-text-secondary)] bg-[var(--color-border-subtle)] px-2 py-0.5 rounded">
                               {q.type.replace(/_/g, " ")}
                             </span>
                             {q.difficultyLevel && (
@@ -2068,7 +2068,7 @@ const AssessmentsContent = () => {
                   setRetakeModal(null);
                   setRetakeForm({ reason: "", newDueDate: "" });
                 }}
-                className="px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
+                className="px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
               >
                 {t("assessmentsPage.retakeModal.cancel") || "Cancel"}
               </button>
@@ -2121,7 +2121,7 @@ const AssessmentsContent = () => {
             <div className="flex items-center gap-3 justify-end">
               <button
                 onClick={() => { setFlagModal(null); setFlagReason(""); }}
-                className="px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
+                className="px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
               >
                 {t("assessmentsPage.flag.cancel")}
               </button>

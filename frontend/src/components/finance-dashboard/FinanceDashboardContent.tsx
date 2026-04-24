@@ -42,7 +42,7 @@ const FinanceDashboardContent = () => {
   // Mock Revenue Data
   const mockRevenueData = {
     gateways: [
-      { name: t("revenueSummary.tapMoyasar"), percentage: 72, color: "bg-[#3B82F6]" },
+      { name: t("revenueSummary.tapMoyasar"), percentage: 72, color: "bg-[var(--color-primary)]" },
       { name: t("revenueSummary.bnplTamara"), percentage: 28, color: "bg-[#22C55E]" },
     ],
     topCourses: [

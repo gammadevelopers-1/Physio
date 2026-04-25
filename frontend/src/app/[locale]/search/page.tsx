@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import { SearchPageContent } from "@/components/search";
 
 export const metadata = {
@@ -25,7 +24,6 @@ export default function SearchPage() {
         <SearchPageContent />
       </Suspense>
       <Footer />
-      <WhatsAppButton />
     </main>
   );
 }

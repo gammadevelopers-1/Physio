@@ -159,9 +159,10 @@ export interface SiteSettings {
   siteName: string;
   footerDescription: string | null;
   copyrightText: string | null;
-  whatsappNumber: string | null;
   showSearchBar: boolean | null;
-  showWhatsappButton: boolean | null;
+  showLiveChat: boolean | null;
+  liveChatPropertyId: string | null;
+  liveChatWidgetId: string | null;
   instagramUrl: string | null;
   twitterUrl: string | null;
   linkedinUrl: string | null;
@@ -183,6 +184,8 @@ export interface SiteSettings {
   themeIconColor: string | null;
   themeFooterBackground: string | null;
   themeButtonText: string | null;
+  themeNavbarBackground: string | null;
+  themeNavbarText: string | null;
   locale: string;
   createdAt: string;
   updatedAt: string;

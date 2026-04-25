@@ -25,7 +25,7 @@ const AuthNavbar = () => {
 
   return (
     <nav
-      className="sticky top-0 z-50 w-full bg-[var(--color-surface-page)] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] px-4 py-3 md:px-16 md:py-5"
+      className="sticky top-0 z-50 w-full bg-[var(--color-navbar-bg)] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] px-4 py-3 md:px-16 md:py-5"
     >
       <div className="flex items-center justify-between w-full">
         {/* Left: Logo + Nav Links */}
@@ -144,7 +144,7 @@ const AuthNavbar = () => {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-[var(--surface-intense)] border-t border-[var(--outline-subtle)] shadow-lg">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-[var(--color-navbar-bg)] border-t border-[var(--outline-subtle)] shadow-lg">
           <div className="flex flex-col px-4 py-4">
             {/* Mobile Nav Links */}
             <Link

@@ -112,7 +112,7 @@ const CourseManagerNavbar = ({ manager }: CourseManagerNavbarProps) => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-[var(--color-surface-page)] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] px-4 py-3 lg:px-16 lg:py-5">
+    <nav className="sticky top-0 z-50 w-full bg-[var(--color-navbar-bg)] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] px-4 py-3 lg:px-16 lg:py-5">
       <div className="flex items-center justify-between w-full">
         {/* Logo + Nav Links */}
         <div className="flex items-center gap-8">
@@ -236,7 +236,7 @@ const CourseManagerNavbar = ({ manager }: CourseManagerNavbarProps) => {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 right-0 bg-[var(--color-surface-page)] border-t border-[var(--outline-subtle)] shadow-lg max-h-[calc(100vh-80px)] overflow-y-auto">
+        <div className="lg:hidden absolute top-full left-0 right-0 bg-[var(--color-navbar-bg)] border-t border-[var(--outline-subtle)] shadow-lg max-h-[calc(100vh-80px)] overflow-y-auto">
           <div className="flex flex-col px-4 py-4">
             {/* User Info */}
             <div className="flex items-center gap-3 pb-4 mb-4 border-b border-[var(--outline-subtle)]">

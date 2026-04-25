@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { getSiteSettings } from "@/lib/strapi";
+import LiveChatWidget from "@/components/LiveChatWidget";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -33,6 +34,8 @@ const THEME_DEFAULTS = {
   iconColor: "#737373",
   footerBackground: "#ffffff",
   buttonText: "#ffffff",
+  navbarBackground: "#EEF3F7",
+  navbarText: "#171717",
 };
 
 export default async function RootLayout({
@@ -53,9 +56,11 @@ export default async function RootLayout({
     iconColor: settings?.themeIconColor || THEME_DEFAULTS.iconColor,
     footerBackground: settings?.themeFooterBackground || THEME_DEFAULTS.footerBackground,
     buttonText: settings?.themeButtonText || THEME_DEFAULTS.buttonText,
+    navbarBackground: settings?.themeNavbarBackground || THEME_DEFAULTS.navbarBackground,
+    navbarText: settings?.themeNavbarText || THEME_DEFAULTS.navbarText,
   };
 
-  const themeStyle = `:root{--color-primary:${theme.primary};--color-primary-dark:${theme.primaryDark};--color-surface-page:${theme.surfacePage};--color-surface-card:${theme.surfaceCard};--color-text-primary:${theme.textPrimary};--color-text-secondary:${theme.textSecondary};--color-border:${theme.borderColor};--color-border-subtle:${theme.borderSubtle};--color-icon:${theme.iconColor};--color-footer-bg:${theme.footerBackground};--color-button-text:${theme.buttonText};}`;
+  const themeStyle = `:root{--color-primary:${theme.primary};--color-primary-dark:${theme.primaryDark};--color-surface-page:${theme.surfacePage};--color-surface-card:${theme.surfaceCard};--color-text-primary:${theme.textPrimary};--color-text-secondary:${theme.textSecondary};--color-border:${theme.borderColor};--color-border-subtle:${theme.borderSubtle};--color-icon:${theme.iconColor};--color-footer-bg:${theme.footerBackground};--color-button-text:${theme.buttonText};--color-navbar-bg:${theme.navbarBackground};--color-navbar-text:${theme.navbarText};}`;
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -64,6 +69,11 @@ export default async function RootLayout({
       </head>
       <body className={`${dmSans.variable} ${notoSansArabic.variable} antialiased`}>
         {children}
+        <LiveChatWidget
+          enabled={settings?.showLiveChat}
+          propertyId={settings?.liveChatPropertyId}
+          widgetId={settings?.liveChatWidgetId}
+        />
       </body>
     </html>
   );

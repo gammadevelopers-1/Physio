@@ -1,6 +1,5 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import { BlogsPageContent } from "@/components/blogs";
 import { getBlogsPageData } from "@/lib/strapi/api";
 
@@ -31,7 +30,6 @@ export default async function BlogsPage({ params }: { params: Promise<{ locale: 
         blogsPage={blogsPage}
       />
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
-      <WhatsAppButton phoneNumber={siteSettings?.whatsappNumber} enabled={siteSettings?.showWhatsappButton} />
     </main>
   );
 }

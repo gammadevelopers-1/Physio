@@ -1,6 +1,5 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import { ArchivedPageContent } from "@/components/courses";
 
 export const metadata = {
@@ -14,7 +13,6 @@ export default function ArchivedPage() {
       <Navbar />
       <ArchivedPageContent />
       <Footer />
-      <WhatsAppButton />
     </main>
   );
 }

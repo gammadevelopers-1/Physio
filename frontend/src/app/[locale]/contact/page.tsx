@@ -1,7 +1,6 @@
 import Navbar from "@/components/Navbar";
 import ContactForm from "@/components/ContactForm";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import { setRequestLocale } from "next-intl/server";
 import { getContactPageData } from "@/lib/strapi";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
@@ -37,7 +36,6 @@ export default async function ContactPage({
       <div className="hidden lg:block">
         <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
       </div>
-      <WhatsAppButton phoneNumber={siteSettings?.whatsappNumber} enabled={siteSettings?.showWhatsappButton} />
     </main>
   );
 }

@@ -55,7 +55,7 @@ const Navbar = ({ siteSettings, navLinks = [], footerLinks }: NavbarProps) => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-[var(--color-surface-page)] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] px-4 py-3 lg:px-16 lg:py-5">
+    <nav className="sticky top-0 z-50 w-full bg-[var(--color-navbar-bg)] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] px-4 py-3 lg:px-16 lg:py-5">
       {/* Main container - dir="rtl" on html handles the RTL layout automatically */}
       <div className="flex items-center justify-between w-full">
         {/* Logo + Nav Links (appears on right side in RTL due to dir="rtl") */}
@@ -73,7 +73,7 @@ const Navbar = ({ siteSettings, navLinks = [], footerLinks }: NavbarProps) => {
               />
             </Link>
           ) : siteName ? (
-            <Link href={`/${locale}`} className="font-semibold text-lg text-[var(--on-surface-default)] shrink-0">
+            <Link href={`/${locale}`} className="font-semibold text-lg text-[var(--color-navbar-text)] shrink-0">
               {siteName}
             </Link>
           ) : null}
@@ -85,7 +85,7 @@ const Navbar = ({ siteSettings, navLinks = [], footerLinks }: NavbarProps) => {
                 <Link
                   key={link.id}
                   href={link.url.startsWith('/') ? `/${locale}${link.url.replace(/^\/(en|ar)/, '')}` : link.url}
-                  className="text-[var(--color-text-primary)] text-base leading-6 hover:text-[var(--color-primary)] transition-colors whitespace-nowrap"
+                  className="text-[var(--color-navbar-text)] text-base leading-6 hover:text-[var(--color-primary)] transition-colors whitespace-nowrap"
                 >
                   {link.label}
                 </Link>
@@ -161,7 +161,7 @@ const Navbar = ({ siteSettings, navLinks = [], footerLinks }: NavbarProps) => {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 right-0 bg-[var(--surface-intense)] border-t border-[var(--outline-subtle)] shadow-lg">
+        <div className="lg:hidden absolute top-full left-0 right-0 bg-[var(--color-navbar-bg)] border-t border-[var(--outline-subtle)] shadow-lg">
           <div className="flex flex-col px-4 py-4">
             {/* Mobile Nav Links — Strapi only */}
             {navLinks.length > 0 &&
@@ -169,7 +169,7 @@ const Navbar = ({ siteSettings, navLinks = [], footerLinks }: NavbarProps) => {
                 <Link
                   key={link.id}
                   href={link.url.startsWith('/') ? `/${locale}${link.url.replace(/^\/(en|ar)/, '')}` : link.url}
-                  className="py-3 text-[var(--color-text-primary)] text-base leading-6 hover:text-[var(--color-primary)] transition-colors border-b border-[var(--outline-subtle)]"
+                  className="py-3 text-[var(--color-navbar-text)] text-base leading-6 hover:text-[var(--color-primary)] transition-colors border-b border-[var(--outline-subtle)]"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {link.label}

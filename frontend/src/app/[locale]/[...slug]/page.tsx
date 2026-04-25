@@ -2,7 +2,6 @@ import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
 import { getDynamicPage } from "@/lib/strapi";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import type { SideLoadedData } from "@/lib/strapi/types";
@@ -52,7 +51,6 @@ export default async function DynamicPage({
       <div className="hidden lg:block">
         <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
       </div>
-      <WhatsAppButton phoneNumber={siteSettings?.whatsappNumber} enabled={siteSettings?.showWhatsappButton} />
     </main>
   );
 }

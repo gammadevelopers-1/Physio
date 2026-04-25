@@ -47,17 +47,22 @@
         }
       }
     },
-    "whatsappNumber": {
-      "type": "string"
-    },
     "showSearchBar": {
       "type": "boolean",
       "default": true,
       "pluginOptions": { "i18n": { "localized": false } }
     },
-    "showWhatsappButton": {
+    "showLiveChat": {
       "type": "boolean",
-      "default": true,
+      "default": false,
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "liveChatPropertyId": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "liveChatWidgetId": {
+      "type": "string",
       "pluginOptions": { "i18n": { "localized": false } }
     },
     "instagramUrl": {
@@ -162,6 +167,16 @@
     "themeButtonText": {
       "type": "string",
       "default": "#ffffff",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "themeNavbarBackground": {
+      "type": "string",
+      "default": "#EEF3F7",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "themeNavbarText": {
+      "type": "string",
+      "default": "#171717",
       "pluginOptions": { "i18n": { "localized": false } }
     }
   }

@@ -1310,9 +1310,14 @@ const CourseDetailContent = ({
         {/* Related Courses */}
         <section className="px-16 py-16 bg-[var(--color-surface-page)]">
           <div className="max-w-[1200px] mx-auto">
-            <h2 className="font-bold text-[var(--color-text-primary)] text-center mb-10" style={{ fontSize: "36px" }}>
+            <h2 className="font-bold text-[var(--color-text-primary)] text-center mb-3" style={{ fontSize: "36px" }}>
               {relatedCoursesTitle || t("relatedCourses.title")}
             </h2>
+            {(relatedCoursesSubtitle || t("relatedCourses.subtitle")) && (
+              <p className="text-[var(--color-text-secondary)] text-center text-base mb-10 max-w-[720px] mx-auto">
+                {relatedCoursesSubtitle || t("relatedCourses.subtitle")}
+              </p>
+            )}
 
             <div className="grid grid-cols-4 gap-6">
               {relatedCourses.map((relatedCourse) => (

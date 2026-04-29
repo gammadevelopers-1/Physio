@@ -31,4 +31,8 @@ export class RegisterDto {
   @IsString()
   @MaxLength(50)
   scfhsNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  recaptchaToken?: string;
 }

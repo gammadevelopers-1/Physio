@@ -114,6 +114,14 @@ SECRETS="DATABASE_URL=DATABASE_URL:latest"
 SECRETS="${SECRETS},JWT_SECRET=JWT_SECRET:latest"
 SECRETS="${SECRETS},JWT_REFRESH_SECRET=JWT_REFRESH_SECRET:latest"
 
+# Google reCAPTCHA secret (verifies tokens from /auth/login + /auth/register)
+if gcloud secrets describe RECAPTCHA_SECRET_KEY &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},RECAPTCHA_SECRET_KEY=RECAPTCHA_SECRET_KEY:latest"
+    log_info "reCAPTCHA secret found - login/register protected"
+else
+    log_warning "RECAPTCHA_SECRET_KEY not found in Secret Manager - login/register will FAIL until set"
+fi
+
 # Email (Resend API)
 if gcloud secrets describe RESEND_API_KEY &>/dev/null 2>&1; then
     SECRETS="${SECRETS},RESEND_API_KEY=RESEND_API_KEY:latest"

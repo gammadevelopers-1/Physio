@@ -392,9 +392,10 @@ export const authApi = {
     firstName?: string;
     lastName?: string;
     scfhsNumber?: string;
+    recaptchaToken?: string;
   }) => api.post<RegisterResponse>('/auth/register', data, { skipAuth: true }),
 
-  login: (data: { email: string; password: string }) =>
+  login: (data: { email: string; password: string; recaptchaToken?: string }) =>
     api.post<LoginResponse>('/auth/login', data, { skipAuth: true }),
 
   logout: () => api.post<{ message: string }>('/auth/logout'),

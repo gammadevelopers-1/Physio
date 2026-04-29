@@ -30,7 +30,7 @@ interface TwoFactorPending {
 }
 
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string, redirectTo?: string) => Promise<void>;
+  login: (email: string, password: string, redirectTo?: string, recaptchaToken?: string) => Promise<void>;
   verify2FA: (challengeId: string, code: string, redirectTo?: string) => Promise<void>;
   resend2FA: (challengeId: string) => Promise<{ challengeId: string }>;
   register: (data: RegisterData) => Promise<void>;
@@ -46,6 +46,7 @@ interface RegisterData {
   firstName?: string;
   lastName?: string;
   scfhsNumber?: string;
+  recaptchaToken?: string;
 }
 
 // ===========================================
@@ -129,10 +130,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Login — may return user tokens OR trigger 2FA
   const login = useCallback(
-    async (email: string, password: string, redirectTo?: string) => {
+    async (email: string, password: string, redirectTo?: string, recaptchaToken?: string) => {
       setState((prev) => ({ ...prev, isLoading: true }));
       try {
-        const response = await authApi.login({ email, password });
+        const response = await authApi.login({ email, password, recaptchaToken });
 
         // 2FA required — redirect to verification page
         if (response.requiresTwoFactor && response.challengeId) {
@@ -274,6 +275,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         firstName: data.firstName,
         lastName: data.lastName,
         ...(data.scfhsNumber && { scfhsNumber: data.scfhsNumber }),
+        ...(data.recaptchaToken && { recaptchaToken: data.recaptchaToken }),
       });
       setState((prev) => ({ ...prev, isLoading: false }));
     } catch (error) {

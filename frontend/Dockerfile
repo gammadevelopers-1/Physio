@@ -16,8 +16,10 @@ WORKDIR /app
 # Next.js inlines NEXT_PUBLIC_* vars at build time, so they must be set here
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_STRAPI_URL
+ARG NEXT_PUBLIC_RECAPTCHA_SITE_KEY
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_STRAPI_URL=${NEXT_PUBLIC_STRAPI_URL}
+ENV NEXT_PUBLIC_RECAPTCHA_SITE_KEY=${NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
 
 # Copy package files and install all dependencies (including dev)
 COPY package.json package-lock.json ./

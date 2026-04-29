@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -11,6 +11,9 @@ import { useAuth } from "@/contexts";
 import { ApiError } from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import ReCAPTCHA from "react-google-recaptcha";
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
 
 
 function SignInForm() {
@@ -28,6 +31,8 @@ function SignInForm() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,15 +44,24 @@ function SignInForm() {
       return;
     }
 
+    if (!recaptchaToken) {
+      setError(tToasts("captchaRequired"));
+      toast.error(tToasts("captchaRequired"));
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      await login(email, password, redirectTo || undefined);
+      await login(email, password, redirectTo || undefined, recaptchaToken);
     } catch (err) {
       const message = err instanceof ApiError
         ? err.message
         : tToasts("genericError");
       setError(message);
       toast.error(message);
+      // reset captcha — Google tokens are single-use
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -189,10 +203,24 @@ function SignInForm() {
                     </span>
                   </div>
 
+                  {/* reCAPTCHA */}
+                  {RECAPTCHA_SITE_KEY && (
+                    <div className="flex justify-center" dir="ltr">
+                      <ReCAPTCHA
+                        ref={recaptchaRef}
+                        sitekey={RECAPTCHA_SITE_KEY}
+                        hl={locale === "ar" ? "ar" : "en"}
+                        onChange={(token) => setRecaptchaToken(token)}
+                        onExpired={() => setRecaptchaToken(null)}
+                        onErrored={() => setRecaptchaToken(null)}
+                      />
+                    </div>
+                  )}
+
                   {/* Login Button */}
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || !recaptchaToken}
                     className="w-full h-10 px-5 py-2 rounded-xl text-white font-medium text-sm text-center hover:opacity-90 transition-opacity disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{
                       background: isRTL

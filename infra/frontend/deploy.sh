@@ -68,6 +68,15 @@ fi
 log_info "NEXT_PUBLIC_API_URL  = ${BACKEND_URL}/api"
 log_info "NEXT_PUBLIC_STRAPI_URL = ${STRAPI_URL}"
 
+# Resolve reCAPTCHA site key from Secret Manager (optional — widget hides if unset)
+RECAPTCHA_SITE_KEY=""
+if gcloud secrets describe NEXT_PUBLIC_RECAPTCHA_SITE_KEY &>/dev/null 2>&1; then
+    RECAPTCHA_SITE_KEY=$(gcloud secrets versions access latest --secret=NEXT_PUBLIC_RECAPTCHA_SITE_KEY)
+    log_info "NEXT_PUBLIC_RECAPTCHA_SITE_KEY = (loaded from Secret Manager)"
+else
+    log_warning "NEXT_PUBLIC_RECAPTCHA_SITE_KEY not in Secret Manager — captcha widget will not render"
+fi
+
 # Step 4: Build Docker image
 if [ "$SKIP_BUILD" = false ]; then
     log_step "Building Docker image..."
@@ -77,6 +86,7 @@ if [ "$SKIP_BUILD" = false ]; then
         --platform linux/amd64 \
         --build-arg NEXT_PUBLIC_API_URL="${BACKEND_URL}/api" \
         --build-arg NEXT_PUBLIC_STRAPI_URL="${STRAPI_URL}" \
+        --build-arg NEXT_PUBLIC_RECAPTCHA_SITE_KEY="${RECAPTCHA_SITE_KEY}" \
         -t ${IMAGE_TAG} \
         -t ${IMAGE_LATEST} \
         .

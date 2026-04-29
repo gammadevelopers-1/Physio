@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -11,6 +11,9 @@ import { useAuth } from "@/contexts";
 import { ApiError } from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2, CheckCircle, Eye, EyeOff } from "lucide-react";
+import ReCAPTCHA from "react-google-recaptcha";
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
 
 
 function SignUpForm() {
@@ -35,6 +38,8 @@ function SignUpForm() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +88,13 @@ function SignUpForm() {
       return;
     }
 
+    if (!recaptchaToken) {
+      const msg = tToasts("captchaRequired");
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await register({
@@ -91,6 +103,7 @@ function SignUpForm() {
         firstName,
         lastName,
         ...(scfhsNumber.trim() && { scfhsNumber: scfhsNumber.trim() }),
+        recaptchaToken,
       });
       setSuccess(true);
       toast.success(tToasts("accountCreated"));
@@ -104,6 +117,9 @@ function SignUpForm() {
         : tToasts("genericError");
       setError(message);
       toast.error(message);
+      // reset captcha — Google tokens are single-use
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -381,10 +397,24 @@ function SignUpForm() {
                     </span>
                   </div>
 
+                  {/* reCAPTCHA */}
+                  {RECAPTCHA_SITE_KEY && (
+                    <div className="flex justify-center" dir="ltr">
+                      <ReCAPTCHA
+                        ref={recaptchaRef}
+                        sitekey={RECAPTCHA_SITE_KEY}
+                        hl={locale === "ar" ? "ar" : "en"}
+                        onChange={(token) => setRecaptchaToken(token)}
+                        onExpired={() => setRecaptchaToken(null)}
+                        onErrored={() => setRecaptchaToken(null)}
+                      />
+                    </div>
+                  )}
+
                   {/* Register Button */}
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || !recaptchaToken}
                     className="w-full h-10 px-5 py-2 rounded-xl text-white font-medium text-sm text-center hover:opacity-90 transition-opacity disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{
                       background: isRTL

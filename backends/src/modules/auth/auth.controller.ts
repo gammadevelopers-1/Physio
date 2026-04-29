@@ -17,6 +17,7 @@ import {
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
+import { RecaptchaService } from './recaptcha.service';
 import {
   RegisterDto,
   LoginDto,
@@ -40,6 +41,7 @@ export class AuthController {
   constructor(
     private authService: AuthService,
     private twoFactorService: TwoFactorService,
+    private recaptchaService: RecaptchaService,
   ) {}
 
   // Helper: set refresh token cookie
@@ -69,6 +71,7 @@ export class AuthController {
   @Public()
   @Post('register')
   async register(@Body() dto: RegisterDto) {
+    await this.recaptchaService.verify(dto.recaptchaToken, 'register');
     return this.authService.register(dto);
   }
 
@@ -84,6 +87,8 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Headers('x-device-id') deviceId?: string,
   ) {
+    await this.recaptchaService.verify(dto.recaptchaToken, 'login');
+
     const ipAddress = req.ip || req.connection.remoteAddress;
     const userAgent = req.headers['user-agent'] || '';
 

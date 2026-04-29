@@ -742,10 +742,10 @@ const CourseDetailContent = ({
               )}
             </div>
           ))}
-          {remaining > 0 && (
+          {(moreContentText?.trim() || remaining > 0) && (
             <div className="mt-2 p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
               <p className="text-[13px] text-[var(--color-text-secondary)]">
-                {moreContentText || (locale === "ar"
+                {moreContentText?.trim() || (locale === "ar"
                   ? "المزيد من المحتوى متاح عند التسجيل"
                   : "More content available after enrollment")}
               </p>

@@ -160,9 +160,11 @@ export interface SiteSettings {
   footerDescription: string | null;
   copyrightText: string | null;
   showSearchBar: boolean | null;
-  showLiveChat: boolean | null;
-  liveChatPropertyId: string | null;
-  liveChatWidgetId: string | null;
+  showWhatsappButton: boolean | null;
+  whatsappNumber: string | null;
+  whatsappCompanyName: string | null;
+  whatsappGreeting: string | null;
+  whatsappReplyTime: string | null;
   instagramUrl: string | null;
   twitterUrl: string | null;
   linkedinUrl: string | null;
@@ -186,6 +188,8 @@ export interface SiteSettings {
   themeButtonText: string | null;
   themeNavbarBackground: string | null;
   themeNavbarText: string | null;
+  themeFooterHeading: string | null;
+  themeFooterText: string | null;
   locale: string;
   createdAt: string;
   updatedAt: string;
@@ -551,6 +555,29 @@ export interface FAQItem {
   id: number;
   question: string;
   answer: string;
+}
+
+export interface SearchTermItem {
+  id: number;
+  term: string;
+}
+
+export interface SearchPage {
+  id: number;
+  documentId: string;
+  heroTitle: string | null;
+  heroSubtitle: string | null;
+  searchPlaceholder: string | null;
+  searchPlaceholderMobile: string | null;
+  popularSearchesLabel: string | null;
+  popularSearchTerms: SearchTermItem[] | null;
+  filterResultsLabel: string | null;
+  noResultsTitle: string | null;
+  noResultsDescription: string | null;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
 }
 
 export interface FAQPage {

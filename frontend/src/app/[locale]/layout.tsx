@@ -6,6 +6,8 @@ import { ClientProviders } from "@/components/providers/ClientProviders";
 import { HtmlAttributesSetter } from "@/components/HtmlAttributesSetter";
 import NavigationProgress from "@/components/NavigationProgress";
 import LocaleSwitchOverlay from "@/components/LocaleSwitchOverlay";
+import WhatsAppChatWidget from "@/components/WhatsAppChatWidget";
+import { getSiteSettings } from "@/lib/strapi";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -26,6 +28,7 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
   const messages = await getMessages();
+  const settings = await getSiteSettings(locale).catch(() => null);
 
   const isRTL = locale === "ar";
 
@@ -44,6 +47,14 @@ export default async function LocaleLayout({
         <div className={isRTL ? "font-arabic" : ""}>
           {children}
         </div>
+        <WhatsAppChatWidget
+          enabled={settings?.showWhatsappButton}
+          phoneNumber={settings?.whatsappNumber}
+          companyName={settings?.whatsappCompanyName}
+          greeting={settings?.whatsappGreeting}
+          replyTime={settings?.whatsappReplyTime}
+          locale={locale}
+        />
       </ClientProviders>
     </NextIntlClientProvider>
   );

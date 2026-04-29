@@ -3,7 +3,6 @@ import { DM_Sans, Noto_Sans_Arabic } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { getSiteSettings } from "@/lib/strapi";
-import LiveChatWidget from "@/components/LiveChatWidget";
 
 const META_PIXEL_ID = "1956469491660011";
 const GA4_ID = "G-Z9DZXJQCWY";
@@ -41,6 +40,8 @@ const THEME_DEFAULTS = {
   buttonText: "#ffffff",
   navbarBackground: "#EEF3F7",
   navbarText: "#171717",
+  footerHeading: "#171717",
+  footerText: "#171717",
 };
 
 export default async function RootLayout({
@@ -63,9 +64,11 @@ export default async function RootLayout({
     buttonText: settings?.themeButtonText || THEME_DEFAULTS.buttonText,
     navbarBackground: settings?.themeNavbarBackground || THEME_DEFAULTS.navbarBackground,
     navbarText: settings?.themeNavbarText || THEME_DEFAULTS.navbarText,
+    footerHeading: settings?.themeFooterHeading || THEME_DEFAULTS.footerHeading,
+    footerText: settings?.themeFooterText || THEME_DEFAULTS.footerText,
   };
 
-  const themeStyle = `:root{--color-primary:${theme.primary};--color-primary-dark:${theme.primaryDark};--color-surface-page:${theme.surfacePage};--color-surface-card:${theme.surfaceCard};--color-text-primary:${theme.textPrimary};--color-text-secondary:${theme.textSecondary};--color-border:${theme.borderColor};--color-border-subtle:${theme.borderSubtle};--color-icon:${theme.iconColor};--color-footer-bg:${theme.footerBackground};--color-button-text:${theme.buttonText};--color-navbar-bg:${theme.navbarBackground};--color-navbar-text:${theme.navbarText};}`;
+  const themeStyle = `:root{--color-primary:${theme.primary};--color-primary-dark:${theme.primaryDark};--color-surface-page:${theme.surfacePage};--color-surface-card:${theme.surfaceCard};--color-text-primary:${theme.textPrimary};--color-text-secondary:${theme.textSecondary};--color-border:${theme.borderColor};--color-border-subtle:${theme.borderSubtle};--color-icon:${theme.iconColor};--color-footer-bg:${theme.footerBackground};--color-button-text:${theme.buttonText};--color-navbar-bg:${theme.navbarBackground};--color-navbar-text:${theme.navbarText};--color-footer-heading:${theme.footerHeading};--color-footer-text:${theme.footerText};}`;
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -113,11 +116,6 @@ export default async function RootLayout({
           />
         </noscript>
         {children}
-        <LiveChatWidget
-          enabled={settings?.showLiveChat}
-          propertyId={settings?.liveChatPropertyId}
-          widgetId={settings?.liveChatWidgetId}
-        />
       </body>
     </html>
   );

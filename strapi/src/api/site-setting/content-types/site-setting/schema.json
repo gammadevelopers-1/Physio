@@ -52,18 +52,26 @@
       "default": true,
       "pluginOptions": { "i18n": { "localized": false } }
     },
-    "showLiveChat": {
+    "showWhatsappButton": {
       "type": "boolean",
       "default": false,
       "pluginOptions": { "i18n": { "localized": false } }
     },
-    "liveChatPropertyId": {
+    "whatsappNumber": {
       "type": "string",
       "pluginOptions": { "i18n": { "localized": false } }
     },
-    "liveChatWidgetId": {
+    "whatsappCompanyName": {
       "type": "string",
-      "pluginOptions": { "i18n": { "localized": false } }
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "whatsappGreeting": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "whatsappReplyTime": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
     },
     "instagramUrl": {
       "type": "string"
@@ -175,6 +183,16 @@
       "pluginOptions": { "i18n": { "localized": false } }
     },
     "themeNavbarText": {
+      "type": "string",
+      "default": "#171717",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "themeFooterHeading": {
+      "type": "string",
+      "default": "#171717",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "themeFooterText": {
       "type": "string",
       "default": "#171717",
       "pluginOptions": { "i18n": { "localized": false } }

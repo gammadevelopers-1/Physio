@@ -1423,6 +1423,54 @@ export interface BlocksHeroBanner extends Struct.ComponentSchema {
   };
 }
 
+export interface BlocksImageBannerBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_image_banner_blocks';
+  info: {
+    description: 'Centered image with an optional button beneath it';
+    displayName: 'Image Banner Block';
+    icon: 'picture';
+  };
+  attributes: {
+    alignment: Schema.Attribute.Enumeration<['left', 'center', 'right']> &
+      Schema.Attribute.DefaultTo<'center'>;
+    button: Schema.Attribute.Component<'elements.button-link', false>;
+    image: Schema.Attribute.Media<'images'> &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    imageAlt: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    maxWidth: Schema.Attribute.Enumeration<
+      ['small', 'medium', 'large', 'full']
+    > &
+      Schema.Attribute.DefaultTo<'large'>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
 export interface BlocksImageGalleryBlock extends Struct.ComponentSchema {
   collectionName: 'components_blocks_image_gallery_blocks';
   info: {
@@ -2892,6 +2940,30 @@ export interface ElementsCardItem extends Struct.ComponentSchema {
   };
 }
 
+export interface ElementsCertificationsStep extends Struct.ComponentSchema {
+  collectionName: 'components_elements_certifications_steps';
+  info: {
+    description: "A single step in the 'How to Claim CME Hours' flow with icon, title, and description";
+    displayName: 'Certifications Step';
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    icon: Schema.Attribute.Media<'images' | 'files'>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
 export interface ElementsComparisonColumn extends Struct.ComponentSchema {
   collectionName: 'components_elements_comparison_columns';
   info: {
@@ -2953,6 +3025,47 @@ export interface ElementsComplianceBadgeItem extends Struct.ComponentSchema {
     status: Schema.Attribute.Enumeration<['active', 'pending', 'expired']> &
       Schema.Attribute.DefaultTo<'active'>;
     verificationUrl: Schema.Attribute.String;
+  };
+}
+
+export interface ElementsComplianceCard extends Struct.ComponentSchema {
+  collectionName: 'components_elements_compliance_cards';
+  info: {
+    description: 'A card describing a compliance pillar with image, title, and description';
+    displayName: 'Compliance Card';
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    image: Schema.Attribute.Media<'images'>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface ElementsComplianceItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_compliance_items';
+  info: {
+    description: 'A single compliance/standard bullet point';
+    displayName: 'Compliance Item';
+  };
+  attributes: {
+    text: Schema.Attribute.Text &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
   };
 }
 
@@ -3105,6 +3218,73 @@ export interface ElementsEventItem extends Struct.ComponentSchema {
   };
 }
 
+export interface ElementsFeatureItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_feature_items';
+  info: {
+    description: 'A feature with icon, title, and description';
+    displayName: 'Feature Item';
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    icon: Schema.Attribute.Media<'images' | 'files'>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface ElementsInfoBadge extends Struct.ComponentSchema {
+  collectionName: 'components_elements_info_badges';
+  info: {
+    description: 'A compact label/value pair (e.g., License Number, Status, Valid Through)';
+    displayName: 'Info Badge';
+  };
+  attributes: {
+    label: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    value: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface ElementsLearningCardItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_learning_card_items';
+  info: {
+    description: 'A learning experience card with image, title, and optional link';
+    displayName: 'Learning Card Item';
+  };
+  attributes: {
+    image: Schema.Attribute.Media<'images'>;
+    imageMobile: Schema.Attribute.Media<'images'>;
+    linkUrl: Schema.Attribute.String;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
 export interface ElementsLearningOutcomeItem extends Struct.ComponentSchema {
   collectionName: 'components_elements_learning_outcome_items';
   info: {
@@ -3120,6 +3300,18 @@ export interface ElementsLearningOutcomeItem extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+  };
+}
+
+export interface ElementsPaymentMethodItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_payment_method_items';
+  info: {
+    description: 'A payment method icon (Visa, Mastercard, etc.)';
+    displayName: 'Payment Method';
+  };
+  attributes: {
+    icon: Schema.Attribute.Media<'images'> & Schema.Attribute.Required;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
   };
 }
 
@@ -3377,6 +3569,17 @@ export interface SharedPolicySection extends Struct.ComponentSchema {
   };
 }
 
+export interface SharedSearchTerm extends Struct.ComponentSchema {
+  collectionName: 'components_shared_search_terms';
+  info: {
+    description: 'A single popular search term';
+    displayName: 'Search Term';
+  };
+  attributes: {
+    term: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
@@ -3404,6 +3607,7 @@ declare module '@strapi/strapi' {
       'blocks.featured-courses-grid': BlocksFeaturedCoursesGrid;
       'blocks.feedback-form-block': BlocksFeedbackFormBlock;
       'blocks.hero-banner': BlocksHeroBanner;
+      'blocks.image-banner-block': BlocksImageBannerBlock;
       'blocks.image-gallery-block': BlocksImageGalleryBlock;
       'blocks.instructor-spotlight-block': BlocksInstructorSpotlightBlock;
       'blocks.instructors-grid': BlocksInstructorsGrid;
@@ -3434,14 +3638,21 @@ declare module '@strapi/strapi' {
       'elements.anchor-link-item': ElementsAnchorLinkItem;
       'elements.button-link': ElementsButtonLink;
       'elements.card-item': ElementsCardItem;
+      'elements.certifications-step': ElementsCertificationsStep;
       'elements.comparison-column': ElementsComparisonColumn;
       'elements.compliance-badge-item': ElementsComplianceBadgeItem;
+      'elements.compliance-card': ElementsComplianceCard;
+      'elements.compliance-item': ElementsComplianceItem;
       'elements.counter-item': ElementsCounterItem;
       'elements.cpd-tier': ElementsCpdTier;
       'elements.curriculum-module': ElementsCurriculumModule;
       'elements.download-item': ElementsDownloadItem;
       'elements.event-item': ElementsEventItem;
+      'elements.feature-item': ElementsFeatureItem;
+      'elements.info-badge': ElementsInfoBadge;
+      'elements.learning-card-item': ElementsLearningCardItem;
       'elements.learning-outcome-item': ElementsLearningOutcomeItem;
+      'elements.payment-method-item': ElementsPaymentMethodItem;
       'elements.progress-metric': ElementsProgressMetric;
       'elements.related-page-item': ElementsRelatedPageItem;
       'elements.social-link': ElementsSocialLink;
@@ -3452,6 +3663,7 @@ declare module '@strapi/strapi' {
       'elements.treatment-technique-item': ElementsTreatmentTechniqueItem;
       'shared.faq-item': SharedFaqItem;
       'shared.policy-section': SharedPolicySection;
+      'shared.search-term': SharedSearchTerm;
     }
   }
 }

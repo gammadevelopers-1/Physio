@@ -496,6 +496,7 @@ export interface ApiAboutPageAboutPage extends Struct.SingleTypeSchema {
         'blocks.trainer-form-block',
         'blocks.treatment-gallery-block',
         'blocks.upcoming-events-block',
+        'blocks.image-banner-block',
         'blocks.video-embed',
       ]
     > &
@@ -522,25 +523,16 @@ export interface ApiAboutPageAboutPage extends Struct.SingleTypeSchema {
           localized: true;
         };
       }>;
-    complianceItem1: Schema.Attribute.Text &
+    complianceButtonLink: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
-          localized: true;
+          localized: false;
         };
       }>;
-    complianceItem2: Schema.Attribute.Text &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    complianceItem3: Schema.Attribute.Text &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    complianceItem4: Schema.Attribute.Text &
+    complianceItems: Schema.Attribute.Component<
+      'elements.compliance-item',
+      true
+    > &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -555,80 +547,13 @@ export interface ApiAboutPageAboutPage extends Struct.SingleTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    feature1Description: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    feature1Title: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    feature2Description: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    feature2Title: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    feature3Description: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    feature3Title: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    feature4Description: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    feature4Title: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    feature5Description: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    feature5Title: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    feature6Description: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    feature6Title: Schema.Attribute.String &
+    features: Schema.Attribute.Component<'elements.feature-item', true> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
     heroDescription: Schema.Attribute.Text &
-      Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -640,40 +565,36 @@ export interface ApiAboutPageAboutPage extends Struct.SingleTypeSchema {
           localized: true;
         };
       }>;
+    heroExploreButtonLink: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
     heroGetStartedButtonLabel: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
+    heroGetStartedButtonLink: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
     heroImage: Schema.Attribute.Media<'images'>;
     heroImageMobile: Schema.Attribute.Media<'images'>;
     heroTitle: Schema.Attribute.String &
-      Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
-    learningCard1Image: Schema.Attribute.Media<'images'>;
-    learningCard1ImageMobile: Schema.Attribute.Media<'images'>;
-    learningCard1Title: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    learningCard2Image: Schema.Attribute.Media<'images'>;
-    learningCard2ImageMobile: Schema.Attribute.Media<'images'>;
-    learningCard2Title: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    learningCard3Image: Schema.Attribute.Media<'images'>;
-    learningCard3ImageMobile: Schema.Attribute.Media<'images'>;
-    learningCard3Title: Schema.Attribute.String &
+    learningCards: Schema.Attribute.Component<
+      'elements.learning-card-item',
+      true
+    > &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -813,6 +734,7 @@ export interface ApiBecomeTrainerPageBecomeTrainerPage
         'blocks.trainer-form-block',
         'blocks.treatment-gallery-block',
         'blocks.upcoming-events-block',
+        'blocks.image-banner-block',
         'blocks.video-embed',
       ]
     > &
@@ -1167,6 +1089,99 @@ export interface ApiBlogPostBlogPost extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiBlogsPageBlogsPage extends Struct.SingleTypeSchema {
+  collectionName: 'blogs_pages';
+  info: {
+    description: 'Section labels and metadata for the public blogs listing and blog detail pages';
+    displayName: 'Blogs Page';
+    pluralName: 'blogs-pages';
+    singularName: 'blogs-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    backToAllPostsLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    blogsSubtitle: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    blogsTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    featuredBlogsSubtitle: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    featuredBlogsTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    latestBlogsSubtitle: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    latestBlogsTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::blogs-page.blogs-page'
+    >;
+    metaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    ogImage: Schema.Attribute.Media<'images'>;
+    publishedAt: Schema.Attribute.DateTime;
+    publishedByLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiCertificationsPageCertificationsPage
   extends Struct.SingleTypeSchema {
   collectionName: 'certifications_pages';
@@ -1233,6 +1248,7 @@ export interface ApiCertificationsPageCertificationsPage
         'blocks.trainer-form-block',
         'blocks.treatment-gallery-block',
         'blocks.upcoming-events-block',
+        'blocks.image-banner-block',
         'blocks.video-embed',
       ]
     > &
@@ -1261,6 +1277,12 @@ export interface ApiCertificationsPageCertificationsPage
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
+        };
+      }>;
+    heroButtonLink: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
         };
       }>;
     heroDescription: Schema.Attribute.Text &
@@ -1345,37 +1367,7 @@ export interface ApiCertificationsPageCertificationsPage
           localized: true;
         };
       }>;
-    step1Description: Schema.Attribute.Text &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    step1Title: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    step2Description: Schema.Attribute.Text &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    step2Title: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    step3Description: Schema.Attribute.Text &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    step3Title: Schema.Attribute.String &
+    steps: Schema.Attribute.Component<'elements.certifications-step', true> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -1482,6 +1474,7 @@ export interface ApiContactPageContactPage extends Struct.SingleTypeSchema {
         'blocks.trainer-form-block',
         'blocks.treatment-gallery-block',
         'blocks.upcoming-events-block',
+        'blocks.image-banner-block',
         'blocks.video-embed',
       ]
     > &
@@ -1743,6 +1736,7 @@ export interface ApiCourseDetailPageCourseDetailPage
         'blocks.trainer-form-block',
         'blocks.treatment-gallery-block',
         'blocks.upcoming-events-block',
+        'blocks.image-banner-block',
         'blocks.video-embed',
       ]
     >;
@@ -1911,12 +1905,37 @@ export interface ApiCoursesPageCoursesPage extends Struct.SingleTypeSchema {
         'blocks.trainer-form-block',
         'blocks.treatment-gallery-block',
         'blocks.upcoming-events-block',
+        'blocks.image-banner-block',
         'blocks.video-embed',
       ]
     >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    ctaButtonHref: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    ctaButtonLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    ctaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    ctaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     emptyStateMessage: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1924,6 +1943,132 @@ export interface ApiCoursesPageCoursesPage extends Struct.SingleTypeSchema {
         };
       }>;
     emptyStateTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterAllLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterAvailabilityLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterAvailFullLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterAvailOpenLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterAvailStartingSoonLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterBlendedLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterDeliveryLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterFreeLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterLangArLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterLangBothLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterLangEnLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterLanguageLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterOnsiteLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterPaidLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterPricingLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterSelfPacedLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterSortByLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterSortFeaturedLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterSortNewestLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterSortRatingLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterZoomLabel: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -1959,6 +2104,60 @@ export interface ApiCoursesPageCoursesPage extends Struct.SingleTypeSchema {
         };
       }>;
     publishedAt: Schema.Attribute.DateTime;
+    searchPlaceholder: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    showAvailabilityFilter: Schema.Attribute.Boolean &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<true>;
+    showDeliveryFilter: Schema.Attribute.Boolean &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<true>;
+    showLanguageFilter: Schema.Attribute.Boolean &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<true>;
+    showPricingFilter: Schema.Attribute.Boolean &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<true>;
+    showSearchBar: Schema.Attribute.Boolean &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<true>;
+    showSortBy: Schema.Attribute.Boolean &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<true>;
+    sidebarFilterTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -2031,6 +2230,7 @@ export interface ApiFaqPageFaqPage extends Struct.SingleTypeSchema {
         'blocks.trainer-form-block',
         'blocks.treatment-gallery-block',
         'blocks.upcoming-events-block',
+        'blocks.image-banner-block',
         'blocks.video-embed',
       ]
     > &
@@ -2046,6 +2246,12 @@ export interface ApiFaqPageFaqPage extends Struct.SingleTypeSchema {
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
+        };
+      }>;
+    getInTouchLink: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
         };
       }>;
     items: Schema.Attribute.Component<'shared.faq-item', true>;
@@ -2235,6 +2441,7 @@ export interface ApiFeedbackPageFeedbackPage extends Struct.SingleTypeSchema {
         'blocks.trainer-form-block',
         'blocks.treatment-gallery-block',
         'blocks.upcoming-events-block',
+        'blocks.image-banner-block',
         'blocks.video-embed',
       ]
     > &
@@ -2349,6 +2556,12 @@ export interface ApiHomePageHomePage extends Struct.SingleTypeSchema {
           localized: true;
         };
       }>;
+    becomeTrainerButtonLink: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
     becomeTrainerDescription: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -2411,6 +2624,7 @@ export interface ApiHomePageHomePage extends Struct.SingleTypeSchema {
         'blocks.trainer-form-block',
         'blocks.treatment-gallery-block',
         'blocks.upcoming-events-block',
+        'blocks.image-banner-block',
         'blocks.video-embed',
       ]
     > &
@@ -2427,6 +2641,12 @@ export interface ApiHomePageHomePage extends Struct.SingleTypeSchema {
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
+        };
+      }>;
+    ctaButtonLink: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
         };
       }>;
     ctaDescription: Schema.Attribute.Text &
@@ -2500,7 +2720,21 @@ export interface ApiHomePageHomePage extends Struct.SingleTypeSchema {
           localized: true;
         };
       }>;
-    heroVideo: Schema.Attribute.Media<'videos'>;
+    heroVideo: Schema.Attribute.Media<'videos'> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    heroVideoMode: Schema.Attribute.Enumeration<
+      ['banner', 'widescreen', 'fullFit']
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'banner'>;
     instructorsDescription: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -2679,6 +2913,7 @@ export interface ApiInstructorsPageInstructorsPage
         'blocks.trainer-form-block',
         'blocks.treatment-gallery-block',
         'blocks.upcoming-events-block',
+        'blocks.image-banner-block',
         'blocks.video-embed',
       ]
     > &
@@ -2794,6 +3029,7 @@ export interface ApiLearningPoliciesPageLearningPoliciesPage
         'blocks.trainer-form-block',
         'blocks.treatment-gallery-block',
         'blocks.upcoming-events-block',
+        'blocks.image-banner-block',
         'blocks.video-embed',
       ]
     > &
@@ -2963,8 +3199,18 @@ export interface ApiNelcPageNelcPage extends Struct.SingleTypeSchema {
         'blocks.trainer-form-block',
         'blocks.treatment-gallery-block',
         'blocks.upcoming-events-block',
+        'blocks.image-banner-block',
         'blocks.video-embed',
       ]
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    complianceCards: Schema.Attribute.Component<
+      'elements.compliance-card',
+      true
     > &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -2986,19 +3232,6 @@ export interface ApiNelcPageNelcPage extends Struct.SingleTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    governanceDescription: Schema.Attribute.Text &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    governanceImage: Schema.Attribute.Media<'images'>;
-    governanceTitle: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
     heroDescription: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -3012,38 +3245,7 @@ export interface ApiNelcPageNelcPage extends Struct.SingleTypeSchema {
           localized: true;
         };
       }>;
-    instructionDescription: Schema.Attribute.Text &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    instructionImage: Schema.Attribute.Media<'images'>;
-    instructionTitle: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    licenseNumberLabel: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    licenseNumberValue: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    licenseTypeLabel: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    licenseTypeValue: Schema.Attribute.String &
+    infoBadges: Schema.Attribute.Component<'elements.info-badge', true> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -3069,31 +3271,6 @@ export interface ApiNelcPageNelcPage extends Struct.SingleTypeSchema {
     nelcLogo: Schema.Attribute.Media<'images'>;
     ogImage: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
-    statusLabel: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    statusValue: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    technologyDescription: Schema.Attribute.Text &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    technologyImage: Schema.Attribute.Media<'images'>;
-    technologyTitle: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -3166,6 +3343,7 @@ export interface ApiPagePage extends Struct.CollectionTypeSchema {
         'blocks.trainer-form-block',
         'blocks.treatment-gallery-block',
         'blocks.upcoming-events-block',
+        'blocks.image-banner-block',
         'blocks.video-embed',
       ]
     >;
@@ -3310,6 +3488,7 @@ export interface ApiPartnersPagePartnersPage extends Struct.SingleTypeSchema {
         'blocks.trainer-form-block',
         'blocks.treatment-gallery-block',
         'blocks.upcoming-events-block',
+        'blocks.image-banner-block',
         'blocks.video-embed',
       ]
     > &
@@ -3420,6 +3599,7 @@ export interface ApiPrivacyPolicyPagePrivacyPolicyPage
         'blocks.trainer-form-block',
         'blocks.treatment-gallery-block',
         'blocks.upcoming-events-block',
+        'blocks.image-banner-block',
         'blocks.video-embed',
       ]
     > &
@@ -3475,6 +3655,87 @@ export interface ApiPrivacyPolicyPagePrivacyPolicyPage
   };
 }
 
+export interface ApiSearchPageSearchPage extends Struct.SingleTypeSchema {
+  collectionName: 'search_pages';
+  info: {
+    description: 'Search page text content (hero, search bar, popular searches)';
+    displayName: 'Search Page';
+    pluralName: 'search-pages';
+    singularName: 'search-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    filterResultsLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    heroSubtitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    heroTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::search-page.search-page'
+    >;
+    noResultsDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    noResultsTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    popularSearchesLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    popularSearchTerms: Schema.Attribute.Component<'shared.search-term', true>;
+    publishedAt: Schema.Attribute.DateTime;
+    searchPlaceholder: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    searchPlaceholderMobile: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiSiteSettingSiteSetting extends Struct.SingleTypeSchema {
   collectionName: 'site_settings';
   info: {
@@ -3508,6 +3769,12 @@ export interface ApiSiteSettingSiteSetting extends Struct.SingleTypeSchema {
           localized: true;
         };
       }>;
+    footerMenuTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     footerOrganizationTitle: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -3534,7 +3801,25 @@ export interface ApiSiteSettingSiteSetting extends Struct.SingleTypeSchema {
       'api::site-setting.site-setting'
     >;
     logo: Schema.Attribute.Media<'images'>;
+    paymentMethods: Schema.Attribute.Component<
+      'elements.payment-method-item',
+      true
+    >;
     publishedAt: Schema.Attribute.DateTime;
+    showSearchBar: Schema.Attribute.Boolean &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<true>;
+    showWhatsappButton: Schema.Attribute.Boolean &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<false>;
     siteName: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
@@ -3542,11 +3827,139 @@ export interface ApiSiteSettingSiteSetting extends Struct.SingleTypeSchema {
           localized: true;
         };
       }>;
+    themeBorderColor: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'#e5e7eb'>;
+    themeBorderSubtle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'#C8D5E1'>;
+    themeButtonText: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'#ffffff'>;
+    themeFooterBackground: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'#ffffff'>;
+    themeFooterHeading: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'#171717'>;
+    themeFooterText: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'#171717'>;
+    themeIconColor: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'#737373'>;
+    themeNavbarBackground: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'#EEF3F7'>;
+    themeNavbarText: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'#171717'>;
+    themePrimaryColor: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'#a37f49'>;
+    themePrimaryDark: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'#6b4e24'>;
+    themeSurfaceCard: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'#e5edf4'>;
+    themeSurfacePage: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'#EEF3F7'>;
+    themeTextPrimary: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'#171717'>;
+    themeTextSecondary: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'#737373'>;
     twitterUrl: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    whatsappNumber: Schema.Attribute.String;
+    whatsappCompanyName: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    whatsappGreeting: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    whatsappNumber: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    whatsappReplyTime: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
   };
 }
 
@@ -3616,6 +4029,7 @@ export interface ApiTermsPageTermsPage extends Struct.SingleTypeSchema {
         'blocks.trainer-form-block',
         'blocks.treatment-gallery-block',
         'blocks.upcoming-events-block',
+        'blocks.image-banner-block',
         'blocks.video-embed',
       ]
     > &
@@ -4241,6 +4655,7 @@ declare module '@strapi/strapi' {
       'api::become-trainer-page.become-trainer-page': ApiBecomeTrainerPageBecomeTrainerPage;
       'api::blog-category.blog-category': ApiBlogCategoryBlogCategory;
       'api::blog-post.blog-post': ApiBlogPostBlogPost;
+      'api::blogs-page.blogs-page': ApiBlogsPageBlogsPage;
       'api::certifications-page.certifications-page': ApiCertificationsPageCertificationsPage;
       'api::contact-page.contact-page': ApiContactPageContactPage;
       'api::course-detail-page.course-detail-page': ApiCourseDetailPageCourseDetailPage;
@@ -4258,6 +4673,7 @@ declare module '@strapi/strapi' {
       'api::partner.partner': ApiPartnerPartner;
       'api::partners-page.partners-page': ApiPartnersPagePartnersPage;
       'api::privacy-policy-page.privacy-policy-page': ApiPrivacyPolicyPagePrivacyPolicyPage;
+      'api::search-page.search-page': ApiSearchPageSearchPage;
       'api::site-setting.site-setting': ApiSiteSettingSiteSetting;
       'api::terms-page.terms-page': ApiTermsPageTermsPage;
       'api::testimonial.testimonial': ApiTestimonialTestimonial;

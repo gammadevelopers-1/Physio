@@ -9,7 +9,6 @@ import {
   Clock,
   ArrowRight,
   ArrowLeft,
-  Banknote,
 } from "lucide-react";
 import { PublicCourse } from "@/types/instructor-dashboard";
 import { useTranslations, useLocale } from "next-intl";
@@ -63,96 +62,131 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
   const price = course.price ?? 0;
   const isFree = price === 0;
 
+  const isEnded = course.availabilityStatus === "completed";
+  const isFull = course.availabilityStatus === "full";
+  const isClosed = course.availabilityStatus === "deadline_passed";
+  const hasOverlay = !!course.availabilityStatus && course.availabilityStatus !== "open";
+
+  const overlayLabel = isEnded
+    ? t("card.courseEnded")
+    : isFull
+      ? t("card.capacityFull")
+      : isClosed
+        ? t("card.enrollmentClosed")
+        : null;
+
+  const overlayClasses = isEnded
+    ? "bg-[var(--color-text-secondary)] text-white"
+    : isFull
+      ? "bg-red-600 text-white"
+      : "bg-[#F59E0B] text-white";
+
+  const initial = (title || "?").trim().charAt(0).toUpperCase();
+
   return (
     <Link
       href={`/courses/${course.id}`}
-      className="flex flex-col w-full group h-full"
+      className="group flex flex-col w-full h-full bg-[var(--color-surface-card)] border border-[var(--color-border-subtle)] rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
     >
-      {/* Card Header - with title, thumbnail (design cut), badges */}
-      <div className="relative bg-[var(--color-surface-card)] rounded-2xl p-4 h-[200px] flex flex-col justify-between overflow-hidden">
-        {/* Availability pill */}
-        {course.availabilityStatus && course.availabilityStatus !== "open" && (
-          <div
-            className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} z-20 text-[11px] font-semibold px-3 py-1 rounded-full ${
-              course.availabilityStatus === "completed"
-                ? "bg-[var(--color-text-secondary)] text-white"
-                : course.availabilityStatus === "full"
-                  ? "bg-red-600 text-white"
-                  : "bg-[#F59E0B] text-white"
+      {/* Hero image — 16:9 */}
+      <div className="relative w-full aspect-[16/9] bg-[var(--color-surface-page)] overflow-hidden">
+        {course.thumbnail ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={course.thumbnail}
+            alt=""
+            className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02] ${
+              isEnded ? "grayscale opacity-70" : ""
             }`}
+          />
+        ) : (
+          <div
+            className="w-full h-full flex items-center justify-center"
+            style={{
+              background: `linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))`,
+            }}
           >
-            {course.availabilityStatus === "completed"
-              ? t("card.courseEnded")
-              : course.availabilityStatus === "full"
-                ? t("card.capacityFull")
-                : t("card.enrollmentClosed")}
+            <span className="text-white text-6xl font-bold opacity-90 select-none">
+              {initial}
+            </span>
           </div>
         )}
+
+        {/* Status overlay (top-end) */}
+        {hasOverlay && overlayLabel && (
+          <div
+            className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm ${overlayClasses}`}
+          >
+            {overlayLabel}
+          </div>
+        )}
+
+        {/* Delivery pill (bottom-start) */}
+        <div className={`absolute bottom-3 ${isRTL ? "right-3" : "left-3"}`}>
+          <div className="flex items-center gap-1.5 bg-[var(--color-primary)] rounded-full px-2.5 py-1 shadow-sm">
+            <DeliveryIcon className="w-3.5 h-3.5 text-white" strokeWidth={2} />
+            <span className="text-white text-[11px] font-semibold">{deliveryLabel}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-col flex-1 p-4 gap-2">
+        {/* Meta row */}
+        <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[var(--color-text-secondary)] ${isRTL ? "justify-end" : ""}`}>
+          <span className="flex items-center gap-1">
+            <Calendar className="w-3.5 h-3.5" strokeWidth={1.5} />
+            {formattedDate}
+          </span>
+          {cmeLabel && (
+            <>
+              <span className="text-[var(--color-border)]">·</span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" strokeWidth={1.5} />
+                {cmeLabel}
+              </span>
+            </>
+          )}
+        </div>
 
         {/* Title */}
-        <p
-          className={`text-[var(--color-text-primary)] font-semibold text-[18px] leading-[24px] max-w-[55%] z-10 line-clamp-3 ${isRTL ? "text-right ml-auto" : "text-left"}`}
+        <h3
+          className={`text-[var(--color-text-primary)] font-semibold text-[16px] leading-[22px] line-clamp-2 ${isRTL ? "text-right" : "text-left"}`}
         >
           {title}
-        </p>
+        </h3>
 
-        {/* Thumbnail */}
-        {course.thumbnail ? (
-          <div
-            className={`absolute top-0 bottom-0 w-[50%] ${isRTL ? "left-0 rounded-l-2xl" : "right-0 rounded-r-2xl"} overflow-hidden`}
+        {/* Description */}
+        {description && (
+          <p
+            className={`text-[var(--color-text-secondary)] text-[13px] leading-[19px] line-clamp-2 ${isRTL ? "text-right" : "text-left"}`}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={course.thumbnail}
-              alt=""
-              className="w-full h-full object-cover"
-            />
-          </div>
-        ) : null}
-
-        {/* Bottom row - delivery badge only */}
-        <div className="flex items-center w-full z-10">
-          <div className="flex items-center gap-1.5 bg-[var(--color-primary)] rounded-full px-3 py-1.5">
-            <DeliveryIcon className="w-3.5 h-3.5 text-white" strokeWidth={1.5} />
-            <span className="text-white text-[12px] font-medium">{deliveryLabel}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Meta tags row */}
-      <div className={`flex flex-wrap gap-2 mt-3 ${isRTL ? "justify-end" : "justify-start"}`}>
-        <div className="flex items-center gap-1 bg-[var(--color-border-subtle)] rounded-lg px-2.5 py-1.5">
-          <Calendar className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" strokeWidth={1.5} />
-          <span className="text-[var(--color-text-secondary)] text-[13px]">{formattedDate}</span>
-        </div>
-        {cmeLabel && (
-          <div className="flex items-center gap-1 bg-[var(--color-border-subtle)] rounded-lg px-2.5 py-1.5">
-            <Clock className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" strokeWidth={1.5} />
-            <span className="text-[var(--color-text-secondary)] text-[13px]">{cmeLabel}</span>
-          </div>
+            {description}
+          </p>
         )}
-      </div>
 
-      {/* Description */}
-      <p className={`text-[var(--color-text-secondary)] text-[14px] leading-[20px] mt-3 line-clamp-2 ${isRTL ? "text-right" : "text-left"}`}>
-        {description}
-      </p>
+        {/* Spacer */}
+        <div className="flex-1" />
 
-      {/* Spacer to push footer to bottom */}
-      <div className="flex-1" />
+        {/* Divider */}
+        <div className="h-px bg-[var(--color-border-subtle)] mt-2" />
 
-      {/* Footer: Price (SAR icon) + View Details - always at bottom */}
-      <div className={`flex items-center justify-between mt-3 ${isRTL ? "flex-row-reverse" : ""}`}>
-        <div className="flex items-center gap-1">
-          <Banknote className="w-4 h-4 text-[var(--color-text-secondary)]" strokeWidth={1.5} />
-          <span className="text-[var(--color-text-primary)] text-[14px] font-semibold">
+        {/* Footer: price + CTA */}
+        <div className={`flex items-center justify-between pt-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+          <span className="text-[var(--color-primary)] font-bold text-[15px]">
             {isFree ? t("card.free") : `${price} SAR`}
           </span>
+          <span
+            className={`inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
+          >
+            {t("card.viewDetails")}
+            {isRTL ? (
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" strokeWidth={2} />
+            ) : (
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
+            )}
+          </span>
         </div>
-        <span className={`flex items-center gap-1 text-[var(--color-text-primary)] text-[14px] font-medium group-hover:text-[var(--color-primary)] transition-colors ${isRTL ? "flex-row-reverse" : ""}`}>
-          {t("card.viewDetails")}
-          {isRTL ? <ArrowLeft className="w-4 h-4" strokeWidth={1.5} /> : <ArrowRight className="w-4 h-4" strokeWidth={1.5} />}
-        </span>
       </div>
     </Link>
   );

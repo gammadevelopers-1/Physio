@@ -389,10 +389,12 @@ const MyCoursesContent = () => {
                             )
                           : 0;
 
+                      const cardTitle = isRTL && course.titleAr ? course.titleAr : course.title;
+                      const cardInitial = (cardTitle || "?").trim().charAt(0).toUpperCase();
                       return (
                         <div
                           key={course.id}
-                          className="border border-[var(--color-border)] rounded-xl overflow-hidden relative flex flex-col"
+                          className="group bg-[var(--color-surface-card)] border border-[var(--color-border-subtle)] rounded-2xl overflow-hidden relative flex flex-col shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
                         >
                           {/* Favourite Button */}
                           <button
@@ -410,7 +412,7 @@ const MyCoursesContent = () => {
                                     : "in_progress",
                               })
                             }
-                            className={`absolute top-2 ${isRTL ? "left-2" : "right-2"} z-10 w-8 h-8 bg-[var(--color-surface-card)] rounded-full flex items-center justify-center shadow-md hover:bg-[var(--color-surface-page)] transition-colors`}
+                            className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} z-10 w-8 h-8 bg-[var(--color-surface-card)] rounded-full flex items-center justify-center shadow-md hover:bg-[var(--color-surface-page)] transition-colors`}
                             aria-label={
                               isFavourite(course.id)
                                 ? t("favourites.removeFromFavourites")
@@ -425,7 +427,7 @@ const MyCoursesContent = () => {
                           {/* Deadline Badge */}
                           {deadline && (
                             <div
-                              className={`absolute top-2 ${isRTL ? "right-2" : "left-2"} z-10 flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium ${deadline.color}`}
+                              className={`absolute top-3 ${isRTL ? "right-3" : "left-3"} z-10 flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold shadow-sm ${deadline.color}`}
                             >
                               <AlertTriangle className="w-3 h-3" />
                               {deadline.label}
@@ -435,24 +437,35 @@ const MyCoursesContent = () => {
                           {/* Completed Badge */}
                           {course.enrollmentStatus === "completed" && !deadline && (
                             <div
-                              className={`absolute top-2 ${isRTL ? "right-2" : "left-2"} z-10 flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-green-50 text-green-700 border border-green-200`}
+                              className={`absolute top-3 ${isRTL ? "right-3" : "left-3"} z-10 flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold bg-green-50 text-green-700 border border-green-200 shadow-sm`}
                             >
                               <CheckCircle className="w-3 h-3" />
                               {t("myCourses.completedBadge")}
                             </div>
                           )}
 
-                          {/* Thumbnail */}
-                          <div className="w-full h-[120px] sm:h-[140px] bg-[var(--color-border-subtle)]">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={
-                                course.thumbnail ||
-                                "/student_dashboard/courses/image 473.svg"
-                              }
-                              alt={course.title}
-                              className="w-full h-full object-cover"
-                            />
+                          {/* Thumbnail — 16:9 */}
+                          <div className="relative w-full aspect-[16/9] bg-[var(--color-surface-page)] overflow-hidden">
+                            {course.thumbnail ? (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img
+                                src={course.thumbnail}
+                                alt={course.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div
+                                className="w-full h-full flex items-center justify-center"
+                                style={{
+                                  background:
+                                    "linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))",
+                                }}
+                              >
+                                <span className="text-white text-6xl font-bold opacity-90 select-none">
+                                  {cardInitial}
+                                </span>
+                              </div>
+                            )}
                           </div>
 
                           {/* Course Info */}

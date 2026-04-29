@@ -335,39 +335,58 @@ const MyCoursesContent = () => {
                         const thumbnailSrc =
                           course.thumbnail || "/student_dashboard/courses/image 473.svg";
 
+                        const initial = (courseTitle || "?").trim().charAt(0).toUpperCase();
+                        const hasThumbnail = !!course.thumbnail;
                         return (
                           <div
                             key={course.id}
-                            className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden hover:shadow-md transition-shadow flex flex-col"
+                            className="group bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border-subtle)] overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col"
                           >
-                            <div className="relative h-40">
-                              <Image
-                                src={thumbnailSrc}
-                                alt={courseTitle}
-                                fill
-                                className="object-cover"
-                                unoptimized={thumbnailSrc.startsWith("http")}
-                              />
-                              <div className="absolute top-3 left-3 flex flex-wrap gap-2">
-                                <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${getStatusBadge(course.status)}`}>
-                                  {t(`courses.status.${course.status}`)}
-                                </span>
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[var(--color-surface-card)]/90 rounded-md text-xs font-medium text-[var(--color-text-secondary)]">
-                                  {getDeliveryIcon(course.deliveryType)}
+                            {/* Hero image — 16:9 */}
+                            <div className="relative w-full aspect-[16/9] bg-[var(--color-surface-page)] overflow-hidden">
+                              {hasThumbnail ? (
+                                <Image
+                                  src={thumbnailSrc}
+                                  alt={courseTitle}
+                                  fill
+                                  className="object-cover"
+                                  unoptimized={thumbnailSrc.startsWith("http")}
+                                />
+                              ) : (
+                                <div
+                                  className="w-full h-full flex items-center justify-center"
+                                  style={{
+                                    background:
+                                      "linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))",
+                                  }}
+                                >
+                                  <span className="text-white text-6xl font-bold opacity-90 select-none">
+                                    {initial}
+                                  </span>
+                                </div>
+                              )}
+                              {/* Status badge (top-end) */}
+                              <span
+                                className={`absolute top-3 ${locale === "ar" ? "left-3" : "right-3"} px-2.5 py-1 rounded-full text-[11px] font-semibold shadow-sm ${getStatusBadge(course.status)}`}
+                              >
+                                {t(`courses.status.${course.status}`)}
+                              </span>
+                              {/* Delivery pill (bottom-start) */}
+                              <div
+                                className={`absolute bottom-3 ${locale === "ar" ? "right-3" : "left-3"} flex items-center gap-1.5 bg-[var(--color-primary)] rounded-full px-2.5 py-1 shadow-sm`}
+                              >
+                                <span className="text-white">{getDeliveryIcon(course.deliveryType)}</span>
+                                <span className="text-white text-[11px] font-semibold">
                                   {t(`courses.delivery.${course.deliveryType}`)}
                                 </span>
-                                {course.status === "active" && (course as any).enrollmentDeadline && new Date((course as any).enrollmentDeadline) > new Date() && (
-                                  <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-[#DCFCE7] text-[#16A34A]">
-                                    Registration Open
-                                  </span>
-                                )}
                               </div>
                             </div>
-                            <div className="p-4 flex flex-col flex-1">
-                              <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-2 line-clamp-1">{courseTitle}</h3>
+
+                            {/* Content */}
+                            <div className="p-4 flex flex-col flex-1 gap-2">
                               {(course.startDate || course.endDate) && (
-                                <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)] mb-2">
-                                  <Calendar className="w-3.5 h-3.5" />
+                                <div className="flex items-center gap-1.5 text-[12px] text-[var(--color-text-secondary)]">
+                                  <Calendar className="w-3.5 h-3.5" strokeWidth={1.5} />
                                   {course.startDate
                                     ? formatDateHijri(course.startDate, calendarFormat, { locale })
                                     : "—"}
@@ -377,31 +396,41 @@ const MyCoursesContent = () => {
                                     : t("courses.ongoing")}
                                 </div>
                               )}
-                              <div className="flex items-center gap-4 text-sm text-[var(--color-text-secondary)] mb-3">
+
+                              <h3 className="text-[16px] font-semibold text-[var(--color-text-primary)] leading-[22px] line-clamp-2">
+                                {courseTitle}
+                              </h3>
+
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[var(--color-text-secondary)]">
                                 <span className="flex items-center gap-1">
-                                  <Users className="w-4 h-4" />
+                                  <Users className="w-3.5 h-3.5" strokeWidth={1.5} />
                                   {course.enrolledCount} {course.enrolledCount === 1 ? t("courses.student") : t("courses.students")}
                                 </span>
                                 {course.deliveryType !== "self-paced" && (
-                                  <span className="flex items-center gap-1">
-                                    <Calendar className="w-4 h-4" />
-                                    {course.completedSessions}/{course.totalSessions} {t("courses.sessions")}
-                                  </span>
+                                  <>
+                                    <span className="text-[var(--color-border)]">·</span>
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="w-3.5 h-3.5" strokeWidth={1.5} />
+                                      {course.completedSessions}/{course.totalSessions} {t("courses.sessions")}
+                                    </span>
+                                  </>
                                 )}
-                                <span className="flex items-center gap-1 text-[var(--color-text-secondary)]">
-                                  <Star className={`w-3.5 h-3.5 ${ratingsMap[course.id]?.totalRatings ? "text-[#F59E0B] fill-[#F59E0B]" : ""}`} />
+                                <span className="text-[var(--color-border)]">·</span>
+                                <span className="flex items-center gap-1">
+                                  <Star className={`w-3.5 h-3.5 ${ratingsMap[course.id]?.totalRatings ? "text-[#F59E0B] fill-[#F59E0B]" : ""}`} strokeWidth={1.5} />
                                   {ratingsMap[course.id]?.totalRatings
                                     ? `${ratingsMap[course.id].avgRating} (${ratingsMap[course.id].totalRatings})`
                                     : t("courses.noRatingsYet")}
                                 </span>
                               </div>
+
                               {course.completionRate > 0 && (
-                                <div className="mb-3">
-                                  <div className="flex justify-between text-xs mb-1">
+                                <div className="mt-1">
+                                  <div className="flex justify-between text-[11px] mb-1">
                                     <span className="text-[var(--color-text-secondary)]">{t("courses.completion")}</span>
-                                    <span className="font-medium text-[var(--color-text-primary)]">{course.completionRate}%</span>
+                                    <span className="font-semibold text-[var(--color-text-primary)]">{course.completionRate}%</span>
                                   </div>
-                                  <div className="h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
+                                  <div className="h-1.5 bg-[var(--color-border-subtle)] rounded-full overflow-hidden">
                                     <div
                                       className="h-full bg-[#22C55E] rounded-full transition-all"
                                       style={{ width: `${course.completionRate}%` }}
@@ -409,16 +438,22 @@ const MyCoursesContent = () => {
                                   </div>
                                 </div>
                               )}
+
                               {nextSession && (
-                                <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)] mb-3">
-                                  <Clock className="w-3.5 h-3.5" />
+                                <div className="flex items-center gap-1.5 text-[12px] text-[var(--color-text-secondary)]">
+                                  <Clock className="w-3.5 h-3.5" strokeWidth={1.5} />
                                   {t("courses.nextSession")}: {nextSession}
                                 </div>
                               )}
-                              <div className="flex gap-2 mt-auto">
+
+                              <div className="flex-1" />
+
+                              <div className="h-px bg-[var(--color-border-subtle)] mt-1" />
+
+                              <div className="flex gap-2 pt-2">
                                 <Link
                                   href={`/${locale}/dashboard/instructor/courses/${course.id}`}
-                                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors"
+                                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 btn-gold text-[var(--color-button-text)] text-[13px] font-semibold rounded-lg transition-colors"
                                 >
                                   {t("courses.viewDetails")}
                                   {locale === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}

@@ -95,7 +95,7 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
           <img
             src={course.thumbnail}
             alt=""
-            className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02] ${
+            className={`w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.02] ${
               isEnded ? "grayscale opacity-70" : ""
             }`}
           />

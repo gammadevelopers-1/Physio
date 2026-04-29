@@ -349,7 +349,7 @@ const MyCoursesContent = () => {
                                   src={thumbnailSrc}
                                   alt={courseTitle}
                                   fill
-                                  className="object-cover"
+                                  className="object-cover object-top"
                                   unoptimized={thumbnailSrc.startsWith("http")}
                                 />
                               ) : (
@@ -497,7 +497,7 @@ const MyCoursesContent = () => {
                                 src={course.thumbnail || "/student_dashboard/courses/image 473.svg"}
                                 alt={courseTitle}
                                 fill
-                                className="object-cover"
+                                className="object-cover object-top"
                                 unoptimized={(course.thumbnail || "").startsWith("http")}
                               />
                             </div>

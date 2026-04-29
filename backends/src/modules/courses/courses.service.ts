@@ -378,33 +378,23 @@ export class CoursesService {
 
     const whereClause = and(...conditions);
 
-    // Primary sort: availability priority (open → completed → full → deadline passed)
-    const availabilityPriority = sql`(CASE
-      WHEN ${courses.status} = 'completed' THEN 2
-      WHEN (${courses.enrollmentDeadline} IS NOT NULL AND ${courses.enrollmentDeadline} <= NOW()) THEN 4
-      WHEN (
-        CASE
-          WHEN ${courses.maxEnrollment} IS NOT NULL THEN
-            (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped') >= ${courses.maxEnrollment}
-          WHEN ${courses.deliveryType} = 'self-paced' THEN
-            FALSE
-          ELSE
-            (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped') >= 2000
-        END
-      ) THEN 3
-      ELSE 1
-    END)`;
-
-    // Secondary sort: user's choice
-    let secondarySort;
+    // Sort respects the user's choice — "newest" means newest first, regardless
+    // of availability status. Availability is filterable separately and shown
+    // on the card itself, so it must not push new courses behind older "open"
+    // ones in the list.
+    let orderBy: any[];
     switch (params.sort) {
       case 'rating':
-        secondarySort = sql`(SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = "courses"."id") DESC`;
+        orderBy = [
+          sql`(SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = "courses"."id") DESC`,
+          desc(courses.createdAt),
+        ];
         break;
       case 'featured':
       case 'newest':
       default:
-        secondarySort = desc(courses.createdAt);
+        orderBy = [desc(courses.createdAt)];
+        break;
     }
 
     const data = await db
@@ -448,7 +438,7 @@ export class CoursesService {
       })
       .from(courses)
       .where(whereClause)
-      .orderBy(availabilityPriority, secondarySort)
+      .orderBy(...orderBy)
       .limit(limit)
       .offset(offset);
 

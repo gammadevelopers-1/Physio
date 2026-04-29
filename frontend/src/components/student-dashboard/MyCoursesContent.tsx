@@ -451,7 +451,7 @@ const MyCoursesContent = () => {
                               <img
                                 src={course.thumbnail}
                                 alt={course.title}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover object-top"
                               />
                             ) : (
                               <div

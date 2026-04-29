@@ -191,7 +191,7 @@ const TACoursesList = () => {
                       src={thumbnailSrc}
                       alt={course.courseTitle}
                       fill
-                      className="object-cover"
+                      className="object-cover object-top"
                       unoptimized={thumbnailSrc.startsWith("http")}
                     />
                   ) : (

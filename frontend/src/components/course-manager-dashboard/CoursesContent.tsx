@@ -432,7 +432,7 @@ const CoursesContent = () => {
                               src={thumbnailSrc}
                               alt={courseTitle}
                               fill
-                              className="object-cover"
+                              className="object-cover object-top"
                               unoptimized={thumbnailSrc.startsWith("http")}
                             />
                           ) : (

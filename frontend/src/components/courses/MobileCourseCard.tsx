@@ -102,7 +102,7 @@ const MobileCourseCard = ({
           <img
             src={course.thumbnail}
             alt=""
-            className={`w-full h-full object-cover ${isEnded ? "grayscale opacity-70" : ""}`}
+            className={`w-full h-full object-cover object-top ${isEnded ? "grayscale opacity-70" : ""}`}
           />
         ) : (
           <div

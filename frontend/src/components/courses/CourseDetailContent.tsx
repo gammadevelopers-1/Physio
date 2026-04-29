@@ -1107,7 +1107,7 @@ const CourseDetailContent = ({
                       <img
                         src={apiCourse.thumbnail || "/blogs/blog-hero.png"}
                         alt={getTitle()}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-top"
                       />
                     </div>
                   </div>

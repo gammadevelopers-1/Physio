@@ -72,6 +72,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
   // Pricing & venue
   const [price, setPrice] = useState("");
+  const [cmeHours, setCmeHours] = useState("");
   const [venue, setVenue] = useState("");
   const [venueAr, setVenueAr] = useState("");
   const [enrollmentDeadline, setEnrollmentDeadline] = useState("");
@@ -125,6 +126,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
         // Pricing & venue
         setPrice((courseData as any).price?.toString() || "");
+        setCmeHours(courseData.cmeHours != null ? courseData.cmeHours.toString() : "");
         setVenue((courseData as any).venue || "");
         setVenueAr((courseData as any).venueAr || "");
         if ((courseData as any).enrollmentDeadline) {
@@ -200,6 +202,10 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
       toast.error(t("createCourse.instructorRequired"));
       return;
     }
+    if (Number(price) > 0 && !cmeHours) {
+      toast.error(t("createCourse.cmeHours") + " is required");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -241,6 +247,13 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
       if (venue.trim()) payload.venue = venue.trim();
       if (venueAr.trim()) payload.venueAr = venueAr.trim();
       if (price) payload.price = Number(price);
+      if (cmeHours) {
+        payload.cmeHours = Number(cmeHours);
+        payload.isCmeAccredited = true;
+      } else {
+        payload.cmeHours = 0;
+        payload.isCmeAccredited = false;
+      }
       if (enrollmentDeadline) payload.enrollmentDeadline = enrollmentDeadline;
       if (language !== 'en') payload.language = language;
       // Only send showContents for self-paced/blended courses
@@ -933,6 +946,26 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         min={0}
                         className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                       />
+                    </div>
+                    <div>
+                      <label htmlFor="edit-cme-hours" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                        {t("createCourse.cmeHours")}{Number(price) > 0 ? " *" : ""}
+                      </label>
+                      <input
+                        id="edit-cme-hours"
+                        type="number"
+                        value={cmeHours}
+                        onChange={(e) => setCmeHours(e.target.value)}
+                        placeholder="5"
+                        min={Number(price) > 0 ? 1 : 0}
+                        required={Number(price) > 0}
+                        className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                      />
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                        {Number(price) > 0
+                          ? t("createCourse.cmeHoursHint")
+                          : (t("createCourse.cmeHoursOptionalHint") || "Optional for free courses — leave empty to hide CME info")}
+                      </p>
                     </div>
                     <div>
                       <label htmlFor="edit-enrollment-deadline" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">

@@ -284,7 +284,7 @@ const CreateCourseContent = () => {
           toast.error(t("createCourse.endDate") + " is required");
           return false;
         }
-        if (!cmeHours) {
+        if (Number(price) > 0 && !cmeHours) {
           toast.error(t("createCourse.cmeHours") + " is required");
           return false;
         }
@@ -941,7 +941,7 @@ const CreateCourseContent = () => {
                       </div>
                       <div>
                         <label htmlFor="cme-hours" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                          {t("createCourse.cmeHours")} *
+                          {t("createCourse.cmeHours")}{Number(price) > 0 ? " *" : ""}
                         </label>
                         <input
                           id="cme-hours"
@@ -949,11 +949,15 @@ const CreateCourseContent = () => {
                           value={cmeHours}
                           onChange={(e) => setCmeHours(e.target.value)}
                           placeholder="5"
-                          min={1}
-                          required
+                          min={Number(price) > 0 ? 1 : 0}
+                          required={Number(price) > 0}
                           className={inputClass}
                         />
-                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("createCourse.cmeHoursHint")}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                          {Number(price) > 0
+                            ? t("createCourse.cmeHoursHint")
+                            : (t("createCourse.cmeHoursOptionalHint") || "Optional for free courses — leave empty if not applicable")}
+                        </p>
                       </div>
                       <div>
                         <label htmlFor="cohort" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">

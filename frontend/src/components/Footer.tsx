@@ -75,7 +75,7 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
                     />
                   </div>
                 ) : siteName ? (
-                  <h2 className="text-[var(--on-surface-default)] text-2xl font-semibold">
+                  <h2 className="text-[var(--color-footer-text)] text-2xl font-semibold">
                     {siteName}
                   </h2>
                 ) : null}
@@ -114,7 +114,7 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
               <div className={`flex flex-col gap-4 w-[250px] ${isRTL ? "items-start text-right" : "items-start"}`}>
                 {siteSettings?.footerPlatformTitle && (
                   <h3
-                    className="text-[var(--color-text-primary)] font-semibold"
+                    className="text-[var(--color-footer-heading)] font-semibold"
                     style={{ fontSize: "var(--typeface-font-styles-heading-h4)" }}
                   >
                     {siteSettings.footerPlatformTitle}
@@ -124,7 +124,7 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
                   <Link
                     key={index}
                     href={link.href}
-                    className="text-[var(--on-surface-default)] leading-6 hover:text-[var(--on-surface-primary)] transition-colors"
+                    className="text-[var(--color-footer-text)] leading-6 hover:text-[var(--on-surface-primary)] transition-colors"
                     style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
                   >
                     {link.label}
@@ -138,7 +138,7 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
               <div className={`flex flex-col gap-4 w-[250px] ${isRTL ? "items-start text-right" : "items-start"}`}>
                 {siteSettings?.footerOrganizationTitle && (
                   <h3
-                    className="text-[var(--color-text-primary)] font-semibold"
+                    className="text-[var(--color-footer-heading)] font-semibold"
                     style={{ fontSize: "var(--typeface-font-styles-heading-h4)" }}
                   >
                     {siteSettings.footerOrganizationTitle}
@@ -148,7 +148,7 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
                   <Link
                     key={index}
                     href={link.href}
-                    className="text-[var(--on-surface-default)] leading-6 hover:text-[var(--on-surface-primary)] transition-colors"
+                    className="text-[var(--color-footer-text)] leading-6 hover:text-[var(--on-surface-primary)] transition-colors"
                     style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
                   >
                     {link.label}
@@ -162,7 +162,7 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
               <div className={`flex flex-col gap-4 w-[250px] ${isRTL ? "items-start text-right" : "items-start"}`}>
                 {siteSettings?.footerSupportTitle && (
                   <h3
-                    className="text-[var(--color-text-primary)] font-semibold"
+                    className="text-[var(--color-footer-heading)] font-semibold"
                     style={{ fontSize: "var(--typeface-font-styles-heading-h4)" }}
                   >
                     {siteSettings.footerSupportTitle}
@@ -172,7 +172,7 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
                   <Link
                     key={index}
                     href={link.href}
-                    className="text-[var(--on-surface-default)] leading-6 hover:text-[var(--on-surface-primary)] transition-colors"
+                    className="text-[var(--color-footer-text)] leading-6 hover:text-[var(--on-surface-primary)] transition-colors"
                     style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
                   >
                     {link.label}

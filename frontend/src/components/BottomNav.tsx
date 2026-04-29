@@ -176,7 +176,7 @@ const BottomNav = ({ siteSettings, footerLinks }: BottomNavProps) => {
           <div
             className={`flex items-center justify-between px-4 pb-4 border-b border-[var(--color-border)] ${isRTL ? "flex-row-reverse" : ""}`}
           >
-            <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+            <h2 className="text-lg font-semibold text-[var(--color-footer-heading)]">
               {menuTitle}
             </h2>
             <button
@@ -196,7 +196,7 @@ const BottomNav = ({ siteSettings, footerLinks }: BottomNavProps) => {
               <div className="py-4 border-b border-[var(--color-border)]">
                 {platformTitle && (
                   <h3
-                    className={`text-sm font-semibold text-[var(--color-text-primary)] mb-3 ${isRTL ? "text-right" : "text-left"}`}
+                    className={`text-sm font-semibold text-[var(--color-footer-heading)] mb-3 ${isRTL ? "text-right" : "text-left"}`}
                   >
                     {platformTitle}
                   </h3>
@@ -207,7 +207,7 @@ const BottomNav = ({ siteSettings, footerLinks }: BottomNavProps) => {
                       key={index}
                       href={link.href}
                       onClick={handleLinkClick}
-                      className={`flex items-center justify-between py-3 text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
+                      className={`flex items-center justify-between py-3 text-[var(--color-footer-text)] hover:bg-[var(--color-surface-page)] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
                     >
                       <span className="text-base">{link.label}</span>
                       <ChevronIcon className="w-5 h-5 text-[var(--color-icon)]" />
@@ -221,7 +221,7 @@ const BottomNav = ({ siteSettings, footerLinks }: BottomNavProps) => {
               <div className="py-4 border-b border-[var(--color-border)]">
                 {organizationTitle && (
                   <h3
-                    className={`text-sm font-semibold text-[var(--color-text-primary)] mb-3 ${isRTL ? "text-right" : "text-left"}`}
+                    className={`text-sm font-semibold text-[var(--color-footer-heading)] mb-3 ${isRTL ? "text-right" : "text-left"}`}
                   >
                     {organizationTitle}
                   </h3>
@@ -232,7 +232,7 @@ const BottomNav = ({ siteSettings, footerLinks }: BottomNavProps) => {
                       key={index}
                       href={link.href}
                       onClick={handleLinkClick}
-                      className={`flex items-center justify-between py-3 text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
+                      className={`flex items-center justify-between py-3 text-[var(--color-footer-text)] hover:bg-[var(--color-surface-page)] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
                     >
                       <span className="text-base">{link.label}</span>
                       <ChevronIcon className="w-5 h-5 text-[var(--color-icon)]" />
@@ -246,7 +246,7 @@ const BottomNav = ({ siteSettings, footerLinks }: BottomNavProps) => {
               <div className="py-4">
                 {supportTitle && (
                   <h3
-                    className={`text-sm font-semibold text-[var(--color-text-primary)] mb-3 ${isRTL ? "text-right" : "text-left"}`}
+                    className={`text-sm font-semibold text-[var(--color-footer-heading)] mb-3 ${isRTL ? "text-right" : "text-left"}`}
                   >
                     {supportTitle}
                   </h3>
@@ -257,7 +257,7 @@ const BottomNav = ({ siteSettings, footerLinks }: BottomNavProps) => {
                       key={index}
                       href={link.href}
                       onClick={handleLinkClick}
-                      className={`flex items-center justify-between py-3 text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
+                      className={`flex items-center justify-between py-3 text-[var(--color-footer-text)] hover:bg-[var(--color-surface-page)] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
                     >
                       <span className="text-base">{link.label}</span>
                       <ChevronIcon className="w-5 h-5 text-[var(--color-icon)]" />

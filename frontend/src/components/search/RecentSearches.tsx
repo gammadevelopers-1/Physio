@@ -27,7 +27,7 @@ const RecentSearches = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4 text-[var(--color-text-secondary)]" />
+          <Clock className="w-4 h-4 text-[var(--color-icon)]" />
           <span className="text-sm font-medium text-[var(--color-text-secondary)]">
             {t("recentSearches")}
           </span>
@@ -36,7 +36,7 @@ const RecentSearches = ({
           onClick={onClearAll}
           className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)] hover:text-[var(--feedback-error-text)] transition-colors"
         >
-          <Trash2 className="w-3.5 h-3.5" />
+          <Trash2 className="w-3.5 h-3.5 text-[var(--color-icon)]" />
           <span>{t("clearAll")}</span>
         </button>
       </div>
@@ -61,7 +61,7 @@ const RecentSearches = ({
               }}
               className="p-0.5 rounded-full opacity-0 group-hover:opacity-100 hover:bg-[var(--color-surface-card)] transition-all"
             >
-              <X className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
+              <X className="w-3.5 h-3.5 text-[var(--color-icon)]" />
             </button>
           </div>
         ))}

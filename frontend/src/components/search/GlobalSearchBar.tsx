@@ -140,7 +140,7 @@ const GlobalSearchBar = ({
         <button
           type="submit"
           disabled={isLoading}
-          className="flex items-center justify-center px-4 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors disabled:opacity-70"
+          className="flex items-center justify-center px-4 text-[var(--color-icon)] hover:text-[var(--color-primary)] transition-colors disabled:opacity-70"
           aria-label={t("searchButton")}
         >
           {isLoading ? (
@@ -172,7 +172,7 @@ const GlobalSearchBar = ({
           <button
             type="button"
             onClick={handleClear}
-            className="flex items-center justify-center px-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+            className="flex items-center justify-center px-4 text-[var(--color-icon)] hover:text-[var(--color-text-primary)] transition-colors"
             aria-label={t("clearButton")}
           >
             <X className={styles.icon} strokeWidth={1.67} />

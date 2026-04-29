@@ -1,26 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import GlobalSearchBar from "./GlobalSearchBar";
 import SearchResults from "./SearchResults";
-import AdvancedFilters, { FilterState } from "./AdvancedFilters";
-import MobileFilterDrawer from "./MobileFilterDrawer";
 import RecentSearches from "./RecentSearches";
 import { useRecentSearches } from "./useRecentSearches";
-import { courses } from "@/data/courses";
 import { searchBlogs } from "@/lib/strapi/api";
 import type { StrapiBlogPost, SearchPage } from "@/lib/strapi/types";
-import type { Course } from "@/data/courses";
-
-const DEFAULT_FILTERS: FilterState = {
-  contentType: "all",
-  courseTypes: [],
-  certifications: [],
-  priceRange: "all",
-  sortBy: "relevance",
-};
+import type { PublicCourse } from "@/types/instructor-dashboard";
 
 interface SearchPageContentProps {
   strapiData?: SearchPage | null;
@@ -37,129 +26,76 @@ const SearchPageContent = ({ strapiData }: SearchPageContentProps = {}) => {
   const heroTitle = strapiData?.heroTitle?.trim() || t("title");
   const heroSubtitle = strapiData?.heroSubtitle?.trim() || t("subtitle");
   const popularLabel = strapiData?.popularSearchesLabel?.trim() || t("popularSearches");
-  const filterResultsLabel = strapiData?.filterResultsLabel?.trim() || t("filterResults");
   const placeholderText = strapiData?.searchPlaceholder?.trim() || t("placeholder");
   const placeholderMobileText = strapiData?.searchPlaceholderMobile?.trim() || t("placeholderMobile");
+  const noResultsTitle = strapiData?.noResultsTitle?.trim() || undefined;
 
-  // State
   const [query, setQuery] = useState(initialQuery);
-  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [isLoading, setIsLoading] = useState(false);
+  const [courseResults, setCourseResults] = useState<PublicCourse[]>([]);
   const [blogResults, setBlogResults] = useState<StrapiBlogPost[]>([]);
   const [hasSearched, setHasSearched] = useState(!!initialQuery);
 
-  // Recent searches hook
   const { recentSearches, addSearch, removeSearch, clearAll: clearRecentSearches } = useRecentSearches();
 
-  // Calculate active filters count
-  const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    if (filters.contentType !== "all") count++;
-    count += filters.courseTypes.length;
-    count += filters.certifications.length;
-    if (filters.priceRange !== "all") count++;
-    return count;
-  }, [filters]);
+  // In-flight token guard so a stale slow response can't overwrite a fresher one
+  const inflightToken = useRef(0);
 
-  // Filter courses based on search query and advanced filters (client-side)
-  const filteredCourses = useMemo(() => {
-    if (!query.trim()) return [];
+  const performSearch = useCallback(
+    async (searchQuery: string) => {
+      const token = ++inflightToken.current;
+      const trimmed = searchQuery.trim();
 
-    const searchLower = query.toLowerCase();
+      if (!trimmed) {
+        setCourseResults([]);
+        setBlogResults([]);
+        setHasSearched(false);
+        return;
+      }
 
-    // First filter by search query
-    let results = courses.filter((course) => {
-      return (
-        course.title.toLowerCase().includes(searchLower) ||
-        course.description.toLowerCase().includes(searchLower) ||
-        course.category.toLowerCase().includes(searchLower) ||
-        course.type.toLowerCase().includes(searchLower)
-      );
-    });
+      setIsLoading(true);
+      setHasSearched(true);
 
-    // Apply course type filter
-    if (filters.courseTypes.length > 0) {
-      results = results.filter(course => filters.courseTypes.includes(course.type));
-    }
+      try {
+        const params = new URLSearchParams({ search: trimmed, limit: "100", sort: "newest" });
 
-    // Apply certification filter
-    if (filters.certifications.length > 0) {
-      results = results.filter(course =>
-        filters.certifications.includes(course.certification)
-      );
-    }
+        const [coursesRes, blogs] = await Promise.all([
+          fetch(`/api/public-courses?${params.toString()}`).then((r) => (r.ok ? r.json() : { data: [] })),
+          searchBlogs(trimmed, locale).catch(() => []),
+        ]);
 
-    // Apply price filter
-    if (filters.priceRange === "free") {
-      results = results.filter(course => !course.isPaid || course.price === 0);
-    } else if (filters.priceRange === "paid") {
-      results = results.filter(course => course.isPaid && course.price > 0);
-    }
+        if (token !== inflightToken.current) return; // stale — drop
 
-    // Apply sorting
-    switch (filters.sortBy) {
-      case "newest":
-        results = [...results].sort((a, b) => {
-          const dateA = new Date(a.date || "").getTime();
-          const dateB = new Date(b.date || "").getTime();
-          return dateB - dateA;
-        });
-        break;
-      case "price-low":
-        results = [...results].sort((a, b) => a.price - b.price);
-        break;
-      case "price-high":
-        results = [...results].sort((a, b) => b.price - a.price);
-        break;
-      default:
-        // relevance - keep original order
-        break;
-    }
+        setCourseResults(Array.isArray(coursesRes?.data) ? coursesRes.data : []);
+        setBlogResults(Array.isArray(blogs) ? blogs : []);
+      } catch (error) {
+        console.error("Search error:", error);
+        if (token === inflightToken.current) {
+          setCourseResults([]);
+          setBlogResults([]);
+        }
+      } finally {
+        if (token === inflightToken.current) setIsLoading(false);
+      }
+    },
+    [locale],
+  );
 
-    return results;
-  }, [query, filters.courseTypes, filters.certifications, filters.priceRange, filters.sortBy]);
-
-  // Search for blogs from Strapi
-  const performSearch = useCallback(async (searchQuery: string) => {
-    if (!searchQuery.trim()) {
-      setBlogResults([]);
-      setHasSearched(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setHasSearched(true);
-
-    try {
-      const blogs = await searchBlogs(searchQuery, locale);
-      setBlogResults(blogs);
-    } catch (error) {
-      console.error("Search error:", error);
-      setBlogResults([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [locale]);
-
-  // Perform search on initial load if query exists
   useEffect(() => {
     if (initialQuery) {
       performSearch(initialQuery);
     }
   }, [initialQuery, performSearch]);
 
-  // Handle search submission
   const handleSearch = useCallback(
     (newQuery: string) => {
       setQuery(newQuery);
       performSearch(newQuery);
 
-      // Add to recent searches
       if (newQuery.trim()) {
         addSearch(newQuery);
       }
 
-      // Update URL without full page reload
       const url = new URL(window.location.href);
       if (newQuery.trim()) {
         url.searchParams.set("q", newQuery);
@@ -168,16 +104,14 @@ const SearchPageContent = ({ strapiData }: SearchPageContentProps = {}) => {
       }
       window.history.pushState({}, "", url);
     },
-    [performSearch, addSearch]
+    [performSearch, addSearch],
   );
 
-  // Handle instant search (for debounced onChange)
   const handleInstantSearch = useCallback(
     (newQuery: string) => {
       setQuery(newQuery);
       performSearch(newQuery);
 
-      // Update URL without full page reload
       const url = new URL(window.location.href);
       if (newQuery.trim()) {
         url.searchParams.set("q", newQuery);
@@ -186,37 +120,15 @@ const SearchPageContent = ({ strapiData }: SearchPageContentProps = {}) => {
       }
       window.history.replaceState({}, "", url);
     },
-    [performSearch]
+    [performSearch],
   );
 
-  // Handle recent search click
   const handleRecentSearchClick = useCallback(
     (searchQuery: string) => {
       handleSearch(searchQuery);
     },
-    [handleSearch]
+    [handleSearch],
   );
-
-  // Handle filter change
-  const handleFilterChange = useCallback((newFilters: FilterState) => {
-    setFilters(newFilters);
-  }, []);
-
-  // Clear all filters
-  const clearAllFilters = useCallback(() => {
-    setFilters(DEFAULT_FILTERS);
-  }, []);
-
-  // Filter results based on content type filter
-  const displayedCourses: Course[] = useMemo(() => {
-    if (filters.contentType === "blogs") return [];
-    return filteredCourses;
-  }, [filters.contentType, filteredCourses]);
-
-  const displayedBlogs: StrapiBlogPost[] = useMemo(() => {
-    if (filters.contentType === "courses") return [];
-    return blogResults;
-  }, [filters.contentType, blogResults]);
 
   // Popular search suggestions — Strapi terms with translation fallback
   const popularSearches = (strapiData?.popularSearchTerms?.length
@@ -234,7 +146,6 @@ const SearchPageContent = ({ strapiData }: SearchPageContentProps = {}) => {
       {/* Hero Section */}
       <div className="bg-gradient-to-b from-[var(--color-surface-card)] to-[var(--color-surface-page)] pt-8 pb-12 px-4 lg:px-16">
         <div className="max-w-4xl mx-auto">
-          {/* Title */}
           <div className="mb-8">
             <h1 className="text-3xl lg:text-4xl font-bold text-[var(--color-text-primary)] mb-2">
               {heroTitle}
@@ -244,7 +155,6 @@ const SearchPageContent = ({ strapiData }: SearchPageContentProps = {}) => {
             </p>
           </div>
 
-          {/* Search Bar with instant search */}
           <GlobalSearchBar
             initialQuery={query}
             onSearch={handleSearch}
@@ -258,7 +168,6 @@ const SearchPageContent = ({ strapiData }: SearchPageContentProps = {}) => {
             placeholderMobile={placeholderMobileText}
           />
 
-          {/* Recent Searches (show when no query) */}
           {!query && recentSearches.length > 0 && (
             <div className="mt-6">
               <RecentSearches
@@ -270,7 +179,6 @@ const SearchPageContent = ({ strapiData }: SearchPageContentProps = {}) => {
             </div>
           )}
 
-          {/* Popular Searches (show when no query and no recent searches) */}
           {!query && recentSearches.length === 0 && (
             <div className="mt-6">
               <p className="text-sm text-[var(--color-text-secondary)] mb-3">
@@ -292,54 +200,21 @@ const SearchPageContent = ({ strapiData }: SearchPageContentProps = {}) => {
         </div>
       </div>
 
-      {/* Results Section with Sidebar */}
-      <div className="px-4 lg:px-16 py-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Mobile Filter Button */}
-          {hasSearched && (
-            <div className="mb-6 lg:hidden">
-              <MobileFilterDrawer
-                filters={filters}
-                onFilterChange={handleFilterChange}
-                coursesCount={filteredCourses.length}
-                blogsCount={blogResults.length}
-                onClearAll={clearAllFilters}
-                activeFiltersCount={activeFiltersCount}
-              />
-            </div>
-          )}
-
-          <div className="flex gap-8">
-            {/* Desktop Sidebar Filters */}
-            {hasSearched && (
-              <aside className="hidden lg:block w-72 flex-shrink-0">
-                <div className="sticky top-24">
-                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
-                    {filterResultsLabel}
-                  </h2>
-                  <AdvancedFilters
-                    filters={filters}
-                    onFilterChange={handleFilterChange}
-                    coursesCount={filteredCourses.length}
-                    blogsCount={blogResults.length}
-                    onClearAll={clearAllFilters}
-                  />
-                </div>
-              </aside>
-            )}
-
-            {/* Results */}
-            <main className="flex-1 min-w-0">
-              <SearchResults
-                courses={displayedCourses}
-                blogs={displayedBlogs}
-                query={hasSearched ? query : ""}
-                isLoading={isLoading}
-              />
-            </main>
+      {/* Results Section — full width, no sidebar */}
+      {hasSearched && (
+        <div className="px-4 lg:px-16 py-8">
+          <div className="max-w-7xl mx-auto">
+            <SearchResults
+              courses={courseResults}
+              blogs={blogResults}
+              query={query}
+              isLoading={isLoading}
+              isRTL={isRTL}
+              noResultsTitle={noResultsTitle}
+            />
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

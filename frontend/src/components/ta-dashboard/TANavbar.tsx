@@ -19,14 +19,12 @@ import {
   Calendar,
 } from "lucide-react";
 import { useAuth } from "@/contexts";
-import DashboardSearchOverlay from "@/components/shared/DashboardSearchOverlay";
 import NotificationBell from "@/components/shared/NotificationBell";
 import { RoleSwitcherDropdownItems, RoleSwitcherMobileSection } from "@/components/shared/RoleSwitcher";
 
 const TANavbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const t = useTranslations("navbar");
   const tDashboard = useTranslations("taDashboard");
   const tA = useTranslations("accessibility");
@@ -108,7 +106,7 @@ const TANavbar = () => {
 
           {/* Search Icon - Hidden on mobile */}
           <button
-            onClick={() => setIsSearchOpen(true)}
+            onClick={() => router.push(`/${locale}/search`)}
             className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
             aria-label={tA("search")}
           >
@@ -228,7 +226,7 @@ const TANavbar = () => {
             {/* Mobile Action Buttons */}
             <div className="flex items-center gap-4 py-3">
               <button
-                onClick={() => { setIsSearchOpen(true); setIsMobileMenuOpen(false); }}
+                onClick={() => { router.push(`/${locale}/search`); setIsMobileMenuOpen(false); }}
                 className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
                 aria-label={tA("search")}
               >
@@ -255,11 +253,6 @@ const TANavbar = () => {
           </div>
         </div>
       )}
-      <DashboardSearchOverlay
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        role="instructor"
-      />
     </nav>
   );
 };

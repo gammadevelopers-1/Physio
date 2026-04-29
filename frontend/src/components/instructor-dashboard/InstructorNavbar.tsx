@@ -26,7 +26,6 @@ import {
 import { useAuth } from "@/contexts";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
-import DashboardSearchOverlay from "@/components/shared/DashboardSearchOverlay";
 import NotificationBell from "@/components/shared/NotificationBell";
 import { RoleSwitcherDropdownItems, RoleSwitcherMobileSection } from "@/components/shared/RoleSwitcher";
 
@@ -42,7 +41,6 @@ interface InstructorNavbarProps {
 const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const t = useTranslations("navbar");
   const tDashboard = useTranslations("instructorDashboard");
   const tA = useTranslations("accessibility");
@@ -156,7 +154,7 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
           {/* Search Icon - Hidden on mobile; gated by Strapi toggle */}
           {showSearch && (
             <button
-              onClick={() => setIsSearchOpen(true)}
+              onClick={() => router.push(`/${locale}/search`)}
               className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
               aria-label={tA("search")}
             >
@@ -302,7 +300,7 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
             {showSearch && (
               <div className="flex items-center gap-4 py-3">
                 <button
-                  onClick={() => { setIsSearchOpen(true); setIsMobileMenuOpen(false); }}
+                  onClick={() => { router.push(`/${locale}/search`); setIsMobileMenuOpen(false); }}
                   className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
                   aria-label={tA("search")}
                 >
@@ -322,11 +320,6 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
           </div>
         </div>
       )}
-      <DashboardSearchOverlay
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        role="instructor"
-      />
     </nav>
   );
 };

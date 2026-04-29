@@ -26,7 +26,6 @@ import {
   Bell,
 } from "lucide-react";
 import { useAuth } from "@/contexts";
-import DashboardSearchOverlay from "@/components/shared/DashboardSearchOverlay";
 import { RoleSwitcherDropdownItems, RoleSwitcherMobileSection } from "@/components/shared/RoleSwitcher";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
@@ -43,7 +42,6 @@ interface AdminNavbarProps {
 const AdminNavbar = ({ admin }: AdminNavbarProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const t = useTranslations("navbar");
   const tDashboard = useTranslations("adminDashboard");
   const locale = useLocale();
@@ -169,7 +167,7 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
           {/* Search Icon - Hidden on mobile; gated by Strapi toggle */}
           {showSearch && (
             <button
-              onClick={() => setIsSearchOpen(true)}
+              onClick={() => router.push(`/${locale}/search`)}
               className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
             >
               <Search className="w-5 h-5" strokeWidth={1.67} />
@@ -324,7 +322,7 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
             {showSearch && (
               <div className="flex items-center gap-4 py-3">
                 <button
-                  onClick={() => { setIsSearchOpen(true); setIsMobileMenuOpen(false); }}
+                  onClick={() => { router.push(`/${locale}/search`); setIsMobileMenuOpen(false); }}
                   className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
                 >
                   <Search className="w-5 h-5" strokeWidth={1.67} />
@@ -343,11 +341,6 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
           </div>
         </div>
       )}
-      <DashboardSearchOverlay
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        role="admin"
-      />
     </nav>
   );
 };

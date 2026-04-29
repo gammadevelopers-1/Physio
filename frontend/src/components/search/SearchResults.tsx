@@ -31,9 +31,9 @@ const SearchResults = ({
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <div className="w-12 h-12 border-4 border-[var(--surface-container-primary-2)] border-t-transparent rounded-full animate-spin" />
-        <p className="mt-4 text-[var(--on-surface-variant)]">
-          {isRTL ? "جاري البحث..." : "Searching..."}
+        <div className="w-12 h-12 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
+        <p className="mt-4 text-[var(--color-text-secondary)]">
+          {t("searching")}
         </p>
       </div>
     );
@@ -42,23 +42,23 @@ const SearchResults = ({
   if (!query) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="w-20 h-20 bg-gradient-to-br from-[var(--surface-container-default)] to-[var(--surface-container-low)] rounded-full flex items-center justify-center mb-6">
-          <Search className="w-10 h-10 text-[var(--on-surface-variant)]" />
+        <div className="w-20 h-20 bg-gradient-to-br from-[var(--color-surface-card)] to-[var(--color-border-subtle)] rounded-full flex items-center justify-center mb-6">
+          <Search className="w-10 h-10 text-[var(--color-text-secondary)]" />
         </div>
-        <h3 className="text-xl font-semibold text-[var(--on-surface-default)] mb-2">
-          {isRTL ? "ابدأ البحث" : "Start Your Search"}
+        <h3 className="text-xl font-semibold text-[var(--color-text-primary)] mb-2">
+          {t("startSearchTitle")}
         </h3>
-        <p className="text-[var(--on-surface-variant)] max-w-md mb-6">
-          {t("subtitle")}
+        <p className="text-[var(--color-text-secondary)] max-w-md mb-6">
+          {t("startSearchDescription")}
         </p>
-        <div className="flex items-center gap-6 text-sm text-[var(--on-surface-variant)]">
+        <div className="flex items-center gap-6 text-sm text-[var(--color-text-secondary)]">
           <div className="flex items-center gap-2">
             <GraduationCap className="w-5 h-5" />
-            <span>{isRTL ? "الدورات" : "Courses"}</span>
+            <span>{t("courses")}</span>
           </div>
           <div className="flex items-center gap-2">
             <BookOpen className="w-5 h-5" />
-            <span>{isRTL ? "المدونات" : "Blogs"}</span>
+            <span>{t("blogs")}</span>
           </div>
         </div>
       </div>
@@ -68,21 +68,21 @@ const SearchResults = ({
   if (totalResults === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="w-20 h-20 bg-gradient-to-br from-[var(--surface-container-default)] to-[var(--surface-container-low)] rounded-full flex items-center justify-center mb-6">
-          <Search className="w-10 h-10 text-[var(--on-surface-variant)]" />
+        <div className="w-20 h-20 bg-gradient-to-br from-[var(--color-surface-card)] to-[var(--color-border-subtle)] rounded-full flex items-center justify-center mb-6">
+          <Search className="w-10 h-10 text-[var(--color-text-secondary)]" />
         </div>
-        <h3 className="text-xl font-semibold text-[var(--on-surface-default)] mb-2">
+        <h3 className="text-xl font-semibold text-[var(--color-text-primary)] mb-2">
           {t("results.noResults")}
         </h3>
-        <p className="text-[var(--on-surface-variant)] max-w-md mb-6">
+        <p className="text-[var(--color-text-secondary)] max-w-md mb-6">
           {t("results.noResultsDescription")}
         </p>
-        <div className="text-sm text-[var(--on-surface-variant)]" dir={isRTL ? "rtl" : "ltr"}>
-          <p className="font-medium mb-2">{isRTL ? "نصائح:" : "Tips:"}</p>
+        <div className="text-sm text-[var(--color-text-secondary)]" dir={isRTL ? "rtl" : "ltr"}>
+          <p className="font-medium mb-2">{t("tipsLabel")}</p>
           <ul className={`space-y-1 ${isRTL ? "me-4" : "ms-4"} list-disc`}>
-            <li>{isRTL ? "تحقق من الإملاء" : "Check your spelling"}</li>
-            <li>{isRTL ? "جرب كلمات مفتاحية مختلفة" : "Try different keywords"}</li>
-            <li>{isRTL ? "استخدم مصطلحات أكثر عمومية" : "Use more general terms"}</li>
+            <li>{t("tipSpelling")}</li>
+            <li>{t("tipKeywords")}</li>
+            <li>{t("tipGeneral")}</li>
           </ul>
         </div>
       </div>
@@ -93,13 +93,13 @@ const SearchResults = ({
     <div className="space-y-8">
       {/* Results Summary */}
       <div>
-        <p className="text-[var(--on-surface-variant)]">
+        <p className="text-[var(--color-text-secondary)]">
           {t("results.showing")}{" "}
-          <span className="font-semibold text-[var(--on-surface-default)]">
+          <span className="font-semibold text-[var(--color-text-primary)]">
             {totalResults}
           </span>{" "}
           {t("results.resultsFor")}{" "}
-          <span className="font-semibold text-[var(--on-surface-default)]">
+          <span className="font-semibold text-[var(--color-text-primary)]">
             &quot;{query}&quot;
           </span>
         </p>
@@ -108,8 +108,8 @@ const SearchResults = ({
       {/* Courses Results */}
       {courses.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-[var(--on-surface-default)] flex items-center gap-2">
-            <GraduationCap className="w-6 h-6 text-[var(--surface-container-primary-2)]" />
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
+            <GraduationCap className="w-6 h-6 text-[var(--color-primary)]" />
             {t("results.courses")} ({courses.length})
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -123,8 +123,8 @@ const SearchResults = ({
       {/* Blogs Results */}
       {blogs.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-[var(--on-surface-default)] flex items-center gap-2">
-            <BookOpen className="w-6 h-6 text-[var(--blue-blue-600)]" />
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
+            <BookOpen className="w-6 h-6 text-[var(--color-primary)]" />
             {t("results.blogs")} ({blogs.length})
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -152,10 +152,10 @@ const CourseResultCard = ({ course, isRTL, searchQuery }: CourseResultCardProps)
 
   return (
     <Link href={`/${locale}/courses/${course.slug}`} className="group block">
-      <div className="flex flex-col gap-4 p-4 bg-white border border-[var(--outline-subtle)] rounded-2xl hover:shadow-lg hover:border-[var(--surface-container-primary-2)]/30 transition-all duration-300">
+      <div className="flex flex-col gap-4 p-4 bg-[var(--color-surface-card)] border border-[var(--color-border-subtle)] rounded-2xl hover:shadow-lg hover:border-[var(--color-primary)]/30 transition-all duration-300">
         {/* Card Header */}
         <div className="relative bg-[var(--color-surface-page)] rounded-xl p-4 h-[140px] flex flex-col justify-between overflow-hidden">
-          <span className={`absolute top-3 ${isRTL ? "right-3" : "left-3"} bg-[var(--surface-container-primary-2)] text-white text-xs px-2.5 py-1 rounded-full font-medium`}>
+          <span className={`absolute top-3 ${isRTL ? "right-3" : "left-3"} bg-[var(--color-primary)] text-white text-xs px-2.5 py-1 rounded-full font-medium`}>
             {t("results.course")}
           </span>
           <div className={`pt-8 ${isRTL ? "pe-16" : "pe-16"}`}>
@@ -185,16 +185,16 @@ const CourseResultCard = ({ course, isRTL, searchQuery }: CourseResultCardProps)
 
         {/* Meta Info */}
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-1 text-[var(--on-surface-variant)] bg-[var(--surface-container-default)] px-2 py-1 rounded-lg">
+          <div className="flex items-center gap-1 text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] px-2 py-1 rounded-lg">
             <Calendar className="w-3.5 h-3.5" strokeWidth={1.5} />
             <span className="text-xs">{course.date}</span>
           </div>
-          <div className="flex items-center gap-1 text-[var(--on-surface-variant)] bg-[var(--surface-container-default)] px-2 py-1 rounded-lg">
+          <div className="flex items-center gap-1 text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] px-2 py-1 rounded-lg">
             <Clock className="w-3.5 h-3.5" strokeWidth={1.5} />
             <span className="text-xs">{course.hours}</span>
           </div>
           {course.certification !== "None" && (
-            <span className="text-xs px-2 py-1 bg-[var(--blue-blue-600)]/10 text-[var(--blue-blue-600)] rounded-lg font-medium">
+            <span className="text-xs px-2 py-1 bg-[var(--color-primary)]/10 text-[var(--color-primary)] rounded-lg font-medium">
               {course.certification}
             </span>
           )}
@@ -204,16 +204,16 @@ const CourseResultCard = ({ course, isRTL, searchQuery }: CourseResultCardProps)
         <HighlightText
           text={course.description}
           highlight={searchQuery}
-          className="text-[var(--on-surface-variant)] text-sm line-clamp-2"
+          className="text-[var(--color-text-secondary)] text-sm line-clamp-2"
         />
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-[var(--outline-subtle)]">
+        <div className="flex items-center justify-between pt-2 border-t border-[var(--color-border-subtle)]">
           <div className="flex items-center gap-1">
             {course.price > 0 && <Image src="/icons/rayal-icon.svg" alt="SAR" width={14} height={15} />}
-            <span className="text-[var(--color-text-primary)] font-bold text-lg">{course.price > 0 ? course.price : (isRTL ? "مجاني" : "Free")}</span>
+            <span className="text-[var(--color-text-primary)] font-bold text-lg">{course.price > 0 ? course.price : t("free")}</span>
           </div>
-          <span className="flex items-center gap-1 text-[var(--surface-container-primary-2)] text-sm font-medium group-hover:gap-2 transition-all">
+          <span className="flex items-center gap-1 text-[var(--color-primary)] text-sm font-medium group-hover:gap-2 transition-all">
             {t("viewDetails")}
             <ArrowIcon className="w-4 h-4" strokeWidth={2} />
           </span>
@@ -247,10 +247,10 @@ const BlogResultCard = ({ blog, isRTL, searchQuery }: BlogResultCardProps) => {
 
   return (
     <Link href={`/${locale}/blogs/${blog.slug}`} className="group block">
-      <div className="flex flex-col gap-4 p-4 bg-white border border-[var(--outline-subtle)] rounded-2xl hover:shadow-lg hover:border-[var(--blue-blue-600)]/30 transition-all duration-300">
+      <div className="flex flex-col gap-4 p-4 bg-[var(--color-surface-card)] border border-[var(--color-border-subtle)] rounded-2xl hover:shadow-lg hover:border-[var(--color-primary)]/30 transition-all duration-300">
         {/* Image */}
         <div className="relative h-[140px] overflow-hidden rounded-xl">
-          <span className={`absolute top-3 ${isRTL ? "right-3" : "left-3"} z-10 bg-[var(--blue-blue-600)] text-white text-xs px-2.5 py-1 rounded-full font-medium`}>
+          <span className={`absolute top-3 ${isRTL ? "right-3" : "left-3"} z-10 bg-[var(--color-primary)] text-white text-xs px-2.5 py-1 rounded-full font-medium`}>
             {t("results.blog")}
           </span>
           <Image
@@ -265,23 +265,23 @@ const BlogResultCard = ({ blog, isRTL, searchQuery }: BlogResultCardProps) => {
         <HighlightText
           text={title}
           highlight={searchQuery}
-          className="font-semibold text-[var(--on-surface-default)] line-clamp-2"
+          className="font-semibold text-[var(--color-text-primary)] line-clamp-2"
         />
 
         {/* Excerpt */}
         <HighlightText
           text={excerpt}
           highlight={searchQuery}
-          className="text-[var(--on-surface-variant)] text-sm line-clamp-2"
+          className="text-[var(--color-text-secondary)] text-sm line-clamp-2"
         />
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-[var(--outline-subtle)]">
-          <div className="flex items-center gap-1 text-[var(--on-surface-variant)]">
+        <div className="flex items-center justify-between pt-2 border-t border-[var(--color-border-subtle)]">
+          <div className="flex items-center gap-1 text-[var(--color-text-secondary)]">
             <Clock className="w-4 h-4" />
             <span className="text-sm">{readTime}</span>
           </div>
-          <span className="flex items-center gap-1 text-[var(--blue-blue-600)] text-sm font-medium group-hover:gap-2 transition-all">
+          <span className="flex items-center gap-1 text-[var(--color-primary)] text-sm font-medium group-hover:gap-2 transition-all">
             {t("readMore")}
             <ArrowIcon className="w-4 h-4" strokeWidth={2} />
           </span>

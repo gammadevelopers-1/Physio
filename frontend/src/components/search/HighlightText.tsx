@@ -11,7 +11,7 @@ const HighlightText = ({
   text,
   highlight,
   className = "",
-  highlightClassName = "bg-yellow-200 text-[var(--on-surface-default)]",
+  highlightClassName = "bg-yellow-200 text-[var(--color-text-primary)]",
 }: HighlightTextProps) => {
   if (!highlight.trim()) {
     return <span className={className}>{text}</span>;

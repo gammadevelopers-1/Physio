@@ -15,6 +15,8 @@ interface GlobalSearchBarProps {
   isLoading?: boolean;
   showInstantSearch?: boolean;
   debounceMs?: number;
+  placeholder?: string;
+  placeholderMobile?: string;
 }
 
 const GlobalSearchBar = ({
@@ -27,6 +29,8 @@ const GlobalSearchBar = ({
   isLoading = false,
   showInstantSearch = false,
   debounceMs = 300,
+  placeholder,
+  placeholderMobile,
 }: GlobalSearchBarProps) => {
   const [query, setQuery] = useState(initialQuery);
   const [isFocused, setIsFocused] = useState(false);
@@ -126,17 +130,17 @@ const GlobalSearchBar = ({
   return (
     <form onSubmit={handleSubmit} className={`w-full ${className}`} dir={isRTL ? "rtl" : "ltr"}>
       <div
-        className={`relative flex items-center ${styles.container} w-full bg-[var(--surface-container-default)] rounded-xl border transition-all duration-200 ${
+        className={`relative flex items-center ${styles.container} w-full bg-[var(--color-surface-card)] rounded-xl border transition-all duration-200 ${
           isFocused
-            ? "border-[var(--surface-container-primary-2)] ring-2 ring-[var(--surface-container-primary-2)]/20"
-            : "border-[var(--outline-subtle)]"
+            ? "border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/20"
+            : "border-[var(--color-border-subtle)]"
         }`}
       >
         {/* Search Icon Button */}
         <button
           type="submit"
           disabled={isLoading}
-          className="flex items-center justify-center px-4 text-[var(--on-surface-variant)] hover:text-[var(--surface-container-primary-2)] transition-colors disabled:opacity-70"
+          className="flex items-center justify-center px-4 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors disabled:opacity-70"
           aria-label={t("searchButton")}
         >
           {isLoading ? (
@@ -156,9 +160,11 @@ const GlobalSearchBar = ({
           onBlur={() => setIsFocused(false)}
           onKeyDown={handleKeyDown}
           placeholder={
-            variant === "compact" ? t("placeholderMobile") : t("placeholder")
+            variant === "compact"
+              ? (placeholderMobile ?? t("placeholderMobile"))
+              : (placeholder ?? t("placeholder"))
           }
-          className={`flex-1 h-full bg-transparent ${styles.input} text-[var(--on-surface-default)] placeholder:text-[var(--on-surface-variant)] focus:outline-none`}
+          className={`flex-1 h-full bg-transparent ${styles.input} text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none`}
         />
 
         {/* Clear Button */}
@@ -166,7 +172,7 @@ const GlobalSearchBar = ({
           <button
             type="button"
             onClick={handleClear}
-            className="flex items-center justify-center px-4 text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+            className="flex items-center justify-center px-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
             aria-label={t("clearButton")}
           >
             <X className={styles.icon} strokeWidth={1.67} />

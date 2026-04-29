@@ -11,7 +11,7 @@ import RecentSearches from "./RecentSearches";
 import { useRecentSearches } from "./useRecentSearches";
 import { courses } from "@/data/courses";
 import { searchBlogs } from "@/lib/strapi/api";
-import type { StrapiBlogPost } from "@/lib/strapi/types";
+import type { StrapiBlogPost, SearchPage } from "@/lib/strapi/types";
 import type { Course } from "@/data/courses";
 
 const DEFAULT_FILTERS: FilterState = {
@@ -22,12 +22,24 @@ const DEFAULT_FILTERS: FilterState = {
   sortBy: "relevance",
 };
 
-const SearchPageContent = () => {
+interface SearchPageContentProps {
+  strapiData?: SearchPage | null;
+}
+
+const SearchPageContent = ({ strapiData }: SearchPageContentProps = {}) => {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
   const t = useTranslations("searchPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  // Strapi-controlled text with translation fallbacks
+  const heroTitle = strapiData?.heroTitle?.trim() || t("title");
+  const heroSubtitle = strapiData?.heroSubtitle?.trim() || t("subtitle");
+  const popularLabel = strapiData?.popularSearchesLabel?.trim() || t("popularSearches");
+  const filterResultsLabel = strapiData?.filterResultsLabel?.trim() || t("filterResults");
+  const placeholderText = strapiData?.searchPlaceholder?.trim() || t("placeholder");
+  const placeholderMobileText = strapiData?.searchPlaceholderMobile?.trim() || t("placeholderMobile");
 
   // State
   const [query, setQuery] = useState(initialQuery);
@@ -206,26 +218,29 @@ const SearchPageContent = () => {
     return blogResults;
   }, [filters.contentType, blogResults]);
 
-  // Popular search suggestions
-  const popularSearches = [
-    isRTL ? "مكافحة العدوى" : "Infection Control",
-    isRTL ? "دعم الحياة" : "Life Support",
-    isRTL ? "سلامة المرضى" : "Patient Safety",
-    isRTL ? "الصحة العامة" : "Public Health",
-  ];
+  // Popular search suggestions — Strapi terms with translation fallback
+  const popularSearches = (strapiData?.popularSearchTerms?.length
+    ? strapiData.popularSearchTerms.map((it) => it.term).filter(Boolean)
+    : [
+        t("popularItem1"),
+        t("popularItem2"),
+        t("popularItem3"),
+        t("popularItem4"),
+      ]
+  ).filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-white" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-[var(--color-surface-page)]" dir={isRTL ? "rtl" : "ltr"}>
       {/* Hero Section */}
-      <div className="bg-gradient-to-b from-[var(--surface-container-default)] to-white pt-8 pb-12 px-4 lg:px-16">
+      <div className="bg-gradient-to-b from-[var(--color-surface-card)] to-[var(--color-surface-page)] pt-8 pb-12 px-4 lg:px-16">
         <div className="max-w-4xl mx-auto">
           {/* Title */}
           <div className="mb-8">
-            <h1 className="text-3xl lg:text-4xl font-bold text-[var(--on-surface-default)] mb-2">
-              {t("title")}
+            <h1 className="text-3xl lg:text-4xl font-bold text-[var(--color-text-primary)] mb-2">
+              {heroTitle}
             </h1>
-            <p className="text-[var(--on-surface-variant)] text-lg">
-              {t("subtitle")}
+            <p className="text-[var(--color-text-secondary)] text-lg">
+              {heroSubtitle}
             </p>
           </div>
 
@@ -239,6 +254,8 @@ const SearchPageContent = () => {
             isLoading={isLoading}
             showInstantSearch={true}
             debounceMs={400}
+            placeholder={placeholderText}
+            placeholderMobile={placeholderMobileText}
           />
 
           {/* Recent Searches (show when no query) */}
@@ -256,15 +273,15 @@ const SearchPageContent = () => {
           {/* Popular Searches (show when no query and no recent searches) */}
           {!query && recentSearches.length === 0 && (
             <div className="mt-6">
-              <p className="text-sm text-[var(--on-surface-variant)] mb-3">
-                {t("popularSearches")}
+              <p className="text-sm text-[var(--color-text-secondary)] mb-3">
+                {popularLabel}
               </p>
               <div className="flex flex-wrap gap-2">
                 {popularSearches.map((term) => (
                   <button
                     key={term}
                     onClick={() => handleSearch(term)}
-                    className="px-4 py-2 bg-white border border-[var(--outline-subtle)] rounded-full text-sm text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-default)] hover:border-[var(--surface-container-primary-2)] transition-all duration-200"
+                    className="px-4 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border-subtle)] rounded-full text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-all duration-200"
                   >
                     {term}
                   </button>
@@ -297,8 +314,8 @@ const SearchPageContent = () => {
             {hasSearched && (
               <aside className="hidden lg:block w-72 flex-shrink-0">
                 <div className="sticky top-24">
-                  <h2 className="text-lg font-semibold text-[var(--on-surface-default)] mb-4">
-                    {isRTL ? "تصفية النتائج" : "Filter Results"}
+                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
+                    {filterResultsLabel}
                   </h2>
                   <AdvancedFilters
                     filters={filters}

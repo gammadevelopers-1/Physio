@@ -39,8 +39,8 @@ const SearchFilters = ({
           onClick={() => onFilterChange(filter.key)}
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${
             activeFilter === filter.key
-              ? "bg-[var(--surface-container-primary-2)] text-[var(--on-surface-inverse)]"
-              : "bg-[var(--surface-container-default)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)]"
+              ? "bg-[var(--color-primary)] text-[var(--color-button-text)]"
+              : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
           } ${isRTL ? "flex-row-reverse" : ""}`}
         >
           <span>{filter.label}</span>
@@ -48,8 +48,8 @@ const SearchFilters = ({
             <span
               className={`px-2 py-0.5 rounded-full text-xs ${
                 activeFilter === filter.key
-                  ? "bg-white/20 text-[var(--on-surface-inverse)]"
-                  : "bg-[var(--surface-container-low)] text-[var(--on-surface-variant)]"
+                  ? "bg-white/20 text-[var(--color-button-text)]"
+                  : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
               }`}
             >
               {filter.count}

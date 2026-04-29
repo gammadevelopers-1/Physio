@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { X, SlidersHorizontal } from "lucide-react";
 import { useState, useEffect } from "react";
 import AdvancedFilters, { FilterState } from "./AdvancedFilters";
@@ -23,6 +23,7 @@ const MobileFilterDrawer = ({
   activeFiltersCount,
 }: MobileFilterDrawerProps) => {
   const locale = useLocale();
+  const t = useTranslations("searchPage");
   const isRTL = locale === "ar";
   const [isOpen, setIsOpen] = useState(false);
 
@@ -43,12 +44,12 @@ const MobileFilterDrawer = ({
       {/* Filter Toggle Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-white border border-[var(--outline-subtle)] rounded-xl text-sm font-medium text-[var(--on-surface-default)] hover:bg-[var(--surface-container-default)] transition-colors"
+        className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-border-subtle)] rounded-xl text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-card)] transition-colors"
       >
         <SlidersHorizontal className="w-5 h-5" />
-        <span>{isRTL ? "فلاتر" : "Filters"}</span>
+        <span>{t("filtersLabel")}</span>
         {activeFiltersCount > 0 && (
-          <span className="px-2 py-0.5 bg-[var(--surface-container-primary-2)] text-white text-xs rounded-full">
+          <span className="px-2 py-0.5 bg-[var(--color-primary)] text-white text-xs rounded-full">
             {activeFiltersCount}
           </span>
         )}
@@ -64,7 +65,7 @@ const MobileFilterDrawer = ({
 
       {/* Drawer */}
       <div
-        className={`lg:hidden fixed bottom-0 left-0 right-0 z-[90] bg-white rounded-t-3xl transform transition-transform duration-300 ease-out ${
+        className={`lg:hidden fixed bottom-0 left-0 right-0 z-[90] bg-[var(--color-surface-card)] rounded-t-3xl transform transition-transform duration-300 ease-out ${
           isOpen ? "translate-y-0" : "translate-y-full"
         }`}
         style={{ maxHeight: "90vh" }}
@@ -76,15 +77,15 @@ const MobileFilterDrawer = ({
         </div>
 
         {/* Drawer Header */}
-        <div className="flex items-center justify-between px-5 pb-4 border-b border-[var(--outline-subtle)]">
-          <h2 className="text-xl font-semibold text-[var(--on-surface-default)]">
-            {isRTL ? "الفلاتر" : "Filters"}
+        <div className="flex items-center justify-between px-5 pb-4 border-b border-[var(--color-border-subtle)]">
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
+            {t("filtersLabel")}
           </h2>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-2 rounded-full hover:bg-[var(--surface-container-default)] transition-colors"
+            className="p-2 rounded-full hover:bg-[var(--color-surface-card)] transition-colors"
           >
-            <X className="w-6 h-6 text-[var(--on-surface-variant)]" />
+            <X className="w-6 h-6 text-[var(--color-text-secondary)]" />
           </button>
         </div>
 
@@ -100,12 +101,12 @@ const MobileFilterDrawer = ({
         </div>
 
         {/* Apply Button */}
-        <div className="px-5 py-4 border-t border-[var(--outline-subtle)] bg-white">
+        <div className="px-5 py-4 border-t border-[var(--color-border-subtle)] bg-[var(--color-surface-card)]">
           <button
             onClick={() => setIsOpen(false)}
             className="w-full py-3.5 btn-gold text-[var(--color-button-text)] font-medium rounded-xl transition-colors"
           >
-            {isRTL ? "تطبيق الفلاتر" : "Apply Filters"}
+            {t("applyFilters")}
           </button>
         </div>
       </div>

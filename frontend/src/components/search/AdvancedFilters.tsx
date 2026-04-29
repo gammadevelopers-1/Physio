@@ -76,16 +76,16 @@ const AdvancedFilters = ({
   ];
 
   const sortOptions = [
-    { key: "relevance" as const, label: isRTL ? "الأكثر صلة" : "Most Relevant" },
-    { key: "newest" as const, label: isRTL ? "الأحدث" : "Newest First" },
-    { key: "price-low" as const, label: isRTL ? "السعر: من الأقل للأعلى" : "Price: Low to High" },
-    { key: "price-high" as const, label: isRTL ? "السعر: من الأعلى للأقل" : "Price: High to Low" },
+    { key: "relevance" as const, label: t("sortRelevance") },
+    { key: "newest" as const, label: t("sortNewest") },
+    { key: "price-low" as const, label: t("sortPriceLow") },
+    { key: "price-high" as const, label: t("sortPriceHigh") },
   ];
 
   const priceOptions = [
-    { key: "all" as const, label: isRTL ? "الكل" : "All Prices" },
-    { key: "free" as const, label: isRTL ? "مجاني" : "Free" },
-    { key: "paid" as const, label: isRTL ? "مدفوع" : "Paid" },
+    { key: "all" as const, label: t("priceAll") },
+    { key: "free" as const, label: t("free") },
+    { key: "paid" as const, label: t("pricePaid") },
   ];
 
   return (
@@ -94,13 +94,13 @@ const AdvancedFilters = ({
       <div className="flex items-center justify-between mb-4">
         {/* Sort Dropdown */}
         <div className="flex items-center gap-2">
-          <span className="text-sm text-[var(--on-surface-variant)]">
-            {isRTL ? "ترتيب حسب:" : "Sort by:"}
+          <span className="text-sm text-[var(--color-text-secondary)]">
+            {t("sortByLabel")}
           </span>
           <select
             value={filters.sortBy}
             onChange={(e) => updateFilter("sortBy", e.target.value as FilterState["sortBy"])}
-            className="px-3 py-2 bg-white border border-[var(--outline-subtle)] rounded-lg text-sm text-[var(--on-surface-default)] focus:outline-none focus:border-[var(--surface-container-primary-2)] cursor-pointer"
+            className="px-3 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border-subtle)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] cursor-pointer"
           >
             {sortOptions.map(option => (
               <option key={option.key} value={option.key}>{option.label}</option>
@@ -128,15 +128,15 @@ const AdvancedFilters = ({
             onClick={() => updateFilter("contentType", option.key)}
             className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
               filters.contentType === option.key
-                ? "bg-[var(--surface-container-primary-2)] text-white"
-                : "bg-[var(--surface-container-default)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)]"
+                ? "bg-[var(--color-primary)] text-white"
+                : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
             }`}
           >
             <span>{option.label}</span>
             <span className={`px-2 py-0.5 rounded-full text-xs ${
               filters.contentType === option.key
                 ? "bg-white/20"
-                : "bg-[var(--surface-container-low)]"
+                : "bg-[var(--color-border-subtle)]"
             }`}>
               {option.count}
             </span>
@@ -146,41 +146,41 @@ const AdvancedFilters = ({
 
       {/* Advanced Filter Sections - Only show for courses */}
       {filters.contentType !== "blogs" && (
-        <div className="space-y-3 border-t border-[var(--outline-subtle)] pt-4">
+        <div className="space-y-3 border-t border-[var(--color-border-subtle)] pt-4">
           {/* Course Type Filter */}
-          <div className="border border-[var(--outline-subtle)] rounded-xl overflow-hidden">
+          <div className="border border-[var(--color-border-subtle)] rounded-xl overflow-hidden">
             <button
               onClick={() => toggleSection("courseType")}
-              className="w-full flex items-center justify-between px-4 py-3 bg-[var(--surface-container-default)] hover:bg-[var(--surface-container-low)] transition-colors"
+              className="w-full flex items-center justify-between px-4 py-3 bg-[var(--color-surface-card)] hover:bg-[var(--color-border-subtle)] transition-colors"
             >
-              <span className="font-medium text-[var(--on-surface-default)]">
-                {isRTL ? "نوع الدورة" : "Course Type"}
+              <span className="font-medium text-[var(--color-text-primary)]">
+                {t("courseTypeLabel")}
                 {filters.courseTypes.length > 0 && (
-                  <span className={`${isRTL ? "me-2" : "ms-2"} px-2 py-0.5 bg-[var(--surface-container-primary-2)] text-white text-xs rounded-full`}>
+                  <span className={`${isRTL ? "me-2" : "ms-2"} px-2 py-0.5 bg-[var(--color-primary)] text-white text-xs rounded-full`}>
                     {filters.courseTypes.length}
                   </span>
                 )}
               </span>
               {expandedSections.courseType ? (
-                <ChevronUp className="w-5 h-5 text-[var(--on-surface-variant)]" />
+                <ChevronUp className="w-5 h-5 text-[var(--color-text-secondary)]" />
               ) : (
-                <ChevronDown className="w-5 h-5 text-[var(--on-surface-variant)]" />
+                <ChevronDown className="w-5 h-5 text-[var(--color-text-secondary)]" />
               )}
             </button>
             {expandedSections.courseType && (
-              <div className="p-4 bg-white space-y-2">
+              <div className="p-4 bg-[var(--color-surface-card)] space-y-2">
                 {COURSE_TYPES.map(type => (
                   <label
                     key={type}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--surface-container-default)] cursor-pointer transition-colors"
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--color-surface-card)] cursor-pointer transition-colors"
                   >
                     <input
                       type="checkbox"
                       checked={filters.courseTypes.includes(type)}
                       onChange={() => toggleArrayFilter("courseTypes", type)}
-                      className="w-5 h-5 rounded border-[var(--outline-subtle)] text-[var(--surface-container-primary-2)] focus:ring-[var(--surface-container-primary-2)]"
+                      className="w-5 h-5 rounded border-[var(--color-border-subtle)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                     />
-                    <span className="text-sm text-[var(--on-surface-default)]">
+                    <span className="text-sm text-[var(--color-text-primary)]">
                       {isRTL ? COURSE_TYPES_AR[type] : type}
                     </span>
                   </label>
@@ -190,39 +190,39 @@ const AdvancedFilters = ({
           </div>
 
           {/* Certification Filter */}
-          <div className="border border-[var(--outline-subtle)] rounded-xl overflow-hidden">
+          <div className="border border-[var(--color-border-subtle)] rounded-xl overflow-hidden">
             <button
               onClick={() => toggleSection("certification")}
-              className="w-full flex items-center justify-between px-4 py-3 bg-[var(--surface-container-default)] hover:bg-[var(--surface-container-low)] transition-colors"
+              className="w-full flex items-center justify-between px-4 py-3 bg-[var(--color-surface-card)] hover:bg-[var(--color-border-subtle)] transition-colors"
             >
-              <span className="font-medium text-[var(--on-surface-default)]">
-                {isRTL ? "الشهادة" : "Certification"}
+              <span className="font-medium text-[var(--color-text-primary)]">
+                {t("certificationLabel")}
                 {filters.certifications.length > 0 && (
-                  <span className={`${isRTL ? "me-2" : "ms-2"} px-2 py-0.5 bg-[var(--surface-container-primary-2)] text-white text-xs rounded-full`}>
+                  <span className={`${isRTL ? "me-2" : "ms-2"} px-2 py-0.5 bg-[var(--color-primary)] text-white text-xs rounded-full`}>
                     {filters.certifications.length}
                   </span>
                 )}
               </span>
               {expandedSections.certification ? (
-                <ChevronUp className="w-5 h-5 text-[var(--on-surface-variant)]" />
+                <ChevronUp className="w-5 h-5 text-[var(--color-text-secondary)]" />
               ) : (
-                <ChevronDown className="w-5 h-5 text-[var(--on-surface-variant)]" />
+                <ChevronDown className="w-5 h-5 text-[var(--color-text-secondary)]" />
               )}
             </button>
             {expandedSections.certification && (
-              <div className="p-4 bg-white space-y-2">
+              <div className="p-4 bg-[var(--color-surface-card)] space-y-2">
                 {CERTIFICATIONS.map(cert => (
                   <label
                     key={cert}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--surface-container-default)] cursor-pointer transition-colors"
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--color-surface-card)] cursor-pointer transition-colors"
                   >
                     <input
                       type="checkbox"
                       checked={filters.certifications.includes(cert)}
                       onChange={() => toggleArrayFilter("certifications", cert)}
-                      className="w-5 h-5 rounded border-[var(--outline-subtle)] text-[var(--surface-container-primary-2)] focus:ring-[var(--surface-container-primary-2)]"
+                      className="w-5 h-5 rounded border-[var(--color-border-subtle)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                     />
-                    <span className="text-sm text-[var(--on-surface-default)]">{cert}</span>
+                    <span className="text-sm text-[var(--color-text-primary)]">{cert}</span>
                   </label>
                 ))}
               </div>
@@ -230,40 +230,40 @@ const AdvancedFilters = ({
           </div>
 
           {/* Price Filter */}
-          <div className="border border-[var(--outline-subtle)] rounded-xl overflow-hidden">
+          <div className="border border-[var(--color-border-subtle)] rounded-xl overflow-hidden">
             <button
               onClick={() => toggleSection("price")}
-              className="w-full flex items-center justify-between px-4 py-3 bg-[var(--surface-container-default)] hover:bg-[var(--surface-container-low)] transition-colors"
+              className="w-full flex items-center justify-between px-4 py-3 bg-[var(--color-surface-card)] hover:bg-[var(--color-border-subtle)] transition-colors"
             >
-              <span className="font-medium text-[var(--on-surface-default)]">
-                {isRTL ? "السعر" : "Price"}
+              <span className="font-medium text-[var(--color-text-primary)]">
+                {t("priceLabel")}
                 {filters.priceRange !== "all" && (
-                  <span className={`${isRTL ? "me-2" : "ms-2"} px-2 py-0.5 bg-[var(--surface-container-primary-2)] text-white text-xs rounded-full`}>
+                  <span className={`${isRTL ? "me-2" : "ms-2"} px-2 py-0.5 bg-[var(--color-primary)] text-white text-xs rounded-full`}>
                     1
                   </span>
                 )}
               </span>
               {expandedSections.price ? (
-                <ChevronUp className="w-5 h-5 text-[var(--on-surface-variant)]" />
+                <ChevronUp className="w-5 h-5 text-[var(--color-text-secondary)]" />
               ) : (
-                <ChevronDown className="w-5 h-5 text-[var(--on-surface-variant)]" />
+                <ChevronDown className="w-5 h-5 text-[var(--color-text-secondary)]" />
               )}
             </button>
             {expandedSections.price && (
-              <div className="p-4 bg-white space-y-2">
+              <div className="p-4 bg-[var(--color-surface-card)] space-y-2">
                 {priceOptions.map(option => (
                   <label
                     key={option.key}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--surface-container-default)] cursor-pointer transition-colors"
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--color-surface-card)] cursor-pointer transition-colors"
                   >
                     <input
                       type="radio"
                       name="price"
                       checked={filters.priceRange === option.key}
                       onChange={() => updateFilter("priceRange", option.key)}
-                      className="w-5 h-5 border-[var(--outline-subtle)] text-[var(--surface-container-primary-2)] focus:ring-[var(--surface-container-primary-2)]"
+                      className="w-5 h-5 border-[var(--color-border-subtle)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                     />
-                    <span className="text-sm text-[var(--on-surface-default)]">{option.label}</span>
+                    <span className="text-sm text-[var(--color-text-primary)]">{option.label}</span>
                   </label>
                 ))}
               </div>

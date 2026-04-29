@@ -21,6 +21,7 @@ import type {
   PartnersPage,
   InstructorsPage,
   FAQPage,
+  SearchPage,
   BlogsPage,
   CoursesPage,
   CourseDetailPage,
@@ -1036,6 +1037,22 @@ export async function getFAQPage(locale: string = 'en'): Promise<FAQPage | null>
         ...BLOCKS_POPULATE_PARAMS,
         ...OG_IMAGE_POPULATE,
         'populate[items]': 'true',
+      },
+    }
+  );
+  return response?.data || null;
+}
+
+/**
+ * Fetch search page text content
+ */
+export async function getSearchPage(locale: string = 'en'): Promise<SearchPage | null> {
+  const response = await fetchStrapi<StrapiSingleResponse<SearchPage>>(
+    '/search-page',
+    {
+      params: {
+        locale,
+        'populate[popularSearchTerms]': 'true',
       },
     }
   );

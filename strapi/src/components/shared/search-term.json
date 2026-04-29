@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_shared_search_terms",
+  "info": {
+    "displayName": "Search Term",
+    "description": "A single popular search term"
+  },
+  "attributes": {
+    "term": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

@@ -439,6 +439,16 @@ export class RoleRequestsService {
       );
     }
 
+    // Detect placeholder users (created via the public trainer-application
+    // flow, never logged in, zero role assignments). These users still
+    // have a random unguessable password; after approval we trigger a
+    // password-reset email so they can set a real one.
+    const priorRoles = await db
+      .select({ roleId: userRoles.roleId })
+      .from(userRoles)
+      .where(eq(userRoles.userId, request.userId));
+    const isPlaceholder = priorRoles.length === 0;
+
     // Update request status
     await db
       .update(roleRequests)
@@ -481,6 +491,21 @@ export class RoleRequestsService {
       );
     } catch (error) {
       this.logger.error('Failed to send approval email', error);
+    }
+
+    // Placeholder user → trigger password-reset email so they can set a password
+    if (isPlaceholder) {
+      try {
+        await this.authService.forgotPassword(request.user.email);
+        this.logger.log(
+          `Sent set-password email to placeholder user ${request.userId}`,
+        );
+      } catch (error) {
+        this.logger.error(
+          `Failed to send set-password email to ${request.user.email}`,
+          error,
+        );
+      }
     }
 
     return { message: 'Application approved successfully' };

@@ -8,6 +8,11 @@ import { ChevronDown, Trash2, Mail, Image as ImageIcon, CloudUpload, CheckCircle
 import { useTranslations, useLocale } from "next-intl";
 import { useIsAuthenticated, useUser, useUserRoles, useAuth } from "@/contexts";
 import { roleRequestsApi, getAccessToken, type RoleRequest } from "@/lib/api";
+import ReCAPTCHA from "react-google-recaptcha";
+import OtpVerifyModal from "./trainer-application/OtpVerifyModal";
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
 // InputField component moved outside to prevent re-creation on parent re-render
 const InputField = ({
@@ -429,7 +434,14 @@ const BecomeTrainerForm = ({
   const { switchRole } = useAuth();
   const isInstructor = userRoles.includes("INSTRUCTOR");
 
-  // Check for existing application on mount
+  // Public flow: captcha → OTP → scoped JWT carries through file uploads + submit
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [otpModalOpen, setOtpModalOpen] = useState(false);
+  const [scopedToken, setScopedToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA | null>(null);
+
+  // Check for existing application on mount — only if user happens to be logged in
+  // (anonymous applicants skip this entirely; the backend will dedup on submit)
   useEffect(() => {
     const checkExisting = async () => {
       if (!isAuthenticated) {
@@ -541,9 +553,16 @@ const BecomeTrainerForm = ({
     setFiles((prev) => ({ ...prev, [field]: file }));
   };
 
-  const uploadFile = async (file: File): Promise<{ url: string; filename: string } | null> => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
-    const token = getAccessToken();
+  /**
+   * Upload a file. Uses the scoped JWT issued from OTP verification when
+   * the applicant is anonymous; falls back to the regular access token
+   * when they happen to be logged in (admin/manager preview, etc).
+   */
+  const uploadFile = async (
+    file: File,
+    overrideToken?: string,
+  ): Promise<{ url: string; filename: string } | null> => {
+    const token = overrideToken || scopedToken || getAccessToken();
     const formPayload = new FormData();
     formPayload.append("file", file);
 
@@ -560,12 +579,16 @@ const BecomeTrainerForm = ({
     }
   };
 
+  /**
+   * Submit click — runs in two stages:
+   *   1. First click: validate, then open OTP modal (which requests + verifies code,
+   *      then calls onVerified with a scoped JWT). After verify, this submit
+   *      handler is re-invoked from the modal callback with scopedToken set.
+   *   2. With scopedToken set: actually upload files + POST the application.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAuthenticated) {
-      router.push(`/${locale}/signin?redirect=/${locale}/become-trainer`);
-      return;
-    }
+    setSubmitError(null);
 
     // Validate at least one name field is filled
     if (!formData.fullNameArabic && !formData.fullNameEnglish) {
@@ -573,21 +596,43 @@ const BecomeTrainerForm = ({
       return;
     }
 
+    if (!formData.email) {
+      setSubmitError(locale === "ar" ? "يرجى إدخال البريد الإلكتروني" : "Please enter your email");
+      return;
+    }
+
+    // Stage 1: open OTP modal (uses captcha token from inline widget)
+    if (!scopedToken) {
+      if (!recaptchaToken) {
+        setSubmitError(
+          locale === "ar"
+            ? "يرجى إكمال التحقق \"لست برنامج روبوت\""
+            : "Please complete the \"I'm not a robot\" verification",
+        );
+        return;
+      }
+      setOtpModalOpen(true);
+      return;
+    }
+
+    // Stage 2: scopedToken present — proceed with submission
+    await actuallySubmit(scopedToken);
+  };
+
+  const actuallySubmit = async (token: string) => {
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
-      // Upload files
+      // Upload files (uses scoped JWT)
       const resumeFiles: Array<{ type: string; url: string; filename: string }> = [];
 
       if (formData.uploadResume && files.resume) {
-        // Upload single resume file
-        const result = await uploadFile(files.resume);
+        const result = await uploadFile(files.resume, token);
         if (result) {
           resumeFiles.push({ type: "resume", url: result.url, filename: result.filename });
         }
       } else if (formData.createResume) {
-        // Upload individual section files
         const fileEntries: [string, File | null][] = [
           ["education", files.education],
           ["professionalSkills", files.professionalSkills],
@@ -597,7 +642,7 @@ const BecomeTrainerForm = ({
 
         for (const [type, file] of fileEntries) {
           if (file) {
-            const result = await uploadFile(file);
+            const result = await uploadFile(file, token);
             if (result) {
               resumeFiles.push({ type, url: result.url, filename: result.filename });
             }
@@ -605,21 +650,18 @@ const BecomeTrainerForm = ({
         }
       }
 
-      // Upload photo if exists
       if (formData.photo) {
-        const photoResult = await uploadFile(formData.photo);
+        const photoResult = await uploadFile(formData.photo, token);
         if (photoResult) {
           resumeFiles.push({ type: "photo", url: photoResult.url, filename: photoResult.filename });
         }
       }
 
-      const finalNameArabic = formData.fullNameArabic;
-      const finalNameEnglish = formData.fullNameEnglish;
-
-      // Build profile data
       const profileData = {
-        fullNameArabic: finalNameArabic,
-        fullNameEnglish: finalNameEnglish,
+        fullNameArabic: formData.fullNameArabic,
+        fullNameEnglish: formData.fullNameEnglish,
+        firstName: formData.fullNameEnglish?.split(" ")[0] || formData.fullNameArabic?.split(" ")[0] || "",
+        lastName: formData.fullNameEnglish?.split(" ").slice(1).join(" ") || formData.fullNameArabic?.split(" ").slice(1).join(" ") || "",
         email: formData.email,
         countryCode: formData.countryCode,
         mobileNumber: formData.mobileNumber,
@@ -642,18 +684,30 @@ const BecomeTrainerForm = ({
         iban: formData.iban,
       };
 
-      await roleRequestsApi.submit({
-        requestedRole: "INSTRUCTOR",
-        profileData,
-        bankData,
-        resumeFiles,
+      // POST to public submit endpoint (validated by scoped JWT)
+      const res = await fetch(`${API_URL}/trainer-applications/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ profileData, bankData, resumeFiles, locale }),
       });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json.message || "Failed to submit application");
+      }
 
       setSubmitSuccess(true);
     } catch (err: unknown) {
       const error = err as Error & { statusCode?: number };
       const msg = error.message || "Failed to submit application. Please try again.";
       setSubmitError(msg);
+      // Reset captcha + scoped token so user can retry cleanly
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
+      setScopedToken(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -679,24 +733,7 @@ const BecomeTrainerForm = ({
   // Helper: next-intl returns the key path (truthy) when missing, so || fallback won't work
   const tt = (key: string, fallback: string) => (t.has(key) ? t(key) : fallback);
 
-  // Not logged in
-  if (!isAuthenticated) {
-    return (
-      <section className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
-        <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
-          <AlertCircle className="w-12 h-12 text-[var(--color-primary)] mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-2">{tt("loginRequired", "Login Required")}</h2>
-          <p className="text-[var(--color-text-secondary)] mb-6">{tt("loginRequiredDesc", "You need to sign in to submit a trainer application.")}</p>
-          <Link
-            href={`/${locale}/signin?redirect=/${locale}/become-trainer`}
-            className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white rounded-xl font-medium hover:bg-[var(--color-primary-dark)] transition-colors"
-          >
-            {tt("signIn", "Sign In to Apply")}
-          </Link>
-        </div>
-      </section>
-    );
-  }
+  // Auth gate removed — form is public. OTP verifies email; captcha blocks bots.
 
   // Already an instructor
   if (isInstructor) {
@@ -1025,12 +1062,26 @@ const BecomeTrainerForm = ({
               {/* Divider */}
               <div className="w-full h-px bg-[var(--color-border)] my-10" />
 
+              {/* reCAPTCHA */}
+              {RECAPTCHA_SITE_KEY && (
+                <div className="flex justify-center mb-6" dir="ltr">
+                  <ReCAPTCHA
+                    ref={recaptchaRef}
+                    sitekey={RECAPTCHA_SITE_KEY}
+                    hl={isRTL ? "ar" : "en"}
+                    onChange={(t) => setRecaptchaToken(t)}
+                    onExpired={() => setRecaptchaToken(null)}
+                    onErrored={() => setRecaptchaToken(null)}
+                  />
+                </div>
+              )}
+
               {/* Submit Buttons */}
               <div className="flex gap-3 justify-end">
                 <button type="button" className="h-11 px-6 rounded-lg font-medium border border-[var(--color-border-subtle)] hover:bg-gray-50">
                   {labels.cancel}
                 </button>
-                <button type="submit" disabled={isSubmitting} className="h-11 px-6 rounded-lg font-medium text-white btn-gold disabled:opacity-50 flex items-center gap-2">
+                <button type="submit" disabled={isSubmitting || (!!RECAPTCHA_SITE_KEY && !recaptchaToken)} className="h-11 px-6 rounded-lg font-medium text-white btn-gold disabled:opacity-50 flex items-center gap-2">
                   {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   {isSubmitting ? tt("submitting", "Submitting...") : (locale === "ar" ? "تقديم الطلب" : "Submit Application")}
                 </button>
@@ -1258,12 +1309,25 @@ const BecomeTrainerForm = ({
               <InputField label={labels.iban} name="iban" required value={formData.iban} onChange={handleInputChange} isRTL={isRTL} />
             </div>
 
+            {/* reCAPTCHA */}
+            {RECAPTCHA_SITE_KEY && (
+              <div className="flex justify-center mt-6" dir="ltr">
+                <ReCAPTCHA
+                  sitekey={RECAPTCHA_SITE_KEY}
+                  hl={isRTL ? "ar" : "en"}
+                  onChange={(t) => setRecaptchaToken(t)}
+                  onExpired={() => setRecaptchaToken(null)}
+                  onErrored={() => setRecaptchaToken(null)}
+                />
+              </div>
+            )}
+
             {/* Submit Buttons */}
             <div className="flex gap-3 mt-6">
               <button type="button" className="flex-1 h-12 rounded-xl font-medium border border-[var(--color-border-subtle)] hover:bg-gray-50">
                 {labels.cancel}
               </button>
-              <button type="submit" disabled={isSubmitting} className="flex-1 h-12 rounded-xl font-medium text-white btn-gold disabled:opacity-50 flex items-center justify-center gap-2">
+              <button type="submit" disabled={isSubmitting || (!!RECAPTCHA_SITE_KEY && !recaptchaToken)} className="flex-1 h-12 rounded-xl font-medium text-white btn-gold disabled:opacity-50 flex items-center justify-center gap-2">
                 {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                 {isSubmitting ? tt("submitting", "Submitting...") : (locale === "ar" ? "تقديم الطلب" : "Submit Application")}
               </button>
@@ -1271,6 +1335,20 @@ const BecomeTrainerForm = ({
           </div>
         </form>
       </div>
+
+      {/* OTP Verification Modal — opens on submit, returns scoped JWT */}
+      <OtpVerifyModal
+        isOpen={otpModalOpen}
+        email={formData.email}
+        recaptchaToken={recaptchaToken}
+        onVerified={(token) => {
+          setScopedToken(token);
+          setOtpModalOpen(false);
+          // Resume submission with the scoped token
+          actuallySubmit(token);
+        }}
+        onClose={() => setOtpModalOpen(false)}
+      />
     </section>
   );
 };

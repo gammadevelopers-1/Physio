@@ -7,6 +7,7 @@ export * from './users';
 export * from './refresh-tokens';
 export * from './roles';
 export * from './two-factor';
+export * from './email-verifications';
 export * from './role-requests';
 export * from './blocked-national-ids';
 export * from './admin-notifications';

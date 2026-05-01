@@ -6,6 +6,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
 import { RecaptchaService } from './recaptcha.service';
+import { EmailVerificationService } from './email-verification.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
@@ -23,15 +24,26 @@ import { RolesGuard } from './guards/roles.guard';
       }),
     }),
   ],
+  // Re-export JwtModule so other feature modules (storage, trainer-applications)
+  // can inject JwtService via custom guards.
   controllers: [AuthController],
   providers: [
     AuthService,
     TwoFactorService,
     RecaptchaService,
+    EmailVerificationService,
     JwtStrategy,
     JwtAuthGuard,
     RolesGuard,
   ],
-  exports: [AuthService, TwoFactorService, JwtAuthGuard, RolesGuard],
+  exports: [
+    AuthService,
+    TwoFactorService,
+    RecaptchaService,
+    EmailVerificationService,
+    JwtAuthGuard,
+    RolesGuard,
+    JwtModule,
+  ],
 })
 export class AuthModule {}

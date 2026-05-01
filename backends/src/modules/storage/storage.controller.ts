@@ -17,6 +17,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { StorageService } from './storage.service';
 import { JwtAuthGuard } from '../auth/guards';
+import { JwtOrScopedGuard } from '../auth/guards/jwt-or-scoped.guard';
 import { Public } from '../auth/decorators';
 import { randomUUID } from 'crypto';
 
@@ -56,8 +57,13 @@ export class StorageController {
   /**
    * Upload a trainer document (PDF, images)
    * Returns { url, filename } for use in role-request body
+   *
+   * Accepts either a regular logged-in user token OR a trainer-application
+   * scoped JWT (issued by /trainer-applications/verify-otp) so anonymous
+   * applicants can attach CV/certificate files during the public flow.
    */
-  @UseGuards(JwtAuthGuard)
+  @Public()
+  @UseGuards(JwtOrScopedGuard)
   @Post('upload')
   @UseInterceptors(
     FileInterceptor('file', {

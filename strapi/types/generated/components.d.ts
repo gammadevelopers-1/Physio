@@ -3084,6 +3084,9 @@ export interface ElementsCounterItem extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    liveSource: Schema.Attribute.Enumeration<
+      ['totalStudents', 'totalCourses', 'totalInstructors']
+    >;
     prefix: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {

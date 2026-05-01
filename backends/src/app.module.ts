@@ -10,6 +10,8 @@ import { StorageModule } from './modules/storage/storage.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { EmailModule } from './modules/email/email.module';
 import { RoleRequestsModule } from './modules/role-requests/role-requests.module';
+import { TrainerApplicationsModule } from './modules/trainer-applications/trainer-applications.module';
+import { PublicStatsModule } from './modules/public-stats/public-stats.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { CoursesModule } from './modules/courses/courses.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
@@ -88,6 +90,8 @@ import processingConfig from './config/processing.config';
     HealthModule,
     StorageModule,
     RoleRequestsModule,
+    TrainerApplicationsModule,
+    PublicStatsModule,
     NotificationsModule,
     CoursesModule,
     SessionsModule,

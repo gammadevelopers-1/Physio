@@ -339,6 +339,11 @@
       "repeatable": true,
       "component": "elements.dropdown-option"
     },
+    "specialtyOptions": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.dropdown-option"
+    },
     "qualificationOptions": {
       "type": "component",
       "repeatable": true,

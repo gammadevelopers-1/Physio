@@ -588,6 +588,12 @@ export interface RoleRequest {
   profileData: Record<string, unknown>;
   bankData: Record<string, unknown> | null;
   resumeFiles: Array<{ type: string; url: string; filename: string }> | null;
+  structuredResume: {
+    education?: Array<{ university: string; graduationYear: string; profession: string; specialty: string; qualification: string }>;
+    professionalSkills?: Array<{ placeOfWork: string; type: string; yearsOfExperience: number; academicRank?: string; natureOfWork?: string }>;
+    scientificResearches?: Array<{ type: string; role: string; description: string }>;
+    trainingExperiences?: Array<{ eventName: string; executingAgency: string }>;
+  } | null;
   reviewedBy: string | null;
   reviewNote: string | null;
   reviewedAt: string | null;

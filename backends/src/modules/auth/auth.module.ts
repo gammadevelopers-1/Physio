@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
 import { RecaptchaService } from './recaptcha.service';
 import { EmailVerificationService } from './email-verification.service';
+import { PasswordSetupService } from './password-setup.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
@@ -32,6 +33,7 @@ import { RolesGuard } from './guards/roles.guard';
     TwoFactorService,
     RecaptchaService,
     EmailVerificationService,
+    PasswordSetupService,
     JwtStrategy,
     JwtAuthGuard,
     RolesGuard,
@@ -41,6 +43,7 @@ import { RolesGuard } from './guards/roles.guard';
     TwoFactorService,
     RecaptchaService,
     EmailVerificationService,
+    PasswordSetupService,
     JwtAuthGuard,
     RolesGuard,
     JwtModule,

@@ -18,6 +18,7 @@ import {
   RoleName,
 } from '../../database/schema';
 import { AuthService } from '../auth/auth.service';
+import { PasswordSetupService } from '../auth/password-setup.service';
 import { EmailService } from '../email/email.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateRoleRequestDto } from './dto/create-role-request.dto';
@@ -29,6 +30,7 @@ export class RoleRequestsService {
 
   constructor(
     private authService: AuthService,
+    private passwordSetupService: PasswordSetupService,
     private emailService: EmailService,
     private notificationsService: NotificationsService,
   ) {}
@@ -146,6 +148,7 @@ export class RoleRequestsService {
         profileData: dto.profileData,
         bankData: dto.bankData || null,
         resumeFiles: dto.resumeFiles || null,
+        structuredResume: dto.structuredResume || null,
       })
       .returning();
 
@@ -274,6 +277,7 @@ export class RoleRequestsService {
         profileData: roleRequests.profileData,
         bankData: roleRequests.bankData,
         resumeFiles: roleRequests.resumeFiles,
+        structuredResume: roleRequests.structuredResume,
         reviewedBy: roleRequests.reviewedBy,
         reviewNote: roleRequests.reviewNote,
         reviewedAt: roleRequests.reviewedAt,
@@ -392,6 +396,7 @@ export class RoleRequestsService {
         profileData: roleRequests.profileData,
         bankData: roleRequests.bankData,
         resumeFiles: roleRequests.resumeFiles,
+        structuredResume: roleRequests.structuredResume,
         reviewedBy: roleRequests.reviewedBy,
         reviewNote: roleRequests.reviewNote,
         reviewedAt: roleRequests.reviewedAt,
@@ -475,7 +480,9 @@ export class RoleRequestsService {
       );
     }
 
-    // Send approval email
+    // Approval email — placeholder users get the set-password magic-link
+    // version (single email, with a button); existing users get the standard
+    // approval email since they already have a password.
     try {
       const profileData = request.profileData as Record<string, string>;
       const applicantName =
@@ -484,28 +491,25 @@ export class RoleRequestsService {
         request.user.email;
 
       const locale = (request.user.language || 'en') as 'en' | 'ar';
-      await this.emailService.sendApplicationApproved(
-        request.user.email,
-        applicantName,
-        locale,
-      );
-    } catch (error) {
-      this.logger.error('Failed to send approval email', error);
-    }
 
-    // Placeholder user → trigger password-reset email so they can set a password
-    if (isPlaceholder) {
-      try {
-        await this.authService.forgotPassword(request.user.email);
+      if (isPlaceholder) {
+        await this.passwordSetupService.sendSetupEmail({
+          email: request.user.email,
+          applicantName,
+          locale,
+        });
         this.logger.log(
-          `Sent set-password email to placeholder user ${request.userId}`,
+          `Sent approval+set-password email to placeholder user ${request.userId}`,
         );
-      } catch (error) {
-        this.logger.error(
-          `Failed to send set-password email to ${request.user.email}`,
-          error,
+      } else {
+        await this.emailService.sendApplicationApproved(
+          request.user.email,
+          applicantName,
+          locale,
         );
       }
+    } catch (error) {
+      this.logger.error('Failed to send approval email', error);
     }
 
     return { message: 'Application approved successfully' };

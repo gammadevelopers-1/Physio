@@ -72,10 +72,10 @@ export function TrainerFormBlock({ data }: TrainerFormBlockProps) {
       // Dropdown overrides — empty arrays use defaults
       nationalityOptions={data.nationalityOptions ?? null}
       professionOptions={data.professionOptions ?? null}
+      specialtyOptions={data.specialtyOptions ?? null}
       qualificationOptions={data.qualificationOptions ?? null}
       rankOptions={data.rankOptions ?? null}
       bankOptions={data.bankOptions ?? null}
-      countryCodeOptions={data.countryCodeOptions ?? null}
     />
   );
 }

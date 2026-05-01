@@ -30,6 +30,11 @@ export const roleRequests = pgTable('role_requests', {
   profileData: jsonb('profile_data').notNull(),
   bankData: jsonb('bank_data'),
   resumeFiles: jsonb('resume_files'),
+  // Structured resume entries for the "Create Resume" path. Shape:
+  // { education: [...], professionalSkills: [...],
+  //   scientificResearches: [...], trainingExperiences: [...] }
+  // Nullable — applicants who upload a resume file leave this empty.
+  structuredResume: jsonb('structured_resume'),
 
   // Review
   reviewedBy: uuid('reviewed_by').references(() => users.id, {

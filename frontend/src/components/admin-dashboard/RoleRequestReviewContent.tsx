@@ -144,6 +144,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
 
   const profileData = (application?.profileData || {}) as Record<string, string>;
   const bankData = (application?.bankData || {}) as Record<string, string>;
+  const structured = application?.structuredResume || null;
   const rawResumeFiles = (application?.resumeFiles || []) as Array<{ type: string; url: string; filename: string }>;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
   const resumeFiles = rawResumeFiles
@@ -292,6 +293,86 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
                     ))}
                   </div>
                 </div>
+              )}
+
+              {/* Structured Resume (Create-Resume path) */}
+              {structured && (
+                (structured.education?.length || structured.professionalSkills?.length ||
+                  structured.scientificResearches?.length || structured.trainingExperiences?.length) ? (
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6 space-y-6">
+                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                      {isRTL ? "السيرة الذاتية المنشأة" : "Resume Builder"}
+                    </h2>
+
+                    {!!structured.education?.length && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
+                          {isRTL ? "التعليم" : "Education"}
+                        </h3>
+                        <div className="grid grid-cols-1 gap-3">
+                          {structured.education.map((e, i) => (
+                            <div key={i} className="border border-[var(--color-border)] rounded-lg p-3 bg-[var(--color-surface-page)]">
+                              <p className="font-semibold text-[var(--color-text-primary)]">{e.university}</p>
+                              <p className="text-sm text-[var(--color-text-secondary)]">{e.qualification} — {e.graduationYear}</p>
+                              <p className="text-xs text-[var(--color-text-secondary)]">{e.profession} · {e.specialty}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {!!structured.professionalSkills?.length && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
+                          {isRTL ? "المهارات المهنية" : "Professional Skills"}
+                        </h3>
+                        <div className="grid grid-cols-1 gap-3">
+                          {structured.professionalSkills.map((s, i) => (
+                            <div key={i} className="border border-[var(--color-border)] rounded-lg p-3 bg-[var(--color-surface-page)]">
+                              <p className="font-semibold text-[var(--color-text-primary)]">{s.placeOfWork}</p>
+                              <p className="text-sm text-[var(--color-text-secondary)]">
+                                {s.type}{s.type === "Academic" && s.academicRank ? ` — ${s.academicRank}` : s.type === "Practical Experience" && s.natureOfWork ? ` — ${s.natureOfWork}` : ""}
+                              </p>
+                              <p className="text-xs text-[var(--color-text-secondary)]">{s.yearsOfExperience} {isRTL ? "سنوات خبرة" : "years of experience"}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {!!structured.scientificResearches?.length && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
+                          {isRTL ? "الأبحاث العلمية" : "Scientific Researches"}
+                        </h3>
+                        <div className="grid grid-cols-1 gap-3">
+                          {structured.scientificResearches.map((r, i) => (
+                            <div key={i} className="border border-[var(--color-border)] rounded-lg p-3 bg-[var(--color-surface-page)]">
+                              <p className="font-semibold text-[var(--color-text-primary)]">{r.description}</p>
+                              <p className="text-sm text-[var(--color-text-secondary)]">{r.type} · {r.role}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {!!structured.trainingExperiences?.length && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
+                          {isRTL ? "الخبرة التدريبية" : "Training Experience"}
+                        </h3>
+                        <div className="grid grid-cols-1 gap-3">
+                          {structured.trainingExperiences.map((tr, i) => (
+                            <div key={i} className="border border-[var(--color-border)] rounded-lg p-3 bg-[var(--color-surface-page)]">
+                              <p className="font-semibold text-[var(--color-text-primary)]">{tr.eventName}</p>
+                              <p className="text-sm text-[var(--color-text-secondary)]">{tr.executingAgency}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : null
               )}
 
               {/* Bank Information */}

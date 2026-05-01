@@ -131,6 +131,7 @@ export class TrainerApplicationsService {
       profileData: dto.profileData,
       bankData: dto.bankData,
       resumeFiles: dto.resumeFiles,
+      structuredResume: dto.structuredResume,
     });
 
     return { requestId: request.id, userId };

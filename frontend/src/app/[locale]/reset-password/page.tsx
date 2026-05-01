@@ -210,7 +210,7 @@ function ResetPasswordForm() {
                           onChange={(e) => handleCodeChange(i, e.target.value)}
                           onKeyDown={(e) => handleKeyDown(i, e)}
                           disabled={isSubmitting}
-                          className="w-11 h-12 text-center text-lg font-semibold border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors disabled:opacity-50"
+                          className="w-11 h-12 text-center text-lg font-semibold bg-[var(--color-surface-card)] border border-[var(--color-border-subtle)] rounded-lg outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors disabled:opacity-50"
                         />
                       ))}
                     </div>

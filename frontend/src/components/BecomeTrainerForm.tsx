@@ -10,6 +10,11 @@ import { useIsAuthenticated, useUser, useUserRoles, useAuth } from "@/contexts";
 import { roleRequestsApi, getAccessToken, type RoleRequest } from "@/lib/api";
 import ReCAPTCHA from "react-google-recaptcha";
 import OtpVerifyModal from "./trainer-application/OtpVerifyModal";
+import ResumeBuilder, { emptyStructuredResume, type StructuredResume } from "./trainer-application/ResumeBuilder";
+import { toast } from "sonner";
+import PhoneInput, { isValidPhoneNumber, parsePhoneNumber } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
+import { isValidIBAN } from "ibantools";
 
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
@@ -172,6 +177,234 @@ const Dropdown = ({
   );
 };
 
+// Searchable dropdown — used for Country/State/City where the option list
+// can be very long (250 countries, hundreds of cities). Falls back to a
+// plain text input when `options` is empty (some countries have no states
+// in the dataset, some states have no cities).
+const SearchableDropdown = ({
+  label,
+  field,
+  options,
+  value,
+  isOpen,
+  onToggle,
+  onSelect,
+  required = false,
+  placeholder = "",
+  searchPlaceholder = "",
+  withDivider = true,
+  isRTL = false,
+  disabled = false,
+}: {
+  label: string;
+  field: string;
+  options: { value: string; label: string }[];
+  value: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  onSelect: (field: string, value: string) => void;
+  required?: boolean;
+  placeholder?: string;
+  searchPlaceholder?: string;
+  withDivider?: boolean;
+  isRTL?: boolean;
+  disabled?: boolean;
+}) => {
+  const [query, setQuery] = useState("");
+  const selected = options.find((o) => o.value === value);
+  const displayLabel = selected ? selected.label : "";
+
+  const filtered = query.trim()
+    ? options.filter((o) => o.label.toLowerCase().includes(query.trim().toLowerCase()))
+    : options;
+
+  // Empty options → render free-text input instead so applicants from
+  // regions missing in the dataset can still complete the form.
+  if (options.length === 0) {
+    return (
+      <>
+        <div className="flex flex-col lg:flex-row lg:items-start py-4 lg:py-6 gap-2 lg:gap-0 lg:justify-between">
+          <label className="shrink-0 text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
+            {label} {required && <span className="text-[#dc2626]">*</span>}
+          </label>
+          <div className="w-full lg:w-1/2">
+            <input
+              type="text"
+              value={value}
+              onChange={(e) => onSelect(field, e.target.value)}
+              placeholder={placeholder}
+              disabled={disabled}
+              className={`w-full h-12 px-4 bg-white border border-[var(--color-border-subtle)] rounded-lg outline-none focus:border-[var(--outline-focused)] disabled:opacity-50 disabled:cursor-not-allowed ${isRTL ? "text-right" : ""}`}
+              style={{ fontSize: "16px" }}
+            />
+          </div>
+        </div>
+        {withDivider && <div className="w-full h-px bg-[var(--color-border)]" />}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex flex-col lg:flex-row lg:items-start py-4 lg:py-6 gap-2 lg:gap-0 lg:justify-between">
+        <label className="shrink-0 text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
+          {label} {required && <span className="text-[#dc2626]">*</span>}
+        </label>
+        <div className="relative w-full lg:w-1/2">
+          <button
+            type="button"
+            onClick={() => {
+              if (!disabled) {
+                setQuery("");
+                onToggle();
+              }
+            }}
+            disabled={disabled}
+            className="w-full h-12 px-4 bg-white border border-[var(--color-border-subtle)] rounded-lg flex items-center justify-between cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span className={value ? "text-[var(--on-surface-default)]" : "text-[var(--on-surface-variant)]"} style={{ fontSize: "16px" }}>
+              {displayLabel || placeholder}
+            </span>
+            <ChevronDown className={`w-5 h-5 text-[var(--on-surface-variant)] transition-transform ${isOpen ? "rotate-180" : ""}`} />
+          </button>
+          {isOpen && (
+            <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-[var(--color-border-subtle)] rounded-lg shadow-lg z-20 max-h-72 overflow-hidden flex flex-col">
+              <div className="p-2 border-b border-[var(--color-border-subtle)]">
+                <input
+                  type="text"
+                  autoFocus
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={searchPlaceholder}
+                  className={`w-full h-9 px-3 bg-[var(--color-surface-page)] border border-[var(--color-border-subtle)] rounded-md outline-none focus:border-[var(--outline-focused)] text-sm ${isRTL ? "text-right" : ""}`}
+                />
+              </div>
+              <div className="overflow-y-auto">
+                {filtered.length === 0 ? (
+                  <div className="px-4 py-3 text-sm text-[var(--on-surface-variant)]">
+                    {isRTL ? "لا توجد نتائج" : "No results"}
+                  </div>
+                ) : (
+                  filtered.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        onSelect(field, option.value);
+                        setQuery("");
+                      }}
+                      className={`w-full px-4 py-2.5 hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                      style={{ fontSize: "16px" }}
+                    >
+                      {option.label}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      {withDivider && <div className="w-full h-px bg-[var(--color-border)]" />}
+    </>
+  );
+};
+
+// ComboBox — searchable dropdown that ALSO accepts free-typed values that
+// aren't in the list. The user can either pick a suggestion or type their
+// own (e.g., a profession Amna hasn't seeded yet). Stored value is the
+// raw string (whatever the user typed or selected as label).
+const ComboBox = ({
+  label,
+  field,
+  options,
+  value,
+  isOpen,
+  onToggle,
+  onChange,
+  required = false,
+  placeholder = "",
+  withDivider = true,
+  isRTL = false,
+  disabled = false,
+}: {
+  label: string;
+  field: string;
+  options: { value: string; label: string }[];
+  value: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  onChange: (field: string, value: string) => void;
+  required?: boolean;
+  placeholder?: string;
+  withDivider?: boolean;
+  isRTL?: boolean;
+  disabled?: boolean;
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const filtered = value.trim()
+    ? options.filter((o) => o.label.toLowerCase().includes(value.trim().toLowerCase()))
+    : options;
+
+  // Close the suggestion list when clicking outside
+  useEffect(() => {
+    if (!isOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        onToggle();
+      }
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [isOpen, onToggle]);
+
+  return (
+    <>
+      <div className="flex flex-col lg:flex-row lg:items-start py-4 lg:py-6 gap-2 lg:gap-0 lg:justify-between">
+        <label className="shrink-0 text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
+          {label} {required && <span className="text-[#dc2626]">*</span>}
+        </label>
+        <div ref={containerRef} className="relative w-full lg:w-1/2">
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => {
+              onChange(field, e.target.value);
+              if (!isOpen) onToggle();
+            }}
+            onFocus={() => { if (!isOpen && !disabled) onToggle(); }}
+            placeholder={placeholder}
+            disabled={disabled}
+            className={`w-full h-12 px-4 pe-10 bg-white border border-[var(--color-border-subtle)] rounded-lg outline-none focus:border-[var(--outline-focused)] disabled:opacity-50 disabled:cursor-not-allowed ${isRTL ? "text-right" : ""}`}
+            style={{ fontSize: "16px" }}
+          />
+          <ChevronDown className={`pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--on-surface-variant)] transition-transform ${isOpen ? "rotate-180" : ""}`} />
+          {isOpen && options.length > 0 && filtered.length > 0 && (
+            <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-[var(--color-border-subtle)] rounded-lg shadow-lg z-20 max-h-72 overflow-y-auto">
+              {filtered.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onChange(field, option.label);
+                    onToggle();
+                  }}
+                  className={`w-full px-4 py-2.5 hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                  style={{ fontSize: "16px" }}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      {withDivider && <div className="w-full h-px bg-[var(--color-border)]" />}
+    </>
+  );
+};
+
 // FileUpload component moved outside to prevent re-creation on parent re-render
 const FileUpload = ({
   label,
@@ -308,16 +541,17 @@ interface BecomeTrainerFormProps {
   // Strapi-overridable dropdown options
   nationalityOptions?: StrapiDropdownOption[] | null;
   professionOptions?: StrapiDropdownOption[] | null;
+  specialtyOptions?: StrapiDropdownOption[] | null;
   qualificationOptions?: StrapiDropdownOption[] | null;
   rankOptions?: StrapiDropdownOption[] | null;
   bankOptions?: StrapiDropdownOption[] | null;
-  countryCodeOptions?: StrapiDropdownOption[] | null;
 }
 
 interface StrapiDropdownOption {
   id?: number;
   value: string;
   label: string;
+  parentProfessionKey?: string | null;
 }
 
 const BecomeTrainerForm = ({
@@ -379,10 +613,10 @@ const BecomeTrainerForm = ({
   showPhoto = true,
   nationalityOptions: strapiNationality = null,
   professionOptions: strapiProfession = null,
+  specialtyOptions: strapiSpecialty = null,
   qualificationOptions: strapiQualification = null,
   rankOptions: strapiRank = null,
   bankOptions: strapiBank = null,
-  countryCodeOptions: strapiCountryCode = null,
 }: BecomeTrainerFormProps) => {
   const t = useTranslations("becomeTrainerPage");
   const locale = useLocale();
@@ -436,11 +670,15 @@ const BecomeTrainerForm = ({
     fullNameArabic: "",
     fullNameEnglish: "",
     email: "",
-    countryCode: "SA",
-    mobileNumber: "",
+    phoneE164: "",
     gender: "",
     nationality: "Saudi Arabia",
     nationalIqamaId: "",
+    countryIso: "",
+    stateIso: "",
+    cityName: "",
+    countryName: "",
+    stateName: "",
     profession: "",
     specialty: "",
     qualification: "",
@@ -457,6 +695,8 @@ const BecomeTrainerForm = ({
     iban: "",
   });
 
+  const [structuredResume, setStructuredResume] = useState<StructuredResume>(emptyStructuredResume);
+
   const [files, setFiles] = useState({
     resume: null as File | null,
     education: null as File | null,
@@ -468,11 +708,66 @@ const BecomeTrainerForm = ({
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
   const [existingApplication, setExistingApplication] = useState<RoleRequest | null>(null);
   const [checkingStatus, setCheckingStatus] = useState(true);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  // country-state-city dataset is ~10MB. Lazy-load on first render so it
+  // stays out of the initial bundle. While loading, dropdowns show "Loading...".
+  type LocationOption = { value: string; label: string };
+  type CscApi = {
+    Country: { getAllCountries: () => Array<{ isoCode: string; name: string }> };
+    State: { getStatesOfCountry: (iso: string) => Array<{ isoCode: string; name: string }> };
+    City: { getCitiesOfState: (country: string, state: string) => Array<{ name: string }> };
+  };
+  const [csc, setCsc] = useState<CscApi | null>(null);
+  useEffect(() => {
+    let mounted = true;
+    import("country-state-city").then((mod) => {
+      if (mounted) setCsc({ Country: mod.Country, State: mod.State, City: mod.City });
+    });
+    return () => { mounted = false; };
+  }, []);
+
+  const countryOptions: LocationOption[] = csc
+    ? csc.Country.getAllCountries().map((c) => ({ value: c.isoCode, label: c.name }))
+    : [];
+  const stateOptions: LocationOption[] = csc && formData.countryIso
+    ? csc.State.getStatesOfCountry(formData.countryIso).map((s) => ({ value: s.isoCode, label: s.name }))
+    : [];
+  const cityOptions: LocationOption[] = csc && formData.countryIso && formData.stateIso
+    ? csc.City.getCitiesOfState(formData.countryIso, formData.stateIso).map((c) => ({ value: c.name, label: c.name }))
+    : [];
+
+  // Cascading select handler — picking Country resets State + City; picking State resets City
+  const handleLocationSelect = (field: string, value: string) => {
+    if (field === "countryIso") {
+      const country = csc?.Country.getAllCountries().find((c) => c.isoCode === value);
+      setFormData((prev) => ({
+        ...prev,
+        countryIso: value,
+        countryName: country?.name || value,
+        stateIso: "",
+        stateName: "",
+        cityName: "",
+      }));
+    } else if (field === "stateIso") {
+      const state = csc?.State.getStatesOfCountry(formData.countryIso).find((s) => s.isoCode === value);
+      setFormData((prev) => ({
+        ...prev,
+        stateIso: value,
+        stateName: state?.name || value,
+        cityName: "",
+      }));
+    } else if (field === "stateName") {
+      // free-text fallback when country has no states in dataset
+      setFormData((prev) => ({ ...prev, stateName: value, stateIso: "", cityName: "" }));
+    } else if (field === "cityName") {
+      setFormData((prev) => ({ ...prev, cityName: value }));
+    }
+    setOpenDropdown(null);
+  };
   const isAuthenticated = useIsAuthenticated();
   const user = useUser();
   const userRoles = useUserRoles();
@@ -484,19 +779,6 @@ const BecomeTrainerForm = ({
   const [otpModalOpen, setOtpModalOpen] = useState(false);
   const [scopedToken, setScopedToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA | null>(null);
-
-  // Specialty as tag input — applicants type and press Enter / comma to add
-  const [specialtyTags, setSpecialtyTags] = useState<string[]>([]);
-  const [specialtyInput, setSpecialtyInput] = useState("");
-
-  const addSpecialtyTag = (raw: string) => {
-    const tag = raw.trim().replace(/,$/, "").trim();
-    if (!tag) return;
-    setSpecialtyTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]));
-    setSpecialtyInput("");
-  };
-  const removeSpecialtyTag = (idx: number) =>
-    setSpecialtyTags((prev) => prev.filter((_, i) => i !== idx));
 
   // Check for existing application on mount — only if user happens to be logged in
   // (anonymous applicants skip this entirely; the backend will dedup on submit)
@@ -583,6 +865,40 @@ const BecomeTrainerForm = ({
     { value: "Other", label: isRTL ? "أخرى" : "Other" },
   ];
 
+  // Default specialty list — used as fallback when Strapi doesn't have one.
+  // Each entry is keyed to its parent profession (matches default profession `value`).
+  // Amna's full list lives in Strapi and overrides this entirely.
+  const defaultSpecialty: StrapiDropdownOption[] = [
+    // Physician
+    { value: "Internal Medicine", label: isRTL ? "الطب الباطني" : "Internal Medicine", parentProfessionKey: "Physician" },
+    { value: "Cardiology", label: isRTL ? "أمراض القلب" : "Cardiology", parentProfessionKey: "Physician" },
+    { value: "Dermatology", label: isRTL ? "الأمراض الجلدية" : "Dermatology", parentProfessionKey: "Physician" },
+    { value: "Pediatrics", label: isRTL ? "طب الأطفال" : "Pediatrics", parentProfessionKey: "Physician" },
+    { value: "Family Medicine", label: isRTL ? "طب الأسرة" : "Family Medicine", parentProfessionKey: "Physician" },
+    { value: "Emergency Medicine", label: isRTL ? "طب الطوارئ" : "Emergency Medicine", parentProfessionKey: "Physician" },
+    // Surgeon
+    { value: "General Surgery", label: isRTL ? "الجراحة العامة" : "General Surgery", parentProfessionKey: "Surgeon" },
+    { value: "Orthopedic Surgery", label: isRTL ? "جراحة العظام" : "Orthopedic Surgery", parentProfessionKey: "Surgeon" },
+    { value: "Neurosurgery", label: isRTL ? "جراحة الأعصاب" : "Neurosurgery", parentProfessionKey: "Surgeon" },
+    { value: "Plastic Surgery", label: isRTL ? "جراحة التجميل" : "Plastic Surgery", parentProfessionKey: "Surgeon" },
+    // Dentist
+    { value: "Orthodontics", label: isRTL ? "تقويم الأسنان" : "Orthodontics", parentProfessionKey: "Dentist" },
+    { value: "Endodontics", label: isRTL ? "علاج الجذور" : "Endodontics", parentProfessionKey: "Dentist" },
+    { value: "Pediatric Dentistry", label: isRTL ? "طب أسنان الأطفال" : "Pediatric Dentistry", parentProfessionKey: "Dentist" },
+    // Pharmacist
+    { value: "Clinical Pharmacy", label: isRTL ? "الصيدلة السريرية" : "Clinical Pharmacy", parentProfessionKey: "Pharmacist" },
+    { value: "Hospital Pharmacy", label: isRTL ? "صيدلة المستشفيات" : "Hospital Pharmacy", parentProfessionKey: "Pharmacist" },
+    { value: "Industrial Pharmacy", label: isRTL ? "الصيدلة الصناعية" : "Industrial Pharmacy", parentProfessionKey: "Pharmacist" },
+    // Nurse
+    { value: "Critical Care Nursing", label: isRTL ? "تمريض الحالات الحرجة" : "Critical Care Nursing", parentProfessionKey: "Nurse" },
+    { value: "Pediatric Nursing", label: isRTL ? "تمريض الأطفال" : "Pediatric Nursing", parentProfessionKey: "Nurse" },
+    { value: "Operating Room Nursing", label: isRTL ? "تمريض غرف العمليات" : "Operating Room Nursing", parentProfessionKey: "Nurse" },
+    // Physiotherapist
+    { value: "Orthopedic Physiotherapy", label: isRTL ? "العلاج الطبيعي للعظام" : "Orthopedic Physiotherapy", parentProfessionKey: "Physiotherapist" },
+    { value: "Neurological Physiotherapy", label: isRTL ? "العلاج الطبيعي العصبي" : "Neurological Physiotherapy", parentProfessionKey: "Physiotherapist" },
+    { value: "Sports Physiotherapy", label: isRTL ? "العلاج الطبيعي الرياضي" : "Sports Physiotherapy", parentProfessionKey: "Physiotherapist" },
+  ];
+
   const defaultRank = [
     { value: "General Practitioner", label: isRTL ? "طبيب عام" : "General Practitioner" },
     { value: "Resident", label: isRTL ? "طبيب مقيم" : "Resident" },
@@ -612,27 +928,40 @@ const BecomeTrainerForm = ({
     { value: "Other", label: isRTL ? "أخرى" : "Other" },
   ];
 
-  const defaultCountryCode = [
-    { value: "SA", label: "+966 SA" },
-    { value: "AE", label: "+971 AE" },
-    { value: "BH", label: "+973 BH" },
-    { value: "KW", label: "+965 KW" },
-    { value: "OM", label: "+968 OM" },
-    { value: "QA", label: "+974 QA" },
-    { value: "EG", label: "+20 EG" },
-    { value: "JO", label: "+962 JO" },
-  ];
-
   // Strapi options take priority when configured (non-empty)
   const usableStrapi = (arr: StrapiDropdownOption[] | null | undefined) =>
     Array.isArray(arr) && arr.length > 0 ? arr.map((o) => ({ value: o.value, label: o.label })) : null;
 
-  const nationalityOptions = usableStrapi(strapiNationality) || defaultNationality;
+  // Nationality: prefer the full country list from country-state-city (250
+  // entries, searchable). Fall back to Strapi/curated list while the
+  // dataset is still loading or if the lib couldn't load.
+  const nationalityOptions = csc
+    ? csc.Country.getAllCountries().map((c) => ({ value: c.name, label: c.name }))
+    : usableStrapi(strapiNationality) || defaultNationality;
+  const isSaudiNationality = formData.nationality === "Saudi Arabia";
+  const nationalIdLabel = isSaudiNationality
+    ? (isRTL ? "رقم الهوية الوطنية" : "National ID")
+    : (isRTL ? "رقم الإقامة / جواز السفر" : "Iqama / Passport Number");
+  const nationalIdPlaceholder = isSaudiNationality
+    ? (isRTL ? "10 أرقام تبدأ بـ 1" : "10 digits starting with 1")
+    : (isRTL ? "رقم الإقامة أو جواز السفر" : "Iqama or passport number");
   const professionOptions = usableStrapi(strapiProfession) || defaultProfession;
   const qualificationOptions = usableStrapi(strapiQualification) || defaultQualification;
   const rankOptions = usableStrapi(strapiRank) || defaultRank;
+
+  // Specialty cascade: filter by selected profession's value. Strapi list (or
+  // default) entries are tagged with parentProfessionKey; entries with no
+  // parent or matching parent are shown. Falls back to all entries if the
+  // user typed a profession not present in the dropdown (free-text).
+  const allSpecialties = (strapiSpecialty && strapiSpecialty.length > 0
+    ? strapiSpecialty
+    : defaultSpecialty) as StrapiDropdownOption[];
+  const selectedProfession = professionOptions.find((p) => p.label === formData.profession || p.value === formData.profession);
+  const professionKey = selectedProfession?.value || "";
+  const specialtyOptions: StrapiDropdownOption[] = professionKey
+    ? allSpecialties.filter((s) => !s.parentProfessionKey || s.parentProfessionKey === professionKey)
+    : [];
   const bankOptions = usableStrapi(strapiBank) || defaultBank;
-  const countryCodeOptions = usableStrapi(strapiCountryCode) || defaultCountryCode;
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -655,22 +984,62 @@ const BecomeTrainerForm = ({
   };
 
   const handleDropdownSelect = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setOpenDropdown(null);
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value };
+      // Changing profession invalidates the previously selected specialty
+      if (field === "profession") next.specialty = "";
+      return next;
+    });
+    if (field !== "profession" && field !== "specialty" && field !== "qualification" && field !== "rank") {
+      // ComboBox manages its own typing/picking — close on non-combobox field selects
+      setOpenDropdown(null);
+    }
+  };
+
+  // Backend caps uploads at 10MB and accepts only PDF/JPEG/PNG/WebP — guard
+  // here so the user sees the problem before submit instead of a silent failure.
+  const MAX_FILE_BYTES = 10 * 1024 * 1024;
+  const ALLOWED_PHOTO_MIMES = ["image/jpeg", "image/png", "image/webp"];
+  const ALLOWED_DOC_MIMES = ["application/pdf"];
+
+  const validateFile = (file: File, allowed: string[]): string | null => {
+    if (file.size > MAX_FILE_BYTES) {
+      return locale === "ar"
+        ? `الملف ${file.name} يتجاوز الحد الأقصى 10 ميجابايت`
+        : `${file.name} exceeds the 10MB limit`;
+    }
+    if (!allowed.includes(file.type)) {
+      return locale === "ar"
+        ? `نوع الملف ${file.name} غير مدعوم`
+        : `${file.name} is not a supported file type`;
+    }
+    return null;
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setFormData((prev) => ({
-        ...prev,
-        photo: file,
-        photoPreview: URL.createObjectURL(file),
-      }));
+    if (!file) return;
+    const err = validateFile(file, ALLOWED_PHOTO_MIMES);
+    if (err) {
+      toast.error(err);
+      e.target.value = "";
+      return;
     }
+    setFormData((prev) => ({
+      ...prev,
+      photo: file,
+      photoPreview: URL.createObjectURL(file),
+    }));
   };
 
   const handleFileChange = (field: keyof typeof files, file: File | null) => {
+    if (file) {
+      const err = validateFile(file, ALLOWED_DOC_MIMES);
+      if (err) {
+        toast.error(err);
+        return;
+      }
+    }
     setFiles((prev) => ({ ...prev, [field]: file }));
   };
 
@@ -682,22 +1051,23 @@ const BecomeTrainerForm = ({
   const uploadFile = async (
     file: File,
     overrideToken?: string,
-  ): Promise<{ url: string; filename: string } | null> => {
+  ): Promise<{ url: string; filename: string }> => {
     const token = overrideToken || scopedToken || getAccessToken();
     const formPayload = new FormData();
     formPayload.append("file", file);
 
-    try {
-      const res = await fetch(`${API_URL}/storage/upload`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formPayload,
-      });
-      if (!res.ok) return null;
-      return res.json();
-    } catch {
-      return null;
+    const res = await fetch(`${API_URL}/storage/upload`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formPayload,
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      const reason = (body?.message as string) || `${res.status} ${res.statusText}`;
+      throw new Error(`${file.name}: ${reason}`);
     }
+    return res.json();
   };
 
   /**
@@ -709,49 +1079,80 @@ const BecomeTrainerForm = ({
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitError(null);
 
     // Validate at least one name field is filled
     if (!formData.fullNameArabic && !formData.fullNameEnglish) {
-      setSubmitError(locale === "ar" ? "يرجى إدخال الاسم بالعربية أو الإنجليزية على الأقل" : "Please enter at least one name (Arabic or English)");
+      toast.error(locale === "ar" ? "يرجى إدخال الاسم بالعربية أو الإنجليزية على الأقل" : "Please enter at least one name (Arabic or English)");
       return;
     }
 
     if (!formData.email) {
-      setSubmitError(locale === "ar" ? "يرجى إدخال البريد الإلكتروني" : "Please enter your email");
+      toast.error(locale === "ar" ? "يرجى إدخال البريد الإلكتروني" : "Please enter your email");
       return;
     }
 
-    // ─── KSA-specific format validations ─────────────────────────
-    if (showMobileNumber && formData.mobileNumber) {
-      const cleanMobile = formData.mobileNumber.replace(/\s/g, "");
-      if (formData.countryCode === "SA" && !/^5\d{8}$/.test(cleanMobile)) {
-        setSubmitError(
-          locale === "ar"
-            ? "رقم الجوال السعودي يجب أن يبدأ بالرقم 5 ويتكون من 9 أرقام"
-            : "Saudi mobile number must start with 5 and be 9 digits",
+    if (!formData.countryName) {
+      toast.error(locale === "ar" ? "يرجى اختيار الدولة" : "Please select a country");
+      return;
+    }
+    if (!formData.stateName) {
+      toast.error(locale === "ar" ? "يرجى اختيار المنطقة / الولاية" : "Please select a state / region");
+      return;
+    }
+    if (!formData.cityName) {
+      toast.error(locale === "ar" ? "يرجى إدخال المدينة" : "Please select or enter a city");
+      return;
+    }
+
+    // Phone validation — uses libphonenumber-js (handles every country).
+    // For SA, surface a Saudi-specific message; for others, generic.
+    if (showMobileNumber && formData.phoneE164) {
+      const valid = isValidPhoneNumber(formData.phoneE164);
+      if (!valid) {
+        const parsed = parsePhoneNumber(formData.phoneE164);
+        const isSaudi = parsed?.country === "SA";
+        toast.error(
+          isSaudi
+            ? (locale === "ar" ? "أدخل رقم جوال سعودي صحيح" : "Please enter a valid Saudi mobile number")
+            : (locale === "ar" ? "أدخل رقم جوال صحيح" : "Please enter a valid mobile number"),
         );
         return;
       }
     }
 
     if (showNationalIqamaId && formData.nationalIqamaId) {
-      if (!/^[12]\d{9}$/.test(formData.nationalIqamaId.trim())) {
-        setSubmitError(
-          locale === "ar"
-            ? "رقم الهوية / الإقامة يجب أن يكون 10 أرقام يبدأ بـ 1 أو 2"
-            : "National/Iqama ID must be 10 digits starting with 1 or 2",
-        );
-        return;
+      const id = formData.nationalIqamaId.trim();
+      if (isSaudiNationality) {
+        // Saudi citizens: National ID is 10 digits starting with 1
+        if (!/^1\d{9}$/.test(id)) {
+          toast.error(
+            locale === "ar"
+              ? "رقم الهوية الوطنية يجب أن يكون 10 أرقام ويبدأ بـ 1"
+              : "National ID must be 10 digits starting with 1",
+          );
+          return;
+        }
+      } else {
+        // Non-Saudi: accept Iqama (10 digits starting with 2) OR a passport
+        // number. Permissive alphanumeric range covers both.
+        if (!/^[A-Za-z0-9]{4,20}$/.test(id)) {
+          toast.error(
+            locale === "ar"
+              ? "أدخل رقم إقامة أو جواز سفر صحيح"
+              : "Please enter a valid Iqama or passport number",
+          );
+          return;
+        }
       }
     }
 
     if (showScfhsToggle && formData.hasScfhsNumber && formData.scfhsNumber) {
-      if (!/^\d{6,10}$/.test(formData.scfhsNumber.trim())) {
-        setSubmitError(
+      // Allow letters + digits (some SCFHS numbers have alphanumeric prefixes), 4–15 chars
+      if (!/^[A-Za-z0-9]{4,15}$/.test(formData.scfhsNumber.trim())) {
+        toast.error(
           locale === "ar"
-            ? "رقم تصنيف هيئة التخصصات الصحية يجب أن يكون 6 إلى 10 أرقام"
-            : "SCFHS number must be 6 to 10 digits",
+            ? "أدخل رقم تصنيف هيئة التخصصات الصحية صحيح"
+            : "Please enter a valid SCFHS number",
         );
         return;
       }
@@ -759,11 +1160,14 @@ const BecomeTrainerForm = ({
 
     if (showBankSection && formData.iban) {
       const cleanIban = formData.iban.replace(/\s/g, "").toUpperCase();
-      if (!/^SA\d{22}$/.test(cleanIban)) {
-        setSubmitError(
+      // ibantools validates length + country prefix + mod-97 checksum for
+      // every IBAN-registry country (SA, AE, GB, EG, ...). Catches typos
+      // that a length-only regex would miss.
+      if (!isValidIBAN(cleanIban)) {
+        toast.error(
           locale === "ar"
-            ? "رقم الآيبان يجب أن يبدأ بـ SA ويتكون من 24 خانة"
-            : "IBAN must start with SA and be 24 characters",
+            ? "أدخل رقم آيبان صحيح"
+            : "Please enter a valid IBAN",
         );
         return;
       }
@@ -772,7 +1176,7 @@ const BecomeTrainerForm = ({
     // Stage 1: open OTP modal (uses captcha token from inline widget)
     if (!scopedToken) {
       if (!recaptchaToken) {
-        setSubmitError(
+        toast.error(
           locale === "ar"
             ? "يرجى إكمال التحقق \"لست برنامج روبوت\""
             : "Please complete the \"I'm not a robot\" verification",
@@ -789,41 +1193,42 @@ const BecomeTrainerForm = ({
 
   const actuallySubmit = async (token: string) => {
     setIsSubmitting(true);
-    setSubmitError(null);
 
     try {
-      // Upload files (uses scoped JWT)
+      // Upload files (uses scoped JWT). Any failure aborts the whole submission
+      // so the applicant gets a clear toast instead of a silently empty record.
       const resumeFiles: Array<{ type: string; url: string; filename: string }> = [];
+      const pending: Array<{ type: string; file: File }> = [];
 
+      // Only the upload-resume path uploads a CV file. The create-resume
+      // path captures structured entries via ResumeBuilder (no file upload).
       if (formData.uploadResume && files.resume) {
-        const result = await uploadFile(files.resume, token);
-        if (result) {
-          resumeFiles.push({ type: "resume", url: result.url, filename: result.filename });
-        }
-      } else if (formData.createResume) {
-        const fileEntries: [string, File | null][] = [
-          ["education", files.education],
-          ["professionalSkills", files.professionalSkills],
-          ["scientificResearches", files.scientificResearches],
-          ["trainingExperience", files.trainingExperience],
-        ];
-
-        for (const [type, file] of fileEntries) {
-          if (file) {
-            const result = await uploadFile(file, token);
-            if (result) {
-              resumeFiles.push({ type, url: result.url, filename: result.filename });
-            }
-          }
-        }
+        pending.push({ type: "resume", file: files.resume });
       }
-
       if (formData.photo) {
-        const photoResult = await uploadFile(formData.photo, token);
-        if (photoResult) {
-          resumeFiles.push({ type: "photo", url: photoResult.url, filename: photoResult.filename });
+        pending.push({ type: "photo", file: formData.photo });
+      }
+
+      for (const { type, file } of pending) {
+        try {
+          const result = await uploadFile(file, token);
+          resumeFiles.push({ type, url: result.url, filename: result.filename });
+        } catch (uploadErr) {
+          const detail = uploadErr instanceof Error ? uploadErr.message : String(uploadErr);
+          toast.error(
+            locale === "ar"
+              ? `تعذر رفع الملف — ${detail}`
+              : `Could not upload file — ${detail}`,
+          );
+          setIsSubmitting(false);
+          return;
         }
       }
+
+      // Derive country (ISO-2) + national number from the single E.164 value
+      const parsedPhone = formData.phoneE164 ? parsePhoneNumber(formData.phoneE164) : null;
+      const phoneCountry = parsedPhone?.country || "";
+      const phoneNational = parsedPhone?.nationalNumber || "";
 
       const profileData = {
         fullNameArabic: formData.fullNameArabic,
@@ -831,14 +1236,17 @@ const BecomeTrainerForm = ({
         firstName: formData.fullNameEnglish?.split(" ")[0] || formData.fullNameArabic?.split(" ")[0] || "",
         lastName: formData.fullNameEnglish?.split(" ").slice(1).join(" ") || formData.fullNameArabic?.split(" ").slice(1).join(" ") || "",
         email: formData.email,
-        countryCode: formData.countryCode,
-        mobileNumber: formData.mobileNumber,
+        phone: formData.phoneE164,
+        countryCode: phoneCountry,
+        mobileNumber: phoneNational,
+        country: formData.countryName,
+        state: formData.stateName,
+        city: formData.cityName,
         gender: formData.gender,
         nationality: formData.nationality,
         nationalIqamaId: formData.nationalIqamaId,
         profession: formData.profession,
-        specialty: specialtyTags.length > 0 ? specialtyTags.join(", ") : formData.specialty,
-        specialtyTags: specialtyTags.length > 0 ? specialtyTags : undefined,
+        specialty: formData.specialty,
         qualification: formData.qualification,
         academicRank: formData.rank,
         hasScfhsNumber: formData.hasScfhsNumber,
@@ -860,7 +1268,14 @@ const BecomeTrainerForm = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ profileData, bankData, resumeFiles, locale }),
+        body: JSON.stringify({
+          profileData,
+          bankData,
+          resumeFiles,
+          // Only ship structured resume when applicant chose the create-resume path
+          structuredResume: formData.createResume ? structuredResume : undefined,
+          locale,
+        }),
       });
 
       const json = await res.json().catch(() => ({}));
@@ -872,7 +1287,7 @@ const BecomeTrainerForm = ({
     } catch (err: unknown) {
       const error = err as Error & { statusCode?: number };
       const msg = error.message || "Failed to submit application. Please try again.";
-      setSubmitError(msg);
+      toast.error(msg);
       // Reset captcha + scoped token so user can retry cleanly
       recaptchaRef.current?.reset();
       setRecaptchaToken(null);
@@ -957,20 +1372,20 @@ const BecomeTrainerForm = ({
     );
   }
 
-  // Success state
+  // Success state — anonymous submitters don't have a dashboard yet, just confirm by email
   if (submitSuccess) {
     return (
-      <section className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
+      <section className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center px-4" dir={isRTL ? "rtl" : "ltr"}>
         <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
           <CheckCircle2 className="w-12 h-12 text-[#16A34A] mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-2">{tt("submitSuccess", "Application Submitted!")}</h2>
-          <p className="text-[var(--color-text-secondary)] mb-6">{tt("submitSuccessDesc", "We'll review your application and notify you within a few business days.")}</p>
-          <Link
-            href={`/${locale}/dashboard/student/applications`}
-            className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white rounded-xl font-medium hover:bg-[var(--color-primary-dark)] transition-colors"
-          >
-            {tt("viewApplications", "View My Applications")}
-          </Link>
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-3">
+            {isRTL ? "تم إرسال طلبك" : "Your request has been submitted"}
+          </h2>
+          <p className="text-[var(--color-text-secondary)] leading-relaxed">
+            {isRTL
+              ? "طلبك قيد المراجعة. سيتم إعلامك بالنتيجة عبر البريد الإلكتروني قريبًا."
+              : "Your request is under review. You'll be notified by email shortly."}
+          </p>
         </div>
       </section>
     );
@@ -984,14 +1399,6 @@ const BecomeTrainerForm = ({
           <h1 className="font-semibold text-[var(--on-surface-default)] text-center mb-10" style={{ fontSize: "48px" }}>
             {labels.title}
           </h1>
-
-          {/* Error banner */}
-          {submitError && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
-              <p className="text-sm text-red-700">{submitError}</p>
-            </div>
-          )}
 
           {/* Single Card containing all sections */}
           <form onSubmit={handleSubmit}>
@@ -1028,10 +1435,23 @@ const BecomeTrainerForm = ({
                     >
                       {locale === "ar" ? "رفع الصورة" : "Upload Photo"}
                     </button>
+                    {formData.photo && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (photoInputRef.current) photoInputRef.current.value = "";
+                          setFormData((prev) => ({ ...prev, photo: null, photoPreview: "" }));
+                        }}
+                        aria-label={locale === "ar" ? "إزالة الصورة" : "Remove photo"}
+                        className="p-2 rounded-full text-red-500 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                     <input
                       ref={photoInputRef}
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp"
                       className="hidden"
                       onChange={handlePhotoChange}
                     />
@@ -1092,49 +1512,18 @@ const BecomeTrainerForm = ({
 
             
 
-                {/* Mobile Number with country code */}
+                {/* Mobile Number with international country selector */}
                 <div className="flex items-start py-6 justify-between">
                   <label className="shrink-0 text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
                     {labels.mobile} <span className="text-[#dc2626]">*</span>
                   </label>
-                  <div className={`w-1/2 flex h-12 bg-white border border-[var(--color-border-subtle)] rounded-lg overflow-hidden ${isRTL ? "flex-row-reverse" : ""}`}>
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setOpenDropdown(openDropdown === "countryCode" ? null : "countryCode")}
-                        className={`h-full px-4 flex items-center gap-1 cursor-pointer bg-white ${isRTL ? "border-l border-[var(--color-border-subtle)]" : "border-r border-[var(--color-border-subtle)]"}`}
-                      >
-                        <span className="text-[var(--on-surface-default)] whitespace-nowrap" style={{ fontSize: "16px" }}>
-                          {countryCodeOptions.find((o) => o.value === formData.countryCode)?.label || formData.countryCode}
-                        </span>
-                        <ChevronDown className={`w-4 h-4 text-[var(--on-surface-variant)] transition-transform ${openDropdown === "countryCode" ? "rotate-180" : ""}`} />
-                      </button>
-                      {openDropdown === "countryCode" && (
-                        <div className={`absolute top-full mt-1 bg-white border border-[var(--color-border-subtle)] rounded-lg shadow-lg z-20 min-w-[80px] ${isRTL ? "right-0" : "left-0"}`}>
-                          {countryCodeOptions.map((opt) => (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              onClick={() => {
-                                setFormData((prev) => ({ ...prev, countryCode: opt.value }));
-                                setOpenDropdown(null);
-                              }}
-                              className={`w-full px-4 py-2 hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"} whitespace-nowrap`}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <input
-                      type="tel"
-                      name="mobileNumber"
-                      value={formData.mobileNumber}
-                      onChange={handleInputChange}
-                      required
-                      className={`flex-1 px-4 py-2.5 focus:outline-none ${isRTL ? "text-right" : ""}`}
-                      style={{ fontSize: "16px" }}
+                  <div className="w-1/2 pg-phone-field" dir={isRTL ? "rtl" : "ltr"}>
+                    <PhoneInput
+                      international
+                      defaultCountry="SA"
+                      value={formData.phoneE164}
+                      onChange={(v) => setFormData((prev) => ({ ...prev, phoneE164: v || "" }))}
+                      placeholder={isRTL ? "أدخل رقم الجوال" : "Enter phone number"}
                     />
                   </div>
                 </div>
@@ -1142,48 +1531,26 @@ const BecomeTrainerForm = ({
                 {/* Divider */}
                 <div className="w-full h-px bg-[var(--color-border)]" />
 
-                {showGender && <Dropdown label={labels.gender} field="gender" options={genderOptions} required value={formData.gender} isOpen={openDropdown === "gender"} onToggle={() => setOpenDropdown(openDropdown === "gender" ? null : "gender")} onSelect={handleDropdownSelect} />}
-                {showNationality && <Dropdown label={labels.nationality} field="nationality" options={nationalityOptions} withDivider={false} required showFlag value={formData.nationality} isOpen={openDropdown === "nationality"} onToggle={() => setOpenDropdown(openDropdown === "nationality" ? null : "nationality")} onSelect={handleDropdownSelect} />}
-                {showNationalIqamaId && <InputField label={labels.nationalId} name="nationalIqamaId" required value={formData.nationalIqamaId} onChange={handleInputChange} isRTL={isRTL} />}
-                {showProfession && <Dropdown label={labels.profession} field="profession" options={professionOptions} required withDivider={false} value={formData.profession} isOpen={openDropdown === "profession"} onToggle={() => setOpenDropdown(openDropdown === "profession" ? null : "profession")} onSelect={handleDropdownSelect} />}
-                {showSpecialty && (
-                  <>
-                    <div className="flex flex-col lg:flex-row lg:items-start py-4 lg:py-6 gap-2 lg:gap-0 lg:justify-between">
-                      <label className="shrink-0 text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
-                        {labels.speciality}
-                      </label>
-                      <div className="w-full lg:w-1/2">
-                        <div className="min-h-12 px-3 py-2 bg-white border border-[var(--color-border-subtle)] rounded-lg flex flex-wrap items-center gap-1.5">
-                          {specialtyTags.map((tag, idx) => (
-                            <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-sm">
-                              {tag}
-                              <button type="button" onClick={() => removeSpecialtyTag(idx)} aria-label="remove tag" className="hover:text-[var(--color-primary-dark)]">×</button>
-                            </span>
-                          ))}
-                          <input
-                            type="text"
-                            value={specialtyInput}
-                            onChange={(e) => {
-                              const v = e.target.value;
-                              if (v.endsWith(",")) addSpecialtyTag(v);
-                              else setSpecialtyInput(v);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") { e.preventDefault(); addSpecialtyTag(specialtyInput); }
-                              else if (e.key === "Backspace" && !specialtyInput && specialtyTags.length) removeSpecialtyTag(specialtyTags.length - 1);
-                            }}
-                            onBlur={() => specialtyInput && addSpecialtyTag(specialtyInput)}
-                            placeholder={isRTL ? "اكتب التخصص ثم Enter أو فاصلة" : "Type specialty then Enter or comma"}
-                            className={`flex-1 min-w-[140px] py-1 outline-none bg-transparent ${isRTL ? "text-right" : ""}`}
-                            style={{ fontSize: "16px" }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </>
+                {showGender && <Dropdown label={labels.gender} field="gender" placeholder={isRTL ? "اختر الجنس" : "Select gender"} options={genderOptions} required value={formData.gender} isOpen={openDropdown === "gender"} onToggle={() => setOpenDropdown(openDropdown === "gender" ? null : "gender")} onSelect={handleDropdownSelect} />}
+                {showNationality && <SearchableDropdown label={labels.nationality} field="nationality" placeholder={isRTL ? "اختر الجنسية" : "Select nationality"} searchPlaceholder={isRTL ? "ابحث..." : "Search..."} options={nationalityOptions} required value={formData.nationality} isOpen={openDropdown === "nationality"} onToggle={() => setOpenDropdown(openDropdown === "nationality" ? null : "nationality")} onSelect={handleDropdownSelect} isRTL={isRTL} />}
+                {showNationalIqamaId && <InputField label={nationalIdLabel} name="nationalIqamaId" placeholder={nationalIdPlaceholder} required value={formData.nationalIqamaId} onChange={handleInputChange} isRTL={isRTL} />}
+
+                <SearchableDropdown label={isRTL ? "الدولة" : "Country"} field="countryIso" required placeholder={isRTL ? "اختر الدولة" : "Select country"} searchPlaceholder={isRTL ? "ابحث عن دولة..." : "Search country..."} options={countryOptions} value={formData.countryIso} isOpen={openDropdown === "countryIso"} onToggle={() => setOpenDropdown(openDropdown === "countryIso" ? null : "countryIso")} onSelect={handleLocationSelect} isRTL={isRTL} disabled={!csc} />
+                {stateOptions.length > 0 ? (
+                  <SearchableDropdown label={isRTL ? "المنطقة / الولاية" : "State / Region"} field="stateIso" required placeholder={isRTL ? "اختر المنطقة" : "Select state"} searchPlaceholder={isRTL ? "ابحث..." : "Search..."} options={stateOptions} value={formData.stateIso} isOpen={openDropdown === "stateIso"} onToggle={() => setOpenDropdown(openDropdown === "stateIso" ? null : "stateIso")} onSelect={handleLocationSelect} isRTL={isRTL} disabled={!formData.countryIso} />
+                ) : (
+                  <SearchableDropdown label={isRTL ? "المنطقة / الولاية" : "State / Region"} field="stateName" required placeholder={isRTL ? "أدخل المنطقة" : "Enter state / region"} options={[]} value={formData.stateName} isOpen={false} onToggle={() => {}} onSelect={handleLocationSelect} isRTL={isRTL} disabled={!formData.countryIso} />
                 )}
-                {showQualification && <Dropdown label={labels.qualification} field="qualification" options={qualificationOptions} required withDivider={false} value={formData.qualification} isOpen={openDropdown === "qualification"} onToggle={() => setOpenDropdown(openDropdown === "qualification" ? null : "qualification")} onSelect={handleDropdownSelect} />}
-                {showAcademicRank && <Dropdown label={labels.rank} field="rank" options={rankOptions} required withDivider={false} value={formData.rank} isOpen={openDropdown === "rank"} onToggle={() => setOpenDropdown(openDropdown === "rank" ? null : "rank")} onSelect={handleDropdownSelect} />}
+                {cityOptions.length > 0 ? (
+                  <SearchableDropdown label={isRTL ? "المدينة" : "City"} field="cityName" required placeholder={isRTL ? "اختر المدينة" : "Select city"} searchPlaceholder={isRTL ? "ابحث..." : "Search..."} options={cityOptions} value={formData.cityName} isOpen={openDropdown === "cityName"} onToggle={() => setOpenDropdown(openDropdown === "cityName" ? null : "cityName")} onSelect={handleLocationSelect} isRTL={isRTL} disabled={!formData.stateName} />
+                ) : (
+                  <SearchableDropdown label={isRTL ? "المدينة" : "City"} field="cityName" required placeholder={isRTL ? "أدخل المدينة" : "Enter city"} options={[]} value={formData.cityName} isOpen={false} onToggle={() => {}} onSelect={handleLocationSelect} isRTL={isRTL} disabled={!formData.stateName} />
+                )}
+
+                {showProfession && <ComboBox label={labels.profession} field="profession" required placeholder={isRTL ? "اختر أو اكتب المهنة" : "Select or type profession"} options={professionOptions} value={formData.profession} isOpen={openDropdown === "profession"} onToggle={() => setOpenDropdown(openDropdown === "profession" ? null : "profession")} onChange={handleDropdownSelect} isRTL={isRTL} />}
+                {showSpecialty && <ComboBox label={labels.speciality} field="specialty" required placeholder={!formData.profession ? (isRTL ? "اختر المهنة أولاً" : "Pick a profession first") : (isRTL ? "اختر أو اكتب التخصص" : "Select or type specialty")} options={specialtyOptions} value={formData.specialty} isOpen={openDropdown === "specialty"} onToggle={() => setOpenDropdown(openDropdown === "specialty" ? null : "specialty")} onChange={handleDropdownSelect} isRTL={isRTL} disabled={!formData.profession} />}
+                {showQualification && <ComboBox label={labels.qualification} field="qualification" required placeholder={isRTL ? "اختر أو اكتب المؤهل" : "Select or type qualification"} options={qualificationOptions} value={formData.qualification} isOpen={openDropdown === "qualification"} onToggle={() => setOpenDropdown(openDropdown === "qualification" ? null : "qualification")} onChange={handleDropdownSelect} isRTL={isRTL} />}
+                {showAcademicRank && <ComboBox label={labels.rank} field="rank" required placeholder={isRTL ? "اختر أو اكتب الدرجة" : "Select or type rank"} options={rankOptions} value={formData.rank} isOpen={openDropdown === "rank"} onToggle={() => setOpenDropdown(openDropdown === "rank" ? null : "rank")} onChange={handleDropdownSelect} isRTL={isRTL} />}
 
                 {/* SCFHS Number Question */}
                 <div className="flex py-6 justify-between">
@@ -1210,8 +1577,8 @@ const BecomeTrainerForm = ({
                 </div>
                 <div className="w-full h-px bg-[var(--color-border)]" />
 
-                {showTwitter && <InputField label={labels.twitter} name="twitter" withDivider={false} value={formData.twitter} onChange={handleInputChange} isRTL={isRTL} />}
-                {showLinkedIn && <InputField label={labels.linkedIn} name="linkedIn" withDivider={false} value={formData.linkedIn} onChange={handleInputChange} isRTL={isRTL} />}
+                {showTwitter && <InputField label={labels.twitter} name="twitter" placeholder="https://twitter.com/username" withDivider={false} value={formData.twitter} onChange={handleInputChange} isRTL={isRTL} />}
+                {showLinkedIn && <InputField label={labels.linkedIn} name="linkedIn" placeholder="https://linkedin.com/in/username" withDivider={false} value={formData.linkedIn} onChange={handleInputChange} isRTL={isRTL} />}
               </div>
 
               {/* Divider */}
@@ -1238,12 +1605,15 @@ const BecomeTrainerForm = ({
               )}
 
               {formData.createResume && (
-                <div className="flex flex-col gap-8">
-                  <FileUpload label={labels.education} field="education" file={files.education} onFileChange={handleFileChangeWrapper} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
-                  <FileUpload label={labels.professionalSkills} field="professionalSkills" file={files.professionalSkills} onFileChange={handleFileChangeWrapper} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
-                  <FileUpload label={labels.scientificResearches} field="scientificResearches" file={files.scientificResearches} onFileChange={handleFileChangeWrapper} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
-                  <FileUpload label={labels.trainingExperience} field="trainingExperience" file={files.trainingExperience} onFileChange={handleFileChangeWrapper} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
-                </div>
+                <ResumeBuilder
+                  value={structuredResume}
+                  onChange={setStructuredResume}
+                  isRTL={isRTL}
+                  professionOptions={professionOptions}
+                  allSpecialtyOptions={allSpecialties}
+                  qualificationOptions={qualificationOptions}
+                  rankOptions={rankOptions}
+                />
               )}
 
               {/* Divider */}
@@ -1258,9 +1628,9 @@ const BecomeTrainerForm = ({
               <div className="w-full h-px bg-[var(--color-border)]" />
 
               <div className="flex flex-col ">
-                {showBankSection && <InputField label={labels.accountHolder} name="accountHolderName" required value={formData.accountHolderName} onChange={handleInputChange} isRTL={isRTL} />}
-                {showBankSection && <Dropdown label={labels.bankName} field="bankName" options={bankOptions} withDivider={false} required value={formData.bankName} isOpen={openDropdown === "bankName"} onToggle={() => setOpenDropdown(openDropdown === "bankName" ? null : "bankName")} onSelect={handleDropdownSelect} />}
-                {showBankSection && <InputField label={labels.iban} name="iban" required withDivider={false} value={formData.iban} onChange={handleInputChange} isRTL={isRTL} />}
+                {showBankSection && <InputField label={labels.accountHolder} name="accountHolderName" placeholder={isRTL ? "اسم صاحب الحساب" : "e.g. Mohammed Al-Fulan"} required value={formData.accountHolderName} onChange={handleInputChange} isRTL={isRTL} />}
+                {showBankSection && <ComboBox label={labels.bankName} field="bankName" required placeholder={isRTL ? "اختر أو اكتب اسم البنك" : "Select or type bank name"} options={bankOptions} value={formData.bankName} isOpen={openDropdown === "bankName"} onToggle={() => setOpenDropdown(openDropdown === "bankName" ? null : "bankName")} onChange={handleDropdownSelect} isRTL={isRTL} />}
+                {showBankSection && <InputField label={labels.iban} name="iban" placeholder="SA00 0000 0000 0000 0000 0000" required withDivider={false} value={formData.iban} onChange={handleInputChange} isRTL={isRTL} />}
               </div>
 
               {/* Divider */}
@@ -1301,14 +1671,6 @@ const BecomeTrainerForm = ({
           {labels.title}
         </h1>
 
-        {/* Error banner */}
-        {submitError && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
-            <p className="text-sm text-red-700">{submitError}</p>
-          </div>
-        )}
-
         {/* Single Card containing all sections */}
         <form onSubmit={handleSubmit}>
           <div className="bg-white rounded-2xl p-5" style={{ boxShadow: "0px 1px 3px rgba(0,0,0,0.1)" }}>
@@ -1332,6 +1694,19 @@ const BecomeTrainerForm = ({
                   >
                     {locale === "ar" ? "رفع الصورة" : "Upload Photo"}
                   </button>
+                  {formData.photo && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (photoInputRef.current) photoInputRef.current.value = "";
+                        setFormData((prev) => ({ ...prev, photo: null, photoPreview: "" }));
+                      }}
+                      aria-label={locale === "ar" ? "إزالة الصورة" : "Remove photo"}
+                      className="p-2 rounded-full text-red-500 hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                   <div
                     className="w-12 h-12 rounded-full bg-[var(--color-surface-page)] flex items-center justify-center overflow-hidden cursor-pointer"
                     onClick={() => photoInputRef.current?.click()}
@@ -1383,44 +1758,13 @@ const BecomeTrainerForm = ({
                 <label className="text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
                   {labels.mobile} <span className="text-[#dc2626]">*</span>
                 </label>
-                <div className={`flex h-12 bg-white border border-[var(--color-border-subtle)] rounded-lg overflow-hidden ${isRTL ? "flex-row-reverse" : ""}`}>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setOpenDropdown(openDropdown === "countryCodeMobile" ? null : "countryCodeMobile")}
-                      className={`h-full px-4 flex items-center gap-1 cursor-pointer ${isRTL ? "border-l border-[var(--color-border-subtle)]" : "border-r border-[var(--color-border-subtle)]"}`}
-                    >
-                      <span className="text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
-                        {formData.countryCode}
-                      </span>
-                      <ChevronDown className={`w-4 h-4 text-[var(--on-surface-variant)] transition-transform ${openDropdown === "countryCodeMobile" ? "rotate-180" : ""}`} />
-                    </button>
-                    {openDropdown === "countryCodeMobile" && (
-                      <div className={`absolute top-full mt-1 bg-white border border-[var(--color-border-subtle)] rounded-lg shadow-lg z-20 min-w-[80px] ${isRTL ? "right-0" : "left-0"}`}>
-                        {["SA", "AE", "EG", "JO"].map((code) => (
-                          <button
-                            key={code}
-                            type="button"
-                            onClick={() => {
-                              setFormData((prev) => ({ ...prev, countryCode: code }));
-                              setOpenDropdown(null);
-                            }}
-                            className={`w-full px-4 py-2 hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
-                          >
-                            {code}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <input
-                    type="tel"
-                    name="mobileNumber"
-                    value={formData.mobileNumber}
-                    onChange={handleInputChange}
-                    required
-                    className={`flex-1 px-4 py-2.5 focus:outline-none ${isRTL ? "text-right" : ""}`}
-                    style={{ fontSize: "16px" }}
+                <div className="pg-phone-field" dir={isRTL ? "rtl" : "ltr"}>
+                  <PhoneInput
+                    international
+                    defaultCountry="SA"
+                    value={formData.phoneE164}
+                    onChange={(v) => setFormData((prev) => ({ ...prev, phoneE164: v || "" }))}
+                    placeholder={isRTL ? "أدخل رقم الجوال" : "Enter phone number"}
                   />
                 </div>
               </div>
@@ -1428,44 +1772,26 @@ const BecomeTrainerForm = ({
                {/* Divider */}
             <div className="w-full h-px bg-[var(--color-border)] " />
 
-              {showGender && <Dropdown label={labels.gender} field="gender" options={genderOptions} required value={formData.gender} isOpen={openDropdown === "gender"} onToggle={() => setOpenDropdown(openDropdown === "gender" ? null : "gender")} onSelect={handleDropdownSelect} />}
-              {showNationality && <Dropdown label={labels.nationality} field="nationality" options={nationalityOptions} required showFlag withDivider={false} value={formData.nationality} isOpen={openDropdown === "nationality"} onToggle={() => setOpenDropdown(openDropdown === "nationality" ? null : "nationality")} onSelect={handleDropdownSelect} />}
-              {showNationalIqamaId && <InputField label={labels.nationalId} name="nationalIqamaId" required withDivider={false} value={formData.nationalIqamaId} onChange={handleInputChange} isRTL={isRTL} />}
-              {showProfession && <Dropdown label={labels.profession} field="profession" options={professionOptions} required withDivider={false} value={formData.profession} isOpen={openDropdown === "profession"} onToggle={() => setOpenDropdown(openDropdown === "profession" ? null : "profession")} onSelect={handleDropdownSelect} />}
-              {showSpecialty && (
-                <div className="flex flex-col py-4 gap-2">
-                  <label className="shrink-0 text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
-                    {labels.speciality}
-                  </label>
-                  <div className="min-h-12 px-3 py-2 bg-white border border-[var(--color-border-subtle)] rounded-lg flex flex-wrap items-center gap-1.5">
-                    {specialtyTags.map((tag, idx) => (
-                      <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-sm">
-                        {tag}
-                        <button type="button" onClick={() => removeSpecialtyTag(idx)} aria-label="remove tag" className="hover:text-[var(--color-primary-dark)]">×</button>
-                      </span>
-                    ))}
-                    <input
-                      type="text"
-                      value={specialtyInput}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        if (v.endsWith(",")) addSpecialtyTag(v);
-                        else setSpecialtyInput(v);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") { e.preventDefault(); addSpecialtyTag(specialtyInput); }
-                        else if (e.key === "Backspace" && !specialtyInput && specialtyTags.length) removeSpecialtyTag(specialtyTags.length - 1);
-                      }}
-                      onBlur={() => specialtyInput && addSpecialtyTag(specialtyInput)}
-                      placeholder={isRTL ? "اكتب التخصص ثم Enter أو فاصلة" : "Type specialty then Enter or comma"}
-                      className={`flex-1 min-w-[140px] py-1 outline-none bg-transparent ${isRTL ? "text-right" : ""}`}
-                      style={{ fontSize: "16px" }}
-                    />
-                  </div>
-                </div>
+              {showGender && <Dropdown label={labels.gender} field="gender" placeholder={isRTL ? "اختر الجنس" : "Select gender"} options={genderOptions} required value={formData.gender} isOpen={openDropdown === "gender"} onToggle={() => setOpenDropdown(openDropdown === "gender" ? null : "gender")} onSelect={handleDropdownSelect} />}
+              {showNationality && <SearchableDropdown label={labels.nationality} field="nationality" placeholder={isRTL ? "اختر الجنسية" : "Select nationality"} searchPlaceholder={isRTL ? "ابحث..." : "Search..."} options={nationalityOptions} required value={formData.nationality} isOpen={openDropdown === "nationality"} onToggle={() => setOpenDropdown(openDropdown === "nationality" ? null : "nationality")} onSelect={handleDropdownSelect} isRTL={isRTL} />}
+              {showNationalIqamaId && <InputField label={nationalIdLabel} name="nationalIqamaId" placeholder={nationalIdPlaceholder} required withDivider={false} value={formData.nationalIqamaId} onChange={handleInputChange} isRTL={isRTL} />}
+
+              <SearchableDropdown label={isRTL ? "الدولة" : "Country"} field="countryIso" required placeholder={isRTL ? "اختر الدولة" : "Select country"} searchPlaceholder={isRTL ? "ابحث عن دولة..." : "Search country..."} options={countryOptions} value={formData.countryIso} isOpen={openDropdown === "countryIso"} onToggle={() => setOpenDropdown(openDropdown === "countryIso" ? null : "countryIso")} onSelect={handleLocationSelect} isRTL={isRTL} disabled={!csc} />
+              {stateOptions.length > 0 ? (
+                <SearchableDropdown label={isRTL ? "المنطقة / الولاية" : "State / Region"} field="stateIso" required placeholder={isRTL ? "اختر المنطقة" : "Select state"} searchPlaceholder={isRTL ? "ابحث..." : "Search..."} options={stateOptions} value={formData.stateIso} isOpen={openDropdown === "stateIso"} onToggle={() => setOpenDropdown(openDropdown === "stateIso" ? null : "stateIso")} onSelect={handleLocationSelect} isRTL={isRTL} disabled={!formData.countryIso} />
+              ) : (
+                <SearchableDropdown label={isRTL ? "المنطقة / الولاية" : "State / Region"} field="stateName" required placeholder={isRTL ? "أدخل المنطقة" : "Enter state / region"} options={[]} value={formData.stateName} isOpen={false} onToggle={() => {}} onSelect={handleLocationSelect} isRTL={isRTL} disabled={!formData.countryIso} />
               )}
-              {showQualification && <Dropdown label={labels.qualification} field="qualification" options={qualificationOptions} required withDivider={false} value={formData.qualification} isOpen={openDropdown === "qualification"} onToggle={() => setOpenDropdown(openDropdown === "qualification" ? null : "qualification")} onSelect={handleDropdownSelect} />}
-              {showAcademicRank && <Dropdown label={labels.rank} field="rank" options={rankOptions} required withDivider={false} value={formData.rank} isOpen={openDropdown === "rank"} onToggle={() => setOpenDropdown(openDropdown === "rank" ? null : "rank")} onSelect={handleDropdownSelect} />}
+              {cityOptions.length > 0 ? (
+                <SearchableDropdown label={isRTL ? "المدينة" : "City"} field="cityName" required placeholder={isRTL ? "اختر المدينة" : "Select city"} searchPlaceholder={isRTL ? "ابحث..." : "Search..."} options={cityOptions} value={formData.cityName} isOpen={openDropdown === "cityName"} onToggle={() => setOpenDropdown(openDropdown === "cityName" ? null : "cityName")} onSelect={handleLocationSelect} isRTL={isRTL} disabled={!formData.stateName} />
+              ) : (
+                <SearchableDropdown label={isRTL ? "المدينة" : "City"} field="cityName" required placeholder={isRTL ? "أدخل المدينة" : "Enter city"} options={[]} value={formData.cityName} isOpen={false} onToggle={() => {}} onSelect={handleLocationSelect} isRTL={isRTL} disabled={!formData.stateName} />
+              )}
+
+              {showProfession && <ComboBox label={labels.profession} field="profession" required placeholder={isRTL ? "اختر أو اكتب المهنة" : "Select or type profession"} options={professionOptions} value={formData.profession} isOpen={openDropdown === "profession"} onToggle={() => setOpenDropdown(openDropdown === "profession" ? null : "profession")} onChange={handleDropdownSelect} isRTL={isRTL} />}
+              {showSpecialty && <ComboBox label={labels.speciality} field="specialty" required placeholder={!formData.profession ? (isRTL ? "اختر المهنة أولاً" : "Pick a profession first") : (isRTL ? "اختر أو اكتب التخصص" : "Select or type specialty")} options={specialtyOptions} value={formData.specialty} isOpen={openDropdown === "specialty"} onToggle={() => setOpenDropdown(openDropdown === "specialty" ? null : "specialty")} onChange={handleDropdownSelect} isRTL={isRTL} disabled={!formData.profession} />}
+              {showQualification && <ComboBox label={labels.qualification} field="qualification" required placeholder={isRTL ? "اختر أو اكتب المؤهل" : "Select or type qualification"} options={qualificationOptions} value={formData.qualification} isOpen={openDropdown === "qualification"} onToggle={() => setOpenDropdown(openDropdown === "qualification" ? null : "qualification")} onChange={handleDropdownSelect} isRTL={isRTL} />}
+              {showAcademicRank && <ComboBox label={labels.rank} field="rank" required placeholder={isRTL ? "اختر أو اكتب الدرجة" : "Select or type rank"} options={rankOptions} value={formData.rank} isOpen={openDropdown === "rank"} onToggle={() => setOpenDropdown(openDropdown === "rank" ? null : "rank")} onChange={handleDropdownSelect} isRTL={isRTL} />}
 
               {/* SCFHS Number Question */}
               <div className="flex flex-col gap-3">
@@ -1491,8 +1817,8 @@ const BecomeTrainerForm = ({
                {/* Divider */}
             <div className="w-full h-px bg-[var(--color-border)] " />
 
-              {showTwitter && <InputField label={labels.twitter} name="twitter" withDivider={false} value={formData.twitter} onChange={handleInputChange} isRTL={isRTL} />}
-              {showLinkedIn && <InputField label={labels.linkedIn} name="linkedIn" withDivider={false} value={formData.linkedIn} onChange={handleInputChange} isRTL={isRTL} />}
+              {showTwitter && <InputField label={labels.twitter} name="twitter" placeholder="https://twitter.com/username" withDivider={false} value={formData.twitter} onChange={handleInputChange} isRTL={isRTL} />}
+              {showLinkedIn && <InputField label={labels.linkedIn} name="linkedIn" placeholder="https://linkedin.com/in/username" withDivider={false} value={formData.linkedIn} onChange={handleInputChange} isRTL={isRTL} />}
             </div>
 
             {/* Divider */}
@@ -1519,12 +1845,15 @@ const BecomeTrainerForm = ({
             )}
 
             {formData.createResume && (
-              <div className="flex flex-col gap-5">
-                <FileUpload label={labels.education} field="education" file={files.education} onFileChange={handleFileChangeWrapper} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
-                <FileUpload label={labels.professionalSkills} field="professionalSkills" file={files.professionalSkills} onFileChange={handleFileChangeWrapper} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
-                <FileUpload label={labels.scientificResearches} field="scientificResearches" file={files.scientificResearches} onFileChange={handleFileChangeWrapper} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
-                <FileUpload label={labels.trainingExperience} field="trainingExperience" file={files.trainingExperience} onFileChange={handleFileChangeWrapper} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
-              </div>
+              <ResumeBuilder
+                value={structuredResume}
+                onChange={setStructuredResume}
+                isRTL={isRTL}
+                professionOptions={professionOptions}
+                allSpecialtyOptions={allSpecialties}
+                qualificationOptions={qualificationOptions}
+                rankOptions={rankOptions}
+              />
             )}
 
              {/* Divider */}
@@ -1539,9 +1868,9 @@ const BecomeTrainerForm = ({
              <div className="w-full h-px bg-[var(--color-border)] " />
 
             <div className="flex flex-col ">
-              {showBankSection && <InputField label={labels.accountHolder} name="accountHolderName" required value={formData.accountHolderName} onChange={handleInputChange} isRTL={isRTL} />}
-              {showBankSection && <Dropdown label={labels.bankName} field="bankName" options={bankOptions} required withDivider={false} value={formData.bankName} isOpen={openDropdown === "bankName"} onToggle={() => setOpenDropdown(openDropdown === "bankName" ? null : "bankName")} onSelect={handleDropdownSelect} />}
-              {showBankSection && <InputField label={labels.iban} name="iban" required value={formData.iban} onChange={handleInputChange} isRTL={isRTL} />}
+              {showBankSection && <InputField label={labels.accountHolder} name="accountHolderName" placeholder={isRTL ? "اسم صاحب الحساب" : "e.g. Mohammed Al-Fulan"} required value={formData.accountHolderName} onChange={handleInputChange} isRTL={isRTL} />}
+              {showBankSection && <ComboBox label={labels.bankName} field="bankName" required placeholder={isRTL ? "اختر أو اكتب اسم البنك" : "Select or type bank name"} options={bankOptions} value={formData.bankName} isOpen={openDropdown === "bankName"} onToggle={() => setOpenDropdown(openDropdown === "bankName" ? null : "bankName")} onChange={handleDropdownSelect} isRTL={isRTL} />}
+              {showBankSection && <InputField label={labels.iban} name="iban" placeholder="SA00 0000 0000 0000 0000 0000" required value={formData.iban} onChange={handleInputChange} isRTL={isRTL} />}
             </div>
 
             {/* reCAPTCHA */}

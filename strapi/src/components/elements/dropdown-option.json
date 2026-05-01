@@ -13,6 +13,10 @@
       "type": "string",
       "required": true,
       "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "parentProfessionKey": {
+      "type": "string",
+      "description": "Used by specialty options only — set to the profession 'value' this specialty belongs to (e.g. 'medicine'). Leave empty for non-specialty dropdowns."
     }
   }
 }

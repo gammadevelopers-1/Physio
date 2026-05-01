@@ -309,6 +309,13 @@ export interface BecomeTrainerPage {
   saveButtonLabel: string | null;
   yesButtonLabel: string | null;
   noButtonLabel: string | null;
+  // Strapi-managed dropdown option lists (Amna fills these in)
+  nationalityOptions: DropdownOptionItem[] | null;
+  professionOptions: DropdownOptionItem[] | null;
+  specialtyOptions: DropdownOptionItem[] | null;
+  qualificationOptions: DropdownOptionItem[] | null;
+  rankOptions: DropdownOptionItem[] | null;
+  bankOptions: DropdownOptionItem[] | null;
   locale: string;
   createdAt: string;
   updatedAt: string;
@@ -954,6 +961,7 @@ export interface TrainerFormBlockData extends BaseBlock {
   // Dropdown options (when empty/null, fall back to KSA defaults)
   nationalityOptions?: DropdownOptionItem[] | null;
   professionOptions?: DropdownOptionItem[] | null;
+  specialtyOptions?: DropdownOptionItem[] | null;
   qualificationOptions?: DropdownOptionItem[] | null;
   rankOptions?: DropdownOptionItem[] | null;
   bankOptions?: DropdownOptionItem[] | null;
@@ -964,6 +972,8 @@ export interface DropdownOptionItem {
   id: number;
   value: string;
   label: string;
+  /** Specialty options only: the profession `value` this specialty belongs to */
+  parentProfessionKey?: string | null;
 }
 
 export interface CertificationCardsBlockData extends BaseBlock {

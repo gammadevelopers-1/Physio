@@ -12,6 +12,10 @@ import {
   getApplicationApprovedText,
 } from './templates/application-approved.template';
 import {
+  getApplicationApprovedSetPasswordHtml,
+  getApplicationApprovedSetPasswordText,
+} from './templates/application-approved-set-password.template';
+import {
   getApplicationRejectedHtml,
   getApplicationRejectedText,
 } from './templates/application-rejected.template';
@@ -250,6 +254,31 @@ export class EmailService {
       this.logger.log(`Application approved email sent to ${to}`);
     } catch (error) {
       this.logger.error(`Failed to send approval email to ${to}`, error);
+    }
+  }
+
+  /**
+   * Approval email with magic-link "Set Password" button — used for
+   * placeholder users who applied via the public Become-Trainer flow
+   * and never set a password.
+   */
+  async sendApplicationApprovedSetPassword(
+    to: string,
+    applicantName: string,
+    setupUrl: string,
+    locale: EmailLocale = 'en',
+  ): Promise<void> {
+    try {
+      const s = getEmailStrings(locale);
+      await this.send({
+        to,
+        subject: s.appApprovedSubject,
+        html: getApplicationApprovedSetPasswordHtml(applicantName, setupUrl, locale),
+        text: getApplicationApprovedSetPasswordText(applicantName, setupUrl, locale),
+      });
+      this.logger.log(`Approval+set-password email sent to ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send approval+set-password email to ${to}`, error);
     }
   }
 

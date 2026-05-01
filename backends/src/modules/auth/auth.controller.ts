@@ -18,6 +18,8 @@ import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
 import { RecaptchaService } from './recaptcha.service';
+import { PasswordSetupService } from './password-setup.service';
+import { CompletePasswordSetupDto } from './dto/password-setup.dto';
 import {
   RegisterDto,
   LoginDto,
@@ -42,6 +44,7 @@ export class AuthController {
     private authService: AuthService,
     private twoFactorService: TwoFactorService,
     private recaptchaService: RecaptchaService,
+    private passwordSetupService: PasswordSetupService,
   ) {}
 
   // Helper: set refresh token cookie
@@ -311,6 +314,42 @@ export class AuthController {
     @Body() body: { email: string; code: string; newPassword: string },
   ) {
     return this.authService.resetPassword(body.email, body.code, body.newPassword);
+  }
+
+  // ===========================================
+  // Password Setup — magic-link flow for placeholder users
+  // (used after admin approves a Become-Trainer application)
+  // ===========================================
+  @Public()
+  @Post('password-setup/validate')
+  @HttpCode(HttpStatus.OK)
+  async validatePasswordSetupToken(@Body() body: { token: string }) {
+    return this.passwordSetupService.validateToken(body.token);
+  }
+
+  @Public()
+  @Post('password-setup/complete')
+  @HttpCode(HttpStatus.OK)
+  async completePasswordSetup(
+    @Body() dto: CompletePasswordSetupDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.recaptchaService.verify(dto.recaptchaToken, 'password-setup');
+
+    const result = await this.passwordSetupService.completeSetup({
+      token: dto.token,
+      password: dto.password,
+      ipAddress: req.ip || req.connection?.remoteAddress,
+      userAgent: req.headers['user-agent'],
+    });
+
+    this.setRefreshCookie(res, result.refreshToken);
+
+    return {
+      user: result.user,
+      accessToken: result.accessToken,
+    };
   }
 
   // ===========================================

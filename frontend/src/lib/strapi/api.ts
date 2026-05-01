@@ -379,6 +379,13 @@ export async function getBecomeTrainerPage(locale: string = 'en'): Promise<Becom
         locale,
         ...BLOCKS_POPULATE_PARAMS,
         ...OG_IMAGE_POPULATE,
+        // Page-level dropdown option lists (Strapi-managed by Amna)
+        'populate[nationalityOptions]': 'true',
+        'populate[professionOptions]': 'true',
+        'populate[specialtyOptions]': 'true',
+        'populate[qualificationOptions]': 'true',
+        'populate[rankOptions]': 'true',
+        'populate[bankOptions]': 'true',
       },
     }
   );

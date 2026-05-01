@@ -18,6 +18,13 @@ export class SubmitApplicationDto {
   @IsArray()
   resumeFiles?: ResumeFile[];
 
+  // Structured resume from the "Create Resume" path:
+  // { education: [...], professionalSkills: [...],
+  //   scientificResearches: [...], trainingExperiences: [...] }
+  @IsOptional()
+  @IsObject()
+  structuredResume?: Record<string, unknown>;
+
   @IsOptional()
   @IsString()
   locale?: string;

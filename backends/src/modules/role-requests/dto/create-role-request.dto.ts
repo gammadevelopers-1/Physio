@@ -22,4 +22,10 @@ export class CreateRoleRequestDto {
   @IsOptional()
   @IsArray()
   resumeFiles?: Array<{ type: string; url: string; filename: string }>;
+
+  // Structured resume entries when applicants build their CV in-form
+  // instead of uploading a file
+  @IsOptional()
+  @IsObject()
+  structuredResume?: Record<string, unknown>;
 }

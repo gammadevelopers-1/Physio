@@ -40,21 +40,21 @@ const RecentFeedbackWidget = ({
         stars.push(
           <Star
             key={i}
-            className={`${starSize} text-[#F59E0B] fill-[#F59E0B]`}
+            className={`${starSize} text-[var(--color-star)] fill-[var(--color-star)]`}
           />
         );
       } else if (i === fullStars && hasHalfStar) {
         stars.push(
           <div key={i} className="relative">
-            <Star className={`${starSize} text-[var(--color-border)]`} />
+            <Star className={`${starSize} text-[var(--color-star-border)]`} />
             <div className="absolute inset-0 overflow-hidden w-1/2">
-              <Star className={`${starSize} text-[#F59E0B] fill-[#F59E0B]`} />
+              <Star className={`${starSize} text-[var(--color-star)] fill-[var(--color-star)]`} />
             </div>
           </div>
         );
       } else {
         stars.push(
-          <Star key={i} className={`${starSize} text-[var(--color-border)]`} />
+          <Star key={i} className={`${starSize} text-[var(--color-star-border)]`} />
         );
       }
     }

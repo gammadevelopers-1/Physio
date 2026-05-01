@@ -187,7 +187,7 @@ function AllReviewsModal({
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className={`w-4 h-4 ${i < Math.floor(avgRating) ? "text-[var(--color-primary)] fill-[var(--color-primary)]" : "text-[var(--color-border)] fill-[var(--color-border)]"}`}
+                    className={`w-4 h-4 ${i < Math.floor(avgRating) ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)] fill-[var(--color-star-border)]"}`}
                   />
                 ))}
               </div>
@@ -279,7 +279,7 @@ function AllReviewsModal({
           ) : reviews.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="w-14 h-14 rounded-xl bg-[var(--color-border-subtle)] flex items-center justify-center mb-3">
-                <Star className="w-7 h-7 text-[var(--color-text-secondary)]" />
+                <Star className="w-7 h-7 text-[var(--color-star-border)]" />
               </div>
               <p className="text-sm text-[var(--color-text-secondary)]">{isRTL ? "لا توجد مراجعات مطابقة" : "No matching reviews"}</p>
             </div>
@@ -299,7 +299,7 @@ function AllReviewsModal({
                     {[...Array(5)].map((_, si) => (
                       <Star
                         key={si}
-                        className={`w-3.5 h-3.5 ${si < r.rating ? "text-[var(--color-primary)] fill-[var(--color-primary)]" : "text-[var(--color-border)] fill-[var(--color-border)]"}`}
+                        className={`w-3.5 h-3.5 ${si < r.rating ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)] fill-[var(--color-star-border)]"}`}
                       />
                     ))}
                   </div>
@@ -867,7 +867,7 @@ const CourseDetailContent = ({
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`w-4 h-4 ${i < Math.floor(apiCourse.avgRating) ? "text-[var(--color-primary)] fill-[var(--color-primary)]" : "text-[var(--color-border)] fill-[var(--color-border)]"}`}
+                  className={`w-4 h-4 ${i < Math.floor(apiCourse.avgRating) ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)] fill-[var(--color-star-border)]"}`}
                 />
               ))}
             </div>
@@ -892,7 +892,7 @@ const CourseDetailContent = ({
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-3 h-3 ${i < review.rating ? "text-[var(--color-primary)] fill-[var(--color-primary)]" : "text-[var(--color-border)] fill-[var(--color-border)]"}`}
+                        className={`w-3 h-3 ${i < review.rating ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)] fill-[var(--color-star-border)]"}`}
                       />
                     ))}
                   </div>
@@ -918,7 +918,7 @@ const CourseDetailContent = ({
         ) : (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <div className="w-14 h-14 rounded-xl bg-[var(--color-border-subtle)] flex items-center justify-center mb-3">
-              <Star className="w-7 h-7 text-[var(--color-text-secondary)]" />
+              <Star className="w-7 h-7 text-[var(--color-star-border)]" />
             </div>
             <p className="text-sm text-[var(--color-text-secondary)]">
               {noReviewsText || (locale === "ar" ? "لا توجد تقييمات بعد" : "No Reviews Yet")}
@@ -1384,7 +1384,7 @@ const CourseDetailContent = ({
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-3 h-3 ${i < Math.floor(apiCourse.avgRating) ? "text-[var(--color-primary)] fill-[var(--color-primary)]" : "text-[var(--color-border)] fill-[var(--color-border)]"}`}
+                      className={`w-3 h-3 ${i < Math.floor(apiCourse.avgRating) ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)] fill-[var(--color-star-border)]"}`}
                     />
                   ))}
                 </div>

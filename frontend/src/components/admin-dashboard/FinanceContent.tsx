@@ -220,7 +220,7 @@ const FinanceContent = () => {
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-10 h-10 bg-[var(--gold-gold-100)] rounded-lg flex items-center justify-center">
-                      <CreditCard className="w-5 h-5 text-[var(--gold-gold-500)]" />
+                      <CreditCard className="w-5 h-5 text-[var(--color-star)]" />
                     </div>
                     <div className={`flex items-center gap-1 ${stats.aovTrend > 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
                       {stats.aovTrend > 0 ? (

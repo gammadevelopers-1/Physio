@@ -131,7 +131,7 @@ const InstructorsManagementWidget = ({
               {/* Stats & Status */}
               <div className="text-end flex-shrink-0">
                 <div className="flex items-center gap-0.5 justify-end mb-1">
-                  <Star className="w-3 h-3 text-[#D4A520] fill-[#D4A520]" />
+                  <Star className="w-3 h-3 text-[var(--color-star)] fill-[var(--color-star)]" />
                   <span className="text-xs text-[#D4A520] font-medium">
                     {instructor.rating.toFixed(1)}
                   </span>

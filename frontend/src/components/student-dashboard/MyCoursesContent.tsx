@@ -157,7 +157,7 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
                   aria-label={`${s} star${s > 1 ? "s" : ""}`}
                 >
                   <Star
-                    className={`w-8 h-8 ${s <= rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[var(--color-border)]"}`}
+                    className={`w-8 h-8 ${s <= rating ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)]"}`}
                   />
                 </button>
               ))}

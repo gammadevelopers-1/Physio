@@ -39,8 +39,8 @@ const StarRow = ({ rating }: { rating: number }) => (
         key={n}
         className={`w-4 h-4 ${
           n <= rating
-            ? "text-[var(--color-primary)] fill-[var(--color-primary)]"
-            : "text-[var(--color-border-subtle)]"
+            ? "text-[var(--color-star)] fill-[var(--color-star)]"
+            : "text-[var(--color-star-border)]"
         }`}
         strokeWidth={1.5}
       />

@@ -42,6 +42,8 @@ const THEME_DEFAULTS = {
   navbarText: "#171717",
   footerHeading: "#171717",
   footerText: "#171717",
+  starColor: "#F59E0B",
+  starBorder: "#E5E7EB",
 };
 
 export default async function RootLayout({
@@ -66,9 +68,11 @@ export default async function RootLayout({
     navbarText: settings?.themeNavbarText || THEME_DEFAULTS.navbarText,
     footerHeading: settings?.themeFooterHeading || THEME_DEFAULTS.footerHeading,
     footerText: settings?.themeFooterText || THEME_DEFAULTS.footerText,
+    starColor: settings?.themeStarColor || THEME_DEFAULTS.starColor,
+    starBorder: settings?.themeStarBorder || THEME_DEFAULTS.starBorder,
   };
 
-  const themeStyle = `:root{--color-primary:${theme.primary};--color-primary-dark:${theme.primaryDark};--color-surface-page:${theme.surfacePage};--color-surface-card:${theme.surfaceCard};--color-text-primary:${theme.textPrimary};--color-text-secondary:${theme.textSecondary};--color-border:${theme.borderColor};--color-border-subtle:${theme.borderSubtle};--color-icon:${theme.iconColor};--color-footer-bg:${theme.footerBackground};--color-button-text:${theme.buttonText};--color-navbar-bg:${theme.navbarBackground};--color-navbar-text:${theme.navbarText};--color-footer-heading:${theme.footerHeading};--color-footer-text:${theme.footerText};}`;
+  const themeStyle = `:root{--color-primary:${theme.primary};--color-primary-dark:${theme.primaryDark};--color-surface-page:${theme.surfacePage};--color-surface-card:${theme.surfaceCard};--color-text-primary:${theme.textPrimary};--color-text-secondary:${theme.textSecondary};--color-border:${theme.borderColor};--color-border-subtle:${theme.borderSubtle};--color-icon:${theme.iconColor};--color-footer-bg:${theme.footerBackground};--color-button-text:${theme.buttonText};--color-navbar-bg:${theme.navbarBackground};--color-navbar-text:${theme.navbarText};--color-footer-heading:${theme.footerHeading};--color-footer-text:${theme.footerText};--color-star:${theme.starColor};--color-star-border:${theme.starBorder};}`;
 
   return (
     <html lang="en" suppressHydrationWarning>

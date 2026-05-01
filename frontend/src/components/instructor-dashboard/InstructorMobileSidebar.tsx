@@ -220,7 +220,7 @@ const InstructorMobileSidebar = ({
               <p className="text-sm text-[var(--color-text-secondary)] mb-2">{instructor.email}</p>
 
               <div className="flex items-center gap-1.5 px-3 py-1 bg-[#FEF3C7] rounded-full">
-                <Star className="w-4 h-4 text-[#D4A520] fill-[#D4A520]" />
+                <Star className="w-4 h-4 text-[var(--color-star)] fill-[var(--color-star)]" />
                 <span className="text-sm font-medium text-[#D4A520]">
                   {instructor.rating} {t("sidebar.rating")}
                 </span>

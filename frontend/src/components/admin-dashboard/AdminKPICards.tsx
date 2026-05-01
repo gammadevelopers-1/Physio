@@ -59,7 +59,7 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
       subLabel: `+${data.totalUsersNew} ${t("kpi.thisWeek")}`,
       icon: Users,
       iconBg: "bg-[var(--gold-gold-100)]",
-      iconColor: "text-[var(--gold-gold-500)]",
+      iconColor: "text-[var(--color-star)]",
     },
     {
       id: "revenueMTD",
@@ -97,7 +97,7 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
       subLabel: data.certificatesPeriod,
       icon: Award,
       iconBg: "bg-[var(--gold-gold-100)]",
-      iconColor: "text-[var(--gold-gold-500)]",
+      iconColor: "text-[var(--color-star)]",
     },
   ];
 

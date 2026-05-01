@@ -34,7 +34,7 @@ const NELCComplianceWidget = ({
   const reportIcons = {
     enrollment: { icon: BarChart3, bg: "bg-[var(--functional-blue-400)]/10", color: "text-[var(--functional-blue-600)]" },
     completion: { icon: CheckCircle, bg: "bg-[var(--functional-green-400)]/10", color: "text-[var(--functional-green-600)]" },
-    satisfaction: { icon: Star, bg: "bg-[var(--gold-gold-100)]", color: "text-[var(--gold-gold-500)]" },
+    satisfaction: { icon: Star, bg: "bg-[var(--gold-gold-100)]", color: "text-[var(--color-star)]" },
   };
 
   // Calculate percentages for the progress bar
@@ -49,7 +49,7 @@ const NELCComplianceWidget = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-[var(--gold-gold-100)] rounded-lg flex items-center justify-center">
-            <ClipboardCheck className="w-4 h-4 text-[var(--gold-gold-500)]" />
+            <ClipboardCheck className="w-4 h-4 text-[var(--color-star)]" />
           </div>
           <h3 className="text-base font-semibold text-[var(--on-surface-default)]">
             {t("nelc.title")}

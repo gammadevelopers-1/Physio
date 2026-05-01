@@ -501,7 +501,7 @@ const CourseManagerCourseDetailContent = ({
                               disabled={updatingStatus}
                               className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${
                                 course.isFeatured
-                                  ? "bg-[var(--gold-gold-100)] text-[var(--gold-gold-500)] hover:bg-[var(--gold-gold-200)]"
+                                  ? "bg-[var(--gold-gold-100)] text-[var(--color-star)] hover:bg-[var(--gold-gold-200)]"
                                   : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                               }`}
                             >
@@ -892,7 +892,7 @@ const CourseManagerCourseDetailContent = ({
                             return (
                               <Star
                                 key={s}
-                                className={`w-4 h-4 ${s <= Math.round(avg) ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[var(--color-border)]"}`}
+                                className={`w-4 h-4 ${s <= Math.round(avg) ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)]"}`}
                               />
                             );
                           })}
@@ -910,7 +910,7 @@ const CourseManagerCourseDetailContent = ({
                     </div>
                   ) : reviews.length === 0 ? (
                     <div className="text-center py-8">
-                      <Star className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
+                      <Star className="w-10 h-10 text-[var(--color-star-border)] mx-auto mb-3" />
                       <p className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.noReviewsYet")}</p>
                     </div>
                   ) : (
@@ -927,7 +927,7 @@ const CourseManagerCourseDetailContent = ({
                                 {[1, 2, 3, 4, 5].map((s) => (
                                   <Star
                                     key={s}
-                                    className={`w-3.5 h-3.5 ${s <= r.rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[var(--color-border)]"}`}
+                                    className={`w-3.5 h-3.5 ${s <= r.rating ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)]"}`}
                                   />
                                 ))}
                               </div>

@@ -196,6 +196,16 @@
       "type": "string",
       "default": "#171717",
       "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "themeStarColor": {
+      "type": "string",
+      "default": "#F59E0B",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "themeStarBorder": {
+      "type": "string",
+      "default": "#E5E7EB",
+      "pluginOptions": { "i18n": { "localized": false } }
     }
   }
 }

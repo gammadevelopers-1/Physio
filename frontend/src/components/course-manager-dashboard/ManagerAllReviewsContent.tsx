@@ -380,7 +380,7 @@ export default function ManagerAllReviewsContent() {
                 ) : reviews.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
                     <div className="w-14 h-14 rounded-xl bg-[var(--color-border-subtle)] flex items-center justify-center mb-3">
-                      <Star className="w-7 h-7 text-[var(--color-text-secondary)]" />
+                      <Star className="w-7 h-7 text-[var(--color-star-border)]" />
                     </div>
                     <p className="text-sm text-[var(--color-text-secondary)]">
                       {isRTL ? "لا توجد مراجعات مطابقة" : "No reviews match your filters"}
@@ -422,7 +422,7 @@ export default function ManagerAllReviewsContent() {
                               {[1, 2, 3, 4, 5].map((s) => (
                                 <Star
                                   key={s}
-                                  className={`w-4 h-4 ${s <= r.rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[var(--color-border)]"}`}
+                                  className={`w-4 h-4 ${s <= r.rating ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)]"}`}
                                 />
                               ))}
                             </div>
@@ -561,7 +561,7 @@ export default function ManagerAllReviewsContent() {
             <div className="p-5 space-y-3">
               <div className="flex items-center gap-0.5">
                 {[1, 2, 3, 4, 5].map((s) => (
-                  <Star key={s} className={`w-5 h-5 ${s <= modal.rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[var(--color-border)]"}`} />
+                  <Star key={s} className={`w-5 h-5 ${s <= modal.rating ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)]"}`} />
                 ))}
               </div>
               {modal.reviewText ? (

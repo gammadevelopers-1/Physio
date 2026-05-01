@@ -37,7 +37,7 @@ const UpcomingSessionsWidget = ({ sessions }: UpcomingSessionsWidgetProps) => {
       <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[var(--color-border)]">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-[var(--gold-gold-100)] rounded-lg flex items-center justify-center">
-            <Calendar className="w-4 h-4 text-[var(--gold-gold-500)]" />
+            <Calendar className="w-4 h-4 text-[var(--color-star)]" />
           </div>
           <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
             {t("upcomingSessions.title")}

@@ -24,7 +24,7 @@ const CourseStatsWidget = ({ data }: CourseStatsWidgetProps) => {
       {/* Header */}
       <div className="flex items-center gap-2 p-4 sm:p-5 border-b border-[var(--color-border)]">
         <div className="w-8 h-8 bg-[var(--gold-gold-100)] rounded-lg flex items-center justify-center">
-          <BookOpen className="w-4 h-4 text-[var(--gold-gold-500)]" />
+          <BookOpen className="w-4 h-4 text-[var(--color-star)]" />
         </div>
         <h3 className="text-[15px] font-semibold text-[var(--on-surface-default)]">
           {t("courseStats.title")}
@@ -86,7 +86,7 @@ const CourseStatsWidget = ({ data }: CourseStatsWidgetProps) => {
         <div className="bg-[var(--color-surface-page)] rounded-xl p-4 border border-[var(--color-border)]">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-8 h-8 bg-[var(--gold-gold-100)] rounded-lg flex items-center justify-center">
-              <Star className="w-4 h-4 text-[var(--gold-gold-500)]" />
+              <Star className="w-4 h-4 text-[var(--color-star)]" />
             </div>
             <span className="text-sm font-medium text-[var(--on-surface-variant)]">
               {t("courseStats.avgRating")}
@@ -100,9 +100,9 @@ const CourseStatsWidget = ({ data }: CourseStatsWidgetProps) => {
                   key={star}
                   className={`w-4 h-4 ${
                     star <= Math.floor(data.avgRating)
-                      ? "text-[var(--gold-gold-500)] fill-[var(--gold-gold-500)]"
+                      ? "text-[var(--color-star)] fill-[var(--color-star)]"
                       : star - 0.5 <= data.avgRating
-                        ? "text-[var(--gold-gold-500)] fill-[var(--gold-gold-500)]/50"
+                        ? "text-[var(--color-star)] fill-[var(--color-star)]/50"
                         : "text-[var(--color-border)]"
                   }`}
                 />

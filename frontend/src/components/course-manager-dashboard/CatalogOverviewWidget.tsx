@@ -116,7 +116,7 @@ const CatalogOverviewWidget = ({
       {/* Header */}
       <div className="flex items-center gap-2 p-4 sm:p-5 border-b border-[var(--color-border)]">
         <div className="w-8 h-8 bg-[var(--gold-gold-100)] rounded-lg flex items-center justify-center">
-          <BookOpen className="w-4 h-4 text-[var(--gold-gold-500)]" />
+          <BookOpen className="w-4 h-4 text-[var(--color-star)]" />
         </div>
         <h3 className="text-base font-semibold text-[var(--on-surface-default)]">
           {t("catalog.title")}
@@ -277,7 +277,7 @@ const CatalogOverviewWidget = ({
                 <td className="px-4 py-4">
                   {course.rating !== null ? (
                     <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 text-[var(--gold-gold-500)] fill-[var(--gold-gold-500)]" />
+                      <Star className="w-4 h-4 text-[var(--color-star)] fill-[var(--color-star)]" />
                       <span className="text-sm text-[var(--on-surface-variant)]">
                         {course.rating.toFixed(1)}
                       </span>
@@ -331,7 +331,7 @@ const CatalogOverviewWidget = ({
               </div>
               {course.rating !== null && (
                 <div className="flex items-center gap-1">
-                  <Star className="w-3.5 h-3.5 text-[var(--gold-gold-500)] fill-[var(--gold-gold-500)]" />
+                  <Star className="w-3.5 h-3.5 text-[var(--color-star)] fill-[var(--color-star)]" />
                   <span className="text-xs text-[var(--on-surface-variant)]">
                     {course.rating.toFixed(1)}
                   </span>

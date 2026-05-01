@@ -75,7 +75,7 @@ const CertificateQueue = ({
               {/* Top Row: Star, Name */}
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-8 h-8 rounded-full bg-[#FEF3C7] flex items-center justify-center flex-shrink-0">
-                  <Star className="w-4 h-4 text-[#D4A520] fill-[#D4A520]" />
+                  <Star className="w-4 h-4 text-[var(--color-star)] fill-[var(--color-star)]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-[var(--color-text-secondary)]">

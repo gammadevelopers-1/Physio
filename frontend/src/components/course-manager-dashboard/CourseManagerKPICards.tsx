@@ -26,7 +26,7 @@ const CourseManagerKPICards = ({ data }: CourseManagerKPICardsProps) => {
       value: data.totalCourses,
       icon: BookOpen,
       iconBg: "bg-[var(--gold-gold-100)]",
-      iconColor: "text-[var(--gold-gold-500)]",
+      iconColor: "text-[var(--color-star)]",
     },
     {
       id: "totalEnrollments",
@@ -34,7 +34,7 @@ const CourseManagerKPICards = ({ data }: CourseManagerKPICardsProps) => {
       value: data.totalEnrollments,
       icon: Users,
       iconBg: "bg-[var(--gold-gold-100)]",
-      iconColor: "text-[var(--gold-gold-500)]",
+      iconColor: "text-[var(--color-star)]",
     },
     {
       id: "pendingReviews",

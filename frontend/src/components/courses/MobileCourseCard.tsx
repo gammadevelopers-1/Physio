@@ -178,7 +178,7 @@ const MobileCourseCard = ({
             )}
             {course.avgRating > 0 && (
               <span className="flex items-center gap-0.5">
-                <Star className="w-3.5 h-3.5 text-[#F59E0B] fill-[#F59E0B]" />
+                <Star className="w-3.5 h-3.5 text-[var(--color-star)] fill-[var(--color-star)]" />
                 <span>{course.avgRating.toFixed(1)}</span>
               </span>
             )}

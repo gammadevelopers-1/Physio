@@ -559,7 +559,7 @@ const CoursesContent = () => {
                                       role="menuitem"
                                     >
                                       <Star
-                                        className={`w-3.5 h-3.5 ${course.isFeatured ? "text-[var(--gold-gold-500)] fill-[var(--gold-gold-500)]" : ""}`}
+                                        className={`w-3.5 h-3.5 ${course.isFeatured ? "text-[var(--color-star)] fill-[var(--color-star)]" : ""}`}
                                       />
                                       {course.isFeatured
                                         ? t("coursesPage.actions.unfeature")
@@ -627,7 +627,7 @@ const CoursesContent = () => {
                             </h3>
                             {course.isFeatured && (
                               <span
-                                className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[var(--gold-gold-100)] text-[var(--gold-gold-500)] rounded text-[10px] font-semibold flex-shrink-0"
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[var(--gold-gold-100)] text-[var(--color-star)] rounded text-[10px] font-semibold flex-shrink-0"
                                 title={t("coursesPage.featuredBadge")}
                               >
                                 <Star className="w-2.5 h-2.5 fill-current" />
@@ -670,7 +670,7 @@ const CoursesContent = () => {
                             )}
                             {ratingsMap[course.id] && ratingsMap[course.id].totalRatings > 0 && (
                               <span className="flex items-center gap-1">
-                                <Star className="w-3.5 h-3.5 text-[var(--gold-gold-500)] fill-[var(--gold-gold-500)]" />
+                                <Star className="w-3.5 h-3.5 text-[var(--color-star)] fill-[var(--color-star)]" />
                                 <span className="font-medium text-[var(--color-text-primary)]">
                                   {ratingsMap[course.id].avgRating.toFixed(1)}
                                 </span>

@@ -417,7 +417,7 @@ const MyCoursesContent = () => {
                                 )}
                                 <span className="text-[var(--color-border)]">·</span>
                                 <span className="flex items-center gap-1">
-                                  <Star className={`w-3.5 h-3.5 ${ratingsMap[course.id]?.totalRatings ? "text-[#F59E0B] fill-[#F59E0B]" : ""}`} strokeWidth={1.5} />
+                                  <Star className={`w-3.5 h-3.5 ${ratingsMap[course.id]?.totalRatings ? "text-[var(--color-star)] fill-[var(--color-star)]" : ""}`} strokeWidth={1.5} />
                                   {ratingsMap[course.id]?.totalRatings
                                     ? `${ratingsMap[course.id].avgRating} (${ratingsMap[course.id].totalRatings})`
                                     : t("courses.noRatingsYet")}

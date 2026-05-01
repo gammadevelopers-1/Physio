@@ -122,7 +122,7 @@ const AlertsActivitySidebar = ({
       case "certificate":
         return (
           <div className="w-8 h-8 rounded-full bg-[var(--gold-gold-100)] flex items-center justify-center">
-            <Award className="w-4 h-4 text-[var(--gold-gold-500)]" />
+            <Award className="w-4 h-4 text-[var(--color-star)]" />
           </div>
         );
       default:

@@ -165,18 +165,39 @@ export async function getSiteSettings(locale: string = 'en'): Promise<SiteSettin
  * Fetch all active partners
  */
 export async function getPartners(locale: string = 'en'): Promise<Partner[]> {
-  const response = await fetchStrapi<StrapiResponse<Partner[]>>(
-    '/partners',
-    {
-      params: {
-        locale,
-        'filters[isActive][$eq]': 'true',
-        'sort[0]': 'order:asc',
-        'populate[logo]': 'true',
-      },
-    }
-  );
-  return response?.data || [];
+  const params = {
+    locale,
+    'filters[isActive][$eq]': 'true',
+    'sort[0]': 'order:asc',
+    'populate[logo]': 'true',
+  };
+  const response = await fetchStrapi<StrapiResponse<Partner[]>>('/partners', { params });
+  const localized = response?.data || [];
+
+  // English is the source of truth — return as-is.
+  if (locale === 'en') return localized;
+
+  // Strapi treats media as per-locale, but Amna usually only uploads logos
+  // to the English copy. For non-English requests, fill missing logos from
+  // the matching English partner (same documentId).
+  const needsFallback = localized.some((p) => !p.logo);
+  if (!needsFallback) return localized;
+
+  try {
+    const englishResp = await fetchStrapi<StrapiResponse<Partner[]>>('/partners', {
+      params: { ...params, locale: 'en' },
+    });
+    const english = englishResp?.data || [];
+    const englishByDocId = new Map(english.map((p) => [p.documentId, p]));
+
+    return localized.map((p) => {
+      if (p.logo) return p;
+      const enMatch = englishByDocId.get(p.documentId);
+      return enMatch?.logo ? { ...p, logo: enMatch.logo } : p;
+    });
+  } catch {
+    return localized;
+  }
 }
 
 /**

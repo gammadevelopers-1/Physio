@@ -6,8 +6,7 @@
   },
   "attributes": {
     "value": {
-      "type": "integer",
-      "required": true
+      "type": "integer"
     },
     "label": {
       "type": "string",

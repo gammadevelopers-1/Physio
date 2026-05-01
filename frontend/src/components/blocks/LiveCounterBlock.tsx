@@ -161,7 +161,7 @@ export function LiveCounterBlock({ data }: LiveCounterBlockProps) {
                       className="font-bold leading-none text-[40px] lg:text-[52px] text-[var(--color-primary)]"
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
-                      {counter.prefix || "+"}
+                      {counter.prefix}
                       <AnimatedCounter value={displayValue} duration={duration} />
                       {counter.suffix}
                     </span>
@@ -173,11 +173,12 @@ export function LiveCounterBlock({ data }: LiveCounterBlockProps) {
               })}
             </div>
 
-            {/* Title block — sits on the side opposite the counters */}
+            {/* Title block — anchored to the visual start of the row
+                (LTR → left, RTL → right). Counters fill the remaining space. */}
             {(data.title || data.description) && (
               <div
-                className={`flex-shrink-0 lg:w-[260px] xl:w-[300px] ${
-                  isRTL ? "text-right lg:order-first" : "text-left lg:order-last"
+                className={`flex-shrink-0 lg:w-[260px] xl:w-[300px] lg:order-first ${
+                  isRTL ? "text-right" : "text-left"
                 }`}
               >
                 {data.title && (

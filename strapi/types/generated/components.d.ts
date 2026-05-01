@@ -2473,12 +2473,21 @@ export interface BlocksTrainerFormBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    bankOptions: Schema.Attribute.Component<'elements.dropdown-option', true>;
     cancelButtonLabel: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
+    countryCodeOptions: Schema.Attribute.Component<
+      'elements.dropdown-option',
+      true
+    >;
+    nationalityOptions: Schema.Attribute.Component<
+      'elements.dropdown-option',
+      true
+    >;
     noButtonLabel: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -2505,6 +2514,10 @@ export interface BlocksTrainerFormBlock extends Struct.ComponentSchema {
       ]
     > &
       Schema.Attribute.DefaultTo<'bottom'>;
+    professionOptions: Schema.Attribute.Component<
+      'elements.dropdown-option',
+      true
+    >;
     profileAttachCVLabel: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -2613,6 +2626,11 @@ export interface BlocksTrainerFormBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    qualificationOptions: Schema.Attribute.Component<
+      'elements.dropdown-option',
+      true
+    >;
+    rankOptions: Schema.Attribute.Component<'elements.dropdown-option', true>;
     resumeClickToUploadLabel: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -2685,6 +2703,35 @@ export interface BlocksTrainerFormBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    showAcademicRank: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    showBankSection: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    showEmail: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    showFullNameArabic: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    showFullNameEnglish: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    showGender: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    showLinkedIn: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    showMobileNumber: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    showNationalIqamaId: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    showNationality: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    showPhoto: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    showProfession: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    showProfileSection: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    showQualification: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    showResumeSection: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    showScfhsToggle: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    showSpecialty: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    showTwitter: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     visibility: Schema.Attribute.Enumeration<
       ['all', 'desktop-only', 'mobile-only']
     > &
@@ -3099,7 +3146,7 @@ export interface ElementsCounterItem extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
-    value: Schema.Attribute.Integer & Schema.Attribute.Required;
+    value: Schema.Attribute.Integer;
   };
 }
 
@@ -3185,6 +3232,24 @@ export interface ElementsDownloadItem extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+  };
+}
+
+export interface ElementsDropdownOption extends Struct.ComponentSchema {
+  collectionName: 'components_elements_dropdown_options';
+  info: {
+    description: 'A single selectable option for a form dropdown';
+    displayName: 'Dropdown Option';
+  };
+  attributes: {
+    label: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    value: Schema.Attribute.String & Schema.Attribute.Required;
   };
 }
 
@@ -3650,6 +3715,7 @@ declare module '@strapi/strapi' {
       'elements.cpd-tier': ElementsCpdTier;
       'elements.curriculum-module': ElementsCurriculumModule;
       'elements.download-item': ElementsDownloadItem;
+      'elements.dropdown-option': ElementsDropdownOption;
       'elements.event-item': ElementsEventItem;
       'elements.feature-item': ElementsFeatureItem;
       'elements.info-badge': ElementsInfoBadge;

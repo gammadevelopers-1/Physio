@@ -50,6 +50,32 @@ export function TrainerFormBlock({ data }: TrainerFormBlockProps) {
       saveButtonLabel={data.saveButtonLabel}
       yesButtonLabel={data.yesButtonLabel}
       noButtonLabel={data.noButtonLabel}
+      // Visibility flags — undefined / null treated as "show" (defaults true)
+      showProfileSection={data.showProfileSection !== false}
+      showResumeSection={data.showResumeSection !== false}
+      showBankSection={data.showBankSection !== false}
+      showFullNameArabic={data.showFullNameArabic !== false}
+      showFullNameEnglish={data.showFullNameEnglish !== false}
+      showEmail={data.showEmail !== false}
+      showMobileNumber={data.showMobileNumber !== false}
+      showGender={data.showGender !== false}
+      showNationality={data.showNationality !== false}
+      showNationalIqamaId={data.showNationalIqamaId !== false}
+      showProfession={data.showProfession !== false}
+      showSpecialty={data.showSpecialty !== false}
+      showQualification={data.showQualification !== false}
+      showAcademicRank={data.showAcademicRank !== false}
+      showScfhsToggle={data.showScfhsToggle !== false}
+      showTwitter={data.showTwitter !== false}
+      showLinkedIn={data.showLinkedIn !== false}
+      showPhoto={data.showPhoto !== false}
+      // Dropdown overrides — empty arrays use defaults
+      nationalityOptions={data.nationalityOptions ?? null}
+      professionOptions={data.professionOptions ?? null}
+      qualificationOptions={data.qualificationOptions ?? null}
+      rankOptions={data.rankOptions ?? null}
+      bankOptions={data.bankOptions ?? null}
+      countryCodeOptions={data.countryCodeOptions ?? null}
     />
   );
 }

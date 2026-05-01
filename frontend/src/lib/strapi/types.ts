@@ -190,6 +190,8 @@ export interface SiteSettings {
   themeNavbarText: string | null;
   themeFooterHeading: string | null;
   themeFooterText: string | null;
+  themeStarColor: string | null;
+  themeStarBorder: string | null;
   locale: string;
   createdAt: string;
   updatedAt: string;
@@ -930,6 +932,38 @@ export interface TrainerFormBlockData extends BaseBlock {
   saveButtonLabel: string | null;
   yesButtonLabel: string | null;
   noButtonLabel: string | null;
+  // Section + field visibility (default true)
+  showProfileSection?: boolean | null;
+  showResumeSection?: boolean | null;
+  showBankSection?: boolean | null;
+  showFullNameArabic?: boolean | null;
+  showFullNameEnglish?: boolean | null;
+  showEmail?: boolean | null;
+  showMobileNumber?: boolean | null;
+  showGender?: boolean | null;
+  showNationality?: boolean | null;
+  showNationalIqamaId?: boolean | null;
+  showProfession?: boolean | null;
+  showSpecialty?: boolean | null;
+  showQualification?: boolean | null;
+  showAcademicRank?: boolean | null;
+  showScfhsToggle?: boolean | null;
+  showTwitter?: boolean | null;
+  showLinkedIn?: boolean | null;
+  showPhoto?: boolean | null;
+  // Dropdown options (when empty/null, fall back to KSA defaults)
+  nationalityOptions?: DropdownOptionItem[] | null;
+  professionOptions?: DropdownOptionItem[] | null;
+  qualificationOptions?: DropdownOptionItem[] | null;
+  rankOptions?: DropdownOptionItem[] | null;
+  bankOptions?: DropdownOptionItem[] | null;
+  countryCodeOptions?: DropdownOptionItem[] | null;
+}
+
+export interface DropdownOptionItem {
+  id: number;
+  value: string;
+  label: string;
 }
 
 export interface CertificationCardsBlockData extends BaseBlock {

@@ -3904,6 +3904,20 @@ export interface ApiSiteSettingSiteSetting extends Struct.SingleTypeSchema {
         };
       }> &
       Schema.Attribute.DefaultTo<'#6b4e24'>;
+    themeStarBorder: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'#E5E7EB'>;
+    themeStarColor: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'#F59E0B'>;
     themeSurfaceCard: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {

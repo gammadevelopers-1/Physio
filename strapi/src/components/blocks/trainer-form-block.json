@@ -311,6 +311,54 @@
         }
       }
     },
+    "showProfileSection": { "type": "boolean", "default": true },
+    "showResumeSection": { "type": "boolean", "default": true },
+    "showBankSection": { "type": "boolean", "default": true },
+    "showFullNameArabic": { "type": "boolean", "default": true },
+    "showFullNameEnglish": { "type": "boolean", "default": true },
+    "showEmail": { "type": "boolean", "default": true },
+    "showMobileNumber": { "type": "boolean", "default": true },
+    "showGender": { "type": "boolean", "default": true },
+    "showNationality": { "type": "boolean", "default": true },
+    "showNationalIqamaId": { "type": "boolean", "default": true },
+    "showProfession": { "type": "boolean", "default": true },
+    "showSpecialty": { "type": "boolean", "default": true },
+    "showQualification": { "type": "boolean", "default": true },
+    "showAcademicRank": { "type": "boolean", "default": true },
+    "showScfhsToggle": { "type": "boolean", "default": true },
+    "showTwitter": { "type": "boolean", "default": true },
+    "showLinkedIn": { "type": "boolean", "default": true },
+    "showPhoto": { "type": "boolean", "default": true },
+    "nationalityOptions": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.dropdown-option"
+    },
+    "professionOptions": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.dropdown-option"
+    },
+    "qualificationOptions": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.dropdown-option"
+    },
+    "rankOptions": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.dropdown-option"
+    },
+    "bankOptions": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.dropdown-option"
+    },
+    "countryCodeOptions": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.dropdown-option"
+    },
     "visibility": {
       "type": "enumeration",
       "enum": [

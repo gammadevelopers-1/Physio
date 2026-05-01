@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_elements_dropdown_options",
+  "info": {
+    "displayName": "Dropdown Option",
+    "description": "A single selectable option for a form dropdown"
+  },
+  "attributes": {
+    "value": {
+      "type": "string",
+      "required": true
+    },
+    "label": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    }
+  }
+}

@@ -207,6 +207,7 @@ export interface Partner {
   url: string | null;
   order: number;
   isActive: boolean;
+  showOnHomeMarquee: boolean | null;
   logo: StrapiMedia;
   locale: string;
   createdAt: string;

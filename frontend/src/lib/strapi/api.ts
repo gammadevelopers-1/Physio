@@ -164,15 +164,22 @@ export async function getSiteSettings(locale: string = 'en'): Promise<SiteSettin
 }
 
 /**
- * Fetch all active partners
+ * Fetch all active partners. Pass `marqueeOnly: true` to restrict to those
+ * with showOnHomeMarquee != false (default true tolerates legacy null rows).
  */
-export async function getPartners(locale: string = 'en'): Promise<Partner[]> {
-  const params = {
+export async function getPartners(
+  locale: string = 'en',
+  opts?: { marqueeOnly?: boolean },
+): Promise<Partner[]> {
+  const params: Record<string, string> = {
     locale,
     'filters[isActive][$eq]': 'true',
     'sort[0]': 'order:asc',
     'populate[logo]': 'true',
   };
+  if (opts?.marqueeOnly) {
+    params['filters[showOnHomeMarquee][$ne]'] = 'false';
+  }
   const response = await fetchStrapi<StrapiResponse<Partner[]>>('/partners', { params });
   const localized = response?.data || [];
 
@@ -581,7 +588,7 @@ export async function getHomePageData(locale: string = 'en') {
   ] = await Promise.all([
     getHomePage(locale),
     getSiteSettings(locale),
-    getPartners(locale),
+    getPartners(locale, { marqueeOnly: true }),
     getFeaturedCourses(locale),
     getHomeInstructors(locale),
     getTestimonials(locale),

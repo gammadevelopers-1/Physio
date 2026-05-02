@@ -41,6 +41,15 @@
     "isActive": {
       "type": "boolean",
       "default": true
+    },
+    "showOnHomeMarquee": {
+      "type": "boolean",
+      "default": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     }
   }
 }

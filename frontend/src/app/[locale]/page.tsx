@@ -2,7 +2,6 @@
 import { setRequestLocale } from "next-intl/server";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
-import Partners from "@/components/Partners";
 import FeaturedCourses from "@/components/FeaturedCourses";
 import BecomeTrainer from "@/components/BecomeTrainer";
 import ExpertInstructors from "@/components/ExpertInstructors";
@@ -52,8 +51,7 @@ export default async function Home({
       <Hero data={homePage} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'after-section-1')} sideLoadedData={sideLoadedData} />
 
-      {/* Section 2: Partners */}
-      <Partners partners={partners} sectionTitle={homePage?.partnersSectionTitle} />
+      {/* Section 2: Partners — rendered via Partners Strip block (controlled from CMS) */}
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'after-section-2')} sideLoadedData={sideLoadedData} />
 
       {/* Section 3: Featured Courses */}

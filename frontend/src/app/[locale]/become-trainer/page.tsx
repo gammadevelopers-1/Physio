@@ -17,6 +17,7 @@ export default async function BecomeTrainerPage({
 
   const {
     becomeTrainerPage: data,
+    professions,
     siteSettings,
     navbarLinks,
     footerLinks,
@@ -70,11 +71,10 @@ export default async function BecomeTrainerPage({
         yesButtonLabel={data?.yesButtonLabel}
         noButtonLabel={data?.noButtonLabel}
         nationalityOptions={data?.nationalityOptions ?? null}
-        professionOptions={data?.professionOptions ?? null}
-        specialtyOptions={data?.specialtyOptions ?? null}
         qualificationOptions={data?.qualificationOptions ?? null}
         rankOptions={data?.rankOptions ?? null}
         bankOptions={data?.bankOptions ?? null}
+        professions={professions}
       />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'after-section-1')} sideLoadedData={sideLoadedData} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'bottom')} sideLoadedData={sideLoadedData} />

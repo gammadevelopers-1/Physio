@@ -960,8 +960,6 @@ export interface TrainerFormBlockData extends BaseBlock {
   showPhoto?: boolean | null;
   // Dropdown options (when empty/null, fall back to KSA defaults)
   nationalityOptions?: DropdownOptionItem[] | null;
-  professionOptions?: DropdownOptionItem[] | null;
-  specialtyOptions?: DropdownOptionItem[] | null;
   qualificationOptions?: DropdownOptionItem[] | null;
   rankOptions?: DropdownOptionItem[] | null;
   bankOptions?: DropdownOptionItem[] | null;
@@ -972,8 +970,16 @@ export interface DropdownOptionItem {
   id: number;
   value: string;
   label: string;
-  /** Specialty options only: the profession `value` this specialty belongs to */
-  parentProfessionKey?: string | null;
+}
+
+/** Profession collection-type entry, with its nested specialties */
+export interface ProfessionEntry {
+  id: number;
+  documentId: string;
+  value: string;
+  label: string;
+  specialties: Array<{ id: number; value: string; label: string }>;
+  locale: string;
 }
 
 export interface CertificationCardsBlockData extends BaseBlock {

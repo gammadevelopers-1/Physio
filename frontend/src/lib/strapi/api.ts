@@ -379,10 +379,9 @@ export async function getBecomeTrainerPage(locale: string = 'en'): Promise<Becom
         locale,
         ...BLOCKS_POPULATE_PARAMS,
         ...OG_IMAGE_POPULATE,
-        // Page-level dropdown option lists (Strapi-managed by Amna)
+        // Page-level dropdown option lists (Strapi-managed by Amna).
+        // Profession + Specialty live in their own collection type now.
         'populate[nationalityOptions]': 'true',
-        'populate[professionOptions]': 'true',
-        'populate[specialtyOptions]': 'true',
         'populate[qualificationOptions]': 'true',
         'populate[rankOptions]': 'true',
         'populate[bankOptions]': 'true',
@@ -393,16 +392,37 @@ export async function getBecomeTrainerPage(locale: string = 'en'): Promise<Becom
 }
 
 /**
+ * Fetch all professions with their nested specialties.
+ * Each profession is a collection-type entry; specialties are a repeatable
+ * component inside it. Public read enabled via bootstrap.
+ */
+export async function getProfessions(locale: string = 'en'): Promise<import('./types').ProfessionEntry[]> {
+  const response = await fetchStrapi<{ data: import('./types').ProfessionEntry[] }>(
+    '/professions',
+    {
+      params: {
+        locale,
+        'populate[specialties]': 'true',
+        'pagination[pageSize]': 200,
+      },
+    }
+  );
+  return response?.data || [];
+}
+
+/**
  * Fetch all become-trainer page data at once
  */
 export async function getBecomeTrainerPageData(locale: string = 'en') {
   const [
     becomeTrainerPage,
+    professions,
     siteSettings,
     navbarLinks,
     footerLinks,
   ] = await Promise.all([
     getBecomeTrainerPage(locale),
+    getProfessions(locale),
     getSiteSettings(locale),
     getNavbarLinks(locale),
     getFooterLinks(locale),
@@ -410,6 +430,7 @@ export async function getBecomeTrainerPageData(locale: string = 'en') {
 
   return {
     becomeTrainerPage,
+    professions,
     siteSettings,
     navbarLinks,
     footerLinks,

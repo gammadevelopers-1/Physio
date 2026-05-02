@@ -24,6 +24,7 @@ import {
   CreditCard,
   Twitter,
   Linkedin,
+  MapPin,
 } from "lucide-react";
 import { AdminSidebar, AdminNavbar } from "@/components/admin-dashboard";
 import AdminMobileSidebar from "./AdminMobileSidebar";
@@ -234,6 +235,9 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
                   <InfoField icon={Mail} label={t("roleRequestReviewPage.email") || "Email"} value={profileData.email || application.user?.email} />
                   <InfoField icon={Phone} label={t("roleRequestReviewPage.phone") || "Phone"} value={profileData.mobileNumber || profileData.phone ? `${profileData.countryCode ? `(${profileData.countryCode}) ` : ""}${profileData.mobileNumber || profileData.phone}` : undefined} />
                   <InfoField icon={Globe} label={t("roleRequestReviewPage.nationality") || "Nationality"} value={profileData.nationality} />
+                  <InfoField icon={MapPin} label={t("roleRequestReviewPage.country") || "Country"} value={profileData.country} />
+                  <InfoField icon={MapPin} label={t("roleRequestReviewPage.state") || "State / Region"} value={profileData.state} />
+                  <InfoField icon={MapPin} label={t("roleRequestReviewPage.city") || "City"} value={profileData.city} />
                   <InfoField icon={User} label={t("roleRequestReviewPage.gender") || "Gender"} value={profileData.gender} />
                   <InfoField icon={Briefcase} label={t("roleRequestReviewPage.profession") || "Profession"} value={profileData.profession} />
                   <InfoField icon={GraduationCap} label={t("roleRequestReviewPage.specialty") || "Specialty"} value={profileData.specialty} />

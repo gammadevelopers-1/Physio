@@ -9,7 +9,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
-import { eq, and, or, gt, inArray, count, sql, ilike, asc, desc, SQL } from 'drizzle-orm';
+import { eq, and, or, gt, inArray, count, sql, ilike, asc, desc, notLike, SQL } from 'drizzle-orm';
 import { randomBytes, createHash, randomInt } from 'crypto';
 import { db } from '../../database';
 import {
@@ -963,8 +963,49 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    // Delete user (cascade will handle userRoles and refreshTokens)
-    await db.delete(users).where(eq(users.id, userId));
+    // Soft-delete by anonymization. A hard DELETE would fail for any user
+    // that has ever performed an audited action (audit_logs.performed_by,
+    // courses.reviewed_by, attendance.marked_by, etc.) since most metadata
+    // FKs to users.id don't cascade by design — those records are part of
+    // the historical audit trail and must be preserved.
+    //
+    // Strategy: scrub PII + deactivate, free up the email so the person
+    // can sign up again, and strip all roles + refresh tokens so the
+    // anonymized account can't authenticate.
+    const anonEmail = `deleted-${userId}@deleted.local`;
+    await db
+      .update(users)
+      .set({
+        email: anonEmail,
+        firstName: null,
+        lastName: null,
+        firstNameAr: null,
+        lastNameAr: null,
+        phone: null,
+        avatar: null,
+        bio: null,
+        location: null,
+        scfhsNumber: null,
+        nationalId: null,
+        nationality: null,
+        gender: null,
+        dateOfBirth: null,
+        department: null,
+        specialty: null,
+        instructorStatus: null,
+        zoomEmail: null,
+        isActive: false,
+        isVerified: false,
+        twoFactorEnabled: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    // Strip all role assignments so they can't authenticate as anything
+    await db.delete(userRoles).where(eq(userRoles.userId, userId));
+
+    // Invalidate all active sessions
+    await db.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
 
     return { message: 'User deleted successfully' };
   }
@@ -1027,8 +1068,11 @@ export class AuthService {
     const sortOrder = query.sortOrder?.toLowerCase() === 'asc' ? 'asc' : 'desc';
     const offset = (page - 1) * limit;
 
-    // Build WHERE conditions
-    const conditions: (SQL | undefined)[] = [];
+    // Build WHERE conditions. Always exclude anonymized (soft-deleted) users
+    // — their email is rewritten to `deleted-<uuid>@deleted.local` on delete.
+    const conditions: (SQL | undefined)[] = [
+      notLike(users.email, 'deleted-%@deleted.local'),
+    ];
 
     if (search) {
       conditions.push(

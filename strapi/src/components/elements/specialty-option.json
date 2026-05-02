@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_elements_specialty_options",
+  "info": {
+    "displayName": "Specialty Option",
+    "description": "A specialty under a profession (e.g. Cardiology under Medicine)"
+  },
+  "attributes": {
+    "value": {
+      "type": "string",
+      "required": true
+    },
+    "label": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    }
+  }
+}

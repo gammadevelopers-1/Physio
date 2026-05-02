@@ -1,0 +1,36 @@
+{
+  "kind": "collectionType",
+  "collectionName": "professions",
+  "info": {
+    "singularName": "profession",
+    "pluralName": "professions",
+    "displayName": "Profession",
+    "description": "Profession with its nested specialties (e.g. Medicine -> Cardiology, Dermatology, ...)"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "value": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "label": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "specialties": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.specialty-option",
+      "pluginOptions": { "i18n": { "localized": true } }
+    }
+  }
+}

@@ -13,8 +13,10 @@ import OtpVerifyModal from "./trainer-application/OtpVerifyModal";
 import ResumeBuilder, { emptyStructuredResume, type StructuredResume } from "./trainer-application/ResumeBuilder";
 import { toast } from "sonner";
 import PhoneInput, { isValidPhoneNumber, parsePhoneNumber } from "react-phone-number-input";
+import phoneArLabels from "react-phone-number-input/locale/ar.json";
 import "react-phone-number-input/style.css";
 import { isValidIBAN } from "ibantools";
+import { arCountryName, arStateName, arCityName } from "@/lib/locations-ar";
 
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
@@ -540,18 +542,25 @@ interface BecomeTrainerFormProps {
   showPhoto?: boolean;
   // Strapi-overridable dropdown options
   nationalityOptions?: StrapiDropdownOption[] | null;
-  professionOptions?: StrapiDropdownOption[] | null;
-  specialtyOptions?: StrapiDropdownOption[] | null;
   qualificationOptions?: StrapiDropdownOption[] | null;
   rankOptions?: StrapiDropdownOption[] | null;
   bankOptions?: StrapiDropdownOption[] | null;
+  // Profession + Specialty come from a dedicated Strapi collection-type
+  // where each profession has its specialties nested inside it.
+  professions?: ProfessionEntry[] | null;
 }
 
 interface StrapiDropdownOption {
   id?: number;
   value: string;
   label: string;
-  parentProfessionKey?: string | null;
+}
+
+interface ProfessionEntry {
+  id?: number;
+  value: string;
+  label: string;
+  specialties?: Array<{ value: string; label: string }>;
 }
 
 const BecomeTrainerForm = ({
@@ -612,8 +621,7 @@ const BecomeTrainerForm = ({
   showLinkedIn = true,
   showPhoto = true,
   nationalityOptions: strapiNationality = null,
-  professionOptions: strapiProfession = null,
-  specialtyOptions: strapiSpecialty = null,
+  professions: strapiProfessions = null,
   qualificationOptions: strapiQualification = null,
   rankOptions: strapiRank = null,
   bankOptions: strapiBank = null,
@@ -730,14 +738,26 @@ const BecomeTrainerForm = ({
     return () => { mounted = false; };
   }, []);
 
+  // Country / State / City labels switch to Arabic when locale=ar:
+  //  - Country names: i18n-iso-countries (full coverage)
+  //  - State + City: curated map for KSA + GCC + Egypt + Jordan; English elsewhere
   const countryOptions: LocationOption[] = csc
-    ? csc.Country.getAllCountries().map((c) => ({ value: c.isoCode, label: c.name }))
+    ? csc.Country.getAllCountries().map((c) => ({
+        value: c.isoCode,
+        label: isRTL ? arCountryName(c.isoCode, c.name) : c.name,
+      }))
     : [];
   const stateOptions: LocationOption[] = csc && formData.countryIso
-    ? csc.State.getStatesOfCountry(formData.countryIso).map((s) => ({ value: s.isoCode, label: s.name }))
+    ? csc.State.getStatesOfCountry(formData.countryIso).map((s) => ({
+        value: s.isoCode,
+        label: isRTL ? arStateName(formData.countryIso, s.name) : s.name,
+      }))
     : [];
   const cityOptions: LocationOption[] = csc && formData.countryIso && formData.stateIso
-    ? csc.City.getCitiesOfState(formData.countryIso, formData.stateIso).map((c) => ({ value: c.name, label: c.name }))
+    ? csc.City.getCitiesOfState(formData.countryIso, formData.stateIso).map((c) => ({
+        value: c.name,
+        label: isRTL ? arCityName(formData.countryIso, c.name) : c.name,
+      }))
     : [];
 
   // Cascading select handler — picking Country resets State + City; picking State resets City
@@ -832,22 +852,71 @@ const BecomeTrainerForm = ({
     { value: "Other", label: isRTL ? "أخرى" : "Other" },
   ];
 
-  const defaultProfession = [
-    { value: "Physician", label: isRTL ? "طبيب" : "Physician" },
-    { value: "Surgeon", label: isRTL ? "جراح" : "Surgeon" },
-    { value: "Dentist", label: isRTL ? "طبيب أسنان" : "Dentist" },
-    { value: "Pharmacist", label: isRTL ? "صيدلي" : "Pharmacist" },
-    { value: "Nurse", label: isRTL ? "ممرض" : "Nurse" },
-    { value: "Physiotherapist", label: isRTL ? "أخصائي علاج طبيعي" : "Physiotherapist" },
-    { value: "Occupational Therapist", label: isRTL ? "أخصائي علاج وظيفي" : "Occupational Therapist" },
-    { value: "Speech Therapist", label: isRTL ? "أخصائي نطق" : "Speech Therapist" },
-    { value: "Medical Lab Technologist", label: isRTL ? "فني مختبر طبي" : "Medical Lab Technologist" },
-    { value: "Radiology Technician", label: isRTL ? "فني أشعة" : "Radiology Technician" },
-    { value: "Respiratory Therapist", label: isRTL ? "أخصائي علاج تنفسي" : "Respiratory Therapist" },
-    { value: "Paramedic", label: isRTL ? "مسعف" : "Paramedic" },
-    { value: "Health Educator", label: isRTL ? "مثقف صحي" : "Health Educator" },
-    { value: "Hospital Administrator", label: isRTL ? "مدير مستشفى" : "Hospital Administrator" },
-    { value: "Other", label: isRTL ? "أخرى" : "Other" },
+  // Default profession list (with nested specialties) — used as fallback
+  // when Amna hasn't populated the Strapi Profession collection. Once she
+  // adds entries in Strapi, those override this entire fallback.
+  const defaultProfessions: ProfessionEntry[] = [
+    {
+      value: "Physician",
+      label: isRTL ? "طبيب" : "Physician",
+      specialties: [
+        { value: "Internal Medicine", label: isRTL ? "الطب الباطني" : "Internal Medicine" },
+        { value: "Cardiology", label: isRTL ? "أمراض القلب" : "Cardiology" },
+        { value: "Dermatology", label: isRTL ? "الأمراض الجلدية" : "Dermatology" },
+        { value: "Pediatrics", label: isRTL ? "طب الأطفال" : "Pediatrics" },
+        { value: "Family Medicine", label: isRTL ? "طب الأسرة" : "Family Medicine" },
+        { value: "Emergency Medicine", label: isRTL ? "طب الطوارئ" : "Emergency Medicine" },
+      ],
+    },
+    {
+      value: "Surgeon",
+      label: isRTL ? "جراح" : "Surgeon",
+      specialties: [
+        { value: "General Surgery", label: isRTL ? "الجراحة العامة" : "General Surgery" },
+        { value: "Orthopedic Surgery", label: isRTL ? "جراحة العظام" : "Orthopedic Surgery" },
+        { value: "Neurosurgery", label: isRTL ? "جراحة الأعصاب" : "Neurosurgery" },
+        { value: "Plastic Surgery", label: isRTL ? "جراحة التجميل" : "Plastic Surgery" },
+      ],
+    },
+    {
+      value: "Dentist",
+      label: isRTL ? "طبيب أسنان" : "Dentist",
+      specialties: [
+        { value: "Orthodontics", label: isRTL ? "تقويم الأسنان" : "Orthodontics" },
+        { value: "Endodontics", label: isRTL ? "علاج الجذور" : "Endodontics" },
+        { value: "Pediatric Dentistry", label: isRTL ? "طب أسنان الأطفال" : "Pediatric Dentistry" },
+      ],
+    },
+    {
+      value: "Pharmacist",
+      label: isRTL ? "صيدلي" : "Pharmacist",
+      specialties: [
+        { value: "Clinical Pharmacy", label: isRTL ? "الصيدلة السريرية" : "Clinical Pharmacy" },
+        { value: "Hospital Pharmacy", label: isRTL ? "صيدلة المستشفيات" : "Hospital Pharmacy" },
+        { value: "Industrial Pharmacy", label: isRTL ? "الصيدلة الصناعية" : "Industrial Pharmacy" },
+      ],
+    },
+    {
+      value: "Nurse",
+      label: isRTL ? "ممرض" : "Nurse",
+      specialties: [
+        { value: "Critical Care Nursing", label: isRTL ? "تمريض الحالات الحرجة" : "Critical Care Nursing" },
+        { value: "Pediatric Nursing", label: isRTL ? "تمريض الأطفال" : "Pediatric Nursing" },
+        { value: "Operating Room Nursing", label: isRTL ? "تمريض غرف العمليات" : "Operating Room Nursing" },
+      ],
+    },
+    {
+      value: "Physiotherapist",
+      label: isRTL ? "أخصائي علاج طبيعي" : "Physiotherapist",
+      specialties: [
+        { value: "Orthopedic Physiotherapy", label: isRTL ? "العلاج الطبيعي للعظام" : "Orthopedic Physiotherapy" },
+        { value: "Neurological Physiotherapy", label: isRTL ? "العلاج الطبيعي العصبي" : "Neurological Physiotherapy" },
+        { value: "Sports Physiotherapy", label: isRTL ? "العلاج الطبيعي الرياضي" : "Sports Physiotherapy" },
+      ],
+    },
+    { value: "Occupational Therapist", label: isRTL ? "أخصائي علاج وظيفي" : "Occupational Therapist", specialties: [] },
+    { value: "Speech Therapist", label: isRTL ? "أخصائي نطق" : "Speech Therapist", specialties: [] },
+    { value: "Other", label: isRTL ? "أخرى" : "Other", specialties: [] },
   ];
 
   const defaultQualification = [
@@ -863,40 +932,6 @@ const BecomeTrainerForm = ({
     { value: "Fellowship", label: isRTL ? "زمالة" : "Fellowship" },
     { value: "Board Certified", label: isRTL ? "بورد معتمد" : "Board Certified" },
     { value: "Other", label: isRTL ? "أخرى" : "Other" },
-  ];
-
-  // Default specialty list — used as fallback when Strapi doesn't have one.
-  // Each entry is keyed to its parent profession (matches default profession `value`).
-  // Amna's full list lives in Strapi and overrides this entirely.
-  const defaultSpecialty: StrapiDropdownOption[] = [
-    // Physician
-    { value: "Internal Medicine", label: isRTL ? "الطب الباطني" : "Internal Medicine", parentProfessionKey: "Physician" },
-    { value: "Cardiology", label: isRTL ? "أمراض القلب" : "Cardiology", parentProfessionKey: "Physician" },
-    { value: "Dermatology", label: isRTL ? "الأمراض الجلدية" : "Dermatology", parentProfessionKey: "Physician" },
-    { value: "Pediatrics", label: isRTL ? "طب الأطفال" : "Pediatrics", parentProfessionKey: "Physician" },
-    { value: "Family Medicine", label: isRTL ? "طب الأسرة" : "Family Medicine", parentProfessionKey: "Physician" },
-    { value: "Emergency Medicine", label: isRTL ? "طب الطوارئ" : "Emergency Medicine", parentProfessionKey: "Physician" },
-    // Surgeon
-    { value: "General Surgery", label: isRTL ? "الجراحة العامة" : "General Surgery", parentProfessionKey: "Surgeon" },
-    { value: "Orthopedic Surgery", label: isRTL ? "جراحة العظام" : "Orthopedic Surgery", parentProfessionKey: "Surgeon" },
-    { value: "Neurosurgery", label: isRTL ? "جراحة الأعصاب" : "Neurosurgery", parentProfessionKey: "Surgeon" },
-    { value: "Plastic Surgery", label: isRTL ? "جراحة التجميل" : "Plastic Surgery", parentProfessionKey: "Surgeon" },
-    // Dentist
-    { value: "Orthodontics", label: isRTL ? "تقويم الأسنان" : "Orthodontics", parentProfessionKey: "Dentist" },
-    { value: "Endodontics", label: isRTL ? "علاج الجذور" : "Endodontics", parentProfessionKey: "Dentist" },
-    { value: "Pediatric Dentistry", label: isRTL ? "طب أسنان الأطفال" : "Pediatric Dentistry", parentProfessionKey: "Dentist" },
-    // Pharmacist
-    { value: "Clinical Pharmacy", label: isRTL ? "الصيدلة السريرية" : "Clinical Pharmacy", parentProfessionKey: "Pharmacist" },
-    { value: "Hospital Pharmacy", label: isRTL ? "صيدلة المستشفيات" : "Hospital Pharmacy", parentProfessionKey: "Pharmacist" },
-    { value: "Industrial Pharmacy", label: isRTL ? "الصيدلة الصناعية" : "Industrial Pharmacy", parentProfessionKey: "Pharmacist" },
-    // Nurse
-    { value: "Critical Care Nursing", label: isRTL ? "تمريض الحالات الحرجة" : "Critical Care Nursing", parentProfessionKey: "Nurse" },
-    { value: "Pediatric Nursing", label: isRTL ? "تمريض الأطفال" : "Pediatric Nursing", parentProfessionKey: "Nurse" },
-    { value: "Operating Room Nursing", label: isRTL ? "تمريض غرف العمليات" : "Operating Room Nursing", parentProfessionKey: "Nurse" },
-    // Physiotherapist
-    { value: "Orthopedic Physiotherapy", label: isRTL ? "العلاج الطبيعي للعظام" : "Orthopedic Physiotherapy", parentProfessionKey: "Physiotherapist" },
-    { value: "Neurological Physiotherapy", label: isRTL ? "العلاج الطبيعي العصبي" : "Neurological Physiotherapy", parentProfessionKey: "Physiotherapist" },
-    { value: "Sports Physiotherapy", label: isRTL ? "العلاج الطبيعي الرياضي" : "Sports Physiotherapy", parentProfessionKey: "Physiotherapist" },
   ];
 
   const defaultRank = [
@@ -945,23 +980,23 @@ const BecomeTrainerForm = ({
   const nationalIdPlaceholder = isSaudiNationality
     ? (isRTL ? "10 أرقام تبدأ بـ 1" : "10 digits starting with 1")
     : (isRTL ? "رقم الإقامة أو جواز السفر" : "Iqama or passport number");
-  const professionOptions = usableStrapi(strapiProfession) || defaultProfession;
   const qualificationOptions = usableStrapi(strapiQualification) || defaultQualification;
   const rankOptions = usableStrapi(strapiRank) || defaultRank;
-
-  // Specialty cascade: filter by selected profession's value. Strapi list (or
-  // default) entries are tagged with parentProfessionKey; entries with no
-  // parent or matching parent are shown. Falls back to all entries if the
-  // user typed a profession not present in the dropdown (free-text).
-  const allSpecialties = (strapiSpecialty && strapiSpecialty.length > 0
-    ? strapiSpecialty
-    : defaultSpecialty) as StrapiDropdownOption[];
-  const selectedProfession = professionOptions.find((p) => p.label === formData.profession || p.value === formData.profession);
-  const professionKey = selectedProfession?.value || "";
-  const specialtyOptions: StrapiDropdownOption[] = professionKey
-    ? allSpecialties.filter((s) => !s.parentProfessionKey || s.parentProfessionKey === professionKey)
-    : [];
   const bankOptions = usableStrapi(strapiBank) || defaultBank;
+
+  // Profession cascade: Amna's Strapi Profession collection takes priority;
+  // fall back to the curated default list if she hasn't populated it yet.
+  const professions: ProfessionEntry[] =
+    strapiProfessions && strapiProfessions.length > 0
+      ? strapiProfessions
+      : defaultProfessions;
+  const professionOptions = professions.map((p) => ({ value: p.value, label: p.label }));
+
+  // Match by label or value (the ComboBox stores label, but values can also be typed).
+  const selectedProfession = professions.find(
+    (p) => p.label === formData.profession || p.value === formData.profession,
+  );
+  const specialtyOptions = (selectedProfession?.specialties || []).map((s) => ({ value: s.value, label: s.label }));
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -1524,6 +1559,7 @@ const BecomeTrainerForm = ({
                       value={formData.phoneE164}
                       onChange={(v) => setFormData((prev) => ({ ...prev, phoneE164: v || "" }))}
                       placeholder={isRTL ? "أدخل رقم الجوال" : "Enter phone number"}
+                      labels={isRTL ? phoneArLabels : undefined}
                     />
                   </div>
                 </div>
@@ -1609,8 +1645,7 @@ const BecomeTrainerForm = ({
                   value={structuredResume}
                   onChange={setStructuredResume}
                   isRTL={isRTL}
-                  professionOptions={professionOptions}
-                  allSpecialtyOptions={allSpecialties}
+                  professions={professions}
                   qualificationOptions={qualificationOptions}
                   rankOptions={rankOptions}
                 />
@@ -1849,8 +1884,7 @@ const BecomeTrainerForm = ({
                 value={structuredResume}
                 onChange={setStructuredResume}
                 isRTL={isRTL}
-                professionOptions={professionOptions}
-                allSpecialtyOptions={allSpecialties}
+                professions={professions}
                 qualificationOptions={qualificationOptions}
                 rankOptions={rankOptions}
               />

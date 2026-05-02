@@ -47,14 +47,14 @@ export const emptyStructuredResume: StructuredResume = {
   trainingExperiences: [],
 };
 
-type Option = { value: string; label: string; parentProfessionKey?: string | null };
+type Option = { value: string; label: string };
+type Profession = { value: string; label: string; specialties?: Array<{ value: string; label: string }> };
 
 interface ResumeBuilderProps {
   value: StructuredResume;
   onChange: (next: StructuredResume) => void;
   isRTL: boolean;
-  professionOptions: Option[];
-  allSpecialtyOptions: Option[]; // unfiltered — modal filters by selected profession
+  professions: Profession[];
   qualificationOptions: Option[];
   rankOptions: Option[];
 }
@@ -173,16 +173,14 @@ const SaveBtn = ({ onClick, isRTL }: { onClick: () => void; isRTL: boolean }) =>
 const EducationModal = ({
   initial,
   isRTL,
-  professionOptions,
-  allSpecialtyOptions,
+  professions,
   qualificationOptions,
   onSave,
   onClose,
 }: {
   initial: EducationEntry | null;
   isRTL: boolean;
-  professionOptions: Option[];
-  allSpecialtyOptions: Option[];
+  professions: Profession[];
   qualificationOptions: Option[];
   onSave: (entry: EducationEntry) => void;
   onClose: () => void;
@@ -191,10 +189,12 @@ const EducationModal = ({
     initial || { university: "", graduationYear: "", profession: "", specialty: "", qualification: "" },
   );
 
-  // Filter specialties by selected profession (parentProfessionKey === profession value)
-  const specialtyOptions = draft.profession
-    ? allSpecialtyOptions.filter((s) => !s.parentProfessionKey || s.parentProfessionKey === draft.profession)
-    : [];
+  const professionOptions = professions.map((p) => ({ value: p.value, label: p.label }));
+  // Cascade: specialties come from the selected profession's nested list.
+  const selectedProfession = professions.find(
+    (p) => p.value === draft.profession || p.label === draft.profession,
+  );
+  const specialtyOptions = (selectedProfession?.specialties || []).map((s) => ({ value: s.value, label: s.label }));
 
   const submit = () => {
     if (!draft.university.trim() || !draft.graduationYear || !draft.profession || !draft.specialty || !draft.qualification) return;
@@ -421,11 +421,15 @@ export default function ResumeBuilder({
   value,
   onChange,
   isRTL,
-  professionOptions,
-  allSpecialtyOptions,
+  professions,
   qualificationOptions,
   rankOptions,
 }: ResumeBuilderProps) {
+  // Derived once for card display (matching label by value)
+  const professionOptions = professions.map((p) => ({ value: p.value, label: p.label }));
+  const allSpecialtyOptions = professions.flatMap((p) =>
+    (p.specialties || []).map((s) => ({ value: s.value, label: s.label })),
+  );
   type ModalState =
     | { kind: "education"; index: number | null }
     | { kind: "research"; index: number | null }
@@ -568,8 +572,7 @@ export default function ResumeBuilder({
         <EducationModal
           initial={modal.index !== null ? value.education[modal.index] : null}
           isRTL={isRTL}
-          professionOptions={professionOptions}
-          allSpecialtyOptions={allSpecialtyOptions}
+          professions={professions}
           qualificationOptions={qualificationOptions}
           onSave={upsertEducation}
           onClose={() => setModal(null)}

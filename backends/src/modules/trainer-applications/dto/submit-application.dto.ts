@@ -1,8 +1,17 @@
-import { IsArray, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
-interface ResumeFile {
+// Class (not interface) so class-transformer with whitelist+transform
+// preserves the inner properties. With a plain interface, class-validator
+// strips the object contents and we end up storing [[], []] in the DB.
+class ResumeFileDto {
+  @IsString()
   type: string;
+
+  @IsString()
   url: string;
+
+  @IsString()
   filename: string;
 }
 
@@ -16,7 +25,9 @@ export class SubmitApplicationDto {
 
   @IsOptional()
   @IsArray()
-  resumeFiles?: ResumeFile[];
+  @ValidateNested({ each: true })
+  @Type(() => ResumeFileDto)
+  resumeFiles?: ResumeFileDto[];
 
   // Structured resume from the "Create Resume" path:
   // { education: [...], professionalSkills: [...],

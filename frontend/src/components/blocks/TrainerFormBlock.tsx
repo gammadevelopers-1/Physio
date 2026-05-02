@@ -69,10 +69,10 @@ export function TrainerFormBlock({ data }: TrainerFormBlockProps) {
       showTwitter={data.showTwitter !== false}
       showLinkedIn={data.showLinkedIn !== false}
       showPhoto={data.showPhoto !== false}
-      // Dropdown overrides — empty arrays use defaults
+      // Dropdown overrides — empty arrays use defaults.
+      // Profession + Specialty are handled by the Profession collection-type
+      // when this block is used directly (the page-level fetch passes them).
       nationalityOptions={data.nationalityOptions ?? null}
-      professionOptions={data.professionOptions ?? null}
-      specialtyOptions={data.specialtyOptions ?? null}
       qualificationOptions={data.qualificationOptions ?? null}
       rankOptions={data.rankOptions ?? null}
       bankOptions={data.bankOptions ?? null}

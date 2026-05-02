@@ -312,6 +312,18 @@ export class AuthService {
     // Get updated roles list
     const updatedRoles = await this.getUserRoles(userId);
 
+    // Fix activeRole if it points to a role the user doesn't actually have.
+    // Placeholder users from the public Become-a-Trainer flow are created
+    // with activeRole='STUDENT' as a label (no STUDENT row in user_roles).
+    // After admin assigns their real role (e.g. INSTRUCTOR), flip activeRole
+    // so the magic-link auto-login lands them on the correct dashboard.
+    if (!updatedRoles.includes(user.activeRole as RoleName)) {
+      await db
+        .update(users)
+        .set({ activeRole: roleName, updatedAt: new Date() })
+        .where(eq(users.id, userId));
+    }
+
     return {
       message: `Role ${roleName} assigned successfully`,
       roles: updatedRoles,

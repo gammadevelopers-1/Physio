@@ -174,6 +174,8 @@ export interface SiteSettings {
   footerSupportTitle: string | null;
   footerMenuTitle: string | null;
   logo: StrapiMedia | null;
+  favicon: StrapiMedia | null;
+  defaultOgImage: StrapiMedia | null;
   paymentMethods: PaymentMethodItem[] | null;
   themePrimaryColor: string | null;
   themePrimaryDark: string | null;

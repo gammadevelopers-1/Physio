@@ -154,6 +154,8 @@ export async function getSiteSettings(locale: string = 'en'): Promise<SiteSettin
       params: {
         locale,
         'populate[logo]': 'true',
+        'populate[favicon]': 'true',
+        'populate[defaultOgImage]': 'true',
         'populate[paymentMethods][populate][icon]': 'true',
       },
     }

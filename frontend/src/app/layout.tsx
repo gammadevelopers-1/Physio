@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Noto_Sans_Arabic } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
-import { getSiteSettings } from "@/lib/strapi";
+import { getSiteSettings, getStrapiMediaUrl } from "@/lib/strapi";
 
 const META_PIXEL_ID = "1956469491660011";
 const GA4_ID = "G-Z9DZXJQCWY";
@@ -20,11 +20,43 @@ const notoSansArabic = Noto_Sans_Arabic({
   weight: ["400", "500", "600", "700"],
 });
 
-export const metadata: Metadata = {
-  title: "PhysioGuidance - Health Training & eLearning Courses",
-  description:
-    "Delivering NELC-compliant training, accredited programs, and live learning experiences for the health sector.",
-};
+const DEFAULT_TITLE = "PhysioGuidance - Health Training & eLearning Courses";
+const DEFAULT_DESCRIPTION =
+  "Delivering NELC-compliant training, accredited programs, and live learning experiences for the health sector.";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings().catch(() => null);
+  const faviconUrl = settings?.favicon?.url ? getStrapiMediaUrl(settings.favicon.url) : null;
+  const ogImageUrl = settings?.defaultOgImage?.url
+    ? getStrapiMediaUrl(settings.defaultOgImage.url)
+    : null;
+
+  return {
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    ...(faviconUrl && { icons: { icon: faviconUrl, shortcut: faviconUrl, apple: faviconUrl } }),
+    ...(ogImageUrl && {
+      openGraph: {
+        title: DEFAULT_TITLE,
+        description: DEFAULT_DESCRIPTION,
+        images: [
+          {
+            url: ogImageUrl,
+            width: settings?.defaultOgImage?.width || 1200,
+            height: settings?.defaultOgImage?.height || 630,
+            alt: settings?.defaultOgImage?.alternativeText || DEFAULT_TITLE,
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: DEFAULT_TITLE,
+        description: DEFAULT_DESCRIPTION,
+        images: [ogImageUrl],
+      },
+    }),
+  };
+}
 
 const THEME_DEFAULTS = {
   primary: "#a37f49",

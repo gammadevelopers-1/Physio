@@ -541,7 +541,15 @@ function ManageRolesModal({
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [confirmingRemoveRole, setConfirmingRemoveRole] = useState<string | null>(null);
 
-  const availableRoles = ALL_ROLES.filter((r) => !userRoles.includes(r));
+  // Strict role isolation: STUDENT and INSTRUCTOR are mutually exclusive.
+  const hasStudent = userRoles.includes("STUDENT");
+  const hasInstructor = userRoles.includes("INSTRUCTOR");
+  const availableRoles = ALL_ROLES.filter((r) => {
+    if (userRoles.includes(r)) return false;
+    if (r === "STUDENT" && hasInstructor) return false;
+    if (r === "INSTRUCTOR" && hasStudent) return false;
+    return true;
+  });
 
   const handleAddRole = async (role: string) => {
     setActionInProgress(role);
@@ -714,6 +722,11 @@ function ManageRolesModal({
                 </button>
               ))}
             </div>
+            {(hasStudent || hasInstructor) && (
+              <p className="text-xs text-[var(--color-text-secondary)] mt-2 italic">
+                Student and Instructor roles are mutually exclusive — remove the existing one to add the other.
+              </p>
+            )}
           </div>
         )}
 

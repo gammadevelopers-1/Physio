@@ -9,7 +9,7 @@ import { eq } from 'drizzle-orm';
 import * as argon2 from 'argon2';
 import { randomBytes } from 'crypto';
 import { db } from '../../database';
-import { users, ROLE_NAMES } from '../../database/schema';
+import { users, userRoles, roles, ROLE_NAMES } from '../../database/schema';
 import { EmailVerificationService } from '../auth/email-verification.service';
 import { RecaptchaService } from '../auth/recaptcha.service';
 import { RoleRequestsService } from '../role-requests/role-requests.service';
@@ -93,6 +93,40 @@ export class TrainerApplicationsService {
       .limit(1);
 
     if (existing) {
+      // Strict role isolation: block if the email already belongs to a user
+      // with any STUDENT, INSTRUCTOR, or staff role. Only placeholder users
+      // (zero roles in user_roles) are allowed to re-submit a pending application.
+      const existingRoles = await db
+        .select({ name: roles.name })
+        .from(userRoles)
+        .innerJoin(roles, eq(roles.id, userRoles.roleId))
+        .where(eq(userRoles.userId, existing.id));
+      const roleNames = existingRoles.map((r) => r.name);
+
+      if (roleNames.includes(ROLE_NAMES.STUDENT)) {
+        throw new ConflictException(
+          'This email is already registered as a student. Please use a different email to apply as a trainer.',
+        );
+      }
+      if (roleNames.includes(ROLE_NAMES.INSTRUCTOR)) {
+        throw new ConflictException(
+          'This email is already registered as an instructor.',
+        );
+      }
+      const STAFF_ROLES: string[] = [
+        ROLE_NAMES.TEACHING_ASSISTANT,
+        ROLE_NAMES.MANAGER,
+        ROLE_NAMES.ADMIN,
+        ROLE_NAMES.FINANCE,
+        ROLE_NAMES.SUPPORT,
+        ROLE_NAMES.SUPER_ADMIN,
+      ];
+      if (roleNames.some((r) => STAFF_ROLES.includes(r))) {
+        throw new ConflictException(
+          'This email belongs to a staff account and cannot be used for a trainer application.',
+        );
+      }
+
       userId = existing.id;
     } else {
       // Create placeholder user with random unguessable password.

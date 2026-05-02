@@ -291,6 +291,20 @@ export class AuthService {
       throw new ConflictException(`User already has the ${roleName} role`);
     }
 
+    // Strict role isolation: STUDENT and INSTRUCTOR are mutually exclusive.
+    if (roleName === ROLE_NAMES.STUDENT || roleName === ROLE_NAMES.INSTRUCTOR) {
+      const conflictingRole =
+        roleName === ROLE_NAMES.STUDENT
+          ? ROLE_NAMES.INSTRUCTOR
+          : ROLE_NAMES.STUDENT;
+      const currentRoles = await this.getUserRoles(userId);
+      if (currentRoles.includes(conflictingRole as RoleName)) {
+        throw new ConflictException(
+          `User already has the ${conflictingRole} role. Student and Instructor are mutually exclusive — remove the existing role first.`,
+        );
+      }
+    }
+
     // Assign role
     await db.insert(userRoles).values({
       userId,

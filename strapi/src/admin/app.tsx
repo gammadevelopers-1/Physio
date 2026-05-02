@@ -1,4 +1,6 @@
 import type { StrapiApp } from '@strapi/strapi/admin';
+// @ts-expect-error — Vite handles binary asset imports at build time
+import favicon from './extensions/favicon.ico';
 
 const RTL_STYLE_ID = 'strapi-rtl-override';
 
@@ -75,6 +77,9 @@ function applyDirection() {
 export default {
   config: {
     locales: ['ar'],
+    head: {
+      favicon,
+    },
   },
   bootstrap(_app: StrapiApp) {
     // Inject the RTL stylesheet immediately

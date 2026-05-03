@@ -67,7 +67,8 @@
         "blocks.treatment-gallery-block",
         "blocks.upcoming-events-block",
         "blocks.image-banner-block",
-        "blocks.video-embed"
+        "blocks.video-embed",
+        "blocks.featured-section-block"
       ],
       "pluginOptions": {
         "i18n": {
@@ -128,7 +129,6 @@
     },
     "heroTitle": {
       "type": "string",
-      "required": true,
       "pluginOptions": {
         "i18n": {
           "localized": true
@@ -153,7 +153,6 @@
     },
     "heroDescription": {
       "type": "text",
-      "required": true,
       "pluginOptions": {
         "i18n": {
           "localized": true

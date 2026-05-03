@@ -43,6 +43,9 @@ const BLOCKS_POPULATE_PARAMS: Record<string, string> = {
   // Image Banner Block - has media (image) + single component (button)
   'populate[blocks][on][blocks.image-banner-block][populate][image]': 'true',
   'populate[blocks][on][blocks.image-banner-block][populate][button]': 'true',
+  // Featured Section Block - has multi media (images) + single component (ctaButton)
+  'populate[blocks][on][blocks.featured-section-block][populate][images]': 'true',
+  'populate[blocks][on][blocks.featured-section-block][populate][ctaButton]': 'true',
   'populate[blocks][on][blocks.instructors-grid][populate]': '*',
   'populate[blocks][on][blocks.testimonials-carousel][populate]': '*',
   'populate[blocks][on][blocks.rich-text-block][populate]': '*',

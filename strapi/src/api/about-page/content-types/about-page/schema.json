@@ -67,7 +67,8 @@
         "blocks.treatment-gallery-block",
         "blocks.upcoming-events-block",
         "blocks.image-banner-block",
-        "blocks.video-embed"
+        "blocks.video-embed",
+        "blocks.featured-section-block"
       ],
       "pluginOptions": {
         "i18n": {
@@ -95,9 +96,10 @@
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
-
     "heroTitle": {
       "type": "string",
       "pluginOptions": {
@@ -150,15 +152,18 @@
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
     "heroImageMobile": {
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
-
     "complianceTitle": {
       "type": "string",
       "pluginOptions": {
@@ -193,7 +198,6 @@
         }
       }
     },
-
     "learningTitle": {
       "type": "string",
       "pluginOptions": {
@@ -228,7 +232,6 @@
         }
       }
     },
-
     "capabilitiesTitle": {
       "type": "string",
       "pluginOptions": {

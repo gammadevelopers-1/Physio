@@ -19,7 +19,11 @@
     "title": {
       "type": "string",
       "required": true,
-      "pluginOptions": { "i18n": { "localized": true } }
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "slug": {
       "type": "uid",
@@ -28,11 +32,19 @@
     },
     "metaTitle": {
       "type": "string",
-      "pluginOptions": { "i18n": { "localized": true } }
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "metaDescription": {
       "type": "text",
-      "pluginOptions": { "i18n": { "localized": true } }
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "blocks": {
       "type": "dynamiczone",
@@ -85,7 +97,8 @@
         "blocks.treatment-gallery-block",
         "blocks.upcoming-events-block",
         "blocks.image-banner-block",
-        "blocks.video-embed"
+        "blocks.video-embed",
+        "blocks.featured-section-block"
       ]
     }
   }

@@ -792,6 +792,18 @@ export interface ImageBannerBlockData extends BaseBlock {
   alignment: 'left' | 'center' | 'right';
 }
 
+export interface FeaturedSectionBlockData extends BaseBlock {
+  __component: 'blocks.featured-section-block';
+  title: string | null;
+  description: string | null;
+  ctaButton: ButtonLink | null;
+  images: StrapiMedia[] | null;
+  imagePosition: 'left' | 'right';
+  showArrows: boolean;
+  showDots: boolean;
+  autoPlay: boolean;
+}
+
 export interface InstructorsGridBlockData extends BaseBlock {
   __component: 'blocks.instructors-grid';
   title: string | null;
@@ -1018,6 +1030,7 @@ export type DynamicZoneBlock =
   | FeaturedCoursesGridBlockData
   | CTABannerBlockData
   | ImageBannerBlockData
+  | FeaturedSectionBlockData
   | InstructorsGridBlockData
   | TestimonialsCarouselBlockData
   | RichTextBlockData

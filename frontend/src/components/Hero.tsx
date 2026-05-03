@@ -42,6 +42,10 @@ const Hero = ({ data }: HeroProps) => {
   const hasAnyMobileContent = !!(titleMobile || description || button1Label || button2Label);
   const hasAnyDesktopContent = !!(title || titleLine2 || description || button1Label || button2Label);
   const hasButtons = !!(button1Label || button2Label);
+  const hasAnyHeroContent =
+    hasAnyMobileContent || hasAnyDesktopContent || !!videoUrl || heroPartnerLogos.length > 0;
+
+  if (!hasAnyHeroContent) return null;
 
   return (
     <section className="relative w-full">

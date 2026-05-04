@@ -349,7 +349,7 @@ export default function CheckoutContent() {
                         placeholder={t("payment.cardNumber")}
                         value={cardNumber}
                         onChange={(e) => setCardNumber(e.target.value)}
-                        className={`w-full h-12 px-[14px] bg-white border border-[var(--color-border-subtle)] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[var(--color-border-subtle)] ${isRTL ? "text-right" : "text-left"}`}
+                        className={`w-full h-12 px-[14px] bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[var(--color-border-subtle)] ${isRTL ? "text-right" : "text-left"}`}
                         style={{ boxShadow: "0px 1px 2px 0px rgba(10,13,18,0.05)" }}
                         dir="ltr"
                       />
@@ -359,7 +359,7 @@ export default function CheckoutContent() {
                           placeholder={t("payment.expiry")}
                           value={expiry}
                           onChange={(e) => setExpiry(e.target.value)}
-                          className={`w-full h-12 px-[14px] bg-white border border-[var(--color-border-subtle)] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[var(--color-border-subtle)] ${isRTL ? "text-right" : "text-left"}`}
+                          className={`w-full h-12 px-[14px] bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[var(--color-border-subtle)] ${isRTL ? "text-right" : "text-left"}`}
                           style={{ boxShadow: "0px 1px 2px 0px rgba(10,13,18,0.05)" }}
                           dir="ltr"
                         />
@@ -368,7 +368,7 @@ export default function CheckoutContent() {
                           placeholder={t("payment.cvc")}
                           value={cvc}
                           onChange={(e) => setCvc(e.target.value)}
-                          className={`w-full h-12 px-[14px] bg-white border border-[var(--color-border-subtle)] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[var(--color-border-subtle)] ${isRTL ? "text-right" : "text-left"}`}
+                          className={`w-full h-12 px-[14px] bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[var(--color-border-subtle)] ${isRTL ? "text-right" : "text-left"}`}
                           style={{ boxShadow: "0px 1px 2px 0px rgba(10,13,18,0.05)" }}
                           dir="ltr"
                         />
@@ -378,7 +378,7 @@ export default function CheckoutContent() {
                         placeholder={t("payment.nameOnCard")}
                         value={nameOnCard}
                         onChange={(e) => setNameOnCard(e.target.value)}
-                        className={`w-full h-12 px-[14px] bg-white border border-[var(--color-border-subtle)] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[var(--color-border-subtle)] ${isRTL ? "text-right" : "text-left"}`}
+                        className={`w-full h-12 px-[14px] bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[var(--color-border-subtle)] ${isRTL ? "text-right" : "text-left"}`}
                         style={{ boxShadow: "0px 1px 2px 0px rgba(10,13,18,0.05)" }}
                         dir={isRTL ? "rtl" : "ltr"}
                       />

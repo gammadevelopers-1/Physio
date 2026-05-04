@@ -135,7 +135,7 @@ const BlogResultCard = ({ blog, isRTL, searchQuery }: BlogResultCardProps) => {
 
   return (
     <Link href={`/${locale}/blogs/${blog.slug}`} className="group block">
-      <div className="flex flex-col gap-4 p-4 bg-[var(--color-surface-card)] border border-[var(--color-border-subtle)] rounded-2xl hover:shadow-lg hover:border-[var(--color-primary)]/30 transition-all duration-300">
+      <div className="flex flex-col gap-4 p-4 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-2xl hover:shadow-lg hover:border-[var(--color-primary)]/30 transition-all duration-300">
         {/* Image */}
         <div className="relative h-[140px] overflow-hidden rounded-xl">
           <span className={`absolute top-3 ${isRTL ? "right-3" : "left-3"} z-10 bg-[var(--color-primary)] text-white text-xs px-2.5 py-1 rounded-full font-medium`}>
@@ -164,7 +164,7 @@ const BlogResultCard = ({ blog, isRTL, searchQuery }: BlogResultCardProps) => {
         />
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-[var(--color-border-subtle)]">
+        <div className="flex items-center justify-between pt-2 border-t border-[var(--color-border)]">
           <div className="flex items-center gap-1 text-[var(--color-text-secondary)]">
             <Clock className="w-4 h-4" />
             <span className="text-sm">{readTime}</span>

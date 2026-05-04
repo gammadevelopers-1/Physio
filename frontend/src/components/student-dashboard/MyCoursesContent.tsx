@@ -394,7 +394,7 @@ const MyCoursesContent = () => {
                       return (
                         <div
                           key={course.id}
-                          className="group bg-[var(--color-surface-card)] border border-[var(--color-border-subtle)] rounded-2xl overflow-hidden relative flex flex-col shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                          className="group bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-2xl overflow-hidden relative flex flex-col shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
                         >
                           {/* Favourite Button */}
                           <button

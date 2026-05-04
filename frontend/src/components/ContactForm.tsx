@@ -397,7 +397,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                       <button
                         type="button"
                         onClick={() => setIsCountryOpen(!isCountryOpen)}
-                        className={`h-full px-3.5 flex items-center gap-1 cursor-pointer ${isRTL ? "border-l border-[var(--color-border-subtle)]" : "border-r border-[var(--color-border-subtle)]"}`}
+                        className={`h-full px-3.5 flex items-center gap-1 cursor-pointer ${isRTL ? "border-l border-[var(--color-border)]" : "border-r border-[var(--color-border)]"}`}
                       >
                         <span
                           className="text-[var(--color-text-primary)] text-sm md:text-base"

@@ -133,7 +133,7 @@ const GlobalSearchBar = ({
         className={`relative flex items-center ${styles.container} w-full bg-[var(--color-surface-card)] rounded-xl border transition-all duration-200 ${
           isFocused
             ? "border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/20"
-            : "border-[var(--color-border-subtle)]"
+            : "border-[var(--color-border)]"
         }`}
       >
         {/* Search Icon Button */}

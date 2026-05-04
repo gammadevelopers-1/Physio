@@ -80,7 +80,7 @@ const Modal = ({ title, isRTL, onClose, children }: { title: string; isRTL: bool
 );
 
 const inputCls = (isRTL: boolean) =>
-  `w-full h-11 px-3 bg-white border border-[var(--color-border-subtle)] rounded-lg outline-none focus:border-[var(--outline-focused)] text-sm ${isRTL ? "text-right" : ""}`;
+  `w-full h-11 px-3 bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] text-sm ${isRTL ? "text-right" : ""}`;
 
 const SelectField = ({
   label,
@@ -372,7 +372,7 @@ const SectionHeader = ({ title, onAdd, isRTL }: { title: string; onAdd: () => vo
 );
 
 const EmptyState = ({ message, onAdd, isRTL }: { message: string; onAdd: () => void; isRTL: boolean }) => (
-  <div className="border border-dashed border-[var(--color-border-subtle)] rounded-xl py-6 flex flex-col items-center gap-3">
+  <div className="border border-dashed border-[var(--color-border)] rounded-xl py-6 flex flex-col items-center gap-3">
     <FolderPlus className="w-7 h-7 text-[var(--color-text-secondary)]" />
     <p className="text-sm text-[var(--color-text-secondary)]">{message}</p>
     <button
@@ -395,13 +395,13 @@ const Card = ({
   onEdit: () => void;
   onDelete: () => void;
 }) => (
-  <div className="border border-[var(--color-border-subtle)] rounded-xl p-4 flex items-start justify-between gap-3 mb-3 bg-white">
+  <div className="border border-[var(--color-border)] rounded-xl p-4 flex items-start justify-between gap-3 mb-3 bg-white">
     <div className="flex-1 min-w-0">{children}</div>
     <div className="flex flex-col gap-2 shrink-0">
-      <button type="button" onClick={onEdit} className="p-1.5 rounded border border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)] transition-colors">
+      <button type="button" onClick={onEdit} className="p-1.5 rounded border border-[var(--color-border)] hover:bg-[var(--color-surface-page)] transition-colors">
         <Pencil className="w-4 h-4 text-[var(--color-text-secondary)]" />
       </button>
-      <button type="button" onClick={onDelete} className="p-1.5 rounded border border-[var(--color-border-subtle)] hover:bg-red-50 hover:border-red-200 transition-colors">
+      <button type="button" onClick={onDelete} className="p-1.5 rounded border border-[var(--color-border)] hover:bg-red-50 hover:border-red-200 transition-colors">
         <Trash2 className="w-4 h-4 text-red-500" />
       </button>
     </div>

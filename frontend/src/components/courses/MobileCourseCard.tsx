@@ -93,7 +93,7 @@ const MobileCourseCard = ({
   return (
     <Link
       href={`/courses/${course.id}`}
-      className="group flex flex-col w-full bg-[var(--color-surface-card)] border border-[var(--color-border-subtle)] rounded-2xl overflow-hidden shadow-sm active:scale-[0.99] transition-transform"
+      className="group flex flex-col w-full bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-2xl overflow-hidden shadow-sm active:scale-[0.99] transition-transform"
     >
       {/* Hero image — 16:9 */}
       <div className="relative w-full aspect-[16/9] bg-[var(--color-surface-page)] overflow-hidden">

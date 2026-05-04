@@ -46,7 +46,7 @@ const RecentSearches = ({
         {searches.map((search) => (
           <div
             key={search}
-            className="group flex items-center gap-1 px-3 py-1.5 bg-[var(--color-surface-card)] border border-[var(--color-border-subtle)] rounded-full transition-all hover:border-[var(--color-primary)]"
+            className="group flex items-center gap-1 px-3 py-1.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-full transition-all hover:border-[var(--color-primary)]"
           >
             <button
               onClick={() => onSearchClick(search)}

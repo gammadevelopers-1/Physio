@@ -100,7 +100,7 @@ const AdvancedFilters = ({
           <select
             value={filters.sortBy}
             onChange={(e) => updateFilter("sortBy", e.target.value as FilterState["sortBy"])}
-            className="px-3 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border-subtle)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] cursor-pointer"
+            className="px-3 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] cursor-pointer"
           >
             {sortOptions.map(option => (
               <option key={option.key} value={option.key}>{option.label}</option>
@@ -146,9 +146,9 @@ const AdvancedFilters = ({
 
       {/* Advanced Filter Sections - Only show for courses */}
       {filters.contentType !== "blogs" && (
-        <div className="space-y-3 border-t border-[var(--color-border-subtle)] pt-4">
+        <div className="space-y-3 border-t border-[var(--color-border)] pt-4">
           {/* Course Type Filter */}
-          <div className="border border-[var(--color-border-subtle)] rounded-xl overflow-hidden">
+          <div className="border border-[var(--color-border)] rounded-xl overflow-hidden">
             <button
               onClick={() => toggleSection("courseType")}
               className="w-full flex items-center justify-between px-4 py-3 bg-[var(--color-surface-card)] hover:bg-[var(--color-border-subtle)] transition-colors"
@@ -178,7 +178,7 @@ const AdvancedFilters = ({
                       type="checkbox"
                       checked={filters.courseTypes.includes(type)}
                       onChange={() => toggleArrayFilter("courseTypes", type)}
-                      className="w-5 h-5 rounded border-[var(--color-border-subtle)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                      className="w-5 h-5 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                     />
                     <span className="text-sm text-[var(--color-text-primary)]">
                       {isRTL ? COURSE_TYPES_AR[type] : type}
@@ -190,7 +190,7 @@ const AdvancedFilters = ({
           </div>
 
           {/* Certification Filter */}
-          <div className="border border-[var(--color-border-subtle)] rounded-xl overflow-hidden">
+          <div className="border border-[var(--color-border)] rounded-xl overflow-hidden">
             <button
               onClick={() => toggleSection("certification")}
               className="w-full flex items-center justify-between px-4 py-3 bg-[var(--color-surface-card)] hover:bg-[var(--color-border-subtle)] transition-colors"
@@ -220,7 +220,7 @@ const AdvancedFilters = ({
                       type="checkbox"
                       checked={filters.certifications.includes(cert)}
                       onChange={() => toggleArrayFilter("certifications", cert)}
-                      className="w-5 h-5 rounded border-[var(--color-border-subtle)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                      className="w-5 h-5 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                     />
                     <span className="text-sm text-[var(--color-text-primary)]">{cert}</span>
                   </label>
@@ -230,7 +230,7 @@ const AdvancedFilters = ({
           </div>
 
           {/* Price Filter */}
-          <div className="border border-[var(--color-border-subtle)] rounded-xl overflow-hidden">
+          <div className="border border-[var(--color-border)] rounded-xl overflow-hidden">
             <button
               onClick={() => toggleSection("price")}
               className="w-full flex items-center justify-between px-4 py-3 bg-[var(--color-surface-card)] hover:bg-[var(--color-border-subtle)] transition-colors"
@@ -261,7 +261,7 @@ const AdvancedFilters = ({
                       name="price"
                       checked={filters.priceRange === option.key}
                       onChange={() => updateFilter("priceRange", option.key)}
-                      className="w-5 h-5 border-[var(--color-border-subtle)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                      className="w-5 h-5 border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                     />
                     <span className="text-sm text-[var(--color-text-primary)]">{option.label}</span>
                   </label>

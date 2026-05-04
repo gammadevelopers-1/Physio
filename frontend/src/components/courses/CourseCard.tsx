@@ -86,7 +86,7 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
   return (
     <Link
       href={`/courses/${course.id}`}
-      className="group flex flex-col w-full h-full bg-[var(--color-surface-card)] border border-[var(--color-border-subtle)] rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+      className="group flex flex-col w-full h-full bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
     >
       {/* Hero image — 16:9 */}
       <div className="relative w-full aspect-[16/9] bg-[var(--color-surface-page)] overflow-hidden">

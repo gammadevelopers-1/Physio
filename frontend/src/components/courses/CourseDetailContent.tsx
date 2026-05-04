@@ -1162,7 +1162,7 @@ const CourseDetailContent = ({
 
                     {/* Tabby Payment — only for PAID courses */}
                     {!apiIsFree && (
-                      <div className="border border-[var(--color-border-subtle)] rounded-xl p-4 mb-4">
+                      <div className="border border-[var(--color-border)] rounded-xl p-4 mb-4">
                         <div className="flex items-start justify-between">
                           <div className={isRTL ? "text-right" : "text-left"}>
                             <p className="text-sm text-[var(--color-text-secondary)]">
@@ -1448,7 +1448,7 @@ const CourseDetailContent = ({
 
             {/* Tabby Payment — only for PAID courses */}
             {!apiIsFree && (
-              <div className="border border-[var(--color-border-subtle)] rounded-xl p-3 mb-4">
+              <div className="border border-[var(--color-border)] rounded-xl p-3 mb-4">
                 <div className="flex items-start justify-between">
                   <div className={isRTL ? "text-right" : "text-left"}>
                     <p className="text-sm text-[var(--color-text-secondary)]">

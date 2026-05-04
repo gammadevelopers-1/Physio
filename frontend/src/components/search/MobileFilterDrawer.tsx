@@ -44,7 +44,7 @@ const MobileFilterDrawer = ({
       {/* Filter Toggle Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-border-subtle)] rounded-xl text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-card)] transition-colors"
+        className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-card)] transition-colors"
       >
         <SlidersHorizontal className="w-5 h-5" />
         <span>{t("filtersLabel")}</span>
@@ -77,7 +77,7 @@ const MobileFilterDrawer = ({
         </div>
 
         {/* Drawer Header */}
-        <div className="flex items-center justify-between px-5 pb-4 border-b border-[var(--color-border-subtle)]">
+        <div className="flex items-center justify-between px-5 pb-4 border-b border-[var(--color-border)]">
           <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
             {t("filtersLabel")}
           </h2>
@@ -101,7 +101,7 @@ const MobileFilterDrawer = ({
         </div>
 
         {/* Apply Button */}
-        <div className="px-5 py-4 border-t border-[var(--color-border-subtle)] bg-[var(--color-surface-card)]">
+        <div className="px-5 py-4 border-t border-[var(--color-border)] bg-[var(--color-surface-card)]">
           <button
             onClick={() => setIsOpen(false)}
             className="w-full py-3.5 btn-gold text-[var(--color-button-text)] font-medium rounded-xl transition-colors"

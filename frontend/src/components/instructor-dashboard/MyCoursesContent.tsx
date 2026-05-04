@@ -340,7 +340,7 @@ const MyCoursesContent = () => {
                         return (
                           <div
                             key={course.id}
-                            className="group bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border-subtle)] overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col"
+                            className="group bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col"
                           >
                             {/* Hero image — 16:9 */}
                             <div className="relative w-full aspect-[16/9] bg-[var(--color-surface-page)] overflow-hidden">

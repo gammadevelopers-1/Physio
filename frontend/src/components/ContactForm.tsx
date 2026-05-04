@@ -74,7 +74,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
       className="overflow-hidden bg-[var(--color-border-subtle)] md:bg-[var(--color-surface-page)]"
     >
       <div
-        className="flex flex-col max-w-[1312px] mx-auto px-4 py-16 md:px-16 md:py-20"
+        className="flex flex-col max-w-[1312px] mx-auto px-4 md:px-16 py-12 lg:py-20"
       >
         {/* Main Content: Contact Info + Form */}
         <div className="flex flex-col md:flex-row md:gap-20 md:items-stretch">

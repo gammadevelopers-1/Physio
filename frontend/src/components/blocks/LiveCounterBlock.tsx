@@ -129,7 +129,7 @@ export function LiveCounterBlock({ data }: LiveCounterBlockProps) {
 
   return (
     <section
-      className="px-4 lg:px-16 py-12 lg:py-16"
+      className="px-4 lg:px-16 py-12 lg:py-20"
       style={{ backgroundColor: data.backgroundColor || "transparent" }}
     >
       <div className="max-w-[1280px] mx-auto">

@@ -42,7 +42,7 @@ export function ImageBannerBlock({ data }: ImageBannerBlockProps) {
   const imageHeight = data.image.height || 900;
 
   return (
-    <section className="w-full bg-[var(--color-surface-page)] px-4 md:px-16 py-10 md:py-16">
+    <section className="w-full bg-[var(--color-surface-page)] px-4 md:px-16 py-12 lg:py-20">
       <div className={`mx-auto w-full ${widthClass}`}>
         <div className={`flex flex-col gap-6 ${alignClass}`}>
           <div className="w-full">

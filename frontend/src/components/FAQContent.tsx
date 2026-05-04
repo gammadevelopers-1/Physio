@@ -33,7 +33,7 @@ export default function FAQContent({ strapiData }: FAQContentProps) {
   };
 
   return (
-    <section className="bg-[var(--color-surface-page)] px-4 md:px-16 py-12 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
+    <section className="bg-[var(--color-surface-page)] px-4 md:px-16 py-12 lg:py-20" dir={isRTL ? "rtl" : "ltr"}>
       <div className="max-w-[1312px] mx-auto">
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
           {/* Title and CTA Section — each element hides when Strapi is empty */}

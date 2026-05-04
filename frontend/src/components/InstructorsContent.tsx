@@ -101,7 +101,7 @@ export default function InstructorsContent({ instructors, strapiData }: Instruct
     <>
       {/* Meet the Experts Section - only rendered when Strapi has experts */}
       {experts.length > 0 && (
-        <section className="bg-[var(--color-surface-page)] px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
+        <section className="bg-[var(--color-surface-page)] px-4 md:px-16 py-12 lg:py-20" dir={isRTL ? "rtl" : "ltr"}>
           <div className="max-w-[1312px] mx-auto flex flex-col gap-12 items-center">
             {expertsTitle && (
               <h1
@@ -140,7 +140,7 @@ export default function InstructorsContent({ instructors, strapiData }: Instruct
 
       {/* Minds Behind Physioguidance Section - only rendered when Strapi has minds */}
       {minds.length > 0 && (
-        <section className="bg-[var(--color-surface-page)] px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
+        <section className="bg-[var(--color-surface-page)] px-4 md:px-16 py-12 lg:py-20" dir={isRTL ? "rtl" : "ltr"}>
           <div className="max-w-[1312px] mx-auto flex flex-col gap-12 items-center">
             {mindsTitle && (
               <h1

@@ -47,48 +47,52 @@ const Hero = ({ data }: HeroProps) => {
 
   if (!hasAnyHeroContent) return null;
 
+  const showVideoContainer = !!videoUrl || heroPartnerLogos.length > 0;
+
   return (
     <section className="relative w-full">
-      {/* Video Section - Responsive height */}
-      <div className={`relative ${videoContainerClass} w-full overflow-hidden bg-[var(--color-surface-page)]`}>
-        {videoUrl && (
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className={`absolute inset-0 w-full h-full ${videoObjectFitClass}`}
-          >
-            <source src={videoUrl} type="video/mp4" />
-          </video>
-        )}
+      {/* Video Section — only render when there's a video or partner logos */}
+      {showVideoContainer && (
+        <div className={`relative ${videoContainerClass} w-full overflow-hidden bg-[var(--color-surface-page)]`}>
+          {videoUrl && (
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className={`absolute inset-0 w-full h-full ${videoObjectFitClass}`}
+            >
+              <source src={videoUrl} type="video/mp4" />
+            </video>
+          )}
 
-        {heroPartnerLogos.length > 0 && (
-          <div
-            className={`absolute bottom-5 flex items-center gap-3 lg:gap-6 ${
-              isRTL ? "left-5 lg:left-16" : "right-5 lg:right-16"
-            }`}
-          >
-            {heroPartnerLogos.map((logo, index) => (
-              <div key={logo.id || index} className="flex items-center gap-3 lg:gap-6">
-                <div className="relative h-8 w-8 lg:h-16 lg:w-24">
-                  <Image
-                    src={getStrapiMediaUrl(logo.url)}
-                    alt={logo.alternativeText || `Partner ${index + 1}`}
-                    fill
-                    unoptimized
-                    className="object-contain"
-                    style={{ mixBlendMode: "multiply" }}
-                  />
+          {heroPartnerLogos.length > 0 && (
+            <div
+              className={`absolute bottom-5 flex items-center gap-3 lg:gap-6 ${
+                isRTL ? "left-5 lg:left-16" : "right-5 lg:right-16"
+              }`}
+            >
+              {heroPartnerLogos.map((logo, index) => (
+                <div key={logo.id || index} className="flex items-center gap-3 lg:gap-6">
+                  <div className="relative h-8 w-8 lg:h-16 lg:w-24">
+                    <Image
+                      src={getStrapiMediaUrl(logo.url)}
+                      alt={logo.alternativeText || `Partner ${index + 1}`}
+                      fill
+                      unoptimized
+                      className="object-contain"
+                      style={{ mixBlendMode: "multiply" }}
+                    />
+                  </div>
+                  {index < heroPartnerLogos.length - 1 && (
+                    <div className="h-5 lg:h-12 w-px bg-white/40" />
+                  )}
                 </div>
-                {index < heroPartnerLogos.length - 1 && (
-                  <div className="h-5 lg:h-12 w-px bg-white/40" />
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Content Section - only render when at least one piece of text/button is provided */}
       {(hasAnyMobileContent || hasAnyDesktopContent) && (

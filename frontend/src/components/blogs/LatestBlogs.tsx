@@ -22,7 +22,7 @@ const LatestBlogs = ({ blogs }: LatestBlogsProps) => {
   return (
     <>
       {/* Desktop */}
-      <section className="hidden lg:block bg-[#1a1a2e] py-16 px-16">
+      <section className="hidden lg:block bg-[#1a1a2e] py-12 lg:py-20 px-16">
         <div className="max-w-[1200px] mx-auto">
           <h2 className="font-semibold text-white mb-2" style={{ fontSize: "48px" }}>
             Latest Blogs

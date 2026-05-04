@@ -144,7 +144,7 @@ export default async function AboutPage({
 
       {/* Section 2: Compliance & Standards Section */}
       {hasCompliance && (
-        <section className="bg-[var(--color-surface-page)] px-4 py-12 md:px-12 md:py-20 lg:px-16 lg:py-24">
+        <section className="bg-[var(--color-surface-page)] px-4 md:px-12 lg:px-16 py-12 lg:py-20">
           <div className={`flex flex-col items-center justify-center max-w-[800px] mx-auto text-center ${isRTL ? "text-right" : ""}`}>
             {data?.complianceTitle && (
               <h2 className="text-[var(--on-surface-default)] mb-6 md:mb-8 text-[30px] lg:text-[48px] font-semibold leading-[100%] tracking-[-0.15px] lg:tracking-[-0.24px] text-center w-full">
@@ -185,7 +185,7 @@ export default async function AboutPage({
 
       {/* Section 3: Learning Experience Section */}
       {hasLearning && (
-        <section className="bg-[var(--color-surface-page)] px-4 py-12 md:px-12 md:py-20 lg:px-16 lg:py-24">
+        <section className="bg-[var(--color-surface-page)] px-4 md:px-12 lg:px-16 py-12 lg:py-20">
           <div className="flex flex-col items-center justify-center max-w-[1200px] mx-auto">
             {data?.learningTitle && (
               <h2 className="text-[var(--on-surface-default)] mb-3 md:mb-4 text-center text-[30px] lg:text-[48px] font-semibold leading-[100%] tracking-[-0.15px] lg:tracking-[-0.24px]">
@@ -255,7 +255,7 @@ export default async function AboutPage({
 
       {/* Section 4: Platform Capabilities Section */}
       {hasCapabilities && (
-        <section className="bg-[var(--color-surface-page)] px-4 py-12 md:px-12 md:py-20 lg:px-16 lg:py-24">
+        <section className="bg-[var(--color-surface-page)] px-4 md:px-12 lg:px-16 py-12 lg:py-20">
           <div className="flex flex-col items-center justify-center max-w-[1200px] mx-auto">
             {data?.capabilitiesTitle && (
               <h2 className="text-[var(--on-surface-default)] mb-3 md:mb-4 text-center text-[30px] lg:text-[48px] font-semibold leading-[100%] tracking-[-0.15px] lg:tracking-[-0.24px]">

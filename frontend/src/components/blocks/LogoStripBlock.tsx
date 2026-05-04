@@ -19,7 +19,7 @@ export function LogoStripBlock({ data }: LogoStripBlockProps) {
   if (logos.length === 0) return null;
 
   return (
-    <section className="py-8 md:py-16 px-4 md:px-0 overflow-hidden">
+    <section className="py-12 lg:py-20 px-4 md:px-0 overflow-hidden">
       <div className="flex flex-col gap-6 md:gap-10 items-center">
         {/* Optional title */}
         {data.title && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 interface WhatsAppChatWidgetProps {
   enabled?: boolean | null;
@@ -30,6 +30,11 @@ const COPY: Record<string, { placeholder: string; send: string; online: string; 
 
 const sanitizePhone = (raw: string) => raw.replace(/[^\d]/g, "");
 
+const STORAGE_KEY = "physioguidance:whatsapp-position";
+const DRAG_THRESHOLD = 5;
+const VIEWPORT_PAD = 8;
+const POPUP_GAP = 12;
+
 const WhatsAppChatWidget = ({
   enabled,
   phoneNumber,
@@ -40,11 +45,54 @@ const WhatsAppChatWidget = ({
 }: WhatsAppChatWidgetProps) => {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+  const [hydrated, setHydrated] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const dragStartRef = useRef<{
+    pointerX: number;
+    pointerY: number;
+    posX: number;
+    posY: number;
+  } | null>(null);
+  const movedRef = useRef(false);
 
   const copy = COPY[locale] ?? COPY.en;
   const isRTL = locale === "ar";
   const cleanPhone = phoneNumber ? sanitizePhone(phoneNumber) : "";
+
+  // Load saved position from localStorage on mount
+  useEffect(() => {
+    setHydrated(true);
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed?.x === "number" && typeof parsed?.y === "number") {
+          setPosition(parsed);
+        }
+      }
+    } catch {
+      // ignore corrupted storage
+    }
+  }, []);
+
+  // Clamp button position to viewport on resize
+  useEffect(() => {
+    if (!position) return;
+    const onResize = () => {
+      const size = window.innerWidth < 1024 ? 48 : 56;
+      setPosition((p) => {
+        if (!p) return p;
+        return {
+          x: Math.max(VIEWPORT_PAD, Math.min(p.x, window.innerWidth - size - VIEWPORT_PAD)),
+          y: Math.max(VIEWPORT_PAD, Math.min(p.y, window.innerHeight - size - VIEWPORT_PAD)),
+        };
+      });
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [position]);
 
   useEffect(() => {
     if (open && textareaRef.current) {
@@ -52,6 +100,59 @@ const WhatsAppChatWidget = ({
       return () => window.clearTimeout(id);
     }
   }, [open]);
+
+  const onPointerDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!buttonRef.current) return;
+    buttonRef.current.setPointerCapture(e.pointerId);
+    movedRef.current = false;
+    const rect = buttonRef.current.getBoundingClientRect();
+    dragStartRef.current = {
+      pointerX: e.clientX,
+      pointerY: e.clientY,
+      posX: rect.left,
+      posY: rect.top,
+    };
+  }, []);
+
+  const onPointerMove = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!dragStartRef.current) return;
+    const dx = e.clientX - dragStartRef.current.pointerX;
+    const dy = e.clientY - dragStartRef.current.pointerY;
+    if (!movedRef.current && Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) {
+      return;
+    }
+    movedRef.current = true;
+    const size = window.innerWidth < 1024 ? 48 : 56;
+    const newX = dragStartRef.current.posX + dx;
+    const newY = dragStartRef.current.posY + dy;
+    setPosition({
+      x: Math.max(VIEWPORT_PAD, Math.min(newX, window.innerWidth - size - VIEWPORT_PAD)),
+      y: Math.max(VIEWPORT_PAD, Math.min(newY, window.innerHeight - size - VIEWPORT_PAD)),
+    });
+  }, []);
+
+  const onPointerUp = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+    if (buttonRef.current?.hasPointerCapture(e.pointerId)) {
+      buttonRef.current.releasePointerCapture(e.pointerId);
+    }
+    if (movedRef.current && position) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(position));
+      } catch {
+        // ignore storage failure
+      }
+    }
+    dragStartRef.current = null;
+  }, [position]);
+
+  const handleButtonClick = useCallback(() => {
+    if (movedRef.current) {
+      // suppress click immediately following a drag
+      movedRef.current = false;
+      return;
+    }
+    setOpen((v) => !v);
+  }, []);
 
   if (!enabled || !cleanPhone) return null;
 
@@ -76,13 +177,42 @@ const WhatsAppChatWidget = ({
   const displayGreeting = greeting?.trim() || copy.defaultGreeting;
   const displayReply = replyTime?.trim() || copy.defaultReply;
 
+  // Compute popup position when button has been dragged.
+  // If button is in upper half of viewport, popup opens below; otherwise above.
+  // Horizontal: same x as button, clamped so popup stays within viewport.
+  const popupStyle: React.CSSProperties | undefined = (() => {
+    if (!hydrated || !position || typeof window === "undefined") return undefined;
+    const buttonSize = window.innerWidth < 1024 ? 48 : 56;
+    const popupMaxWidth = Math.min(360, window.innerWidth - 24);
+    const popupBelow = position.y < window.innerHeight / 2;
+    const left = Math.max(
+      VIEWPORT_PAD,
+      Math.min(position.x, window.innerWidth - popupMaxWidth - VIEWPORT_PAD),
+    );
+    if (popupBelow) {
+      return { left, top: position.y + buttonSize + POPUP_GAP, right: "auto", bottom: "auto" };
+    }
+    return {
+      left,
+      bottom: window.innerHeight - position.y + POPUP_GAP,
+      right: "auto",
+      top: "auto",
+    };
+  })();
+
+  const buttonStyle: React.CSSProperties | undefined = (hydrated && position)
+    ? { left: position.x, top: position.y, right: "auto", bottom: "auto" }
+    : undefined;
+
   return (
     <>
       {/* Chat Popup */}
       {open && (
         <div
-          className="fixed z-[9998] bottom-24 end-6 w-[calc(100vw-3rem)] max-w-[360px] max-h-[calc(100vh-8rem)] flex flex-col rounded-2xl overflow-hidden shadow-2xl"
-          style={{ direction: isRTL ? "rtl" : "ltr" }}
+          className={`fixed z-[9998] w-[calc(100vw-3rem)] max-w-[360px] max-h-[calc(100vh-8rem)] flex flex-col rounded-2xl overflow-hidden shadow-2xl ${
+            popupStyle ? "" : "bottom-24 end-6"
+          }`}
+          style={{ direction: isRTL ? "rtl" : "ltr", ...popupStyle }}
           role="dialog"
           aria-label="WhatsApp chat"
         >
@@ -156,19 +286,27 @@ const WhatsAppChatWidget = ({
         </div>
       )}
 
-      {/* Floating Button */}
+      {/* Floating Button — draggable, position persists in localStorage */}
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleButtonClick}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
         aria-label={open ? "Close WhatsApp chat" : "Open WhatsApp chat"}
-        className="fixed z-[9999] bottom-6 end-6 w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#1ea952] transition-all flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105"
+        style={buttonStyle}
+        className={`fixed z-[9999] w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-[#25D366] hover:bg-[#1ea952] transition-colors flex items-center justify-center shadow-lg hover:shadow-xl touch-none cursor-grab active:cursor-grabbing select-none ${
+          buttonStyle ? "" : "bottom-6 end-6"
+        }`}
       >
         {open ? (
-          <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white">
+          <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white pointer-events-none">
             <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
           </svg>
         ) : (
-          <svg viewBox="0 0 24 24" className="w-7 h-7 fill-white">
+          <svg viewBox="0 0 24 24" className="w-6 h-6 lg:w-7 lg:h-7 fill-white pointer-events-none">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.262.489 1.694.626.712.226 1.36.194 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
           </svg>
         )}

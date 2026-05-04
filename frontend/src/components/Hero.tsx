@@ -30,12 +30,13 @@ const Hero = ({ data }: HeroProps) => {
         : "h-[370px] lg:h-[600px]";
   const videoObjectFitClass = heroVideoMode === "fullFit" ? "object-contain" : "object-cover";
 
-  const titleMobile = data?.heroTitleMobile || "";
-  const title = data?.heroTitle || "";
-  const titleLine2 = data?.heroTitleLine2 || "";
-  const description = data?.heroDescription || "";
-  const button1Label = data?.heroButton1Label || "";
-  const button2Label = data?.heroButton2Label || "";
+  // Trim so whitespace-only Strapi values count as empty.
+  const titleMobile = (data?.heroTitleMobile || "").trim();
+  const title = (data?.heroTitle || "").trim();
+  const titleLine2 = (data?.heroTitleLine2 || "").trim();
+  const description = (data?.heroDescription || "").trim();
+  const button1Label = (data?.heroButton1Label || "").trim();
+  const button2Label = (data?.heroButton2Label || "").trim();
   const button1Href = resolveHref(data?.heroButton1Link, locale);
   const button2Href = resolveHref(data?.heroButton2Link, locale);
 
@@ -94,12 +95,11 @@ const Hero = ({ data }: HeroProps) => {
         </div>
       )}
 
-      {/* Content Section - only render when at least one piece of text/button is provided */}
-      {(hasAnyMobileContent || hasAnyDesktopContent) && (
-        <div className="bg-[var(--color-surface-page)] px-4 lg:px-16 pt-8 pb-6 lg:py-20 overflow-hidden">
-          {/* Mobile/Tablet Layout */}
-          {hasAnyMobileContent && (
-            <div className="flex flex-col gap-4 lg:hidden">
+      {/* Mobile/Tablet content wrapper — gated separately so the section
+          collapses entirely when only desktop fields are filled. */}
+      {hasAnyMobileContent && (
+        <div className="lg:hidden bg-[var(--color-surface-page)] px-4 pt-8 pb-6 overflow-hidden">
+          <div className="flex flex-col gap-4">
               {titleMobile && (
                 <h1
                   className="text-[var(--color-text-primary)] font-semibold tracking-[-0.72px] leading-none"
@@ -148,12 +148,14 @@ const Hero = ({ data }: HeroProps) => {
                   )}
                 </div>
               )}
-            </div>
-          )}
+          </div>
+        </div>
+      )}
 
-          {/* Desktop Layout */}
-          {hasAnyDesktopContent && (
-            <div className="hidden lg:flex gap-20 items-start max-w-full">
+      {/* Desktop content wrapper — gated separately. */}
+      {hasAnyDesktopContent && (
+        <div className="hidden lg:block bg-[var(--color-surface-page)] px-16 py-20 overflow-hidden">
+          <div className="flex gap-20 items-start max-w-full">
               {(title || titleLine2) && (
                 <div className="flex-1 min-w-0">
                   <h1
@@ -202,8 +204,7 @@ const Hero = ({ data }: HeroProps) => {
                   )}
                 </div>
               )}
-            </div>
-          )}
+          </div>
         </div>
       )}
     </section>

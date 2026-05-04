@@ -260,7 +260,7 @@ const SessionsCalendarWidget = ({
             )}
             <button
               onClick={(e) => { e.stopPropagation(); onAttendance?.(session.id); }}
-              className="p-1 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+              className="p-1 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
               title={t("sessionsCalendar.attendance")}
             >
               <ClipboardCheck className="w-3 h-3" />
@@ -268,7 +268,7 @@ const SessionsCalendarWidget = ({
             {isScheduled && (
               <button
                 onClick={(e) => { e.stopPropagation(); onShareMaterials?.(session.id); }}
-                className="p-1 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+                className="p-1 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                 title={t("sessionsCalendar.shareMaterials")}
               >
                 <Upload className="w-3 h-3" />
@@ -293,7 +293,7 @@ const SessionsCalendarWidget = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigateWeek("prev")}
-            className="p-1.5 sm:p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+            className="p-1.5 sm:p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
             aria-label="Previous week"
           >
             {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -303,7 +303,7 @@ const SessionsCalendarWidget = ({
           </span>
           <button
             onClick={() => navigateWeek("next")}
-            className="p-1.5 sm:p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+            className="p-1.5 sm:p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
             aria-label="Next week"
           >
             {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}

@@ -189,7 +189,7 @@ const SearchPageContent = ({ strapiData }: SearchPageContentProps = {}) => {
                   <button
                     key={term}
                     onClick={() => handleSearch(term)}
-                    className="px-4 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-full text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-all duration-200"
+                    className="px-4 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-full text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-all duration-200"
                   >
                     {term}
                   </button>

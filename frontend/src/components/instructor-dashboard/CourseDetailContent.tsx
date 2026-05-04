@@ -1247,7 +1247,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                       suspended: "bg-[#FEF3C7] text-[#D97706]",
                                     };
                                     return (
-                                      <tr key={enrollment.id} className="border-b border-[#F3F4F6] hover:bg-[var(--color-surface-page)]">
+                                      <tr key={enrollment.id} className="border-b border-[#F3F4F6] hover:bg-[var(--color-border-subtle)]">
                                         <td className="px-3 py-3">
                                           <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                                             {enrollment.studentFirstName} {enrollment.studentLastName}
@@ -1298,7 +1298,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     <button
                                       onClick={() => setStudentsPage((p) => Math.max(1, p - 1))}
                                       disabled={studentsPage === 1}
-                                      className="p-1.5 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50"
+                                      className="p-1.5 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50"
                                     >
                                       <ChevronLeft className="w-3.5 h-3.5" />
                                     </button>
@@ -1308,7 +1308,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     <button
                                       onClick={() => setStudentsPage((p) => Math.min(studentsTotalPages, p + 1))}
                                       disabled={studentsPage === studentsTotalPages}
-                                      className="p-1.5 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50"
+                                      className="p-1.5 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50"
                                     >
                                       <ChevronRight className="w-3.5 h-3.5" />
                                     </button>
@@ -1331,7 +1331,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           </div>
                         ) : (
                           sessions.map((session) => (
-                            <div key={session.id} className="flex items-center justify-between p-4 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors">
+                            <div key={session.id} className="flex items-center justify-between p-4 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors">
                               <div className="flex items-center gap-3">
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                                   session.type === "zoom" ? "bg-[var(--color-border-subtle)]" : session.type === "onsite" ? "bg-[#DCFCE7]" : "bg-[#F3E8FF]"

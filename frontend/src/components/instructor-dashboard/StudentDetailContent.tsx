@@ -488,7 +488,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                               {student.enrollments.map((enrollment) => (
                                 <div
                                   key={enrollment.id}
-                                  className="p-4 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-surface-page)] transition-colors"
+                                  className="p-4 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-border-subtle)] transition-colors"
                                 >
                                   <div className="flex items-start justify-between mb-3">
                                     <div>
@@ -696,7 +696,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                         </thead>
                                         <tbody className="divide-y divide-[#F3F4F6]">
                                           {cp.attendanceRecords.map((r: any) => (
-                                            <tr key={r.sessionId} className="hover:bg-[var(--color-surface-page)]">
+                                            <tr key={r.sessionId} className="hover:bg-[var(--color-border-subtle)]">
                                               <td className="px-3 py-1.5 text-xs text-[var(--color-text-primary)]">{r.sessionTitle}</td>
                                               <td className="px-3 py-1.5 text-xs text-[var(--color-text-secondary)]">{formatDate(r.scheduledAt)}</td>
                                               <td className="px-3 py-1.5">
@@ -790,7 +790,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                         const pct = a.maxScore > 0 ? Math.round((a.score / a.maxScore) * 100) : 0;
                                         const passed = pct >= 60;
                                         return (
-                                          <tr key={a.assessmentId} className="hover:bg-[var(--color-surface-page)]">
+                                          <tr key={a.assessmentId} className="hover:bg-[var(--color-border-subtle)]">
                                             <td className="px-4 py-2.5 text-sm text-[var(--color-text-primary)]">{a.title}</td>
                                             <td className="px-4 py-2.5">
                                               <span className={`text-sm font-semibold ${pct >= 80 ? "text-[#22C55E]" : pct >= 60 ? "text-[#EAB308]" : "text-[#EF4444]"}`}>

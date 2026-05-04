@@ -407,7 +407,7 @@ const StudentsContent = () => {
 
                       <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                        className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                       >
                         <Filter className="w-4 h-4" />
                         {t("students.filters")}
@@ -531,7 +531,7 @@ const StudentsContent = () => {
                               {paginatedStudents.map((student) => (
                                 <tr
                                   key={student.studentId}
-                                  className="hover:bg-[var(--color-surface-page)] transition-colors"
+                                  className="hover:bg-[var(--color-border-subtle)] transition-colors"
                                 >
                                   <td className="px-3 py-3">
                                     <div className="max-w-[200px]">

@@ -189,7 +189,7 @@ const AdminSettingsContent = () => {
                             <div className="w-20 h-20 bg-[var(--color-surface-page)] rounded-lg flex items-center justify-center border border-[var(--color-border)]">
                               <Settings className="w-8 h-8 text-[var(--color-text-secondary)]" />
                             </div>
-                            <button className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
+                            <button className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]">
                               {t("settingsPage.general.uploadLogo")}
                             </button>
                           </div>

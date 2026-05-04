@@ -112,7 +112,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
           href={material.fileUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
         >
           <ExternalLink className="w-4 h-4" />
           Open in tab
@@ -404,7 +404,7 @@ const CourseLearningContent = () => {
                         ? "opacity-50 cursor-not-allowed"
                         : isActive
                           ? "bg-[var(--color-border-subtle)] border border-[#BFDBFE]"
-                          : "hover:bg-[var(--color-surface-page)] cursor-pointer"
+                          : "hover:bg-[var(--color-border-subtle)] cursor-pointer"
                     }`}
                   >
                     {/* Step indicator */}
@@ -603,7 +603,7 @@ const CourseLearningContent = () => {
                   <button
                     onClick={goToPrevModule}
                     disabled={currentIndex === 0}
-                    className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-40 text-sm text-[var(--color-text-secondary)]"
+                    className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-40 text-sm text-[var(--color-text-secondary)]"
                     aria-label={tA("previousModule")}
                   >
                     {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
@@ -612,7 +612,7 @@ const CourseLearningContent = () => {
                   <button
                     onClick={goToNextModule}
                     disabled={currentIndex === sortedModules.length - 1}
-                    className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-40 text-sm text-[var(--color-text-secondary)]"
+                    className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-40 text-sm text-[var(--color-text-secondary)]"
                     aria-label={tA("nextModule")}
                   >
                     Next

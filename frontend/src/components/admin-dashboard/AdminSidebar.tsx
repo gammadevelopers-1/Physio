@@ -217,7 +217,7 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
         </div>
 
         {/* View Profile Button */}
-        <button className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors">
+        <button className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors">
           {t("sidebar.viewProfile")}
         </button>
       </div>
@@ -236,7 +236,7 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                   active
                     ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
-                    : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                    : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                 }`}
               >
                 <Icon

@@ -254,7 +254,7 @@ function CreateUserModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+              className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
             >
               Cancel
             </button>
@@ -422,7 +422,7 @@ function EditUserModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+              className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
             >
               Cancel
             </button>
@@ -496,7 +496,7 @@ function DeleteUserModal({
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+            className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
           >
             Cancel
           </button>
@@ -715,7 +715,7 @@ function ManageRolesModal({
                   key={role}
                   onClick={() => handleAddRole(role)}
                   disabled={actionInProgress === role}
-                  className="px-3 py-1.5 text-xs font-medium border border-[var(--color-border)] rounded-full hover:bg-[var(--color-surface-page)] disabled:opacity-50 flex items-center gap-1"
+                  className="px-3 py-1.5 text-xs font-medium border border-[var(--color-border)] rounded-full hover:bg-[var(--color-border-subtle)] disabled:opacity-50 flex items-center gap-1"
                 >
                   <Plus className="w-3 h-3" />
                   {t(`userManagement.roles.${role.toLowerCase()}`)}
@@ -733,7 +733,7 @@ function ManageRolesModal({
         <div className="mt-6">
           <button
             onClick={onClose}
-            className="w-full h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+            className="w-full h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
           >
             Close
           </button>
@@ -996,7 +996,7 @@ const UsersContent = () => {
                     <option value="suspended">{t("userManagement.statuses.suspended")}</option>
                   </select>
 
-                  <button className="flex items-center gap-2 px-4 h-10 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors">
+                  <button className="flex items-center gap-2 px-4 h-10 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors">
                     <Download className="w-4 h-4" />
                     {t("usersPage.export")}
                   </button>
@@ -1062,7 +1062,7 @@ const UsersContent = () => {
                           const status = getUserStatus(user);
                           const roleKey = user.activeRole.toLowerCase();
                           return (
-                            <tr key={user.id} className="border-b border-[#F3F4F6] hover:bg-[var(--color-surface-page)]">
+                            <tr key={user.id} className="border-b border-[#F3F4F6] hover:bg-[var(--color-border-subtle)]">
                               <td className="px-4 py-4">
                                 <div className="flex items-center gap-3">
                                   <div className={`w-10 h-10 rounded-full ${getAvatarBgColor(user.activeRole)} flex items-center justify-center flex-shrink-0`}>
@@ -1115,7 +1115,7 @@ const UsersContent = () => {
                                           setEditingUser(user);
                                           setOpenDropdownId(null);
                                         }}
-                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                                       >
                                         <Edit className="w-4 h-4" />
                                         {t("usersPage.actions.edit")}
@@ -1125,7 +1125,7 @@ const UsersContent = () => {
                                           setManagingRolesUser(user);
                                           setOpenDropdownId(null);
                                         }}
-                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                                       >
                                         <Shield className="w-4 h-4" />
                                         Manage Roles
@@ -1135,7 +1135,7 @@ const UsersContent = () => {
                                           setViewingDevicesUser(user);
                                           setOpenDropdownId(null);
                                         }}
-                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                                       >
                                         <Smartphone className="w-4 h-4" />
                                         Trusted Devices
@@ -1192,7 +1192,7 @@ const UsersContent = () => {
                       <button
                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                         disabled={!pagination.hasPrev}
-                        className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Previous
                       </button>
@@ -1208,7 +1208,7 @@ const UsersContent = () => {
                               className={`w-8 h-8 text-sm rounded-lg ${
                                 p === currentPage
                                   ? "bg-[var(--color-primary)] text-white"
-                                  : "border border-[var(--color-border)] hover:bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]"
+                                  : "border border-[var(--color-border)] hover:bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
                               }`}
                             >
                               {p}
@@ -1218,7 +1218,7 @@ const UsersContent = () => {
                       <button
                         onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
                         disabled={!pagination.hasNext}
-                        className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Next
                       </button>

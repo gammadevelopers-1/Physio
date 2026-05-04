@@ -273,7 +273,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                       isActive
                         ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
-                        : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                        : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                     }`}
                   >
                     <Icon

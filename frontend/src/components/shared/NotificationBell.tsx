@@ -156,7 +156,7 @@ export default function NotificationBell() {
                 <button
                   key={notif.id}
                   onClick={() => handleNotificationClick(notif)}
-                  className={`w-full text-left px-4 py-3 border-b border-[var(--outline-subtle)] last:border-b-0 hover:bg-[var(--color-surface-page)] transition-colors ${
+                  className={`w-full text-left px-4 py-3 border-b border-[var(--outline-subtle)] last:border-b-0 hover:bg-[var(--color-border-subtle)] transition-colors ${
                     !notif.isRead ? "bg-[var(--color-border-subtle)]" : ""
                   }`}
                 >

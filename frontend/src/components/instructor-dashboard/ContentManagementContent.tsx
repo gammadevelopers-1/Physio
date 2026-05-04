@@ -388,7 +388,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
 
           {/* Actions */}
           <div className="flex gap-3 mt-6">
-            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-50">
+            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-50">
               {t("content.cancel")}
             </button>
             <button
@@ -519,7 +519,7 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
           {error && <p className="mt-3 text-sm text-[#EF4444]">{error}</p>}
 
           <div className="flex gap-3 mt-6">
-            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50">
+            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50">
               {t("content.cancel")}
             </button>
             <button
@@ -658,7 +658,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                     href={material.captionsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                   >
                     <Download className="w-3 h-3" />
                     {t("content.downloadCaptions")}
@@ -669,7 +669,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                     href={material.transcriptUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                   >
                     <Download className="w-3 h-3" />
                     {t("content.downloadTranscript")}
@@ -737,7 +737,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
           </div>
 
           <div className="flex gap-3 mt-6">
-            <button onClick={onClose} disabled={saving} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50">
+            <button onClick={onClose} disabled={saving} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50">
               {t("content.cancel")}
             </button>
             <button
@@ -793,7 +793,7 @@ const DeleteConfirm = ({ material, onClose, onDeleted, t }: DeleteConfirmProps) 
           <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-6">&ldquo;{material.title}&rdquo;</p>
 
           <div className="flex gap-3">
-            <button onClick={onClose} disabled={deleting} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50">
+            <button onClick={onClose} disabled={deleting} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50">
               {t("content.cancel")}
             </button>
             <button
@@ -1108,7 +1108,7 @@ const ContentManagementContent = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={refetch}
-                    className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+                    className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                     aria-label={t("content.refresh")}
                   >
                     <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
@@ -1214,7 +1214,7 @@ const ContentManagementContent = () => {
                       <div className="flex gap-2">
                         <button
                           onClick={() => setShowFilters(!showFilters)}
-                          className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                          className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                         >
                           <Filter className="w-4 h-4" />
                           {t("content.filters")}
@@ -1225,13 +1225,13 @@ const ContentManagementContent = () => {
                         <div className="flex border border-[var(--color-border)] rounded-lg overflow-hidden">
                           <button
                             onClick={() => setViewMode("list")}
-                            className={`p-2.5 ${viewMode === "list" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"}`}
+                            className={`p-2.5 ${viewMode === "list" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"}`}
                           >
                             <List className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => setViewMode("grid")}
-                            className={`p-2.5 ${viewMode === "grid" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"}`}
+                            className={`p-2.5 ${viewMode === "grid" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"}`}
                           >
                             <Grid className="w-4 h-4" />
                           </button>
@@ -1361,7 +1361,7 @@ const ContentManagementContent = () => {
                           </thead>
                           <tbody className="divide-y divide-[var(--color-border)]">
                             {paginatedMaterials.map((m) => (
-                              <tr key={m.id} className="hover:bg-[var(--color-surface-page)] transition-colors">
+                              <tr key={m.id} className="hover:bg-[var(--color-border-subtle)] transition-colors">
                                 <td className="px-4 py-4 overflow-hidden">
                                   <div className="flex items-center gap-3 min-w-0">
                                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${getFileIconBg(m.type)}`}>

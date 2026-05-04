@@ -437,7 +437,7 @@ const TADashboardContent = ({
                         session.status === "completed") && (
                         <button
                           onClick={() => handleViewAttendance(session.id, { scheduledAt: session.scheduledAt, durationMinutes: session.durationMinutes, title: session.title, type: session.type, status: session.status, courseId: session.courseId, zoomLink: session.zoomLink })}
-                          className="inline-flex items-center gap-2 px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-lg text-sm font-medium hover:bg-[var(--color-surface-page)] transition-colors"
+                          className="inline-flex items-center gap-2 px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-lg text-sm font-medium hover:bg-[var(--color-border-subtle)] transition-colors"
                         >
                           <Eye className="w-4 h-4" />
                           {t("sessions.viewAttendance")}

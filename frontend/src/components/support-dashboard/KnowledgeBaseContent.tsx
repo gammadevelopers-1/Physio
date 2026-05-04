@@ -268,7 +268,7 @@ const KnowledgeBaseContent = () => {
                     className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                       activeTab === tab.key
                         ? "bg-[var(--color-text-primary)] text-white"
-                        : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
+                        : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-border-subtle)]"
                     }`}
                   >
                     {tab.label}
@@ -311,11 +311,11 @@ const KnowledgeBaseContent = () => {
                           <div
                             className={`absolute top-full mt-1 ${isRTL ? "left-0" : "right-0"} bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-10`}
                           >
-                            <button className="flex items-center gap-2 w-full px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors">
+                            <button className="flex items-center gap-2 w-full px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors">
                               <Eye className="w-4 h-4" />
                               {t("kbPage.actions.view")}
                             </button>
-                            <button className="flex items-center gap-2 w-full px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors">
+                            <button className="flex items-center gap-2 w-full px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors">
                               <Pencil className="w-4 h-4" />
                               {t("kbPage.actions.edit")}
                             </button>

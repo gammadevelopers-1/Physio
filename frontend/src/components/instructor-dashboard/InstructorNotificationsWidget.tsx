@@ -103,7 +103,7 @@ const InstructorNotificationsWidget = ({
           </p>
           <button
             onClick={onRefresh}
-            className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors"
+            className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors"
             aria-label={tA("refresh")}
           >
             {t("notifications.refresh")}

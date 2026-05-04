@@ -265,7 +265,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
           {(session.status === "live" || session.status === "ended" || session.status === "completed") && (
             <button
               onClick={() => onViewAttendance(session.id, { scheduledAt: session.scheduledAt, durationMinutes: session.durationMinutes, title: session.title, type: session.type, status: session.status, courseId: session.courseId, zoomLink: session.zoomLink })}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-lg text-xs font-medium hover:bg-[var(--color-surface-page)] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-lg text-xs font-medium hover:bg-[var(--color-border-subtle)] transition-colors"
             >
               <Eye className="w-3.5 h-3.5" />
               {t("sessions.viewAttendance")}
@@ -274,7 +274,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
           {session.assessmentId && (
             <button
               onClick={() => onViewSubmissions(session.assessmentId!)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-lg text-xs font-medium hover:bg-[var(--color-surface-page)] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-lg text-xs font-medium hover:bg-[var(--color-border-subtle)] transition-colors"
             >
               <FileText className="w-3.5 h-3.5" />
               {t("sessions.viewSubmissions")}

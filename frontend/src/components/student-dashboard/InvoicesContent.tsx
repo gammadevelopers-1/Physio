@@ -160,7 +160,7 @@ const InvoicesContent = () => {
                         {invoices.map((invoice) => (
                           <tr
                             key={invoice.id}
-                            className="border-b border-[var(--color-border)] last:border-b-0 hover:bg-[var(--color-surface-page)] transition-colors"
+                            className="border-b border-[var(--color-border)] last:border-b-0 hover:bg-[var(--color-border-subtle)] transition-colors"
                           >
                             <td
                               className={`py-4 px-4 text-sm text-[var(--color-text-primary)] ${isRTL ? "text-right" : "text-left"}`}
@@ -200,13 +200,13 @@ const InvoicesContent = () => {
                                   className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                 >
                                   <button
-                                    className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                    className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                                     onClick={() => setOpenMenuId(null)}
                                   >
                                     {t("invoices.viewInvoice")}
                                   </button>
                                   <button
-                                    className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                    className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                                     onClick={() => setOpenMenuId(null)}
                                   >
                                     {t("invoices.downloadInvoice")}
@@ -244,13 +244,13 @@ const InvoicesContent = () => {
                                   className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                 >
                                   <button
-                                    className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                    className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                                     onClick={() => setOpenMenuId(null)}
                                   >
                                     {t("invoices.viewInvoice")}
                                   </button>
                                   <button
-                                    className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                    className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                                     onClick={() => setOpenMenuId(null)}
                                   >
                                     {t("invoices.downloadInvoice")}

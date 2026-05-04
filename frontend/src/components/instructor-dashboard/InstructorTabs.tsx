@@ -371,7 +371,7 @@ const InstructorTabs = ({
               className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
                 isDragOver
                   ? "border-[var(--color-primary)] bg-[var(--color-border-subtle)]"
-                  : "border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-page)]"
+                  : "border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-border-subtle)]"
               }`}
             >
               <input
@@ -466,7 +466,7 @@ const InstructorTabs = ({
                     return (
                       <tr
                         key={file.id}
-                        className="border-t border-[#F3F4F6] hover:bg-[var(--color-surface-page)]"
+                        className="border-t border-[#F3F4F6] hover:bg-[var(--color-border-subtle)]"
                       >
                         {/* File Name */}
                         <td className="py-3.5 overflow-hidden">
@@ -513,7 +513,7 @@ const InstructorTabs = ({
                           <div className="relative">
                             <button
                               onClick={() => setOpenActionMenu(openActionMenu === file.id ? null : file.id)}
-                              className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+                              className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                               aria-label={tA("openActions")}
                               aria-haspopup="true"
                               aria-expanded={openActionMenu === file.id}
@@ -527,7 +527,7 @@ const InstructorTabs = ({
                                 <div className="py-1">
                                   <button
                                     onClick={() => handleEdit(file.id)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                                     role="menuitem"
                                   >
                                     <Edit className="w-4 h-4 text-[var(--color-text-secondary)]" />
@@ -535,7 +535,7 @@ const InstructorTabs = ({
                                   </button>
                                   <button
                                     onClick={() => handleReplace(file.id)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                                     role="menuitem"
                                   >
                                     <RefreshCw className="w-4 h-4 text-[var(--color-text-secondary)]" />
@@ -571,14 +571,14 @@ const InstructorTabs = ({
                   <button
                     onClick={() => setContentPage((p) => Math.max(0, p - 1))}
                     disabled={contentPage === 0}
-                    className="px-3 py-1.5 text-sm font-medium border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-1.5 text-sm font-medium border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {t("content.previous")}
                   </button>
                   <button
                     onClick={() => setContentPage((p) => Math.min(totalPages - 1, p + 1))}
                     disabled={contentPage >= totalPages - 1}
-                    className="px-3 py-1.5 text-sm font-medium border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-1.5 text-sm font-medium border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {t("content.next")}
                   </button>

@@ -141,11 +141,11 @@ const FinanceReportsContent = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors">
+                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors">
                     <FileSpreadsheet className="w-4 h-4" />
                     {t("reportsPage.exportExcel")}
                   </button>
-                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors">
+                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors">
                     <Download className="w-4 h-4" />
                     {t("reportsPage.exportPdf")}
                   </button>
@@ -314,7 +314,7 @@ const FinanceReportsContent = () => {
                     </thead>
                     <tbody>
                       {mockRevenueReport.map((item, index) => (
-                        <tr key={index} className="border-b border-[#F3F4F6] hover:bg-[var(--color-surface-page)]">
+                        <tr key={index} className="border-b border-[#F3F4F6] hover:bg-[var(--color-border-subtle)]">
                           <td className="py-3 px-5 text-[13px] font-medium text-[var(--color-text-primary)]">{item.name}</td>
                           <td className="py-3 px-5 text-[13px] font-semibold text-[var(--color-text-primary)]">{item.revenue}</td>
                           <td className="py-3 px-5 text-[13px] text-[var(--color-text-secondary)] hidden md:table-cell">{item.transactions}</td>

@@ -175,7 +175,7 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
         <button
           type="button"
           onClick={() => dispatch({ type: "SET_STEP", step: 3 })}
-          className="px-6 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+          className="px-6 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
         >
           {t("back")}
         </button>

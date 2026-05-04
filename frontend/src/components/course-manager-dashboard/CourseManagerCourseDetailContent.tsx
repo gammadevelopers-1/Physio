@@ -502,7 +502,7 @@ const CourseManagerCourseDetailContent = ({
                               className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${
                                 course.isFeatured
                                   ? "bg-[var(--gold-gold-100)] text-[var(--color-star)] hover:bg-[var(--gold-gold-200)]"
-                                  : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                                  : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                               }`}
                             >
                               <Star
@@ -515,7 +515,7 @@ const CourseManagerCourseDetailContent = ({
                             <button
                               onClick={handleDeactivate}
                               disabled={updatingStatus}
-                              className="inline-flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-50"
+                              className="inline-flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-50"
                             >
                               <Archive className="w-4 h-4" />
                               {t("courseDetail.archive")}
@@ -686,7 +686,7 @@ const CourseManagerCourseDetailContent = ({
                         .map((mod: CourseModule, idx: number) => (
                           <div key={mod.id}>
                             <button
-                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--color-surface-page)] transition-colors"
+                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--color-border-subtle)] transition-colors"
                               onClick={() => toggleModule(mod.id)}
                             >
                               <div className="flex items-center gap-3">
@@ -992,7 +992,7 @@ const CourseManagerCourseDetailContent = ({
             <div className="flex items-center justify-end gap-3 mt-4">
               <button
                 onClick={() => { setRemovingMaterial(null); setRemoveReason(""); }}
-                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)]"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)]"
               >
                 {t("courseDetail.cancel")}
               </button>
@@ -1027,7 +1027,7 @@ const CourseManagerCourseDetailContent = ({
             <div className="flex items-center justify-end gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)]"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)]"
               >
                 {t("courseDetail.cancel")}
               </button>
@@ -1073,7 +1073,7 @@ const CourseManagerCourseDetailContent = ({
             <div className="flex items-center justify-end gap-3">
               <button
                 onClick={() => { setShowRequestChanges(false); setRequestChangesNote(""); }}
-                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)]"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)]"
               >
                 {t("courseDetail.cancel")}
               </button>

@@ -129,7 +129,7 @@ const OtpVerifyModal = ({
           <button
             onClick={onClose}
             aria-label={closeLabel}
-            className="p-1.5 rounded-full hover:bg-[var(--color-surface-page)] transition-colors"
+            className="p-1.5 rounded-full hover:bg-[var(--color-border-subtle)] transition-colors"
           >
             <X className="w-5 h-5 text-[var(--color-icon)]" />
           </button>

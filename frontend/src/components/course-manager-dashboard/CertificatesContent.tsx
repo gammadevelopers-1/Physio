@@ -226,7 +226,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t 
           {/* Action Buttons */}
           {canAct ? (
             <div className="flex gap-2">
-              <button onClick={onClose} disabled={processing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50">
+              <button onClick={onClose} disabled={processing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50">
                 {t("certificates.cancel")}
               </button>
               {cert.status === "pending" && (
@@ -257,7 +257,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t 
               </button>
             </div>
           ) : (
-            <button onClick={onClose} className="w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
+            <button onClick={onClose} className="w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]">
               {t("certificates.close")}
             </button>
           )}
@@ -657,7 +657,7 @@ const CertificatesContent = () => {
                   <h1 className="text-xl md:text-2xl font-bold text-[var(--color-text-primary)]">{t("certificates.title")}</h1>
                   <p className="text-sm text-[var(--color-text-secondary)] mt-1">{t("certificates.subtitle")}</p>
                 </div>
-                <button onClick={refetch} className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors" title={t("certificates.refresh")}>
+                <button onClick={refetch} className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors" title={t("certificates.refresh")}>
                   <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                 </button>
               </div>
@@ -759,7 +759,7 @@ const CertificatesContent = () => {
                       </div>
                       <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                        className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                       >
                         <Filter className="w-4 h-4" />
                         {t("certificates.filters")}
@@ -841,7 +841,7 @@ const CertificatesContent = () => {
                               const elig = getEligibility(cert);
                               const canSelect = cert.status === "pending" || cert.status === "held";
                               return (
-                                <tr key={cert.id} className="hover:bg-[var(--color-surface-page)] transition-colors">
+                                <tr key={cert.id} className="hover:bg-[var(--color-border-subtle)] transition-colors">
                                   <td className="px-4 py-4">
                                     {canSelect ? (
                                       <input
@@ -1019,7 +1019,7 @@ const CertificatesContent = () => {
 
                             {(cert.status === "pending" || cert.status === "held") && (
                               <div className="flex gap-2">
-                                <button onClick={() => setReviewingCert(cert)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
+                                <button onClick={() => setReviewingCert(cert)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]">
                                   <Eye className="w-4 h-4" />{t("certificates.review")}
                                 </button>
                                 <button onClick={() => quickApprove(cert)} className="flex items-center justify-center px-3 py-2 bg-[#22C55E] text-white rounded-lg hover:bg-[#16A34A]">
@@ -1105,7 +1105,7 @@ const CertificatesContent = () => {
                 />
               </div>
               <div className="flex gap-3">
-                <button onClick={() => { setRevokingCert(null); setRevokeReason(""); }} disabled={revokeProcessing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50">
+                <button onClick={() => { setRevokingCert(null); setRevokeReason(""); }} disabled={revokeProcessing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50">
                   {t("certificates.cancel")}
                 </button>
                 <button
@@ -1137,7 +1137,7 @@ const CertificatesContent = () => {
                 className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none mb-4"
               />
               <div className="flex gap-3">
-                <button onClick={() => { setBatchNoteModal(null); setBatchNote(""); }} disabled={batchProcessing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50">
+                <button onClick={() => { setBatchNoteModal(null); setBatchNote(""); }} disabled={batchProcessing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50">
                   {t("certificates.cancel")}
                 </button>
                 <button
@@ -1254,7 +1254,7 @@ const CertificatesContent = () => {
                   <button
                     onClick={() => setConfirmingApproval(null)}
                     disabled={approvalProcessing}
-                    className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50"
+                    className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50"
                   >
                     Close
                   </button>

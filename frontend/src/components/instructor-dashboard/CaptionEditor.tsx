@@ -217,7 +217,7 @@ export default function CaptionEditor({
         {/* Footer */}
         {tab === "editor" && (
           <div className="flex justify-end gap-2 p-4 border-t border-[var(--color-border)]">
-            <button onClick={onClose} className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
+            <button onClick={onClose} className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]">
               {t("captions.cancel")}
             </button>
             <button

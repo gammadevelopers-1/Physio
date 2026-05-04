@@ -472,7 +472,7 @@ const SupportSettingsContent = () => {
                           </thead>
                           <tbody>
                             {categories.map((category, index) => (
-                              <tr key={index} className="border-b border-[#F3F4F6] hover:bg-[var(--color-surface-page)]">
+                              <tr key={index} className="border-b border-[#F3F4F6] hover:bg-[var(--color-border-subtle)]">
                                 <td className="py-3 px-5 text-[13px] font-medium text-[var(--color-text-primary)]">{category.name}</td>
                                 <td className="py-3 px-5 text-[13px] text-[var(--color-text-secondary)] hidden md:table-cell">{category.description}</td>
                                 <td className="py-3 px-5 text-[13px] font-semibold text-[var(--color-text-primary)]">{category.tickets}</td>

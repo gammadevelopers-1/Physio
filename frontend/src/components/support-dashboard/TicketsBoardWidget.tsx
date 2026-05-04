@@ -203,7 +203,7 @@ const TicketsBoardWidget = () => {
             {filteredTickets.map((ticket) => (
               <tr
                 key={ticket.id}
-                className="border-b border-[#F3F4F6] hover:bg-[var(--color-surface-page)] transition-colors"
+                className="border-b border-[#F3F4F6] hover:bg-[var(--color-border-subtle)] transition-colors"
               >
                 <td className="px-3 py-3">
                   <span className="text-[13px] font-medium text-[var(--color-primary)]">

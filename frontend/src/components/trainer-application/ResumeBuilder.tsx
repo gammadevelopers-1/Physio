@@ -70,7 +70,7 @@ const Modal = ({ title, isRTL, onClose, children }: { title: string; isRTL: bool
     >
       <div className="flex items-center justify-between px-6 pt-5 pb-3">
         <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{title}</h3>
-        <button type="button" onClick={onClose} className="p-1 text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] rounded">
+        <button type="button" onClick={onClose} className="p-1 text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] rounded">
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -398,7 +398,7 @@ const Card = ({
   <div className="border border-[var(--color-border)] rounded-xl p-4 flex items-start justify-between gap-3 mb-3 bg-white">
     <div className="flex-1 min-w-0">{children}</div>
     <div className="flex flex-col gap-2 shrink-0">
-      <button type="button" onClick={onEdit} className="p-1.5 rounded border border-[var(--color-border)] hover:bg-[var(--color-surface-page)] transition-colors">
+      <button type="button" onClick={onEdit} className="p-1.5 rounded border border-[var(--color-border)] hover:bg-[var(--color-border-subtle)] transition-colors">
         <Pencil className="w-4 h-4 text-[var(--color-text-secondary)]" />
       </button>
       <button type="button" onClick={onDelete} className="p-1.5 rounded border border-[var(--color-border)] hover:bg-red-50 hover:border-red-200 transition-colors">

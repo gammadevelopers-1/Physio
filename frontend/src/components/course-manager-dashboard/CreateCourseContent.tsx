@@ -1170,7 +1170,7 @@ const CreateCourseContent = () => {
                                       key={inst.id}
                                       type="button"
                                       onClick={() => { setInstructorId(inst.id); setInstructorDropdownOpen(false); setInstructorSearch(""); }}
-                                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-start transition-colors ${isSelected ? "bg-[var(--color-border-subtle)]" : "hover:bg-[var(--color-surface-page)]"}`}
+                                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-start transition-colors ${isSelected ? "bg-[var(--color-border-subtle)]" : "hover:bg-[var(--color-border-subtle)]"}`}
                                     >
                                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center text-white text-[11px] font-semibold flex-shrink-0">
                                         {initials}
@@ -1287,7 +1287,7 @@ const CreateCourseContent = () => {
                                       key={ta.id}
                                       type="button"
                                       onClick={() => { setSelectedTAId(ta.id); setTaDropdownOpen(false); setTaSearch(""); }}
-                                      className="w-full flex items-center gap-3 px-3 py-2.5 text-start hover:bg-[var(--color-surface-page)] transition-colors"
+                                      className="w-full flex items-center gap-3 px-3 py-2.5 text-start hover:bg-[var(--color-border-subtle)] transition-colors"
                                     >
                                       <div className="w-8 h-8 rounded-full bg-[#FEF3C7] flex items-center justify-center text-[11px] font-semibold text-[#92400E] flex-shrink-0">
                                         {initials}
@@ -1644,7 +1644,7 @@ const CreateCourseContent = () => {
                 <button
                   type="button"
                   onClick={currentStep === 1 ? () => router.back() : goBack}
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                 >
                   {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
                   {currentStep === 1

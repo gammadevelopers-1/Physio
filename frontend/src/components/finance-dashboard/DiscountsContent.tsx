@@ -219,11 +219,11 @@ const DiscountsContent = () => {
                             </button>
                             {openActionId === coupon.id && (
                               <div className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[120px] z-20 ${isRTL ? "left-0" : "right-0"}`}>
-                                <button className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
+                                <button className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]">
                                   <Eye className="w-3.5 h-3.5" />
                                   {t("paymentsTable.actions.view")}
                                 </button>
-                                <button className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
+                                <button className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]">
                                   <Pencil className="w-3.5 h-3.5" />
                                   {t("discountsPage.actions.edit")}
                                 </button>
@@ -330,7 +330,7 @@ const DiscountsContent = () => {
               </div>
             </div>
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowCreateModal(false)} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
+              <button onClick={() => setShowCreateModal(false)} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]">
                 {t("discountsPage.form.cancel")}
               </button>
               <button className="flex-1 px-4 py-2.5 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium">

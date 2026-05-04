@@ -181,7 +181,7 @@ const BottomNav = ({ siteSettings, footerLinks }: BottomNavProps) => {
             </h2>
             <button
               onClick={() => setIsDrawerOpen(false)}
-              className="p-2 rounded-full hover:bg-[var(--color-surface-page)] transition-colors"
+              className="p-2 rounded-full hover:bg-[var(--color-border-subtle)] transition-colors"
             >
               <X className="w-5 h-5 text-[var(--color-icon)]" />
             </button>
@@ -207,7 +207,7 @@ const BottomNav = ({ siteSettings, footerLinks }: BottomNavProps) => {
                       key={index}
                       href={link.href}
                       onClick={handleLinkClick}
-                      className={`flex items-center justify-between py-3 text-[var(--color-footer-text)] hover:bg-[var(--color-surface-page)] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
+                      className={`flex items-center justify-between py-3 text-[var(--color-footer-text)] hover:bg-[var(--color-border-subtle)] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
                     >
                       <span className="text-base">{link.label}</span>
                       <ChevronIcon className="w-5 h-5 text-[var(--color-icon)]" />
@@ -232,7 +232,7 @@ const BottomNav = ({ siteSettings, footerLinks }: BottomNavProps) => {
                       key={index}
                       href={link.href}
                       onClick={handleLinkClick}
-                      className={`flex items-center justify-between py-3 text-[var(--color-footer-text)] hover:bg-[var(--color-surface-page)] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
+                      className={`flex items-center justify-between py-3 text-[var(--color-footer-text)] hover:bg-[var(--color-border-subtle)] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
                     >
                       <span className="text-base">{link.label}</span>
                       <ChevronIcon className="w-5 h-5 text-[var(--color-icon)]" />
@@ -257,7 +257,7 @@ const BottomNav = ({ siteSettings, footerLinks }: BottomNavProps) => {
                       key={index}
                       href={link.href}
                       onClick={handleLinkClick}
-                      className={`flex items-center justify-between py-3 text-[var(--color-footer-text)] hover:bg-[var(--color-surface-page)] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
+                      className={`flex items-center justify-between py-3 text-[var(--color-footer-text)] hover:bg-[var(--color-border-subtle)] rounded-lg px-2 -mx-2 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
                     >
                       <span className="text-base">{link.label}</span>
                       <ChevronIcon className="w-5 h-5 text-[var(--color-icon)]" />

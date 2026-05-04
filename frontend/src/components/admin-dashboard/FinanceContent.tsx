@@ -148,7 +148,7 @@ const FinanceContent = () => {
                     <option value="mtd">{t("financePage.dateRange.mtd")}</option>
                     <option value="ytd">{t("financePage.dateRange.ytd")}</option>
                   </select>
-                  <button className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors">
+                  <button className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors">
                     <Download className="w-4 h-4" />
                     {t("financePage.export")}
                   </button>
@@ -323,7 +323,7 @@ const FinanceContent = () => {
                       {filteredTransactions.map((tx) => (
                         <tr
                           key={tx.id}
-                          className="border-b border-[#F3F4F6] hover:bg-[var(--color-surface-page)]"
+                          className="border-b border-[#F3F4F6] hover:bg-[var(--color-border-subtle)]"
                         >
                           <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)]">{tx.date}</td>
                           <td className="px-4 py-4 text-sm text-[var(--color-text-primary)]">{tx.description}</td>

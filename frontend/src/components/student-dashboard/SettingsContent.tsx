@@ -799,7 +799,7 @@ const SettingsContent = () => {
                               onClick={() =>
                                 handleNationalitySelect(nationality.value)
                               }
-                              className={`w-full px-4 py-2.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"} ${formData.nationality === nationality.value ? "bg-[var(--color-border-subtle)]" : ""}`}
+                              className={`w-full px-4 py-2.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors ${isRTL ? "text-right" : "text-left"} ${formData.nationality === nationality.value ? "bg-[var(--color-border-subtle)]" : ""}`}
                             >
                               {t(nationality.labelKey)}
                             </button>
@@ -847,7 +847,7 @@ const SettingsContent = () => {
                               key={gender.value}
                               type="button"
                               onClick={() => handleGenderSelect(gender.value)}
-                              className={`w-full px-4 py-2.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"} ${formData.gender === gender.value ? "bg-[var(--color-border-subtle)]" : ""}`}
+                              className={`w-full px-4 py-2.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors ${isRTL ? "text-right" : "text-left"} ${formData.gender === gender.value ? "bg-[var(--color-border-subtle)]" : ""}`}
                             >
                               {t(gender.labelKey)}
                             </button>

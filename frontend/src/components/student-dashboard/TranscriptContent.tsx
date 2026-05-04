@@ -133,7 +133,7 @@ function CourseRow({
   formatDate: (d: string | null) => string;
 }) {
   return (
-    <tr className="border-b border-[#F3F4F6] last:border-0 hover:bg-[var(--color-surface-page)] transition-colors">
+    <tr className="border-b border-[#F3F4F6] last:border-0 hover:bg-[var(--color-border-subtle)] transition-colors">
       <td className="py-3 px-3">
         <p className="text-sm font-medium text-[var(--color-text-secondary)]">
           {isRTL && course.courseTitleAr

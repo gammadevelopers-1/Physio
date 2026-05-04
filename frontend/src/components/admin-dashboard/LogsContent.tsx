@@ -220,7 +220,7 @@ const LogsContent = () => {
                 <button
                   onClick={handleExport}
                   disabled={exporting}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-50"
                 >
                   {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                   {t("logsPage.exportLogs")}
@@ -306,7 +306,7 @@ const LogsContent = () => {
                     </thead>
                     <tbody>
                       {filteredLogs.map((log) => (
-                        <tr key={log.id} className="border-b border-[#F3F4F6] hover:bg-[var(--color-surface-page)]">
+                        <tr key={log.id} className="border-b border-[#F3F4F6] hover:bg-[var(--color-border-subtle)]">
                           <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)] font-mono whitespace-nowrap">
                             {log.timestamp}
                           </td>
@@ -347,13 +347,13 @@ const LogsContent = () => {
                     {t("logsPage.showing", { count: filteredLogs.length })}
                   </p>
                   <div className="flex items-center gap-2">
-                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[var(--color-surface-page)]">
+                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[var(--color-border-subtle)]">
                       {t("logsPage.previous")}
                     </button>
                     <button className="px-3 py-1.5 text-sm btn-gold text-[var(--color-button-text)] rounded">1</button>
-                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[var(--color-surface-page)]">2</button>
-                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[var(--color-surface-page)]">3</button>
-                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[var(--color-surface-page)]">
+                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[var(--color-border-subtle)]">2</button>
+                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[var(--color-border-subtle)]">3</button>
+                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[var(--color-border-subtle)]">
                       {t("logsPage.next")}
                     </button>
                   </div>

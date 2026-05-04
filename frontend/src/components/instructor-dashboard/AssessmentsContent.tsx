@@ -307,7 +307,7 @@ const CreateAssessmentModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
             >
               {t("assessments.cancel")}
             </button>
@@ -556,7 +556,7 @@ const EditAssessmentModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
             >
               {t("assessments.cancel")}
             </button>
@@ -864,7 +864,7 @@ const AddQuestionModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
             >
               {t("assessments.cancel")}
             </button>
@@ -1158,7 +1158,7 @@ const EditQuestionModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
             >
               {t("assessments.cancel")}
             </button>
@@ -1483,7 +1483,7 @@ const GradeModal = ({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+            className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
           >
             {t("assessments.cancel")}
           </button>
@@ -2066,7 +2066,7 @@ const AssessmentsContent = () => {
                             </div>
                             <button
                               onClick={() => setShowFilters(!showFilters)}
-                              className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                              className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                             >
                               <Filter className="w-4 h-4" />
                               {t("assessments.filters")}
@@ -2158,7 +2158,7 @@ const AssessmentsContent = () => {
                             filteredAssessments.map((assessment) => (
                               <div
                                 key={assessment.id}
-                                className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-surface-page)] transition-colors"
+                                className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-border-subtle)] transition-colors"
                               >
                                 <div className="flex-1">
                                   <div className="flex items-start gap-3">
@@ -2364,7 +2364,7 @@ const AssessmentsContent = () => {
                                     <button
                                       key={a.id}
                                       onClick={() => setSelectedAssessmentForQ(a.id)}
-                                      className="w-full text-start p-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] hover:border-[var(--color-primary)] transition-colors flex items-center justify-between gap-3"
+                                      className="w-full text-start p-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] hover:border-[var(--color-primary)] transition-colors flex items-center justify-between gap-3"
                                     >
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
@@ -2587,7 +2587,7 @@ const AssessmentsContent = () => {
                                 return (
                                 <div
                                   key={question.id}
-                                  className="flex flex-col md:flex-row md:items-start justify-between gap-4 p-4 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-surface-page)] transition-colors"
+                                  className="flex flex-col md:flex-row md:items-start justify-between gap-4 p-4 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-border-subtle)] transition-colors"
                                 >
                                   <div className="flex items-start gap-3 flex-1">
                                     <div className="w-9 h-9 rounded-lg bg-[var(--color-border-subtle)] flex items-center justify-center shrink-0">
@@ -2711,7 +2711,7 @@ const AssessmentsContent = () => {
                                     <button
                                       key={a.id}
                                       onClick={() => setSelectedAssessmentForS(a.id)}
-                                      className="w-full text-start p-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] hover:border-[var(--color-primary)] transition-colors flex items-center justify-between gap-3"
+                                      className="w-full text-start p-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] hover:border-[var(--color-primary)] transition-colors flex items-center justify-between gap-3"
                                     >
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
@@ -2827,7 +2827,7 @@ const AssessmentsContent = () => {
                                       const renderRow = (sub: AssessmentSubmission, isNested: boolean) => {
                                         const pct = sub.percentage ? parseFloat(sub.percentage) : 0;
                                         return (
-                                          <tr key={sub.id} className={`hover:bg-[var(--color-surface-page)] ${isNested ? "bg-[#FAFAFA]" : ""}`}>
+                                          <tr key={sub.id} className={`hover:bg-[var(--color-border-subtle)] ${isNested ? "bg-[#FAFAFA]" : ""}`}>
                                             <td className={`py-3 ${isNested ? "ps-14" : ""}`}>
                                               {isNested ? (
                                                 <div className="flex items-center gap-2">
@@ -2890,7 +2890,7 @@ const AssessmentsContent = () => {
 
                                         return (
                                           <React.Fragment key={studentId}>
-                                            <tr className="hover:bg-[var(--color-surface-page)]">
+                                            <tr className="hover:bg-[var(--color-border-subtle)]">
                                               <td className="py-3">
                                                 <div className="flex items-center gap-3">
                                                   {hasRetakes && (
@@ -3023,7 +3023,7 @@ const AssessmentsContent = () => {
                                     <button
                                       key={a.id}
                                       onClick={() => setSelectedAssessmentForIA(a.id)}
-                                      className="w-full text-start p-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] hover:border-[var(--color-primary)] transition-colors flex items-center justify-between gap-3"
+                                      className="w-full text-start p-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] hover:border-[var(--color-primary)] transition-colors flex items-center justify-between gap-3"
                                     >
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
@@ -3186,7 +3186,7 @@ const AssessmentsContent = () => {
                                       return (
                                         <tr
                                           key={item.questionId}
-                                          className="hover:bg-[var(--color-surface-page)]"
+                                          className="hover:bg-[var(--color-border-subtle)]"
                                         >
                                           <td className="py-3 max-w-[300px]">
                                             <span className="text-sm text-[var(--color-text-primary)] line-clamp-2">
@@ -3389,7 +3389,7 @@ const AssessmentsContent = () => {
             <div className="flex gap-3">
               <button
                 onClick={() => { setPublishConfirmId(null); setPublishCheckData(null); }}
-                className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
               >
                 {t("assessments.cancel")}
               </button>

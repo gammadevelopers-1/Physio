@@ -173,7 +173,7 @@ const SessionCard = ({
           {!isInactive && (
             <button
               onClick={onAttendance}
-              className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+              className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
               aria-label={t("sessions.attendance")}
             >
               <ClipboardCheck className="w-3.5 h-3.5" />
@@ -183,7 +183,7 @@ const SessionCard = ({
           {(isScheduled || isLive) && (
             <button
               onClick={onShare}
-              className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+              className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
               aria-label={t("sessions.shareMaterials")}
             >
               <Upload className="w-3.5 h-3.5" />

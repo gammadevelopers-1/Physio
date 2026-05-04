@@ -107,7 +107,7 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
       {/* Header — clickable to toggle */}
       <button
         onClick={() => setPanelOpen((v) => !v)}
-        className="w-full p-4 text-start hover:bg-[var(--color-surface-page)] transition-colors"
+        className="w-full p-4 text-start hover:bg-[var(--color-border-subtle)] transition-colors"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -161,7 +161,7 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
             <div key={cat.category}>
               <button
                 onClick={() => setExpandedCategory(isExpanded ? null : cat.category)}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--color-surface-page)] transition-colors text-start"
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--color-border-subtle)] transition-colors text-start"
               >
                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${cfg.bg}`}>
                   <CatIcon className={`w-3.5 h-3.5 ${cfg.text}`} />

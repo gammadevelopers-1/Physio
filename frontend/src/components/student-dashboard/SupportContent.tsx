@@ -162,7 +162,7 @@ function TicketRow({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 p-3 sm:p-4 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-surface-page)] transition-colors text-left"
+      className="w-full flex items-center gap-3 p-3 sm:p-4 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-border-subtle)] transition-colors text-left"
       dir={isRTL ? "rtl" : "ltr"}
     >
       <div className="flex-1 min-w-0">
@@ -353,7 +353,7 @@ function CreateTicketForm({
                 className={`flex-1 py-2 text-xs sm:text-sm font-medium rounded-lg border transition-colors ${
                   priority === p
                     ? "border-[#002D87] bg-[var(--color-primary)] text-white"
-                    : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                    : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                 }`}
               >
                 {t(`supportPage.priority_${p}` as Parameters<typeof t>[0])}
@@ -420,7 +420,7 @@ function CreateTicketForm({
               </button>
             </div>
           ) : (
-            <label className="flex items-center gap-2 p-2.5 border border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:bg-[var(--color-surface-page)] transition-colors">
+            <label className="flex items-center gap-2 p-2.5 border border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:bg-[var(--color-border-subtle)] transition-colors">
               <Paperclip className="w-4 h-4 text-[var(--color-text-secondary)]" />
               <span className="text-sm text-[var(--color-text-secondary)]">
                 {t("supportPage.attachFile")}
@@ -526,7 +526,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
             <div key={index} className="border border-[var(--color-border)] rounded-lg overflow-hidden">
               <button
                 onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
-                className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-[var(--color-surface-page)] transition-colors"
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-[var(--color-border-subtle)] transition-colors"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] flex-shrink-0">
@@ -745,7 +745,7 @@ const SupportContent = () => {
                         </p>
                         <button
                           onClick={() => setShowForm(true)}
-                          className="flex items-center gap-1.5 px-5 py-2 border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs sm:text-sm font-medium rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
+                          className="flex items-center gap-1.5 px-5 py-2 border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs sm:text-sm font-medium rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
                         >
                           <Plus className="w-4 h-4" />
                           {t("supportPage.createFirst")}

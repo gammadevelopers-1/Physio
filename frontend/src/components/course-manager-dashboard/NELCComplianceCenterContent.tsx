@@ -531,7 +531,7 @@ const NELCComplianceCenterContent = () => {
                           return (
                             <Fragment key={course.courseId}>
                               <tr
-                                className="hover:bg-[var(--color-surface-page)] transition-colors cursor-pointer"
+                                className="hover:bg-[var(--color-border-subtle)] transition-colors cursor-pointer"
                                 onClick={() => {
                                   const next = isExpanded ? null : course.courseId;
                                   setExpandedCourse(next);
@@ -769,7 +769,7 @@ const NELCComplianceCenterContent = () => {
                               return (
                                 <Fragment key={vc.sessionId}>
                                   <tr
-                                    className="hover:bg-[var(--color-surface-page)] transition-colors cursor-pointer"
+                                    className="hover:bg-[var(--color-border-subtle)] transition-colors cursor-pointer"
                                     onClick={() =>
                                       setExpandedSession(isExpanded ? null : vc.sessionId)
                                     }

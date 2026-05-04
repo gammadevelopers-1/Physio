@@ -274,7 +274,7 @@ const TeamContent = () => {
                     className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                       activeTab === tab.key
                         ? "bg-[var(--color-text-primary)] text-white"
-                        : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
+                        : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-border-subtle)]"
                     }`}
                   >
                     {tab.label}
@@ -374,19 +374,19 @@ const TeamContent = () => {
                     {/* Quick Action Buttons */}
                     <div className="flex items-center gap-2">
                       <button
-                        className="flex-1 h-9 flex items-center justify-center gap-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+                        className="flex-1 h-9 flex items-center justify-center gap-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                         title={t("teamPage.actions.message")}
                       >
                         <MessageSquare className="w-3.5 h-3.5" />
                       </button>
                       <button
-                        className="flex-1 h-9 flex items-center justify-center gap-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+                        className="flex-1 h-9 flex items-center justify-center gap-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                         title={t("teamPage.actions.stats")}
                       >
                         <BarChart3 className="w-3.5 h-3.5" />
                       </button>
                       <button
-                        className="flex-1 h-9 flex items-center justify-center gap-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+                        className="flex-1 h-9 flex items-center justify-center gap-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                         title={t("teamPage.actions.more")}
                       >
                         <MoreVertical className="w-3.5 h-3.5" />

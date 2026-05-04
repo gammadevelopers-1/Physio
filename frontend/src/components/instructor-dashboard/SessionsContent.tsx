@@ -888,7 +888,7 @@ function RecordingsModal({
                       href={rec.downloadUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
                     >
                       <Download className="w-3 h-3" />
                       {t("sessionsPage.recordings.download")}
@@ -1513,7 +1513,7 @@ function SessionCard({
 
   return (
     <div className={`px-4 py-3 transition-colors ${
-      isLive ? "bg-[#FEF2F2]/50" : "hover:bg-[var(--color-surface-page)]"
+      isLive ? "bg-[#FEF2F2]/50" : "hover:bg-[var(--color-border-subtle)]"
     } ${isPast ? "opacity-70" : ""}`}>
       {/* Main row */}
       <div className="flex items-center gap-3">
@@ -1584,10 +1584,10 @@ function SessionCard({
                 {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
                 {t("sessionsPage.start")}
               </button>
-              <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
+              <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
                 <ClipboardCheck className="w-3.5 h-3.5" />
               </button>
-              <button onClick={onEdit} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors" aria-label={t("sessionsPage.edit")}>
+              <button onClick={onEdit} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors" aria-label={t("sessionsPage.edit")}>
                 <Edit className="w-3.5 h-3.5" />
               </button>
               <button onClick={onCancel} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors" aria-label={t("sessionsPage.cancel")}>
@@ -1606,7 +1606,7 @@ function SessionCard({
                 {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
                 {t("sessionsPage.endSession")}
               </button>
-              <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
+              <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
                 <ClipboardCheck className="w-3.5 h-3.5" />
               </button>
               {session.zoomLink && (
@@ -1625,7 +1625,7 @@ function SessionCard({
           )}
 
           {session.status === "completed" && (
-            <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
+            <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
               <ClipboardCheck className="w-3.5 h-3.5" />
             </button>
           )}

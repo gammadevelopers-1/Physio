@@ -185,7 +185,7 @@ const InviteFriendsContent = () => {
                       </div>
                       <button
                         onClick={handleCopyCode}
-                        className={`flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors whitespace-nowrap ${isRTL ? "flex-row-reverse" : ""}`}
+                        className={`flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors whitespace-nowrap ${isRTL ? "flex-row-reverse" : ""}`}
                       >
                         {copied ? (
                           <Check className="w-4 h-4 text-[#16A34A]" />
@@ -256,7 +256,7 @@ const InviteFriendsContent = () => {
                             {invites.map((invite) => (
                               <tr
                                 key={invite.id}
-                                className="border-b border-[var(--color-border)] last:border-b-0 hover:bg-[var(--color-surface-page)] transition-colors"
+                                className="border-b border-[var(--color-border)] last:border-b-0 hover:bg-[var(--color-border-subtle)] transition-colors"
                               >
                                 <td
                                   className={`py-4 px-4 text-sm text-[var(--color-text-primary)] ${isRTL ? "text-right" : "text-left"}`}
@@ -285,13 +285,13 @@ const InviteFriendsContent = () => {
                                       className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                     >
                                       <button
-                                        className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                        className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                                         onClick={() => setOpenMenuId(null)}
                                       >
                                         {t("inviteFriends.resend")}
                                       </button>
                                       <button
-                                        className={`w-full px-4 py-2 text-sm text-[#DC2626] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                        className={`w-full px-4 py-2 text-sm text-[#DC2626] hover:bg-[var(--color-border-subtle)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                                         onClick={() => setOpenMenuId(null)}
                                       >
                                         {t("inviteFriends.cancel")}
@@ -336,13 +336,13 @@ const InviteFriendsContent = () => {
                                     className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                   >
                                     <button
-                                      className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                      className={`w-full px-4 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                                       onClick={() => setOpenMenuId(null)}
                                     >
                                       {t("inviteFriends.resend")}
                                     </button>
                                     <button
-                                      className={`w-full px-4 py-2 text-sm text-[#DC2626] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                      className={`w-full px-4 py-2 text-sm text-[#DC2626] hover:bg-[var(--color-border-subtle)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                                       onClick={() => setOpenMenuId(null)}
                                     >
                                       {t("inviteFriends.cancel")}

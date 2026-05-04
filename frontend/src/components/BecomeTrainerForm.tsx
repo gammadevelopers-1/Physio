@@ -163,7 +163,7 @@ const Dropdown = ({
                   key={option.value}
                   type="button"
                   onClick={() => onSelect(field, option.value)}
-                  className="w-full px-4 py-2.5 hover:bg-[var(--color-surface-page)] transition-colors flex items-center gap-2 text-left"
+                  className="w-full px-4 py-2.5 hover:bg-[var(--color-border-subtle)] transition-colors flex items-center gap-2 text-left"
                   style={{ fontSize: "16px" }}
                 >
                   {showFlag && option.value === "Saudi Arabia" && <Image src="/icons/flag.svg" alt="SA" width={20} height={20} className="rounded-sm" />}
@@ -295,7 +295,7 @@ const SearchableDropdown = ({
                         onSelect(field, option.value);
                         setQuery("");
                       }}
-                      className={`w-full px-4 py-2.5 hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                      className={`w-full px-4 py-2.5 hover:bg-[var(--color-border-subtle)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                       style={{ fontSize: "16px" }}
                     >
                       {option.label}
@@ -392,7 +392,7 @@ const ComboBox = ({
                     onChange(field, option.label);
                     onToggle();
                   }}
-                  className={`w-full px-4 py-2.5 hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                  className={`w-full px-4 py-2.5 hover:bg-[var(--color-border-subtle)] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                   style={{ fontSize: "16px" }}
                 >
                   {option.label}

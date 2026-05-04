@@ -136,7 +136,7 @@ const TAAssessmentSubmissionsView = ({
                   return (
                     <React.Fragment key={submission.id}>
                       <tr
-                        className={`border-b border-[var(--color-border)] last:border-b-0 ${hasContent ? "cursor-pointer hover:bg-[var(--color-surface-page)]" : ""}`}
+                        className={`border-b border-[var(--color-border)] last:border-b-0 ${hasContent ? "cursor-pointer hover:bg-[var(--color-border-subtle)]" : ""}`}
                         onClick={() => hasContent && setExpandedId(isExpanded ? null : submission.id)}
                       >
                         <td className="px-4 py-3 text-sm text-[var(--color-text-primary)]">

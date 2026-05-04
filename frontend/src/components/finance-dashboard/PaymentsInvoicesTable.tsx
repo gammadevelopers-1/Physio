@@ -179,7 +179,7 @@ const PaymentsInvoicesTable = ({
             {filteredTransactions.map((tx) => (
               <tr
                 key={tx.id}
-                className="border-b border-[#F3F4F6] hover:bg-[var(--color-surface-page)] transition-colors"
+                className="border-b border-[#F3F4F6] hover:bg-[var(--color-border-subtle)] transition-colors"
               >
                 <td className="py-3 px-4">
                   <span className="text-[13px] font-medium text-[var(--color-primary)]">
@@ -220,7 +220,7 @@ const PaymentsInvoicesTable = ({
                           openActionId === tx.id ? null : tx.id
                         )
                       }
-                      className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] transition-colors"
+                      className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] transition-colors"
                     >
                       <MoreVertical className="w-3.5 h-3.5" />
                     </button>
@@ -228,15 +228,15 @@ const PaymentsInvoicesTable = ({
                       <div
                         className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-20 ${isRTL ? "left-0" : "right-0"}`}
                       >
-                        <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors">
+                        <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors">
                           <Eye className="w-3.5 h-3.5" />
                           {t("paymentsTable.actions.view")}
                         </button>
-                        <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors">
+                        <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors">
                           <Download className="w-3.5 h-3.5" />
                           {t("paymentsTable.actions.download")}
                         </button>
-                        <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors">
+                        <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors">
                           <Send className="w-3.5 h-3.5" />
                           {t("paymentsTable.actions.resend")}
                         </button>
@@ -267,11 +267,11 @@ const PaymentsInvoicesTable = ({
             })}
           </p>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors">
+            <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors">
               <ChevronLeft className="w-4 h-4" />
               {t("paymentsTable.pagination.previous")}
             </button>
-            <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors">
+            <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors">
               {t("paymentsTable.pagination.next")}
               <ChevronRight className="w-4 h-4" />
             </button>

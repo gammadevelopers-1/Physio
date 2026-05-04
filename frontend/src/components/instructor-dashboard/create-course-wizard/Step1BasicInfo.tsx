@@ -172,7 +172,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
             </button>
           </div>
         ) : (
-          <label className="flex flex-col items-center justify-center w-full max-w-md h-48 border-2 border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-page)] transition-colors">
+          <label className="flex flex-col items-center justify-center w-full max-w-md h-48 border-2 border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:border-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] transition-colors">
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"

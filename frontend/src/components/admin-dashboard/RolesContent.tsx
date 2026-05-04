@@ -229,7 +229,7 @@ function CreateRoleModal({ onClose, onCreated }: { onClose: () => void; onCreate
             />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
+            <button type="button" onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]">
               Cancel
             </button>
             <button type="submit" disabled={isSubmitting} className="flex-1 h-10 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2">
@@ -310,7 +310,7 @@ function EditRoleModal({ role, onClose, onUpdated }: { role: RoleWithCount; onCl
             />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
+            <button type="button" onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]">
               Cancel
             </button>
             <button type="submit" disabled={isSubmitting} className="flex-1 h-10 btn-gold text-[var(--color-button-text)] rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2">
@@ -363,7 +363,7 @@ function DeleteRoleModal({ role, onClose, onDeleted }: { role: RoleWithCount; on
         )}
         <p className="text-xs text-[var(--color-text-secondary)] mb-6">This action cannot be undone.</p>
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
+          <button onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]">
             Cancel
           </button>
           <button
@@ -500,7 +500,7 @@ const RolesContent = () => {
                       >
                         {/* Role Header */}
                         <div
-                          className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--color-surface-page)]"
+                          className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--color-border-subtle)]"
                           onClick={() =>
                             setExpandedRole(expandedRole === role.id ? null : role.id)
                           }

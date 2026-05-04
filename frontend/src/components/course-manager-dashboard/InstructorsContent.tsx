@@ -413,7 +413,7 @@ const InstructorsContent = () => {
                         <div className="flex items-center justify-center pt-3 border-t border-[var(--color-border)] mt-auto">
                           <button
                             onClick={() => setDetailInstructorId(instructor.id)}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] rounded-lg transition-colors"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
                           >
                             {t("instructorsPage.viewProfile")}
                             <ChevronRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />

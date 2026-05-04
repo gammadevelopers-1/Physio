@@ -248,7 +248,7 @@ function CertificateCard({
               <button
                 onClick={() => onDownload(certificate.id)}
                 disabled={downloading}
-                className="flex items-center justify-center gap-2 flex-1 py-2 sm:py-2.5 border border-[var(--color-border)] rounded-lg text-xs sm:text-sm font-medium text-[var(--color-text-primary)] text-center hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-50"
+                className="flex items-center justify-center gap-2 flex-1 py-2 sm:py-2.5 border border-[var(--color-border)] rounded-lg text-xs sm:text-sm font-medium text-[var(--color-text-primary)] text-center hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-50"
               >
                 {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                 {t("certifications.downloadCertificate")}
@@ -260,7 +260,7 @@ function CertificateCard({
                     toast.success(t("certifications.linkCopied"));
                   });
                 }}
-                className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 border border-[var(--color-border)] rounded-lg text-xs sm:text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 border border-[var(--color-border)] rounded-lg text-xs sm:text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                 title={t("certifications.shareCertificate")}
               >
                 <Link2 className="w-4 h-4" />
@@ -440,7 +440,7 @@ const CertificationsContent = () => {
                     </p>
                     <Link
                       href={`/${locale}/courses`}
-                      className="px-5 py-2 sm:px-6 sm:py-2.5 border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs sm:text-sm font-medium rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
+                      className="px-5 py-2 sm:px-6 sm:py-2.5 border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs sm:text-sm font-medium rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
                     >
                       {t("certifications.viewCourses")}
                     </Link>

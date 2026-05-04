@@ -121,7 +121,7 @@ const CalendarContent = () => {
                 </h1>
                 <button
                   onClick={handleExportIcs}
-                  className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-xs sm:text-sm font-medium rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-xs sm:text-sm font-medium rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
                 >
                   <Download className="w-4 h-4" />
                   {t("calendarPage.exportIcs")}

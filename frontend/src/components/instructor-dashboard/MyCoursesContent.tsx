@@ -460,14 +460,14 @@ const MyCoursesContent = () => {
                                 </Link>
                                 <button
                                   onClick={() => router.push(`/${locale}/dashboard/instructor/courses/${course.id}?tab=analytics`)}
-                                  className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+                                  className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                                   title={t("courses.viewAnalytics")}
                                 >
                                   <BarChart3 className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => router.push(`/${locale}/dashboard/instructor/courses/${course.id}?tab=settings`)}
-                                  className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
+                                  className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
                                   title={t("courses.courseSettings")}
                                 >
                                   <Settings className="w-4 h-4" />
@@ -490,7 +490,7 @@ const MyCoursesContent = () => {
                           <Link
                             key={course.id}
                             href={`/${locale}/dashboard/instructor/courses/${course.id}`}
-                            className="flex items-center gap-4 p-4 hover:bg-[var(--color-surface-page)] transition-colors"
+                            className="flex items-center gap-4 p-4 hover:bg-[var(--color-border-subtle)] transition-colors"
                           >
                             <div className="w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 relative">
                               <Image
@@ -554,7 +554,7 @@ const MyCoursesContent = () => {
                         <button
                           onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                           disabled={currentPage === 1}
-                          className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <ChevronLeft className="w-4 h-4" />
                         </button>
@@ -576,7 +576,7 @@ const MyCoursesContent = () => {
                               className={`w-9 h-9 rounded-lg text-sm font-medium ${
                                 page === currentPage
                                   ? "bg-[var(--color-primary)] text-white"
-                                  : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                                  : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                               }`}
                             >
                               {page}
@@ -586,7 +586,7 @@ const MyCoursesContent = () => {
                         <button
                           onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                           disabled={currentPage === totalPages}
-                          className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <ChevronRight className="w-4 h-4" />
                         </button>

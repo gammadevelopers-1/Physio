@@ -605,7 +605,7 @@ const ContentReviewContent = () => {
                           return (
                             <Fragment key={item.id}>
                               <tr
-                                className="hover:bg-[var(--color-surface-page)] transition-colors cursor-pointer"
+                                className="hover:bg-[var(--color-border-subtle)] transition-colors cursor-pointer"
                                 onClick={() => toggleExpand(item.id)}
                               >
                                 <td className="px-2 py-3" onClick={(e) => e.stopPropagation()}>

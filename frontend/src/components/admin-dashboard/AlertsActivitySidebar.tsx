@@ -278,7 +278,7 @@ const AlertsActivitySidebar = ({
               <Link
                 key={action.id}
                 href={action.href}
-                className="flex items-center gap-2 p-3 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-surface-page)] transition-colors"
+                className="flex items-center gap-2 p-3 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-border-subtle)] transition-colors"
               >
                 <Icon className="w-4 h-4 text-[var(--color-text-secondary)]" />
                 <span className="text-sm text-[var(--color-text-secondary)]">{action.label}</span>

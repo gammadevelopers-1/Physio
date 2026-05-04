@@ -128,7 +128,7 @@ const ReviewsOverviewWidget = ({ overall, topCourses }: ReviewsOverviewWidgetPro
                   <li key={course.courseId}>
                     <Link
                       href={`/${locale}/dashboard/manager/courses/${course.courseId}/reviews`}
-                      className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-[var(--color-surface-page)] transition-colors group"
+                      className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors group"
                     >
                       <span className="w-6 h-6 rounded-full bg-[var(--gold-gold-100)] text-[var(--color-star)] text-xs font-semibold flex items-center justify-center flex-shrink-0">
                         {idx + 1}

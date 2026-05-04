@@ -386,7 +386,7 @@ const CourseAssistantsManagePanel = ({
                         </button>
                         <button
                           onClick={() => setConfirmRemove(null)}
-                          className="px-2 py-1 text-xs text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded hover:bg-[var(--color-surface-page)]"
+                          className="px-2 py-1 text-xs text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded hover:bg-[var(--color-border-subtle)]"
                         >
                           {t("taManagement.cancel")}
                         </button>
@@ -451,7 +451,7 @@ const CourseAssistantsManagePanel = ({
                   setRejectionReason("");
                 }}
                 disabled={rejectingLoading}
-                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-50"
               >
                 {t("taManagement.cancel")}
               </button>

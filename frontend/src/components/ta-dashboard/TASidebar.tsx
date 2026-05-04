@@ -168,7 +168,7 @@ const TASidebar = () => {
         {/* View Profile Button */}
         <Link
           href={`/${locale}/dashboard/teaching-assistant/settings`}
-          className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors text-center block"
+          className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors text-center block"
         >
           {t("sidebar.viewProfile")}
         </Link>
@@ -189,7 +189,7 @@ const TASidebar = () => {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                   active
                     ? "bg-[#FFF8E6] text-[var(--color-primary-dark)]"
-                    : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                    : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                 }`}
               >
                 <Icon

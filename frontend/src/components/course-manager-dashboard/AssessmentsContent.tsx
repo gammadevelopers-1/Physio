@@ -885,7 +885,7 @@ const AssessmentsContent = () => {
                   <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] mb-6 overflow-hidden">
                     <button
                       onClick={() => setDefaultsOpen(!defaultsOpen)}
-                      className="w-full flex items-center justify-between px-4 py-4 hover:bg-[var(--color-surface-page)] transition-colors"
+                      className="w-full flex items-center justify-between px-4 py-4 hover:bg-[var(--color-border-subtle)] transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center">
@@ -1122,7 +1122,7 @@ const AssessmentsContent = () => {
                                           </colgroup>
                                           <tbody>
                                             <tr
-                                              className={`hover:bg-[var(--color-surface-page)] transition-colors cursor-pointer ${
+                                              className={`hover:bg-[var(--color-border-subtle)] transition-colors cursor-pointer ${
                                                 expandedId === assessment.id ? "bg-[var(--color-surface-page)]" : ""
                                               }`}
                                               onClick={() => toggleSettings(assessment)}
@@ -1386,7 +1386,7 @@ const AssessmentsContent = () => {
                                     return (
                                       <tr
                                         key={sub.id}
-                                        className={`hover:bg-[var(--color-surface-page)] transition-colors ${isNested ? "bg-[#FAFAFA]" : ""}`}
+                                        className={`hover:bg-[var(--color-border-subtle)] transition-colors ${isNested ? "bg-[#FAFAFA]" : ""}`}
                                       >
                                         <td className={`px-4 py-3 ${isNested ? "ps-10" : ""}`}>
                                           {isNested ? (
@@ -1476,7 +1476,7 @@ const AssessmentsContent = () => {
                                     return (
                                       <React.Fragment key={studentId}>
                                         {/* Primary row */}
-                                        <tr className="hover:bg-[var(--color-surface-page)] transition-colors">
+                                        <tr className="hover:bg-[var(--color-border-subtle)] transition-colors">
                                           <td className="px-4 py-3">
                                             <div className="flex items-center gap-2">
                                               {hasRetakes && (

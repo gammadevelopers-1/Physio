@@ -263,7 +263,7 @@ const ComplianceContent = () => {
                     <div key={category.id}>
                       {/* Category Header */}
                       <button
-                        className="w-full flex items-center justify-between p-5 hover:bg-[var(--color-surface-page)] transition-colors"
+                        className="w-full flex items-center justify-between p-5 hover:bg-[var(--color-border-subtle)] transition-colors"
                         onClick={() =>
                           setExpandedCategory(
                             expandedCategory === category.id ? null : category.id

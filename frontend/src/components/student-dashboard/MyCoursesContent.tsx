@@ -182,7 +182,7 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
             <button
               onClick={onClose}
               disabled={submitting}
-              className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors cursor-pointer"
+              className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors cursor-pointer"
             >
               {t("courseDetail.cancel")}
             </button>
@@ -412,7 +412,7 @@ const MyCoursesContent = () => {
                                     : "in_progress",
                               })
                             }
-                            className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} z-10 w-8 h-8 bg-[var(--color-surface-card)] rounded-full flex items-center justify-center shadow-md hover:bg-[var(--color-surface-page)] transition-colors`}
+                            className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} z-10 w-8 h-8 bg-[var(--color-surface-card)] rounded-full flex items-center justify-center shadow-md hover:bg-[var(--color-border-subtle)] transition-colors`}
                             aria-label={
                               isFavourite(course.id)
                                 ? t("favourites.removeFromFavourites")
@@ -637,7 +637,7 @@ const MyCoursesContent = () => {
                 <button
                   onClick={() => setDropCourseId(null)}
                   disabled={dropping}
-                  className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors cursor-pointer"
+                  className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors cursor-pointer"
                 >
                   {t("courseDetail.cancel")}
                 </button>

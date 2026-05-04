@@ -146,7 +146,7 @@ export default function VersionHistoryPanel({
                             </button>
                             <button
                               onClick={() => setConfirmId(null)}
-                              className="px-3 py-1 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                              className="px-3 py-1 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                             >
                               {t("versions.cancel")}
                             </button>
@@ -186,7 +186,7 @@ export default function VersionHistoryPanel({
 
         {/* Footer */}
         <div className="p-4 border-t border-[var(--color-border)]">
-          <button onClick={onClose} className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
+          <button onClick={onClose} className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]">
             {t("versions.close")}
           </button>
         </div>

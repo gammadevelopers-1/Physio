@@ -473,7 +473,7 @@ const SettingsContent = () => {
                             className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                               calendarFormat === "gregorian"
                                 ? "bg-[var(--color-primary)] text-white border-[#002D87]"
-                                : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
+                                : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[var(--color-border-subtle)]"
                             }`}
                           >
                             {t("settingsPage.profile.gregorian") || "Gregorian"} (ميلادي)
@@ -484,7 +484,7 @@ const SettingsContent = () => {
                             className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                               calendarFormat === "hijri"
                                 ? "bg-[var(--color-primary)] text-white border-[#002D87]"
-                                : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
+                                : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[var(--color-border-subtle)]"
                             }`}
                           >
                             {t("settingsPage.profile.hijri") || "Hijri"} (هجري)

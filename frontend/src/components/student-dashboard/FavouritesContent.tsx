@@ -144,7 +144,7 @@ const FavouritesContent = () => {
                           {/* View Course Button */}
                           <Link
                             href={`/${locale}/dashboard/student/courses/${course.id}`}
-                            className="block w-full py-1.5 sm:py-2 border border-[var(--color-border)] rounded-lg text-xs sm:text-sm font-medium text-[var(--color-text-primary)] text-center hover:bg-[var(--color-surface-page)] transition-colors"
+                            className="block w-full py-1.5 sm:py-2 border border-[var(--color-border)] rounded-lg text-xs sm:text-sm font-medium text-[var(--color-text-primary)] text-center hover:bg-[var(--color-border-subtle)] transition-colors"
                           >
                             {t("favourites.viewCourse")}
                           </Link>

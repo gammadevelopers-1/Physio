@@ -672,7 +672,7 @@ const SessionsContent = () => {
     return (
       <div
         key={session.id}
-        className={`p-4 hover:bg-[var(--color-surface-page)] transition-colors border-s-4 ${colorClass} ${dimmed ? "opacity-75" : ""} ${isConflict ? "bg-[#FEF2F2]" : ""}`}
+        className={`p-4 hover:bg-[var(--color-border-subtle)] transition-colors border-s-4 ${colorClass} ${dimmed ? "opacity-75" : ""} ${isConflict ? "bg-[#FEF2F2]" : ""}`}
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
@@ -768,7 +768,7 @@ const SessionsContent = () => {
                   {(session.status === "completed" || session.status === "ended" || session.status === "cancelled") && (
                     <button
                       onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setAttendanceModal({ id: session.id, title: session.title, courseId: session.courseId }); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)]"
                     >
                       <Users className="w-4 h-4" /> {t("sessionsPage.viewAttendance")}
                     </button>
@@ -783,13 +783,13 @@ const SessionsContent = () => {
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setRescheduleModal({ id: session.id, title: session.title, scheduledAt: session.scheduledAt }); (() => { const d = new Date(session.scheduledAt); const local = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}T${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; setRescheduleDate(local); })(); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)]"
                       >
                         <CalendarClock className="w-4 h-4" /> {t("sessionsPage.reschedule")}
                       </button>
                       {false && <button
                         onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setSubstituteModal({ id: session.id, title: session.title }); setSubstituteId(""); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)]"
                       >
                         <UserPlus className="w-4 h-4" /> {t("sessionsPage.assignSubstitute")}
                       </button>}
@@ -1009,7 +1009,7 @@ const SessionsContent = () => {
                     <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
                       <button
                         onClick={() => setShowPast(!showPast)}
-                        className="w-full flex items-center justify-between p-4 hover:bg-[var(--color-surface-page)] transition-colors rounded-xl"
+                        className="w-full flex items-center justify-between p-4 hover:bg-[var(--color-border-subtle)] transition-colors rounded-xl"
                       >
                         <div className="flex items-center gap-2">
                           <h2 className="text-base font-semibold text-[var(--color-text-primary)]">{t("sessionsPage.past")}</h2>
@@ -1113,7 +1113,7 @@ const SessionsContent = () => {
                   className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[var(--color-primary)] outline-none resize-none h-24"
                 />
                 <div className="flex justify-end gap-3">
-                  <button onClick={() => setCancelModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)]">Close</button>
+                  <button onClick={() => setCancelModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)]">Close</button>
                   <button onClick={handleCancelOnBehalf} disabled={!cancelReason || actionLoading} className="px-4 py-2 text-sm font-medium text-white bg-[#EF4444] rounded-lg disabled:opacity-50 inline-flex items-center gap-2 hover:bg-[#DC2626]">
                     {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}Cancel Session
                   </button>
@@ -1147,7 +1147,7 @@ const SessionsContent = () => {
                   />
                 </div>
                 <div className="flex justify-end gap-3">
-                  <button onClick={() => setRescheduleModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)]">Close</button>
+                  <button onClick={() => setRescheduleModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)]">Close</button>
                   <button onClick={handleReschedule} disabled={!rescheduleDate || actionLoading} className="px-4 py-2 text-sm font-medium text-white btn-gold rounded-lg disabled:opacity-50 inline-flex items-center gap-2">
                     {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}Reschedule
                   </button>
@@ -1185,7 +1185,7 @@ const SessionsContent = () => {
                   ))}
                 </select>
                 <div className="flex justify-end gap-3">
-                  <button onClick={() => setSubstituteModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)]">Close</button>
+                  <button onClick={() => setSubstituteModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)]">Close</button>
                   <button onClick={handleAssignSubstitute} disabled={!substituteId || actionLoading} className="px-4 py-2 text-sm font-medium text-white btn-gold rounded-lg disabled:opacity-50 inline-flex items-center gap-2">
                     {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}Assign
                   </button>
@@ -1273,7 +1273,7 @@ const SessionsContent = () => {
                         };
                         const presPercent = (record as any).presencePercent;
                         return (
-                          <tr key={`${record.studentId}-${idx}`} className="hover:bg-[var(--color-surface-page)]">
+                          <tr key={`${record.studentId}-${idx}`} className="hover:bg-[var(--color-border-subtle)]">
                             <td className="px-3 py-2 text-[var(--color-text-primary)]">{name}</td>
                             <td className="px-3 py-2">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColors[record.status] || "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"}`}>
@@ -1329,7 +1329,7 @@ const SessionsContent = () => {
                       // silently fail
                     }
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors whitespace-nowrap"
                 >
                   <Download className="w-3.5 h-3.5" />
                   Export

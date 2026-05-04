@@ -1068,7 +1068,7 @@ const AssessmentContent = () => {
                 <button
                   onClick={() => setCurrentQuestion((p) => Math.max(0, p - 1))}
                   disabled={currentQuestion === 0}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-40"
+                  className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-40"
                 >
                   {isRTL ? (
                     <ArrowRight className="w-4 h-4" />
@@ -1723,7 +1723,7 @@ const AssessmentContent = () => {
                       className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors text-start ${
                         isSelected
                           ? "border-[#002D87] bg-[var(--color-border-subtle)]"
-                          : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
+                          : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[var(--color-border-subtle)]"
                       }`}
                     >
                       <div
@@ -1775,7 +1775,7 @@ const AssessmentContent = () => {
                       className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors text-start ${
                         isSelected
                           ? "border-[#002D87] bg-[var(--color-border-subtle)]"
-                          : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
+                          : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[var(--color-border-subtle)]"
                       }`}
                     >
                       <div
@@ -1824,7 +1824,7 @@ const AssessmentContent = () => {
                       className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors text-start ${
                         isSelected
                           ? "border-[#002D87] bg-[var(--color-border-subtle)]"
-                          : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
+                          : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[var(--color-border-subtle)]"
                       }`}
                     >
                       <div
@@ -1957,7 +1957,7 @@ const AssessmentContent = () => {
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:bg-[var(--color-surface-page)] hover:border-[#002D87] transition-colors">
+                  <label className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:bg-[var(--color-border-subtle)] hover:border-[#002D87] transition-colors">
                     <Upload className="w-10 h-10 text-[var(--color-text-secondary)]" />
                     <span className="text-sm text-[var(--color-text-secondary)]">
                       {t("assessment.uploadFile")}
@@ -1995,7 +1995,7 @@ const AssessmentContent = () => {
             <button
               onClick={() => setCurrentQuestion((p) => Math.max(0, p - 1))}
               disabled={currentQuestion === 0}
-              className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-40"
+              className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-40"
             >
               {isRTL ? (
                 <ArrowRight className="w-4 h-4" />

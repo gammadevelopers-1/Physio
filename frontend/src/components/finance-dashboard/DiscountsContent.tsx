@@ -305,11 +305,11 @@ const DiscountsContent = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("discountsPage.form.code")}</label>
-                <input type="text" placeholder={t("discountsPage.form.codePlaceholder")} className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
+                <input type="text" placeholder={t("discountsPage.form.codePlaceholder")} className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-input-focus)]" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("discountsPage.form.type")}</label>
-                <select className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
+                <select className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-input-focus)]">
                   <option value="percentage">{t("discountsPage.form.percentage")}</option>
                   <option value="fixed">{t("discountsPage.form.fixedAmount")}</option>
                 </select>
@@ -317,16 +317,16 @@ const DiscountsContent = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("discountsPage.form.usageLimit")}</label>
-                  <input type="number" placeholder="100" className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
+                  <input type="number" placeholder="100" className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-input-focus)]" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("discountsPage.form.expiryDate")}</label>
-                  <input type="date" className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
+                  <input type="date" className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-input-focus)]" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("discountsPage.form.minOrder")}</label>
-                <input type="number" placeholder="0" className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
+                <input type="number" placeholder="0" className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-input-focus)]" />
               </div>
             </div>
             <div className="flex gap-3 mt-6">

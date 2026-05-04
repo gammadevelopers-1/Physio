@@ -436,7 +436,7 @@ const CourseAssistantsManagePanel = ({
               }}
               placeholder={t("taManagement.rejectPlaceholder")}
               rows={4}
-              className="w-full px-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)]"
+              className="w-full px-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent resize-none text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)]"
               disabled={rejectingLoading}
             />
             <div className="flex items-center justify-between mt-2 mb-4">

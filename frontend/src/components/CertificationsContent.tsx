@@ -372,7 +372,7 @@ function CertificateVerifyForm({
             onChange={(e) => setCertInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleVerify()}
             placeholder={placeholderLabel || ""}
-            className={`w-full h-[48px] px-4 border border-[var(--color-input-border)] rounded-lg text-[14px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "text-right" : "text-left"}`}
+            className={`w-full h-[48px] px-4 border border-[var(--color-input-border)] rounded-lg text-[14px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-input-focus)] ${isRTL ? "text-right" : "text-left"}`}
             dir={isRTL ? "rtl" : "ltr"}
           />
           {buttonLabel && (

@@ -290,7 +290,7 @@ function VerifyForm() {
                               ? "border-[var(--color-primary)] bg-[var(--color-border-subtle)]"
                               : "border-[var(--color-border)] bg-[var(--color-surface-page)]"
                         }
-                        focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20
+                        focus:border-[var(--color-input-focus)] focus:ring-2 focus:ring-[var(--color-input-focus)]/20
                         disabled:opacity-50 disabled:cursor-not-allowed
                         text-[var(--color-text-primary)]`}
                       style={{

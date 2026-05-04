@@ -80,7 +80,7 @@ const Modal = ({ title, isRTL, onClose, children }: { title: string; isRTL: bool
 );
 
 const inputCls = (isRTL: boolean) =>
-  `w-full h-11 px-3 bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] text-sm ${isRTL ? "text-right" : ""}`;
+  `w-full h-11 px-3 bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--color-input-focus)] text-sm ${isRTL ? "text-right" : ""}`;
 
 const SelectField = ({
   label,

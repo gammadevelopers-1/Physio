@@ -381,7 +381,7 @@ const TASettingsContent = () => {
                             onChange={(e) =>
                               setProfileData({ ...profileData, firstName: e.target.value })
                             }
-                            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                           />
                         </div>
                         <div>
@@ -395,7 +395,7 @@ const TASettingsContent = () => {
                             onChange={(e) =>
                               setProfileData({ ...profileData, lastName: e.target.value })
                             }
-                            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                           />
                         </div>
                         <div>
@@ -430,7 +430,7 @@ const TASettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, phone: e.target.value })
                               }
-                              className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                              className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                             />
                           </div>
                         </div>
@@ -449,7 +449,7 @@ const TASettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, location: e.target.value })
                               }
-                              className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                              className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                             />
                           </div>
                         </div>
@@ -467,7 +467,7 @@ const TASettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, language: e.target.value })
                               }
-                              className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                              className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                             >
                               <option value="en">English</option>
                               <option value="ar">العربية</option>
@@ -489,7 +489,7 @@ const TASettingsContent = () => {
                           setProfileData({ ...profileData, bio: e.target.value })
                         }
                         rows={4}
-                        className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
+                        className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] resize-none"
                       />
                     </div>
 
@@ -534,7 +534,7 @@ const TASettingsContent = () => {
                               placeholder="••••••••"
                               value={currentPassword}
                               onChange={(e) => setCurrentPassword(e.target.value)}
-                              className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                              className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                             />
                             <button
                               type="button"
@@ -563,7 +563,7 @@ const TASettingsContent = () => {
                               placeholder="••••••••"
                               value={newPassword}
                               onChange={(e) => setNewPassword(e.target.value)}
-                              className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                              className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                             />
                             <button
                               type="button"
@@ -788,7 +788,7 @@ const TASettingsContent = () => {
                           onChange={(e) =>
                             setPreferences({ ...preferences, dateFormat: e.target.value })
                           }
-                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                         >
                           <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                           <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -805,7 +805,7 @@ const TASettingsContent = () => {
                           onChange={(e) =>
                             setPreferences({ ...preferences, timeFormat: e.target.value })
                           }
-                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                         >
                           <option value="12h">{t("settings.time12h")}</option>
                           <option value="24h">{t("settings.time24h")}</option>
@@ -821,7 +821,7 @@ const TASettingsContent = () => {
                           onChange={(e) =>
                             setPreferences({ ...preferences, timezone: e.target.value })
                           }
-                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                         >
                           <option value="Asia/Riyadh">Saudi Arabia (UTC+3)</option>
                           <option value="Asia/Dubai">UAE / Gulf (UTC+4)</option>

@@ -645,7 +645,7 @@ const AssessmentsContent = () => {
             onChange={(e) =>
               setForm({ ...form, retakeScorePolicy: e.target.value })
             }
-            className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
           >
             <option value="highest">{t("assessmentsPage.retake.policies.highest")}</option>
             <option value="latest">{t("assessmentsPage.retake.policies.latest")}</option>
@@ -741,7 +741,7 @@ const AssessmentsContent = () => {
                   <select
                     value={selectedCourseId}
                     onChange={(e) => setSelectedCourseId(e.target.value)}
-                    className="w-full sm:w-96 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    className="w-full sm:w-96 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                   >
                     <option value="">{t("assessmentsPage.allCourses") || "All Courses"}</option>
                     {courses.map((c) => (
@@ -1025,14 +1025,14 @@ const AssessmentsContent = () => {
                               placeholder={t("assessmentsPage.searchPlaceholder")}
                               value={searchQuery}
                               onChange={(e) => setSearchQuery(e.target.value)}
-                              className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent`}
+                              className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent`}
                             />
                           </div>
                           <div className="flex gap-3">
                             <select
                               value={typeFilter}
                               onChange={(e) => setTypeFilter(e.target.value)}
-                              className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                              className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                             >
                               <option value="all">{t("assessmentsPage.filters.allTypes")}</option>
                               <option value="quiz">{t("assessmentsPage.filters.quiz")}</option>
@@ -1042,7 +1042,7 @@ const AssessmentsContent = () => {
                             <select
                               value={statusFilter}
                               onChange={(e) => setStatusFilter(e.target.value)}
-                              className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                              className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                             >
                               <option value="all">{t("assessmentsPage.filters.allStatus")}</option>
                               <option value="draft">{t("assessmentsPage.filters.draft")}</option>
@@ -1156,7 +1156,7 @@ const AssessmentsContent = () => {
                                                 <DropdownMenu>
                                                   <DropdownMenuTrigger asChild>
                                                     <button
-                                                      className="p-1.5 rounded-lg hover:bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                                                      className="p-1.5 rounded-lg hover:bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                                                       title={t("assessmentsPage.table.actions")}
                                                     >
                                                       <MoreVertical className="w-4 h-4" />
@@ -1253,7 +1253,7 @@ const AssessmentsContent = () => {
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
                                         <button
-                                          className="p-1.5 rounded-lg hover:bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                                          className="p-1.5 rounded-lg hover:bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                                           title={t("assessmentsPage.table.actions")}
                                         >
                                           <MoreVertical className="w-4 h-4" />
@@ -1323,7 +1323,7 @@ const AssessmentsContent = () => {
                         <select
                           value={selectedSubmissionAssessment}
                           onChange={(e) => setSelectedSubmissionAssessment(e.target.value)}
-                          className="w-full sm:w-80 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="w-full sm:w-80 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                         >
                           <option value="">{t("assessmentsPage.submissions.selectPlaceholder")}</option>
                           {assessments.map((a) => (
@@ -1856,7 +1856,7 @@ const AssessmentsContent = () => {
                 <select
                   value={overrideForm.studentId}
                   onChange={(e) => setOverrideForm({ ...overrideForm, studentId: e.target.value })}
-                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                 >
                   <option value="">{t("assessmentsPage.override.selectStudent")}</option>
                   {overrideStudents.map((s) => (
@@ -1879,7 +1879,7 @@ const AssessmentsContent = () => {
                   min={1}
                   value={overrideForm.value}
                   onChange={(e) => setOverrideForm({ ...overrideForm, value: Math.max(1, parseInt(e.target.value) || 1) })}
-                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                 />
               </div>
               {/* Reason */}
@@ -1892,7 +1892,7 @@ const AssessmentsContent = () => {
                   onChange={(e) => setOverrideForm({ ...overrideForm, reason: e.target.value })}
                   rows={3}
                   placeholder={t("assessmentsPage.override.reasonPlaceholder")}
-                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
+                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] resize-none"
                 />
               </div>
             </div>

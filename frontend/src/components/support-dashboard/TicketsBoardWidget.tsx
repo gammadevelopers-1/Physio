@@ -133,7 +133,7 @@ const TicketsBoardWidget = () => {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="text-sm border border-[var(--color-input-border)] rounded-lg px-3 py-1.5 text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+          className="text-sm border border-[var(--color-input-border)] rounded-lg px-3 py-1.5 text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent"
         >
           <option value="all">{t("ticketsBoard.filters.allStatuses")}</option>
           <option value="New">{t("ticketsBoard.statuses.new")}</option>
@@ -150,7 +150,7 @@ const TicketsBoardWidget = () => {
         <select
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value)}
-          className="text-sm border border-[var(--color-input-border)] rounded-lg px-3 py-1.5 text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+          className="text-sm border border-[var(--color-input-border)] rounded-lg px-3 py-1.5 text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent"
         >
           <option value="all">
             {t("ticketsBoard.filters.allPriorities")}
@@ -167,7 +167,7 @@ const TicketsBoardWidget = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t("ticketsBoard.filters.searchPlaceholder")}
-            className="w-full text-sm border border-[var(--color-input-border)] rounded-lg pl-9 pr-3 py-1.5 text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+            className="w-full text-sm border border-[var(--color-input-border)] rounded-lg pl-9 pr-3 py-1.5 text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent"
           />
         </div>
       </div>

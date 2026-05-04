@@ -244,7 +244,7 @@ const MyTicketsContent = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t("myTicketsPage.searchPlaceholder")}
-                    className={`w-full sm:w-[260px] py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+                    className={`w-full sm:w-[260px] py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-input-focus)] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
                   />
                 </div>
               </div>
@@ -339,7 +339,7 @@ const MyTicketsContent = () => {
                 <textarea
                   rows={3}
                   placeholder={t("myTicketsPage.quickReplyPlaceholder")}
-                  className="w-full px-4 py-3 border border-[var(--color-input-border)] rounded-xl text-[13px] text-[var(--color-text-secondary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-primary)] resize-none mb-3"
+                  className="w-full px-4 py-3 border border-[var(--color-input-border)] rounded-xl text-[13px] text-[var(--color-text-secondary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-input-focus)] resize-none mb-3"
                 />
 
                 {/* Macros + Send */}

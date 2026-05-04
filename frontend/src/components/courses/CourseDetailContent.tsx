@@ -214,7 +214,7 @@ function AllReviewsModal({
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as typeof sort)}
-              className="text-sm border border-[var(--color-input-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-surface-page)]"
+              className="text-sm border border-[var(--color-input-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] bg-[var(--color-surface-page)]"
             >
               <option value="highest">{isRTL ? "الأعلى تقييماً" : "Highest rated"}</option>
               <option value="lowest">{isRTL ? "الأقل تقييماً" : "Lowest rated"}</option>
@@ -612,7 +612,7 @@ const CourseDetailContent = ({
                 <select
                   value={sessionFilterCity}
                   onChange={(e) => setSessionFilterCity(e.target.value)}
-                  className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-page)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-page)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                 >
                   <option value="">{locale === "ar" ? "كل المدن" : "All cities"}</option>
                   {uniqueCities.map((city) => (
@@ -631,7 +631,7 @@ const CourseDetailContent = ({
                 <select
                   value={sessionFilterMonth}
                   onChange={(e) => setSessionFilterMonth(e.target.value)}
-                  className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-page)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-page)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                 >
                   <option value="">{locale === "ar" ? "كل الأشهر" : "All months"}</option>
                   {uniqueMonths.map((m) => (

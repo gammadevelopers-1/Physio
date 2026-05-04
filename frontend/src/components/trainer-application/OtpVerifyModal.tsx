@@ -153,7 +153,7 @@ const OtpVerifyModal = ({
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
               placeholder="••••••"
-              className="w-full px-4 py-3 text-center text-2xl tracking-[0.5em] font-mono border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-page)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)]"
+              className="w-full px-4 py-3 text-center text-2xl tracking-[0.5em] font-mono border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-page)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-input-focus)]"
               dir="ltr"
               autoFocus
             />

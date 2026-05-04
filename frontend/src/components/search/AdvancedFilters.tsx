@@ -100,7 +100,7 @@ const AdvancedFilters = ({
           <select
             value={filters.sortBy}
             onChange={(e) => updateFilter("sortBy", e.target.value as FilterState["sortBy"])}
-            className="px-3 py-2 bg-[var(--color-surface-card)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] cursor-pointer"
+            className="px-3 py-2 bg-[var(--color-surface-card)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-input-focus)] cursor-pointer"
           >
             {sortOptions.map(option => (
               <option key={option.key} value={option.key}>{option.label}</option>
@@ -178,7 +178,7 @@ const AdvancedFilters = ({
                       type="checkbox"
                       checked={filters.courseTypes.includes(type)}
                       onChange={() => toggleArrayFilter("courseTypes", type)}
-                      className="w-5 h-5 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                      className="w-5 h-5 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-input-focus)]"
                     />
                     <span className="text-sm text-[var(--color-text-primary)]">
                       {isRTL ? COURSE_TYPES_AR[type] : type}
@@ -220,7 +220,7 @@ const AdvancedFilters = ({
                       type="checkbox"
                       checked={filters.certifications.includes(cert)}
                       onChange={() => toggleArrayFilter("certifications", cert)}
-                      className="w-5 h-5 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                      className="w-5 h-5 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-input-focus)]"
                     />
                     <span className="text-sm text-[var(--color-text-primary)]">{cert}</span>
                   </label>
@@ -261,7 +261,7 @@ const AdvancedFilters = ({
                       name="price"
                       checked={filters.priceRange === option.key}
                       onChange={() => updateFilter("priceRange", option.key)}
-                      className="w-5 h-5 border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                      className="w-5 h-5 border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-input-focus)]"
                     />
                     <span className="text-sm text-[var(--color-text-primary)]">{option.label}</span>
                   </label>

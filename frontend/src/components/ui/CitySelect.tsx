@@ -73,8 +73,8 @@ export function CitySelect({
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-50 max-h-64 overflow-hidden flex flex-col">
-          <div className="p-2 border-b border-[var(--color-border)]">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[var(--color-input-border)] rounded-lg shadow-lg z-50 max-h-64 overflow-hidden flex flex-col">
+          <div className="p-2 border-b border-[var(--color-input-border)]">
             <div className="relative">
               <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-2" : "left-2"}`} />
               <input

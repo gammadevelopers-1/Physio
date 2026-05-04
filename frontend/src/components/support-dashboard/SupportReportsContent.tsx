@@ -196,7 +196,7 @@ const SupportReportsContent = () => {
                     <select
                       value={period}
                       onChange={(e) => setPeriod(e.target.value)}
-                      className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)]"
+                      className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-input-focus)]"
                     >
                       <option value="thisWeek">{t("reportsPage.filters.thisWeek")}</option>
                       <option value="lastWeek">{t("reportsPage.filters.lastWeek")}</option>
@@ -210,7 +210,7 @@ const SupportReportsContent = () => {
                     <select
                       value={groupBy}
                       onChange={(e) => setGroupBy(e.target.value)}
-                      className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)]"
+                      className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-input-focus)]"
                     >
                       <option value="byCategory">{t("reportsPage.filters.byCategory")}</option>
                       <option value="byAgent">{t("reportsPage.filters.byAgent")}</option>

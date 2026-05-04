@@ -734,7 +734,7 @@ const SettingsContent = () => {
                       onChange={handleInputChange}
                       aria-label={t("settings.scfhsNumber")}
                       placeholder={t("settings.scfhsPlaceholder")}
-                      className={`w-full px-4 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                      className={`w-full px-4 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                     />
                   </div>
 

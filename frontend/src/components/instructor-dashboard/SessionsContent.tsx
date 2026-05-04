@@ -605,7 +605,7 @@ function AttendanceModal({
                             setLocalNotes((prev) => ({ ...prev, [e.studentId]: ev.target.value }))
                           }
                           placeholder={t("sessionsPage.attendance.notePlaceholder")}
-                          className="w-full px-2.5 py-1.5 border border-[var(--color-input-border)] rounded text-xs text-[var(--color-text-secondary)] placeholder:text-[var(--color-text-secondary)] focus:ring-1 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none"
+                          className="w-full px-2.5 py-1.5 border border-[var(--color-input-border)] rounded text-xs text-[var(--color-text-secondary)] placeholder:text-[var(--color-text-secondary)] focus:ring-1 focus:ring-[var(--color-input-focus)] focus:border-[var(--color-input-focus)] outline-none"
                         />
                       )}
                       {/* Zoom sync timing data + timeline bar */}
@@ -2608,7 +2608,7 @@ const SessionsContent = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Reason *</label>
-                <textarea value={rescheduleForm.reason} onChange={(e) => setRescheduleForm(d => ({ ...d, reason: e.target.value }))} rows={2} placeholder="Why is this lecture being rescheduled?" className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none" />
+                <textarea value={rescheduleForm.reason} onChange={(e) => setRescheduleForm(d => ({ ...d, reason: e.target.value }))} rows={2} placeholder="Why is this lecture being rescheduled?" className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] resize-none" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -2617,15 +2617,15 @@ const SessionsContent = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">New Time *</label>
-                  <input type="time" value={rescheduleForm.time} onChange={(e) => setRescheduleForm(d => ({ ...d, time: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
+                  <input type="time" value={rescheduleForm.time} onChange={(e) => setRescheduleForm(d => ({ ...d, time: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Duration</label>
                 <div className="flex items-center gap-2">
-                  <input type="number" min={0} value={rescheduleForm.durationHours} onChange={(e) => setRescheduleForm(d => ({ ...d, durationHours: Math.max(0, Number(e.target.value)) }))} className="w-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
+                  <input type="number" min={0} value={rescheduleForm.durationHours} onChange={(e) => setRescheduleForm(d => ({ ...d, durationHours: Math.max(0, Number(e.target.value)) }))} className="w-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]" />
                   <span className="text-sm text-[var(--color-text-secondary)]">hrs</span>
-                  <input type="number" min={0} max={59} value={rescheduleForm.durationMins} onChange={(e) => setRescheduleForm(d => ({ ...d, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))} className="w-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
+                  <input type="number" min={0} max={59} value={rescheduleForm.durationMins} onChange={(e) => setRescheduleForm(d => ({ ...d, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))} className="w-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]" />
                   <span className="text-sm text-[var(--color-text-secondary)]">min</span>
                 </div>
               </div>

@@ -165,7 +165,7 @@ export default function DatePicker({
       {/* Dropdown calendar */}
       {open && (
         <div
-          className={`absolute z-50 mt-1 bg-white border border-[var(--color-border)] rounded-xl shadow-lg w-[300px] ${
+          className={`absolute z-50 mt-1 bg-white border border-[var(--color-input-border)] rounded-xl shadow-lg w-[300px] ${
             isRTL ? "right-0" : "left-0"
           }`}
         >

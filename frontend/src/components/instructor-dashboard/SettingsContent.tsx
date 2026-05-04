@@ -368,7 +368,7 @@ const SettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, firstName: e.target.value })
                               }
-                              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                             />
                           </div>
                           <div>
@@ -382,7 +382,7 @@ const SettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, lastName: e.target.value })
                               }
-                              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                             />
                           </div>
                           <div>
@@ -397,7 +397,7 @@ const SettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, firstNameAr: e.target.value })
                               }
-                              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                             />
                           </div>
                           <div>
@@ -412,7 +412,7 @@ const SettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, lastNameAr: e.target.value })
                               }
-                              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                             />
                           </div>
                           <div>
@@ -447,7 +447,7 @@ const SettingsContent = () => {
                                 onChange={(e) =>
                                   setProfileData({ ...profileData, phone: e.target.value })
                                 }
-                                className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                                className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                               />
                             </div>
                           </div>
@@ -465,7 +465,7 @@ const SettingsContent = () => {
                                 onChange={(e) =>
                                   setProfileData({ ...profileData, language: e.target.value })
                                 }
-                                className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                                className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                               >
                                 <option value="en">English</option>
                                 <option value="ar">العربية</option>
@@ -550,7 +550,7 @@ const SettingsContent = () => {
                                 placeholder="••••••••"
                                 value={currentPassword}
                                 onChange={(e) => setCurrentPassword(e.target.value)}
-                                className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                                className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                               />
                               <button
                                 type="button"
@@ -579,7 +579,7 @@ const SettingsContent = () => {
                                 placeholder="••••••••"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
-                                className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                                className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                               />
                               <button
                                 type="button"

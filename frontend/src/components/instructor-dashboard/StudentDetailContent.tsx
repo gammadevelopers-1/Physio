@@ -850,7 +850,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                 <select
                                   value={interventionType}
                                   onChange={(e) => setInterventionType(e.target.value as InterventionType)}
-                                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none"
+                                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-[var(--color-input-focus)] outline-none"
                                 >
                                   <option value="email">{t("studentDetail.interventionEmail")}</option>
                                   <option value="makeup_session">{t("studentDetail.interventionMakeup")}</option>
@@ -867,7 +867,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                   <select
                                     value={interventionCourseId}
                                     onChange={(e) => setInterventionCourseId(e.target.value)}
-                                    className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none"
+                                    className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-[var(--color-input-focus)] outline-none"
                                   >
                                     <option value="">{t("studentDetail.interventionAnyCourse")}</option>
                                     {student.enrollments.map((e) => (
@@ -890,7 +890,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                   placeholder={t("studentDetail.interventionNotePlaceholder")}
                                   maxLength={2000}
                                   rows={3}
-                                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none resize-none"
+                                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-[var(--color-input-focus)] outline-none resize-none"
                                 />
                               </div>
 
@@ -984,7 +984,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                     type="text"
                     value={makeupData.title}
                     onChange={(e) => setMakeupData(d => ({ ...d, title: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -1001,7 +1001,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                       type="time"
                       value={makeupData.time}
                       onChange={(e) => setMakeupData(d => ({ ...d, time: e.target.value }))}
-                      className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                      className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -1012,7 +1012,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                     value={makeupData.duration}
                     onChange={(e) => setMakeupData(d => ({ ...d, duration: e.target.value }))}
                     min={15}
-                    className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent"
                   />
                 </div>
                 <p className="text-xs text-[var(--color-text-secondary)]">{t("studentDetail.makeupNote")}</p>

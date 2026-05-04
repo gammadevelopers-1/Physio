@@ -165,7 +165,7 @@ const CreateAssessmentModal = ({
             <select
               value={courseId}
               onChange={(e) => setCourseId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
               required
             >
               {courses.filter((c) => c.status !== "completed" && c.status !== "archived").map((c) => (
@@ -183,7 +183,7 @@ const CreateAssessmentModal = ({
               <select
                 value={moduleId}
                 onChange={(e) => setModuleId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
               >
                 <option value="">{t("assessments.noModule") || "No module (general)"}</option>
                 {courseModules.map((m) => (
@@ -200,7 +200,7 @@ const CreateAssessmentModal = ({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
               placeholder={t("assessments.titlePlaceholder")}
               required
             />
@@ -213,7 +213,7 @@ const CreateAssessmentModal = ({
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
               >
                 <option value="quiz">{t("assessments.typeQuiz")}</option>
                 <option value="exam">{t("assessments.typeExam")}</option>
@@ -229,7 +229,7 @@ const CreateAssessmentModal = ({
                   type="number"
                   value={durationMinutes}
                   onChange={(e) => setDurationMinutes(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                   placeholder={t("assessments.minutes")}
                   min={1}
                   required
@@ -270,7 +270,7 @@ const CreateAssessmentModal = ({
               <textarea
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] min-h-[80px]"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] min-h-[80px]"
                 placeholder={t("assessments.instructionsPlaceholder") || "Enter assignment instructions..."}
               />
             </div>
@@ -284,7 +284,7 @@ const CreateAssessmentModal = ({
                 type="number"
                 value={totalMarks}
                 onChange={(e) => setTotalMarks(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                 min={1}
                 required
               />
@@ -297,7 +297,7 @@ const CreateAssessmentModal = ({
                 type="number"
                 value={passingMarks}
                 onChange={(e) => setPassingMarks(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                 min={0}
                 required
               />
@@ -420,7 +420,7 @@ const EditAssessmentModal = ({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
               required
             />
           </div>
@@ -432,7 +432,7 @@ const EditAssessmentModal = ({
               <select
                 value={editModuleId}
                 onChange={(e) => setEditModuleId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
               >
                 <option value="">{t("assessments.noModule") || "No module (general)"}</option>
                 {editCourseModules.map((m) => (
@@ -449,7 +449,7 @@ const EditAssessmentModal = ({
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
               >
                 <option value="quiz">{t("assessments.typeQuiz")}</option>
                 <option value="exam">{t("assessments.typeExam")}</option>
@@ -463,7 +463,7 @@ const EditAssessmentModal = ({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
               >
                 <option value="draft">{t("assessments.statusDraft")}</option>
                 <option value="published">{t("assessments.statusPublished")}</option>
@@ -480,7 +480,7 @@ const EditAssessmentModal = ({
                 type="number"
                 value={totalMarks}
                 onChange={(e) => setTotalMarks(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                 min={1}
                 required
               />
@@ -493,7 +493,7 @@ const EditAssessmentModal = ({
                 type="number"
                 value={passingMarks}
                 onChange={(e) => setPassingMarks(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                 min={0}
                 required
               />
@@ -507,7 +507,7 @@ const EditAssessmentModal = ({
                   type="number"
                   value={durationMinutes}
                   onChange={(e) => setDurationMinutes(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                   placeholder={t("assessments.minutes")}
                   min={1}
                 />
@@ -547,7 +547,7 @@ const EditAssessmentModal = ({
               <textarea
                 value={editInstructions}
                 onChange={(e) => setEditInstructions(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] min-h-[80px]"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] min-h-[80px]"
                 placeholder={t("assessments.instructionsPlaceholder") || "Enter assignment instructions..."}
               />
             </div>
@@ -709,7 +709,7 @@ const AddQuestionModal = ({
               <select
                 value={qType}
                 onChange={(e) => setQType(e.target.value as QuestionType)}
-                className="w-full px-2 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full px-2 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
               >
                 <option value="mcq">{t("assessments.typeMCQ")}</option>
                 <option value="true_false">{t("assessments.typeTrueFalse")}</option>
@@ -724,7 +724,7 @@ const AddQuestionModal = ({
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value as DifficultyLevel)}
-                className="w-full px-2 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full px-2 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
               >
                 <option value="easy">{t("assessments.difficultyEasy")}</option>
                 <option value="medium">{t("assessments.difficultyMedium")}</option>
@@ -739,7 +739,7 @@ const AddQuestionModal = ({
                 type="number"
                 value={marks}
                 onChange={(e) => setMarks(Number(e.target.value))}
-                className="w-full px-2 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full px-2 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                 min={1}
               />
             </div>
@@ -753,7 +753,7 @@ const AddQuestionModal = ({
             <textarea
               value={questionText}
               onChange={(e) => setQuestionText(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] resize-none"
               rows={3}
               required
             />
@@ -767,7 +767,7 @@ const AddQuestionModal = ({
             <textarea
               value={questionTextAr}
               onChange={(e) => setQuestionTextAr(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] resize-none"
               rows={2}
               dir="rtl"
             />
@@ -793,7 +793,7 @@ const AddQuestionModal = ({
                       type="text"
                       value={opt.text}
                       onChange={(e) => handleOptionChange(idx, "text", e.target.value)}
-                      className="flex-1 px-2 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                      className="flex-1 px-2 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                       placeholder={`${t("assessments.option")} ${idx + 1}`}
                     />
                     {options.length > 2 && (
@@ -811,7 +811,7 @@ const AddQuestionModal = ({
                       type="text"
                       value={opt.textAr || ""}
                       onChange={(e) => handleOptionChange(idx, "textAr", e.target.value)}
-                      className="w-full px-2 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                      className="w-full px-2 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                       placeholder={`${t("assessments.optionAr")} ${idx + 1}`}
                       dir="rtl"
                     />
@@ -1012,7 +1012,7 @@ const EditQuestionModal = ({
               <select
                 value={qType}
                 onChange={(e) => setQType(e.target.value as QuestionType)}
-                className="w-full px-2 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full px-2 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
               >
                 <option value="mcq">{t("assessments.typeMCQ")}</option>
                 <option value="true_false">{t("assessments.typeTrueFalse")}</option>
@@ -1027,7 +1027,7 @@ const EditQuestionModal = ({
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value as DifficultyLevel)}
-                className="w-full px-2 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full px-2 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
               >
                 <option value="easy">{t("assessments.difficultyEasy")}</option>
                 <option value="medium">{t("assessments.difficultyMedium")}</option>
@@ -1042,7 +1042,7 @@ const EditQuestionModal = ({
                 type="number"
                 value={marks}
                 onChange={(e) => setMarks(Number(e.target.value))}
-                className="w-full px-2 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full px-2 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                 min={1}
               />
             </div>
@@ -1054,7 +1054,7 @@ const EditQuestionModal = ({
             <textarea
               value={questionText}
               onChange={(e) => setQuestionText(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] resize-none"
               rows={3}
               required
             />
@@ -1066,7 +1066,7 @@ const EditQuestionModal = ({
             <textarea
               value={questionTextAr}
               onChange={(e) => setQuestionTextAr(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] resize-none"
               rows={2}
               dir="rtl"
             />
@@ -1090,7 +1090,7 @@ const EditQuestionModal = ({
                       type="text"
                       value={opt.text}
                       onChange={(e) => handleOptionChange(idx, "text", e.target.value)}
-                      className="flex-1 px-2 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                      className="flex-1 px-2 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                       placeholder={`${t("assessments.option")} ${idx + 1}`}
                     />
                     {options.length > 2 && (
@@ -1108,7 +1108,7 @@ const EditQuestionModal = ({
                       type="text"
                       value={opt.textAr || ""}
                       onChange={(e) => handleOptionChange(idx, "textAr", e.target.value)}
-                      className="w-full px-2 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                      className="w-full px-2 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                       placeholder={`${t("assessments.optionAr")} ${idx + 1}`}
                       dir="rtl"
                     />
@@ -1315,7 +1315,7 @@ const GradeModal = ({
                   type="number"
                   value={assignmentScore}
                   onChange={(e) => setAssignmentScore(e.target.value)}
-                  className="w-28 px-3 py-2.5 border-2 border-[var(--color-primary)] rounded-lg text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-28 px-3 py-2.5 border-2 border-[var(--color-primary)] rounded-lg text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                   min={0}
                   max={totalMarks || 100}
                 />
@@ -1329,7 +1329,7 @@ const GradeModal = ({
               <textarea
                 value={overallComment}
                 onChange={(e) => setOverallComment(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] min-h-[80px]"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] min-h-[80px]"
                 placeholder={t("assessments.addComment") || "Add a comment..."}
               />
             </div>
@@ -1408,7 +1408,7 @@ const GradeModal = ({
                                 ),
                               }))
                             }
-                            className="w-20 px-3 py-1.5 border-2 border-[var(--color-primary)] rounded-lg text-sm font-semibold text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                            className="w-20 px-3 py-1.5 border-2 border-[var(--color-primary)] rounded-lg text-sm font-semibold text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                             min={0}
                             max={maxMarks}
                           />
@@ -1423,7 +1423,7 @@ const GradeModal = ({
                               [answer.questionId]: e.target.value,
                             }))
                           }
-                          className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                           placeholder={t("assessments.questionComment") || "Add comment for this question..."}
                         />
                       </>
@@ -1472,7 +1472,7 @@ const GradeModal = ({
               <textarea
                 value={overallComment}
                 onChange={(e) => setOverallComment(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] min-h-[60px]"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] min-h-[60px]"
                 placeholder={t("assessments.addComment") || "Add an overall comment..."}
               />
             </div>
@@ -2061,7 +2061,7 @@ const AssessmentsContent = () => {
                                 placeholder={t("assessments.searchPlaceholder")}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
+                                className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
                               />
                             </div>
                             <button
@@ -2078,7 +2078,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={selectedCourse}
                                 onChange={(e) => setSelectedCourse(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                               >
                                 <option value="all">{t("assessments.allCourses")}</option>
                                 {courses.map((c) => (
@@ -2090,7 +2090,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={selectedType}
                                 onChange={(e) => setSelectedType(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                               >
                                 {types.map((t_) => (
                                   <option key={t_.id} value={t_.id}>{t_.name}</option>
@@ -2099,7 +2099,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={selectedStatus}
                                 onChange={(e) => setSelectedStatus(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                               >
                                 {statusOptions.map((s) => (
                                   <option key={s.id} value={s.id}>{s.name}</option>
@@ -2112,7 +2112,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={selectedCourse}
                                 onChange={(e) => setSelectedCourse(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                               >
                                 <option value="all">{t("assessments.allCourses")}</option>
                                 {courses.map((c) => (
@@ -2124,7 +2124,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={selectedType}
                                 onChange={(e) => setSelectedType(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                               >
                                 {types.map((t_) => (
                                   <option key={t_.id} value={t_.id}>{t_.name}</option>
@@ -2133,7 +2133,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={selectedStatus}
                                 onChange={(e) => setSelectedStatus(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                               >
                                 {statusOptions.map((s) => (
                                   <option key={s.id} value={s.id}>{s.name}</option>
@@ -2299,7 +2299,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={qbCourseFilter}
                                 onChange={(e) => { setQbCourseFilter(e.target.value); setSelectedAssessmentForQ(""); }}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] min-w-[200px]"
+                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] min-w-[200px]"
                               >
                                 <option value="">{t("assessments.allCourses")}</option>
                                 {courses.map((c) => (
@@ -2313,13 +2313,13 @@ const AssessmentsContent = () => {
                                   placeholder={t("assessments.searchByName") || "Search by name..."}
                                   value={qbSearchQuery}
                                   onChange={(e) => setQbSearchQuery(e.target.value)}
-                                  className="w-full pl-9 pr-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                                  className="w-full pl-9 pr-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                                 />
                               </div>
                               <select
                                 value={qbStatusFilter}
                                 onChange={(e) => setQbStatusFilter(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                               >
                                 <option value="all">{t("assessments.allStatuses")}</option>
                                 <option value="draft">{t("assessments.statusDraft")}</option>
@@ -2328,7 +2328,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={qbTypeFilter}
                                 onChange={(e) => setQbTypeFilter(e.target.value)}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                               >
                                 <option value="all">{t("assessments.allTypes")}</option>
                                 <option value="quiz">{t("assessments.typeQuiz")}</option>
@@ -2425,7 +2425,7 @@ const AssessmentsContent = () => {
                                   <select
                                     value={questionTypeFilter}
                                     onChange={(e) => setQuestionTypeFilter(e.target.value)}
-                                    className="px-2 py-1.5 border border-[var(--color-input-border)] rounded-lg text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                                    className="px-2 py-1.5 border border-[var(--color-input-border)] rounded-lg text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                                   >
                                     <option value="all">{t("assessments.allTypes")}</option>
                                     <option value="mcq">{t("assessments.typeMCQ")}</option>
@@ -2436,7 +2436,7 @@ const AssessmentsContent = () => {
                                   <select
                                     value={questionDifficultyFilter}
                                     onChange={(e) => setQuestionDifficultyFilter(e.target.value)}
-                                    className="px-2 py-1.5 border border-[var(--color-input-border)] rounded-lg text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                                    className="px-2 py-1.5 border border-[var(--color-input-border)] rounded-lg text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                                   >
                                     <option value="all">{t("assessments.allDifficulties")}</option>
                                     <option value="easy">{t("assessments.difficultyEasy")}</option>
@@ -2678,7 +2678,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={subCourseFilter}
                                 onChange={(e) => { setSubCourseFilter(e.target.value); }}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] min-w-[200px]"
+                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] min-w-[200px]"
                               >
                                 <option value="">{t("assessments.allCourses")}</option>
                                 {courses.map((c) => (
@@ -2692,7 +2692,7 @@ const AssessmentsContent = () => {
                                   placeholder={t("assessments.searchByName") || "Search by name..."}
                                   value={subSearchQuery}
                                   onChange={(e) => setSubSearchQuery(e.target.value)}
-                                  className="w-full pl-9 pr-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                                  className="w-full pl-9 pr-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                                 />
                               </div>
                             </div>
@@ -2758,7 +2758,7 @@ const AssessmentsContent = () => {
                             <select
                               value={submissionStatusFilter}
                               onChange={(e) => setSubmissionStatusFilter(e.target.value)}
-                              className="px-2 py-1.5 border border-[var(--color-input-border)] rounded-lg text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                              className="px-2 py-1.5 border border-[var(--color-input-border)] rounded-lg text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                             >
                               <option value="all">{t("assessments.filterByStatus")}</option>
                               <option value="submitted">{t("assessments.submissionPending")}</option>
@@ -2989,7 +2989,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={iaCourseFilter}
                                 onChange={(e) => { setIaCourseFilter(e.target.value); }}
-                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] min-w-[200px]"
+                                className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] min-w-[200px]"
                               >
                                 <option value="">{t("assessments.allCourses") || "All Courses"}</option>
                                 {courses.map((c) => (
@@ -3003,7 +3003,7 @@ const AssessmentsContent = () => {
                                   placeholder={t("assessments.searchByName") || "Search by name..."}
                                   value={iaSearchQuery}
                                   onChange={(e) => setIaSearchQuery(e.target.value)}
-                                  className="w-full pl-9 pr-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                                  className="w-full pl-9 pr-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                                 />
                               </div>
                             </div>

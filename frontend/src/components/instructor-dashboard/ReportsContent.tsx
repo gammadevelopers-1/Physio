@@ -189,7 +189,7 @@ function ExportModal({
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
             >
               {reportType.requiresCourse ? (
                 <option value="">{t("reports.chooseCourse")}</option>
@@ -456,7 +456,7 @@ const ReportsContent = () => {
                     <select
                       value={filterDelivery}
                       onChange={(e) => { setFilterDelivery(e.target.value); setFilterCourse(""); }}
-                      className="md:w-40 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                      className="md:w-40 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                     >
                       <option value="all">{t("reports.allDeliveryTypes")}</option>
                       <option value="zoom">{t("reports.zoom")}</option>
@@ -469,7 +469,7 @@ const ReportsContent = () => {
                       value={filterCourse}
                       onChange={(e) => setFilterCourse(e.target.value)}
                       disabled={loadingCourses}
-                      className="flex-1 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
+                      className="flex-1 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] disabled:opacity-50"
                     >
                       <option value="">{t("reports.allCourses")}</option>
                       {filteredCourses.map((c) => (
@@ -485,7 +485,7 @@ const ReportsContent = () => {
                       onChange={(e) =>
                         setFilterFormat(e.target.value as ReportFormat)
                       }
-                      className="md:w-40 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                      className="md:w-40 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                     >
                       <option value="pdf">PDF</option>
                       <option value="csv">CSV</option>

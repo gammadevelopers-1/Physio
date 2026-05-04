@@ -341,7 +341,7 @@ function ThresholdSettingsModal({
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
             >
               {courses.map((c) => (
                 <option key={c.value} value={c.value}>{c.label}</option>
@@ -359,7 +359,7 @@ function ThresholdSettingsModal({
                 type="number"
                 value={attendance}
                 onChange={(e) => setAttendance(e.target.value)}
-                className="flex-1 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="flex-1 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                 min={0}
                 max={100}
               />
@@ -377,7 +377,7 @@ function ThresholdSettingsModal({
                 type="number"
                 value={score}
                 onChange={(e) => setScore(e.target.value)}
-                className="flex-1 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="flex-1 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                 min={0}
                 max={100}
               />
@@ -395,7 +395,7 @@ function ThresholdSettingsModal({
                 type="number"
                 value={inactivity}
                 onChange={(e) => setInactivity(e.target.value)}
-                className="flex-1 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="flex-1 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                 min={1}
                 max={90}
               />

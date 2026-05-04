@@ -1110,7 +1110,7 @@ const SessionsContent = () => {
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
                   placeholder="Reason for cancellation..."
-                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[var(--color-primary)] outline-none resize-none h-24"
+                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[var(--color-input-focus)] outline-none resize-none h-24"
                 />
                 <div className="flex justify-end gap-3">
                   <button onClick={() => setCancelModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)]">Close</button>
@@ -1177,7 +1177,7 @@ const SessionsContent = () => {
                 <select
                   value={substituteId}
                   onChange={(e) => setSubstituteId(e.target.value)}
-                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[var(--color-primary)] outline-none"
+                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[var(--color-input-focus)] outline-none"
                 >
                   <option value="">Select instructor...</option>
                   {instructors.map((inst) => (
@@ -1311,7 +1311,7 @@ const SessionsContent = () => {
                 <select
                   value={exportFormat}
                   onChange={(e) => setExportFormat(e.target.value as "csv" | "pdf" | "xlsx")}
-                  className="px-2 py-2 text-xs border border-[var(--color-input-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none"
+                  className="px-2 py-2 text-xs border border-[var(--color-input-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:ring-1 focus:ring-[var(--color-input-focus)] outline-none"
                 >
                   <option value="csv">CSV</option>
                   <option value="pdf">PDF</option>

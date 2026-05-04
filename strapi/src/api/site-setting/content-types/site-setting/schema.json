@@ -179,6 +179,11 @@
       "default": "#9CA3AF",
       "pluginOptions": { "i18n": { "localized": false } }
     },
+    "themeInputFocus": {
+      "type": "string",
+      "default": "#a37f49",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
     "themeIconColor": {
       "type": "string",
       "default": "#737373",

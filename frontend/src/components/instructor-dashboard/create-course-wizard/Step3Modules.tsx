@@ -111,7 +111,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
               type="text"
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+              className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent"
             />
           </div>
           <div>
@@ -124,7 +124,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
               dir="rtl"
               value={form.titleAr}
               onChange={(e) => setForm((f) => ({ ...f, titleAr: e.target.value }))}
-              className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+              className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent"
             />
           </div>
           <div>
@@ -135,7 +135,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
               id="module-type"
               value={form.type}
               onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
-              className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent bg-[var(--color-surface-card)]"
+              className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent bg-[var(--color-surface-card)]"
             >
               {MODULE_TYPES.map((mType) => (
                 <option key={mType} value={mType}>
@@ -162,7 +162,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
                     }))
                   }
                   placeholder="1"
-                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent"
                 />
                 <span className="text-xs text-[var(--color-text-secondary)] mt-0.5 block">{t("hours")}</span>
               </div>
@@ -180,7 +180,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
                     }))
                   }
                   placeholder="30"
-                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent"
                 />
                 <span className="text-xs text-[var(--color-text-secondary)] mt-0.5 block">{t("minutes")}</span>
               </div>

@@ -197,7 +197,7 @@ const InvoicesContent = () => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={t("paymentsTable.searchPlaceholder")}
-                        className={`w-full sm:w-[260px] py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+                        className={`w-full sm:w-[260px] py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-input-focus)] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
                       />
                     </div>
                   </div>

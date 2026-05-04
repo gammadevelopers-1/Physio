@@ -986,7 +986,7 @@ const CourseManagerCourseDetailContent = ({
               value={removeReason}
               onChange={(e) => setRemoveReason(e.target.value)}
               placeholder={t("courseDetail.removeReasonPlaceholder")}
-              className="w-full border border-[var(--color-input-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+              className="w-full border border-[var(--color-input-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent"
               rows={3}
             />
             <div className="flex items-center justify-end gap-3 mt-4">

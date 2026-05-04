@@ -172,7 +172,7 @@ function SetPasswordContent() {
                       autoComplete="new-password"
                       required
                       minLength={8}
-                      className="w-full h-11 px-3 pe-10 bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--color-primary)] text-sm"
+                      className="w-full h-11 px-3 pe-10 bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--color-input-focus)] text-sm"
                     />
                     <button
                       type="button"
@@ -196,7 +196,7 @@ function SetPasswordContent() {
                       autoComplete="new-password"
                       required
                       minLength={8}
-                      className="w-full h-11 px-3 pe-10 bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--color-primary)] text-sm"
+                      className="w-full h-11 px-3 pe-10 bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--color-input-focus)] text-sm"
                     />
                     <button
                       type="button"

@@ -174,7 +174,7 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
               maxLength={2000}
               dir="auto"
               placeholder={t("myCourses.reviewTextPlaceholder")}
-              className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
+              className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] resize-none"
             />
             <p className="text-xs text-[var(--color-text-secondary)] mt-1">{reviewText.length} / 2000</p>
           </div>

@@ -68,6 +68,7 @@ const THEME_DEFAULTS = {
   borderColor: "#e5e7eb",
   borderSubtle: "#C8D5E1",
   inputBorder: "#9CA3AF",
+  inputFocus: "#a37f49",
   iconColor: "#737373",
   footerBackground: "#ffffff",
   buttonText: "#ffffff",
@@ -98,6 +99,10 @@ export default async function RootLayout({
       settings?.themeInputBorder ||
       settings?.themeBorderColor ||
       THEME_DEFAULTS.inputBorder,
+    inputFocus:
+      settings?.themeInputFocus ||
+      settings?.themePrimaryColor ||
+      THEME_DEFAULTS.inputFocus,
     iconColor: settings?.themeIconColor || THEME_DEFAULTS.iconColor,
     footerBackground: settings?.themeFooterBackground || THEME_DEFAULTS.footerBackground,
     buttonText: settings?.themeButtonText || THEME_DEFAULTS.buttonText,
@@ -109,7 +114,7 @@ export default async function RootLayout({
     starBorder: settings?.themeStarBorder || THEME_DEFAULTS.starBorder,
   };
 
-  const themeStyle = `:root{--color-primary:${theme.primary};--color-primary-dark:${theme.primaryDark};--color-surface-page:${theme.surfacePage};--color-surface-card:${theme.surfaceCard};--color-text-primary:${theme.textPrimary};--color-text-secondary:${theme.textSecondary};--color-border:${theme.borderColor};--color-border-subtle:${theme.borderSubtle};--color-input-border:${theme.inputBorder};--color-icon:${theme.iconColor};--color-footer-bg:${theme.footerBackground};--color-button-text:${theme.buttonText};--color-navbar-bg:${theme.navbarBackground};--color-navbar-text:${theme.navbarText};--color-footer-heading:${theme.footerHeading};--color-footer-text:${theme.footerText};--color-star:${theme.starColor};--color-star-border:${theme.starBorder};}`;
+  const themeStyle = `:root{--color-primary:${theme.primary};--color-primary-dark:${theme.primaryDark};--color-surface-page:${theme.surfacePage};--color-surface-card:${theme.surfaceCard};--color-text-primary:${theme.textPrimary};--color-text-secondary:${theme.textSecondary};--color-border:${theme.borderColor};--color-border-subtle:${theme.borderSubtle};--color-input-border:${theme.inputBorder};--color-input-focus:${theme.inputFocus};--color-icon:${theme.iconColor};--color-footer-bg:${theme.footerBackground};--color-button-text:${theme.buttonText};--color-navbar-bg:${theme.navbarBackground};--color-navbar-text:${theme.navbarText};--color-footer-heading:${theme.footerHeading};--color-footer-text:${theme.footerText};--color-star:${theme.starColor};--color-star-border:${theme.starBorder};}`;
 
   return (
     <html lang="en" suppressHydrationWarning>

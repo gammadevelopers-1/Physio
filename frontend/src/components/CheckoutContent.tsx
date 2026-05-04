@@ -104,7 +104,7 @@ export default function CheckoutContent() {
                       type="text"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      className="w-full h-12 px-4 bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors"
+                      className="w-full h-12 px-4 bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--color-input-focus)] transition-colors"
                       dir={isRTL ? "rtl" : "ltr"}
                     />
                   </div>
@@ -116,7 +116,7 @@ export default function CheckoutContent() {
                       type="text"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      className="w-full h-12 px-4 bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors"
+                      className="w-full h-12 px-4 bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--color-input-focus)] transition-colors"
                       dir={isRTL ? "rtl" : "ltr"}
                     />
                   </div>
@@ -136,7 +136,7 @@ export default function CheckoutContent() {
                       type="tel"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      className={`w-full h-12 ${isRTL ? "pr-16 pl-4" : "pl-16 pr-4"} bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors`}
+                      className={`w-full h-12 ${isRTL ? "pr-16 pl-4" : "pl-16 pr-4"} bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--color-input-focus)] transition-colors`}
                       dir="ltr"
                     />
                   </div>
@@ -151,7 +151,7 @@ export default function CheckoutContent() {
                     <select
                       value={isResident}
                       onChange={(e) => setIsResident(e.target.value)}
-                      className="w-full h-12 px-4 bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors appearance-none cursor-pointer"
+                      className="w-full h-12 px-4 bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--color-input-focus)] transition-colors appearance-none cursor-pointer"
                       dir={isRTL ? "rtl" : "ltr"}
                     >
                       <option value=""></option>
@@ -171,7 +171,7 @@ export default function CheckoutContent() {
                     <select
                       value={isHealthcarePractitioner}
                       onChange={(e) => setIsHealthcarePractitioner(e.target.value)}
-                      className="w-full h-12 px-4 bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors appearance-none cursor-pointer"
+                      className="w-full h-12 px-4 bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--color-input-focus)] transition-colors appearance-none cursor-pointer"
                       dir={isRTL ? "rtl" : "ltr"}
                     >
                       <option value=""></option>

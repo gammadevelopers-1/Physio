@@ -27,6 +27,8 @@ interface PdfViewerBlockProps {
 }
 
 export function PdfViewerBlock({ data }: PdfViewerBlockProps) {
+  if (!data.pdfFile && !data.title?.trim()) return null;
+
   const pdfUrl = data.pdfFile ? getStrapiMediaUrl(data.pdfFile.url) : null;
   const height = data.height || 600;
 

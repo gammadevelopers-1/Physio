@@ -35,6 +35,14 @@ const columnClasses: Record<string, string> = {
 };
 
 export function ImageGalleryBlock({ data }: ImageGalleryBlockProps) {
+  if (
+    (!data.images || data.images.length === 0) &&
+    !data.title?.trim() &&
+    !data.description?.trim()
+  ) {
+    return null;
+  }
+
   const cols = data.columns || "3";
 
   return (

@@ -17,6 +17,14 @@ export function InstructorsGridBlock({
   data,
   sideLoadedData,
 }: InstructorsGridBlockProps) {
+  if (
+    (!sideLoadedData.instructors ||
+      sideLoadedData.instructors.length === 0) &&
+    !data.title?.trim()
+  ) {
+    return null;
+  }
+
   // Filter instructors based on block configuration
   let filtered: Instructor[] = sideLoadedData.instructors;
 

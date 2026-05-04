@@ -116,6 +116,14 @@ export function LiveCounterBlock({ data }: LiveCounterBlockProps) {
     };
   }, [hasLiveCounter]);
 
+  if (
+    (!data.counters || data.counters.length === 0) &&
+    !data.title?.trim() &&
+    !data.description?.trim()
+  ) {
+    return null;
+  }
+
   // Resolve each counter to its display value
   const resolveValue = (counter: CounterItem): number => {
     if (counter.liveSource && liveStats) {

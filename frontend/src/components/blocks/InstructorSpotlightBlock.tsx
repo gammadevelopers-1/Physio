@@ -30,6 +30,10 @@ interface InstructorSpotlightBlockProps {
 }
 
 export function InstructorSpotlightBlock({ data }: InstructorSpotlightBlockProps) {
+  if (!data.instructorName?.trim() && !data.title?.trim() && !data.photo) {
+    return null;
+  }
+
   const credList = data.credentials
     ? data.credentials.split("\n").filter(Boolean)
     : [];

@@ -16,6 +16,14 @@ export function FeaturedCoursesGridBlock({
   data,
   sideLoadedData,
 }: FeaturedCoursesGridBlockProps) {
+  if (
+    (!sideLoadedData.featuredCourses ||
+      sideLoadedData.featuredCourses.length === 0) &&
+    !data.title?.trim()
+  ) {
+    return null;
+  }
+
   // FeaturedCourses expects `sectionData` shaped like HomePage.
   // Map the generic block fields to the relevant HomePage fields.
   const sectionData: Partial<HomePage> = {

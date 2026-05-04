@@ -28,6 +28,14 @@ interface CpdCalculatorBlockProps {
 }
 
 export function CpdCalculatorBlock({ data }: CpdCalculatorBlockProps) {
+  if (
+    (!data.tiers || data.tiers.length === 0) &&
+    !data.title?.trim() &&
+    !data.description?.trim()
+  ) {
+    return null;
+  }
+
   const total = data.tiers?.reduce((sum, t) => sum + (t.points || 0), 0) || 0;
 
   return (

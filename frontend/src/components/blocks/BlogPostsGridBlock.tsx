@@ -27,6 +27,8 @@ const columnClasses: Record<string, string> = {
 };
 
 export function BlogPostsGridBlock({ data }: BlogPostsGridBlockProps) {
+  if (!data.title?.trim() && !data.description?.trim()) return null;
+
   const cols = data.columns || "3";
 
   return (

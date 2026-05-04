@@ -34,6 +34,8 @@ const headingSizes: Record<string, string> = {
 };
 
 export function SectionHeaderBlock({ data }: SectionHeaderBlockProps) {
+  if (!data.title?.trim() && !data.subtitle?.trim()) return null;
+
   const alignment = data.alignment || "center";
   const level = data.headingLevel || "h2";
 

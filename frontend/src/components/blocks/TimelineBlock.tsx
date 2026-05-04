@@ -27,6 +27,14 @@ interface TimelineBlockProps {
 }
 
 export function TimelineBlock({ data }: TimelineBlockProps) {
+  if (
+    (!data.steps || data.steps.length === 0) &&
+    !data.title?.trim() &&
+    !data.description?.trim()
+  ) {
+    return null;
+  }
+
   return (
     <section className="px-4 lg:px-16 py-12 lg:py-20">
       <div className="max-w-[1280px] mx-auto flex flex-col gap-8 items-center">

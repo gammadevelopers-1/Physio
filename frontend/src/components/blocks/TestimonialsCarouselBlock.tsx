@@ -16,6 +16,14 @@ export function TestimonialsCarouselBlock({
   data,
   sideLoadedData,
 }: TestimonialsCarouselBlockProps) {
+  if (
+    (!sideLoadedData.testimonials ||
+      sideLoadedData.testimonials.length === 0) &&
+    !data.title?.trim()
+  ) {
+    return null;
+  }
+
   // Testimonials expects `sectionData` shaped like HomePage.
   const sectionData: Partial<HomePage> = {
     testimonialsTitle: data.title,

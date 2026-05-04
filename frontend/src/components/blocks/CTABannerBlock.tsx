@@ -14,6 +14,14 @@ interface CTABannerBlockProps {
 }
 
 export function CTABannerBlock({ data }: CTABannerBlockProps) {
+  if (
+    !data.title?.trim() &&
+    !data.description?.trim() &&
+    (!data.buttons || data.buttons.length === 0)
+  ) {
+    return null;
+  }
+
   const primaryButton = data.buttons?.[0] ?? null;
 
   if (data.variant === "centered") {

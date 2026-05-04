@@ -12,6 +12,8 @@ interface VideoEmbedBlockProps {
 }
 
 export function VideoEmbedBlock({ data }: VideoEmbedBlockProps) {
+  if (!data.videoFile && !data.videoUrl && !data.title?.trim()) return null;
+
   return (
     <section className="px-4 lg:px-16 py-12 lg:py-20">
       <div className="max-w-[1280px] mx-auto flex flex-col gap-6 items-center">

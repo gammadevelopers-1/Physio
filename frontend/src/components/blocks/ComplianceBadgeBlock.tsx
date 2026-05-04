@@ -40,6 +40,14 @@ const statusColors: Record<string, string> = {
 };
 
 export function ComplianceBadgeBlock({ data }: ComplianceBadgeBlockProps) {
+  if (
+    (!data.badges || data.badges.length === 0) &&
+    !data.title?.trim() &&
+    !data.description?.trim()
+  ) {
+    return null;
+  }
+
   const variant = data.variant || "row";
 
   return (

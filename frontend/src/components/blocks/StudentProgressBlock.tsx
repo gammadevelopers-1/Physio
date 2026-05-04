@@ -27,6 +27,14 @@ interface StudentProgressBlockProps {
 }
 
 export function StudentProgressBlock({ data }: StudentProgressBlockProps) {
+  if (
+    (!data.metrics || data.metrics.length === 0) &&
+    !data.title?.trim() &&
+    !data.description?.trim()
+  ) {
+    return null;
+  }
+
   const variant = data.variant || "bars";
 
   return (

@@ -29,6 +29,14 @@ interface ComparisonTableBlockProps {
 }
 
 export function ComparisonTableBlock({ data }: ComparisonTableBlockProps) {
+  if (
+    (!data.columns || data.columns.length === 0) &&
+    !data.title?.trim() &&
+    !data.description?.trim()
+  ) {
+    return null;
+  }
+
   const labels = data.featureLabels
     ? data.featureLabels.split("\n").filter(Boolean)
     : [];

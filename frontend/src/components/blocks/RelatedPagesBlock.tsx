@@ -39,6 +39,14 @@ const columnClasses: Record<string, string> = {
 };
 
 export function RelatedPagesBlock({ data }: RelatedPagesBlockProps) {
+  if (
+    (!data.pages || data.pages.length === 0) &&
+    !data.title?.trim() &&
+    !data.description?.trim()
+  ) {
+    return null;
+  }
+
   const cols = data.columns || "3";
 
   return (

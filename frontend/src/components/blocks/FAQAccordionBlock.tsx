@@ -18,11 +18,19 @@ export function FAQAccordionBlock({ data }: FAQAccordionBlockProps) {
 
   // Build initial open state from defaultOpen flags
   const initialOpen = new Set<number>();
-  data.items.forEach((item, index) => {
+  (data.items || []).forEach((item, index) => {
     if ((item as any).defaultOpen) initialOpen.add(index);
   });
 
   const [openIndices, setOpenIndices] = useState<Set<number>>(initialOpen);
+
+  if (
+    (!data.items || data.items.length === 0) &&
+    !data.title?.trim() &&
+    !data.subtitle?.trim()
+  ) {
+    return null;
+  }
 
   const toggle = (index: number) => {
     setOpenIndices((prev) => {

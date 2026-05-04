@@ -40,6 +40,14 @@ const columnClasses: Record<string, string> = {
 };
 
 export function TreatmentGalleryBlock({ data }: TreatmentGalleryBlockProps) {
+  if (
+    (!data.techniques || data.techniques.length === 0) &&
+    !data.title?.trim() &&
+    !data.description?.trim()
+  ) {
+    return null;
+  }
+
   const cols = data.columns || "3";
 
   return (

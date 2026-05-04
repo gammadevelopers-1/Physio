@@ -25,6 +25,8 @@ interface BreadcrumbBlockProps {
 }
 
 export function BreadcrumbBlock({ data }: BreadcrumbBlockProps) {
+  if (!data.items || data.items.length === 0) return null;
+
   const separator = data.separator || "/";
 
   return (

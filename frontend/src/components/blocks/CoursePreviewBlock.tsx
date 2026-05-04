@@ -31,6 +31,15 @@ interface CoursePreviewBlockProps {
 }
 
 export function CoursePreviewBlock({ data }: CoursePreviewBlockProps) {
+  if (
+    !data.previewVideo &&
+    !data.previewVideoUrl &&
+    !data.previewImage &&
+    !data.title?.trim()
+  ) {
+    return null;
+  }
+
   const highlights = data.courseHighlights
     ? data.courseHighlights.split("\n").filter(Boolean)
     : [];

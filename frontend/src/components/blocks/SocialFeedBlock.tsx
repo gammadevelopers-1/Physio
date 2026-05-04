@@ -41,6 +41,14 @@ const columnClasses: Record<string, string> = {
 };
 
 export function SocialFeedBlock({ data }: SocialFeedBlockProps) {
+  if (
+    (!data.posts || data.posts.length === 0) &&
+    !data.title?.trim() &&
+    !data.description?.trim()
+  ) {
+    return null;
+  }
+
   const cols = data.columns || "3";
 
   return (

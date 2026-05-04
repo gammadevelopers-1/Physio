@@ -13,6 +13,13 @@ export function PolicySectionsBlock({ data }: PolicySectionsBlockProps) {
   const locale = useLocale();
   const isRTL = locale === "ar";
 
+  if (
+    (!data.sections || data.sections.length === 0) &&
+    !data.title?.trim()
+  ) {
+    return null;
+  }
+
   const emptyMessage = isRTL
     ? "جاري تحديث هذه السياسة — يرجى المراجعة لاحقاً"
     : "This policy is being updated — please check back soon";

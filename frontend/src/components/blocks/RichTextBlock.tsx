@@ -19,6 +19,8 @@ const widthClasses: Record<RichTextBlockData["maxWidth"], string> = {
 };
 
 export function RichTextBlock({ data }: RichTextBlockProps) {
+  if (!data.content?.trim()) return null;
+
   return (
     <section className="px-4 lg:px-16 py-12 lg:py-20">
       <div

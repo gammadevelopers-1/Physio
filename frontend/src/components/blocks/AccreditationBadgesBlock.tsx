@@ -28,6 +28,14 @@ interface AccreditationBadgesBlockProps {
 }
 
 export function AccreditationBadgesBlock({ data }: AccreditationBadgesBlockProps) {
+  if (
+    (!data.badges || data.badges.length === 0) &&
+    !data.title?.trim() &&
+    !data.description?.trim()
+  ) {
+    return null;
+  }
+
   const links = data.badgeLinks
     ? data.badgeLinks.split("\n").filter(Boolean)
     : [];

@@ -37,6 +37,15 @@ interface HeroBannerBlockProps {
 export function HeroBannerBlock({ data }: HeroBannerBlockProps) {
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  if (
+    !data.title?.trim() &&
+    !data.description?.trim() &&
+    !data.backgroundImage &&
+    (!data.buttons || data.buttons.length === 0)
+  ) {
+    return null;
+  }
   const hasButtons = data.buttons && data.buttons.length > 0;
 
   return (

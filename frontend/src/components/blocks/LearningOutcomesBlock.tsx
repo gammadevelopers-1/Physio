@@ -33,6 +33,14 @@ const iconMap: Record<string, string> = {
 };
 
 export function LearningOutcomesBlock({ data }: LearningOutcomesBlockProps) {
+  if (
+    (!data.outcomes || data.outcomes.length === 0) &&
+    !data.title?.trim() &&
+    !data.description?.trim()
+  ) {
+    return null;
+  }
+
   const cols = data.columns || "2";
   const iconChar = iconMap[data.icon || "checkmark"] || "\u2713";
 

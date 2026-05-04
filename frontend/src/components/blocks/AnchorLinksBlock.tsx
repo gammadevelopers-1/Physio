@@ -25,6 +25,13 @@ interface AnchorLinksBlockProps {
 }
 
 export function AnchorLinksBlock({ data }: AnchorLinksBlockProps) {
+  if (
+    (!data.links || data.links.length === 0) &&
+    !data.title?.trim()
+  ) {
+    return null;
+  }
+
   return (
     <nav
       className={`px-4 lg:px-16 py-4 ${data.sticky ? "sticky top-0 z-30 bg-white shadow-sm" : ""}`}

@@ -27,6 +27,10 @@ interface BeforeAfterBlockProps {
 }
 
 export function BeforeAfterBlock({ data }: BeforeAfterBlockProps) {
+  if (!data.beforeImage && !data.afterImage && !data.title?.trim()) {
+    return null;
+  }
+
   return (
     <section className="px-4 lg:px-16 py-12 lg:py-20">
       <div className="max-w-[1280px] mx-auto flex flex-col gap-8 items-center">

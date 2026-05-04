@@ -13,6 +13,17 @@ interface CertificationCardsBlockProps {
 }
 
 export function CertificationCardsBlock({ data }: CertificationCardsBlockProps) {
+  if (
+    !data.heroTitle?.trim() &&
+    !data.nelcTitle?.trim() &&
+    !data.scfhsTitle?.trim() &&
+    !data.verificationTitle?.trim() &&
+    !data.claimCMETitle?.trim() &&
+    (!data.steps || data.steps.length === 0)
+  ) {
+    return null;
+  }
+
   // Map block data to CertificationsPage-shaped object for the existing component
   const strapiData: Partial<CertificationsPage> = {
     breadcrumb: data.breadcrumb,

@@ -53,6 +53,14 @@ function formatEventDate(dateStr: string) {
 }
 
 export function UpcomingEventsBlock({ data }: UpcomingEventsBlockProps) {
+  if (
+    (!data.events || data.events.length === 0) &&
+    !data.title?.trim() &&
+    !data.description?.trim()
+  ) {
+    return null;
+  }
+
   const variant = data.variant || "list";
   const events = data.events || [];
 

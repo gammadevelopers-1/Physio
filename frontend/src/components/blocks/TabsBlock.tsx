@@ -28,6 +28,9 @@ interface TabsBlockProps {
 
 export function TabsBlock({ data }: TabsBlockProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+
+  if (!data.tabs || data.tabs.length === 0) return null;
+
   const tabs = data.tabs || [];
   const isVertical = data.variant === "vertical";
 

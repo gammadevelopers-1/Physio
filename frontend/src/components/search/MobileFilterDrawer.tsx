@@ -44,7 +44,7 @@ const MobileFilterDrawer = ({
       {/* Filter Toggle Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-card)] transition-colors"
+        className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-input-border)] rounded-xl text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-card)] transition-colors"
       >
         <SlidersHorizontal className="w-5 h-5" />
         <span>{t("filtersLabel")}</span>

@@ -131,7 +131,7 @@ function ScheduleSessionModal({
           <select
             value={courseId}
             onChange={(e) => setCourseId(e.target.value)}
-            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
+            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
           >
             <option value="">{t("sessionsPage.form.selectCourse")}</option>
             {courses.map((c) => (
@@ -149,7 +149,7 @@ function ScheduleSessionModal({
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm"
+            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm"
             placeholder={t("sessionsPage.form.sessionTitlePlaceholder")}
           />
         </div>
@@ -174,7 +174,7 @@ function ScheduleSessionModal({
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm"
             />
           </div>
         </div>
@@ -185,9 +185,9 @@ function ScheduleSessionModal({
             {t("sessionsPage.form.duration") || "Duration"}
           </label>
           <div className="flex items-center gap-2">
-            <input type="number" min={0} value={durationHours} onChange={(e) => setDurationHours(Math.max(0, Number(e.target.value)))} className="w-20 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-center" />
+            <input type="number" min={0} value={durationHours} onChange={(e) => setDurationHours(Math.max(0, Number(e.target.value)))} className="w-20 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-center" />
             <span className="text-sm text-[var(--color-text-secondary)]">{t("sessionsPage.form.hours") || "hrs"}</span>
-            <input type="number" min={0} max={59} value={durationMins} onChange={(e) => setDurationMins(Math.max(0, Math.min(59, Number(e.target.value))))} className="w-20 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-center" />
+            <input type="number" min={0} max={59} value={durationMins} onChange={(e) => setDurationMins(Math.max(0, Math.min(59, Number(e.target.value))))} className="w-20 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-center" />
             <span className="text-sm text-[var(--color-text-secondary)]">{t("sessionsPage.form.minutes") || "min"}</span>
           </div>
         </div>
@@ -235,13 +235,13 @@ function ScheduleSessionModal({
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                 {t("sessionsPage.form.roomName") || "Room Name"}
               </label>
-              <input type="text" value={roomName} onChange={(e) => setRoomName(e.target.value)} className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm" placeholder={t("sessionsPage.form.roomNamePlaceholder") || "e.g. Room 101"} />
+              <input type="text" value={roomName} onChange={(e) => setRoomName(e.target.value)} className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm" placeholder={t("sessionsPage.form.roomNamePlaceholder") || "e.g. Room 101"} />
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
                 {t("sessionsPage.form.venueAddress") || "Venue Address"} *
               </label>
-              <input type="text" value={venueAddress} onChange={(e) => setVenueAddress(e.target.value)} className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm" placeholder={t("sessionsPage.form.venueAddressPlaceholder") || "Enter venue address"} />
+              <input type="text" value={venueAddress} onChange={(e) => setVenueAddress(e.target.value)} className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm" placeholder={t("sessionsPage.form.venueAddressPlaceholder") || "Enter venue address"} />
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
@@ -853,7 +853,7 @@ const SessionsContent = () => {
                 <select
                   value={statusFilter}
                   onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                  className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
+                  className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
                 >
                   <option value="">{t("sessionsPage.allStatuses")}</option>
                   <option value="scheduled">{t("sessionsPage.statusUpcoming")}</option>
@@ -865,7 +865,7 @@ const SessionsContent = () => {
                 <select
                   value={instructorFilter}
                   onChange={(e) => { setInstructorFilter(e.target.value); setCurrentPage(1); }}
-                  className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
+                  className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
                 >
                   <option value="">{t("sessionsPage.allInstructors")}</option>
                   {instructors.map((inst) => (
@@ -889,7 +889,7 @@ const SessionsContent = () => {
                       <select
                         value={courseFilter}
                         onChange={(e) => { setCourseFilter(e.target.value); setCurrentPage(1); }}
-                        className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
+                        className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
                       >
                         <option value="">{t("sessionsPage.allCourses")}</option>
                         {coursesList.map((c) => (
@@ -902,7 +902,7 @@ const SessionsContent = () => {
                       <select
                         value={typeFilter}
                         onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
-                        className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
+                        className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
                       >
                         <option value="">{t("sessionsPage.allTypes")}</option>
                         <option value="zoom">{t("sessionsPage.typeZoom")}</option>
@@ -1110,7 +1110,7 @@ const SessionsContent = () => {
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
                   placeholder="Reason for cancellation..."
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[var(--color-primary)] outline-none resize-none h-24"
+                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[var(--color-primary)] outline-none resize-none h-24"
                 />
                 <div className="flex justify-end gap-3">
                   <button onClick={() => setCancelModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)]">Close</button>
@@ -1177,7 +1177,7 @@ const SessionsContent = () => {
                 <select
                   value={substituteId}
                   onChange={(e) => setSubstituteId(e.target.value)}
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[var(--color-primary)] outline-none"
+                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[var(--color-primary)] outline-none"
                 >
                   <option value="">Select instructor...</option>
                   {instructors.map((inst) => (
@@ -1311,7 +1311,7 @@ const SessionsContent = () => {
                 <select
                   value={exportFormat}
                   onChange={(e) => setExportFormat(e.target.value as "csv" | "pdf" | "xlsx")}
-                  className="px-2 py-2 text-xs border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none"
+                  className="px-2 py-2 text-xs border border-[var(--color-input-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none"
                 >
                   <option value="csv">CSV</option>
                   <option value="pdf">PDF</option>

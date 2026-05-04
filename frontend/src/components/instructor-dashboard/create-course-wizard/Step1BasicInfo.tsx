@@ -48,7 +48,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               type="text"
               value={state.title}
               onChange={(e) => dispatch({ type: "SET_FIELD", field: "title", value: e.target.value })}
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none"
             />
           </div>
           <div>
@@ -61,7 +61,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               value={state.titleAr}
               onChange={(e) => dispatch({ type: "SET_FIELD", field: "titleAr", value: e.target.value })}
               dir="rtl"
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none"
             />
           </div>
         </div>
@@ -76,7 +76,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               value={state.description}
               onChange={(e) => dispatch({ type: "SET_FIELD", field: "description", value: e.target.value })}
               rows={4}
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none resize-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none resize-none"
             />
           </div>
           <div>
@@ -89,7 +89,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               onChange={(e) => dispatch({ type: "SET_FIELD", field: "descriptionAr", value: e.target.value })}
               rows={4}
               dir="rtl"
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none resize-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none resize-none"
             />
           </div>
         </div>
@@ -105,7 +105,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
             onChange={(e) =>
               dispatch({ type: "SET_FIELD", field: "deliveryType", value: e.target.value })
             }
-            className="w-full max-w-xs px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface-card)]"
+            className="w-full max-w-xs px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface-card)]"
           >
             <option value="zoom">Zoom</option>
             <option value="onsite">On-site</option>

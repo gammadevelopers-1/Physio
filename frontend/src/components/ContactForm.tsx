@@ -261,7 +261,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                     value={formData.fullName}
                     onChange={handleInputChange}
                     required
-                    className="w-full bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--color-primary)]"
+                    className="w-full bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--color-primary)]"
                     style={{
                       padding: "10px 14px",
                       height: "44px",
@@ -295,7 +295,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                       value={formData.email}
                       onChange={handleInputChange}
                       required
-                      className="w-full bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--color-primary)]"
+                      className="w-full bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--color-primary)]"
                       style={{
                         padding: isRTL ? "10px 48px 10px 14px" : "10px 14px 10px 48px",
                         height: "44px",
@@ -323,7 +323,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                     <button
                       type="button"
                       onClick={() => setIsIssueTypeOpen(!isIssueTypeOpen)}
-                      className={`w-full bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] flex items-center justify-between cursor-pointer ${isRTL ? "flex-row-reverse" : ""}`}
+                      className={`w-full bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] flex items-center justify-between cursor-pointer ${isRTL ? "flex-row-reverse" : ""}`}
                       style={{
                         padding: "10px 14px",
                         height: "44px",
@@ -466,7 +466,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                     name="subject"
                     value={formData.subject}
                     onChange={handleInputChange}
-                    className="w-full bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--color-primary)]"
+                    className="w-full bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--color-primary)]"
                     style={{
                       padding: "10px 14px",
                       height: "44px",
@@ -494,7 +494,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
                       name="description"
                       value={formData.description}
                       onChange={handleInputChange}
-                      className="w-full h-[140px] bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--color-primary)] resize-none"
+                      className="w-full h-[140px] bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--color-primary)] resize-none"
                       style={{
                         padding: "10px 14px",
                         textAlign: isRTL ? "right" : "left",

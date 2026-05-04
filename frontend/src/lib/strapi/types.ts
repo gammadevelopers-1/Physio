@@ -185,6 +185,7 @@ export interface SiteSettings {
   themeTextSecondary: string | null;
   themeBorderColor: string | null;
   themeBorderSubtle: string | null;
+  themeInputBorder: string | null;
   themeIconColor: string | null;
   themeFooterBackground: string | null;
   themeButtonText: string | null;

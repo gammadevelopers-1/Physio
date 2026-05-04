@@ -206,7 +206,7 @@ function SignUpForm() {
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         disabled={loading}
-                        className="w-full min-h-[36px] px-3 py-[7.5px] bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full min-h-[36px] px-3 py-[7.5px] bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
                           boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
                           fontSize: "14px"
@@ -228,7 +228,7 @@ function SignUpForm() {
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         disabled={loading}
-                        className="w-full min-h-[36px] px-3 py-[7.5px] bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full min-h-[36px] px-3 py-[7.5px] bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
                           boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
                           fontSize: "14px"
@@ -253,7 +253,7 @@ function SignUpForm() {
                       value={scfhsNumber}
                       onChange={(e) => setScfhsNumber(e.target.value)}
                       disabled={loading}
-                      className="w-full min-h-[36px] px-3 py-[7.5px] bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50"
+                      className="w-full min-h-[36px] px-3 py-[7.5px] bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50"
                       style={{
                         boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
                         fontSize: "14px"
@@ -278,7 +278,7 @@ function SignUpForm() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       disabled={loading}
-                      className="w-full min-h-[36px] px-3 py-[7.5px] bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50"
+                      className="w-full min-h-[36px] px-3 py-[7.5px] bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50"
                       style={{
                         boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
                         fontSize: "14px"
@@ -304,7 +304,7 @@ function SignUpForm() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         disabled={loading}
-                        className="w-full min-h-[36px] px-3 py-[7.5px] pe-10 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50"
+                        className="w-full min-h-[36px] px-3 py-[7.5px] pe-10 bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50"
                         style={{
                           boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
                           fontSize: "14px"
@@ -345,7 +345,7 @@ function SignUpForm() {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         disabled={loading}
-                        className="w-full min-h-[36px] px-3 py-[7.5px] pe-10 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50"
+                        className="w-full min-h-[36px] px-3 py-[7.5px] pe-10 bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50"
                         style={{
                           boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
                           fontSize: "14px"

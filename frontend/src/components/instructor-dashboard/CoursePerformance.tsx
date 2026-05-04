@@ -262,7 +262,7 @@ const CoursePerformance = ({
           <select
             value={deliveryFilter}
             onChange={(e) => setDeliveryFilter(e.target.value)}
-            className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
+            className="px-3 py-1.5 text-sm border border-[var(--color-input-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
           >
             <option value="all">{t("performance.allDeliveryTypes")}</option>
             <option value="zoom">{t("performance.zoom")}</option>
@@ -274,7 +274,7 @@ const CoursePerformance = ({
             <select
               value={cohortFilter}
               onChange={(e) => setCohortFilter(e.target.value)}
-              className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
+              className="px-3 py-1.5 text-sm border border-[var(--color-input-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
             >
               <option value="all">{t("performance.allCohorts")}</option>
               {cohorts.map((cohort) => (
@@ -286,7 +286,7 @@ const CoursePerformance = ({
           <select
             value={selectedCourse}
             onChange={(e) => setSelectedCourse(e.target.value)}
-            className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
+            className="px-3 py-1.5 text-sm border border-[var(--color-input-border)] rounded-lg text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] hover:border-[var(--color-text-secondary)] transition-colors cursor-pointer"
           >
             {filteredCourses.map((course) => (
               <option key={course.value} value={course.value}>

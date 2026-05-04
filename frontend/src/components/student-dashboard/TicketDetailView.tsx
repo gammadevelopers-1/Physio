@@ -329,7 +329,7 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
                           onKeyDown={handleKeyDown}
                           placeholder={t("supportPage.replyPlaceholder")}
                           rows={2}
-                          className="flex-1 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent resize-none"
+                          className="flex-1 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent resize-none"
                         />
                         <button
                           onClick={handleSendReply}

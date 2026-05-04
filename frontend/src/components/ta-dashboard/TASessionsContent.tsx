@@ -352,7 +352,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
         <select
           value={courseFilter}
           onChange={(e) => setCourseFilter(e.target.value)}
-          className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
+          className="px-3 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
         >
           <option value="all">{t("sessions.allCourses")}</option>
           {uniqueCourses.map(([id, name]) => (
@@ -362,7 +362,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
+          className="px-3 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
         >
           <option value="all">{t("sessions.allStatuses")}</option>
           <option value="scheduled">{t("sessions.scheduled")}</option>
@@ -374,13 +374,13 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
           type="date"
           value={filterDateFrom}
           onChange={(e) => setFilterDateFrom(e.target.value)}
-          className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
+          className="px-3 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
         />
         <input
           type="date"
           value={filterDateTo}
           onChange={(e) => setFilterDateTo(e.target.value)}
-          className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
+          className="px-3 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
         />
         {(filterDateFrom || filterDateTo) && (
           <button

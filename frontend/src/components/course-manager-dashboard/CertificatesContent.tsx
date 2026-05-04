@@ -217,7 +217,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t 
                 onChange={(e) => setNote(e.target.value)}
                 placeholder={t("certificates.notePlaceholder")}
                 rows={3}
-                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
               />
               <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("certificates.noteHint")}</p>
             </div>
@@ -754,7 +754,7 @@ const CertificatesContent = () => {
                           placeholder={t("certificates.searchPlaceholder")}
                           value={searchQuery}
                           onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                          className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
+                          className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
                         />
                       </div>
                       <button
@@ -769,7 +769,7 @@ const CertificatesContent = () => {
                         <select
                           value={selectedCourse}
                           onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); setSelectedIds(new Set()); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           <option value="all">{t("certificates.allCourses")}</option>
                           {courses.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
@@ -777,7 +777,7 @@ const CertificatesContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); setSelectedIds(new Set()); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           {statusOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
@@ -788,7 +788,7 @@ const CertificatesContent = () => {
                         <select
                           value={selectedCourse}
                           onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           <option value="all">{t("certificates.allCourses")}</option>
                           {courses.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
@@ -796,7 +796,7 @@ const CertificatesContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           {statusOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
@@ -825,7 +825,7 @@ const CertificatesContent = () => {
                                   type="checkbox"
                                   checked={actionableCerts.length > 0 && selectedIds.size === actionableCerts.length}
                                   onChange={toggleSelectAll}
-                                  className="w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                                  className="w-4 h-4 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                                 />
                               </th>
                               <th className={`px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider`}>{t("certificates.tableStudent")}</th>
@@ -848,7 +848,7 @@ const CertificatesContent = () => {
                                         type="checkbox"
                                         checked={selectedIds.has(cert.id)}
                                         onChange={() => toggleSelect(cert.id)}
-                                        className="w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                                        className="w-4 h-4 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                                       />
                                     ) : <div className="w-4 h-4" />}
                                   </td>
@@ -956,7 +956,7 @@ const CertificatesContent = () => {
                             type="checkbox"
                             checked={selectedIds.size === actionableCerts.length}
                             onChange={toggleSelectAll}
-                            className="w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                            className="w-4 h-4 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                           />
                           <span className="text-xs text-[var(--color-text-secondary)]">{t("certificates.selectAll")}</span>
                         </div>
@@ -973,7 +973,7 @@ const CertificatesContent = () => {
                                     type="checkbox"
                                     checked={selectedIds.has(cert.id)}
                                     onChange={() => toggleSelect(cert.id)}
-                                    className="w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)] mt-1"
+                                    className="w-4 h-4 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)] mt-1"
                                   />
                                 )}
                                 <div className="w-10 h-10 rounded-full bg-[var(--color-border)] flex items-center justify-center text-sm font-semibold text-[var(--color-text-secondary)]">
@@ -1101,7 +1101,7 @@ const CertificatesContent = () => {
                   onChange={(e) => setRevokeReason(e.target.value)}
                   placeholder={t("certificates.revokeReasonPlaceholder")}
                   rows={3}
-                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#EF4444] resize-none"
+                  className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#EF4444] resize-none"
                 />
               </div>
               <div className="flex gap-3">
@@ -1134,7 +1134,7 @@ const CertificatesContent = () => {
                 onChange={(e) => setBatchNote(e.target.value)}
                 placeholder={t("certificates.notePlaceholder")}
                 rows={3}
-                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none mb-4"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none mb-4"
               />
               <div className="flex gap-3">
                 <button onClick={() => { setBatchNoteModal(null); setBatchNote(""); }} disabled={batchProcessing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50">

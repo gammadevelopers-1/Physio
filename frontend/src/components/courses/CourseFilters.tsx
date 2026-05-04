@@ -174,7 +174,7 @@ const CourseFilters = ({
               placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className={`w-full ${isRTL ? "pr-10 pl-4 text-right" : "pl-10 pr-4"} py-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] outline-none`}
+              className={`w-full ${isRTL ? "pr-10 pl-4 text-right" : "pl-10 pr-4"} py-2.5 bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] outline-none`}
               dir={isRTL ? "rtl" : "ltr"}
             />
           </div>
@@ -189,7 +189,7 @@ const CourseFilters = ({
                 className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   selectedTypes.includes(type)
                     ? "bg-[var(--color-primary)] text-white"
-                    : "bg-[var(--color-surface-page)] text-[var(--color-text-primary)] border border-[var(--color-border)]"
+                    : "bg-[var(--color-surface-page)] text-[var(--color-text-primary)] border border-[var(--color-input-border)]"
                 }`}
               >
                 {deliveryLabelMap[type]}
@@ -208,7 +208,7 @@ const CourseFilters = ({
                   className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                     selectedPricing === o.value
                       ? "bg-[var(--color-primary)] text-white"
-                      : "bg-[var(--color-surface-page)] text-[var(--color-text-primary)] border border-[var(--color-border)]"
+                      : "bg-[var(--color-surface-page)] text-[var(--color-text-primary)] border border-[var(--color-input-border)]"
                   }`}
                 >
                   {o.label}
@@ -223,7 +223,7 @@ const CourseFilters = ({
                 className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   sortBy === o.value
                     ? "bg-[var(--color-primary)] text-white"
-                    : "bg-[var(--color-surface-page)] text-[var(--color-text-primary)] border border-[var(--color-border)]"
+                    : "bg-[var(--color-surface-page)] text-[var(--color-text-primary)] border border-[var(--color-input-border)]"
                 }`}
               >
                 {o.label}
@@ -366,7 +366,7 @@ const CourseFilters = ({
             placeholder={searchPlaceholder}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className={`w-full ${isRTL ? "pr-10 pl-4 text-right" : "pl-10 pr-4"} py-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] outline-none`}
+            className={`w-full ${isRTL ? "pr-10 pl-4 text-right" : "pl-10 pr-4"} py-2.5 bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] outline-none`}
             dir={isRTL ? "rtl" : "ltr"}
           />
         </div>

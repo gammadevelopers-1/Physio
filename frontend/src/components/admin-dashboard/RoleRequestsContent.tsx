@@ -168,13 +168,13 @@ const RoleRequestsContent = () => {
                   placeholder={t("roleRequestsPage.searchPlaceholder") || "Search by name or email..."}
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  className={`w-full h-10 border border-[var(--color-border)] rounded-lg text-sm outline-none focus:border-[#002D87] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                  className={`w-full h-10 border border-[var(--color-input-border)] rounded-lg text-sm outline-none focus:border-[#002D87] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                 />
               </div>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)] outline-none focus:border-[#002D87]"
+                className="h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)] outline-none focus:border-[#002D87]"
               >
                 <option value="all">{t("roleRequestsPage.filterAll") || "All Status"}</option>
                 <option value="PENDING">{t("roleRequestsPage.filterPending") || "Pending"}</option>

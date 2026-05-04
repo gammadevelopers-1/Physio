@@ -104,7 +104,7 @@ export default function CheckoutContent() {
                       type="text"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      className="w-full h-12 px-4 bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors"
+                      className="w-full h-12 px-4 bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors"
                       dir={isRTL ? "rtl" : "ltr"}
                     />
                   </div>
@@ -116,7 +116,7 @@ export default function CheckoutContent() {
                       type="text"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      className="w-full h-12 px-4 bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors"
+                      className="w-full h-12 px-4 bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors"
                       dir={isRTL ? "rtl" : "ltr"}
                     />
                   </div>
@@ -136,7 +136,7 @@ export default function CheckoutContent() {
                       type="tel"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      className={`w-full h-12 ${isRTL ? "pr-16 pl-4" : "pl-16 pr-4"} bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors`}
+                      className={`w-full h-12 ${isRTL ? "pr-16 pl-4" : "pl-16 pr-4"} bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors`}
                       dir="ltr"
                     />
                   </div>
@@ -151,7 +151,7 @@ export default function CheckoutContent() {
                     <select
                       value={isResident}
                       onChange={(e) => setIsResident(e.target.value)}
-                      className="w-full h-12 px-4 bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors appearance-none cursor-pointer"
+                      className="w-full h-12 px-4 bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors appearance-none cursor-pointer"
                       dir={isRTL ? "rtl" : "ltr"}
                     >
                       <option value=""></option>
@@ -171,7 +171,7 @@ export default function CheckoutContent() {
                     <select
                       value={isHealthcarePractitioner}
                       onChange={(e) => setIsHealthcarePractitioner(e.target.value)}
-                      className="w-full h-12 px-4 bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors appearance-none cursor-pointer"
+                      className="w-full h-12 px-4 bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors appearance-none cursor-pointer"
                       dir={isRTL ? "rtl" : "ltr"}
                     >
                       <option value=""></option>
@@ -288,7 +288,7 @@ export default function CheckoutContent() {
                   className={`overflow-hidden cursor-pointer transition-colors ${
                     paymentMethod === "credit"
                       ? "border border-[#005bd3] rounded-xl"
-                      : "border border-[var(--color-border)] rounded-xl"
+                      : "border border-[var(--color-input-border)] rounded-xl"
                   }`}
                   onClick={() => setPaymentMethod("credit")}
                 >
@@ -349,7 +349,7 @@ export default function CheckoutContent() {
                         placeholder={t("payment.cardNumber")}
                         value={cardNumber}
                         onChange={(e) => setCardNumber(e.target.value)}
-                        className={`w-full h-12 px-[14px] bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}
+                        className={`w-full h-12 px-[14px] bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}
                         style={{ boxShadow: "0px 1px 2px 0px rgba(10,13,18,0.05)" }}
                         dir="ltr"
                       />
@@ -359,7 +359,7 @@ export default function CheckoutContent() {
                           placeholder={t("payment.expiry")}
                           value={expiry}
                           onChange={(e) => setExpiry(e.target.value)}
-                          className={`w-full h-12 px-[14px] bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}
+                          className={`w-full h-12 px-[14px] bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}
                           style={{ boxShadow: "0px 1px 2px 0px rgba(10,13,18,0.05)" }}
                           dir="ltr"
                         />
@@ -368,7 +368,7 @@ export default function CheckoutContent() {
                           placeholder={t("payment.cvc")}
                           value={cvc}
                           onChange={(e) => setCvc(e.target.value)}
-                          className={`w-full h-12 px-[14px] bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}
+                          className={`w-full h-12 px-[14px] bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}
                           style={{ boxShadow: "0px 1px 2px 0px rgba(10,13,18,0.05)" }}
                           dir="ltr"
                         />
@@ -378,7 +378,7 @@ export default function CheckoutContent() {
                         placeholder={t("payment.nameOnCard")}
                         value={nameOnCard}
                         onChange={(e) => setNameOnCard(e.target.value)}
-                        className={`w-full h-12 px-[14px] bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}
+                        className={`w-full h-12 px-[14px] bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}
                         style={{ boxShadow: "0px 1px 2px 0px rgba(10,13,18,0.05)" }}
                         dir={isRTL ? "rtl" : "ltr"}
                       />
@@ -391,7 +391,7 @@ export default function CheckoutContent() {
                   className={`overflow-hidden cursor-pointer transition-colors ${
                     paymentMethod === "tabby"
                       ? "border border-[#005bd3] rounded-xl"
-                      : "border border-[var(--color-border)] rounded-xl"
+                      : "border border-[var(--color-input-border)] rounded-xl"
                   }`}
                   onClick={() => setPaymentMethod("tabby")}
                 >

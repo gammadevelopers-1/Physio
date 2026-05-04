@@ -299,7 +299,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t("content.titlePlaceholder")}
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             />
           </div>
 
@@ -309,7 +309,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
             <select
               value={selectedCourseId}
               onChange={(e) => setSelectedCourseId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             >
               {courses.filter((c) => c.status !== "completed" && c.status !== "archived").map((c) => (
                 <option key={c.id} value={c.id}>{c.title}</option>
@@ -324,7 +324,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
               <select
                 value={selectedModuleId}
                 onChange={(e) => setSelectedModuleId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               >
                 <option value="">{t("content.noModule")}</option>
                 {courseModules.map((m) => (
@@ -599,7 +599,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             />
           </div>
 
@@ -689,7 +689,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                   value={captionsUrl}
                   onChange={(e) => setCaptionsUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
                 <p className="text-xs text-[var(--color-text-secondary)] mt-1">{t("content.captionsUrlHint")}</p>
               </div>
@@ -700,7 +700,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                   value={transcriptUrl}
                   onChange={(e) => setTranscriptUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
@@ -1207,7 +1207,7 @@ const ContentManagementContent = () => {
                           placeholder={t("content.searchPlaceholder")}
                           value={searchQuery}
                           onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                          className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
+                          className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
                         />
                       </div>
 
@@ -1243,7 +1243,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedCourse}
                           onChange={(e) => handleCourseChange(e.target.value)}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           <option value="all">{t("content.allCourses")}</option>
                           {courses.map((c) => (
@@ -1253,7 +1253,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedType}
                           onChange={(e) => { setSelectedType(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           {types.map((t) => (
                             <option key={t.id} value={t.id}>{t.name}</option>
@@ -1262,7 +1262,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           {statuses.map((s) => (
                             <option key={s.id} value={s.id}>{s.name}</option>
@@ -1277,7 +1277,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedCourse}
                           onChange={(e) => handleCourseChange(e.target.value)}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           <option value="all">{t("content.allCourses")}</option>
                           {courses.map((c) => (
@@ -1287,7 +1287,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedType}
                           onChange={(e) => { setSelectedType(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           {types.map((t) => (
                             <option key={t.id} value={t.id}>{t.name}</option>
@@ -1296,7 +1296,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           {statuses.map((s) => (
                             <option key={s.id} value={s.id}>{s.name}</option>

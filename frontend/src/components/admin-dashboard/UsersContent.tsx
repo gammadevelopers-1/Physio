@@ -186,7 +186,7 @@ function CreateUserModal({
                 type="text"
                 value={form.firstName}
                 onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+                className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
                 required
               />
             </div>
@@ -196,7 +196,7 @@ function CreateUserModal({
                 type="text"
                 value={form.lastName}
                 onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+                className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
                 required
               />
             </div>
@@ -208,7 +208,7 @@ function CreateUserModal({
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+              className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
               required
             />
           </div>
@@ -219,7 +219,7 @@ function CreateUserModal({
               type="password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+              className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
               placeholder="Min 8 chars, uppercase, lowercase, number"
               required
             />
@@ -231,7 +231,7 @@ function CreateUserModal({
               type="tel"
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+              className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
             />
           </div>
 
@@ -240,7 +240,7 @@ function CreateUserModal({
             <select
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+              className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
             >
               {ALL_ROLES.map((role) => (
                 <option key={role} value={role}>
@@ -358,7 +358,7 @@ function EditUserModal({
                 type="text"
                 value={form.firstName}
                 onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+                className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
                 required
               />
             </div>
@@ -368,7 +368,7 @@ function EditUserModal({
                 type="text"
                 value={form.lastName}
                 onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+                className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
                 required
               />
             </div>
@@ -380,7 +380,7 @@ function EditUserModal({
               type="tel"
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+              className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
             />
           </div>
 
@@ -966,14 +966,14 @@ const UsersContent = () => {
                       placeholder={t("usersPage.searchPlaceholder")}
                       value={searchInput}
                       onChange={(e) => setSearchInput(e.target.value)}
-                      className={`w-full h-10 border border-[var(--color-border)] rounded-lg text-sm ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} focus:outline-none focus:border-[#002D87]`}
+                      className={`w-full h-10 border border-[var(--color-input-border)] rounded-lg text-sm ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} focus:outline-none focus:border-[#002D87]`}
                     />
                   </div>
 
                   <select
                     value={roleFilter}
                     onChange={(e) => setRoleFilter(e.target.value)}
-                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
+                    className="h-10 px-4 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
                   >
                     <option value="all">{t("usersPage.filters.allRoles")}</option>
                     <option value="admin">{t("userManagement.roles.admin")}</option>
@@ -988,7 +988,7 @@ const UsersContent = () => {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
+                    className="h-10 px-4 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
                   >
                     <option value="all">{t("usersPage.filters.allStatus")}</option>
                     <option value="active">{t("userManagement.statuses.active")}</option>

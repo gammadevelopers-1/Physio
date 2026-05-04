@@ -191,7 +191,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={highFRT}
                                     onChange={(e) => setHighFRT(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
+                                    className="w-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[var(--color-text-secondary)]">{t("settingsPage.sla.hours")}</span>
                                 </div>
@@ -202,7 +202,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={highResolution}
                                     onChange={(e) => setHighResolution(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
+                                    className="w-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[var(--color-text-secondary)]">{t("settingsPage.sla.hours")}</span>
                                 </div>
@@ -220,7 +220,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={medFRT}
                                     onChange={(e) => setMedFRT(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
+                                    className="w-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[var(--color-text-secondary)]">{t("settingsPage.sla.hours")}</span>
                                 </div>
@@ -231,7 +231,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={medResolution}
                                     onChange={(e) => setMedResolution(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
+                                    className="w-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[var(--color-text-secondary)]">{t("settingsPage.sla.hours")}</span>
                                 </div>
@@ -249,7 +249,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={lowFRT}
                                     onChange={(e) => setLowFRT(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
+                                    className="w-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[var(--color-text-secondary)]">{t("settingsPage.sla.hours")}</span>
                                 </div>
@@ -260,7 +260,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={lowResolution}
                                     onChange={(e) => setLowResolution(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
+                                    className="w-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[var(--color-text-secondary)]">{t("settingsPage.sla.hours")}</span>
                                 </div>

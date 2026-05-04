@@ -124,7 +124,7 @@ const TACoursesList = () => {
               placeholder={t("courses.searchPlaceholder") || "Search courses..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20 focus:border-transparent"
             />
           </div>
 
@@ -134,7 +134,7 @@ const TACoursesList = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20"
+              className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20"
             >
               <option value="newest">{t("courses.sortNewest") || "Newest First"}</option>
               <option value="oldest">{t("courses.sortOldest") || "Oldest First"}</option>

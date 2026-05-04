@@ -147,7 +147,7 @@ const AdminCoursesContent = () => {
                       placeholder={t("coursesPage.searchPlaceholder")}
                       value={searchQuery}
                       onChange={(e) => handleSearchChange(e.target.value)}
-                      className={`w-full h-10 border border-[var(--color-border)] rounded-lg text-sm ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} focus:outline-none focus:border-[#002D87]`}
+                      className={`w-full h-10 border border-[var(--color-input-border)] rounded-lg text-sm ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} focus:outline-none focus:border-[#002D87]`}
                     />
                   </div>
 
@@ -155,7 +155,7 @@ const AdminCoursesContent = () => {
                   <select
                     value={statusFilter}
                     onChange={(e) => handleStatusChange(e.target.value)}
-                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
+                    className="h-10 px-4 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
                   >
                     <option value="all">{t("coursesPage.filters.allStatus")}</option>
                     <option value="active">{t("coursesPage.filters.active")}</option>

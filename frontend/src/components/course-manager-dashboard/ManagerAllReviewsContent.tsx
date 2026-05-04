@@ -319,7 +319,7 @@ export default function ManagerAllReviewsContent() {
                       onKeyDown={(e) => { if (e.key === "Enter") setSearch(searchInput); }}
                       onBlur={() => setSearch(searchInput)}
                       placeholder={isRTL ? "بحث باسم الطالب أو الدورة أو نص المراجعة..." : "Search by student, course, or review text..."}
-                      className={`w-full ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"} py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]`}
+                      className={`w-full ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"} py-2 text-sm border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]`}
                     />
                   </div>
 
@@ -328,7 +328,7 @@ export default function ManagerAllReviewsContent() {
                     <select
                       value={courseFilter}
                       onChange={(e) => setCourseFilter(e.target.value)}
-                      className="text-sm border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-surface-card)] max-w-[240px]"
+                      className="text-sm border border-[var(--color-input-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-surface-card)] max-w-[240px]"
                     >
                       <option value="">{isRTL ? "كل الدورات" : "All courses"}</option>
                       {courseOptions.map((c) => (
@@ -346,7 +346,7 @@ export default function ManagerAllReviewsContent() {
                       <select
                         value={publishedFilter}
                         onChange={(e) => setPublishedFilter(e.target.value as typeof publishedFilter)}
-                        className="text-sm border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-surface-card)]"
+                        className="text-sm border border-[var(--color-input-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-surface-card)]"
                       >
                         <option value="all">{isRTL ? "الكل" : "All"}</option>
                         <option value="published">{isRTL ? "منشورة" : "Published"}</option>
@@ -360,7 +360,7 @@ export default function ManagerAllReviewsContent() {
                     <select
                       value={sort}
                       onChange={(e) => setSort(e.target.value as SortOption)}
-                      className="text-sm border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-surface-card)]"
+                      className="text-sm border border-[var(--color-input-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-[var(--color-surface-card)]"
                     >
                       <option value="newest">{isRTL ? "الأحدث" : "Newest"}</option>
                       <option value="oldest">{isRTL ? "الأقدم" : "Oldest"}</option>

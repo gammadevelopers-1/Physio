@@ -415,7 +415,7 @@ const CreateCourseContent = () => {
   const selectedTA = availableTAs.find((ta) => ta.id === selectedTAId);
 
   const inputClass =
-    "w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]";
+    "w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]";
   const selectClass = `${inputClass} bg-[var(--color-surface-card)]`;
 
   const formatDate = (dateStr: string) => {
@@ -663,7 +663,7 @@ const CreateCourseContent = () => {
                                 next[i] = e.target.value;
                                 setObjectives(next);
                               }}
-                              className="flex-1 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
+                              className="flex-1 rounded-lg border border-[var(--color-input-border)] px-3 py-2 text-sm"
                               placeholder={`${t("createCourse.objectivePlaceholder")} ${i + 1}`}
                             />
                             <button type="button" onClick={() => setObjectives(objectives.filter((_, j) => j !== i))}
@@ -685,7 +685,7 @@ const CreateCourseContent = () => {
                                 next[i] = e.target.value;
                                 setObjectivesAr(next);
                               }}
-                              className="flex-1 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
+                              className="flex-1 rounded-lg border border-[var(--color-input-border)] px-3 py-2 text-sm"
                               dir="rtl"
                               placeholder={`${i + 1}`}
                             />
@@ -710,7 +710,7 @@ const CreateCourseContent = () => {
                                 next[i] = e.target.value;
                                 setFeatures(next);
                               }}
-                              className="flex-1 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
+                              className="flex-1 rounded-lg border border-[var(--color-input-border)] px-3 py-2 text-sm"
                               placeholder={`${t("createCourse.featurePlaceholder")} ${i + 1}`}
                             />
                             <button type="button" onClick={() => setFeatures(features.filter((_, j) => j !== i))}
@@ -732,7 +732,7 @@ const CreateCourseContent = () => {
                                 next[i] = e.target.value;
                                 setFeaturesAr(next);
                               }}
-                              className="flex-1 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
+                              className="flex-1 rounded-lg border border-[var(--color-input-border)] px-3 py-2 text-sm"
                               dir="rtl"
                               placeholder={`${i + 1}`}
                             />
@@ -757,7 +757,7 @@ const CreateCourseContent = () => {
                                 next[i] = e.target.value;
                                 setTargetAudience(next);
                               }}
-                              className="flex-1 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
+                              className="flex-1 rounded-lg border border-[var(--color-input-border)] px-3 py-2 text-sm"
                               placeholder={`${t("createCourse.audiencePlaceholder")} ${i + 1}`}
                             />
                             <button type="button" onClick={() => setTargetAudience(targetAudience.filter((_, j) => j !== i))}
@@ -779,7 +779,7 @@ const CreateCourseContent = () => {
                                 next[i] = e.target.value;
                                 setTargetAudienceAr(next);
                               }}
-                              className="flex-1 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
+                              className="flex-1 rounded-lg border border-[var(--color-input-border)] px-3 py-2 text-sm"
                               dir="rtl"
                               placeholder={`${i + 1}`}
                             />
@@ -849,7 +849,7 @@ const CreateCourseContent = () => {
                               type="checkbox"
                               checked={showContents}
                               onChange={(e) => setShowContents(e.target.checked)}
-                              className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                              className="mt-0.5 w-4 h-4 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                             />
                             <div>
                               <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("createCourse.showContentsLabel")}</p>
@@ -868,7 +868,7 @@ const CreateCourseContent = () => {
                             type="checkbox"
                             checked={visibleOnPublicSite}
                             onChange={(e) => setVisibleOnPublicSite(e.target.checked)}
-                            className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                            className="mt-0.5 w-4 h-4 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                           />
                           <div>
                             <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("createCourse.visibleOnPublicLabel")}</p>
@@ -1146,7 +1146,7 @@ const CreateCourseContent = () => {
                                   value={instructorSearch}
                                   onChange={(e) => setInstructorSearch(e.target.value)}
                                   placeholder={isRTL ? "بحث..." : "Search..."}
-                                  className="w-full ps-8 pe-3 py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                                  className="w-full ps-8 pe-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                                   autoFocus
                                 />
                               </div>
@@ -1262,7 +1262,7 @@ const CreateCourseContent = () => {
                                   value={taSearch}
                                   onChange={(e) => setTaSearch(e.target.value)}
                                   placeholder={isRTL ? "بحث..." : "Search..."}
-                                  className="w-full ps-8 pe-3 py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97706]"
+                                  className="w-full ps-8 pe-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97706]"
                                   autoFocus
                                 />
                               </div>

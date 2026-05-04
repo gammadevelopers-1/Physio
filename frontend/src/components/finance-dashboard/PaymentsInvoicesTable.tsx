@@ -95,7 +95,7 @@ const PaymentsInvoicesTable = ({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
+            className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
           >
             <option value="all">{t("paymentsTable.filters.allStatus")}</option>
             <option value="paid">{t("paymentsTable.filters.paid")}</option>
@@ -107,7 +107,7 @@ const PaymentsInvoicesTable = ({
           <select
             value={gatewayFilter}
             onChange={(e) => setGatewayFilter(e.target.value)}
-            className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
+            className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
           >
             <option value="all">
               {t("paymentsTable.filters.allGateways")}
@@ -126,7 +126,7 @@ const PaymentsInvoicesTable = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t("paymentsTable.searchPlaceholder")}
-              className={`w-full py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20 ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+              className={`w-full py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20 ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
             />
           </div>
         </div>

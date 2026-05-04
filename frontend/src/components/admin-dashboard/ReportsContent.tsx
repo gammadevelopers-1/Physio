@@ -135,14 +135,14 @@ const ReportsContent = () => {
                       type="date"
                       value={dateFrom}
                       onChange={(e) => setDateFrom(e.target.value)}
-                      className="h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm"
+                      className="h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm"
                     />
                     <span className="text-[var(--color-text-secondary)]">-</span>
                     <input
                       type="date"
                       value={dateTo}
                       onChange={(e) => setDateTo(e.target.value)}
-                      className="h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm"
+                      className="h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm"
                     />
                   </div>
                   <div className="flex items-center gap-2 sm:ml-auto">
@@ -207,7 +207,7 @@ const ReportsContent = () => {
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <select className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)]">
+                      <select className="h-10 px-4 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)]">
                         <option value="pdf">PDF</option>
                         <option value="excel">Excel</option>
                         <option value="csv">CSV</option>

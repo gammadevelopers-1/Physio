@@ -605,7 +605,7 @@ function AttendanceModal({
                             setLocalNotes((prev) => ({ ...prev, [e.studentId]: ev.target.value }))
                           }
                           placeholder={t("sessionsPage.attendance.notePlaceholder")}
-                          className="w-full px-2.5 py-1.5 border border-[var(--color-border)] rounded text-xs text-[var(--color-text-secondary)] placeholder:text-[var(--color-text-secondary)] focus:ring-1 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none"
+                          className="w-full px-2.5 py-1.5 border border-[var(--color-input-border)] rounded text-xs text-[var(--color-text-secondary)] placeholder:text-[var(--color-text-secondary)] focus:ring-1 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none"
                         />
                       )}
                       {/* Zoom sync timing data + timeline bar */}
@@ -972,7 +972,7 @@ function CancelSessionModal({
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm resize-none"
+            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm resize-none"
             rows={3}
             placeholder={t("sessionsPage.cancelSession.reasonPlaceholder")}
           />
@@ -1257,7 +1257,7 @@ function ScheduleSessionModal({
           <select
             value={courseId}
             onChange={(e) => setCourseId(e.target.value)}
-            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm"
+            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm"
           >
             <option value="">{t("sessionsPage.form.selectCourse")}</option>
             {courses.filter((c) => c.status !== "completed" && c.status !== "archived" && c.deliveryType !== "self-paced").map((c) => (
@@ -1275,7 +1275,7 @@ function ScheduleSessionModal({
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm"
+            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm"
             placeholder={t("sessionsPage.form.sessionTitlePlaceholder")}
           />
         </div>
@@ -1300,7 +1300,7 @@ function ScheduleSessionModal({
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm"
             />
           </div>
         </div>
@@ -1326,7 +1326,7 @@ function ScheduleSessionModal({
               min={0}
               value={durationHours}
               onChange={(e) => setDurationHours(Math.max(0, Number(e.target.value)))}
-              className="w-20 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-center"
+              className="w-20 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-center"
             />
             <span className="text-sm text-[var(--color-text-secondary)]">{t("sessionsPage.form.hours")}</span>
             <input
@@ -1335,7 +1335,7 @@ function ScheduleSessionModal({
               max={59}
               value={durationMins}
               onChange={(e) => setDurationMins(Math.max(0, Math.min(59, Number(e.target.value))))}
-              className="w-20 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-center"
+              className="w-20 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-center"
             />
             <span className="text-sm text-[var(--color-text-secondary)]">{t("sessionsPage.form.minutes")}</span>
           </div>
@@ -1390,7 +1390,7 @@ function ScheduleSessionModal({
                 type="text"
                 value={roomName}
                 onChange={(e) => setRoomName(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm"
                 placeholder={t("sessionsPage.form.roomNamePlaceholder")}
               />
             </div>
@@ -1402,7 +1402,7 @@ function ScheduleSessionModal({
                 type="text"
                 value={venueAddress}
                 onChange={(e) => setVenueAddress(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm"
                 placeholder={t("sessionsPage.form.venueAddressPlaceholder")}
               />
             </div>
@@ -1763,7 +1763,7 @@ function EditSessionModal({
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm"
+            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm"
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -1785,7 +1785,7 @@ function EditSessionModal({
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm"
+              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm"
             />
           </div>
         </div>
@@ -1810,7 +1810,7 @@ function EditSessionModal({
               min={0}
               value={durationHours}
               onChange={(e) => setDurationHours(Math.max(0, Number(e.target.value)))}
-              className="w-20 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-center"
+              className="w-20 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-center"
             />
             <span className="text-sm text-[var(--color-text-secondary)]">{t("sessionsPage.form.hours")}</span>
             <input
@@ -1819,7 +1819,7 @@ function EditSessionModal({
               max={59}
               value={durationMins}
               onChange={(e) => setDurationMins(Math.max(0, Math.min(59, Number(e.target.value))))}
-              className="w-20 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-center"
+              className="w-20 px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-center"
             />
             <span className="text-sm text-[var(--color-text-secondary)]">{t("sessionsPage.form.minutes")}</span>
           </div>
@@ -1834,7 +1834,7 @@ function EditSessionModal({
                 type="text"
                 value={roomName}
                 onChange={(e) => setRoomName(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm"
               />
             </div>
             <div>
@@ -1845,7 +1845,7 @@ function EditSessionModal({
                 type="text"
                 value={venueAddress}
                 onChange={(e) => setVenueAddress(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm"
+                className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm"
               />
             </div>
             <div>
@@ -2386,7 +2386,7 @@ const SessionsContent = () => {
                 <select
                   value={filterCourse}
                   onChange={(e) => setFilterCourse(e.target.value)}
-                  className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
+                  className="px-3 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
                 >
                   <option value="all">{t("sessionsPage.allCourses")}</option>
                   {courses.map((c) => (
@@ -2396,7 +2396,7 @@ const SessionsContent = () => {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
+                  className="px-3 py-1.5 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
                 >
                   <option value="all">{t("sessionsPage.allStatuses")}</option>
                   <option value="scheduled">{t("sessionsPage.statusUpcoming")}</option>
@@ -2608,7 +2608,7 @@ const SessionsContent = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Reason *</label>
-                <textarea value={rescheduleForm.reason} onChange={(e) => setRescheduleForm(d => ({ ...d, reason: e.target.value }))} rows={2} placeholder="Why is this lecture being rescheduled?" className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none" />
+                <textarea value={rescheduleForm.reason} onChange={(e) => setRescheduleForm(d => ({ ...d, reason: e.target.value }))} rows={2} placeholder="Why is this lecture being rescheduled?" className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -2617,15 +2617,15 @@ const SessionsContent = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">New Time *</label>
-                  <input type="time" value={rescheduleForm.time} onChange={(e) => setRescheduleForm(d => ({ ...d, time: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
+                  <input type="time" value={rescheduleForm.time} onChange={(e) => setRescheduleForm(d => ({ ...d, time: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Duration</label>
                 <div className="flex items-center gap-2">
-                  <input type="number" min={0} value={rescheduleForm.durationHours} onChange={(e) => setRescheduleForm(d => ({ ...d, durationHours: Math.max(0, Number(e.target.value)) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
+                  <input type="number" min={0} value={rescheduleForm.durationHours} onChange={(e) => setRescheduleForm(d => ({ ...d, durationHours: Math.max(0, Number(e.target.value)) }))} className="w-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
                   <span className="text-sm text-[var(--color-text-secondary)]">hrs</span>
-                  <input type="number" min={0} max={59} value={rescheduleForm.durationMins} onChange={(e) => setRescheduleForm(d => ({ ...d, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
+                  <input type="number" min={0} max={59} value={rescheduleForm.durationMins} onChange={(e) => setRescheduleForm(d => ({ ...d, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))} className="w-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
                   <span className="text-sm text-[var(--color-text-secondary)]">min</span>
                 </div>
               </div>

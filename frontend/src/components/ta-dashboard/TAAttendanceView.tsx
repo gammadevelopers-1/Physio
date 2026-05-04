@@ -419,7 +419,7 @@ const TAAttendanceView = ({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t("attendance.searchPlaceholder")}
-                  className="w-full pl-10 pr-4 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20"
+                  className="w-full pl-10 pr-4 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20"
                 />
               </div>
             </div>
@@ -561,7 +561,7 @@ const TAAttendanceView = ({
                           value={manualAssignments[p.zoomUserEmail] || ""}
                           onChange={(e) => setManualAssignments((prev) => ({ ...prev, [p.zoomUserEmail]: e.target.value }))}
                           disabled={attendanceLocked}
-                          className="flex-1 px-2 py-1.5 text-xs border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] disabled:opacity-50"
+                          className="flex-1 px-2 py-1.5 text-xs border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] disabled:opacity-50"
                         >
                           <option value="">{locale === "ar" ? "اختر طالب" : "Select student"}</option>
                           {records.filter((r) => !markedStudentIds.has(r.studentId)).map((r) => (

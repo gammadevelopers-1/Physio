@@ -1577,7 +1577,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 type="text"
                                 value={settingsForm.title}
                                 onChange={(e) => setSettingsForm((f) => ({ ...f, title: e.target.value }))}
-                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                                className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                               />
                             </div>
                             <div>
@@ -1587,7 +1587,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 dir="rtl"
                                 value={settingsForm.titleAr}
                                 onChange={(e) => setSettingsForm((f) => ({ ...f, titleAr: e.target.value }))}
-                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                                className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                               />
                             </div>
                             <div className="sm:col-span-2">
@@ -1596,7 +1596,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 value={settingsForm.description}
                                 onChange={(e) => setSettingsForm((f) => ({ ...f, description: e.target.value }))}
                                 rows={3}
-                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none"
+                                className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none"
                               />
                             </div>
                             <div className="sm:col-span-2">
@@ -1606,7 +1606,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 value={settingsForm.descriptionAr}
                                 onChange={(e) => setSettingsForm((f) => ({ ...f, descriptionAr: e.target.value }))}
                                 rows={3}
-                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none"
+                                className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none"
                               />
                             </div>
                             <div>
@@ -1614,7 +1614,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               <select
                                 value={settingsForm.deliveryType}
                                 disabled
-                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] cursor-not-allowed"
+                                className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] cursor-not-allowed"
                               >
                                 <option value="zoom">{t("courseDetail.deliveryOptions.zoom")}</option>
                                 <option value="onsite">{t("courseDetail.deliveryOptions.onsite")}</option>
@@ -1629,7 +1629,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 min="1"
                                 value={settingsForm.maxEnrollment}
                                 disabled
-                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] cursor-not-allowed"
+                                className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] cursor-not-allowed"
                               />
                             </div>
                             <div>
@@ -1744,7 +1744,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   type="text"
                   value={moduleForm.title}
                   onChange={(e) => setModuleForm((f) => ({ ...f, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                   placeholder={t("courseDetail.moduleTitlePlaceholder")}
                 />
               </div>
@@ -1755,7 +1755,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   dir="rtl"
                   value={moduleForm.titleAr}
                   onChange={(e) => setModuleForm((f) => ({ ...f, titleAr: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                 />
               </div>
               <div>
@@ -1763,7 +1763,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 <select
                   value={moduleForm.type}
                   onChange={(e) => setModuleForm((f) => ({ ...f, type: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent bg-[var(--color-surface-card)]"
+                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent bg-[var(--color-surface-card)]"
                 >
                   <option value="video">{t("courseDetail.moduleTypes.video")}</option>
                   <option value="document">{t("courseDetail.moduleTypes.document")}</option>
@@ -1780,7 +1780,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       min="0"
                       value={moduleForm.durationHours}
                       onChange={(e) => setModuleForm((f) => ({ ...f, durationHours: e.target.value }))}
-                      className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                      className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                       placeholder="1"
                     />
                     <span className="text-xs text-[var(--color-text-secondary)] mt-0.5 block">{t("courseDetail.hours")}</span>
@@ -1792,7 +1792,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       max="59"
                       value={moduleForm.durationMins}
                       onChange={(e) => setModuleForm((f) => ({ ...f, durationMins: e.target.value }))}
-                      className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                      className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                       placeholder="30"
                     />
                     <span className="text-xs text-[var(--color-text-secondary)] mt-0.5 block">{t("courseDetail.minutes")}</span>
@@ -1923,7 +1923,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   type="text"
                   value={sessionForm.title}
                   onChange={(e) => setSessionForm((f) => ({ ...f, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                 />
               </div>
               <div>
@@ -1931,7 +1931,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 <select
                   value={sessionForm.type}
                   onChange={(e) => setSessionForm((f) => ({ ...f, type: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent bg-[var(--color-surface-card)]"
+                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent bg-[var(--color-surface-card)]"
                 >
                   <option value="zoom">{t("courseDetail.sessionTypes.zoom")}</option>
                   <option value="onsite">{t("courseDetail.sessionTypes.onsite")}</option>
@@ -1953,7 +1953,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                     min={0}
                     value={sessionForm.durationHours}
                     onChange={(e) => setSessionForm((f) => ({ ...f, durationHours: Math.max(0, Number(e.target.value)) }))}
-                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                    className="w-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                   />
                   <span className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.durationHours")}</span>
                   <input
@@ -1962,7 +1962,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                     max={59}
                     value={sessionForm.durationMins}
                     onChange={(e) => setSessionForm((f) => ({ ...f, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))}
-                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                    className="w-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                   />
                   <span className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.durationMinutes")}</span>
                 </div>
@@ -1972,11 +1972,11 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.roomName")}</label>
-                      <input type="text" value={sessionForm.roomName} onChange={(e) => setSessionForm((f) => ({ ...f, roomName: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent" />
+                      <input type="text" value={sessionForm.roomName} onChange={(e) => setSessionForm((f) => ({ ...f, roomName: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.venueAddress")}</label>
-                      <input type="text" value={sessionForm.venueAddress} onChange={(e) => setSessionForm((f) => ({ ...f, venueAddress: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent" />
+                      <input type="text" value={sessionForm.venueAddress} onChange={(e) => setSessionForm((f) => ({ ...f, venueAddress: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent" />
                     </div>
                   </div>
                   <div>
@@ -2023,7 +2023,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none"
+                className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none"
               />
             </div>
             <div className="flex justify-end gap-3 mt-4">
@@ -2060,7 +2060,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   onChange={(e) => setRescheduleData(d => ({ ...d, reason: e.target.value }))}
                   rows={2}
                   placeholder="Why is this lecture being rescheduled?"
-                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none"
+                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -2077,16 +2077,16 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                     type="time"
                     value={rescheduleData.newTime}
                     onChange={(e) => setRescheduleData(d => ({ ...d, newTime: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                   />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("courseDetail.sessionDuration")}</label>
                 <div className="flex items-center gap-2">
-                  <input type="number" min={0} value={rescheduleData.durationHours} onChange={(e) => setRescheduleData(d => ({ ...d, durationHours: Math.max(0, Number(e.target.value)) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent" />
+                  <input type="number" min={0} value={rescheduleData.durationHours} onChange={(e) => setRescheduleData(d => ({ ...d, durationHours: Math.max(0, Number(e.target.value)) }))} className="w-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent" />
                   <span className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.durationHrs")}</span>
-                  <input type="number" min={0} max={59} value={rescheduleData.durationMins} onChange={(e) => setRescheduleData(d => ({ ...d, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent" />
+                  <input type="number" min={0} max={59} value={rescheduleData.durationMins} onChange={(e) => setRescheduleData(d => ({ ...d, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))} className="w-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent" />
                 </div>
               </div>
             </div>

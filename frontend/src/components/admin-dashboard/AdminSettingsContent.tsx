@@ -150,7 +150,7 @@ const AdminSettingsContent = () => {
                             type="text"
                             value={platformName}
                             onChange={(e) => setPlatformName(e.target.value)}
-                            className="w-full h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full h-10 px-4 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
 
@@ -162,7 +162,7 @@ const AdminSettingsContent = () => {
                             type="email"
                             value={contactEmail}
                             onChange={(e) => setContactEmail(e.target.value)}
-                            className="w-full h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full h-10 px-4 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
 
@@ -173,7 +173,7 @@ const AdminSettingsContent = () => {
                           <select
                             value={timezone}
                             onChange={(e) => setTimezone(e.target.value)}
-                            className="w-full h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full h-10 px-4 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           >
                             <option value="Asia/Riyadh">Asia/Riyadh (UTC+3)</option>
                             <option value="Asia/Dubai">Asia/Dubai (UTC+4)</option>
@@ -227,7 +227,7 @@ const AdminSettingsContent = () => {
                           <select
                             value={sessionTimeout}
                             onChange={(e) => setSessionTimeout(e.target.value)}
-                            className="w-full h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full h-10 px-4 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           >
                             <option value="15">15 minutes</option>
                             <option value="30">30 minutes</option>
@@ -243,7 +243,7 @@ const AdminSettingsContent = () => {
                           <select
                             value={passwordMinLength}
                             onChange={(e) => setPasswordMinLength(e.target.value)}
-                            className="w-full h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full h-10 px-4 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           >
                             <option value="6">6 characters</option>
                             <option value="8">8 characters</option>
@@ -363,7 +363,7 @@ const AdminSettingsContent = () => {
                               onChange={(e) => setMaintenanceMessage(e.target.value)}
                               rows={4}
                               placeholder={t("settingsPage.maintenance.defaultMessage")}
-                              className="w-full px-4 py-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                              className="w-full px-4 py-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                             />
                           </div>
                         )}

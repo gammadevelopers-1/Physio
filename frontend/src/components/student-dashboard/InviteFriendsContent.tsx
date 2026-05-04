@@ -163,7 +163,7 @@ const InviteFriendsContent = () => {
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder={t("inviteFriends.emailPlaceholder")}
-                          className={`flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                          className={`flex-1 px-4 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                         />
                         <button
                           type="submit"

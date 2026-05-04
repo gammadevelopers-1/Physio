@@ -238,7 +238,7 @@ const LogsContent = () => {
                       placeholder={t("logsPage.searchPlaceholder")}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className={`w-full h-10 border border-[var(--color-border)] rounded-lg text-sm ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} focus:outline-none focus:border-[#002D87]`}
+                      className={`w-full h-10 border border-[var(--color-input-border)] rounded-lg text-sm ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} focus:outline-none focus:border-[#002D87]`}
                     />
                   </div>
 
@@ -246,7 +246,7 @@ const LogsContent = () => {
                   <select
                     value={actionFilter}
                     onChange={(e) => setActionFilter(e.target.value)}
-                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
+                    className="h-10 px-4 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
                   >
                     <option value="all">{t("logsPage.filters.allActions")}</option>
                     <option value="create">{t("logsPage.filters.create")}</option>
@@ -260,7 +260,7 @@ const LogsContent = () => {
                   <select
                     value={resourceFilter}
                     onChange={(e) => setResourceFilter(e.target.value)}
-                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
+                    className="h-10 px-4 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
                   >
                     <option value="all">{t("logsPage.filters.allResources")}</option>
                     <option value="user">{t("logsPage.filters.users")}</option>
@@ -273,7 +273,7 @@ const LogsContent = () => {
                   {/* Date Range */}
                   <input
                     type="date"
-                    className="h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm"
+                    className="h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm"
                   />
                 </div>
               </div>

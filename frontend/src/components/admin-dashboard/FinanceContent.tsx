@@ -141,7 +141,7 @@ const FinanceContent = () => {
                   <select
                     value={dateRange}
                     onChange={(e) => setDateRange(e.target.value)}
-                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
+                    className="h-10 px-4 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
                   >
                     <option value="today">{t("financePage.dateRange.today")}</option>
                     <option value="week">{t("financePage.dateRange.week")}</option>
@@ -286,7 +286,7 @@ const FinanceContent = () => {
                     <select
                       value={transactionFilter}
                       onChange={(e) => setTransactionFilter(e.target.value)}
-                      className="h-9 px-3 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
+                      className="h-9 px-3 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
                     >
                       <option value="all">{t("financePage.filters.all")}</option>
                       <option value="payment">{t("financePage.filters.payments")}</option>

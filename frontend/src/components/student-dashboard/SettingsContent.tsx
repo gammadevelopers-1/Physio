@@ -676,7 +676,7 @@ const SettingsContent = () => {
                           value={formData.firstName}
                           onChange={handleInputChange}
                           aria-label={t("settings.firstName")}
-                          className={`w-full px-4 py-2.5 bg-[var(--color-border-subtle)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                          className={`w-full px-4 py-2.5 bg-[var(--color-border-subtle)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                         />
                       </div>
                       <div>
@@ -693,7 +693,7 @@ const SettingsContent = () => {
                           value={formData.lastName}
                           onChange={handleInputChange}
                           aria-label={t("settings.lastName")}
-                          className={`w-full px-4 py-2.5 bg-[var(--color-border-subtle)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                          className={`w-full px-4 py-2.5 bg-[var(--color-border-subtle)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                         />
                       </div>
                     </div>
@@ -714,7 +714,7 @@ const SettingsContent = () => {
                       value={formData.email}
                       readOnly
                       aria-label={t("settings.email")}
-                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-[var(--color-surface-page)] cursor-not-allowed ${isRTL ? "text-right" : ""}`}
+                      className={`w-full px-4 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-[var(--color-surface-page)] cursor-not-allowed ${isRTL ? "text-right" : ""}`}
                     />
                   </div>
 
@@ -734,7 +734,7 @@ const SettingsContent = () => {
                       onChange={handleInputChange}
                       aria-label={t("settings.scfhsNumber")}
                       placeholder={t("settings.scfhsPlaceholder")}
-                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                      className={`w-full px-4 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                     />
                   </div>
 
@@ -753,7 +753,7 @@ const SettingsContent = () => {
                       value={formData.nationalId}
                       onChange={handleInputChange}
                       aria-label={t("settings.nationalId")}
-                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                      className={`w-full px-4 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                     />
                   </div>
 
@@ -771,7 +771,7 @@ const SettingsContent = () => {
                         type="button"
                         onClick={() => setNationalityOpen(!nationalityOpen)}
                         aria-label={t("settings.nationality")}
-                        className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent flex items-center justify-between ${isRTL ? "flex-row-reverse" : ""}`}
+                        className={`w-full px-4 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent flex items-center justify-between ${isRTL ? "flex-row-reverse" : ""}`}
                       >
                         <span
                           className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
@@ -823,7 +823,7 @@ const SettingsContent = () => {
                         type="button"
                         onClick={() => setGenderOpen(!genderOpen)}
                         aria-label={t("settings.gender")}
-                        className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent flex items-center justify-between ${isRTL ? "flex-row-reverse" : ""}`}
+                        className={`w-full px-4 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent flex items-center justify-between ${isRTL ? "flex-row-reverse" : ""}`}
                       >
                         <span>
                           {formData.gender
@@ -874,7 +874,7 @@ const SettingsContent = () => {
                         onChange={handleInputChange}
                         placeholder="DD/MM/YYYY"
                         aria-label={t("settings.dob")}
-                        className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right pr-4 pl-10" : "pr-10"}`}
+                        className={`w-full px-4 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right pr-4 pl-10" : "pr-10"}`}
                       />
                       <Calendar
                         className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-secondary)] ${isRTL ? "left-3" : "right-3"}`}
@@ -897,7 +897,7 @@ const SettingsContent = () => {
                       onChange={handleInputChange}
                       rows={4}
                       aria-label={t("settings.biography")}
-                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent resize-none ${isRTL ? "text-right" : ""}`}
+                      className={`w-full px-4 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent resize-none ${isRTL ? "text-right" : ""}`}
                     />
                   </div>
 

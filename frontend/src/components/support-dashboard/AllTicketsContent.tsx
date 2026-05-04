@@ -313,7 +313,7 @@ const AllTicketsContent = () => {
                     <select
                       value={categoryFilter}
                       onChange={(e) => setCategoryFilter(e.target.value)}
-                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-primary)] bg-[var(--color-surface-card)]"
+                      className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-primary)] bg-[var(--color-surface-card)]"
                     >
                       <option value="all">
                         {t("allTicketsPage.filters.allCategories")}
@@ -339,7 +339,7 @@ const AllTicketsContent = () => {
                     <select
                       value={priorityFilter}
                       onChange={(e) => setPriorityFilter(e.target.value)}
-                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-primary)] bg-[var(--color-surface-card)]"
+                      className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-primary)] bg-[var(--color-surface-card)]"
                     >
                       <option value="all">
                         {t("allTicketsPage.filters.allPriorities")}
@@ -365,7 +365,7 @@ const AllTicketsContent = () => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={t("allTicketsPage.searchPlaceholder")}
-                        className={`w-full py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+                        className={`w-full py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
                       />
                     </div>
 

@@ -416,13 +416,13 @@ const ContentReviewContent = () => {
                     placeholder={t("contentReviewPage.searchPlaceholder")}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none`}
+                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none`}
                   />
                 </div>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("contentReviewPage.filters.allStatus")}</option>
                   <option value="pending_review">{t("contentReviewPage.filters.pending")}</option>
@@ -433,7 +433,7 @@ const ContentReviewContent = () => {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("contentReviewPage.filters.allTypes")}</option>
                   <option value="video">{t("contentReviewPage.filters.video")}</option>
@@ -443,7 +443,7 @@ const ContentReviewContent = () => {
                 <select
                   value={courseFilter}
                   onChange={(e) => setCourseFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-[var(--color-surface-card)] border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("contentReviewPage.filters.allCourses")}</option>
                   {courses.map((course) => (
@@ -471,7 +471,7 @@ const ContentReviewContent = () => {
                       onChange={(e) => setCommentText(e.target.value)}
                       placeholder={t("contentReviewPage.commentPlaceholder")}
                       rows={4}
-                      className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none resize-none"
+                      className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none resize-none"
                     />
                     <div className="flex justify-end gap-3 mt-4">
                       <button
@@ -569,7 +569,7 @@ const ContentReviewContent = () => {
                               type="checkbox"
                               checked={filtered.length > 0 && selectedIds.size === filtered.length}
                               onChange={toggleSelectAll}
-                              className="w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                              className="w-4 h-4 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                             />
                           </th>
                           <th className="px-1 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase"></th>
@@ -613,7 +613,7 @@ const ContentReviewContent = () => {
                                     type="checkbox"
                                     checked={selectedIds.has(item.id)}
                                     onChange={() => toggleSelect(item.id)}
-                                    className="w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                                    className="w-4 h-4 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                                   />
                                 </td>
                                 <td className="px-1 py-3">

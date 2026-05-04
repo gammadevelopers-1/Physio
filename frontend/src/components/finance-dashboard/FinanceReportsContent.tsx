@@ -191,7 +191,7 @@ const FinanceReportsContent = () => {
                     <select
                       value={period}
                       onChange={(e) => setPeriod(e.target.value)}
-                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)]"
+                      className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)]"
                     >
                       <option value="thisMonth">{t("reportsPage.filters.thisMonth")}</option>
                       <option value="lastMonth">{t("reportsPage.filters.lastMonth")}</option>
@@ -205,7 +205,7 @@ const FinanceReportsContent = () => {
                     <select
                       value={groupBy}
                       onChange={(e) => setGroupBy(e.target.value)}
-                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)]"
+                      className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)]"
                     >
                       <option value="byCourse">{t("reportsPage.filters.byCourse")}</option>
                       <option value="byInstructor">{t("reportsPage.filters.byInstructor")}</option>

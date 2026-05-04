@@ -158,7 +158,7 @@ export default function CaptionEditor({
                         type="text"
                         value={entry.startTime}
                         onChange={(e) => updateEntry(i, "startTime", e.target.value)}
-                        className="w-[130px] px-2 py-1.5 border border-[var(--color-border)] rounded text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+                        className="w-[130px] px-2 py-1.5 border border-[var(--color-input-border)] rounded text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
                         placeholder="00:00:00.000"
                       />
                       <span className="text-[var(--color-text-secondary)] text-xs pt-1.5">&rarr;</span>
@@ -166,7 +166,7 @@ export default function CaptionEditor({
                         type="text"
                         value={entry.endTime}
                         onChange={(e) => updateEntry(i, "endTime", e.target.value)}
-                        className="w-[130px] px-2 py-1.5 border border-[var(--color-border)] rounded text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+                        className="w-[130px] px-2 py-1.5 border border-[var(--color-input-border)] rounded text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
                         placeholder="00:00:05.000"
                       />
                     </div>
@@ -174,7 +174,7 @@ export default function CaptionEditor({
                       value={entry.text}
                       onChange={(e) => updateEntry(i, "text", e.target.value)}
                       rows={2}
-                      className="w-full px-2 py-1.5 border border-[var(--color-border)] rounded text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] resize-none"
+                      className="w-full px-2 py-1.5 border border-[var(--color-input-border)] rounded text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] resize-none"
                     />
                   </div>
                   <button

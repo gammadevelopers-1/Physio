@@ -203,7 +203,7 @@ function CreateRoleModal({ onClose, onCreated }: { onClose: () => void; onCreate
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value.toUpperCase().replace(/\s+/g, "_") })}
-              className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+              className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
               placeholder="e.g. CONTENT_REVIEWER"
               required
             />
@@ -214,7 +214,7 @@ function CreateRoleModal({ onClose, onCreated }: { onClose: () => void; onCreate
               type="text"
               value={form.displayName}
               onChange={(e) => setForm({ ...form, displayName: e.target.value })}
-              className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+              className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
               placeholder="e.g. Content Reviewer"
               required
             />
@@ -224,7 +224,7 @@ function CreateRoleModal({ onClose, onCreated }: { onClose: () => void; onCreate
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="w-full h-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87] resize-none"
+              className="w-full h-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87] resize-none"
               placeholder="What can this role do?"
             />
           </div>
@@ -297,7 +297,7 @@ function EditRoleModal({ role, onClose, onUpdated }: { role: RoleWithCount; onCl
               type="text"
               value={form.displayName}
               onChange={(e) => setForm({ ...form, displayName: e.target.value })}
-              className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+              className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
               required
             />
           </div>
@@ -306,7 +306,7 @@ function EditRoleModal({ role, onClose, onUpdated }: { role: RoleWithCount; onCl
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="w-full h-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87] resize-none"
+              className="w-full h-20 px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87] resize-none"
             />
           </div>
           <div className="flex gap-3 pt-2">

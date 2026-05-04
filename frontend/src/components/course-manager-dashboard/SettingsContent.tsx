@@ -348,7 +348,7 @@ const SettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, firstName: e.target.value })
                               }
-                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                             />
                           </div>
                           <div>
@@ -362,7 +362,7 @@ const SettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, lastName: e.target.value })
                               }
-                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                             />
                           </div>
                           <div>
@@ -377,7 +377,7 @@ const SettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, firstNameAr: e.target.value })
                               }
-                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                             />
                           </div>
                           <div>
@@ -392,7 +392,7 @@ const SettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, lastNameAr: e.target.value })
                               }
-                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                             />
                           </div>
                           <div>
@@ -408,7 +408,7 @@ const SettingsContent = () => {
                                 type="email"
                                 value={profileData.email}
                                 disabled
-                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                                className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                               />
                             </div>
                           </div>
@@ -427,7 +427,7 @@ const SettingsContent = () => {
                                 onChange={(e) =>
                                   setProfileData({ ...profileData, phone: e.target.value })
                                 }
-                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                                className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                               />
                             </div>
                           </div>
@@ -452,7 +452,7 @@ const SettingsContent = () => {
                                 await profileApi.update({ language: newLocale }).catch(() => {});
                                 window.location.href = `/${newLocale}/dashboard/manager/settings`;
                               }}
-                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                              className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                             >
                               <option value="en">English</option>
                               <option value="ar">{"\u0627\u0644\u0639\u0631\u0628\u064A\u0629"}</option>
@@ -536,7 +536,7 @@ const SettingsContent = () => {
                                 placeholder="••••••••"
                                 value={currentPassword}
                                 onChange={(e) => setCurrentPassword(e.target.value)}
-                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                                className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                               />
                               <button
                                 type="button"
@@ -565,7 +565,7 @@ const SettingsContent = () => {
                                 placeholder="••••••••"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
-                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                                className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                               />
                               <button
                                 type="button"

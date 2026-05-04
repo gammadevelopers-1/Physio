@@ -184,7 +184,7 @@ const FinanceSettingsContent = () => {
                                     type="password"
                                     defaultValue="sk_live_••••••••••••"
                                     readOnly
-                                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] bg-[var(--color-surface-card)]"
+                                    className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] bg-[var(--color-surface-card)]"
                                   />
                                 </div>
                                 <div>
@@ -193,7 +193,7 @@ const FinanceSettingsContent = () => {
                                     type="password"
                                     defaultValue="pk_live_••••••••••••"
                                     readOnly
-                                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] bg-[var(--color-surface-card)]"
+                                    className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] bg-[var(--color-surface-card)]"
                                   />
                                 </div>
                                 <div>
@@ -202,7 +202,7 @@ const FinanceSettingsContent = () => {
                                     type="text"
                                     defaultValue="MID-12345678"
                                     readOnly
-                                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] bg-[var(--color-surface-card)]"
+                                    className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] bg-[var(--color-surface-card)]"
                                   />
                                 </div>
                               </div>
@@ -226,20 +226,20 @@ const FinanceSettingsContent = () => {
                       <div className="max-w-md space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.currency.primaryCurrency")}</label>
-                          <select className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
+                          <select className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
                             <option>{t("settingsPage.currency.sar")}</option>
                           </select>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.currency.displayFormat")}</label>
-                          <select className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
+                          <select className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
                             <option>{t("currencyFormats.sarFirst")}</option>
                             <option>{t("currencyFormats.sarLast")}</option>
                           </select>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.currency.decimalPlaces")}</label>
-                          <select className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
+                          <select className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
                             <option>2</option>
                             <option>0</option>
                           </select>
@@ -276,7 +276,7 @@ const FinanceSettingsContent = () => {
                             type="number"
                             value={vatRate}
                             onChange={(e) => setVatRate(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <div className="flex items-center justify-between p-4 bg-[var(--color-surface-page)] rounded-xl border border-[#F3F4F6]">
@@ -296,7 +296,7 @@ const FinanceSettingsContent = () => {
                             type="text"
                             value={taxNumber}
                             onChange={(e) => setTaxNumber(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <button className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors">
@@ -320,7 +320,7 @@ const FinanceSettingsContent = () => {
                             type="number"
                             value={fullRefundDays}
                             onChange={(e) => setFullRefundDays(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <div>
@@ -329,7 +329,7 @@ const FinanceSettingsContent = () => {
                             type="number"
                             value={partialRefundDays}
                             onChange={(e) => setPartialRefundDays(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <div>
@@ -338,7 +338,7 @@ const FinanceSettingsContent = () => {
                             type="number"
                             value={partialRefundPercent}
                             onChange={(e) => setPartialRefundPercent(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <div>
@@ -347,7 +347,7 @@ const FinanceSettingsContent = () => {
                             type="number"
                             value={bnplDeduction}
                             onChange={(e) => setBnplDeduction(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <div>
@@ -356,7 +356,7 @@ const FinanceSettingsContent = () => {
                             type="number"
                             value={adminFee}
                             onChange={(e) => setAdminFee(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <div>
@@ -365,7 +365,7 @@ const FinanceSettingsContent = () => {
                             type="number"
                             value={autoApproveBelow}
                             onChange={(e) => setAutoApproveBelow(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <button className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors">

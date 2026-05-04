@@ -1867,7 +1867,7 @@ const AssessmentContent = () => {
                   }
                   maxLength={500}
                   placeholder={t("assessment.typeAnswer")}
-                  className="w-full px-4 py-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
+                  className="w-full px-4 py-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
                 />
                 <p className="text-xs text-[var(--color-text-secondary)] mt-1 text-end">
                   {(answers[question.id] || "").length}/500

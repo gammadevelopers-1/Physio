@@ -401,7 +401,7 @@ const StudentsContent = () => {
                           placeholder={t("students.searchPlaceholder")}
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
+                          className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
                         />
                       </div>
 
@@ -420,7 +420,7 @@ const StudentsContent = () => {
                         <select
                           value={selectedCourse}
                           onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           <option value="all">{t("students.allCourses")}</option>
                           {courses.map((c) => (
@@ -430,7 +430,7 @@ const StudentsContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => setSelectedStatus(e.target.value)}
-                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           {statusOptions.map((option) => (
                             <option key={option.id} value={option.id}>
@@ -446,7 +446,7 @@ const StudentsContent = () => {
                         <select
                           value={selectedCourse}
                           onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); }}
-                          className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           <option value="all">{t("students.allCourses")}</option>
                           {courses.map((c) => (
@@ -456,7 +456,7 @@ const StudentsContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => setSelectedStatus(e.target.value)}
-                          className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         >
                           {statusOptions.map((option) => (
                             <option key={option.id} value={option.id}>

@@ -986,7 +986,7 @@ const CourseManagerCourseDetailContent = ({
               value={removeReason}
               onChange={(e) => setRemoveReason(e.target.value)}
               placeholder={t("courseDetail.removeReasonPlaceholder")}
-              className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+              className="w-full border border-[var(--color-input-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
               rows={3}
             />
             <div className="flex items-center justify-end gap-3 mt-4">
@@ -1067,7 +1067,7 @@ const CourseManagerCourseDetailContent = ({
               rows={4}
               maxLength={1000}
               placeholder={t("courseDetail.requestChangesPlaceholder")}
-              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent resize-none mb-1"
+              className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent resize-none mb-1"
             />
             <p className="text-xs text-[var(--color-text-secondary)] mb-4 text-end">{requestChangesNote.length}/1000</p>
             <div className="flex items-center justify-end gap-3">

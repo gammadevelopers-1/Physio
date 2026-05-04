@@ -308,7 +308,7 @@ function CreateTicketForm({
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as TicketCategory)}
-            className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
+            className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
           >
             {CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>
@@ -327,7 +327,7 @@ function CreateTicketForm({
             <select
               value={courseId}
               onChange={(e) => setCourseId(e.target.value)}
-              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
+              className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
             >
               <option value="">{t("supportPage.selectCourse")}</option>
               {enrolledCourses.map((c) => (
@@ -373,7 +373,7 @@ function CreateTicketForm({
             onChange={(e) => setSubject(e.target.value)}
             maxLength={200}
             placeholder={t("supportPage.subjectPlaceholder")}
-            className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
+            className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
             required
           />
         </div>
@@ -389,7 +389,7 @@ function CreateTicketForm({
             maxLength={2000}
             rows={5}
             placeholder={t("supportPage.descriptionPlaceholder")}
-            className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent resize-none"
+            className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent resize-none"
             required
           />
           <p className="text-xs text-[var(--color-text-secondary)] mt-1 text-right">
@@ -491,7 +491,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t("supportPage.searchFaq")}
-          className={`w-full ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"} py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent`}
+          className={`w-full ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"} py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent`}
         />
       </div>
 

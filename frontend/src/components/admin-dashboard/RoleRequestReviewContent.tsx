@@ -480,7 +480,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
                     ? (t("roleRequestReviewPage.noteOptional") || "Add a note (optional)...")
                     : (t("roleRequestReviewPage.noteRequired") || "Enter your message (required)...")
                 }
-                className="w-full h-28 p-3 border border-[var(--color-border)] rounded-lg text-sm resize-none outline-none focus:border-[#002D87]"
+                className="w-full h-28 p-3 border border-[var(--color-input-border)] rounded-lg text-sm resize-none outline-none focus:border-[#002D87]"
               />
 
               {actionError && (

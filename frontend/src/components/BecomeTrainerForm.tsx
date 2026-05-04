@@ -63,7 +63,7 @@ const InputField = ({
           onChange={onChange}
           required={required}
           placeholder={placeholder}
-          className={`w-full h-12 ${icon ? (isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4') : 'px-4'} py-2.5 bg-white border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
+          className={`w-full h-12 ${icon ? (isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4') : 'px-4'} py-2.5 bg-white border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
           style={{ fontSize: "16px" }}
         />
       </div>
@@ -144,7 +144,7 @@ const Dropdown = ({
           <button
             type="button"
             onClick={onToggle}
-            className="w-full h-12 px-4 bg-white border border-[var(--color-border)] rounded-lg flex items-center justify-between cursor-pointer"
+            className="w-full h-12 px-4 bg-white border border-[var(--color-input-border)] rounded-lg flex items-center justify-between cursor-pointer"
           >
             <div className="flex items-center gap-2">
               {showFlag && value === "Saudi Arabia" && (
@@ -236,7 +236,7 @@ const SearchableDropdown = ({
               onChange={(e) => onSelect(field, e.target.value)}
               placeholder={placeholder}
               disabled={disabled}
-              className={`w-full h-12 px-4 bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] disabled:opacity-50 disabled:cursor-not-allowed ${isRTL ? "text-right" : ""}`}
+              className={`w-full h-12 px-4 bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] disabled:opacity-50 disabled:cursor-not-allowed ${isRTL ? "text-right" : ""}`}
               style={{ fontSize: "16px" }}
             />
           </div>
@@ -262,7 +262,7 @@ const SearchableDropdown = ({
               }
             }}
             disabled={disabled}
-            className="w-full h-12 px-4 bg-white border border-[var(--color-border)] rounded-lg flex items-center justify-between cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-12 px-4 bg-white border border-[var(--color-input-border)] rounded-lg flex items-center justify-between cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span className={value ? "text-[var(--on-surface-default)]" : "text-[var(--on-surface-variant)]"} style={{ fontSize: "16px" }}>
               {displayLabel || placeholder}
@@ -278,7 +278,7 @@ const SearchableDropdown = ({
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={searchPlaceholder}
-                  className={`w-full h-9 px-3 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-md outline-none focus:border-[var(--outline-focused)] text-sm ${isRTL ? "text-right" : ""}`}
+                  className={`w-full h-9 px-3 bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-md outline-none focus:border-[var(--outline-focused)] text-sm ${isRTL ? "text-right" : ""}`}
                 />
               </div>
               <div className="overflow-y-auto">
@@ -377,7 +377,7 @@ const ComboBox = ({
             onFocus={() => { if (!isOpen && !disabled) onToggle(); }}
             placeholder={placeholder}
             disabled={disabled}
-            className={`w-full h-12 px-4 pe-10 bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] disabled:opacity-50 disabled:cursor-not-allowed ${isRTL ? "text-right" : ""}`}
+            className={`w-full h-12 px-4 pe-10 bg-white border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] disabled:opacity-50 disabled:cursor-not-allowed ${isRTL ? "text-right" : ""}`}
             style={{ fontSize: "16px" }}
           />
           <ChevronDown className={`pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--on-surface-variant)] transition-transform ${isOpen ? "rotate-180" : ""}`} />
@@ -1508,7 +1508,7 @@ const BecomeTrainerForm = ({
                       value={formData.fullNameArabic}
                       onChange={handleInputChange}
                       placeholder={labels.fullNameArPlaceholder}
-                      className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
+                      className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                       style={{ fontSize: "16px" }}
                     />
                     <input
@@ -1517,7 +1517,7 @@ const BecomeTrainerForm = ({
                       value={formData.fullNameEnglish}
                       onChange={handleInputChange}
                       placeholder={labels.fullNameEnPlaceholder}
-                      className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
+                      className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                       style={{ fontSize: "16px" }}
                     />
                   </div>
@@ -1539,7 +1539,7 @@ const BecomeTrainerForm = ({
                       value={formData.email}
                       onChange={handleInputChange}
                       required
-                      className={`w-full h-12 py-2.5 bg-white border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "pr-12 pl-4 text-right" : "pl-12 pr-4"}`}
+                      className={`w-full h-12 py-2.5 bg-white border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "pr-12 pl-4 text-right" : "pl-12 pr-4"}`}
                       style={{ fontSize: "16px" }}
                     />
                   </div>
@@ -1605,7 +1605,7 @@ const BecomeTrainerForm = ({
                         value={formData.scfhsNumber}
                         onChange={handleInputChange}
                         placeholder={locale === "ar" ? "أدخل رقم التصنيف" : "Enter SCFHS number"}
-                        className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
+                        className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                         style={{ fontSize: "16px" }}
                       />
                     )}
@@ -1769,7 +1769,7 @@ const BecomeTrainerForm = ({
                   value={formData.fullNameArabic}
                   onChange={handleInputChange}
                   placeholder={labels.fullNameArPlaceholder}
-                  className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
+                  className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                   style={{ fontSize: "16px" }}
                 />
                 <input
@@ -1778,7 +1778,7 @@ const BecomeTrainerForm = ({
                   value={formData.fullNameEnglish}
                   onChange={handleInputChange}
                   placeholder={labels.fullNameEnPlaceholder}
-                  className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
+                  className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                   style={{ fontSize: "16px" }}
                 />
               </div>
@@ -1844,7 +1844,7 @@ const BecomeTrainerForm = ({
                     value={formData.scfhsNumber}
                     onChange={handleInputChange}
                     placeholder={locale === "ar" ? "أدخل رقم التصنيف" : "Enter SCFHS number"}
-                    className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
+                    className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                     style={{ fontSize: "16px" }}
                   />
                 )}

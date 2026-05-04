@@ -52,7 +52,7 @@ const InputField = ({
       </label>
       <div className="relative w-full lg:w-1/2">
         {icon && (
-          <div className={`absolute top-1/2 -translate-y-1/2 text-[var(--color-border-subtle)] ${isRTL ? "right-4" : "left-4"}`}>
+          <div className={`absolute top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] ${isRTL ? "right-4" : "left-4"}`}>
             {icon}
           </div>
         )}
@@ -1532,7 +1532,7 @@ const BecomeTrainerForm = ({
                     {labels.email} <span className="text-[#dc2626]">*</span>
                   </label>
                   <div className="relative w-1/2">
-                    <Mail className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-border-subtle)] ${isRTL ? "right-4" : "left-4"}`} strokeWidth={1.5} />
+                    <Mail className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-secondary)] ${isRTL ? "right-4" : "left-4"}`} strokeWidth={1.5} />
                     <input
                       type="email"
                       name="email"

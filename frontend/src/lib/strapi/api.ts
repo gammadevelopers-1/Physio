@@ -48,6 +48,7 @@ const BLOCKS_POPULATE_PARAMS: Record<string, string> = {
   'populate[blocks][on][blocks.featured-section-block][populate][ctaButton]': 'true',
   'populate[blocks][on][blocks.instructors-grid][populate]': '*',
   'populate[blocks][on][blocks.testimonials-carousel][populate]': '*',
+  'populate[blocks][on][blocks.instructor-reviews-block][populate]': '*',
   'populate[blocks][on][blocks.rich-text-block][populate]': '*',
   'populate[blocks][on][blocks.stats-numbers-block][populate][items]': 'true',
   'populate[blocks][on][blocks.cards-grid][populate][cards][populate]': '*',
@@ -123,8 +124,15 @@ const BLOCKS_POPULATE_PARAMS: Record<string, string> = {
   'populate[blocks][on][blocks.upcoming-events-block][populate][events][populate]': '*',
 };
 
-// Separate populate for ogImage — only for single-type pages that have this field
-const OG_IMAGE_POPULATE = { 'populate[ogImage]': 'true' };
+// Per-page SEO populate. The legacy flat metaTitle/metaDescription/ogImage
+// fields were removed from Strapi after their values were migrated into
+// the shared.seo component. Only the seo component needs populate now.
+const SEO_POPULATE = {
+  'populate[seo][populate]': '*',
+};
+// Aliases kept for the existing call sites — both resolve to SEO_POPULATE.
+const LEGACY_OG_POPULATE = SEO_POPULATE;
+const OG_IMAGE_POPULATE = SEO_POPULATE;
 
 /**
  * Fetch home page content
@@ -159,6 +167,7 @@ export async function getSiteSettings(locale: string = 'en'): Promise<SiteSettin
         'populate[logo]': 'true',
         'populate[favicon]': 'true',
         'populate[defaultOgImage]': 'true',
+        'populate[nelcLogo]': 'true',
         'populate[paymentMethods][populate][icon]': 'true',
       },
     }
@@ -854,6 +863,7 @@ export async function getBlogCategories(locale: string = 'en'): Promise<StrapiBl
         locale,
         'sort[0]': 'title:asc',
         'pagination[pageSize]': '100',
+        ...SEO_POPULATE,
       },
     }
   );
@@ -872,6 +882,7 @@ export async function getBlogBySlug(slug: string, locale: string = 'en'): Promis
         'filters[slug][$eq]': slug,
         'populate[category]': 'true',
         'populate[mainImage]': 'true',
+        ...SEO_POPULATE,
       },
     }
   );
@@ -1113,6 +1124,7 @@ export async function getSearchPage(locale: string = 'en'): Promise<SearchPage |
     {
       params: {
         locale,
+        ...SEO_POPULATE,
         'populate[popularSearchTerms]': 'true',
       },
     }
@@ -1145,6 +1157,27 @@ export async function getFAQPageData(locale: string = 'en') {
 }
 
 /**
+ * Lightweight list of every published page in the `pages` collection for a
+ * given locale — slugs + updatedAt only. Used by the sitemap.
+ */
+export async function getAllPagesIndex(
+  locale: string = 'en',
+): Promise<Array<{ slug: string; updatedAt: string | null }>> {
+  const response = await fetchStrapi<StrapiResponse<Array<{ slug: string; updatedAt: string | null }>>>(
+    '/pages',
+    {
+      params: {
+        locale,
+        'fields[0]': 'slug',
+        'fields[1]': 'updatedAt',
+        'pagination[pageSize]': '100',
+      },
+    },
+  );
+  return (response?.data || []).filter((p) => !!p.slug);
+}
+
+/**
  * Fetch a dynamic page by slug
  */
 export async function getDynamicPage(slug: string, locale: string = 'en') {
@@ -1155,6 +1188,9 @@ export async function getDynamicPage(slug: string, locale: string = 'en') {
         locale,
         'filters[slug][$eq]': slug,
         ...BLOCKS_POPULATE_PARAMS,
+        // `pages` collection has only metaTitle/metaDescription — no flat
+        // ogImage field — so it must use SEO_POPULATE (no populate[ogImage]).
+        ...SEO_POPULATE,
       },
     }
   );
@@ -1179,6 +1215,7 @@ export async function getCoursesPage(locale: string = 'en'): Promise<CoursesPage
       params: {
         locale,
         ...BLOCKS_POPULATE_PARAMS,
+        ...SEO_POPULATE,
       },
     }
   );
@@ -1208,6 +1245,7 @@ export async function getCourseDetailPage(locale: string = 'en'): Promise<Course
       params: {
         locale,
         ...BLOCKS_POPULATE_PARAMS,
+        ...SEO_POPULATE,
       },
     }
   );

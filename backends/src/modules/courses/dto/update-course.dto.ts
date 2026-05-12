@@ -9,11 +9,14 @@ import {
   MaxLength,
   Min,
   IsDateString,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import {
   DELIVERY_TYPE,
   DeliveryType,
 } from '../../../database/schema';
+import { FaqItemDto } from './create-course.dto';
 
 const validDeliveryTypes = Object.values(DELIVERY_TYPE);
 
@@ -89,6 +92,16 @@ export class UpdateCourseDto {
   @MaxLength(100)
   cohort?: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  accreditationNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  nelcReviewLink?: string;
+
   // Course content fields
   @IsOptional()
   @IsString()
@@ -127,6 +140,12 @@ export class UpdateCourseDto {
   @IsArray()
   @IsString({ each: true })
   targetAudienceAr?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => FaqItemDto)
+  faqs?: FaqItemDto[];
 
   @IsOptional()
   @IsString()
@@ -195,4 +214,30 @@ export class UpdateCourseDto {
   @IsString()
   @IsIn(['full', 'failed_sections'])
   assessmentRetakeScope?: string;
+
+  // Per-course SEO overrides. Empty values fall back to title /
+  // description / thumbnail in the metadata helper.
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  seoTitle?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  seoDescription?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  seoKeywords?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  seoOgImage?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  seoNoindex?: boolean;
 }

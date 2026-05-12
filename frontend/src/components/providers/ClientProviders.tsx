@@ -4,6 +4,7 @@ import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '@/contexts';
 import { CalendarProvider } from '@/contexts/CalendarContext';
+import { FavouritesProvider } from '@/contexts/FavouritesContext';
 
 interface ClientProvidersProps {
   children: ReactNode;
@@ -13,7 +14,9 @@ export function ClientProviders({ children }: ClientProvidersProps) {
   return (
     <AuthProvider>
       <CalendarProvider>
-      {children}
+        <FavouritesProvider>
+          {children}
+        </FavouritesProvider>
       </CalendarProvider>
       <Toaster
         position="top-right"

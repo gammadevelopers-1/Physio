@@ -1,16 +1,33 @@
+import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { CoursesPageContent } from "@/components/courses";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { getBlocksAtPosition } from "@/lib/strapi/block-utils";
-import { getCoursesPageData } from "@/lib/strapi";
+import { getCoursesPage, getCoursesPageData, getSiteSettings, getStrapiMediaUrl } from "@/lib/strapi";
 import type { SideLoadedData } from "@/lib/strapi/types";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Courses | PhysioGuidance",
-  description: "Explore courses and events - Accredited healthcare training programs",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const [page, settings] = await Promise.all([
+    getCoursesPage(locale).catch(() => null),
+    getSiteSettings(locale).catch(() => null),
+  ]);
+  return buildPageMetadata({
+    locale,
+    path: "/courses",
+    page: page as Parameters<typeof buildPageMetadata>[0]["page"],
+    siteOgImageUrl: settings?.defaultOgImage?.url
+      ? getStrapiMediaUrl(settings.defaultOgImage.url)
+      : null,
+  });
+}
 
 export default async function CoursesPage({
   params,

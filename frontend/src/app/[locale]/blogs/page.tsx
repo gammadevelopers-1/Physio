@@ -1,12 +1,29 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { BlogsPageContent } from "@/components/blogs";
-import { getBlogsPageData } from "@/lib/strapi/api";
+import { getBlogsPage, getBlogsPageData, getSiteSettings, getStrapiMediaUrl } from "@/lib/strapi";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Blogs | PhysioGuidance",
-  description: "Insights, Updates, and Best Practices in Healthcare Education",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const [page, settings] = await Promise.all([
+    getBlogsPage(locale).catch(() => null),
+    getSiteSettings(locale).catch(() => null),
+  ]);
+  return buildPageMetadata({
+    locale,
+    path: "/blogs",
+    page,
+    siteOgImageUrl: settings?.defaultOgImage?.url
+      ? getStrapiMediaUrl(settings.defaultOgImage.url)
+      : null,
+  });
+}
 
 export default async function BlogsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

@@ -9,13 +9,11 @@ import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import InstructorNavbar from "./InstructorNavbar";
 import InstructorKPICards from "./InstructorKPICards";
-import TodaysSessions from "./TodaysSessions";
+import MyLecturesWidget from "./MyLecturesWidget";
 import CoursePerformance from "./CoursePerformance";
 import InstructorTabs from "./InstructorTabs";
 import InstructorNotificationsWidget from "./InstructorNotificationsWidget";
-import InstructorCalendarWidget from "./InstructorCalendarWidget";
 import AtRiskLearners from "./AtRiskLearners";
-import SessionsCalendarWidget from "./SessionsCalendarWidget";
 import AssessmentAnalysisWidget from "./AssessmentAnalysisWidget";
 import RecentFeedbackWidget from "./RecentFeedbackWidget";
 import AssessmentsNeedingAttention from "./AssessmentsNeedingAttention";
@@ -27,9 +25,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { instructorApi, materialsApi } from "@/lib/api";
 import {
   transformToKPIData,
-  transformToSessionCards,
   transformToCalendarSessions,
-  transformToCalendarEvents,
   transformToAtRiskLearners,
   transformToCourseOptions,
 } from "@/lib/instructor-dashboard-transforms";
@@ -156,9 +152,7 @@ const InstructorDashboardContent = () => {
   // ─── Derived data from API ───────────────────────────────
 
   const kpiData = dashboard ? transformToKPIData(dashboard) : { activeCourses: 0, totalStudents: 0, todaysSessions: 0, atRiskLearners: 0 };
-  const sessionCards = dashboard ? transformToSessionCards(dashboard.todaySessions) : [];
   const calendarSessions = dashboard ? transformToCalendarSessions([...dashboard.todaySessions, ...dashboard.upcomingSessions]) : [];
-  const calendarEvents = dashboard ? transformToCalendarEvents(dashboard.todaySessions) : [];
   const atRiskLearners = dashboard ? transformToAtRiskLearners(dashboard.atRiskLearners) : [];
   const courseOptions = dashboard ? transformToCourseOptions(dashboard.activeCourses) : [{ value: "all", label: t("performance.allCourses") }];
 
@@ -194,18 +188,23 @@ const InstructorDashboardContent = () => {
                 {/* KPI Cards */}
                 <InstructorKPICards data={kpiData} />
 
-                {/* Today's Sessions */}
-                <TodaysSessions
-                  sessions={sessionCards}
-                  onStartSession={handleStartSession}
-                  onEndSession={handleEndSession}
-                  onAttendance={handleSessionAttendance}
-                  onShare={handleShareSessionMaterials}
-                />
+                {/* Recent Feedback — top of the dashboard so the instructor
+                    sees the overall rating + latest reviews at-a-glance
+                    without scrolling. */}
+                <div className="mb-6 mt-6">
+                  <RecentFeedbackWidget
+                    overallRating={dashboard?.recentFeedback?.overallRating ?? 0}
+                    totalReviews={dashboard?.recentFeedback?.totalReviews ?? 0}
+                    feedbackItems={dashboard?.recentFeedback?.feedbackItems ?? []}
+                  />
+                </div>
 
-                {/* Sessions Calendar Widget */}
+                {/* My Lectures — consolidated widget replacing the
+                    Today's Sessions + Sessions Calendar Widget + sidebar
+                    Calendar trio. Single source of truth: a week strip
+                    with day-by-day lectures + actions, defaulting to today. */}
                 <div className="mb-6">
-                  <SessionsCalendarWidget
+                  <MyLecturesWidget
                     sessions={calendarSessions}
                     onStartSession={handleStartSession}
                     onEndSession={handleEndSession}
@@ -228,15 +227,6 @@ const InstructorDashboardContent = () => {
                   questions={questionAnalysis}
                 />
 
-                {/* Recent Feedback */}
-                <div className="mb-6">
-                  <RecentFeedbackWidget
-                    overallRating={dashboard?.recentFeedback?.overallRating ?? 0}
-                    totalReviews={dashboard?.recentFeedback?.totalReviews ?? 0}
-                    feedbackItems={dashboard?.recentFeedback?.feedbackItems ?? []}
-                  />
-                </div>
-
                 {/* Tabs Section */}
                 <InstructorTabs
                   contentFiles={contentFiles}
@@ -255,9 +245,6 @@ const InstructorDashboardContent = () => {
                 onMarkAllRead={async () => { await markAllNotificationsRead(); refetch(); }}
                 onClearAll={async () => { await clearAllNotifications(); refetch(); }}
               />
-
-              {/* Calendar */}
-              <InstructorCalendarWidget events={calendarEvents} />
 
               {/* At-Risk Learners */}
               <AtRiskLearners learners={atRiskLearners} courses={courseOptions} onRefresh={refetch} />

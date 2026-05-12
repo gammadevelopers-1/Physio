@@ -2,9 +2,7 @@
 export { default as DashboardSidebar } from "./DashboardSidebar";
 export { default as DashboardStats } from "./DashboardStats";
 export { default as RecentCourses } from "./RecentCourses";
-export { default as NotificationsPanel } from "./NotificationsPanel";
-export { default as CalendarPanel } from "./CalendarPanel";
-export { default as CalendarContent } from "./CalendarContent";
+export { default as LecturesContent } from "./LecturesContent";
 export { default as MobileSidebar } from "./MobileSidebar";
 export { default as DashboardNavbar } from "./DashboardNavbar";
 export { default as DashboardHomeContent } from "./DashboardHomeContent";
@@ -14,7 +12,7 @@ export { default as CertificationsContent } from "./CertificationsContent";
 export { default as TranscriptContent } from "./TranscriptContent";
 export { default as BadgesContent } from "./BadgesContent";
 export { default as InvoicesContent } from "./InvoicesContent";
-export { default as InviteFriendsContent } from "./InviteFriendsContent";
+export { default as MyPointsContent } from "./MyPointsContent";
 export { default as SettingsContent } from "./SettingsContent";
 export { default as SupportContent } from "./SupportContent";
 

@@ -31,6 +31,23 @@ export class InstructorController {
   }
 
   /**
+   * GET /instructor/me/reviews — Approved instructor reviews for the
+   * authenticated instructor. Mirrors the manager-scoped endpoint at
+   * /instructor/:id/reviews but defaults to the caller's own id.
+   * NOTE: Must be defined BEFORE parameterized `:id` routes.
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Get('me/reviews')
+  async getMyInstructorReviews(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('limit') limit?: string,
+  ) {
+    return this.instructorService.listReviewsForInstructor(user.id, {
+      limit: limit ? Number(limit) : undefined,
+    });
+  }
+
+  /**
    * GET /instructor/course-performance — Per-course performance data
    */
   @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
@@ -137,6 +154,21 @@ export class InstructorController {
   @Get(':id/performance')
   async getInstructorPerformance(@Param('id') instructorId: string) {
     return this.instructorService.getInstructorPerformance(instructorId);
+  }
+
+  /**
+   * GET /instructor/:id/reviews — Approved instructor reviews across all
+   * courses this instructor teaches. Used by the manager side-sheet.
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get(':id/reviews')
+  async getInstructorReviews(
+    @Param('id') instructorId: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.instructorService.listReviewsForInstructor(instructorId, {
+      limit: limit ? Number(limit) : undefined,
+    });
   }
 
   /**

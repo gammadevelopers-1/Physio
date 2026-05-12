@@ -16,6 +16,7 @@ import {
   MapPin,
   Check,
   Share2,
+  Heart,
   ShoppingCart,
   Video,
   Award,
@@ -26,10 +27,12 @@ import { CourseCard, MobileCourseCard } from "@/components/courses";
 import { PublicCourse } from "@/types/instructor-dashboard";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
-import { studentApi, publicApi, ApiError } from "@/lib/api";
+import { useFavourites } from "@/contexts/FavouritesContext";
+import { studentApi, publicApi, pointsApi, ApiError } from "@/lib/api";
 import { formatDuration } from "@/lib/utils";
 import { getCityLabel } from "@/lib/saudi-cities";
 import { Loader2 } from "lucide-react";
+import Accordion, { type AccordionItem } from "@/components/ui/Accordion";
 
 interface CourseDetailContentProps {
   noReviewsText?: string;
@@ -361,7 +364,9 @@ const CourseDetailContent = ({
 }: CourseDetailContentProps = {}) => {
   const t = useTranslations("courseDetailPage");
   const tCourses = useTranslations("coursesPage");
+  const tFav = useTranslations("studentDashboard.favourites");
   const locale = useLocale();
+  const { isFavourite, toggleFavourite } = useFavourites();
   const isRTL = locale === "ar";
 
   const params = useParams();
@@ -383,6 +388,49 @@ const CourseDetailContent = ({
       .catch(() => {});
   }, [slug]);
 
+  // Reviews block toggle: course (existing) vs instructor (cross-course
+  // reviews of the course's instructor). Lazy-loaded — only fetched the
+  // first time the toggle hits "instructor".
+  const [reviewKind, setReviewKind] = useState<"course" | "instructor">("course");
+  const [instructorReviews, setInstructorReviews] = useState<{
+    data: Array<{
+      id: string;
+      courseId: string;
+      courseTitle: string;
+      courseTitleAr: string | null;
+      rating: number;
+      reviewText: string | null;
+      createdAt: string;
+      studentName: string;
+    }>;
+    avgRating: number;
+    totalRatings: number;
+  } | null>(null);
+  const [instructorReviewsLoading, setInstructorReviewsLoading] = useState(false);
+  useEffect(() => {
+    if (reviewKind !== "instructor") return;
+    if (!apiCourse?.id) return;
+    if (instructorReviews !== null) return; // cached after first fetch
+    let cancelled = false;
+    setInstructorReviewsLoading(true);
+    fetch(`/api/public-courses/${apiCourse.id}/instructor-aggregated-ratings?limit=10`, {
+      cache: "no-store",
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!cancelled && json) setInstructorReviews(json);
+      })
+      .catch(() => {
+        if (!cancelled) setInstructorReviews({ data: [], avgRating: 0, totalRatings: 0 });
+      })
+      .finally(() => {
+        if (!cancelled) setInstructorReviewsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reviewKind, apiCourse?.id, instructorReviews]);
+
   // Auth + enrollment state
   const { user, isAuthenticated } = useAuth();
   const isStudent = isAuthenticated && user?.activeRole === "STUDENT";
@@ -391,10 +439,42 @@ const CourseDetailContent = ({
     success: boolean;
     message: string;
   } | null>(null);
+
+  // Points redemption — populated once on mount when the user is logged in.
+  // null = not eligible / not loaded; object = redeemable for points.
+  const [redeemInfo, setRedeemInfo] = useState<{
+    costPoints: number;
+    affordable: boolean;
+  } | null>(null);
+  const [redeeming, setRedeeming] = useState(false);
   const [shareTooltip, setShareTooltip] = useState(false);
   const [sessionFilterCity, setSessionFilterCity] = useState<string>("");
   const [sessionFilterMonth, setSessionFilterMonth] = useState<string>("");
   const [reviewsModalOpen, setReviewsModalOpen] = useState(false);
+
+  const favourited = apiCourse && isAuthenticated ? isFavourite(apiCourse.id) : false;
+  const handleFavouriteClick = () => {
+    if (!apiCourse) return;
+    // Guests can't have favourites — push them to signin and bring them
+    // back to this same course detail. Once they're authenticated, the
+    // dashboard's favourites feature is available like normal.
+    if (!isAuthenticated) {
+      const redirect = encodeURIComponent(pathname || `/${locale}/courses/${apiCourse.id}`);
+      router.push(`/${locale}/signin?redirect=${redirect}`);
+      return;
+    }
+    toggleFavourite({
+      id: apiCourse.id,
+      title: isRTL && apiCourse.titleAr ? apiCourse.titleAr : apiCourse.title,
+      thumbnail: apiCourse.thumbnail || "",
+      progress: 0,
+      status: "not_started",
+      price: apiCourse.price ?? 0,
+      cmeHours: apiCourse.cmeHours ?? 0,
+      isCmeAccredited: apiCourse.isCmeAccredited ?? false,
+      deliveryType: apiCourse.deliveryType,
+    });
+  };
 
   const handleShare = async () => {
     const shareUrl = typeof window !== "undefined" ? window.location.href : "";
@@ -430,6 +510,7 @@ const CourseDetailContent = ({
   const apiRemainingSeats = apiCourse?.remainingSeats ?? null;
   const apiCmeAccredited = apiCourse?.isCmeAccredited ?? false;
   const apiCmeHours = apiCourse?.cmeHours ?? 0;
+  const apiAccreditationNumber = apiCourse?.accreditationNumber ?? null;
   const apiSessionCount = apiCourse?.sessionCount ?? 0;
   const availabilityStatus = apiCourse?.availabilityStatus ?? "open";
   const canEnroll = availabilityStatus === "open";
@@ -451,6 +532,56 @@ const CourseDetailContent = ({
       setEnrollResult({ success: false, message });
     } finally {
       setEnrolling(false);
+    }
+  };
+
+  // Fetch redeem eligibility once when the course + auth state are ready.
+  // Skipped for guests, non-students, and free courses (no need to redeem).
+  useEffect(() => {
+    if (!apiCourse || !isStudent || apiIsFree) {
+      setRedeemInfo(null);
+      return;
+    }
+    let cancelled = false;
+    pointsApi
+      .getRedeemableCourses()
+      .then((res) => {
+        if (cancelled) return;
+        const match = res.courses.find((c) => c.id === apiCourse.id);
+        if (match) {
+          setRedeemInfo({
+            costPoints: match.costPoints,
+            affordable: match.affordable,
+          });
+        } else {
+          setRedeemInfo(null);
+        }
+      })
+      .catch(() => {
+        // Silent — redemption is optional UX
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [apiCourse, isStudent, apiIsFree]);
+
+  // Trigger points-based redemption. Reuses enrollResult for UI feedback —
+  // a successful redemption ends in the same place (course unlocked) so
+  // sharing the success path is simpler than a parallel state.
+  const handleRedeem = async () => {
+    if (!apiCourse) return;
+    setRedeeming(true);
+    setEnrollResult(null);
+    try {
+      const res = await pointsApi.redeemCourse(apiCourse.id);
+      setEnrollResult({ success: true, message: t("enrollment.redeemSuccess") });
+      // Refresh local redemption info to reflect the new balance
+      setRedeemInfo({ costPoints: res.pointsUsed, affordable: false });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t("enrollment.error");
+      setEnrollResult({ success: false, message });
+    } finally {
+      setRedeeming(false);
     }
   };
 
@@ -774,6 +905,33 @@ const CourseDetailContent = ({
     );
   };
 
+  // FAQs section renderer — zoom courses only. Hidden when the course has
+  // no FAQ entries.
+  const renderFaqs = (isMobile: boolean = false) => {
+    if (apiCourse?.deliveryType !== "zoom") return null;
+    const list = Array.isArray(apiCourse?.faqs) ? apiCourse.faqs : [];
+    const items = list
+      .filter((f) => (f?.question || f?.questionAr) && (f?.answer || f?.answerAr))
+      .map((f, i): AccordionItem => {
+        const q = isRTL ? (f.questionAr || f.question || "") : (f.question || f.questionAr || "");
+        const a = isRTL ? (f.answerAr || f.answer || "") : (f.answer || f.answerAr || "");
+        return {
+          id: `faq-${i}`,
+          title: q,
+          content: <p className="whitespace-pre-wrap">{a}</p>,
+        };
+      });
+    if (items.length === 0) return null;
+    return (
+      <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
+        <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} ${isRTL ? "text-right" : "text-left"}`}>
+          {isRTL ? "الأسئلة الشائعة" : "FAQs"}
+        </h2>
+        <Accordion items={items} />
+      </div>
+    );
+  };
+
   // Objectives section renderer
   const renderObjectives = (isMobile: boolean = false) => {
     const objectives = getObjectives();
@@ -833,6 +991,167 @@ const CourseDetailContent = ({
     );
   };
 
+  // Instructor card — only renders when an instructor row exists. Photo
+  // and name are clickable and route to the dedicated profile page.
+  // Email is intentionally not shown (privacy + spam vector); reach out
+  // happens via the profile page or course enrolment.
+  const renderInstructor = (isMobile: boolean = false) => {
+    const inst = apiCourse?.instructor;
+    if (!inst?.id) return null;
+
+    const fullName = (() => {
+      const ar = `${inst.firstNameAr || ""} ${inst.lastNameAr || ""}`.trim();
+      const en = `${inst.firstName || ""} ${inst.lastName || ""}`.trim();
+      if (isRTL && ar) return ar;
+      return en || ar || "Instructor";
+    })();
+    const initials = fullName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase() ?? "")
+      .join("");
+    const tagline = inst.profession || inst.specialty || inst.qualification || null;
+    const profileHref = `/${locale}/instructors/${inst.id}`;
+    const twitterHref = inst.twitter
+      ? inst.twitter.startsWith("http")
+        ? inst.twitter
+        : `https://twitter.com/${inst.twitter.replace(/^@/, "")}`
+      : null;
+    const linkedinHref = inst.linkedin
+      ? inst.linkedin.startsWith("http")
+        ? inst.linkedin
+        : `https://linkedin.com/in/${inst.linkedin}`
+      : null;
+
+    return (
+      <div
+        className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}
+      >
+        <h2
+          className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"}`}
+        >
+          {isRTL ? "المدرب" : "Instructor"}
+        </h2>
+        <div className={`flex ${isMobile ? "flex-col items-start gap-4" : "items-start gap-5"}`}>
+          {/* Avatar — clickable */}
+          <Link
+            href={profileHref}
+            aria-label={fullName}
+            className={`flex-shrink-0 ${isMobile ? "w-20 h-20" : "w-24 h-24"} rounded-full overflow-hidden bg-[var(--color-border-subtle)] flex items-center justify-center transition-opacity hover:opacity-90`}
+          >
+            {inst.avatar ? (
+              <Image
+                src={inst.avatar}
+                alt={fullName}
+                width={isMobile ? 80 : 96}
+                height={isMobile ? 80 : 96}
+                className="w-full h-full object-cover"
+                unoptimized={inst.avatar.startsWith("http")}
+              />
+            ) : (
+              <span
+                className={`font-semibold text-[var(--color-text-secondary)] ${isMobile ? "text-xl" : "text-2xl"}`}
+              >
+                {initials || "?"}
+              </span>
+            )}
+          </Link>
+
+          {/* Body */}
+          <div className="flex-1 min-w-0 w-full">
+            <Link
+              href={profileHref}
+              className={`block font-semibold text-[var(--color-text-primary)] hover:text-[var(--color-primary)] transition-colors ${isMobile ? "text-base" : "text-lg"}`}
+            >
+              {fullName}
+            </Link>
+            {tagline && (
+              <p
+                className={`mt-0.5 text-[var(--color-primary)] font-medium ${isMobile ? "text-sm" : "text-sm"}`}
+              >
+                {tagline}
+              </p>
+            )}
+
+            {/* Rating + secondary meta row */}
+            {inst.totalRatings > 0 && (
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star
+                      key={s}
+                      className={`w-4 h-4 ${
+                        s <= Math.round(inst.avgRating)
+                          ? "text-[var(--color-star)] fill-[var(--color-star)]"
+                          : "text-[var(--color-star-border)]"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-sm font-semibold text-[var(--color-text-primary)]">
+                  {inst.avgRating.toFixed(1)}
+                </span>
+                <span className="text-xs text-[var(--color-text-secondary)]">
+                  ({inst.totalRatings} {isRTL ? "تقييم" : inst.totalRatings === 1 ? "review" : "reviews"})
+                </span>
+              </div>
+            )}
+
+            {inst.bio && (
+              <p
+                className={`text-sm text-[var(--color-text-secondary)] leading-relaxed mt-3 whitespace-pre-line line-clamp-3`}
+              >
+                {inst.bio}
+              </p>
+            )}
+
+            {/* Footer: View profile + socials */}
+            <div className={`mt-4 flex items-center gap-3 flex-wrap ${isMobile ? "" : "justify-between"}`}>
+              <Link
+                href={profileHref}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] transition-colors"
+              >
+                {isRTL ? "عرض الملف الشخصي" : "View profile"}
+                {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </Link>
+              {(twitterHref || linkedinHref) && (
+                <div className="flex items-center gap-2">
+                  {linkedinHref && (
+                    <a
+                      href={linkedinHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="LinkedIn"
+                      className="w-8 h-8 rounded-full border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                      </svg>
+                    </a>
+                  )}
+                  {twitterHref && (
+                    <a
+                      href={twitterHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Twitter"
+                      className="w-8 h-8 rounded-full border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                      </svg>
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Notices section renderer
   const renderNotices = (isMobile: boolean = false) => {
     const notices = getNotices();
@@ -854,11 +1173,24 @@ const CourseDetailContent = ({
     );
   };
 
-  // Reviews section renderer — always shows, with empty state
+  // Reviews section renderer — toggle between course reviews (default)
+  // and the course-instructor's reviews across all courses they teach.
   const renderReviews = (isMobile: boolean = false) => {
+    const showingInstructor = reviewKind === "instructor";
+    const items = showingInstructor
+      ? instructorReviews?.data ?? []
+      : apiCourse.ratings;
+    const avg = showingInstructor
+      ? instructorReviews?.avgRating ?? 0
+      : apiCourse.avgRating;
+    const total = showingInstructor
+      ? instructorReviews?.totalRatings ?? 0
+      : apiCourse.totalRatings;
+    const isLoading = showingInstructor && instructorReviewsLoading;
+
     return (
       <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
-        <div className={`flex items-center justify-between mb-6 ${isRTL ? "flex-row-reverse" : ""}`}>
+        <div className={`flex items-center justify-between mb-4 gap-3 flex-wrap ${isRTL ? "flex-row-reverse" : ""}`}>
           <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg" : "text-xl"}`}>
             {reviewsHeading || t("reviews")}
           </h2>
@@ -867,50 +1199,103 @@ const CourseDetailContent = ({
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`w-4 h-4 ${i < Math.floor(apiCourse.avgRating) ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)] fill-[var(--color-star-border)]"}`}
+                  className={`w-4 h-4 ${i < Math.floor(avg) ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)] fill-[var(--color-star-border)]"}`}
                 />
               ))}
             </div>
-            <span className="text-sm text-[var(--color-text-secondary)]">({apiCourse.totalRatings} {t("reviews")})</span>
+            <span className="text-sm text-[var(--color-text-secondary)]">({total} {t("reviews")})</span>
           </div>
         </div>
-        {apiCourse.ratings.length > 0 ? (
+        {/* Course | Instructor toggle */}
+        <div className={`inline-flex p-1 bg-[var(--color-border-subtle)] rounded-lg mb-5`}>
+          {(
+            [
+              { key: "course" as const, label: isRTL ? "الدورة" : "Course" },
+              { key: "instructor" as const, label: isRTL ? "المدرب" : "Instructor" },
+            ]
+          ).map((seg) => (
+            <button
+              key={seg.key}
+              type="button"
+              onClick={() => setReviewKind(seg.key)}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                reviewKind === seg.key
+                  ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
+                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+              }`}
+            >
+              {seg.label}
+            </button>
+          ))}
+        </div>
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />
+          </div>
+        ) : items.length > 0 ? (
           <>
             <div className="flex flex-col divide-y divide-[var(--color-border)]">
-              {apiCourse.ratings.map((review, index) => (
-                <div key={index} className="py-4 first:pt-0 last:pb-0">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="font-medium text-[14px] text-[var(--color-text-secondary)]">{review.studentName}</p>
-                    <p className="text-[12px] text-[var(--color-text-secondary)]">
-                      {new Date(review.createdAt).toLocaleDateString(
-                        locale === "ar" ? "ar-SA" : "en-US",
-                        { day: "numeric", month: "short", year: "numeric" }
-                      )}
-                    </p>
+              {items.map((review, index) => {
+                // Instructor reviews carry a course-name chip; course
+                // reviews don't (the page IS the course).
+                const r = review as {
+                  rating: number;
+                  reviewText: string | null;
+                  createdAt: string;
+                  studentName: string;
+                  id?: string;
+                  courseTitle?: string;
+                  courseTitleAr?: string | null;
+                };
+                const courseChip =
+                  showingInstructor && r.courseTitle
+                    ? isRTL && r.courseTitleAr
+                      ? r.courseTitleAr
+                      : r.courseTitle
+                    : null;
+                return (
+                  <div key={r.id ?? `${index}`} className="py-4 first:pt-0 last:pb-0">
+                    <div className="flex items-center justify-between mb-2 gap-3 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium text-[14px] text-[var(--color-text-secondary)]">{r.studentName}</p>
+                        {courseChip && (
+                          <span className="inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] truncate max-w-[200px]">
+                            {courseChip}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[12px] text-[var(--color-text-secondary)]">
+                        {new Date(r.createdAt).toLocaleDateString(
+                          locale === "ar" ? "ar-SA" : "en-US",
+                          { day: "numeric", month: "short", year: "numeric" }
+                        )}
+                      </p>
+                    </div>
+                    <div className={`flex items-center gap-0.5 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-3 h-3 ${i < r.rating ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)] fill-[var(--color-star-border)]"}`}
+                        />
+                      ))}
+                    </div>
+                    {r.reviewText && (
+                      <p dir="auto" className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed">
+                        {r.reviewText}
+                      </p>
+                    )}
                   </div>
-                  <div className={`flex items-center gap-0.5 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-3 h-3 ${i < review.rating ? "text-[var(--color-star)] fill-[var(--color-star)]" : "text-[var(--color-star-border)] fill-[var(--color-star-border)]"}`}
-                      />
-                    ))}
-                  </div>
-                  {review.reviewText && (
-                    <p dir="auto" className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed">
-                      {review.reviewText}
-                    </p>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
-            {apiCourse.totalRatings > 5 && (
+            {!showingInstructor && total > 5 && (
               <div className="mt-6 flex justify-center">
                 <button
                   onClick={() => setReviewsModalOpen(true)}
                   className="px-6 py-2.5 rounded-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] text-sm font-semibold hover:bg-[var(--color-primary)] hover:text-white transition-colors"
                 >
-                  {isRTL ? `عرض كل المراجعات (${apiCourse.totalRatings})` : `View all reviews (${apiCourse.totalRatings})`}
+                  {isRTL ? `عرض كل المراجعات (${total})` : `View all reviews (${total})`}
                 </button>
               </div>
             )}
@@ -1074,6 +1459,19 @@ const CourseDetailContent = ({
                         <p className={`text-sm text-[var(--color-text-secondary)] ${isRTL ? "text-right" : "text-left"}`}>{getVenue()}</p>
                       </div>
                     )}
+                    {apiAccreditationNumber && (
+                      <div className="flex items-start gap-3">
+                        <Award className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
+                        <div className={isRTL ? "text-right" : "text-left"}>
+                          <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
+                            {locale === "ar" ? "رقم الاعتماد" : "Accreditation Number"}
+                          </p>
+                          <p className="text-sm text-[var(--color-text-secondary)] break-all">
+                            {apiAccreditationNumber}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Target Audience — inline */}
@@ -1145,6 +1543,16 @@ const CourseDetailContent = ({
                         )}
                       </div>
                       <div className="flex items-center gap-2 relative">
+                        <button
+                          onClick={handleFavouriteClick}
+                          aria-label={favourited ? tFav("removeFromFavourites") : tFav("addToFavourites")}
+                          aria-pressed={favourited}
+                          className="p-2.5 rounded-full bg-[var(--color-border-subtle)] hover:bg-[var(--color-border)] transition-colors cursor-pointer"
+                        >
+                          <Heart
+                            className={`w-4 h-4 ${favourited ? "text-red-500 fill-red-500" : "text-[var(--color-text-secondary)]"}`}
+                          />
+                        </button>
                         <button
                           onClick={handleShare}
                           className="p-2.5 rounded-full bg-[var(--color-border-subtle)] hover:bg-[var(--color-border)] transition-colors"
@@ -1230,7 +1638,7 @@ const CourseDetailContent = ({
                         )}
                       </div>
                     ) : (
-                      /* PAID COURSE — Buy Now + Add to Cart */
+                      /* PAID COURSE — Buy Now + Add to Cart + (optional) Redeem */
                       <>
                         <button
                           onClick={() => {
@@ -1257,6 +1665,39 @@ const CourseDetailContent = ({
                           {t("pricingCard.addToCart")}
                           <ShoppingCart className="w-4 h-4" />
                         </button>
+                        {redeemInfo && (
+                          <div className="mb-3">
+                            <button
+                              onClick={handleRedeem}
+                              disabled={
+                                !redeemInfo.affordable ||
+                                redeeming ||
+                                enrollResult?.success
+                              }
+                              className={`w-full h-12 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors ${
+                                redeemInfo.affordable
+                                  ? "border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/5"
+                                  : "border-2 border-[var(--color-border)] text-[var(--color-text-secondary)] cursor-not-allowed"
+                              } disabled:opacity-60`}
+                            >
+                              {redeeming ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : null}
+                              {redeemInfo.affordable
+                                ? t("enrollment.redeemWithPoints", { points: redeemInfo.costPoints })
+                                : t("enrollment.needMorePoints", { points: redeemInfo.costPoints })}
+                            </button>
+                            {enrollResult && (
+                              <p
+                                className={`text-xs mt-1.5 text-center ${
+                                  enrollResult.success ? "text-[#16A34A]" : "text-[#DC2626]"
+                                }`}
+                              >
+                                {enrollResult.message}
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </>
                     )}
 
@@ -1291,15 +1732,17 @@ const CourseDetailContent = ({
         <section className="px-16 pt-2 pb-12">
           <div className="max-w-[1200px] mx-auto">
             {(() => {
-              const defaultOrder = ["overview", "objectives", "contents", "requirements", "reviews"];
+              const defaultOrder = ["overview", "objectives", "instructor", "contents", "requirements", "faqs", "reviews"];
               const order = (apiCourse.sectionsOrder && apiCourse.sectionsOrder.length > 0)
                 ? apiCourse.sectionsOrder
                 : defaultOrder;
               const sectionMap: Record<string, React.ReactNode> = {
                 overview: <div key="overview">{renderOverview(false)}</div>,
                 objectives: <div key="objectives">{renderObjectives(false)}</div>,
+                instructor: <div key="instructor">{renderInstructor(false)}</div>,
                 contents: <div key="contents">{renderModules(false)}</div>,
                 requirements: <div key="requirements">{renderRequirements(false)}</div>,
+                faqs: <div key="faqs">{renderFaqs(false)}</div>,
                 reviews: <div key="reviews">{renderReviews(false)}</div>,
               };
               return order.map((key) => sectionMap[key] || null).filter(Boolean);
@@ -1412,6 +1855,16 @@ const CourseDetailContent = ({
                 )}
               </div>
               <div className="flex items-center gap-2 relative">
+                <button
+                  onClick={handleFavouriteClick}
+                  aria-label={favourited ? tFav("removeFromFavourites") : tFav("addToFavourites")}
+                  aria-pressed={favourited}
+                  className="p-2 rounded-full bg-[var(--color-border-subtle)] hover:bg-[var(--color-border)] cursor-pointer"
+                >
+                  <Heart
+                    className={`w-4 h-4 ${favourited ? "text-red-500 fill-red-500" : "text-[var(--color-text-secondary)]"}`}
+                  />
+                </button>
                 <button
                   onClick={handleShare}
                   className="p-2 rounded-full bg-[var(--color-border-subtle)] hover:bg-[var(--color-border)]"
@@ -1628,6 +2081,19 @@ const CourseDetailContent = ({
                   </div>
                 </div>
               )}
+              {apiAccreditationNumber && (
+                <div className="flex items-center gap-3">
+                  <Award className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                  <div className={isRTL ? "text-right" : "text-left"}>
+                    <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
+                      {locale === "ar" ? "رقم الاعتماد" : "Accreditation Number"}
+                    </p>
+                    <p className="text-sm text-[var(--color-text-secondary)] break-all">
+                      {apiAccreditationNumber}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
             {/* Target Audience — inline in course details (mobile) */}
             {getTargetAudience().length > 0 && (
@@ -1650,15 +2116,17 @@ const CourseDetailContent = ({
           </div>
 
           {(() => {
-            const defaultOrder = ["overview", "objectives", "contents", "requirements", "reviews"];
+            const defaultOrder = ["overview", "objectives", "instructor", "contents", "requirements", "faqs", "reviews"];
             const order = (apiCourse.sectionsOrder && apiCourse.sectionsOrder.length > 0)
               ? apiCourse.sectionsOrder
               : defaultOrder;
             const sectionMap: Record<string, React.ReactNode> = {
               overview: <div key="overview">{renderOverview(true)}</div>,
               objectives: <div key="objectives">{renderObjectives(true)}</div>,
+              instructor: <div key="instructor">{renderInstructor(true)}</div>,
               contents: <div key="contents">{renderModules(true)}</div>,
               requirements: <div key="requirements">{renderRequirements(true)}</div>,
+              faqs: <div key="faqs">{renderFaqs(true)}</div>,
               reviews: <div key="reviews">{renderReviews(true)}</div>,
             };
             return order.map((key) => sectionMap[key] || null).filter(Boolean);

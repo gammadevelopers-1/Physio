@@ -149,21 +149,32 @@ export class StudentService {
           and(
             eq(enrollments.studentId, studentId),
             eq(enrollments.status, 'active'),
-            eq(sessions.status, 'scheduled'),
+            // Date-based + exclude only cancelled (consistent with nextSession query)
             gte(sessions.scheduledAt, new Date()),
+            sql`${sessions.status} <> 'cancelled'`,
             sql`(${sessions.isMakeup} = false OR ${sessions.assignedStudents} IS NULL OR ${sessions.assignedStudents}::jsonb @> ${JSON.stringify([studentId])}::jsonb)`,
           ),
         ),
-      // Average progress across active enrollments
+      // Average progress across active + completed enrollments.
+      // Completed courses count as 100% so they boost the overall progress
+      // (instead of being hidden by an active-only filter). Dropped enrollments
+      // are excluded — they don't represent the student's real progress.
       db
         .select({
-          avgProgress: sql<number>`COALESCE(AVG(${enrollments.progress}), 0)`.mapWith(Number),
+          avgProgress: sql<number>`COALESCE(AVG(
+            CASE WHEN ${enrollments.status} = 'completed' THEN 100
+            ELSE ${enrollments.progress}
+            END
+          ), 0)`.mapWith(Number),
         })
         .from(enrollments)
         .where(
           and(
             eq(enrollments.studentId, studentId),
-            eq(enrollments.status, 'active'),
+            or(
+              eq(enrollments.status, 'active'),
+              eq(enrollments.status, 'completed'),
+            ),
           ),
         ),
       // Attendance stats (across all enrolled courses — only completed/ended sessions, exclude unassigned make-ups)
@@ -185,7 +196,11 @@ export class StudentService {
           and(
             eq(enrollments.studentId, studentId),
             eq(enrollments.status, 'active'),
-            sql`${sessions.status} IN ('completed', 'ended')`,
+            // Past sessions = actually past by date AND not cancelled.
+            // Date-based (not status-based) so future-dated rows mistakenly
+            // marked 'ended'/'completed' don't poison the attendance count.
+            lte(sessions.scheduledAt, new Date()),
+            sql`${sessions.status} <> 'cancelled'`,
             sql`(${sessions.isMakeup} = false OR ${sessions.assignedStudents} IS NULL OR ${sessions.assignedStudents}::jsonb @> ${JSON.stringify([studentId])}::jsonb)`,
           ),
         ),
@@ -250,8 +265,11 @@ export class StudentService {
         and(
           eq(enrollments.studentId, studentId),
           eq(enrollments.status, 'active'),
-          or(eq(sessions.status, 'scheduled'), eq(sessions.status, 'live')),
+          // Future session = actually future by date AND not cancelled.
+          // Trusts the date over the status so a future-dated 'ended'/'missed'
+          // row (left over from rescheduling) still surfaces as upcoming.
           gte(sessions.scheduledAt, new Date()),
+          sql`${sessions.status} <> 'cancelled'`,
           // Exclude make-up lectures not assigned to this student
           sql`(${sessions.isMakeup} = false OR ${sessions.assignedStudents} IS NULL OR ${sessions.assignedStudents}::jsonb @> ${JSON.stringify([studentId])}::jsonb)`,
         ),
@@ -305,6 +323,7 @@ export class StudentService {
     params: {
       status?: string;
       search?: string;
+      delivery?: string;
       page?: number;
       limit?: number;
       sort?: string;
@@ -324,7 +343,12 @@ export class StudentService {
       conditions.push(eq(enrollments.status, params.status));
     }
 
-    // Search by course title
+    // Filter by delivery type (zoom / onsite / blended / self-paced)
+    if (params.delivery && params.delivery !== 'all') {
+      conditions.push(eq(courses.deliveryType, params.delivery));
+    }
+
+    // Search by course title (en + ar)
     if (params.search) {
       const searchTerm = `%${params.search}%`;
       conditions.push(
@@ -348,6 +372,21 @@ export class StudentService {
         thumbnail: courses.thumbnail,
         startDate: courses.startDate,
         endDate: courses.endDate,
+        // Surface the NELC evaluation link + the student's certificate
+        // request status on the courses-list payload so the My Courses
+        // cards can render an action-required pill without the student
+        // having to open each course detail.
+        nelcReviewLink: courses.nelcReviewLink,
+        certificateRequestStatus: sql<string | null>`(
+          SELECT cr.status FROM certificate_requests cr
+          WHERE cr.course_id = "courses"."id" AND cr.student_id = ${studentId}
+          LIMIT 1
+        )`,
+        certificateRequestUrl: sql<string | null>`(
+          SELECT cr.certificate_url FROM certificate_requests cr
+          WHERE cr.course_id = "courses"."id" AND cr.student_id = ${studentId}
+          LIMIT 1
+        )`,
         enrollmentId: enrollments.id,
         enrollmentStatus: enrollments.status,
         progress: enrollments.progress,
@@ -371,6 +410,12 @@ export class StudentService {
           SELECT EXISTS (
             SELECT 1 FROM course_ratings cr
             WHERE cr.course_id = "courses"."id" AND cr.student_id = ${studentId}
+          )
+        )`.mapWith(Boolean),
+        hasReviewedInstructor: sql<boolean>`(
+          SELECT EXISTS (
+            SELECT 1 FROM instructor_ratings ir
+            WHERE ir.course_id = "courses"."id" AND ir.student_id = ${studentId}
           )
         )`.mapWith(Boolean),
       })
@@ -569,10 +614,57 @@ export class StudentService {
         endDate: courses.endDate,
         isCmeAccredited: courses.isCmeAccredited,
         cmeHours: courses.cmeHours,
+        accreditationNumber: courses.accreditationNumber,
+        nelcReviewLink: courses.nelcReviewLink,
+        language: courses.language,
+        faqs: courses.faqs,
         instructorName: sql<string>`(
           SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
           WHERE u.id = ${courses.instructorId}
         )`,
+        // Extended instructor profile — student course-detail page renders
+        // a compact instructor card. Each field nullable; UI hides missing.
+        instructorId: courses.instructorId,
+        instructorFirstName: sql<string | null>`(
+          SELECT u.first_name FROM users u WHERE u.id = ${courses.instructorId}
+        )`,
+        instructorLastName: sql<string | null>`(
+          SELECT u.last_name FROM users u WHERE u.id = ${courses.instructorId}
+        )`,
+        instructorFirstNameAr: sql<string | null>`(
+          SELECT u.first_name_ar FROM users u WHERE u.id = ${courses.instructorId}
+        )`,
+        instructorLastNameAr: sql<string | null>`(
+          SELECT u.last_name_ar FROM users u WHERE u.id = ${courses.instructorId}
+        )`,
+        instructorAvatar: sql<string | null>`(
+          SELECT u.avatar FROM users u WHERE u.id = ${courses.instructorId}
+        )`,
+        instructorBio: sql<string | null>`(
+          SELECT u.bio FROM users u WHERE u.id = ${courses.instructorId}
+        )`,
+        instructorProfession: sql<string | null>`(
+          SELECT u.profession FROM users u WHERE u.id = ${courses.instructorId}
+        )`,
+        instructorSpecialty: sql<string | null>`(
+          SELECT u.specialty FROM users u WHERE u.id = ${courses.instructorId}
+        )`,
+        instructorQualification: sql<string | null>`(
+          SELECT u.qualification FROM users u WHERE u.id = ${courses.instructorId}
+        )`,
+        instructorAvgRating: sql<number>`(
+          SELECT COALESCE(ROUND(AVG(ir.rating)::numeric, 1), 0)
+          FROM instructor_ratings ir
+          WHERE ir.instructor_id = ${courses.instructorId}
+            AND ir.moderation_status = 'approved'
+            AND ir.is_published = true
+        )`.mapWith(Number),
+        instructorTotalRatings: sql<number>`(
+          SELECT COUNT(*) FROM instructor_ratings ir
+          WHERE ir.instructor_id = ${courses.instructorId}
+            AND ir.moderation_status = 'approved'
+            AND ir.is_published = true
+        )`.mapWith(Number),
       })
       .from(courses)
       .where(eq(courses.id, courseId))
@@ -589,7 +681,8 @@ export class StudentService {
       .where(eq(courseModules.courseId, courseId))
       .orderBy(asc(courseModules.orderIndex));
 
-    // Get sessions for this course (scheduled, live, and completed)
+    // Get sessions for this course — return all non-cancelled so frontend
+    // can split them into upcoming / past / inactive based on date + status.
     const upcomingSessions = await db
       .select({
         id: sessions.id,
@@ -606,11 +699,9 @@ export class StudentService {
       .where(
         and(
           eq(sessions.courseId, courseId),
-          or(
-            eq(sessions.status, 'scheduled'),
-            eq(sessions.status, 'live'),
-            eq(sessions.status, 'completed'),
-          ),
+          // Include scheduled/live/completed/ended; the frontend further splits.
+          // Excluding only 'cancelled' so the page can still show ended/completed history.
+          sql`${sessions.status} <> 'cancelled'`,
           // Exclude make-up lectures not assigned to this student
           sql`(${sessions.isMakeup} = false OR ${sessions.assignedStudents} IS NULL OR ${sessions.assignedStudents}::jsonb @> ${JSON.stringify([studentId])}::jsonb)`,
         ),
@@ -903,6 +994,28 @@ export class StudentService {
       )
       .limit(1);
 
+    // Student's certificate request for this course, if any. The
+    // (course_id, student_id) unique constraint guarantees at most one
+    // row, so this is the canonical request for the certificate-status
+    // block on the student course-detail page.
+    const [certificateRequest] = await db
+      .select({
+        id: certificateRequests.id,
+        status: certificateRequests.status,
+        certificateUrl: certificateRequests.certificateUrl,
+        reviewNote: certificateRequests.reviewNote,
+        createdAt: certificateRequests.createdAt,
+        reviewedAt: certificateRequests.reviewedAt,
+      })
+      .from(certificateRequests)
+      .where(
+        and(
+          eq(certificateRequests.courseId, courseId),
+          eq(certificateRequests.studentId, studentId),
+        ),
+      )
+      .limit(1);
+
     return {
       course,
       enrollment: {
@@ -919,6 +1032,7 @@ export class StudentService {
       attendanceRecords,
       assessmentSummary,
       myRating: myRating || null,
+      certificateRequest: certificateRequest || null,
     };
   }
 
@@ -1357,10 +1471,16 @@ export class StudentService {
   // ─── Drop Course ──────────────────────────────────────
 
   async dropCourse(studentId: string, courseId: string) {
-    // 1. Verify enrollment exists and is active
-    const [enrollment] = await db
-      .select({ id: enrollments.id, status: enrollments.status })
+    // 1. Verify enrollment exists and is active. Also pull the course's
+    //    startDate so we can enforce the 3-day pre-start lockout.
+    const [row] = await db
+      .select({
+        enrollmentId: enrollments.id,
+        status: enrollments.status,
+        startDate: courses.startDate,
+      })
       .from(enrollments)
+      .leftJoin(courses, eq(courses.id, enrollments.courseId))
       .where(
         and(
           eq(enrollments.courseId, courseId),
@@ -1369,28 +1489,46 @@ export class StudentService {
       )
       .limit(1);
 
-    if (!enrollment) {
+    if (!row) {
       throw new NotFoundException('You are not enrolled in this course');
     }
 
-    if (enrollment.status === 'dropped') {
+    if (row.status === 'dropped') {
       throw new BadRequestException('You have already dropped this course');
     }
 
-    if (enrollment.status === 'completed') {
+    if (row.status === 'completed') {
       throw new BadRequestException(
         'Cannot drop a completed course',
       );
+    }
+
+    // Hard restriction: students may NOT drop within 3 days of the course
+    // start date, nor after the course has started. Only enforced for
+    // courses that have a startDate (scheduled types — zoom/onsite/blended).
+    // Self-paced courses have no startDate and remain droppable any time.
+    if (row.startDate) {
+      const startMs = new Date(row.startDate).getTime();
+      const threshold = startMs - 3 * 24 * 60 * 60 * 1000;
+      if (Date.now() > threshold) {
+        throw new BadRequestException({
+          code: 'DROP_RESTRICTED_WITHIN_3_DAYS',
+          message:
+            'Course cannot be dropped within 3 days of start date or after it has started',
+        });
+      }
     }
 
     // 2. Update status to dropped
     const [updated] = await db
       .update(enrollments)
       .set({ status: 'dropped' })
-      .where(eq(enrollments.id, enrollment.id))
+      .where(eq(enrollments.id, row.enrollmentId))
       .returning();
 
-    // 3. Audit log
+    // 3. Audit log — captures the drop request for admin/finance tracking.
+    //    Refunds are handled manually by Admin/Finance; we never trigger
+    //    automatic refunds from this service.
     await this.auditService.log({
       eventType: NELC_EVENT_TYPE.ENROLLMENT_DROPPED,
       entityType: 'enrollment',
@@ -1399,7 +1537,7 @@ export class StudentService {
       metadata: {
         courseId,
         studentId,
-        previousStatus: enrollment.status,
+        previousStatus: row.status,
       },
     });
 
@@ -1483,7 +1621,11 @@ export class StudentService {
       throw new NotFoundException('Assessment not found');
     }
 
-    // Verify student is enrolled in the course
+    // Read path: allow both 'active' AND 'completed' enrollments so students
+    // can review their submitted assessments after the course has wrapped.
+    // The write paths (submitAssessment / submitAssignmentFiles / save-progress)
+    // still require status='active', so a completed enrollment can only review,
+    // never take a new attempt.
     const [enrollment] = await db
       .select()
       .from(enrollments)
@@ -1491,7 +1633,10 @@ export class StudentService {
         and(
           eq(enrollments.studentId, studentId),
           eq(enrollments.courseId, assessment.courseId),
-          eq(enrollments.status, 'active'),
+          or(
+            eq(enrollments.status, 'active'),
+            eq(enrollments.status, 'completed'),
+          ),
         ),
       )
       .limit(1);
@@ -1501,6 +1646,8 @@ export class StudentService {
         'You must be enrolled in the course to take this assessment',
       );
     }
+
+    const enrollmentCompleted = enrollment.status === 'completed';
 
     // Check existing submissions to enforce attempt limits
     const existingSubmissions = await db
@@ -1557,11 +1704,17 @@ export class StudentService {
     const effectiveAttemptsAllowed = baseAttemptsAllowed + totalGrants;
     // If the student has an unused retake grant, they can always start
     // another attempt — override maxAttemptsReached.
-    const maxAttemptsReached =
-      unusedGrants > 0 ? false : totalAttempts >= effectiveAttemptsAllowed;
+    // Once the enrollment is 'completed', no further attempts are allowed
+    // even if grants remain — the course is closed.
+    const maxAttemptsReached = enrollmentCompleted
+      ? true
+      : unusedGrants > 0
+        ? false
+        : totalAttempts >= effectiveAttemptsAllowed;
 
-    // Retake info — with the new model, canRetake is simply "an unused grant exists"
-    let canRetake = unusedGrants > 0;
+    // Retake info — with the new model, canRetake is simply "an unused grant exists",
+    // unless the enrollment has completed (read-only review mode).
+    let canRetake = !enrollmentCompleted && unusedGrants > 0;
     const retakeAvailableAt: string | null = null;
 
     // Fetch latest submission for review info
@@ -2499,6 +2652,56 @@ export class StudentService {
     }
   }
 
+  // ─── Recent Grades (dashboard widget) ──────────────────
+
+  /**
+   * Returns the student's most recently graded submissions, joined with assessment
+   * + course. Used by the "Recent Grades" widget on the student dashboard home.
+   * Note: the submissions table has no gradedAt column, so we order by submittedAt
+   * (the closest proxy — graded submissions are always submitted first).
+   */
+  async getRecentGrades(studentId: string, limit = 5) {
+    const rows = await db
+      .select({
+        id: submissions.id,
+        assessmentId: submissions.assessmentId,
+        assessmentTitle: assessments.title,
+        courseId: assessments.courseId,
+        courseTitle: courses.title,
+        courseTitleAr: courses.titleAr,
+        score: submissions.score,
+        totalMarks: submissions.totalMarks,
+        percentage: submissions.percentage,
+        passingMarks: assessments.passingMarks,
+        submittedAt: submissions.submittedAt,
+      })
+      .from(submissions)
+      .innerJoin(assessments, eq(submissions.assessmentId, assessments.id))
+      .innerJoin(courses, eq(assessments.courseId, courses.id))
+      .where(
+        and(
+          eq(submissions.studentId, studentId),
+          eq(submissions.status, 'graded'),
+        ),
+      )
+      .orderBy(desc(submissions.submittedAt))
+      .limit(Math.max(1, Math.min(limit, 20)));
+
+    return rows.map((r) => ({
+      id: r.id,
+      assessmentId: r.assessmentId,
+      assessmentTitle: r.assessmentTitle,
+      courseId: r.courseId,
+      courseTitle: r.courseTitle,
+      courseTitleAr: r.courseTitleAr,
+      score: r.score ?? 0,
+      totalMarks: r.totalMarks ?? 0,
+      percentage: Number(r.percentage ?? 0),
+      passed: (r.score ?? 0) >= (r.passingMarks ?? 0),
+      gradedAt: r.submittedAt,
+    }));
+  }
+
   // ─── Certificates ──────────────────────────────────────
 
   async getCertificates(studentId: string) {
@@ -2557,7 +2760,9 @@ export class StudentService {
       sessionConditions.push(lte(sessions.scheduledAt, new Date(params.to)));
     }
 
-    // Get upcoming sessions from enrolled courses
+    // Get sessions from enrolled courses — include all statuses so the calendar
+    // can render Today / Upcoming / Past groupings. LEFT JOIN attendance so
+    // each row carries the student's own attendance status when present.
     const sessionEvents = await db
       .select({
         id: sessions.id,
@@ -2576,14 +2781,21 @@ export class StudentService {
           SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
           WHERE u.id = ${courses.instructorId}
         )`,
+        attendanceStatus: attendance.status,
       })
       .from(sessions)
       .innerJoin(courses, eq(sessions.courseId, courses.id))
       .innerJoin(enrollments, eq(sessions.courseId, enrollments.courseId))
+      .leftJoin(
+        attendance,
+        and(
+          eq(attendance.sessionId, sessions.id),
+          eq(attendance.studentId, studentId),
+        ),
+      )
       .where(
         and(
           ...conditions,
-          or(eq(sessions.status, 'scheduled'), eq(sessions.status, 'live')),
           ...sessionConditions,
           // Exclude make-up lectures not assigned to this student
           sql`(${sessions.isMakeup} = false OR ${sessions.assignedStudents} IS NULL OR ${sessions.assignedStudents}::jsonb @> ${JSON.stringify([studentId])}::jsonb)`,
@@ -2606,6 +2818,7 @@ export class StudentService {
       roomName: s.roomName,
       venueAddress: s.venueAddress,
       instructorName: s.instructorName,
+      attendanceStatus: s.attendanceStatus, // 'present' | 'absent' | 'late' | 'excused' | null
     }));
 
     // Also fetch assessments with due dates from enrolled courses

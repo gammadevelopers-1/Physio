@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { usePathname } from "next/navigation";
 
 interface WhatsAppChatWidgetProps {
   enabled?: boolean | null;
@@ -60,6 +61,10 @@ const WhatsAppChatWidget = ({
   const copy = COPY[locale] ?? COPY.en;
   const isRTL = locale === "ar";
   const cleanPhone = phoneNumber ? sanitizePhone(phoneNumber) : "";
+
+  // Hide on authenticated dashboard routes — WhatsApp is for the public marketing site only.
+  const pathname = usePathname();
+  const isDashboardRoute = pathname?.includes("/dashboard");
 
   // Load saved position from localStorage on mount
   useEffect(() => {
@@ -154,7 +159,7 @@ const WhatsAppChatWidget = ({
     setOpen((v) => !v);
   }, []);
 
-  if (!enabled || !cleanPhone) return null;
+  if (!enabled || !cleanPhone || isDashboardRoute) return null;
 
   const handleSend = () => {
     const text = message.trim();

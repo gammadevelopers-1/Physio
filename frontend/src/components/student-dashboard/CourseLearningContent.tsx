@@ -44,30 +44,80 @@ function getModuleIcon(type: string, isCompleted?: boolean) {
   }
 }
 
-/** Returns true for file types browsers can render natively in an iframe/embed */
-function isBrowserRenderable(material: ModuleMaterial): boolean {
+type FileKind = "pdf" | "image" | "office" | "other";
+
+function detectFileKind(material: ModuleMaterial): FileKind {
   const mime = material.mimeType || "";
-  const url  = material.fileUrl  || "";
-  const ext  = url.split(".").pop()?.toLowerCase() || "";
-  return (
-    mime === "application/pdf" ||
-    ext  === "pdf" ||
-    mime.startsWith("image/") ||
-    ["jpg","jpeg","png","gif","webp","svg"].includes(ext)
-  );
+  const url = material.fileUrl || "";
+  const ext = url.split("?")[0].split(".").pop()?.toLowerCase() || "";
+  if (mime === "application/pdf" || ext === "pdf") return "pdf";
+  if (mime.startsWith("image/") || ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext)) return "image";
+  if (
+    ["doc", "docx", "xls", "xlsx", "ppt", "pptx"].includes(ext) ||
+    mime.includes("officedocument") ||
+    mime.includes("ms-excel") ||
+    mime.includes("ms-powerpoint") ||
+    mime.includes("msword")
+  ) {
+    return "office";
+  }
+  return "other";
 }
 
 // ─── Content Viewer Components ──────────────────────────────
 
 function PdfViewer({ material }: { material: ModuleMaterial }) {
+  const t = useTranslations("studentDashboard.learning");
   const [loading, setLoading] = useState(true);
 
   if (!material.fileUrl) return null;
 
-  const renderable = isBrowserRenderable(material);
+  const kind = detectFileKind(material);
 
-  if (!renderable) {
-    // DOCX / PPTX / XLSX — browsers can't display natively
+  // Office docs — embed via Microsoft Office Online viewer (requires a publicly fetchable URL)
+  if (kind === "office") {
+    const officeSrc = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(material.fileUrl)}`;
+    return (
+      <div className="relative">
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-surface-page)] rounded-lg z-10">
+            <Loader2 className="w-6 h-6 text-[var(--color-text-secondary)] animate-spin" />
+          </div>
+        )}
+        <iframe
+          src={officeSrc}
+          title={material.title}
+          className="w-full rounded-lg border border-[var(--color-border)]"
+          style={{ height: "680px" }}
+          onLoad={() => setLoading(false)}
+        />
+        <p className="text-[10px] text-[var(--color-text-secondary)] mt-2 text-center">
+          {t("officePreviewNote")}
+        </p>
+        <div className="mt-2 flex justify-end gap-2">
+          <a
+            href={material.fileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
+          >
+            <ExternalLink className="w-4 h-4" />
+            {t("openInTab")}
+          </a>
+          <a
+            href={material.fileUrl}
+            download
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            {t("download")}
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (kind === "other") {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-14 text-center">
         <div className="w-16 h-16 rounded-2xl bg-[var(--color-border-subtle)] flex items-center justify-center">
@@ -78,16 +128,16 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
             {material.title}
           </p>
           <p className="text-xs text-[var(--color-text-secondary)]">
-            This file type cannot be previewed in the browser.
+            {t("previewUnavailable")}
           </p>
         </div>
         <a
           href={material.fileUrl}
           download
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:bg-[#001f61] transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors"
         >
           <Download className="w-4 h-4" />
-          Download to View
+          {t("downloadToView")}
         </a>
       </div>
     );
@@ -115,15 +165,15 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
           className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
         >
           <ExternalLink className="w-4 h-4" />
-          Open in tab
+          {t("openInTab")}
         </a>
         <a
           href={material.fileUrl}
           download
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--color-primary)] border border-[#002D87] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
         >
           <Download className="w-4 h-4" />
-          Download
+          {t("download")}
         </a>
       </div>
     </div>
@@ -131,6 +181,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
 }
 
 function ImageViewer({ material }: { material: ModuleMaterial }) {
+  const t = useTranslations("studentDashboard.learning");
   if (!material.fileUrl) return null;
 
   return (
@@ -149,7 +200,7 @@ function ImageViewer({ material }: { material: ModuleMaterial }) {
         className="absolute top-3 end-3 inline-flex items-center gap-1 px-3 py-1.5 bg-[var(--color-surface-card)]/90 rounded-lg text-xs text-[var(--color-text-primary)] opacity-0 group-hover:opacity-100 transition-opacity shadow"
       >
         <Maximize2 className="w-3 h-3" />
-        Full size
+        {t("fullSize")}
       </a>
     </div>
   );

@@ -14,6 +14,13 @@ export interface FavouriteCourse {
   thumbnail: string;
   progress: number;
   status: "in_progress" | "completed" | "not_started";
+  /** Optional metadata captured at the time of favouriting — used by the favorites page UI. */
+  price?: number;
+  cmeHours?: number;
+  isCmeAccredited?: boolean;
+  deliveryType?: string;
+  /** ISO timestamp when the course was favourited */
+  addedAt?: string;
 }
 
 interface FavouritesContextType {
@@ -63,7 +70,7 @@ export function FavouritesProvider({ children }: { children: ReactNode }) {
       if (prev.some((fav) => fav.id === course.id)) {
         return prev;
       }
-      return [...prev, course];
+      return [...prev, { ...course, addedAt: course.addedAt ?? new Date().toISOString() }];
     });
   };
 

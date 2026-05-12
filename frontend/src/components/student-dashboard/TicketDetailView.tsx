@@ -16,8 +16,11 @@ import {
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
+import TicketDetailSkeleton from "./TicketDetailSkeleton";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useTicketDetail } from "@/hooks/useStudentTickets";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { formatDateReadable } from "@/lib/hijri";
 import { studentApi } from "@/lib/api";
 import type { TicketReply, TicketStatus } from "@/types/student-dashboard";
 
@@ -189,6 +192,7 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
   const userData = useStudentProfile();
 
   const { data: ticket, loading, refetch } = useTicketDetail(ticketId);
+  const { calendarFormat } = useCalendarPreference();
 
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
@@ -219,13 +223,8 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
     }
   };
 
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "";
-    return new Date(dateStr).toLocaleDateString(
-      isRTL ? "ar-SA" : "en-US",
-      { year: "numeric", month: "long", day: "numeric" },
-    );
-  };
+  const formatDate = (dateStr: string | null) =>
+    formatDateReadable(dateStr, calendarFormat, locale);
 
   return (
     <>
@@ -251,9 +250,7 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
               </button>
 
               {loading || !ticket ? (
-                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6 flex items-center justify-center py-16">
-                  <Loader2 className="w-8 h-8 text-[var(--color-text-secondary)] animate-spin" />
-                </div>
+                <TicketDetailSkeleton />
               ) : (
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                   {/* Ticket header */}

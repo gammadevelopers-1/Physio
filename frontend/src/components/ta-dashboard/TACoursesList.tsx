@@ -18,6 +18,15 @@ const TACoursesList = () => {
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
+  const isRTL = locale === "ar";
+
+  // Reset pagination whenever filters change so the user always lands
+  // on page 1 of the new result set.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, searchQuery, sortBy]);
 
   const fetchCourses = useCallback(async () => {
     try {
@@ -173,7 +182,9 @@ const TACoursesList = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredAndSortedCourses.map((course) => {
+          {filteredAndSortedCourses
+            .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+            .map((course) => {
             const hasThumb = !!course.courseThumbnail;
             const thumbnailSrc = course.courseThumbnail || "/student_dashboard/courses/image 473.svg";
             const cardInitial = (course.courseTitle || "?").trim().charAt(0).toUpperCase();
@@ -257,6 +268,60 @@ const TACoursesList = () => {
           })}
         </div>
       )}
+
+      {/* Pagination */}
+      {!loading && filteredAndSortedCourses.length > ITEMS_PER_PAGE && (() => {
+        const totalPages = Math.ceil(filteredAndSortedCourses.length / ITEMS_PER_PAGE);
+        return (
+          <div className={`flex items-center justify-between mt-6 ${isRTL ? "flex-row-reverse" : ""}`}>
+            <p className="text-sm text-[var(--color-text-secondary)]">
+              {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
+              {Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedCourses.length)} /
+              {" "}
+              {filteredAndSortedCourses.length}
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              </button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum: number;
+                if (totalPages <= 5) pageNum = i + 1;
+                else if (currentPage <= 3) pageNum = i + 1;
+                else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                else pageNum = currentPage - 2 + i;
+                return (
+                  <button
+                    key={pageNum}
+                    type="button"
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-9 h-9 rounded-lg text-sm font-medium cursor-pointer ${
+                      pageNum === currentPage
+                        ? "bg-[var(--color-primary)] text-white"
+                        : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

@@ -28,7 +28,9 @@ interface InstructorProfile {
   name: string;
   email: string;
   rating: number;
-  courseCompletion: number;
+  totalReviews?: number;
+  /** % of instructor-editable profile fields populated. 0-100. */
+  profileCompletion: number;
   avatar?: string;
 }
 
@@ -222,25 +224,28 @@ const InstructorMobileSidebar = ({
               <div className="flex items-center gap-1.5 px-3 py-1 bg-[#FEF3C7] rounded-full">
                 <Star className="w-4 h-4 text-[var(--color-star)] fill-[var(--color-star)]" />
                 <span className="text-sm font-medium text-[#D4A520]">
-                  {instructor.rating} {t("sidebar.rating")}
+                  {instructor.totalReviews && instructor.totalReviews > 0
+                    ? `${instructor.rating.toFixed(1)} (${instructor.totalReviews})`
+                    : `0 ${t("sidebar.rating")}`}
                 </span>
               </div>
             </div>
 
-            {/* Course Completion */}
+            {/* Profile Completion — % of instructor-editable Settings
+                fields populated. Mirrors the desktop sidebar. */}
             <div className="mt-6">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-[var(--color-text-secondary)]">
-                  {t("sidebar.courseCompletion")}
+                  {t("sidebar.profileCompletion")}
                 </span>
                 <span className="text-sm font-medium text-[var(--color-text-primary)]">
-                  {instructor.courseCompletion}%
+                  {instructor.profileCompletion}%
                 </span>
               </div>
               <div className="w-full h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#D4A520] rounded-full"
-                  style={{ width: `${instructor.courseCompletion}%` }}
+                  className="h-full bg-[#16A34A] rounded-full"
+                  style={{ width: `${instructor.profileCompletion}%` }}
                 />
               </div>
             </div>

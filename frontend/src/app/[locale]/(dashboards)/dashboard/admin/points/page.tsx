@@ -1,12 +1,12 @@
 import { setRequestLocale } from "next-intl/server";
-import ApplicationsContent from "@/components/student-dashboard/ApplicationsContent";
+import { PointsSystemContent } from "@/components/admin-dashboard";
 
 export const metadata = {
-  title: "My Applications | Student Dashboard | PhysioGuidance",
-  description: "View your role application status and history",
+  title: "Points System | Admin Dashboard | PhysioGuidance",
+  description: "Configure earn rules, redemption settings, and audit user points",
 };
 
-export default async function StudentApplicationsPage({
+export default async function AdminPointsPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
@@ -16,7 +16,7 @@ export default async function StudentApplicationsPage({
 
   return (
     <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
-      <ApplicationsContent />
+      <PointsSystemContent />
     </main>
   );
 }

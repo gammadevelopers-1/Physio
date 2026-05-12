@@ -1,4 +1,5 @@
 //page.tsx
+import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
@@ -8,10 +9,37 @@ import ExpertInstructors from "@/components/ExpertInstructors";
 import Testimonials from "@/components/Testimonials";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
-import { getHomePageData } from "@/lib/strapi";
+import { getHomePage, getHomePageData, getSiteSettings } from "@/lib/strapi";
+import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { getBlocksAtPosition } from "@/lib/strapi/block-utils";
 import type { SideLoadedData } from "@/lib/strapi/types";
+import { buildMetadata } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const [home, settings] = await Promise.all([
+    getHomePage(locale).catch(() => null),
+    getSiteSettings(locale).catch(() => null),
+  ]);
+  return buildMetadata({
+    seo: home?.seo,
+    fallbacks: {
+      title: home?.heroTitle,
+      description: home?.heroDescription,
+      image: home?.heroPartnerLogos?.[0]?.url,
+    },
+    locale,
+    path: "",
+    siteOgImageUrl: settings?.defaultOgImage?.url
+      ? getStrapiMediaUrl(settings.defaultOgImage.url)
+      : null,
+  });
+}
 
 export default async function Home({
   params,

@@ -24,10 +24,12 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
     preferencesApi
       .get()
       .then((prefs) => {
+        // Legacy "both" rows are coerced to "gregorian" — the 3-way toggle
+        // was retired in favour of a binary Gregorian | Hijri choice.
         const fmt = (prefs as Record<string, unknown>).calendarFormat;
-        if (fmt === "hijri" || fmt === "gregorian") {
-          setCalendarFormatState(fmt);
-        }
+        if (fmt === "hijri") setCalendarFormatState("hijri");
+        else if (fmt === "gregorian" || fmt === "both")
+          setCalendarFormatState("gregorian");
       })
       .catch(() => {})
       .finally(() => setLoading(false));

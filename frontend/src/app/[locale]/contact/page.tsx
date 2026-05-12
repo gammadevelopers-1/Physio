@@ -1,11 +1,33 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import ContactForm from "@/components/ContactForm";
 import Footer from "@/components/Footer";
 import { setRequestLocale } from "next-intl/server";
-import { getContactPageData } from "@/lib/strapi";
+import { getContactPage, getContactPageData, getSiteSettings, getStrapiMediaUrl } from "@/lib/strapi";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { getBlocksAtPosition } from "@/lib/strapi/block-utils";
 import type { SideLoadedData } from "@/lib/strapi/types";
+import { buildPageMetadata } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const [page, settings] = await Promise.all([
+    getContactPage(locale).catch(() => null),
+    getSiteSettings(locale).catch(() => null),
+  ]);
+  return buildPageMetadata({
+    locale,
+    path: "/contact",
+    page,
+    siteOgImageUrl: settings?.defaultOgImage?.url
+      ? getStrapiMediaUrl(settings.defaultOgImage.url)
+      : null,
+  });
+}
 
 export default async function ContactPage({
   params,

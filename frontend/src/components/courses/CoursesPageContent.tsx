@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import Link from "next/link";
 import {
   CourseCard,
   MobileCourseCard,
@@ -11,7 +12,7 @@ import {
 import type { CourseFiltersLabels } from "@/components/courses/CourseFilters";
 import { PublicCourse } from "@/types/instructor-dashboard";
 import { useLocale } from "next-intl";
-import { Loader2 } from "lucide-react";
+import { Archive, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 
 const DELIVERY_TYPES = ["zoom", "onsite", "blended", "self-paced"];
 
@@ -64,6 +65,9 @@ const CoursesPageContent = ({
       if (availability) params.set("availability", availability);
       if (language) params.set("language", language);
       if (sortBy) params.set("sort", sortBy);
+      // Explicit — main listing only shows currently-enrollable courses.
+      // Archived bucket lives on /archived (set scope=archived there).
+      params.set("scope", "open");
       params.set("limit", "100");
       const qs = params.toString();
       const res = await fetch(`/api/public-courses${qs ? `?${qs}` : ""}`);
@@ -176,23 +180,35 @@ const CoursesPageContent = ({
       <div className="hidden lg:block" dir={isRTL ? "rtl" : "ltr"}>
         <section className="px-16 py-12">
           <div className="max-w-[1200px] mx-auto">
-            {hasHeader && (
-              <div className={`mb-8 ${isRTL ? "text-right" : "text-left"}`}>
-                {heroTitle && (
-                  <h1
-                    className="font-semibold text-[var(--color-text-primary)] mb-2"
-                    style={{ fontSize: "48px" }}
-                  >
-                    {heroTitle}
-                  </h1>
-                )}
-                {heroSubtitle && (
-                  <p className="text-[var(--color-text-secondary)]" style={{ fontSize: "20px" }}>
-                    {heroSubtitle}
-                  </p>
-                )}
-              </div>
-            )}
+            <div className="flex items-start justify-between gap-4 mb-8">
+              {hasHeader ? (
+                <div className={`${isRTL ? "text-right" : "text-left"}`}>
+                  {heroTitle && (
+                    <h1
+                      className="font-semibold text-[var(--color-text-primary)] mb-2"
+                      style={{ fontSize: "48px" }}
+                    >
+                      {heroTitle}
+                    </h1>
+                  )}
+                  {heroSubtitle && (
+                    <p className="text-[var(--color-text-secondary)]" style={{ fontSize: "20px" }}>
+                      {heroSubtitle}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div />
+              )}
+              <Link
+                href={`/${locale}/archived`}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] transition-colors flex-shrink-0 mt-2"
+              >
+                <Archive className="w-4 h-4" />
+                {isRTL ? "عرض الدورات المؤرشفة" : "View archived courses"}
+                {isRTL ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+              </Link>
+            </div>
 
             <div className="flex gap-8">
               <CourseFilters {...filterProps} />
@@ -252,7 +268,7 @@ const CoursesPageContent = ({
       >
         <section className="px-4 py-6 max-w-full">
           {hasHeader && (
-            <div className={`mb-6 ${isRTL ? "text-right" : "text-left"}`}>
+            <div className={`mb-4 ${isRTL ? "text-right" : "text-left"}`}>
               {heroTitle && (
                 <h1
                   className="font-semibold text-[var(--color-text-primary)] mb-1"
@@ -266,6 +282,14 @@ const CoursesPageContent = ({
               )}
             </div>
           )}
+          <Link
+            href={`/${locale}/archived`}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--color-primary)] mb-4"
+          >
+            <Archive className="w-3.5 h-3.5" />
+            {isRTL ? "عرض الدورات المؤرشفة" : "View archived courses"}
+            {isRTL ? <ArrowLeft className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
+          </Link>
 
           <CourseFilters {...filterProps} variant="mobile" />
 

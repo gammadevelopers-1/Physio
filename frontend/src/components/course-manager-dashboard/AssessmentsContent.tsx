@@ -552,7 +552,7 @@ const AssessmentsContent = () => {
         type="button"
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-          checked ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"
+          checked ? "bg-[#22C55E]" : "bg-[#D1D5DB]"
         }`}
       >
         <span

@@ -41,6 +41,7 @@ type Review = {
 
 type FilterTab = "all" | "pending" | "approved" | "rejected";
 type SortOption = "newest" | "oldest" | "highest" | "lowest";
+type ReviewType = "course" | "instructor";
 
 const PAGE_SIZE = 20;
 
@@ -55,6 +56,10 @@ export default function ManagerAllReviewsContent() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [counts, setCounts] = useState({ pending: 0, approved: 0, rejected: 0 });
+  // Pending count for the INACTIVE review type so the segmented control
+  // can show a badge on the other tab. Refreshed alongside the active fetch.
+  const [oppositePending, setOppositePending] = useState(0);
+  const [reviewType, setReviewType] = useState<ReviewType>("course");
 
   const [tab, setTab] = useState<FilterTab>("pending");
   const [publishedFilter, setPublishedFilter] = useState<"all" | "published" | "unpublished">("all");
@@ -91,7 +96,7 @@ export default function ManagerAllReviewsContent() {
     async (nextPage: number) => {
       setLoading(true);
       try {
-        const res = await courseManagerApi.getManagerReviews({
+        const params = {
           page: nextPage,
           limit: PAGE_SIZE,
           moderationStatus: tab === "all" ? undefined : tab,
@@ -100,12 +105,34 @@ export default function ManagerAllReviewsContent() {
           courseId: courseFilter || undefined,
           search: search || undefined,
           sort,
-        });
+        };
+        const activeFetch =
+          reviewType === "course"
+            ? courseManagerApi.getManagerReviews(params)
+            : courseManagerApi.getManagerInstructorReviews(params);
+        // Lightweight ping at the OTHER endpoint just to grab its pending
+        // count for the segmented-control badge. limit=1, no search/filter
+        // beyond moderationStatus=pending so it stays cheap.
+        const oppositeFetch =
+          reviewType === "course"
+            ? courseManagerApi.getManagerInstructorReviews({
+                page: 1,
+                limit: 1,
+                moderationStatus: "pending",
+              })
+            : courseManagerApi.getManagerReviews({
+                page: 1,
+                limit: 1,
+                moderationStatus: "pending",
+              });
+
+        const [res, opp] = await Promise.all([activeFetch, oppositeFetch]);
         setReviews(res.data);
         setPage(res.page);
         setTotalPages(res.totalPages);
         setTotal(res.total);
         setCounts(res.counts);
+        setOppositePending(opp.counts.pending);
       } catch {
         toast.error(isRTL ? "فشل تحميل المراجعات" : "Failed to load reviews");
         setReviews([]);
@@ -113,7 +140,7 @@ export default function ManagerAllReviewsContent() {
         setLoading(false);
       }
     },
-    [tab, publishedFilter, courseFilter, sort, search, isRTL],
+    [reviewType, tab, publishedFilter, courseFilter, sort, search, isRTL],
   );
 
   useEffect(() => {
@@ -122,10 +149,26 @@ export default function ManagerAllReviewsContent() {
 
   const refresh = () => fetchReviews(page);
 
+  // Choose the right backend endpoints based on the active review type.
+  const api =
+    reviewType === "course"
+      ? {
+          approve: courseManagerApi.approveReview,
+          reject: courseManagerApi.rejectReview,
+          publish: courseManagerApi.setReviewPublished,
+          remove: courseManagerApi.deleteReview,
+        }
+      : {
+          approve: courseManagerApi.approveInstructorReview,
+          reject: courseManagerApi.rejectInstructorReview,
+          publish: courseManagerApi.setInstructorReviewPublished,
+          remove: courseManagerApi.deleteInstructorReview,
+        };
+
   const handleApprove = async (r: Review) => {
     setActingId(r.id);
     try {
-      await courseManagerApi.approveReview(r.courseId, r.id);
+      await api.approve(r.courseId, r.id);
       toast.success(isRTL ? "تمت الموافقة على المراجعة ونشرها" : "Review approved and published");
       refresh();
     } catch {
@@ -138,7 +181,7 @@ export default function ManagerAllReviewsContent() {
   const handleReject = async (r: Review) => {
     setActingId(r.id);
     try {
-      await courseManagerApi.rejectReview(r.courseId, r.id);
+      await api.reject(r.courseId, r.id);
       toast.success(isRTL ? "تم رفض المراجعة" : "Review rejected");
       refresh();
     } catch {
@@ -151,7 +194,7 @@ export default function ManagerAllReviewsContent() {
   const handleTogglePublish = async (r: Review) => {
     setActingId(r.id);
     try {
-      await courseManagerApi.setReviewPublished(r.courseId, r.id, !r.isPublished);
+      await api.publish(r.courseId, r.id, !r.isPublished);
       toast.success(
         isRTL
           ? r.isPublished
@@ -173,7 +216,7 @@ export default function ManagerAllReviewsContent() {
     if (!deleteConfirm) return;
     setActingId(deleteConfirm.id);
     try {
-      await courseManagerApi.deleteReview(deleteConfirm.courseId, deleteConfirm.id);
+      await api.remove(deleteConfirm.courseId, deleteConfirm.id);
       toast.success(isRTL ? "تم حذف المراجعة" : "Review deleted");
       setDeleteConfirm(null);
       refresh();
@@ -277,6 +320,55 @@ export default function ManagerAllReviewsContent() {
                     ? "راجع ووافق على المراجعات قبل نشرها على صفحات الدورة العامة"
                     : "Review and approve feedback before it appears on public course pages"}
                 </p>
+              </div>
+
+              {/* Review type segmented control — Course | Instructor */}
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-1.5 mb-3 inline-flex">
+                {(
+                  [
+                    {
+                      key: "course" as const,
+                      label: isRTL ? "مراجعات الدورة" : "Course Reviews",
+                    },
+                    {
+                      key: "instructor" as const,
+                      label: isRTL ? "مراجعات المدرب" : "Instructor Reviews",
+                    },
+                  ]
+                ).map((seg) => {
+                  const isActive = reviewType === seg.key;
+                  // Pending count: own counts when active, oppositePending otherwise.
+                  const pendingHere = isActive ? counts.pending : oppositePending;
+                  return (
+                    <button
+                      key={seg.key}
+                      onClick={() => {
+                        if (reviewType !== seg.key) {
+                          setReviewType(seg.key);
+                          setPage(1);
+                        }
+                      }}
+                      className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                        isActive
+                          ? "bg-[var(--color-primary)] text-white"
+                          : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
+                      }`}
+                    >
+                      {seg.label}
+                      {pendingHere > 0 && (
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                            isActive
+                              ? "bg-white/20"
+                              : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {pendingHere}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Tabs */}

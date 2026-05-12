@@ -10,6 +10,8 @@ import { db } from '../../database';
 import {
   certificateRequests,
   courses,
+  courseRatings,
+  instructorRatings,
   enrollments,
   sessions,
   attendance,
@@ -53,6 +55,58 @@ export class CertificatesService {
       conditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
     } else {
       conditions.push(eq(courses.instructorId, user.id));
+    }
+  }
+
+  /**
+   * Throw 400 if the student hasn't submitted the reviews required to request
+   * a certificate. Required: course review always; instructor review only
+   * when the course has an assigned instructor. Submission status only —
+   * a rejected review still counts so a manager can't permanently block.
+   */
+  private async assertReviewsSubmitted(
+    courseId: string,
+    studentId: string,
+  ): Promise<void> {
+    const [course] = await db
+      .select({ instructorId: courses.instructorId })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    const [courseRow] = await db
+      .select({ id: courseRatings.id })
+      .from(courseRatings)
+      .where(
+        and(
+          eq(courseRatings.courseId, courseId),
+          eq(courseRatings.studentId, studentId),
+        ),
+      )
+      .limit(1);
+
+    if (!courseRow) {
+      throw new BadRequestException(
+        'Please submit a course review before requesting your certificate.',
+      );
+    }
+
+    if (course?.instructorId) {
+      const [instrRow] = await db
+        .select({ id: instructorRatings.id })
+        .from(instructorRatings)
+        .where(
+          and(
+            eq(instructorRatings.courseId, courseId),
+            eq(instructorRatings.studentId, studentId),
+          ),
+        )
+        .limit(1);
+      if (!instrRow) {
+        throw new BadRequestException(
+          'Please submit an instructor review before requesting your certificate.',
+        );
+      }
     }
   }
 
@@ -264,6 +318,7 @@ export class CertificatesService {
         attendancePercent: certificateRequests.attendancePercent,
         courseName: courses.title,
         courseNameAr: courses.titleAr,
+        accreditationNumber: courses.accreditationNumber,
         totalHours: courses.cmeHours,
         studentFirstName: users.firstName,
         studentLastName: users.lastName,
@@ -287,6 +342,7 @@ export class CertificatesService {
       studentName: `${cert.studentFirstName || ''} ${cert.studentLastName || ''}`.trim(),
       courseName: cert.courseName,
       courseNameAr: cert.courseNameAr,
+      accreditationNumber: cert.accreditationNumber,
       totalHours: cert.totalHours,
       issuedDate: cert.reviewedAt || cert.createdAt,
       certificateId: `PG-${cert.id.slice(0, 8).toUpperCase()}`,
@@ -356,6 +412,13 @@ export class CertificatesService {
         `A certificate request already exists with status: ${existing.status}`,
       );
     }
+
+    // Dual-review gate — student must have submitted both course review and
+    // instructor review (when course has an instructor). Submission status
+    // only; rejected reviews still count, otherwise an unresponsive manager
+    // could block a student forever. The points reward fires later only when
+    // both are *approved*, but the cert request opens on submission.
+    await this.assertReviewsSubmitted(courseId, studentId);
 
     // Compute eligibility
     const eligibility = await this.computeEligibility(courseId, studentId);
@@ -814,6 +877,7 @@ export class CertificatesService {
         titleAr: courses.titleAr,
         cmeHours: courses.cmeHours,
         isCmeAccredited: courses.isCmeAccredited,
+        accreditationNumber: courses.accreditationNumber,
       })
       .from(courses)
       .where(eq(courses.id, courseId))
@@ -964,6 +1028,14 @@ export class CertificatesService {
         y += 16;
         const regNumber = student?.scfhsNumber || certificateId;
         doc.font('Helvetica').fontSize(10).fillColor(gray).text(`with accreditation number ${regNumber}   Date: ${issuedDate.toLocaleDateString('en-GB')}`, 0, y, { align: 'center' });
+        // Optional course-level accreditation number — only rendered when set.
+        // Distinct from the SCFHS practitioner number above; this is the
+        // accrediting body's registration ID for this specific course.
+        if (course?.accreditationNumber) {
+          y += 16;
+          doc.font('Helvetica-Bold').fontSize(10).fillColor(navy)
+            .text(`Course Accreditation: ${course.accreditationNumber}`, 0, y, { align: 'center' });
+        }
         if (cmeHours > 0) {
           y += 16;
           doc.font('Helvetica-Bold').fontSize(11).fillColor(navy).text(`${cmeHours} CME/PD Credit Hours`, 0, y, { align: 'center' });

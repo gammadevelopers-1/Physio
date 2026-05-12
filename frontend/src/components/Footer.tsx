@@ -40,14 +40,31 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
   // Payment methods come from a Strapi repeatable component
   const paymentMethods = (siteSettings?.paymentMethods || []).filter((p) => p.icon);
 
+  // Footer business + NELC info — all sourced from Strapi siteSettings.
+  // Each line renders only when both label and value are present.
+  const crLabel = siteSettings?.commercialRegistrationLabel || null;
+  const crNumber = siteSettings?.commercialRegistrationNumber || null;
+  const hasCR = !!(crLabel && crNumber);
+  const vatLabel = siteSettings?.vatLabel || null;
+  const vatNumber = siteSettings?.vatNumber || null;
+  const hasVAT = !!(vatLabel && vatNumber);
+  const hasBusinessInfo = hasCR || hasVAT;
+
+  const nelcText = siteSettings?.nelcLicenseText || null;
+  const nelcLicenseLabel = siteSettings?.nelcLicenseLabel || null;
+  const nelcLicenseNumber = siteSettings?.nelcLicenseNumber || null;
+  const nelcLogoUrl = siteSettings?.nelcLogo?.url ? getStrapiMediaUrl(siteSettings.nelcLogo.url) : null;
+  const hasNelcLicense = !!(nelcLicenseLabel && nelcLicenseNumber);
+  const hasNelcInfo = !!nelcText || hasNelcLicense;
+
   // Presence flags
   const hasDescription = !!siteSettings?.footerDescription;
   const hasPlatform = !!(siteSettings?.footerPlatformTitle || platformLinks.length > 0);
   const hasOrganization = !!(siteSettings?.footerOrganizationTitle || organizationLinks.length > 0);
   const hasSupport = !!(siteSettings?.footerSupportTitle || supportLinks.length > 0);
   const hasCopyright = !!siteSettings?.copyrightText;
-  const hasBottomRow = hasCopyright || paymentMethods.length > 0;
-  const hasMainRow = !!logoUrl || !!siteName || hasDescription || socialLinks.length > 0 || hasPlatform || hasOrganization || hasSupport;
+  const hasBottomRow = hasCopyright;
+  const hasMainRow = !!logoUrl || !!siteName || hasDescription || socialLinks.length > 0 || hasPlatform || hasOrganization || hasSupport || paymentMethods.length > 0 || hasBusinessInfo || hasNelcInfo;
 
   // Entire footer hides if nothing is configured
   if (!hasMainRow && !hasBottomRow) return null;
@@ -61,9 +78,9 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
         {/* Main Footer Content */}
         {hasMainRow && (
           <div className="flex items-start justify-between w-full gap-8 flex-wrap">
-            {/* Logo + Description + Socials column */}
-            {(logoUrl || siteName || hasDescription || socialLinks.length > 0) && (
-              <div className={`flex flex-col gap-8 w-[250px] ${isRTL ? "items-start text-right" : "items-start"}`}>
+            {/* Logo + Description + Socials + Payments + Business/NELC info column */}
+            {(logoUrl || siteName || hasDescription || socialLinks.length > 0 || paymentMethods.length > 0 || hasBusinessInfo || hasNelcInfo) && (
+              <div className={`flex flex-col gap-8 w-[280px] ${isRTL ? "items-start text-right" : "items-start"}`}>
                 {logoUrl ? (
                   <div className="relative w-20 h-20">
                     <Image
@@ -104,6 +121,85 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
                         </div>
                       </Link>
                     ))}
+                  </div>
+                )}
+
+                {/* Payment Methods — Strapi component, no hardcoded icons */}
+                {paymentMethods.length > 0 && (
+                  <div className="flex gap-3 items-center flex-wrap" dir={isRTL ? "rtl" : "ltr"}>
+                    {paymentMethods.map((method) => {
+                      const src = method.icon ? getStrapiMediaUrl(method.icon.url) : null;
+                      if (!src) return null;
+                      return (
+                        <div
+                          key={method.id}
+                          className="relative w-[42px] h-[28px] bg-white border border-[var(--color-border)] rounded overflow-hidden"
+                        >
+                          <Image
+                            src={src}
+                            alt={method.name}
+                            fill
+                            className="object-contain p-[3px]"
+                            unoptimized={src.startsWith('http')}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Business Information (Commercial Registration + VAT) */}
+                {hasBusinessInfo && (
+                  <div
+                    className="flex flex-col gap-1.5 text-[var(--color-text-secondary)]"
+                    dir={isRTL ? "rtl" : "ltr"}
+                    style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+                  >
+                    {hasCR && (
+                      <span>
+                        <span className="font-medium text-[var(--color-footer-text)]">{crLabel}:</span>{" "}
+                        <span dir="ltr">{crNumber}</span>
+                      </span>
+                    )}
+                    {hasVAT && (
+                      <span>
+                        <span className="font-medium text-[var(--color-footer-text)]">{vatLabel}:</span>{" "}
+                        <span dir="ltr">{vatNumber}</span>
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* NELC License Information */}
+                {hasNelcInfo && (
+                  <div
+                    className="flex items-start gap-3"
+                    dir={isRTL ? "rtl" : "ltr"}
+                    style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+                  >
+                    {nelcLogoUrl && (
+                      <Image
+                        src={nelcLogoUrl}
+                        alt={nelcText || "NELC"}
+                        width={56}
+                        height={56}
+                        className="flex-shrink-0 object-contain h-12 w-auto"
+                        unoptimized={nelcLogoUrl.startsWith("http")}
+                      />
+                    )}
+                    <div className="flex flex-col gap-1.5 text-[var(--color-text-secondary)] min-w-0">
+                      {nelcText && (
+                        <span className="font-medium text-[var(--color-footer-text)]">
+                          {nelcText}
+                        </span>
+                      )}
+                      {hasNelcLicense && (
+                        <span>
+                          <span className="font-medium text-[var(--color-footer-text)]">{nelcLicenseLabel}:</span>{" "}
+                          <span dir="ltr">{nelcLicenseNumber}</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -204,29 +300,6 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
               </div>
             )}
 
-            {/* Payment Methods — Strapi component, no hardcoded icons */}
-            {paymentMethods.length > 0 && (
-              <div className="flex gap-4 items-center" dir={isRTL ? "rtl" : "ltr"}>
-                {paymentMethods.map((method) => {
-                  const src = method.icon ? getStrapiMediaUrl(method.icon.url) : null;
-                  if (!src) return null;
-                  return (
-                    <div
-                      key={method.id}
-                      className="relative w-[35px] h-[24px] bg-white border border-[var(--color-border)] rounded overflow-hidden"
-                    >
-                      <Image
-                        src={src}
-                        alt={method.name}
-                        fill
-                        className="object-contain p-[5px]"
-                        unoptimized={src.startsWith('http')}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            )}
           </div>
         )}
       </div>

@@ -27,6 +27,8 @@ import OfflineBanner from "./OfflineBanner";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentTickets } from "@/hooks/useStudentTickets";
 import { useStudentCourses } from "@/hooks/useStudentCourses";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { formatDateReadable, type CalendarFormat } from "@/lib/hijri";
 import { studentApi } from "@/lib/api";
 import type {
   SupportTicket,
@@ -146,11 +148,13 @@ function TicketRow({
   ticket,
   t,
   locale,
+  calendarFormat,
   onClick,
 }: {
   ticket: SupportTicket;
   t: ReturnType<typeof useTranslations>;
   locale: string;
+  calendarFormat: CalendarFormat;
   onClick: () => void;
 }) {
   const isRTL = locale === "ar";
@@ -183,10 +187,7 @@ function TicketRow({
         )}
         <div className="flex items-center gap-2 mt-1">
           <p className="text-[10px] text-[var(--color-text-secondary)]">
-            {new Date(ticket.createdAt).toLocaleDateString(
-              isRTL ? "ar-SA" : "en-US",
-              { year: "numeric", month: "short", day: "numeric" },
-            )}
+            {formatDateReadable(ticket.createdAt, calendarFormat, locale)}
           </p>
           <SlaBadge ticket={ticket} t={t} />
         </div>
@@ -598,6 +599,7 @@ const SupportContent = () => {
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
   const userData = useStudentProfile();
+  const { calendarFormat } = useCalendarPreference();
 
   const [mainTab, setMainTab] = useState<MainTab>("tickets");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -759,6 +761,7 @@ const SupportContent = () => {
                             ticket={ticket}
                             t={t}
                             locale={locale}
+                            calendarFormat={calendarFormat}
                             onClick={() => setSelectedTicketId(ticket.id)}
                           />
                         ))}

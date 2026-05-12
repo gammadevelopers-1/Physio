@@ -1,14 +1,36 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { setRequestLocale } from "next-intl/server";
-import { getAboutPageData, getStrapiMediaUrl } from "@/lib/strapi";
+import { getAboutPage, getAboutPageData, getSiteSettings, getStrapiMediaUrl } from "@/lib/strapi";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { getBlocksAtPosition } from "@/lib/strapi/block-utils";
 import { resolveHref } from "@/lib/href-utils";
 import type { SideLoadedData } from "@/lib/strapi/types";
+import { buildPageMetadata } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const [page, settings] = await Promise.all([
+    getAboutPage(locale).catch(() => null),
+    getSiteSettings(locale).catch(() => null),
+  ]);
+  return buildPageMetadata({
+    locale,
+    path: "/about",
+    page,
+    siteOgImageUrl: settings?.defaultOgImage?.url
+      ? getStrapiMediaUrl(settings.defaultOgImage.url)
+      : null,
+  });
+}
 
 export default async function AboutPage({
   params,

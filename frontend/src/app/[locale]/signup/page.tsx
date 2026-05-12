@@ -4,11 +4,13 @@ import { useState, Suspense, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import AuthNavbar from "@/components/AuthNavbar";
+import Navbar from "@/components/Navbar";
+import { useNavbarChrome } from "@/hooks/useNavbarChrome";
 import Footer from "@/components/Footer";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts";
 import { ApiError } from "@/lib/api";
+import { isValidSaudiNationalId } from "@/lib/saudi-id";
 import { toast } from "sonner";
 import { Loader2, CheckCircle, Eye, EyeOff } from "lucide-react";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -20,6 +22,7 @@ function SignUpForm() {
   const t = useTranslations("signupPage");
   const tToasts = useTranslations("toasts");
   const locale = useLocale();
+  const chrome = useNavbarChrome();
   const router = useRouter();
   const isRTL = locale === "ar";
   const { register, isLoading } = useAuth();
@@ -29,6 +32,7 @@ function SignUpForm() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [scfhsNumber, setScfhsNumber] = useState("");
+  const [nationalId, setNationalId] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -46,7 +50,7 @@ function SignUpForm() {
     setError(null);
 
     // Validation
-    if (!firstName || !lastName || !email || !password || !confirmPassword) {
+    if (!firstName || !lastName || !email || !password || !confirmPassword || !nationalId) {
       const msg = tToasts("fillRequiredFields");
       setError(msg);
       toast.error(msg);
@@ -55,6 +59,13 @@ function SignUpForm() {
 
     if (firstName.length < 2 || lastName.length < 2) {
       const msg = tToasts("firstLastNameMinLength");
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
+
+    if (!isValidSaudiNationalId(nationalId.trim())) {
+      const msg = tToasts("invalidNationalId");
       setError(msg);
       toast.error(msg);
       return;
@@ -102,6 +113,7 @@ function SignUpForm() {
         password,
         firstName,
         lastName,
+        nationalId: nationalId.trim(),
         ...(scfhsNumber.trim() && { scfhsNumber: scfhsNumber.trim() }),
         recaptchaToken,
       });
@@ -130,7 +142,7 @@ function SignUpForm() {
   if (success) {
     return (
       <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
-        <AuthNavbar />
+        <Navbar siteSettings={chrome.siteSettings} navLinks={chrome.navLinks} footerLinks={chrome.footerLinks} />
         <main id="main-content" className="flex-1 bg-[var(--color-surface-page)] flex items-center justify-center px-4 py-10">
           <div className="bg-[var(--color-surface-card)] rounded-2xl p-8 max-w-md w-full text-center shadow-lg">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
@@ -150,7 +162,7 @@ function SignUpForm() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
-      <AuthNavbar />
+      <Navbar siteSettings={chrome.siteSettings} navLinks={chrome.navLinks} footerLinks={chrome.footerLinks} />
 
       {/* Main Content */}
       <main id="main-content" className="flex-1 bg-[var(--color-surface-page)] px-4 py-10 md:px-16 md:py-20">
@@ -261,6 +273,37 @@ function SignUpForm() {
                       placeholder={t("form.scfhsPlaceholder")}
                     />
                     <p className="text-xs text-[var(--color-text-secondary)]">{t("form.scfhsHint")}</p>
+                  </div>
+
+                  {/* National ID / Iqama (required, KSA-validated, immutable once set) */}
+                  <div className="flex flex-col gap-1.5 w-full">
+                    <label
+                      htmlFor="nationalId"
+                      className="font-medium text-[var(--color-text-primary)]"
+                      style={{ fontSize: "14px", lineHeight: "20px" }}
+                    >
+                      {t("form.nationalId")} <span className="text-[var(--color-error,#DC2626)]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="nationalId"
+                      value={nationalId}
+                      onChange={(e) => setNationalId(e.target.value.replace(/[^0-9]/g, "").slice(0, 10))}
+                      disabled={loading}
+                      inputMode="numeric"
+                      maxLength={10}
+                      pattern="[12][0-9]{9}"
+                      autoComplete="off"
+                      required
+                      dir="ltr"
+                      className="w-full min-h-[36px] px-3 py-[7.5px] bg-[var(--color-surface-page)] border border-[var(--color-input-border)] rounded-lg outline-none focus:border-[var(--color-input-focus)] transition-colors disabled:opacity-50"
+                      style={{
+                        boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
+                        fontSize: "14px",
+                      }}
+                      placeholder={t("form.nationalIdPlaceholder")}
+                    />
+                    <p className="text-xs text-[var(--color-text-secondary)]">{t("form.nationalIdHint")}</p>
                   </div>
 
                   {/* Email Field */}

@@ -27,6 +27,7 @@ interface VerificationResult {
   totalHours: number | null;
   issuedDate: string | null;
   certificateId: string;
+  accreditationNumber: string | null;
 }
 
 export default function CertificateVerifyContent({
@@ -211,6 +212,14 @@ export default function CertificateVerifyContent({
               <p className="text-[11px] text-[var(--color-text-secondary)]">
                 Accredited by the Saudi Commission for Health Specialties (SCFHS)
               </p>
+              {result.accreditationNumber && (
+                <p className="text-[11px] text-[var(--color-text-secondary)] mt-1">
+                  {isRTL ? "رقم اعتماد الدورة: " : "Course Accreditation: "}
+                  <span className="font-semibold text-[var(--color-text-primary)]">
+                    {result.accreditationNumber}
+                  </span>
+                </p>
+              )}
             </div>
           </div>
 

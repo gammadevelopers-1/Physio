@@ -1393,15 +1393,9 @@ const BecomeTrainerForm = ({
               <strong>{tt("reviewerNote", "Reviewer note")}:</strong> {existingApplication.reviewNote}
             </div>
           )}
-          <p className="text-xs text-[var(--color-text-secondary)] mb-4">
+          <p className="text-xs text-[var(--color-text-secondary)]">
             {tt("submittedOn", "Submitted on")}: {new Date(existingApplication.createdAt).toLocaleDateString()}
           </p>
-          <Link
-            href={`/${locale}/dashboard/student/applications`}
-            className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white rounded-xl font-medium hover:bg-[var(--color-primary-dark)] transition-colors"
-          >
-            {tt("viewApplications", "View My Applications")}
-          </Link>
         </div>
       </section>
     );

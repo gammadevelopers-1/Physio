@@ -58,6 +58,11 @@ export interface StudentEnrolledCourse {
   totalSessions: number;
   attendanceRate: number;
   hasReviewed?: boolean;
+  hasReviewedInstructor?: boolean;
+  // Action-required indicators surfaced on the My Courses card pill.
+  nelcReviewLink?: string | null;
+  certificateRequestStatus?: 'pending' | 'approved' | 'rejected' | 'held' | 'revoked' | string | null;
+  certificateRequestUrl?: string | null;
 }
 
 export interface StudentEnrolledCoursesResponse {
@@ -142,6 +147,13 @@ export interface StudentAttendanceRecord {
   presencePercent: number | null;
 }
 
+export interface CourseFaq {
+  question?: string | null;
+  questionAr?: string | null;
+  answer?: string | null;
+  answerAr?: string | null;
+}
+
 export interface StudentCourseDetail {
   course: {
     id: string;
@@ -153,10 +165,28 @@ export interface StudentCourseDetail {
     thumbnail: string | null;
     startDate: string | null;
     endDate: string | null;
+    language?: string | null;
     instructorName: string;
     isCmeAccredited: boolean;
     cmeHours: number;
+    accreditationNumber?: string | null;
+    nelcReviewLink?: string | null;
     isSequential?: boolean;
+    faqs?: CourseFaq[] | null;
+    // Extended instructor profile for the inline instructor card on the
+    // student course-detail page. All optional; UI hides missing fields.
+    instructorId?: string | null;
+    instructorFirstName?: string | null;
+    instructorLastName?: string | null;
+    instructorFirstNameAr?: string | null;
+    instructorLastNameAr?: string | null;
+    instructorAvatar?: string | null;
+    instructorBio?: string | null;
+    instructorProfession?: string | null;
+    instructorSpecialty?: string | null;
+    instructorQualification?: string | null;
+    instructorAvgRating?: number;
+    instructorTotalRatings?: number;
   };
   enrollment: {
     id: string;
@@ -184,6 +214,14 @@ export interface StudentCourseDetail {
     rating: number;
     reviewText: string | null;
     createdAt: string;
+  } | null;
+  certificateRequest?: {
+    id: string;
+    status: 'pending' | 'approved' | 'rejected' | 'held' | 'revoked' | string;
+    certificateUrl: string | null;
+    reviewNote: string | null;
+    createdAt: string;
+    reviewedAt: string | null;
   } | null;
 }
 
@@ -226,6 +264,20 @@ export interface StudentCertificate {
   instructorName: string;
 }
 
+export interface RecentGrade {
+  id: string;
+  assessmentId: string;
+  assessmentTitle: string;
+  courseId: string;
+  courseTitle: string;
+  courseTitleAr: string | null;
+  score: number;
+  totalMarks: number;
+  percentage: number;
+  passed: boolean;
+  gradedAt: string | null;
+}
+
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -241,6 +293,8 @@ export interface CalendarEvent {
   roomName: string | null;
   venueAddress: string | null;
   instructorName: string;
+  /** Student's own attendance for this session: present | absent | late | excused | null */
+  attendanceStatus?: string | null;
 }
 
 export type ActivityType =

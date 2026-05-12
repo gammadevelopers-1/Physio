@@ -16,6 +16,7 @@ import {
   enrollments,
   sessions,
   courseRatings,
+  instructorRatings,
   assessments,
   users,
   COURSE_STATUS,
@@ -34,6 +35,7 @@ import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 import { EmailService } from '../email/email.service';
 import { CertificatesService } from '../certificates/certificates.service';
+import { PointsService } from '../points/points.service';
 
 @Injectable()
 export class CoursesService {
@@ -44,6 +46,7 @@ export class CoursesService {
     private readonly userNotificationsService: UserNotificationsService,
     private readonly emailService: EmailService,
     private readonly certificatesService: CertificatesService,
+    private readonly pointsService: PointsService,
   ) {}
 
   /**
@@ -144,6 +147,8 @@ export class CoursesService {
         startDate: dto.startDate,
         endDate: dto.endDate,
         cohort: dto.cohort,
+        accreditationNumber: dto.accreditationNumber,
+        nelcReviewLink: dto.nelcReviewLink,
         // Content fields
         overview: dto.overview,
         overviewAr: dto.overviewAr,
@@ -313,6 +318,16 @@ export class CoursesService {
     cmeAccredited?: boolean;
     language?: string;
     availability?: string;
+    /**
+     * Top-level visibility scope:
+     *   'open'     → currently enrollable: not completed, deadline not passed,
+     *                end date hasn't passed yet. This is the DEFAULT for the
+     *                public /courses listing.
+     *   'archived' → completed OR deadline passed OR end date passed. The
+     *                /archived page passes this explicitly.
+     *   undefined  → defaults to 'open'.
+     */
+    scope?: 'open' | 'archived';
     sort?: string;
     page?: number;
     limit?: number;
@@ -479,19 +494,46 @@ export class CoursesService {
       };
     });
 
-    // Post-query availability filter (depends on computed availabilityStatus)
-    let filtered = enriched;
-    if (params.availability === 'open') {
-      filtered = enriched.filter((c) => c.availabilityStatus === 'open');
-    } else if (params.availability === 'starting_soon') {
-      filtered = enriched.filter(
-        (c) =>
-          !c.isFull &&
-          c.enrollmentDeadline &&
-          new Date(c.enrollmentDeadline) > now,
-      );
-    } else if (params.availability === 'full') {
-      filtered = enriched.filter((c) => c.isFull);
+    // Top-level scope: split open (currently enrollable / live) vs archived
+    // (completed, deadline passed, or end date passed). Default is 'open' so
+    // the main /courses page never shows expired content unless the caller
+    // explicitly asks for the archive.
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const hasEnded = (c: { endDate: string | null }) => {
+      if (!c.endDate) return false;
+      const ed = new Date(c.endDate);
+      const edLocal = new Date(ed.getFullYear(), ed.getMonth(), ed.getDate());
+      return edLocal < today;
+    };
+    const isArchived = (c: {
+      availabilityStatus: 'open' | 'completed' | 'full' | 'deadline_passed';
+      endDate: string | null;
+    }) =>
+      c.availabilityStatus === 'completed' ||
+      c.availabilityStatus === 'deadline_passed' ||
+      hasEnded(c);
+
+    const scope = params.scope === 'archived' ? 'archived' : 'open';
+    let filtered = enriched.filter((c) =>
+      scope === 'archived' ? isArchived(c) : !isArchived(c),
+    );
+
+    // Sub-filter inside the active scope (UI-driven availability filter).
+    // Only applies on the open scope — on /archived the user already sees
+    // a single bucket so additional availability chips are meaningless.
+    if (scope === 'open') {
+      if (params.availability === 'open') {
+        filtered = filtered.filter((c) => c.availabilityStatus === 'open');
+      } else if (params.availability === 'starting_soon') {
+        filtered = filtered.filter(
+          (c) =>
+            !c.isFull &&
+            c.enrollmentDeadline &&
+            new Date(c.enrollmentDeadline) > now,
+        );
+      } else if (params.availability === 'full') {
+        filtered = filtered.filter((c) => c.isFull);
+      }
     }
 
     const [countResult] = await db
@@ -714,8 +756,15 @@ export class CoursesService {
         noticesAr: courses.noticesAr,
         venue: courses.venue,
         venueAr: courses.venueAr,
+        faqs: courses.faqs,
+        accreditationNumber: courses.accreditationNumber,
         showContents: courses.showContents,
         sectionsOrder: courses.sectionsOrder,
+        seoTitle: courses.seoTitle,
+        seoDescription: courses.seoDescription,
+        seoKeywords: courses.seoKeywords,
+        seoOgImage: courses.seoOgImage,
+        seoNoindex: courses.seoNoindex,
         enrolledCount: sql<number>`(
           SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped'
         )`.mapWith(Number),
@@ -736,6 +785,59 @@ export class CoursesService {
           SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
           WHERE u.id = "courses"."instructor_id"
         )`,
+        // Extended instructor profile — joined for the public course-detail
+        // instructor card. Each is nullable; the UI hides any missing field.
+        instructorId: courses.instructorId,
+        instructorFirstName: sql<string | null>`(
+          SELECT u.first_name FROM users u WHERE u.id = "courses"."instructor_id"
+        )`,
+        instructorLastName: sql<string | null>`(
+          SELECT u.last_name FROM users u WHERE u.id = "courses"."instructor_id"
+        )`,
+        instructorFirstNameAr: sql<string | null>`(
+          SELECT u.first_name_ar FROM users u WHERE u.id = "courses"."instructor_id"
+        )`,
+        instructorLastNameAr: sql<string | null>`(
+          SELECT u.last_name_ar FROM users u WHERE u.id = "courses"."instructor_id"
+        )`,
+        instructorAvatar: sql<string | null>`(
+          SELECT u.avatar FROM users u WHERE u.id = "courses"."instructor_id"
+        )`,
+        instructorEmail: sql<string | null>`(
+          SELECT u.email FROM users u WHERE u.id = "courses"."instructor_id"
+        )`,
+        instructorBio: sql<string | null>`(
+          SELECT u.bio FROM users u WHERE u.id = "courses"."instructor_id"
+        )`,
+        instructorSpecialty: sql<string | null>`(
+          SELECT u.specialty FROM users u WHERE u.id = "courses"."instructor_id"
+        )`,
+        instructorProfession: sql<string | null>`(
+          SELECT u.profession FROM users u WHERE u.id = "courses"."instructor_id"
+        )`,
+        instructorQualification: sql<string | null>`(
+          SELECT u.qualification FROM users u WHERE u.id = "courses"."instructor_id"
+        )`,
+        instructorTwitter: sql<string | null>`(
+          SELECT u.twitter FROM users u WHERE u.id = "courses"."instructor_id"
+        )`,
+        instructorLinkedin: sql<string | null>`(
+          SELECT u.linkedin FROM users u WHERE u.id = "courses"."instructor_id"
+        )`,
+        instructorAvgRating: sql<number>`(
+          SELECT COALESCE(ROUND(AVG(ir.rating)::numeric, 1), 0)
+          FROM instructor_ratings ir
+          WHERE ir.instructor_id = "courses"."instructor_id"
+            AND ir.moderation_status = 'approved'
+            AND ir.is_published = true
+        )`.mapWith(Number),
+        instructorTotalRatings: sql<number>`(
+          SELECT COUNT(*)
+          FROM instructor_ratings ir
+          WHERE ir.instructor_id = "courses"."instructor_id"
+            AND ir.moderation_status = 'approved'
+            AND ir.is_published = true
+        )`.mapWith(Number),
       })
       .from(courses)
       .where(
@@ -879,14 +981,72 @@ export class CoursesService {
       availabilityStatus = 'open';
     }
 
+    // Pull all instructor.* fields into a nested `instructor` object so the
+    // frontend doesn't have to know the flat naming. Hide the flat fields
+    // from the response to keep the public payload tidy.
+    const {
+      instructorId,
+      instructorFirstName,
+      instructorLastName,
+      instructorFirstNameAr,
+      instructorLastNameAr,
+      instructorAvatar,
+      instructorEmail,
+      instructorBio,
+      instructorSpecialty,
+      instructorProfession,
+      instructorQualification,
+      instructorTwitter,
+      instructorLinkedin,
+      instructorAvgRating,
+      instructorTotalRatings,
+      seoTitle,
+      seoDescription,
+      seoKeywords,
+      seoOgImage,
+      seoNoindex,
+      ...rest
+    } = data;
+
+    // Nested SEO object for the public payload. Empty fields are returned
+    // as-is — the frontend metadata helper falls back to title /
+    // description / thumbnail when a field is missing.
+    const seo = {
+      title: seoTitle,
+      description: seoDescription,
+      keywords: seoKeywords,
+      ogImage: seoOgImage,
+      noindex: !!seoNoindex,
+    };
+
+    const instructor = {
+      id: instructorId,
+      firstName: instructorFirstName,
+      lastName: instructorLastName,
+      firstNameAr: instructorFirstNameAr,
+      lastNameAr: instructorLastNameAr,
+      avatar: instructorAvatar,
+      email: instructorEmail,
+      bio: instructorBio,
+      specialty: instructorSpecialty,
+      profession: instructorProfession,
+      qualification: instructorQualification,
+      twitter: instructorTwitter,
+      linkedin: instructorLinkedin,
+      avgRating: Number(Number(instructorAvgRating || 0).toFixed(1)),
+      totalRatings: Number(instructorTotalRatings || 0),
+    };
+
     return {
-      ...data,
-      totalHours: Math.round((data.totalHours / 60) * 10) / 10,
-      avgRating: Number(Number(data.avgRating || 0).toFixed(1)),
-      price: data.price ? Number(data.price) : 0,
+      ...rest,
+      totalHours: Math.round((rest.totalHours / 60) * 10) / 10,
+      avgRating: Number(Number(rest.avgRating || 0).toFixed(1)),
+      price: rest.price ? Number(rest.price) : 0,
       remainingSeats,
       isFull,
       availabilityStatus,
+      instructor,
+      seo,
       sessions: sessionsList,
       modules: modulesList,
       ratings: ratingsList,
@@ -1766,6 +1926,23 @@ export class CoursesService {
       }
     }
 
+    // Award course-completion points (idempotent per enrollment).
+    // Idempotency key is shared with the cron path — whichever runs first
+    // wins, the other becomes a no-op via DB unique constraint.
+    for (const student of activeStudents) {
+      this.pointsService
+        .award(student.studentId, 'course_completed', {
+          idempotencyKey: `course_completed:${student.id}`,
+          sourceEntityType: 'enrollment',
+          sourceEntityId: student.id,
+        })
+        .catch((err) =>
+          this.logger.warn(
+            `Course-completion points failed for enrollment ${student.id}: ${(err as Error).message}`,
+          ),
+        );
+    }
+
     this.logger.log(
       `Finalized ${activeStudents.length} enrollment(s) for course ${courseId}`,
     );
@@ -2541,7 +2718,73 @@ export class CoursesService {
       })
       .where(eq(courseRatings.id, ratingId))
       .returning();
+
+    if (updated) {
+      this.tryAwardDualReviewApproval(updated.courseId, updated.studentId).catch(
+        (err) =>
+          this.logger.warn(
+            `Dual-review points check failed (course rating ${ratingId}): ${(err as Error).message}`,
+          ),
+      );
+    }
+
     return updated;
+  }
+
+  /**
+   * Award review-approved points only when BOTH the course review AND the
+   * instructor review for this enrollment are in `approved` state. Fires
+   * once per enrollment thanks to the idempotency key — re-approving either
+   * review is a no-op. If the course has no instructor (data anomaly),
+   * the gate falls back to course-review-only.
+   */
+  private async tryAwardDualReviewApproval(
+    courseId: string,
+    studentId: string,
+  ): Promise<void> {
+    const [course] = await db
+      .select({ instructorId: courses.instructorId })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    const [courseRating] = await db
+      .select({ moderationStatus: courseRatings.moderationStatus })
+      .from(courseRatings)
+      .where(
+        and(
+          eq(courseRatings.courseId, courseId),
+          eq(courseRatings.studentId, studentId),
+        ),
+      )
+      .limit(1);
+
+    if (courseRating?.moderationStatus !== 'approved') return;
+
+    if (course?.instructorId) {
+      const [instrRating] = await db
+        .select({ moderationStatus: instructorRatings.moderationStatus })
+        .from(instructorRatings)
+        .where(
+          and(
+            eq(instructorRatings.courseId, courseId),
+            eq(instructorRatings.studentId, studentId),
+          ),
+        )
+        .limit(1);
+      if (instrRating?.moderationStatus !== 'approved') return;
+    }
+
+    // sourceEntityId is a UUID column — use the courseId as the canonical
+    // entity (the pair is keyed via the idempotency key, not the FK).
+    // Earlier this was set to `${courseId}:${studentId}` which silently
+    // failed with a uuid-cast error and the .catch in approveReview
+    // swallowed it — no ledger rows were created for any approval.
+    await this.pointsService.award(studentId, 'review_approved', {
+      idempotencyKey: `review_approved:${courseId}:${studentId}`,
+      sourceEntityType: 'course',
+      sourceEntityId: courseId,
+    });
   }
 
   async rejectReview(ratingId: string, user: AuthenticatedUser) {
@@ -2750,6 +2993,1028 @@ export class CoursesService {
         approved: Number(approvedRow?.count || 0),
         rejected: Number(rejectedRow?.count || 0),
       },
+    };
+  }
+
+  // ─── Instructor Ratings ────────────────────────────────────
+
+  /**
+   * Submit an instructor review for a course the student completed. The
+   * review targets the course's assigned instructor — a student leaves one
+   * instructor review per enrollment, regardless of how many courses that
+   * instructor has taught them. Pending until the course manager moderates.
+   */
+  async rateInstructor(
+    courseId: string,
+    studentId: string,
+    rating: number,
+    reviewText?: string,
+  ) {
+    const [enrollment] = await db
+      .select({ status: enrollments.status })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          eq(enrollments.studentId, studentId),
+        ),
+      )
+      .limit(1);
+
+    if (!enrollment) {
+      throw new ForbiddenException(
+        'You must be enrolled in this course to review the instructor',
+      );
+    }
+    if (enrollment.status !== 'completed') {
+      throw new ForbiddenException(
+        'You can only review the instructor after completing the course',
+      );
+    }
+
+    const [course] = await db
+      .select({ instructorId: courses.instructorId })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+    if (!course?.instructorId) {
+      throw new BadRequestException(
+        'This course has no assigned instructor to review',
+      );
+    }
+
+    const [existing] = await db
+      .select({ id: instructorRatings.id })
+      .from(instructorRatings)
+      .where(
+        and(
+          eq(instructorRatings.courseId, courseId),
+          eq(instructorRatings.studentId, studentId),
+        ),
+      )
+      .limit(1);
+
+    if (existing) {
+      throw new ConflictException(
+        'You have already reviewed the instructor for this course',
+      );
+    }
+
+    const [created] = await db
+      .insert(instructorRatings)
+      .values({
+        courseId,
+        instructorId: course.instructorId,
+        studentId,
+        rating,
+        reviewText,
+        moderationStatus: 'pending',
+        isPublished: false,
+      })
+      .returning();
+
+    this.notifyManagerOfPendingInstructorReview(
+      courseId,
+      created.id,
+      studentId,
+      rating,
+      reviewText || null,
+    ).catch((err) =>
+      this.logger.warn(
+        `Failed to notify manager of pending instructor review: ${(err as Error).message}`,
+      ),
+    );
+
+    return created;
+  }
+
+  private async notifyManagerOfPendingInstructorReview(
+    courseId: string,
+    ratingId: string,
+    studentId: string,
+    rating: number,
+    reviewText: string | null,
+  ): Promise<void> {
+    const [course] = await db
+      .select({
+        title: courses.title,
+        titleAr: courses.titleAr,
+        managerId: courses.managerId,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+    if (!course || !course.managerId) return;
+
+    const [manager] = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        language: users.language,
+      })
+      .from(users)
+      .where(eq(users.id, course.managerId))
+      .limit(1);
+    if (!manager) return;
+
+    const [student] = await db
+      .select({ firstName: users.firstName, lastName: users.lastName })
+      .from(users)
+      .where(eq(users.id, studentId))
+      .limit(1);
+    const studentName =
+      `${student?.firstName || ''} ${student?.lastName || ''}`.trim() ||
+      'A student';
+
+    const locale = (manager.language || 'en') as 'en' | 'ar';
+    const isAr = locale === 'ar';
+    const courseTitle = isAr && course.titleAr ? course.titleAr : course.title;
+
+    await this.userNotificationsService.create({
+      recipientId: manager.id,
+      type: 'review_pending_approval',
+      title: isAr
+        ? 'مراجعة مدرب جديدة بانتظار الموافقة'
+        : 'New Instructor Review Pending Approval',
+      message: isAr
+        ? `ترك ${studentName} مراجعة للمدرب (${rating}/5) في "${courseTitle}" وتحتاج إلى موافقتك.`
+        : `${studentName} left a ${rating}/5 instructor review on "${courseTitle}" that needs your approval.`,
+      link: '/dashboard/manager/reviews?type=instructor',
+      entityType: 'instructor_rating',
+      entityId: ratingId,
+    });
+
+    const name =
+      [manager.firstName, manager.lastName].filter(Boolean).join(' ') ||
+      'Manager';
+    this.emailService
+      .sendReviewPendingApproval(
+        manager.email,
+        {
+          recipientName: name,
+          studentName,
+          courseName: courseTitle,
+          rating,
+          reviewText,
+        },
+        locale,
+      )
+      .catch(() => {});
+  }
+
+  async getMyInstructorRating(courseId: string, studentId: string) {
+    const [row] = await db
+      .select({
+        id: instructorRatings.id,
+        rating: instructorRatings.rating,
+        reviewText: instructorRatings.reviewText,
+        createdAt: instructorRatings.createdAt,
+      })
+      .from(instructorRatings)
+      .where(
+        and(
+          eq(instructorRatings.courseId, courseId),
+          eq(instructorRatings.studentId, studentId),
+        ),
+      )
+      .limit(1);
+    return row || null;
+  }
+
+  /**
+   * Whether a (course, student) pair has both reviews submitted. Used by the
+   * certificate-request gate. Submission status only — rejected reviews still
+   * count, otherwise a manager could indefinitely block a student. If the
+   * course has no instructor, only the course review is required.
+   */
+  async hasSubmittedRequiredReviews(
+    courseId: string,
+    studentId: string,
+  ): Promise<{
+    courseReviewSubmitted: boolean;
+    instructorReviewSubmitted: boolean;
+    instructorRequired: boolean;
+    allRequiredSubmitted: boolean;
+  }> {
+    const [course] = await db
+      .select({ instructorId: courses.instructorId })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    const [courseRow] = await db
+      .select({ id: courseRatings.id })
+      .from(courseRatings)
+      .where(
+        and(
+          eq(courseRatings.courseId, courseId),
+          eq(courseRatings.studentId, studentId),
+        ),
+      )
+      .limit(1);
+
+    const courseReviewSubmitted = !!courseRow;
+    const instructorRequired = !!course?.instructorId;
+    let instructorReviewSubmitted = !instructorRequired;
+
+    if (instructorRequired) {
+      const [instrRow] = await db
+        .select({ id: instructorRatings.id })
+        .from(instructorRatings)
+        .where(
+          and(
+            eq(instructorRatings.courseId, courseId),
+            eq(instructorRatings.studentId, studentId),
+          ),
+        )
+        .limit(1);
+      instructorReviewSubmitted = !!instrRow;
+    }
+
+    return {
+      courseReviewSubmitted,
+      instructorReviewSubmitted,
+      instructorRequired,
+      allRequiredSubmitted:
+        courseReviewSubmitted && instructorReviewSubmitted,
+    };
+  }
+
+  // ─── Manager moderation: instructor reviews ───────────────
+
+  private async verifyInstructorRatingAccess(
+    ratingId: string,
+    user: AuthenticatedUser,
+  ) {
+    const [row] = await db
+      .select({
+        id: instructorRatings.id,
+        courseId: instructorRatings.courseId,
+        managerId: courses.managerId,
+      })
+      .from(instructorRatings)
+      .innerJoin(courses, eq(instructorRatings.courseId, courses.id))
+      .where(eq(instructorRatings.id, ratingId))
+      .limit(1);
+    if (!row) {
+      throw new NotFoundException('Instructor review not found');
+    }
+    if (!isGlobalAdmin(user) && row.managerId !== user.id) {
+      throw new ForbiddenException('You do not manage this course');
+    }
+    return row;
+  }
+
+  async approveInstructorReview(ratingId: string, user: AuthenticatedUser) {
+    await this.verifyInstructorRatingAccess(ratingId, user);
+    const [updated] = await db
+      .update(instructorRatings)
+      .set({
+        moderationStatus: 'approved',
+        isPublished: true,
+        reviewedBy: user.id,
+        reviewedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(instructorRatings.id, ratingId))
+      .returning();
+
+    if (updated) {
+      this.tryAwardDualReviewApproval(updated.courseId, updated.studentId).catch(
+        (err) =>
+          this.logger.warn(
+            `Dual-review points check failed (instructor rating ${ratingId}): ${(err as Error).message}`,
+          ),
+      );
+    }
+
+    return updated;
+  }
+
+  async rejectInstructorReview(ratingId: string, user: AuthenticatedUser) {
+    await this.verifyInstructorRatingAccess(ratingId, user);
+    const [updated] = await db
+      .update(instructorRatings)
+      .set({
+        moderationStatus: 'rejected',
+        isPublished: false,
+        reviewedBy: user.id,
+        reviewedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(instructorRatings.id, ratingId))
+      .returning();
+    return updated;
+  }
+
+  async setInstructorReviewPublished(
+    ratingId: string,
+    user: AuthenticatedUser,
+    published: boolean,
+  ) {
+    await this.verifyInstructorRatingAccess(ratingId, user);
+    const [updated] = await db
+      .update(instructorRatings)
+      .set({
+        isPublished: published,
+        reviewedBy: user.id,
+        reviewedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(instructorRatings.id, ratingId))
+      .returning();
+    return updated;
+  }
+
+  async deleteInstructorRating(ratingId: string, user: AuthenticatedUser) {
+    await this.verifyInstructorRatingAccess(ratingId, user);
+    const [deleted] = await db
+      .delete(instructorRatings)
+      .where(eq(instructorRatings.id, ratingId))
+      .returning();
+    return deleted;
+  }
+
+  /**
+   * Manager moderation list for instructor reviews. Mirrors getManagerReviews
+   * but scoped to instructor_ratings. Returns aggregate counts so the UI
+   * segmented control can show pending badges per type.
+   */
+  async getManagerInstructorReviews(
+    user: AuthenticatedUser,
+    params: {
+      page?: number;
+      limit?: number;
+      moderationStatus?: 'pending' | 'approved' | 'rejected';
+      publishedOnly?: boolean;
+      unpublishedOnly?: boolean;
+      courseId?: string;
+      search?: string;
+      sort?: 'newest' | 'oldest' | 'highest' | 'lowest';
+    } = {},
+  ) {
+    const page = Math.max(1, params.page || 1);
+    const limit = Math.min(100, Math.max(1, params.limit || 20));
+    const offset = (page - 1) * limit;
+
+    const conditions: any[] = [];
+    if (!isGlobalAdmin(user)) {
+      conditions.push(eq(courses.managerId, user.id));
+    }
+    if (params.moderationStatus) {
+      conditions.push(
+        eq(instructorRatings.moderationStatus, params.moderationStatus),
+      );
+    }
+    if (params.publishedOnly) {
+      conditions.push(eq(instructorRatings.isPublished, true));
+    } else if (params.unpublishedOnly) {
+      conditions.push(eq(instructorRatings.isPublished, false));
+    }
+    if (params.courseId) {
+      conditions.push(eq(instructorRatings.courseId, params.courseId));
+    }
+    if (params.search) {
+      const term = `%${params.search}%`;
+      conditions.push(
+        or(
+          ilike(users.firstName, term),
+          ilike(users.lastName, term),
+          ilike(instructorRatings.reviewText, term),
+          ilike(courses.title, term),
+          ilike(courses.titleAr, term),
+        ) as any,
+      );
+    }
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    let orderBy;
+    switch (params.sort) {
+      case 'oldest':
+        orderBy = asc(instructorRatings.createdAt);
+        break;
+      case 'highest':
+        orderBy = [
+          desc(instructorRatings.rating),
+          desc(instructorRatings.createdAt),
+        ];
+        break;
+      case 'lowest':
+        orderBy = [
+          asc(instructorRatings.rating),
+          desc(instructorRatings.createdAt),
+        ];
+        break;
+      case 'newest':
+      default:
+        orderBy = desc(instructorRatings.createdAt);
+    }
+
+    const statusPriority = sql`CASE ${instructorRatings.moderationStatus}
+      WHEN 'pending' THEN 1
+      WHEN 'approved' THEN 2
+      WHEN 'rejected' THEN 3
+      ELSE 4
+    END`;
+
+    const [rows, [countRow], [pendingRow], [approvedRow], [rejectedRow]] =
+      await Promise.all([
+        db
+          .select({
+            id: instructorRatings.id,
+            courseId: instructorRatings.courseId,
+            instructorId: instructorRatings.instructorId,
+            courseTitle: courses.title,
+            courseTitleAr: courses.titleAr,
+            rating: instructorRatings.rating,
+            reviewText: instructorRatings.reviewText,
+            moderationStatus: instructorRatings.moderationStatus,
+            isPublished: instructorRatings.isPublished,
+            createdAt: instructorRatings.createdAt,
+            reviewedAt: instructorRatings.reviewedAt,
+            studentFirstName: users.firstName,
+            studentLastName: users.lastName,
+          })
+          .from(instructorRatings)
+          .innerJoin(courses, eq(instructorRatings.courseId, courses.id))
+          .innerJoin(users, eq(instructorRatings.studentId, users.id))
+          .where(whereClause)
+          .orderBy(
+            statusPriority,
+            ...(Array.isArray(orderBy) ? orderBy : [orderBy]),
+          )
+          .limit(limit)
+          .offset(offset),
+        db
+          .select({ count: count() })
+          .from(instructorRatings)
+          .innerJoin(courses, eq(instructorRatings.courseId, courses.id))
+          .innerJoin(users, eq(instructorRatings.studentId, users.id))
+          .where(whereClause),
+        db
+          .select({ count: count() })
+          .from(instructorRatings)
+          .innerJoin(courses, eq(instructorRatings.courseId, courses.id))
+          .where(
+            and(
+              ...(isGlobalAdmin(user) ? [] : [eq(courses.managerId, user.id)]),
+              eq(instructorRatings.moderationStatus, 'pending'),
+            ),
+          ),
+        db
+          .select({ count: count() })
+          .from(instructorRatings)
+          .innerJoin(courses, eq(instructorRatings.courseId, courses.id))
+          .where(
+            and(
+              ...(isGlobalAdmin(user) ? [] : [eq(courses.managerId, user.id)]),
+              eq(instructorRatings.moderationStatus, 'approved'),
+            ),
+          ),
+        db
+          .select({ count: count() })
+          .from(instructorRatings)
+          .innerJoin(courses, eq(instructorRatings.courseId, courses.id))
+          .where(
+            and(
+              ...(isGlobalAdmin(user) ? [] : [eq(courses.managerId, user.id)]),
+              eq(instructorRatings.moderationStatus, 'rejected'),
+            ),
+          ),
+      ]);
+
+    const data = rows.map((r) => ({
+      id: r.id,
+      courseId: r.courseId,
+      instructorId: r.instructorId,
+      courseTitle: r.courseTitle,
+      courseTitleAr: r.courseTitleAr,
+      rating: r.rating,
+      reviewText: r.reviewText,
+      moderationStatus: r.moderationStatus,
+      isPublished: r.isPublished,
+      createdAt: r.createdAt,
+      reviewedAt: r.reviewedAt,
+      studentName:
+        `${r.studentFirstName || ''} ${r.studentLastName || ''}`.trim() ||
+        'Anonymous',
+    }));
+
+    const total = Number(countRow?.count || 0);
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      counts: {
+        pending: Number(pendingRow?.count || 0),
+        approved: Number(approvedRow?.count || 0),
+        rejected: Number(rejectedRow?.count || 0),
+      },
+    };
+  }
+
+  /**
+   * Course-detail view of instructor ratings — paginated published list with
+   * stats. Used by the manager course detail "switch to instructor reviews"
+   * tab. onlyPublished defaults true (matching the course-rating helper).
+   */
+  async getInstructorRatings(
+    courseId: string,
+    params: {
+      page?: number;
+      limit?: number;
+      rating?: number;
+      sort?: 'newest' | 'oldest' | 'highest' | 'lowest';
+      search?: string;
+      onlyPublished?: boolean;
+    } = {},
+  ) {
+    const page = Math.max(1, params.page || 1);
+    const limit = Math.min(100, Math.max(1, params.limit || 20));
+    const offset = (page - 1) * limit;
+    const onlyPublished = params.onlyPublished !== false;
+
+    const conditions: any[] = [eq(instructorRatings.courseId, courseId)];
+    if (onlyPublished) {
+      conditions.push(eq(instructorRatings.isPublished, true));
+    }
+    if (params.rating && params.rating >= 1 && params.rating <= 5) {
+      conditions.push(eq(instructorRatings.rating, params.rating));
+    }
+    if (params.search) {
+      const term = `%${params.search}%`;
+      conditions.push(
+        or(
+          ilike(users.firstName, term),
+          ilike(users.lastName, term),
+          ilike(instructorRatings.reviewText, term),
+        ) as any,
+      );
+    }
+    const whereClause = and(...conditions);
+
+    const statsWhere = onlyPublished
+      ? and(
+          eq(instructorRatings.courseId, courseId),
+          eq(instructorRatings.isPublished, true),
+        )
+      : eq(instructorRatings.courseId, courseId);
+
+    let orderBy;
+    switch (params.sort) {
+      case 'oldest':
+        orderBy = asc(instructorRatings.createdAt);
+        break;
+      case 'highest':
+        orderBy = [
+          desc(instructorRatings.rating),
+          desc(instructorRatings.createdAt),
+        ];
+        break;
+      case 'lowest':
+        orderBy = [
+          asc(instructorRatings.rating),
+          desc(instructorRatings.createdAt),
+        ];
+        break;
+      case 'newest':
+      default:
+        orderBy = desc(instructorRatings.createdAt);
+    }
+
+    const [rows, [countRow], [statsRow], distRows] = await Promise.all([
+      db
+        .select({
+          id: instructorRatings.id,
+          rating: instructorRatings.rating,
+          reviewText: instructorRatings.reviewText,
+          createdAt: instructorRatings.createdAt,
+          studentFirstName: users.firstName,
+          studentLastName: users.lastName,
+        })
+        .from(instructorRatings)
+        .innerJoin(users, eq(instructorRatings.studentId, users.id))
+        .where(whereClause)
+        .orderBy(...(Array.isArray(orderBy) ? orderBy : [orderBy]))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ count: count() })
+        .from(instructorRatings)
+        .innerJoin(users, eq(instructorRatings.studentId, users.id))
+        .where(whereClause),
+      db
+        .select({
+          avgRating: sql<number>`COALESCE(AVG(${instructorRatings.rating}), 0)`,
+          totalRatings: count(),
+        })
+        .from(instructorRatings)
+        .where(statsWhere),
+      db
+        .select({
+          rating: instructorRatings.rating,
+          count: count(),
+        })
+        .from(instructorRatings)
+        .where(statsWhere)
+        .groupBy(instructorRatings.rating),
+    ]);
+
+    const distribution: Record<1 | 2 | 3 | 4 | 5, number> = {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+    };
+    for (const r of distRows) {
+      if (r.rating >= 1 && r.rating <= 5) {
+        distribution[r.rating as 1 | 2 | 3 | 4 | 5] = Number(r.count);
+      }
+    }
+
+    const data = rows.map((r) => ({
+      id: r.id,
+      rating: r.rating,
+      reviewText: r.reviewText,
+      createdAt: r.createdAt,
+      studentName:
+        `${r.studentFirstName || ''} ${r.studentLastName || ''}`.trim() ||
+        'Anonymous',
+    }));
+
+    const total = Number(countRow?.count || 0);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      avgRating: Number(Number(statsRow?.avgRating || 0).toFixed(1)),
+      totalRatings: Number(statsRow?.totalRatings || 0),
+      distribution,
+    };
+  }
+
+  /**
+   * Featured pool of approved+published instructor reviews for the Strapi
+   * homepage block. Round-robin across instructors so quieter instructors
+   * aren't drowned out by prolific ones, then a final shuffle inside each
+   * bucket so the same N reviews don't always appear.
+   *
+   * Algorithm: bucket by instructor → shuffle inside each bucket → round-
+   * robin pick until `limit` is reached.
+   */
+  async getFeaturedInstructorReviews(params: { limit?: number } = {}) {
+    const limit = Math.min(20, Math.max(1, params.limit || 6));
+    const rows = await db
+      .select({
+        id: instructorRatings.id,
+        instructorId: instructorRatings.instructorId,
+        courseId: instructorRatings.courseId,
+        courseTitle: courses.title,
+        courseTitleAr: courses.titleAr,
+        rating: instructorRatings.rating,
+        reviewText: instructorRatings.reviewText,
+        createdAt: instructorRatings.createdAt,
+        studentFirstName: users.firstName,
+        studentLastName: users.lastName,
+        instructorFirstName: sql<string | null>`(
+          SELECT u.first_name FROM users u WHERE u.id = ${instructorRatings.instructorId}
+        )`,
+        instructorLastName: sql<string | null>`(
+          SELECT u.last_name FROM users u WHERE u.id = ${instructorRatings.instructorId}
+        )`,
+        instructorFirstNameAr: sql<string | null>`(
+          SELECT u.first_name_ar FROM users u WHERE u.id = ${instructorRatings.instructorId}
+        )`,
+        instructorLastNameAr: sql<string | null>`(
+          SELECT u.last_name_ar FROM users u WHERE u.id = ${instructorRatings.instructorId}
+        )`,
+        instructorAvatar: sql<string | null>`(
+          SELECT u.avatar FROM users u WHERE u.id = ${instructorRatings.instructorId}
+        )`,
+      })
+      .from(instructorRatings)
+      .innerJoin(courses, eq(instructorRatings.courseId, courses.id))
+      .innerJoin(users, eq(instructorRatings.studentId, users.id))
+      .where(
+        and(
+          eq(instructorRatings.moderationStatus, 'approved'),
+          eq(instructorRatings.isPublished, true),
+        ),
+      );
+
+    // Bucket by instructor. Map preserves insertion order, but we shuffle the
+    // key order below anyway to avoid bias toward instructors with the lowest
+    // UUIDs.
+    const buckets = new Map<string, typeof rows>();
+    for (const r of rows) {
+      const list = buckets.get(r.instructorId) ?? [];
+      list.push(r);
+      buckets.set(r.instructorId, list);
+    }
+
+    // Fisher-Yates in place.
+    const shuffle = <T,>(arr: T[]): T[] => {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    };
+
+    for (const list of buckets.values()) shuffle(list);
+    const instructorOrder = shuffle([...buckets.keys()]);
+
+    const picked: (typeof rows)[number][] = [];
+    let progressed = true;
+    while (picked.length < limit && progressed) {
+      progressed = false;
+      for (const id of instructorOrder) {
+        if (picked.length >= limit) break;
+        const list = buckets.get(id)!;
+        if (list.length > 0) {
+          picked.push(list.shift()!);
+          progressed = true;
+        }
+      }
+    }
+
+    return picked.map((r) => ({
+      id: r.id,
+      courseId: r.courseId,
+      courseTitle: r.courseTitle,
+      courseTitleAr: r.courseTitleAr,
+      rating: r.rating,
+      reviewText: r.reviewText,
+      createdAt: r.createdAt,
+      studentName:
+        `${r.studentFirstName || ''} ${r.studentLastName || ''}`.trim() ||
+        'Anonymous',
+      instructor: {
+        id: r.instructorId,
+        firstName: r.instructorFirstName,
+        lastName: r.instructorLastName,
+        firstNameAr: r.instructorFirstNameAr,
+        lastNameAr: r.instructorLastNameAr,
+        avatar: r.instructorAvatar,
+      },
+    }));
+  }
+
+  /**
+   * Public lookup: given a course id, find its instructor and return that
+   * instructor's approved+published reviews across every course they teach.
+   * Used by the public course-detail Reviews toggle ("Instructor" tab).
+   * Each card carries a courseTitle chip for cross-course context.
+   */
+  async getInstructorAggregatedRatingsByCourse(
+    courseId: string,
+    params: { limit?: number } = {},
+  ) {
+    const [course] = await db
+      .select({ instructorId: courses.instructorId })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+    if (!course?.instructorId) {
+      return { data: [], avgRating: 0, totalRatings: 0 };
+    }
+    return this.listReviewsForInstructor(course.instructorId, params);
+  }
+
+  /**
+   * All approved instructor reviews for a given instructor, across every
+   * course they teach. Used by the manager instructor side-sheet — each
+   * card carries the courseTitle so the manager can see which course the
+   * review came from. Approved + published only (matches public semantics).
+   */
+  async listReviewsForInstructor(
+    instructorId: string,
+    params: { limit?: number } = {},
+  ) {
+    const limit = Math.min(100, Math.max(1, params.limit || 50));
+    const rows = await db
+      .select({
+        id: instructorRatings.id,
+        courseId: instructorRatings.courseId,
+        courseTitle: courses.title,
+        courseTitleAr: courses.titleAr,
+        rating: instructorRatings.rating,
+        reviewText: instructorRatings.reviewText,
+        createdAt: instructorRatings.createdAt,
+        studentFirstName: users.firstName,
+        studentLastName: users.lastName,
+      })
+      .from(instructorRatings)
+      .innerJoin(courses, eq(instructorRatings.courseId, courses.id))
+      .innerJoin(users, eq(instructorRatings.studentId, users.id))
+      .where(
+        and(
+          eq(instructorRatings.instructorId, instructorId),
+          eq(instructorRatings.moderationStatus, 'approved'),
+          eq(instructorRatings.isPublished, true),
+        ),
+      )
+      .orderBy(desc(instructorRatings.createdAt))
+      .limit(limit);
+
+    const [statsRow] = await db
+      .select({
+        avgRating: sql<number>`COALESCE(AVG(${instructorRatings.rating}), 0)`,
+        totalRatings: count(),
+      })
+      .from(instructorRatings)
+      .where(
+        and(
+          eq(instructorRatings.instructorId, instructorId),
+          eq(instructorRatings.moderationStatus, 'approved'),
+          eq(instructorRatings.isPublished, true),
+        ),
+      );
+
+    return {
+      data: rows.map((r) => ({
+        id: r.id,
+        courseId: r.courseId,
+        courseTitle: r.courseTitle,
+        courseTitleAr: r.courseTitleAr,
+        rating: r.rating,
+        reviewText: r.reviewText,
+        createdAt: r.createdAt,
+        studentName:
+          `${r.studentFirstName || ''} ${r.studentLastName || ''}`.trim() ||
+          'Anonymous',
+      })),
+      avgRating: Number(Number(statsRow?.avgRating || 0).toFixed(1)),
+      totalRatings: Number(statsRow?.totalRatings || 0),
+    };
+  }
+
+  /**
+   * Public instructor profile + their public courses + recent reviews.
+   * 404s if the user has zero public-visible courses — protects against
+   * arbitrary user IDs being probed via the URL.
+   */
+  async findInstructorPublicProfile(instructorId: string) {
+    const [profile] = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        firstNameAr: users.firstNameAr,
+        lastNameAr: users.lastNameAr,
+        avatar: users.avatar,
+        bio: users.bio,
+        specialty: users.specialty,
+        profession: users.profession,
+        qualification: users.qualification,
+        twitter: users.twitter,
+        linkedin: users.linkedin,
+      })
+      .from(users)
+      .where(eq(users.id, instructorId))
+      .limit(1);
+
+    if (!profile) {
+      throw new NotFoundException('Instructor not found');
+    }
+
+    // Public courses for this instructor (active or completed, visible)
+    const courseRows = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        titleAr: courses.titleAr,
+        description: courses.description,
+        descriptionAr: courses.descriptionAr,
+        deliveryType: courses.deliveryType,
+        status: courses.status,
+        thumbnail: courses.thumbnail,
+        maxEnrollment: courses.maxEnrollment,
+        price: courses.price,
+        cmeHours: courses.cmeHours,
+        enrollmentDeadline: courses.enrollmentDeadline,
+        isCmeAccredited: courses.isCmeAccredited,
+        language: courses.language,
+        startDate: courses.startDate,
+        endDate: courses.endDate,
+        enrolledCount: sql<number>`(
+          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped'
+        )`.mapWith(Number),
+        totalHours: sql<number>`(
+          COALESCE((SELECT SUM(cm.duration_minutes) FROM course_modules cm WHERE cm.course_id = "courses"."id"), 0)
+          + COALESCE((SELECT SUM(s.duration_minutes) FROM sessions s WHERE s.course_id = "courses"."id"), 0)
+        )`.mapWith(Number),
+        avgRating: sql<number>`(
+          SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = "courses"."id" AND cr.is_published = true
+        )`.mapWith(Number),
+        totalRatings: sql<number>`(
+          SELECT COUNT(*) FROM course_ratings cr WHERE cr.course_id = "courses"."id" AND cr.is_published = true
+        )`.mapWith(Number),
+      })
+      .from(courses)
+      .where(
+        and(
+          eq(courses.instructorId, instructorId),
+          eq(courses.visibleOnPublicSite, true),
+          or(
+            eq(courses.status, COURSE_STATUS.ACTIVE),
+            eq(courses.status, COURSE_STATUS.COMPLETED),
+          ),
+        ),
+      )
+      .orderBy(desc(courses.startDate));
+
+    // Guard against arbitrary user-ID probing: only surface a profile
+    // if this person actually teaches a public course.
+    if (courseRows.length === 0) {
+      throw new NotFoundException('Instructor not found');
+    }
+
+    const now = new Date();
+    const enrichedCourses = courseRows.map((c) => {
+      const isSelfPaced = c.deliveryType === 'self-paced';
+      let effectiveMax: number | null;
+      if (isSelfPaced) {
+        effectiveMax = c.maxEnrollment ?? null;
+      } else {
+        const classification = classifyCourse(c.startDate, c.endDate);
+        effectiveMax = c.maxEnrollment ?? getNelcMaxEnrollment(classification);
+      }
+      const remainingSeats =
+        effectiveMax !== null ? Math.max(0, effectiveMax - c.enrolledCount) : null;
+      const isFull = effectiveMax !== null ? remainingSeats === 0 : false;
+      const deadlinePassed = !!(
+        c.enrollmentDeadline && new Date(c.enrollmentDeadline) <= now
+      );
+      let availabilityStatus: 'open' | 'completed' | 'full' | 'deadline_passed';
+      if (c.status === 'completed') {
+        availabilityStatus = 'completed';
+      } else if (deadlinePassed) {
+        availabilityStatus = 'deadline_passed';
+      } else if (isFull) {
+        availabilityStatus = 'full';
+      } else {
+        availabilityStatus = 'open';
+      }
+      return {
+        ...c,
+        totalHours: Math.round((c.totalHours / 60) * 10) / 10,
+        avgRating: Number(Number(c.avgRating || 0).toFixed(1)),
+        price: c.price ? Number(c.price) : 0,
+        remainingSeats,
+        isFull,
+        availabilityStatus,
+      };
+    });
+
+    // Aggregate stats across the instructor's whole teaching history
+    const courseIds = courseRows.map((c) => c.id);
+    const [studentRow] = await db
+      .select({
+        totalStudents: sql<number>`COUNT(DISTINCT ${enrollments.studentId})`.mapWith(Number),
+      })
+      .from(enrollments)
+      .where(
+        and(
+          inArray(enrollments.courseId, courseIds),
+          sql`${enrollments.status} != 'dropped'`,
+        ),
+      );
+
+    const [ratingRow] = await db
+      .select({
+        avgRating: sql<number>`COALESCE(AVG(${instructorRatings.rating}), 0)`,
+        totalRatings: count(),
+      })
+      .from(instructorRatings)
+      .where(
+        and(
+          eq(instructorRatings.instructorId, instructorId),
+          eq(instructorRatings.moderationStatus, 'approved'),
+          eq(instructorRatings.isPublished, true),
+        ),
+      );
+
+    const reviews = await this.listReviewsForInstructor(instructorId, { limit: 20 });
+
+    return {
+      ...profile,
+      stats: {
+        totalCourses: courseRows.length,
+        totalStudents: Number(studentRow?.totalStudents || 0),
+        avgRating: Number(Number(ratingRow?.avgRating || 0).toFixed(1)),
+        totalRatings: Number(ratingRow?.totalRatings || 0),
+      },
+      courses: enrichedCourses,
+      reviews,
     };
   }
 }

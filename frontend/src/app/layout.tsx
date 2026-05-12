@@ -3,6 +3,8 @@ import { DM_Sans, Noto_Sans_Arabic } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { getSiteSettings, getStrapiMediaUrl } from "@/lib/strapi";
+import JsonLd from "@/components/seo/JsonLd";
+import { organizationLD } from "@/lib/structured-data";
 
 const META_PIXEL_ID = "1956469491660011";
 const GA4_ID = "G-Z9DZXJQCWY";
@@ -116,10 +118,26 @@ export default async function RootLayout({
 
   const themeStyle = `:root{--color-primary:${theme.primary};--color-primary-dark:${theme.primaryDark};--color-surface-page:${theme.surfacePage};--color-surface-card:${theme.surfaceCard};--color-text-primary:${theme.textPrimary};--color-text-secondary:${theme.textSecondary};--color-border:${theme.borderColor};--color-border-subtle:${theme.borderSubtle};--color-input-border:${theme.inputBorder};--color-input-focus:${theme.inputFocus};--color-icon:${theme.iconColor};--color-footer-bg:${theme.footerBackground};--color-button-text:${theme.buttonText};--color-navbar-bg:${theme.navbarBackground};--color-navbar-text:${theme.navbarText};--color-footer-heading:${theme.footerHeading};--color-footer-text:${theme.footerText};--color-star:${theme.starColor};--color-star-border:${theme.starBorder};}`;
 
+  // Site-wide Organization LD — emitted once, at the document root, so
+  // search engines associate every page back to the same publisher.
+  const orgLogo = settings?.logo?.url ? getStrapiMediaUrl(settings.logo.url) : null;
+  const orgSameAs = [
+    settings?.facebookUrl,
+    settings?.twitterUrl,
+    settings?.linkedinUrl,
+    settings?.instagramUrl,
+  ].filter((u): u is string => !!u);
+  const orgLd = organizationLD({
+    name: settings?.siteName || undefined,
+    logoUrl: orgLogo,
+    sameAs: orgSameAs.length ? orgSameAs : undefined,
+  });
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <style dangerouslySetInnerHTML={{ __html: themeStyle }} />
+        <JsonLd id="ld-organization" data={orgLd} />
       </head>
       <body className={`${dmSans.variable} ${notoSansArabic.variable} antialiased`}>
         <noscript>

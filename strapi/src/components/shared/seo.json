@@ -1,0 +1,54 @@
+{
+  "collectionName": "components_shared_seos",
+  "info": {
+    "displayName": "SEO",
+    "description": "Per-page SEO metadata, Open Graph, Twitter card, canonical URL, and robots noindex toggle"
+  },
+  "options": {},
+  "attributes": {
+    "metaTitle": {
+      "type": "string",
+      "maxLength": 150
+    },
+    "metaDescription": {
+      "type": "text",
+      "maxLength": 300
+    },
+    "keywords": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "ogImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "ogTitle": {
+      "type": "string",
+      "maxLength": 150
+    },
+    "ogDescription": {
+      "type": "text",
+      "maxLength": 300
+    },
+    "canonicalUrl": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "noindex": {
+      "type": "boolean",
+      "default": false
+    },
+    "twitterCard": {
+      "type": "enumeration",
+      "enum": [
+        "summary",
+        "summary_large_image"
+      ],
+      "default": "summary_large_image"
+    }
+  }
+}

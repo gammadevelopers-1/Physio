@@ -1,4 +1,5 @@
-import { IsEmail, IsString, MinLength, MaxLength, IsOptional, Matches } from 'class-validator';
+import { IsEmail, IsString, MinLength, MaxLength, IsOptional, Matches, IsNotEmpty } from 'class-validator';
+import { IsSaudiNationalId } from '../../../common/validators/saudi-national-id.validator';
 
 export class RegisterDto {
   @IsEmail({}, { message: 'Please provide a valid email' })
@@ -31,6 +32,14 @@ export class RegisterDto {
   @IsString()
   @MaxLength(50)
   scfhsNumber?: string;
+
+  // National ID / Iqama — required at student registration.
+  // Validated as a 10-digit KSA ID with Luhn-style checksum. Once set,
+  // the user cannot change it via update-profile (one-time field).
+  @IsString()
+  @IsNotEmpty({ message: 'National ID / Iqama is required' })
+  @IsSaudiNationalId({ message: 'Invalid Saudi National ID / Iqama number' })
+  nationalId: string;
 
   @IsOptional()
   @IsString()

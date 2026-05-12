@@ -40,7 +40,16 @@ function getRelativeTime(
   return t("daysAgo", { d: diffDays });
 }
 
-export default function NotificationBell() {
+interface NotificationBellProps {
+  /**
+   * Optional set of notification `type` values to surface. When set, only those types
+   * appear in the dropdown and contribute to the unread badge count.
+   * Used by the student dashboard to hide instructor/manager-oriented notifications.
+   */
+  typeAllowlist?: readonly string[];
+}
+
+export default function NotificationBell({ typeAllowlist }: NotificationBellProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -53,7 +62,7 @@ export default function NotificationBell() {
     markAllAsRead,
     clearAll,
     refetch,
-  } = useNotifications();
+  } = useNotifications({ typeAllowlist });
 
   // Close on outside click
   useEffect(() => {

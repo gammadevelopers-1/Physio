@@ -44,6 +44,15 @@ export const courses = pgTable(
     atRiskInactivityDays: integer('at_risk_inactivity_days').default(7),
     // Cohort
     cohort: varchar('cohort', { length: 100 }),
+    // Optional accreditation number (e.g. "ACA-20260000133").
+    // When set, surfaced on every course-detail view AND embedded on the
+    // issued certificate. When null/empty, hidden everywhere — no labels.
+    accreditationNumber: varchar('accreditation_number', { length: 100 }),
+    // External NELC (National eLearning Center) program-evaluation URL.
+    // Surfaced on the student course-detail page above the certificate
+    // button after completion — students click through to NELC's hosted
+    // form. Stored verbatim; never validated, transformed, or proxied.
+    nelcReviewLink: varchar('nelc_review_link', { length: 500 }),
     // Course content fields (managed by course manager)
     overview: text('overview'),
     overviewAr: text('overview_ar'),
@@ -59,10 +68,25 @@ export const courses = pgTable(
     noticesAr: text('notices_ar'),
     venue: varchar('venue', { length: 255 }),
     venueAr: varchar('venue_ar', { length: 255 }),
+    // Per-course FAQ list — only rendered for zoom/online courses.
+    // Each item is { question, questionAr, answer, answerAr }.
+    faqs: jsonb('faqs').$type<Array<{
+      question?: string;
+      questionAr?: string;
+      answer?: string;
+      answerAr?: string;
+    }>>(),
     showContents: boolean('show_contents').default(true),
     sectionsOrder: jsonb('sections_order').$type<string[]>(),
     visibleOnPublicSite: boolean('visible_on_public_site').default(true).notNull(),
     isFeatured: boolean('is_featured').default(false).notNull(),
+    // Per-course SEO overrides. Empty fields fall back to title /
+    // description / thumbnail in the metadata helper.
+    seoTitle: varchar('seo_title', { length: 150 }),
+    seoDescription: varchar('seo_description', { length: 300 }),
+    seoKeywords: varchar('seo_keywords', { length: 500 }),
+    seoOgImage: varchar('seo_og_image', { length: 500 }),
+    seoNoindex: boolean('seo_noindex').default(false),
     // Course-level assessment defaults (per-assessment can override)
     assessmentProctoringEnabled: boolean('assessment_proctoring_enabled').default(false),
     assessmentTimeLimitEnforced: boolean('assessment_time_limit_enforced').default(true),

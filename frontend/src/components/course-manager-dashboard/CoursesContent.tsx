@@ -21,6 +21,7 @@ import {
   Video,
   MapPin,
   BookOpen,
+  ChevronLeft,
   ChevronRight,
   BarChart3,
   Settings,
@@ -82,7 +83,15 @@ const CoursesContent = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [deliveryFilter, setDeliveryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  // Reset to page 1 whenever filters or search change so the user always
+  // lands on the first page of new results, not an out-of-range page.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, deliveryFilter, sortBy, searchQuery]);
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -97,13 +106,13 @@ const CoursesContent = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const { courses, total, loading, error, refetch } = useCourseManagerCourses({
+  const { courses, total, totalPages, loading, error, refetch } = useCourseManagerCourses({
     status: statusFilter,
     delivery: deliveryFilter,
     search: searchQuery,
     sort: sortBy,
-    page: 1,
-    limit: 50,
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
   });
 
   const [requestChangesId, setRequestChangesId] = useState<string | null>(null);
@@ -424,9 +433,13 @@ const CoursesContent = () => {
                     return (
                       <div
                         key={course.id}
-                        className="group bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col"
+                        className="group relative bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col"
                       >
-                        <div className="relative w-full aspect-[16/9] bg-[var(--color-surface-page)] overflow-hidden">
+                        {/* `overflow-hidden` lives only on the thumbnail so it
+                            doesn't clip the action dropdown menu, which extends
+                            below this box. The outer card is `relative` so the
+                            dropdown stays anchored to the card. */}
+                        <div className="relative w-full aspect-[16/9] bg-[var(--color-surface-page)] overflow-hidden rounded-t-2xl">
                           {hasThumb ? (
                             <Image
                               src={thumbnailSrc}
@@ -461,9 +474,15 @@ const CoursesContent = () => {
                               {t(`coursesPage.delivery.${course.deliveryType}`)}
                             </span>
                           </div>
-                          {/* Context-aware action dropdown */}
-                          {(course.status === "draft" || course.status === "pending_review" || course.status === "active" || course.status === "completed") && (
-                          <div className={`absolute top-3 ${isRTL ? "left-3" : "right-3"}`} ref={openDropdown === course.id ? dropdownRef : undefined}>
+                        </div>
+
+                        {/* Context-aware action dropdown — lifted OUT of the
+                            thumbnail box (which has overflow-hidden) so the
+                            menu can extend below the thumbnail without being
+                            clipped by the next card. Anchored to the outer
+                            card via `relative` set on its root. */}
+                        {(course.status === "draft" || course.status === "pending_review" || course.status === "active" || course.status === "completed") && (
+                          <div className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} z-30`} ref={openDropdown === course.id ? dropdownRef : undefined}>
                             <button
                               onClick={() => setOpenDropdown(openDropdown === course.id ? null : course.id)}
                               disabled={statusLoading === course.id}
@@ -480,7 +499,7 @@ const CoursesContent = () => {
                             </button>
 
                             {openDropdown === course.id && (
-                              <div className="absolute end-0 top-full mt-1 w-48 bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] shadow-lg z-20" role="menu">
+                              <div className="absolute end-0 top-full mt-1 w-48 bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] shadow-lg z-30" role="menu">
                                 <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
                                   {t("coursesPage.actions.title")}
                                 </p>
@@ -617,8 +636,7 @@ const CoursesContent = () => {
                               </div>
                             )}
                           </div>
-                          )}
-                        </div>
+                        )}
 
                         <div className="p-4 flex flex-col flex-1">
                           <div className="flex items-center gap-2 mb-1">
@@ -729,6 +747,57 @@ const CoursesContent = () => {
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {/* Pagination */}
+              {!loading && !error && totalPages > 1 && (
+                <div className={`flex items-center justify-between mt-6 ${isRTL ? "flex-row-reverse" : ""}`}>
+                  <p className="text-sm text-[var(--color-text-secondary)]">
+                    {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
+                    {Math.min(currentPage * ITEMS_PER_PAGE, total)} / {total}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      aria-label={tA("previousPage") || "Previous page"}
+                    >
+                      {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+                    </button>
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum: number;
+                      if (totalPages <= 5) pageNum = i + 1;
+                      else if (currentPage <= 3) pageNum = i + 1;
+                      else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                      else pageNum = currentPage - 2 + i;
+                      return (
+                        <button
+                          key={pageNum}
+                          type="button"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`w-9 h-9 rounded-lg text-sm font-medium cursor-pointer ${
+                            pageNum === currentPage
+                              ? "bg-[var(--color-primary)] text-white"
+                              : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      aria-label={tA("nextPage") || "Next page"}
+                    >
+                      {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
               )}
 

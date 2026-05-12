@@ -319,8 +319,18 @@ const SessionsContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const { calendarFormat, setCalendarFormat } = useCalendarPreference();
-  const useHijri = calendarFormat === "hijri";
+  // Global preference still drives the list-view date formatting. The
+  // calendar grid below has its own local toggle so flipping it doesn't
+  // bleed into every date picker / list across the dashboard.
+  const { calendarFormat } = useCalendarPreference();
+  const settingDefault: "hijri" | "gregorian" =
+    calendarFormat === "hijri" ? "hijri" : "gregorian";
+  const [calendarView, setCalendarView] = useState<"hijri" | "gregorian">(settingDefault);
+  const [calendarViewTouched, setCalendarViewTouched] = useState(false);
+  useEffect(() => {
+    if (!calendarViewTouched) setCalendarView(settingDefault);
+  }, [settingDefault, calendarViewTouched]);
+  const useHijri = calendarView === "hijri";
   const manager = useManagerProfile();
   const [viewMode, setViewMode] = useState<"calendar" | "list">("list");
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -1044,12 +1054,29 @@ const SessionsContent = () => {
                     <button onClick={goToNextMonth} className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg">{isRTL ? <ChevronLeft className="w-5 h-5 text-[var(--color-text-secondary)]" /> : <ChevronRight className="w-5 h-5 text-[var(--color-text-secondary)]" />}</button>
                   </div>
                   <div className="flex items-center justify-end px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
-                    <button
-                      onClick={() => setCalendarFormat(useHijri ? "gregorian" : "hijri")}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border border-[var(--color-border)] hover:bg-[var(--color-surface-card)] transition-colors text-[var(--color-text-secondary)]"
-                    >
-                      {useHijri ? (t("sessionsPage.gregorian") || "Gregorian") : (t("sessionsPage.hijri") || "Hijri")}
-                    </button>
+                    {/* Local-only calendar toggle. Does not mutate the user's
+                        global preference nor any other date picker. */}
+                    <div className="inline-flex bg-[var(--color-border-subtle)] rounded-md p-0.5">
+                      {(["gregorian", "hijri"] as const).map((opt) => (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => {
+                            setCalendarViewTouched(true);
+                            setCalendarView(opt);
+                          }}
+                          className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                            calendarView === opt
+                              ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
+                              : "text-[var(--color-text-secondary)]"
+                          }`}
+                        >
+                          {opt === "gregorian"
+                            ? (t("sessionsPage.gregorian") || (isRTL ? "ميلادي" : "Gregorian"))
+                            : (t("sessionsPage.hijri") || (isRTL ? "هجري" : "Hijri"))}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div className="grid grid-cols-7">
                     {dayNames.map((day) => (<div key={day} className="p-3 text-center text-xs font-medium text-[var(--color-text-secondary)] border-b border-[var(--color-border)]">{day}</div>))}

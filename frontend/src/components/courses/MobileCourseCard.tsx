@@ -11,9 +11,13 @@ import {
   ArrowLeft,
   Star,
   Users,
+  Heart,
 } from "lucide-react";
 import { PublicCourse } from "@/types/instructor-dashboard";
 import { useTranslations, useLocale } from "next-intl";
+import { useRouter, usePathname } from "next/navigation";
+import { useFavourites } from "@/contexts/FavouritesContext";
+import { useAuth } from "@/contexts";
 
 interface MobileCourseCardProps {
   course: PublicCourse;
@@ -32,7 +36,12 @@ const MobileCourseCard = ({
   isRTL = false,
 }: MobileCourseCardProps) => {
   const t = useTranslations("coursesPage");
+  const tFav = useTranslations("studentDashboard.favourites");
   const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
+  const { isFavourite, toggleFavourite } = useFavourites();
 
   const title = isRTL && course.titleAr ? course.titleAr : course.title;
   const description =
@@ -90,6 +99,28 @@ const MobileCourseCard = ({
 
   const initial = (title || "?").trim().charAt(0).toUpperCase();
 
+  const favourited = isAuthenticated && isFavourite(course.id);
+  const handleFavouriteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      const redirect = encodeURIComponent(pathname || `/${locale}/courses`);
+      router.push(`/${locale}/signin?redirect=${redirect}`);
+      return;
+    }
+    toggleFavourite({
+      id: course.id,
+      title,
+      thumbnail: course.thumbnail || "",
+      progress: 0,
+      status: "not_started",
+      price: course.price ?? 0,
+      cmeHours: course.cmeHours ?? 0,
+      isCmeAccredited: course.isCmeAccredited ?? false,
+      deliveryType: course.deliveryType,
+    });
+  };
+
   return (
     <Link
       href={`/courses/${course.id}`}
@@ -101,7 +132,7 @@ const MobileCourseCard = ({
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={course.thumbnail}
-            alt=""
+            alt={course.title}
             className={`w-full h-full object-cover object-top ${isEnded ? "grayscale opacity-70" : ""}`}
           />
         ) : (
@@ -125,6 +156,19 @@ const MobileCourseCard = ({
             {overlayLabel}
           </div>
         )}
+
+        {/* Favourite toggle (top-start) */}
+        <button
+          type="button"
+          onClick={handleFavouriteClick}
+          aria-label={favourited ? tFav("removeFromFavourites") : tFav("addToFavourites")}
+          aria-pressed={favourited}
+          className={`absolute top-3 ${isRTL ? "right-3" : "left-3"} w-8 h-8 bg-[var(--color-surface-card)] rounded-full flex items-center justify-center shadow-md hover:bg-[var(--color-border-subtle)] transition-colors z-10 cursor-pointer`}
+        >
+          <Heart
+            className={`w-4 h-4 ${favourited ? "text-red-500 fill-red-500" : "text-[var(--color-icon)]"}`}
+          />
+        </button>
 
         {/* Delivery pill (bottom-start) */}
         <div className={`absolute bottom-3 ${isRTL ? "right-3" : "left-3"}`}>

@@ -4,7 +4,8 @@ import { useState, useEffect, Suspense, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import AuthNavbar from "@/components/AuthNavbar";
+import Navbar from "@/components/Navbar";
+import { useNavbarChrome } from "@/hooks/useNavbarChrome";
 import Footer from "@/components/Footer";
 import { useTranslations, useLocale } from "next-intl";
 import { authApi } from "@/lib/api";
@@ -14,6 +15,7 @@ import { Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 function ResetPasswordForm() {
   const t = useTranslations("resetPasswordPage");
   const locale = useLocale();
+  const chrome = useNavbarChrome();
   const isRTL = locale === "ar";
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -124,7 +126,7 @@ function ResetPasswordForm() {
   if (!email) {
     return (
       <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
-        <AuthNavbar />
+        <Navbar siteSettings={chrome.siteSettings} navLinks={chrome.navLinks} footerLinks={chrome.footerLinks} />
         <main className="flex-1 bg-[var(--color-surface-page)] flex items-center justify-center">
           <div className="text-center">
             <p className="text-[var(--color-text-secondary)] mb-4">{t("noEmail")}</p>
@@ -143,7 +145,7 @@ function ResetPasswordForm() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
-      <AuthNavbar />
+      <Navbar siteSettings={chrome.siteSettings} navLinks={chrome.navLinks} footerLinks={chrome.footerLinks} />
 
       <main
         id="main-content"

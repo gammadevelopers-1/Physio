@@ -28,6 +28,7 @@ import {
 import DatePicker from "@/components/ui/DatePicker";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
+import { normalizeAndValidateUrl } from "@/lib/url-validation";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
@@ -172,6 +173,11 @@ const CreateCourseContent = () => {
   const [requirementsAr, setRequirementsAr] = useState("");
   const [notices, setNotices] = useState("");
   const [noticesAr, setNoticesAr] = useState("");
+  // FAQs — only rendered for zoom (online) courses on the student detail
+  // page. Each item is bilingual; missing translations fall back to the
+  // counterpart locale at render time.
+  type FaqDraft = { question: string; questionAr: string; answer: string; answerAr: string };
+  const [faqs, setFaqs] = useState<FaqDraft[]>([]);
 
   // Step 3: Schedule & Pricing
   const [startDate, setStartDate] = useState("");
@@ -179,6 +185,9 @@ const CreateCourseContent = () => {
   const [maxEnrollment, setMaxEnrollment] = useState("");
   const [cmeHours, setCmeHours] = useState("");
   const [cohort, setCohort] = useState("");
+  const [accreditationNumber, setAccreditationNumber] = useState("");
+  const [nelcReviewLink, setNelcReviewLink] = useState("");
+  const [nelcReviewLinkError, setNelcReviewLinkError] = useState<string | null>(null);
   const [price, setPrice] = useState("");
   const [venue, setVenue] = useState("");
   const [venueAr, setVenueAr] = useState("");
@@ -292,8 +301,10 @@ const CreateCourseContent = () => {
           toast.error(t("createCourse.startDate") + " must not be in the past");
           return false;
         }
-        if (endDate <= startDate) {
-          toast.error(t("createCourse.endDate") + " must be after " + t("createCourse.startDate"));
+        // Allow same-day courses (endDate === startDate) — single-session
+        // workshops are common. Only reject when end is strictly before start.
+        if (endDate < startDate) {
+          toast.error(t("createCourse.endDate") + " cannot be before " + t("createCourse.startDate"));
           return false;
         }
         return true;
@@ -335,6 +346,15 @@ const CreateCourseContent = () => {
   const handleSubmit = async () => {
     if (!validateStep(1) || !validateStep(2) || !validateStep(3) || !validateStep(4)) return;
 
+    // NELC evaluation link — optional, but if filled must be a valid URL.
+    const nelcLinkResult = normalizeAndValidateUrl(nelcReviewLink);
+    if (!nelcLinkResult.valid) {
+      setNelcReviewLinkError(t("createCourse.nelcReviewLinkInvalid"));
+      toast.error(t("createCourse.nelcReviewLinkInvalid"));
+      return;
+    }
+    setNelcReviewLinkError(null);
+
     const cleanArray = (arr: string[]) => arr.filter(s => s.trim()).map(s => s.trim());
 
     setSubmitting(true);
@@ -356,6 +376,8 @@ const CreateCourseContent = () => {
       if (startDate) payload.startDate = new Date(startDate).toISOString();
       if (endDate) payload.endDate = new Date(endDate).toISOString();
       if (cohort.trim()) payload.cohort = cohort.trim();
+      if (accreditationNumber.trim()) payload.accreditationNumber = accreditationNumber.trim();
+      if (nelcLinkResult.normalized) payload.nelcReviewLink = nelcLinkResult.normalized;
 
       // Content Details fields
       if (overview.trim()) payload.overview = overview.trim();
@@ -376,6 +398,18 @@ const CreateCourseContent = () => {
       if (requirementsAr.trim()) payload.requirementsAr = requirementsAr.trim();
       if (notices.trim()) payload.notices = notices.trim();
       if (noticesAr.trim()) payload.noticesAr = noticesAr.trim();
+      // Only persist FAQs for zoom courses; drop empty rows.
+      if (deliveryType === 'zoom') {
+        const cleanedFaqs = faqs
+          .map((f) => ({
+            question: f.question.trim(),
+            questionAr: f.questionAr.trim(),
+            answer: f.answer.trim(),
+            answerAr: f.answerAr.trim(),
+          }))
+          .filter((f) => (f.question || f.questionAr) && (f.answer || f.answerAr));
+        if (cleanedFaqs.length) payload.faqs = cleanedFaqs;
+      }
 
       // Pricing & venue fields
       if (venue.trim()) payload.venue = venue.trim();
@@ -841,6 +875,93 @@ const CreateCourseContent = () => {
                         />
                       </div>
 
+                      {/* FAQs — zoom (online) courses only */}
+                      {deliveryType === 'zoom' && (
+                        <div className="pt-3 border-t border-[var(--color-border)]">
+                          <div className="flex items-baseline justify-between mb-2">
+                            <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
+                              {t("createCourse.faqsTitle")}
+                            </h4>
+                            <p className="text-xs text-[var(--color-text-secondary)]">
+                              {t("createCourse.faqsHint")}
+                            </p>
+                          </div>
+                          {faqs.map((faq, i) => (
+                            <div key={i} className="mb-4 rounded-lg border border-[var(--color-border)] p-3 bg-[var(--color-surface-page)]">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-medium text-[var(--color-text-secondary)]">
+                                  {t("createCourse.faqItemLabel")} {i + 1}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setFaqs(faqs.filter((_, j) => j !== i))}
+                                  className="text-red-500 text-xs hover:underline"
+                                >
+                                  {t("createCourse.removeFaq")}
+                                </button>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                                <input
+                                  type="text"
+                                  value={faq.question}
+                                  onChange={(e) => {
+                                    const next = [...faqs];
+                                    next[i] = { ...next[i], question: e.target.value };
+                                    setFaqs(next);
+                                  }}
+                                  placeholder={t("createCourse.faqQuestionEnPlaceholder")}
+                                  className={inputClass}
+                                />
+                                <input
+                                  type="text"
+                                  value={faq.questionAr}
+                                  onChange={(e) => {
+                                    const next = [...faqs];
+                                    next[i] = { ...next[i], questionAr: e.target.value };
+                                    setFaqs(next);
+                                  }}
+                                  placeholder={t("createCourse.faqQuestionArPlaceholder")}
+                                  dir="rtl"
+                                  className={inputClass}
+                                />
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                <textarea
+                                  value={faq.answer}
+                                  onChange={(e) => {
+                                    const next = [...faqs];
+                                    next[i] = { ...next[i], answer: e.target.value };
+                                    setFaqs(next);
+                                  }}
+                                  placeholder={t("createCourse.faqAnswerEnPlaceholder")}
+                                  rows={3}
+                                  className={`${inputClass} resize-none`}
+                                />
+                                <textarea
+                                  value={faq.answerAr}
+                                  onChange={(e) => {
+                                    const next = [...faqs];
+                                    next[i] = { ...next[i], answerAr: e.target.value };
+                                    setFaqs(next);
+                                  }}
+                                  placeholder={t("createCourse.faqAnswerArPlaceholder")}
+                                  rows={3}
+                                  dir="rtl"
+                                  className={`${inputClass} resize-none`}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => setFaqs([...faqs, { question: "", questionAr: "", answer: "", answerAr: "" }])}
+                            className="text-sm text-[var(--color-primary)] hover:underline"
+                          >
+                            {t("createCourse.addFaq")}
+                          </button>
+                        </div>
+                      )}
+
                       {/* Show Contents toggle — only for self-paced and blended */}
                       {(deliveryType === 'self-paced' || deliveryType === 'blended') && (
                         <div className="pt-3 border-t border-[var(--color-border)]">
@@ -975,6 +1096,67 @@ const CreateCourseContent = () => {
                         <p className="text-xs text-[var(--color-text-secondary)] mt-1">
                           {t("createCourse.cohortHint")}
                         </p>
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="accreditation-number"
+                          className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1"
+                        >
+                          {t("createCourse.accreditationNumber")}
+                        </label>
+                        <input
+                          id="accreditation-number"
+                          type="text"
+                          value={accreditationNumber}
+                          onChange={(e) => setAccreditationNumber(e.target.value)}
+                          placeholder={t("createCourse.accreditationNumberPlaceholder")}
+                          maxLength={100}
+                          className={inputClass}
+                        />
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                          {t("createCourse.accreditationNumberHint")}
+                        </p>
+                      </div>
+                      <div className="md:col-span-2">
+                        <label
+                          htmlFor="nelc-review-link"
+                          className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1"
+                        >
+                          {t("createCourse.nelcReviewLink")}
+                        </label>
+                        <input
+                          id="nelc-review-link"
+                          type="url"
+                          value={nelcReviewLink}
+                          onChange={(e) => {
+                            setNelcReviewLink(e.target.value);
+                            if (nelcReviewLinkError) setNelcReviewLinkError(null);
+                          }}
+                          onBlur={() => {
+                            const result = normalizeAndValidateUrl(nelcReviewLink);
+                            if (result.valid && result.normalized && result.normalized !== nelcReviewLink) {
+                              setNelcReviewLink(result.normalized);
+                            }
+                            setNelcReviewLinkError(
+                              result.valid ? null : t("createCourse.nelcReviewLinkInvalid"),
+                            );
+                          }}
+                          placeholder={t("createCourse.nelcReviewLinkPlaceholder")}
+                          maxLength={500}
+                          className={`${inputClass} ${nelcReviewLinkError ? "border-red-500 focus:ring-red-500" : ""}`}
+                          dir="ltr"
+                          aria-invalid={!!nelcReviewLinkError}
+                          aria-describedby={nelcReviewLinkError ? "nelc-review-link-error" : undefined}
+                        />
+                        {nelcReviewLinkError ? (
+                          <p id="nelc-review-link-error" className="text-xs text-red-600 mt-1">
+                            {nelcReviewLinkError}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                            {t("createCourse.nelcReviewLinkHint")}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <label htmlFor="price" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
@@ -1532,6 +1714,26 @@ const CreateCourseContent = () => {
                               </dt>
                               <dd className="font-medium text-[var(--color-text-primary)]">
                                 {cohort}
+                              </dd>
+                            </div>
+                          )}
+                          {accreditationNumber && (
+                            <div>
+                              <dt className="text-[var(--color-text-secondary)]">
+                                {t("createCourse.accreditationNumber")}
+                              </dt>
+                              <dd className="font-medium text-[var(--color-text-primary)]">
+                                {accreditationNumber}
+                              </dd>
+                            </div>
+                          )}
+                          {nelcReviewLink && (
+                            <div className="sm:col-span-2">
+                              <dt className="text-[var(--color-text-secondary)]">
+                                {t("createCourse.nelcReviewLink")}
+                              </dt>
+                              <dd className="font-medium text-[var(--color-text-primary)] break-all">
+                                {nelcReviewLink}
                               </dd>
                             </div>
                           )}

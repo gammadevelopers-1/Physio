@@ -1,11 +1,33 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PolicyPageLayout from "@/components/PolicyPageLayout";
 import { setRequestLocale } from "next-intl/server";
-import { getLearningPoliciesPageData } from "@/lib/strapi";
+import { getLearningPoliciesPage, getLearningPoliciesPageData, getSiteSettings, getStrapiMediaUrl } from "@/lib/strapi";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { getBlocksAtPosition } from "@/lib/strapi/block-utils";
 import type { SideLoadedData } from "@/lib/strapi/types";
+import { buildPageMetadata } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const [page, settings] = await Promise.all([
+    getLearningPoliciesPage(locale).catch(() => null),
+    getSiteSettings(locale).catch(() => null),
+  ]);
+  return buildPageMetadata({
+    locale,
+    path: "/policies",
+    page,
+    siteOgImageUrl: settings?.defaultOgImage?.url
+      ? getStrapiMediaUrl(settings.defaultOgImage.url)
+      : null,
+  });
+}
 
 export default async function LearningPolicies({
   params,

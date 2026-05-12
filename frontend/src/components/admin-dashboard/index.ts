@@ -20,3 +20,4 @@ export { default as LogsContent } from "./LogsContent";
 export { default as AdminSettingsContent } from "./AdminSettingsContent";
 export { default as RoleRequestsContent } from "./RoleRequestsContent";
 export { default as RoleRequestReviewContent } from "./RoleRequestReviewContent";
+export { default as PointsSystemContent } from "./PointsSystemContent";

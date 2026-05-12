@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import Link from "next/link";
 import {
   CourseCard,
   MobileCourseCard,
@@ -10,7 +11,7 @@ import {
 } from "@/components/courses";
 import { PublicCourse } from "@/types/instructor-dashboard";
 import { useTranslations, useLocale } from "next-intl";
-import { Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 
 const DELIVERY_TYPES = ["zoom", "onsite", "blended", "self-paced"];
 
@@ -43,6 +44,7 @@ const ArchivedPageContent = () => {
       if (availability) params.set("availability", availability);
       if (language) params.set("language", language);
       if (sortBy) params.set("sort", sortBy);
+      params.set("scope", "archived");
       params.set("limit", "100");
       const qs = params.toString();
       const res = await fetch(`/api/public-courses${qs ? `?${qs}` : ""}`);
@@ -136,16 +138,25 @@ const ArchivedPageContent = () => {
       <div className="hidden lg:block" dir={isRTL ? "rtl" : "ltr"}>
         <section className="px-16 py-12">
           <div className="max-w-[1200px] mx-auto">
-            <div className={`mb-8 ${isRTL ? "text-right" : "text-left"}`}>
-              <h1
-                className="font-semibold text-[var(--color-text-primary)] mb-2"
-                style={{ fontSize: "48px" }}
+            <div className="flex items-start justify-between gap-4 mb-8">
+              <div className={`${isRTL ? "text-right" : "text-left"}`}>
+                <h1
+                  className="font-semibold text-[var(--color-text-primary)] mb-2"
+                  style={{ fontSize: "48px" }}
+                >
+                  {t("title")}
+                </h1>
+                <p className="text-[var(--color-text-secondary)]" style={{ fontSize: "20px" }}>
+                  {t("subtitle")}
+                </p>
+              </div>
+              <Link
+                href={`/${locale}/courses`}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] transition-colors flex-shrink-0 mt-2"
               >
-                {t("title")}
-              </h1>
-              <p className="text-[var(--color-text-secondary)]" style={{ fontSize: "20px" }}>
-                {t("subtitle")}
-              </p>
+                {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+                {isRTL ? "تصفح الدورات النشطة" : "Browse active courses"}
+              </Link>
             </div>
 
             <div className="flex gap-8">
@@ -196,7 +207,7 @@ const ArchivedPageContent = () => {
         dir={isRTL ? "rtl" : "ltr"}
       >
         <section className="px-4 py-6 max-w-full">
-          <div className={`mb-6 ${isRTL ? "text-right" : "text-left"}`}>
+          <div className={`mb-3 ${isRTL ? "text-right" : "text-left"}`}>
             <h1
               className="font-semibold text-[var(--color-text-primary)] mb-1"
               style={{ fontSize: "24px" }}
@@ -205,6 +216,13 @@ const ArchivedPageContent = () => {
             </h1>
             <p className="text-[var(--color-text-secondary)] text-sm">{t("subtitle")}</p>
           </div>
+          <Link
+            href={`/${locale}/courses`}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--color-primary)] mb-4"
+          >
+            {isRTL ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
+            {isRTL ? "تصفح الدورات النشطة" : "Browse active courses"}
+          </Link>
 
           <CourseFilters {...filterProps} variant="mobile" />
 

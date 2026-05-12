@@ -1,5 +1,21 @@
 // Strapi API Response Types
 
+/** Per-page SEO component (shared.seo). All fields optional — use callers
+ *  should fall back to entity defaults (title/description/heroImage). */
+export interface SeoComponent {
+  id?: number;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  keywords?: string | null;
+  /** Strapi pages use the media object; NestJS course SEO uses a URL string. */
+  ogImage?: StrapiMedia | string | null;
+  ogTitle?: string | null;
+  ogDescription?: string | null;
+  canonicalUrl?: string | null;
+  noindex?: boolean | null;
+  twitterCard?: 'summary' | 'summary_large_image' | null;
+}
+
 export interface StrapiMedia {
   id: number;
   documentId: string;
@@ -57,9 +73,7 @@ export interface HomePage {
   id: number;
   documentId: string;
   blocks: DynamicZoneBlock[] | null;
-  metaTitle: string | null;
-  metaDescription: string | null;
-  ogImage: StrapiMedia | null;
+  seo?: SeoComponent | null;
   heroTitle: string;
   heroTitleLine2: string | null;
   heroTitleMobile: string | null;
@@ -119,9 +133,7 @@ export interface AboutPage {
   id: number;
   documentId: string;
   blocks: DynamicZoneBlock[] | null;
-  metaTitle: string | null;
-  metaDescription: string | null;
-  ogImage: StrapiMedia | null;
+  seo?: SeoComponent | null;
   heroTitle: string | null;
   heroDescription: string | null;
   heroExploreButtonLabel: string | null;
@@ -177,6 +189,16 @@ export interface SiteSettings {
   favicon: StrapiMedia | null;
   defaultOgImage: StrapiMedia | null;
   paymentMethods: PaymentMethodItem[] | null;
+  // Footer business + NELC info — all editable from Strapi, locale-aware
+  // for labels; numbers stay non-localized (same digits in both locales).
+  commercialRegistrationLabel: string | null;
+  commercialRegistrationNumber: string | null;
+  vatLabel: string | null;
+  vatNumber: string | null;
+  nelcLicenseText: string | null;
+  nelcLicenseLabel: string | null;
+  nelcLicenseNumber: string | null;
+  nelcLogo: StrapiMedia | null;
   themePrimaryColor: string | null;
   themePrimaryDark: string | null;
   themeSurfacePage: string | null;
@@ -273,9 +295,7 @@ export interface BecomeTrainerPage {
   id: number;
   documentId: string;
   blocks: DynamicZoneBlock[] | null;
-  metaTitle: string | null;
-  metaDescription: string | null;
-  ogImage: StrapiMedia | null;
+  seo?: SeoComponent | null;
   pageTitle: string;
   profileSectionTitle: string | null;
   profilePhotoLabel: string | null;
@@ -339,9 +359,7 @@ export interface PolicyPage {
   id: number;
   documentId: string;
   blocks: DynamicZoneBlock[] | null;
-  metaTitle: string | null;
-  metaDescription: string | null;
-  ogImage: StrapiMedia | null;
+  seo?: SeoComponent | null;
   title: string;
   lastUpdated: string | null;
   sections: PolicySection[];
@@ -355,9 +373,7 @@ export interface ContactPage {
   id: number;
   documentId: string;
   blocks: DynamicZoneBlock[] | null;
-  metaTitle: string | null;
-  metaDescription: string | null;
-  ogImage: StrapiMedia | null;
+  seo?: SeoComponent | null;
   title: string;
   subtitle: string | null;
   formFullNameLabel: string | null;
@@ -395,9 +411,7 @@ export interface FeedbackPage {
   id: number;
   documentId: string;
   blocks: DynamicZoneBlock[] | null;
-  metaTitle: string | null;
-  metaDescription: string | null;
-  ogImage: StrapiMedia | null;
+  seo?: SeoComponent | null;
   title: string;
   description: string | null;
   formFullNameLabel: string | null;
@@ -424,9 +438,7 @@ export interface CertificationsPage {
   id: number;
   documentId: string;
   blocks: DynamicZoneBlock[] | null;
-  metaTitle: string | null;
-  metaDescription: string | null;
-  ogImage: StrapiMedia | null;
+  seo?: SeoComponent | null;
   breadcrumb: string | null;
   heroTitle: string | null;
   heroDescription: string | null;
@@ -472,9 +484,7 @@ export interface NELCPage {
   id: number;
   documentId: string;
   blocks: DynamicZoneBlock[] | null;
-  metaTitle: string | null;
-  metaDescription: string | null;
-  ogImage: StrapiMedia | null;
+  seo?: SeoComponent | null;
   heroTitle: string | null;
   heroDescription: string | null;
   infoBadges: NELCInfoBadge[] | null;
@@ -493,6 +503,7 @@ export interface StrapiBlogCategory {
   documentId: string;
   title: string;
   slug: string;
+  seo?: SeoComponent | null;
   locale: string;
   createdAt: string;
   updatedAt: string;
@@ -511,6 +522,7 @@ export interface StrapiBlogPost {
   publishedDate: string | null;
   authorName: string | null;
   tags: string[] | null;
+  seo?: SeoComponent | null;
   category: StrapiBlogCategory | null;
   mainImage: StrapiMedia | null;
   order: number;
@@ -540,9 +552,7 @@ export interface PartnersPage {
   id: number;
   documentId: string;
   blocks: DynamicZoneBlock[] | null;
-  metaTitle: string | null;
-  metaDescription: string | null;
-  ogImage: StrapiMedia | null;
+  seo?: SeoComponent | null;
   title: string;
   locale: string;
   createdAt: string;
@@ -554,9 +564,7 @@ export interface InstructorsPage {
   id: number;
   documentId: string;
   blocks: DynamicZoneBlock[] | null;
-  metaTitle: string | null;
-  metaDescription: string | null;
-  ogImage: StrapiMedia | null;
+  seo?: SeoComponent | null;
   meetExpertsTitle: string | null;
   mindsBehindTitle: string | null;
   locale: string;
@@ -579,6 +587,7 @@ export interface SearchTermItem {
 export interface SearchPage {
   id: number;
   documentId: string;
+  seo?: SeoComponent | null;
   heroTitle: string | null;
   heroSubtitle: string | null;
   searchPlaceholder: string | null;
@@ -598,9 +607,7 @@ export interface FAQPage {
   id: number;
   documentId: string;
   blocks: DynamicZoneBlock[] | null;
-  metaTitle: string | null;
-  metaDescription: string | null;
-  ogImage: StrapiMedia | null;
+  seo?: SeoComponent | null;
   title: string;
   subtitle: string | null;
   getInTouchLabel: string | null;
@@ -615,9 +622,7 @@ export interface FAQPage {
 export interface BlogsPage {
   id: number;
   documentId: string;
-  metaTitle: string | null;
-  metaDescription: string | null;
-  ogImage: StrapiMedia | null;
+  seo?: SeoComponent | null;
   featuredBlogsTitle: string | null;
   featuredBlogsSubtitle: string | null;
   blogsTitle: string | null;
@@ -676,8 +681,7 @@ export interface CoursesPage {
   filterSortNewestLabel: string | null;
   filterSortRatingLabel: string | null;
   filterSortFeaturedLabel: string | null;
-  metaTitle: string | null;
-  metaDescription: string | null;
+  seo?: SeoComponent | null;
   locale: string;
   createdAt: string;
   updatedAt: string;
@@ -688,6 +692,7 @@ export interface CourseDetailPage {
   id: number;
   documentId: string;
   blocks: DynamicZoneBlock[] | null;
+  seo?: SeoComponent | null;
   noReviewsText: string | null;
   moreContentText: string | null;
   relatedCoursesTitle: string | null;
@@ -818,6 +823,14 @@ export interface TestimonialsCarouselBlockData extends BaseBlock {
   __component: 'blocks.testimonials-carousel';
   title: string | null;
   description: string | null;
+}
+
+export interface InstructorReviewsBlockData extends BaseBlock {
+  __component: 'blocks.instructor-reviews-block';
+  title: string | null;
+  description: string | null;
+  /** 1..20 — number of cards to render. Defaults to 6 in Strapi. */
+  limit: number | null;
 }
 
 export interface RichTextBlockData extends BaseBlock {
@@ -1035,6 +1048,7 @@ export type DynamicZoneBlock =
   | FeaturedSectionBlockData
   | InstructorsGridBlockData
   | TestimonialsCarouselBlockData
+  | InstructorReviewsBlockData
   | RichTextBlockData
   | StatsNumbersBlockData
   | CardsGridBlockData

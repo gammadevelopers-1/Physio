@@ -466,6 +466,53 @@ export class RoleRequestsService {
       })
       .where(eq(roleRequests.id, id));
 
+    // Mirror trainer-application profile fields onto the user row so the
+    // instructor's settings page is pre-filled after first login. Only sets
+    // values that are currently missing — does not overwrite anything the
+    // user has since changed manually.
+    try {
+      const pData = (request.profileData || {}) as Record<string, string>;
+      const [existingUser] = await db
+        .select({
+          firstNameAr: users.firstNameAr,
+          lastNameAr: users.lastNameAr,
+          specialty: users.specialty,
+          profession: users.profession,
+          qualification: users.qualification,
+          twitter: users.twitter,
+          linkedin: users.linkedin,
+        })
+        .from(users)
+        .where(eq(users.id, request.userId))
+        .limit(1);
+
+      const patch: Record<string, string> = {};
+      if (!existingUser?.firstNameAr && pData.firstNameAr)
+        patch.firstNameAr = pData.firstNameAr;
+      if (!existingUser?.lastNameAr && pData.lastNameAr)
+        patch.lastNameAr = pData.lastNameAr;
+      if (!existingUser?.specialty && pData.specialty)
+        patch.specialty = pData.specialty;
+      if (!existingUser?.profession && pData.profession)
+        patch.profession = pData.profession;
+      if (!existingUser?.qualification && pData.qualification)
+        patch.qualification = pData.qualification;
+      if (!existingUser?.twitter && pData.twitter) patch.twitter = pData.twitter;
+      if (!existingUser?.linkedin && (pData.linkedIn || pData.linkedin))
+        patch.linkedin = pData.linkedIn || pData.linkedin;
+
+      if (Object.keys(patch).length > 0) {
+        await db
+          .update(users)
+          .set({ ...patch, updatedAt: new Date() })
+          .where(eq(users.id, request.userId));
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Failed to sync profile fields from approval for user ${request.userId}: ${(err as Error).message}`,
+      );
+    }
+
     // Assign the INSTRUCTOR role
     try {
       await this.authService.assignRole(

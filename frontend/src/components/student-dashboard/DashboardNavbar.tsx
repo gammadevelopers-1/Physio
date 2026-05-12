@@ -18,14 +18,14 @@ import {
   BookOpen,
   Heart,
   Award,
-  BadgeCheck,
-  FileText,
+  Calendar,
   Users,
 } from "lucide-react";
 import { useAuth } from "@/contexts";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import NotificationBell from "@/components/shared/NotificationBell";
+import { STUDENT_NOTIFICATION_TYPES } from "@/components/shared/notification-types";
 import { RoleSwitcherDropdownItems, RoleSwitcherMobileSection } from "@/components/shared/RoleSwitcher";
 
 interface UserProfile {
@@ -54,7 +54,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
     : "/images/logo.png";
   const showSearch = siteSettings?.showSearchBar !== false;
 
-  // Dashboard navigation items for mobile menu
+  // Dashboard navigation items for mobile menu — must mirror DashboardSidebar order
   const dashboardNavItems = [
     {
       label: tDashboard("sidebar.dashboard"),
@@ -67,9 +67,9 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
       icon: BookOpen,
     },
     {
-      label: tDashboard("sidebar.favorites"),
-      href: `/${locale}/dashboard/student/favourites`,
-      icon: Heart,
+      label: tDashboard("sidebar.calendar"),
+      href: `/${locale}/dashboard/student/calendar`,
+      icon: Calendar,
     },
     {
       label: tDashboard("sidebar.certifications"),
@@ -77,14 +77,9 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
       icon: Award,
     },
     {
-      label: tDashboard("sidebar.badges"),
-      href: `/${locale}/dashboard/student/badges`,
-      icon: BadgeCheck,
-    },
-    {
-      label: tDashboard("sidebar.invoices"),
-      href: `/${locale}/dashboard/student/invoices`,
-      icon: FileText,
+      label: tDashboard("sidebar.favorites"),
+      href: `/${locale}/dashboard/student/favourites`,
+      icon: Heart,
     },
     {
       label: tDashboard("sidebar.inviteFriends"),
@@ -156,8 +151,8 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
             </button>
           )}
 
-          {/* Notification Bell - Hidden on mobile */}
-          <NotificationBell />
+          {/* Notification Bell — student-scoped types only */}
+          <NotificationBell typeAllowlist={STUDENT_NOTIFICATION_TYPES} />
 
           {/* User Avatar with Dropdown - Hidden on mobile */}
           <div className="hidden lg:block relative">

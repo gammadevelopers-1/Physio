@@ -321,11 +321,11 @@ const SupportSettingsContent = () => {
                                     e.stopPropagation();
                                     setRuleEnabled((prev) => ({ ...prev, [rule.key]: !prev[rule.key] }));
                                   }}
-                                  className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${
-                                    enabled ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"
+                                  className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#22C55E] ${
+                                    enabled ? "bg-[#22C55E]" : "bg-[#D1D5DB]"
                                   }`}
                                 >
-                                  <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${enabled ? "ms-auto" : ""}`} />
+                                  <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${enabled ? "ms-auto" : ""}`} />
                                 </button>
                               </div>
                             </div>
@@ -398,9 +398,9 @@ const SupportSettingsContent = () => {
                             </div>
                             <button
                               onClick={() => setEmailNotif(!emailNotif)}
-                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${emailNotif ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
+                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${emailNotif ? "bg-[#22C55E]" : "bg-[#D1D5DB]"}`}
                             >
-                              <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${emailNotif ? "ms-auto" : ""}`} />
+                              <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${emailNotif ? "ms-auto" : ""}`} />
                             </button>
                           </div>
                         </div>
@@ -412,9 +412,9 @@ const SupportSettingsContent = () => {
                             </div>
                             <button
                               onClick={() => setSmsNotif(!smsNotif)}
-                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${smsNotif ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
+                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${smsNotif ? "bg-[#22C55E]" : "bg-[#D1D5DB]"}`}
                             >
-                              <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${smsNotif ? "ms-auto" : ""}`} />
+                              <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${smsNotif ? "ms-auto" : ""}`} />
                             </button>
                           </div>
                         </div>
@@ -426,9 +426,9 @@ const SupportSettingsContent = () => {
                             </div>
                             <button
                               onClick={() => setWhatsappNotif(!whatsappNotif)}
-                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${whatsappNotif ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
+                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${whatsappNotif ? "bg-[#22C55E]" : "bg-[#D1D5DB]"}`}
                             >
-                              <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${whatsappNotif ? "ms-auto" : ""}`} />
+                              <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${whatsappNotif ? "ms-auto" : ""}`} />
                             </button>
                           </div>
                         </div>

@@ -122,14 +122,26 @@ const CourseManagerCourseDetailContent = ({
   const [moduleAssessments, setModuleAssessments] = useState<import("@/types/instructor-dashboard").AssessmentResponse[]>([]);
   useEffect(() => {
     if (!courseId) return;
-    courseManagerApi.getCourseRatings(courseId, { limit: 5, sort: "highest" })
-      .then((res) => setReviews(res?.data || []))
-      .catch(() => setReviews([]))
-      .finally(() => setReviewsLoading(false));
     courseManagerApi.getAssessments({ courseId, limit: 100 }).then((res) => {
       setModuleAssessments(res.data || []);
     }).catch(() => {});
   }, [courseId]);
+
+  // Reviews-block state — toggled between course reviews and instructor reviews
+  // for the same course. Each switch refetches; both share the same render layout.
+  const [reviewKind, setReviewKind] = useState<"course" | "instructor">("course");
+  useEffect(() => {
+    if (!courseId) return;
+    setReviewsLoading(true);
+    const fetcher =
+      reviewKind === "course"
+        ? courseManagerApi.getCourseRatings(courseId, { limit: 5, sort: "highest" })
+        : courseManagerApi.getCourseInstructorRatings(courseId, { limit: 5, sort: "highest" });
+    fetcher
+      .then((res) => setReviews(res?.data || []))
+      .catch(() => setReviews([]))
+      .finally(() => setReviewsLoading(false));
+  }, [courseId, reviewKind]);
 
   // Remove material modal
   const [removingMaterial, setRemovingMaterial] = useState<MaterialItem | null>(null);
@@ -631,6 +643,38 @@ const CourseManagerCourseDetailContent = ({
                       {course.cmeHours || "—"}
                     </p>
                   </div>
+                  {course.accreditationNumber && (
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Award className="w-4 h-4 text-[#16A34A]" />
+                        <span className="text-xs text-[var(--color-text-secondary)]">
+                          {isRTL ? "رقم الاعتماد" : "Accreditation #"}
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-[var(--color-text-secondary)] break-all">
+                        {course.accreditationNumber}
+                      </p>
+                    </div>
+                  )}
+                  {course.nelcReviewLink && (
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <ClipboardCheck className="w-4 h-4 text-[#7C3AED]" />
+                        <span className="text-xs text-[var(--color-text-secondary)]">
+                          {isRTL ? "رابط تقييم NELC" : "NELC Review Link"}
+                        </span>
+                      </div>
+                      <a
+                        href={course.nelcReviewLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-medium text-[var(--color-primary)] hover:underline break-all"
+                        dir="ltr"
+                      >
+                        {course.nelcReviewLink}
+                      </a>
+                    </div>
+                  )}
                 </div>
 
                 {/* Description */}
@@ -878,12 +922,35 @@ const CourseManagerCourseDetailContent = ({
                   </div>
                 </div>
 
-                {/* Student Reviews */}
-                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
-                  <div className="flex items-center justify-between mb-4 gap-3">
+                {/* Student Reviews — switch between Course reviews and Instructor reviews */}
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 mt-8">
+                  <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
                     <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
                       {t("courseDetail.reviewsTitle")}
                     </h2>
+                    {/* Course | Instructor switch */}
+                    <div className="inline-flex p-1 bg-[var(--color-border-subtle)] rounded-lg">
+                      {(
+                        [
+                          { key: "course" as const, label: isRTL ? "الدورة" : "Course" },
+                          { key: "instructor" as const, label: isRTL ? "المدرب" : "Instructor" },
+                        ]
+                      ).map((seg) => (
+                        <button
+                          key={seg.key}
+                          onClick={() => setReviewKind(seg.key)}
+                          className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+                            reviewKind === seg.key
+                              ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
+                              : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                          }`}
+                        >
+                          {seg.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-end mb-4">
                     {reviews.length > 0 && (
                       <div className="flex items-center gap-2 text-sm">
                         <div className="flex items-center gap-0.5">

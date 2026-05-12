@@ -1,12 +1,12 @@
 import { setRequestLocale } from "next-intl/server";
-import CalendarContent from "@/components/student-dashboard/CalendarContent";
+import LecturesContent from "@/components/student-dashboard/LecturesContent";
 
 export const metadata = {
-  title: "Calendar | Student Dashboard | PhysioGuidance",
-  description: "View your upcoming sessions and events calendar",
+  title: "Lectures | Student Dashboard | PhysioGuidance",
+  description: "View and join your upcoming lectures",
 };
 
-export default async function StudentCalendarPage({
+export default async function StudentLecturesPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
@@ -16,7 +16,7 @@ export default async function StudentCalendarPage({
 
   return (
     <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
-      <CalendarContent />
+      <LecturesContent />
     </main>
   );
 }

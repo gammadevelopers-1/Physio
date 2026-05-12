@@ -65,6 +65,7 @@ export * from './scheduled-reports';
 
 // Course Ratings schemas
 export * from './course-ratings';
+export * from './instructor-ratings';
 
 // Waitlist schemas
 export * from './waitlists';
@@ -74,6 +75,13 @@ export * from './video-watch-events';
 
 // Session Materials schemas
 export * from './session-materials';
+
+// Points System schemas
+export * from './point-rules';
+export * from './point-transactions';
+export * from './point-redemptions';
+export * from './points-config';
+export * from './course-redemption-settings';
 
 // Health check (can remove later)
 import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';

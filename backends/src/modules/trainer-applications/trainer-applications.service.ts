@@ -140,6 +140,9 @@ export class TrainerApplicationsService {
       const randomPassword = randomBytes(48).toString('hex');
       const passwordHash = await argon2.hash(randomPassword);
 
+      // Carry the trainer-application's profile fields onto the user row
+      // so they're pre-filled in the instructor settings page after approval.
+      // Banking + structured resume stay in role_requests for admin review.
       const [created] = await db
         .insert(users)
         .values({
@@ -147,8 +150,15 @@ export class TrainerApplicationsService {
           passwordHash,
           firstName,
           lastName,
-          phone: (profile.mobileNumber as string) || null,
+          firstNameAr: (profile.firstNameAr as string) || null,
+          lastNameAr: (profile.lastNameAr as string) || null,
+          phone: (profile.mobileNumber as string) || (profile.phoneE164 as string) || null,
           scfhsNumber: (profile.scfhsNumber as string) || null,
+          specialty: (profile.specialty as string) || null,
+          profession: (profile.profession as string) || null,
+          qualification: (profile.qualification as string) || null,
+          twitter: (profile.twitter as string) || null,
+          linkedin: (profile.linkedIn as string) || (profile.linkedin as string) || null,
           activeRole: ROLE_NAMES.STUDENT, // label only — no STUDENT row in user_roles
           isVerified: true,
         })

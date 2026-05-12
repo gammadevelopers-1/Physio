@@ -7,7 +7,8 @@ import { useAuth } from "@/contexts";
 import { ApiError } from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2, ShieldCheck, ArrowLeft, MailOpen } from "lucide-react";
-import AuthNavbar from "@/components/AuthNavbar";
+import Navbar from "@/components/Navbar";
+import { useNavbarChrome } from "@/hooks/useNavbarChrome";
 import Footer from "@/components/Footer";
 
 const OTP_LENGTH = 6;
@@ -16,6 +17,7 @@ const RESEND_COOLDOWN = 60; // seconds
 function VerifyForm() {
   const t = useTranslations("verifyPage");
   const locale = useLocale();
+  const chrome = useNavbarChrome();
   const isRTL = locale === "ar";
   const router = useRouter();
   const { verify2FA, resend2FA, twoFactorPending, isLoading } = useAuth();
@@ -195,7 +197,7 @@ function VerifyForm() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
-      <AuthNavbar />
+      <Navbar siteSettings={chrome.siteSettings} navLinks={chrome.navLinks} footerLinks={chrome.footerLinks} />
 
       <main id="main-content" className="flex-1 bg-[var(--color-surface-page)] px-4 py-10 md:px-16 md:py-20">
         <div className="flex items-center justify-center w-full">

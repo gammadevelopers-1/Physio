@@ -3,6 +3,7 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -26,6 +27,9 @@ async function bootstrap() {
 
   // Cookie parser (for refresh tokens)
   app.use(cookieParser());
+
+  // Global exception filter — logs underlying cause for any unhandled error.
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // Global validation pipe
   app.useGlobalPipes(

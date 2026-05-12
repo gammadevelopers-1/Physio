@@ -21,7 +21,7 @@ import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import type { CalendarFormat } from "@/lib/hijri";
 import { useInstructorCourseDetail } from "@/hooks/useInstructorCourseDetail";
-import { instructorApi, materialsApi } from "@/lib/api";
+import { instructorApi, materialsApi, publicApi } from "@/lib/api";
 import type { CourseModule, CourseSession, CourseMaterialResponse } from "@/types/instructor-dashboard";
 import {
   ArrowLeft,
@@ -58,10 +58,162 @@ import {
   ClipboardCheck,
   ExternalLink,
   Eye,
+  Star,
+  ArrowRight,
 } from "lucide-react";
 
 interface CourseDetailContentProps {
   courseId: string;
+}
+
+/**
+ * Reviews summary block for the instructor course-detail Overview tab.
+ * Shows the top 5 reviews + aggregate rating, with a "View all" link to
+ * the dedicated filterable reviews page. Mirrors the manager-side pattern.
+ */
+function CourseReviewsSection({ courseId }: { courseId: string }) {
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+  const [reviews, setReviews] = useState<
+    Array<{
+      id: string;
+      rating: number;
+      reviewText: string | null;
+      createdAt: string;
+      studentName: string;
+    }>
+  >([]);
+  const [avgRating, setAvgRating] = useState(0);
+  const [totalRatings, setTotalRatings] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    publicApi
+      .getCourseRatings(courseId, { limit: 5, sort: "newest" })
+      .then((res) => {
+        if (cancelled) return;
+        setReviews(res.data);
+        setAvgRating(res.avgRating);
+        setTotalRatings(res.totalRatings);
+      })
+      .catch(() => {
+        if (!cancelled) setReviews([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [courseId]);
+
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+
+  return (
+    <div
+      className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5"
+      dir={isRTL ? "rtl" : "ltr"}
+    >
+      <div className="flex items-center justify-between mb-4 gap-3">
+        <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
+          {isRTL ? "مراجعات الطلاب" : "Student Reviews"}
+        </h2>
+        {totalRatings > 0 && (
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <Star
+                  key={s}
+                  className={`w-4 h-4 ${
+                    s <= Math.round(avgRating)
+                      ? "text-[var(--color-star)] fill-[var(--color-star)]"
+                      : "text-[var(--color-star-border)]"
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="font-semibold text-[var(--color-text-primary)] text-sm">
+              {avgRating.toFixed(1)}
+            </span>
+            <span className="text-xs text-[var(--color-text-secondary)]">
+              ({totalRatings})
+            </span>
+          </div>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="text-center py-8">
+          <Loader2 className="w-5 h-5 animate-spin mx-auto text-[var(--color-text-secondary)]" />
+        </div>
+      ) : reviews.length === 0 ? (
+        <div className="text-center py-8">
+          <Star className="w-10 h-10 text-[var(--color-star-border)] mx-auto mb-3" />
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            {isRTL ? "لا توجد مراجعات بعد" : "No reviews yet"}
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="space-y-3">
+            {reviews.map((r) => (
+              <div
+                key={r.id}
+                className="border border-[var(--color-border)] rounded-lg p-4 bg-[#FAFAFA]"
+              >
+                <div className="flex items-start justify-between mb-2 gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-[var(--color-text-secondary)]">
+                      {r.studentName}
+                    </p>
+                    <p className="text-xs text-[var(--color-text-secondary)]">
+                      {formatDate(r.createdAt)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star
+                        key={s}
+                        className={`w-3.5 h-3.5 ${
+                          s <= r.rating
+                            ? "text-[var(--color-star)] fill-[var(--color-star)]"
+                            : "text-[var(--color-star-border)]"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                {r.reviewText && (
+                  <p
+                    dir="auto"
+                    className="text-sm text-[var(--color-text-secondary)] whitespace-pre-line line-clamp-3"
+                  >
+                    {r.reviewText}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 pt-4 border-t border-[var(--color-border)] flex items-center justify-center">
+            <Link
+              href={`/${locale}/dashboard/instructor/courses/${courseId}/reviews`}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)]"
+            >
+              {isRTL ? "عرض كل المراجعات" : "View all reviews"}
+              {isRTL ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+            </Link>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 // ─── Skeleton ──────────────────────────────────────────────────
@@ -955,6 +1107,32 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 {enrollments.length}{course.maxEnrollment ? ` / ${course.maxEnrollment}` : ""}
                               </p>
                             </div>
+                            {course.accreditationNumber && (
+                              <div className="p-4 bg-[var(--color-surface-page)] rounded-lg">
+                                <p className="text-xs text-[var(--color-text-secondary)] mb-1">
+                                  {locale === "ar" ? "رقم الاعتماد" : "Accreditation #"}
+                                </p>
+                                <p className="text-sm font-medium text-[var(--color-text-secondary)] break-all">
+                                  {course.accreditationNumber}
+                                </p>
+                              </div>
+                            )}
+                            {course.nelcReviewLink && (
+                              <div className="p-4 bg-[var(--color-surface-page)] rounded-lg sm:col-span-2 lg:col-span-3">
+                                <p className="text-xs text-[var(--color-text-secondary)] mb-1">
+                                  {locale === "ar" ? "رابط تقييم NELC" : "NELC Review Link"}
+                                </p>
+                                <a
+                                  href={course.nelcReviewLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm font-medium text-[var(--color-primary)] hover:underline break-all"
+                                  dir="ltr"
+                                >
+                                  {course.nelcReviewLink}
+                                </a>
+                              </div>
+                            )}
                           </div>
                         </div>
                         {!isCourseReadOnly && (
@@ -972,6 +1150,9 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
 
                         {/* Teaching Assistants — hidden for self-paced */}
                         {!isCourseReadOnly && !isSelfPaced && <CourseAssistantsSuggestPanel courseId={courseId} />}
+
+                        {/* Student Reviews — top 5 + link to full filterable page */}
+                        <CourseReviewsSection courseId={courseId} />
                       </div>
                     )}
 

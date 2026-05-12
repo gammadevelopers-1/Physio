@@ -55,6 +55,7 @@ export class CoursesController {
     @Query('cmeAccredited') cmeAccredited?: string,
     @Query('language') language?: string,
     @Query('availability') availability?: string,
+    @Query('scope') scope?: string,
     @Query('sort') sort?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
@@ -71,6 +72,7 @@ export class CoursesController {
             : undefined,
       language,
       availability,
+      scope: scope === 'archived' ? 'archived' : 'open',
       sort,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
@@ -84,6 +86,17 @@ export class CoursesController {
   @Get('public/:id')
   async findOnePublic(@Param('id') id: string) {
     return this.coursesService.findOnePublic(id);
+  }
+
+  /**
+   * GET /courses/instructors/:id/public — Public instructor profile
+   * (profile + stats + their public courses + recent reviews).
+   * Powers the dedicated /instructors/:id page on the marketing site.
+   */
+  @Public()
+  @Get('instructors/:id/public')
+  async findInstructorPublicProfile(@Param('id') id: string) {
+    return this.coursesService.findInstructorPublicProfile(id);
   }
 
   /**
@@ -460,5 +473,171 @@ export class CoursesController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.coursesService.deleteRating(ratingId, user);
+  }
+
+  /**
+   * GET /courses/instructor-reviews/featured — Shuffled, round-robin sample
+   * of approved+published instructor reviews across ALL instructors.
+   * Powers the Strapi "Instructor Reviews" homepage block. Default limit 6.
+   */
+  @Public()
+  @Get('instructor-reviews/featured')
+  async getFeaturedInstructorReviews(@Query('limit') limit?: string) {
+    return this.coursesService.getFeaturedInstructorReviews({
+      limit: limit ? Number(limit) : undefined,
+    });
+  }
+
+  // ─── Instructor Ratings ────────────────────────────────────
+
+  @Roles('STUDENT' as UserRole)
+  @Post(':id/instructor-ratings')
+  async rateInstructor(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: RateCourseDto,
+  ) {
+    return this.coursesService.rateInstructor(
+      courseId,
+      user.id,
+      dto.rating,
+      dto.reviewText,
+    );
+  }
+
+  @Roles('STUDENT' as UserRole)
+  @Get(':id/instructor-ratings/me')
+  async getMyInstructorRating(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.getMyInstructorRating(courseId, user.id);
+  }
+
+  /**
+   * GET /courses/:id/review-status — Whether this student has submitted
+   * the course + instructor reviews required to request a certificate.
+   * Powers the student-side dual-review prompt and "Request Certificate"
+   * gate (UI parity with the backend gate in CertificatesService).
+   */
+  @Roles('STUDENT' as UserRole)
+  @Get(':id/review-status')
+  async getMyReviewStatus(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.hasSubmittedRequiredReviews(courseId, user.id);
+  }
+
+  /**
+   * GET /courses/:id/instructor-aggregated-ratings — Public instructor reviews
+   * across EVERY course this instructor has taught (not just this course).
+   * Used by the public course-detail Reviews block when toggled to
+   * "Instructor" — each card carries a course-name chip so the reader
+   * understands the cross-course context.
+   */
+  @Public()
+  @Get(':id/instructor-aggregated-ratings')
+  async getInstructorAggregatedRatings(
+    @Param('id') courseId: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.coursesService.getInstructorAggregatedRatingsByCourse(courseId, {
+      limit: limit ? Number(limit) : undefined,
+    });
+  }
+
+  /**
+   * GET /courses/:id/instructor-ratings — Paginated published instructor
+   * reviews for a course. Manager course detail uses this; public surface
+   * is gated client-side until product confirms.
+   */
+  @Public()
+  @Get(':id/instructor-ratings')
+  async getInstructorRatings(
+    @Param('id') courseId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('rating') rating?: string,
+    @Query('sort') sort?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.coursesService.getInstructorRatings(courseId, {
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
+      rating: rating ? Number(rating) : undefined,
+      sort: sort as 'newest' | 'oldest' | 'highest' | 'lowest' | undefined,
+      search: search || undefined,
+    });
+  }
+
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get('instructor-reviews/manager')
+  async getManagerInstructorReviews(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('moderationStatus') moderationStatus?: string,
+    @Query('publishedOnly') publishedOnly?: string,
+    @Query('unpublishedOnly') unpublishedOnly?: string,
+    @Query('courseId') courseId?: string,
+    @Query('search') search?: string,
+    @Query('sort') sort?: string,
+  ) {
+    return this.coursesService.getManagerInstructorReviews(user, {
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
+      moderationStatus: moderationStatus as
+        | 'pending'
+        | 'approved'
+        | 'rejected'
+        | undefined,
+      publishedOnly: publishedOnly === 'true',
+      unpublishedOnly: unpublishedOnly === 'true',
+      courseId: courseId || undefined,
+      search: search || undefined,
+      sort: sort as 'newest' | 'oldest' | 'highest' | 'lowest' | undefined,
+    });
+  }
+
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/instructor-ratings/:ratingId/approve')
+  async approveInstructorReview(
+    @Param('ratingId') ratingId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.approveInstructorReview(ratingId, user);
+  }
+
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/instructor-ratings/:ratingId/reject')
+  async rejectInstructorReview(
+    @Param('ratingId') ratingId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.rejectInstructorReview(ratingId, user);
+  }
+
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Patch(':id/instructor-ratings/:ratingId/publish')
+  async setInstructorReviewPublished(
+    @Param('ratingId') ratingId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { published: boolean },
+  ) {
+    return this.coursesService.setInstructorReviewPublished(
+      ratingId,
+      user,
+      !!body.published,
+    );
+  }
+
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Delete(':id/instructor-ratings/:ratingId')
+  async deleteInstructorRating(
+    @Param('ratingId') ratingId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.deleteInstructorRating(ratingId, user);
   }
 }

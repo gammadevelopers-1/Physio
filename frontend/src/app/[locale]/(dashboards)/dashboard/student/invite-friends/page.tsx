@@ -1,12 +1,12 @@
 import { setRequestLocale } from "next-intl/server";
-import { InviteFriendsContent } from "@/components/student-dashboard";
+import { MyPointsContent } from "@/components/student-dashboard";
 
 export const metadata = {
-  title: "Invite Friends | Student Dashboard | PhysioGuidance",
-  description: "Invite friends and earn rewards",
+  title: "My Points | Student Dashboard | PhysioGuidance",
+  description: "Track your points balance and redeem rewards",
 };
 
-export default async function StudentInviteFriendsPage({
+export default async function StudentMyPointsPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
@@ -16,7 +16,7 @@ export default async function StudentInviteFriendsPage({
 
   return (
     <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
-      <InviteFriendsContent />
+      <MyPointsContent />
     </main>
   );
 }

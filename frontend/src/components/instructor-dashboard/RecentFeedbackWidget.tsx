@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslations, useLocale } from "next-intl";
-import { Star, MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { Star, MessageSquare } from "lucide-react";
 
 interface FeedbackItem {
   id: string;
@@ -10,7 +10,11 @@ interface FeedbackItem {
   courseName: string;
   rating: number;
   comment: string;
-  sentiment: "positive" | "neutral" | "negative";
+  /** Optional — no longer rendered; kept for backwards-compat with
+   *  the transform layer until that fan-out is also stripped. */
+  sentiment?: "positive" | "neutral" | "negative";
+  /** ISO timestamp from the backend. Rendered as locale date only —
+   *  the time portion adds clutter without value on a dashboard widget. */
   date: string;
 }
 
@@ -28,7 +32,22 @@ const RecentFeedbackWidget = ({
   const t = useTranslations("instructorDashboard");
   const locale = useLocale();
 
-  // Render star rating
+  // Show only the 3 most recent — beyond that the widget bloats the
+  // dashboard. Per-course reviews live on each course's detail page.
+  const visibleItems = feedbackItems.slice(0, 3);
+
+  // ISO → "May 11, 2026" (locale-aware). Fall through unchanged if the
+  // backend ever sends a non-ISO string.
+  const formatDate = (raw: string) => {
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return raw;
+    return d.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
   const renderStars = (rating: number, size: "sm" | "lg" = "sm") => {
     const stars = [];
     const fullStars = Math.floor(rating);
@@ -41,7 +60,7 @@ const RecentFeedbackWidget = ({
           <Star
             key={i}
             className={`${starSize} text-[var(--color-star)] fill-[var(--color-star)]`}
-          />
+          />,
         );
       } else if (i === fullStars && hasHalfStar) {
         stars.push(
@@ -50,62 +69,15 @@ const RecentFeedbackWidget = ({
             <div className="absolute inset-0 overflow-hidden w-1/2">
               <Star className={`${starSize} text-[var(--color-star)] fill-[var(--color-star)]`} />
             </div>
-          </div>
+          </div>,
         );
       } else {
         stars.push(
-          <Star key={i} className={`${starSize} text-[var(--color-star-border)]`} />
+          <Star key={i} className={`${starSize} text-[var(--color-star-border)]`} />,
         );
       }
     }
     return stars;
-  };
-
-  // Get sentiment styles
-  const getSentimentStyle = (sentiment: string) => {
-    switch (sentiment) {
-      case "positive":
-        return {
-          bg: "bg-[#DCFCE7]",
-          border: "border-[#22C55E]",
-          text: "text-[#22C55E]",
-          dot: "bg-[#22C55E]",
-        };
-      case "neutral":
-        return {
-          bg: "bg-[var(--color-border-subtle)]",
-          border: "border-[var(--color-text-secondary)]",
-          text: "text-[var(--color-text-secondary)]",
-          dot: "bg-[var(--color-text-secondary)]",
-        };
-      case "negative":
-        return {
-          bg: "bg-[#FEE2E2]",
-          border: "border-[#EF4444]",
-          text: "text-[#EF4444]",
-          dot: "bg-[#EF4444]",
-        };
-      default:
-        return {
-          bg: "bg-[var(--color-border-subtle)]",
-          border: "border-[var(--color-text-secondary)]",
-          text: "text-[var(--color-text-secondary)]",
-          dot: "bg-[var(--color-text-secondary)]",
-        };
-    }
-  };
-
-  const getSentimentLabel = (sentiment: string) => {
-    switch (sentiment) {
-      case "positive":
-        return t("feedback.positive");
-      case "neutral":
-        return t("feedback.neutral");
-      case "negative":
-        return t("feedback.negative");
-      default:
-        return sentiment;
-    }
   };
 
   return (
@@ -137,70 +109,53 @@ const RecentFeedbackWidget = ({
               </p>
             </div>
             <div className="flex flex-col items-end gap-1">
-              <div className="flex gap-0.5">
-                {renderStars(overallRating, "lg")}
-              </div>
+              <div className="flex gap-0.5">{renderStars(overallRating, "lg")}</div>
             </div>
           </div>
         </div>
 
-        {/* Feedback Cards */}
+        {/* Feedback cards — neutral surface, no sentiment tagging. The
+            star count already conveys whether the review was good or bad. */}
         <div className="space-y-3">
-          {feedbackItems.map((feedback) => {
-            const sentimentStyle = getSentimentStyle(feedback.sentiment);
-
-            return (
-              <div
-                key={feedback.id}
-                className={`p-3 rounded-lg border-s-4 ${sentimentStyle.bg} ${sentimentStyle.border}`}
-              >
-                {/* Header: Learner info + Rating */}
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xs font-semibold text-[var(--color-text-secondary)]">
-                      {feedback.learnerInitials}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-[var(--color-text-secondary)]">
-                        {feedback.learnerName}
-                      </p>
-                      <p className="text-[10px] text-[var(--color-text-secondary)]">
-                        {feedback.courseName}
-                      </p>
-                    </div>
+          {visibleItems.map((feedback) => (
+            <div
+              key={feedback.id}
+              className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-page)]"
+            >
+              {/* Header: learner info + rating */}
+              <div className="flex items-start justify-between mb-2 gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xs font-semibold text-[var(--color-text-secondary)] flex-shrink-0">
+                    {feedback.learnerInitials}
                   </div>
-                  <div className="flex items-center gap-0.5">
-                    {renderStars(feedback.rating, "sm")}
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                      {feedback.learnerName}
+                    </p>
+                    <p className="text-[10px] text-[var(--color-text-secondary)] truncate">
+                      {feedback.courseName}
+                    </p>
                   </div>
                 </div>
-
-                {/* Comment */}
-                <p className="text-xs text-[var(--color-text-secondary)] mb-2 line-clamp-2">
-                  "{feedback.comment}"
-                </p>
-
-                {/* Footer: Sentiment + Date */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${sentimentStyle.dot}`} />
-                    <span className={`text-[10px] font-medium ${sentimentStyle.text}`}>
-                      {getSentimentLabel(feedback.sentiment)}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-[var(--color-text-secondary)]">
-                    {feedback.date}
-                  </span>
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                  {renderStars(feedback.rating, "sm")}
                 </div>
               </div>
-            );
-          })}
-        </div>
 
-        {/* View All Link */}
-        <button className="w-full flex items-center justify-center gap-1 mt-4 py-2.5 text-sm font-medium text-[var(--color-primary)] hover:underline">
-          {t("feedback.viewAll")}
-          {locale === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-        </button>
+              {/* Comment */}
+              {feedback.comment && (
+                <p className="text-xs text-[var(--color-text-secondary)] mb-2 line-clamp-2">
+                  &ldquo;{feedback.comment}&rdquo;
+                </p>
+              )}
+
+              {/* Date only — no sentiment chip */}
+              <p className="text-[10px] text-[var(--color-text-secondary)] text-end">
+                {formatDate(feedback.date)}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

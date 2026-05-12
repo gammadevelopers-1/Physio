@@ -172,9 +172,9 @@ const FinanceSettingsContent = () => {
                                 </div>
                                 <button
                                   onClick={() => setGatewayEnabled((prev) => ({ ...prev, [gw.key]: !prev[gw.key] }))}
-                                  className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${enabled ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
+                                  className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#22C55E] ${enabled ? "bg-[#22C55E]" : "bg-[#D1D5DB]"}`}
                                 >
-                                  <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${enabled ? "ms-auto" : ""}`} />
+                                  <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${enabled ? "ms-auto" : ""}`} />
                                 </button>
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -265,9 +265,9 @@ const FinanceSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setVatEnabled(!vatEnabled)}
-                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${vatEnabled ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${vatEnabled ? "bg-[#22C55E]" : "bg-[#D1D5DB]"}`}
                           >
-                            <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${vatEnabled ? "ms-auto" : ""}`} />
+                            <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${vatEnabled ? "ms-auto" : ""}`} />
                           </button>
                         </div>
                         <div>
@@ -285,9 +285,9 @@ const FinanceSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setTaxInclusive(!taxInclusive)}
-                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${taxInclusive ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${taxInclusive ? "bg-[#22C55E]" : "bg-[#D1D5DB]"}`}
                           >
-                            <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${taxInclusive ? "ms-auto" : ""}`} />
+                            <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${taxInclusive ? "ms-auto" : ""}`} />
                           </button>
                         </div>
                         <div>

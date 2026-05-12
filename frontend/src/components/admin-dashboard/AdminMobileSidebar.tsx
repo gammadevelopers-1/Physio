@@ -21,6 +21,7 @@ import {
   Pencil,
   Crown,
   UserCheck,
+  Coins,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { roleRequestsApi, profileApi } from "@/lib/api";
@@ -105,6 +106,11 @@ const AdminMobileSidebar = ({ admin }: AdminMobileSidebarProps) => {
       label: t("sidebar.finance"),
       href: `/${locale}/dashboard/admin/finance`,
       icon: DollarSign,
+    },
+    {
+      label: t("sidebar.points"),
+      href: `/${locale}/dashboard/admin/points`,
+      icon: Coins,
     },
     {
       label: t("sidebar.security"),

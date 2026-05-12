@@ -16,6 +16,8 @@ import StudentDashboardError from "./StudentDashboardError";
 import OfflineBanner from "./OfflineBanner";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentTranscript } from "@/hooks/useStudentTranscript";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { formatDateReadable } from "@/lib/hijri";
 import type { TranscriptCourse } from "@/types/student-dashboard";
 
 function StatCard({
@@ -253,18 +255,10 @@ const TranscriptContent = () => {
   const userData = useStudentProfile();
 
   const { data: transcript, loading, error, refetch } = useStudentTranscript();
+  const { calendarFormat } = useCalendarPreference();
 
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "";
-    return new Date(dateStr).toLocaleDateString(
-      locale === "ar" ? "ar-SA" : "en-US",
-      {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      }
-    );
-  };
+  const formatDate = (dateStr: string | null) =>
+    formatDateReadable(dateStr, calendarFormat, locale);
 
   const handlePrint = () => {
     window.print();

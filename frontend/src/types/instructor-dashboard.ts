@@ -397,6 +397,8 @@ export interface CourseDetailResponse {
   startDate: string | null;
   endDate: string | null;
   cohort: string | null;
+  accreditationNumber?: string | null;
+  nelcReviewLink?: string | null;
   createdAt: string;
   updatedAt: string;
   // Course-level assessment defaults (set by manager)
@@ -757,12 +759,40 @@ export interface PublicCourse {
   featuresAr: string[] | null;
   targetAudience: string[] | null;
   targetAudienceAr: string[] | null;
+  faqs:
+    | Array<{
+        question?: string | null;
+        questionAr?: string | null;
+        answer?: string | null;
+        answerAr?: string | null;
+      }>
+    | null;
   requirements: string | null;
   requirementsAr: string | null;
   notices: string | null;
   noticesAr: string | null;
   venue: string | null;
   venueAr: string | null;
+  accreditationNumber: string | null;
+  // Extended instructor profile — backend returns this as a nested object
+  // on findOnePublic responses. Each field nullable; UI hides any missing.
+  instructor?: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    firstNameAr: string | null;
+    lastNameAr: string | null;
+    avatar: string | null;
+    email: string | null;
+    bio: string | null;
+    specialty: string | null;
+    profession: string | null;
+    qualification: string | null;
+    twitter: string | null;
+    linkedin: string | null;
+    avgRating: number;
+    totalRatings: number;
+  };
   showContents: boolean | null;
   sectionsOrder: string[] | null;
   // Related data
@@ -777,4 +807,42 @@ export interface PublicCoursesResponse {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+export interface InstructorPublicReview {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  courseTitleAr: string | null;
+  rating: number;
+  reviewText: string | null;
+  createdAt: string;
+  studentName: string;
+}
+
+export interface InstructorPublicProfile {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  firstNameAr: string | null;
+  lastNameAr: string | null;
+  avatar: string | null;
+  bio: string | null;
+  specialty: string | null;
+  profession: string | null;
+  qualification: string | null;
+  twitter: string | null;
+  linkedin: string | null;
+  stats: {
+    totalCourses: number;
+    totalStudents: number;
+    avgRating: number;
+    totalRatings: number;
+  };
+  courses: PublicCourse[];
+  reviews: {
+    data: InstructorPublicReview[];
+    avgRating: number;
+    totalRatings: number;
+  };
 }

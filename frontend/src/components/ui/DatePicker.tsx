@@ -53,7 +53,20 @@ export default function DatePicker({
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { calendarFormat } = useCalendarPreference();
-  const useHijri = calendarFormat === "hijri";
+  // Picker has its own calendar override so flipping it never mutates the
+  // user's global preference nor any other picker. Default mirrors the
+  // global setting; legacy "both" coerces to Gregorian.
+  const settingDefault: "hijri" | "gregorian" =
+    calendarFormat === "hijri" ? "hijri" : "gregorian";
+  const [localFormat, setLocalFormat] = useState<"hijri" | "gregorian">(settingDefault);
+  // Re-sync when the global setting changes BEFORE the user has interacted
+  // (i.e. the local state still matches what the default was last time).
+  // Once they pick their own calendar, we stop syncing.
+  const [touched, setTouched] = useState(false);
+  useEffect(() => {
+    if (!touched) setLocalFormat(settingDefault);
+  }, [settingDefault, touched]);
+  const useHijri = localFormat === "hijri";
 
   const [open, setOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() =>
@@ -130,12 +143,22 @@ export default function DatePicker({
 
   // ── Selection helpers ──
   const selectedISO = value || "";
-  const minDate = min ? new Date(min) : null;
-  const maxDate = max ? new Date(max) : null;
+  // Parse YYYY-MM-DD as LOCAL midnight to match gDate (which is built via
+  // `new Date(y, m, d)` — also local midnight). `new Date("2026-05-10")`
+  // would parse as UTC midnight, which in UTC+3 zones makes the same
+  // calendar day appear "before" min and disables it. That was making
+  // it impossible to pick the same day as start for end (single-day course).
+  const parseLocalISO = (iso: string): Date | null => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+    if (!m) return null;
+    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  };
+  const minDate = min ? parseLocalISO(min) : null;
+  const maxDate = max ? parseLocalISO(max) : null;
 
   const isDisabledDay = (gDate: Date) => {
-    if (minDate && gDate < new Date(toISO(minDate))) return true;
-    if (maxDate && gDate > new Date(toISO(maxDate))) return true;
+    if (minDate && gDate < minDate) return true;
+    if (maxDate && gDate > maxDate) return true;
     return false;
   };
 
@@ -143,7 +166,7 @@ export default function DatePicker({
   const todayISO = toISO(now);
 
   const displayValue = value
-    ? formatDate(value, calendarFormat, { locale })
+    ? formatDate(value, localFormat, { locale })
     : "";
 
   return (
@@ -186,6 +209,32 @@ export default function DatePicker({
             >
               {isRTL ? <ChevronLeft className="w-4 h-4 text-[var(--color-text-secondary)]" /> : <ChevronRight className="w-4 h-4 text-[var(--color-text-secondary)]" />}
             </button>
+          </div>
+
+          {/* Per-picker calendar toggle — local to this instance. Flipping
+              does not mutate the global preference nor any other picker. */}
+          <div className="flex justify-center px-3 py-2 border-b border-[var(--color-border)]">
+            <div className="inline-flex bg-[var(--color-border-subtle)] rounded-md p-0.5">
+              {(["gregorian", "hijri"] as const).map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => {
+                    setTouched(true);
+                    setLocalFormat(opt);
+                  }}
+                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+                    localFormat === opt
+                      ? "bg-white text-[var(--color-text-primary)] shadow-sm"
+                      : "text-[var(--color-text-secondary)]"
+                  }`}
+                >
+                  {opt === "gregorian"
+                    ? isRTL ? "ميلادي" : "Gregorian"
+                    : isRTL ? "هجري" : "Hijri"}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Day headers */}

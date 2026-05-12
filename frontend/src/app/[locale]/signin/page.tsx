@@ -4,7 +4,8 @@ import { useState, Suspense, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import AuthNavbar from "@/components/AuthNavbar";
+import Navbar from "@/components/Navbar";
+import { useNavbarChrome } from "@/hooks/useNavbarChrome";
 import Footer from "@/components/Footer";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts";
@@ -20,6 +21,7 @@ function SignInForm() {
   const t = useTranslations("signinPage");
   const tToasts = useTranslations("toasts");
   const locale = useLocale();
+  const chrome = useNavbarChrome();
   const isRTL = locale === "ar";
   const { login, isLoading } = useAuth();
   const searchParams = useSearchParams();
@@ -71,7 +73,7 @@ function SignInForm() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
-      <AuthNavbar />
+      <Navbar siteSettings={chrome.siteSettings} navLinks={chrome.navLinks} footerLinks={chrome.footerLinks} />
 
       {/* Main Content */}
       <main id="main-content" className="flex-1 bg-[var(--color-surface-page)] px-4 py-10 md:px-16 md:py-20">

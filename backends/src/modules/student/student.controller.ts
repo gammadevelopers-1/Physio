@@ -55,6 +55,7 @@ export class StudentController {
     @CurrentUser() user: AuthenticatedUser,
     @Query('status') status?: string,
     @Query('search') search?: string,
+    @Query('delivery') delivery?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('sort') sort?: string,
@@ -62,6 +63,7 @@ export class StudentController {
     return this.studentService.getEnrolledCourses(user.id, {
       status,
       search,
+      delivery,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
       sort,
@@ -263,6 +265,17 @@ export class StudentController {
   @Get('certificates')
   async getCertificates(@CurrentUser() user: AuthenticatedUser) {
     return this.studentService.getCertificates(user.id);
+  }
+
+  /**
+   * GET /student/grades/recent — Recently graded submissions for the dashboard widget
+   */
+  @Get('grades/recent')
+  async getRecentGrades(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('limit') limit?: string,
+  ) {
+    return this.studentService.getRecentGrades(user.id, Number(limit) || 5);
   }
 
   /**

@@ -1,14 +1,31 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { SearchPageContent } from "@/components/search";
 import { setRequestLocale } from "next-intl/server";
-import { getSiteSettings, getNavbarLinks, getFooterLinks, getSearchPage } from "@/lib/strapi";
+import { getSiteSettings, getNavbarLinks, getFooterLinks, getSearchPage, getStrapiMediaUrl } from "@/lib/strapi";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Search | PhysioGuidance",
-  description: "Search for courses, blogs, and more on PhysioGuidance",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const [page, settings] = await Promise.all([
+    getSearchPage(locale).catch(() => null),
+    getSiteSettings(locale).catch(() => null),
+  ]);
+  return buildPageMetadata({
+    locale,
+    path: "/search",
+    page: page as Parameters<typeof buildPageMetadata>[0]["page"],
+    siteOgImageUrl: settings?.defaultOgImage?.url
+      ? getStrapiMediaUrl(settings.defaultOgImage.url)
+      : null,
+  });
+}
 
 function SearchPageFallback() {
   return (

@@ -347,11 +347,11 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
                 aria-checked={autoTranscribe}
                 onClick={() => setAutoTranscribe((v) => !v)}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:ring-offset-2 ${
-                  autoTranscribe ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"
+                  autoTranscribe ? "bg-[#22C55E]" : "bg-[#D1D5DB]"
                 }`}
               >
                 <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[var(--color-surface-card)] shadow ring-0 transition duration-200 ease-in-out ${
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
                     autoTranscribe ? "translate-x-5" : "translate-x-0"
                   }`}
                 />
@@ -716,11 +716,11 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                   aria-checked={autoTranscribe}
                   onClick={() => setAutoTranscribe((v) => !v)}
                   className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:ring-offset-2 ${
-                    autoTranscribe ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"
+                    autoTranscribe ? "bg-[#22C55E]" : "bg-[#D1D5DB]"
                   }`}
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[var(--color-surface-card)] shadow ring-0 transition duration-200 ease-in-out ${
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
                       autoTranscribe ? "translate-x-5" : "translate-x-0"
                     }`}
                   />

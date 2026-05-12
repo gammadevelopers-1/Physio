@@ -1,0 +1,55 @@
+{
+  "collectionName": "components_blocks_instructor_reviews_blocks",
+  "info": {
+    "displayName": "Instructor Reviews Block",
+    "icon": "user-friends",
+    "description": "Shuffled, round-robin sample of approved instructor reviews across all instructors. Limit configurable; fresh shuffle on every page load."
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "limit": {
+      "type": "integer",
+      "default": 6,
+      "min": 1,
+      "max": 20
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": [
+        "all",
+        "desktop-only",
+        "mobile-only"
+      ],
+      "default": "all"
+    },
+    "position": {
+      "type": "enumeration",
+      "enum": [
+        "top",
+        "after-section-1",
+        "after-section-2",
+        "after-section-3",
+        "after-section-4",
+        "after-section-5",
+        "after-section-6",
+        "bottom"
+      ],
+      "default": "bottom"
+    }
+  }
+}

@@ -20,7 +20,6 @@ import {
   Users,
   BookOpen,
   BarChart3,
-  Bell,
 } from "lucide-react";
 import { useAuth } from "@/contexts";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
@@ -137,14 +136,6 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
 
           {/* Separator - Hidden on mobile */}
           <div className="hidden lg:block h-6 w-px bg-[var(--on-surface-variant)] opacity-30" />
-
-          {/* Notifications Icon - Hidden on mobile */}
-          <button className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors relative">
-            <Bell className="w-5 h-5" strokeWidth={1.67} />
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#EF4444] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-              3
-            </span>
-          </button>
 
           {/* Search Icon - Hidden on mobile; gated by Strapi toggle */}
           {showSearch && (

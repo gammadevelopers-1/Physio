@@ -214,9 +214,9 @@ const AdminSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setRequire2FA(!require2FA)}
-                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${require2FA ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${require2FA ? "bg-[#22C55E]" : "bg-[#D1D5DB]"}`}
                           >
-                            <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${require2FA ? "ms-auto" : ""}`} />
+                            <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${require2FA ? "ms-auto" : ""}`} />
                           </button>
                         </div>
 
@@ -271,9 +271,9 @@ const AdminSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setEmailNotifications(!emailNotifications)}
-                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${emailNotifications ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${emailNotifications ? "bg-[#22C55E]" : "bg-[#D1D5DB]"}`}
                           >
-                            <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${emailNotifications ? "ms-auto" : ""}`} />
+                            <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${emailNotifications ? "ms-auto" : ""}`} />
                           </button>
                         </div>
 
@@ -288,9 +288,9 @@ const AdminSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setSmsNotifications(!smsNotifications)}
-                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${smsNotifications ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${smsNotifications ? "bg-[#22C55E]" : "bg-[#D1D5DB]"}`}
                           >
-                            <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${smsNotifications ? "ms-auto" : ""}`} />
+                            <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${smsNotifications ? "ms-auto" : ""}`} />
                           </button>
                         </div>
                       </div>
@@ -349,7 +349,7 @@ const AdminSettingsContent = () => {
                             onClick={() => setMaintenanceMode(!maintenanceMode)}
                             className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${maintenanceMode ? "bg-[#DC2626]" : "bg-[var(--color-border)]"}`}
                           >
-                            <div className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${maintenanceMode ? "ms-auto" : ""}`} />
+                            <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${maintenanceMode ? "ms-auto" : ""}`} />
                           </button>
                         </div>
 

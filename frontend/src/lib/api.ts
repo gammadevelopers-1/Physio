@@ -69,6 +69,25 @@ export class ApiError extends Error {
 interface FetchOptions extends RequestInit {
   skipAuth?: boolean;
   _isRetry?: boolean;
+  /** Internal: incremented on each transient-failure retry. */
+  _attempt?: number;
+  /** Disable the transient-error retry for this request (default: enabled for GET). */
+  noRetry?: boolean;
+}
+
+// Transient-error retry config
+const MAX_RETRIES = 2;
+const RETRY_STATUSES = new Set([500, 502, 503, 504]);
+
+function retryDelayMs(attempt: number): number {
+  // Jittered exponential-ish backoff: ~200ms then ~600ms.
+  const base = attempt === 0 ? 200 : 600;
+  return base + Math.floor(Math.random() * 200);
+}
+
+function isRetryableMethod(method: string | undefined): boolean {
+  const m = (method || 'GET').toUpperCase();
+  return m === 'GET' || m === 'HEAD';
 }
 
 // Refresh state management
@@ -93,7 +112,14 @@ async function fetchApi<T>(
   endpoint: string,
   options: FetchOptions = {}
 ): Promise<T> {
-  const { skipAuth = false, _isRetry = false, headers: customHeaders, ...fetchOptions } = options;
+  const {
+    skipAuth = false,
+    _isRetry = false,
+    _attempt = 0,
+    noRetry = false,
+    headers: customHeaders,
+    ...fetchOptions
+  } = options;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -114,11 +140,31 @@ async function fetchApi<T>(
     headers['X-Device-Id'] = deviceId;
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...fetchOptions,
-    headers,
-    credentials: 'include', // Important for httpOnly refresh cookie
-  });
+  // Transient-error retry: idempotent methods only, capped by MAX_RETRIES.
+  const canRetry =
+    !noRetry && isRetryableMethod(fetchOptions.method) && _attempt < MAX_RETRIES;
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${endpoint}`, {
+      ...fetchOptions,
+      headers,
+      credentials: 'include', // Important for httpOnly refresh cookie
+    });
+  } catch (networkErr) {
+    // Network failure (DNS, connection refused, abort). Retry if eligible.
+    if (canRetry) {
+      await new Promise((r) => setTimeout(r, retryDelayMs(_attempt)));
+      return fetchApi<T>(endpoint, { ...options, _attempt: _attempt + 1 });
+    }
+    throw networkErr;
+  }
+
+  // Transient server errors — retry once or twice with jittered backoff.
+  if (canRetry && RETRY_STATUSES.has(response.status)) {
+    await new Promise((r) => setTimeout(r, retryDelayMs(_attempt)));
+    return fetchApi<T>(endpoint, { ...options, _attempt: _attempt + 1 });
+  }
 
   // Handle 401 - attempt token refresh once
   if (response.status === 401 && !skipAuth && !_isRetry) {
@@ -343,6 +389,14 @@ export interface User {
   nationality?: string | null;
   gender?: string | null;
   dateOfBirth?: string | null;
+  // Trainer-application fields — seeded from role_requests.profileData on
+  // approval. Used to pre-fill the instructor settings Professional Info
+  // block on first login.
+  specialty?: string | null;
+  profession?: string | null;
+  qualification?: string | null;
+  twitter?: string | null;
+  linkedin?: string | null;
   roles: string[];
   isActive: boolean;
   isVerified: boolean;
@@ -392,6 +446,7 @@ export const authApi = {
     firstName?: string;
     lastName?: string;
     scfhsNumber?: string;
+    nationalId: string;
     recaptchaToken?: string;
   }) => api.post<RegisterResponse>('/auth/register', data, { skipAuth: true }),
 
@@ -748,12 +803,34 @@ import type {
   InterventionResponse,
   InterventionRecord,
   PublicCoursesResponse,
+  InstructorPublicProfile,
 } from '@/types/instructor-dashboard';
 
 export const instructorApi = {
   // Aggregated dashboard summary
   getDashboardSummary: () =>
     api.get<DashboardSummaryResponse>('/instructor/dashboard-summary'),
+
+  // Approved instructor reviews for the authenticated instructor —
+  // populates the dashboard sidebar rating + a Reviews block on the
+  // dashboard home. Same response shape as the manager's /instructor/:id/reviews.
+  getMyReviews: (limit?: number) => {
+    const qs = limit ? `?limit=${limit}` : '';
+    return api.get<{
+      data: Array<{
+        id: string;
+        courseId: string;
+        courseTitle: string;
+        courseTitleAr: string | null;
+        rating: number;
+        reviewText: string | null;
+        createdAt: string;
+        studentName: string;
+      }>;
+      avgRating: number;
+      totalRatings: number;
+    }>(`/instructor/me/reviews${qs}`);
+  },
 
   // Per-course performance data (attendance, modules, pass/fail)
   getCoursePerformance: (courseId?: string) =>
@@ -1410,6 +1487,8 @@ export interface CreateCourseManagerData {
   endDate?: string;
   instructorId: string;
   cohort?: string;
+  accreditationNumber?: string;
+  nelcReviewLink?: string;
   overview?: string;
   overviewAr?: string;
   objectives?: string[];
@@ -1418,6 +1497,12 @@ export interface CreateCourseManagerData {
   featuresAr?: string[];
   targetAudience?: string[];
   targetAudienceAr?: string[];
+  faqs?: Array<{
+    question?: string;
+    questionAr?: string;
+    answer?: string;
+    answerAr?: string;
+  }>;
   requirements?: string;
   requirementsAr?: string;
   notices?: string;
@@ -1927,6 +2012,132 @@ export const courseManagerApi = {
   deleteReview: (courseId: string, ratingId: string) =>
     api.delete<{ id: string }>(`/courses/${courseId}/ratings/${ratingId}`),
 
+  // Instructor reviews — moderation list
+  getManagerInstructorReviews: (params?: {
+    page?: number;
+    limit?: number;
+    moderationStatus?: 'pending' | 'approved' | 'rejected';
+    publishedOnly?: boolean;
+    unpublishedOnly?: boolean;
+    courseId?: string;
+    search?: string;
+    sort?: 'newest' | 'oldest' | 'highest' | 'lowest';
+  }) => {
+    const sp = new URLSearchParams();
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    if (params?.moderationStatus) sp.set('moderationStatus', params.moderationStatus);
+    if (params?.publishedOnly) sp.set('publishedOnly', 'true');
+    if (params?.unpublishedOnly) sp.set('unpublishedOnly', 'true');
+    if (params?.courseId) sp.set('courseId', params.courseId);
+    if (params?.search) sp.set('search', params.search);
+    if (params?.sort) sp.set('sort', params.sort);
+    const qs = sp.toString();
+    return api.get<{
+      data: Array<{
+        id: string;
+        courseId: string;
+        instructorId: string;
+        courseTitle: string;
+        courseTitleAr: string | null;
+        rating: number;
+        reviewText: string | null;
+        moderationStatus: 'pending' | 'approved' | 'rejected';
+        isPublished: boolean;
+        createdAt: string;
+        reviewedAt: string | null;
+        studentName: string;
+      }>;
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+      counts: { pending: number; approved: number; rejected: number };
+    }>(`/courses/instructor-reviews/manager${qs ? `?${qs}` : ''}`);
+  },
+
+  approveInstructorReview: (courseId: string, ratingId: string) =>
+    api.post<{ id: string }>(
+      `/courses/${courseId}/instructor-ratings/${ratingId}/approve`,
+      {},
+    ),
+
+  rejectInstructorReview: (courseId: string, ratingId: string) =>
+    api.post<{ id: string }>(
+      `/courses/${courseId}/instructor-ratings/${ratingId}/reject`,
+      {},
+    ),
+
+  setInstructorReviewPublished: (
+    courseId: string,
+    ratingId: string,
+    published: boolean,
+  ) =>
+    api.patch<{ id: string }>(
+      `/courses/${courseId}/instructor-ratings/${ratingId}/publish`,
+      { published },
+    ),
+
+  deleteInstructorReview: (courseId: string, ratingId: string) =>
+    api.delete<{ id: string }>(
+      `/courses/${courseId}/instructor-ratings/${ratingId}`,
+    ),
+
+  // Instructor reviews on a single course (for the manager course-detail switch)
+  getCourseInstructorRatings: (
+    courseId: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      rating?: number;
+      sort?: 'newest' | 'oldest' | 'highest' | 'lowest';
+      search?: string;
+    },
+  ) => {
+    const sp = new URLSearchParams();
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    if (params?.rating) sp.set('rating', String(params.rating));
+    if (params?.sort) sp.set('sort', params.sort);
+    if (params?.search) sp.set('search', params.search);
+    const qs = sp.toString();
+    return api.get<{
+      data: Array<{
+        id: string;
+        rating: number;
+        reviewText: string | null;
+        createdAt: string;
+        studentName: string;
+      }>;
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+      avgRating: number;
+      totalRatings: number;
+      distribution: Record<1 | 2 | 3 | 4 | 5, number>;
+    }>(`/courses/${courseId}/instructor-ratings${qs ? `?${qs}` : ''}`);
+  },
+
+  // All approved reviews for a single instructor (manager side-sheet)
+  getReviewsForInstructor: (instructorId: string, limit?: number) => {
+    const qs = limit ? `?limit=${limit}` : '';
+    return api.get<{
+      data: Array<{
+        id: string;
+        courseId: string;
+        courseTitle: string;
+        courseTitleAr: string | null;
+        rating: number;
+        reviewText: string | null;
+        createdAt: string;
+        studentName: string;
+      }>;
+      avgRating: number;
+      totalRatings: number;
+    }>(`/instructor/${instructorId}/reviews${qs}`);
+  },
+
   // Course Materials (manager access)
   getCourseMaterials: (courseId: string, moduleId?: string) =>
     api.get<Array<{
@@ -2294,6 +2505,7 @@ import type {
   StudentCourseDetail,
   CourseProgress,
   StudentCertificate,
+  RecentGrade,
   CalendarEvent,
   StudentTranscript,
   EnrollmentResponse,
@@ -2313,6 +2525,7 @@ export const studentApi = {
   getCourses: (params?: {
     status?: string;
     search?: string;
+    delivery?: string;
     page?: number;
     limit?: number;
     sort?: string;
@@ -2320,6 +2533,7 @@ export const studentApi = {
     const sp = new URLSearchParams();
     if (params?.status && params.status !== 'all') sp.set('status', params.status);
     if (params?.search) sp.set('search', params.search);
+    if (params?.delivery && params.delivery !== 'all') sp.set('delivery', params.delivery);
     if (params?.page) sp.set('page', String(params.page));
     if (params?.limit) sp.set('limit', String(params.limit));
     if (params?.sort) sp.set('sort', params.sort);
@@ -2351,6 +2565,9 @@ export const studentApi = {
 
   getCertificates: () =>
     api.get<StudentCertificate[]>('/student/certificates'),
+
+  getRecentGrades: (limit = 5) =>
+    api.get<RecentGrade[]>(`/student/grades/recent?limit=${limit}`),
 
   requestCertificate: (courseId: string) =>
     api.post<{ id: string; status: string }>('/certificates', { courseId }),
@@ -2485,6 +2702,197 @@ export const studentApi = {
       `/courses/${courseId}/ratings`,
       { rating, reviewText },
     ),
+
+  getMyInstructorRating: (courseId: string) =>
+    api.get<{
+      id: string;
+      rating: number;
+      reviewText: string | null;
+      createdAt: string;
+    } | null>(`/courses/${courseId}/instructor-ratings/me`),
+
+  submitInstructorRating: (courseId: string, rating: number, reviewText?: string) =>
+    api.post<{
+      id: string;
+      rating: number;
+      reviewText: string | null;
+      createdAt: string;
+    }>(`/courses/${courseId}/instructor-ratings`, { rating, reviewText }),
+
+  getReviewStatus: (courseId: string) =>
+    api.get<{
+      courseReviewSubmitted: boolean;
+      instructorReviewSubmitted: boolean;
+      instructorRequired: boolean;
+      allRequiredSubmitted: boolean;
+    }>(`/courses/${courseId}/review-status`),
+};
+
+// ===========================================
+// Points API (student + admin)
+// ===========================================
+
+export interface PointsBalance {
+  balance: number;
+  expiringSoon: number;
+}
+
+export interface PointsTransaction {
+  id: string;
+  delta: number;
+  reason: string;
+  sourceEntityType: string | null;
+  sourceEntityId: string | null;
+  expiresAt: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  ruleKey: string | null;
+  ruleDescription: string | null;
+  ruleDescriptionAr: string | null;
+}
+
+export interface PointsTransactionsResponse {
+  data: PointsTransaction[];
+  page: number;
+  limit: number;
+  total: number;
+}
+
+export interface RedeemableCourse {
+  id: string;
+  title: string;
+  titleAr: string | null;
+  thumbnail: string | null;
+  deliveryType: string;
+  price: number;
+  cmeHours: number;
+  isCmeAccredited: boolean;
+  costPoints: number;
+  affordable: boolean;
+}
+
+export interface PointRule {
+  id: string;
+  ruleKey: string;
+  pointsAmount: number;
+  isActive: boolean;
+  maxPerUser: number | null;
+  cooldownSeconds: number | null;
+  description: string | null;
+  descriptionAr: string | null;
+  expiresAfterDays: number | null;
+}
+
+export interface PointsConfig {
+  id: number;
+  conversionRatePointsPerSar: number;
+  minRedemptionPoints: number;
+  maxRedemptionPct: number;
+  combinableWithCoupons: boolean;
+  defaultExpirationDays: number | null;
+}
+
+export interface ActiveRule {
+  ruleKey: string;
+  pointsAmount: number;
+  description: string | null;
+  descriptionAr: string | null;
+  expiresAfterDays: number | null;
+  maxPerUser: number | null;
+}
+
+export const pointsApi = {
+  getBalance: () => api.get<PointsBalance>('/points/me/balance'),
+
+  getActiveRules: () => api.get<ActiveRule[]>('/points/me/rules'),
+
+  getTransactions: (params?: { page?: number; limit?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const q = qs.toString();
+    return api.get<PointsTransactionsResponse>(
+      `/points/me/transactions${q ? `?${q}` : ''}`,
+    );
+  },
+
+  getRedeemableCourses: () =>
+    api.get<{ balance: number; courses: RedeemableCourse[] }>(
+      '/points/me/redeemable-courses',
+    ),
+
+  redeemCourse: (courseId: string) =>
+    api.post<{
+      redemptionId: string;
+      enrollmentId: string;
+      pointsUsed: number;
+      newBalance: number;
+    }>('/points/redeem-course', { courseId }),
+};
+
+export interface AdminCourseRedemption {
+  id: string;
+  title: string;
+  titleAr: string | null;
+  deliveryType: string;
+  price: string | number;
+  cmeHours: number;
+  isCmeAccredited: boolean;
+  redeemableForFree: boolean;
+  freeUnlockCostPoints: number | null;
+  maxRedemptionPct: number | null;
+}
+
+export interface AdminUserSearchResult {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+}
+
+export const pointsAdminApi = {
+  listRules: () => api.get<PointRule[]>('/admin/points/rules'),
+  updateRule: (ruleKey: string, body: Partial<PointRule>) =>
+    api.patch<PointRule>(`/admin/points/rules/${ruleKey}`, body),
+  getConfig: () => api.get<PointsConfig>('/admin/points/config'),
+  updateConfig: (body: Partial<PointsConfig>) =>
+    api.patch<PointsConfig>('/admin/points/config', body),
+  grant: (body: { userId: string; delta: number; reason: string }) =>
+    api.post<{ rowId: string }>('/admin/points/grant', body),
+  listCourses: (search?: string) => {
+    const qs = search ? `?search=${encodeURIComponent(search)}` : '';
+    return api.get<AdminCourseRedemption[]>(`/admin/points/courses${qs}`);
+  },
+  updateCourseRedemption: (
+    courseId: string,
+    body: Partial<{
+      redeemableForFree: boolean;
+      freeUnlockCostPoints: number | null;
+      maxRedemptionPct: number | null;
+    }>,
+  ) =>
+    api.patch<AdminCourseRedemption>(
+      `/admin/points/courses/${courseId}`,
+      body,
+    ),
+  searchUsers: (q: string) =>
+    api.get<AdminUserSearchResult[]>(
+      `/admin/points/users/search?q=${encodeURIComponent(q)}`,
+    ),
+  getUserTransactions: (
+    userId: string,
+    params?: { page?: number; limit?: number },
+  ) => {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const q = qs.toString();
+    return api.get<PointsTransactionsResponse>(
+      `/admin/points/users/${userId}/transactions${q ? `?${q}` : ''}`,
+    );
+  },
+  getUserBalance: (userId: string) =>
+    api.get<{ balance: number }>(`/admin/points/users/${userId}/balance`),
 };
 
 // ===========================================
@@ -2509,6 +2917,12 @@ export const publicApi = {
       { skipAuth: true },
     );
   },
+
+  getInstructorPublicProfile: (instructorId: string) =>
+    api.get<InstructorPublicProfile>(
+      `/courses/instructors/${instructorId}/public`,
+      { skipAuth: true },
+    ),
 
   getCourseRatings: (
     courseId: string,

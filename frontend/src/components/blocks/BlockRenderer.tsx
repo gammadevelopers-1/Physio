@@ -7,6 +7,7 @@ import { ImageBannerBlock } from './ImageBannerBlock';
 import { FeaturedSectionBlock } from './FeaturedSectionBlock';
 import { InstructorsGridBlock } from './InstructorsGridBlock';
 import { TestimonialsCarouselBlock } from './TestimonialsCarouselBlock';
+import { InstructorReviewsBlock } from './InstructorReviewsBlock';
 import { RichTextBlock } from './RichTextBlock';
 import { StatsNumbersBlock } from './StatsNumbersBlock';
 import { CardsGridBlock } from './CardsGridBlock';
@@ -59,6 +60,7 @@ const BLOCK_COMPONENTS: Record<string, React.ComponentType<any>> = {
   'blocks.featured-section-block': FeaturedSectionBlock,
   'blocks.instructors-grid': InstructorsGridBlock,
   'blocks.testimonials-carousel': TestimonialsCarouselBlock,
+  'blocks.instructor-reviews-block': InstructorReviewsBlock,
   'blocks.rich-text-block': RichTextBlock,
   'blocks.stats-numbers-block': StatsNumbersBlock,
   'blocks.cards-grid': CardsGridBlock,

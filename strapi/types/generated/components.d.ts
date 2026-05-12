@@ -1282,6 +1282,58 @@ export interface BlocksFeaturedCoursesGrid extends Struct.ComponentSchema {
   };
 }
 
+export interface BlocksFeaturedSectionBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_featured_section_blocks';
+  info: {
+    description: 'Two-column layout: title + description + CTA on one side, image carousel on the other';
+    displayName: 'Featured Section Block';
+    icon: 'rocket';
+  };
+  attributes: {
+    autoPlay: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    ctaButton: Schema.Attribute.Component<'elements.button-link', false>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    imagePosition: Schema.Attribute.Enumeration<['left', 'right']> &
+      Schema.Attribute.DefaultTo<'right'>;
+    images: Schema.Attribute.Media<'images', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
+    showArrows: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    showDots: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
 export interface BlocksFeedbackFormBlock extends Struct.ComponentSchema {
   collectionName: 'components_blocks_feedback_form_blocks';
   info: {
@@ -1510,6 +1562,55 @@ export interface BlocksImageGalleryBlock extends Struct.ComponentSchema {
       }>;
     variant: Schema.Attribute.Enumeration<['grid', 'carousel', 'masonry']> &
       Schema.Attribute.DefaultTo<'grid'>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksInstructorReviewsBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_instructor_reviews_blocks';
+  info: {
+    description: 'Shuffled, round-robin sample of approved instructor reviews across all instructors. Limit configurable; fresh shuffle on every page load.';
+    displayName: 'Instructor Reviews Block';
+    icon: 'user-friends';
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    limit: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 20;
+          min: 1;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<6>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     visibility: Schema.Attribute.Enumeration<
       ['all', 'desktop-only', 'mobile-only']
     > &
@@ -2514,10 +2615,6 @@ export interface BlocksTrainerFormBlock extends Struct.ComponentSchema {
       ]
     > &
       Schema.Attribute.DefaultTo<'bottom'>;
-    professionOptions: Schema.Attribute.Component<
-      'elements.dropdown-option',
-      true
-    >;
     profileAttachCVLabel: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -3455,6 +3552,24 @@ export interface ElementsSocialLink extends Struct.ComponentSchema {
   };
 }
 
+export interface ElementsSpecialtyOption extends Struct.ComponentSchema {
+  collectionName: 'components_elements_specialty_options';
+  info: {
+    description: 'A specialty under a profession (e.g. Cardiology under Medicine)';
+    displayName: 'Specialty Option';
+  };
+  attributes: {
+    label: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    value: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
 export interface ElementsStatItem extends Struct.ComponentSchema {
   collectionName: 'components_elements_stat_items';
   info: {
@@ -3648,6 +3763,46 @@ export interface SharedSearchTerm extends Struct.ComponentSchema {
   };
 }
 
+export interface SharedSeo extends Struct.ComponentSchema {
+  collectionName: 'components_shared_seos';
+  info: {
+    description: 'Per-page SEO metadata, Open Graph, Twitter card, canonical URL, and robots noindex toggle';
+    displayName: 'SEO';
+  };
+  attributes: {
+    canonicalUrl: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 500;
+      }>;
+    keywords: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 500;
+      }>;
+    metaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 300;
+      }>;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 150;
+      }>;
+    noindex: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    ogDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 300;
+      }>;
+    ogImage: Schema.Attribute.Media<'images'>;
+    ogTitle: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 150;
+      }>;
+    twitterCard: Schema.Attribute.Enumeration<
+      ['summary', 'summary_large_image']
+    > &
+      Schema.Attribute.DefaultTo<'summary_large_image'>;
+  };
+}
+
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
@@ -3673,10 +3828,12 @@ declare module '@strapi/strapi' {
       'blocks.faq-accordion': BlocksFaqAccordion;
       'blocks.faqs': BlocksFaqs;
       'blocks.featured-courses-grid': BlocksFeaturedCoursesGrid;
+      'blocks.featured-section-block': BlocksFeaturedSectionBlock;
       'blocks.feedback-form-block': BlocksFeedbackFormBlock;
       'blocks.hero-banner': BlocksHeroBanner;
       'blocks.image-banner-block': BlocksImageBannerBlock;
       'blocks.image-gallery-block': BlocksImageGalleryBlock;
+      'blocks.instructor-reviews-block': BlocksInstructorReviewsBlock;
       'blocks.instructor-spotlight-block': BlocksInstructorSpotlightBlock;
       'blocks.instructors-grid': BlocksInstructorsGrid;
       'blocks.learning-outcomes-block': BlocksLearningOutcomesBlock;
@@ -3725,6 +3882,7 @@ declare module '@strapi/strapi' {
       'elements.progress-metric': ElementsProgressMetric;
       'elements.related-page-item': ElementsRelatedPageItem;
       'elements.social-link': ElementsSocialLink;
+      'elements.specialty-option': ElementsSpecialtyOption;
       'elements.stat-item': ElementsStatItem;
       'elements.success-story-item': ElementsSuccessStoryItem;
       'elements.tab-item': ElementsTabItem;
@@ -3733,6 +3891,7 @@ declare module '@strapi/strapi' {
       'shared.faq-item': SharedFaqItem;
       'shared.policy-section': SharedPolicySection;
       'shared.search-term': SharedSearchTerm;
+      'shared.seo': SharedSeo;
     }
   }
 }

@@ -99,13 +99,14 @@ export const dayNamesAr = ["الأحد", "الإثنين", "الثلاثاء", "
 
 // ── Date formatting ────────────────────────────────────────────────────────
 
-export type CalendarFormat = "hijri" | "gregorian";
+export type CalendarFormat = "hijri" | "gregorian" | "both";
 
 /**
  * Format a date according to the user's calendar preference.
  *
  * - Gregorian → DD/MM/YYYY
  * - Hijri     → DD/MM/YYYY هـ
+ * - Both      → DD/MM/YYYY (DD/MM/YYYY هـ)
  *
  * Accepts a Date object or ISO string.
  */
@@ -118,34 +119,30 @@ export function formatDate(
   const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
   if (isNaN(date.getTime())) return "—";
 
-  if (calendarFormat === "hijri") {
+  const timeStr = options?.includeTime
+    ? " " + date.toLocaleTimeString(options?.locale === "ar" ? "ar-SA" : "en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
+
+  const gregorian = (() => {
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  })();
+
+  const hijri = (() => {
     const { day, month, year } = getHijriParts(date);
     const dd = String(day).padStart(2, "0");
     const mm = String(month).padStart(2, "0");
-    const base = `${dd}/${mm}/${year} هـ`;
-    if (options?.includeTime) {
-      const time = date.toLocaleTimeString(options?.locale === "ar" ? "ar-SA" : "en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-      return `${base} ${time}`;
-    }
-    return base;
-  }
+    return `${dd}/${mm}/${year} هـ`;
+  })();
 
-  // Gregorian
-  const dd = String(date.getDate()).padStart(2, "0");
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const yyyy = date.getFullYear();
-  const base = `${dd}/${mm}/${yyyy}`;
-  if (options?.includeTime) {
-    const time = date.toLocaleTimeString(options?.locale === "ar" ? "ar-SA" : "en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    return `${base} ${time}`;
-  }
-  return base;
+  if (calendarFormat === "hijri") return hijri + timeStr;
+  if (calendarFormat === "both") return `${gregorian} (${hijri})${timeStr}`;
+  return gregorian + timeStr;
 }
 
 /**
@@ -160,19 +157,23 @@ export function formatDateReadable(
   const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
   if (isNaN(date.getTime())) return "—";
 
-  if (calendarFormat === "hijri") {
+  const gregorian = date.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const hijri = (() => {
     const { day, month, year } = getHijriParts(date);
     const monthName = locale === "ar" ? hijriMonthNames[month - 1] : hijriMonthNamesEn[month - 1];
     return locale === "ar"
       ? `${day} ${monthName} ${year} هـ`
       : `${monthName} ${day}, ${year} AH`;
-  }
+  })();
 
-  return date.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  if (calendarFormat === "hijri") return hijri;
+  if (calendarFormat === "both") return `${gregorian} (${hijri})`;
+  return gregorian;
 }
 
 /**

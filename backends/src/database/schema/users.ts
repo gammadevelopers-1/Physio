@@ -39,6 +39,15 @@ export const users = pgTable('users', {
   department: varchar('department', { length: 100 }),
   specialty: varchar('specialty', { length: 100 }),
   instructorStatus: varchar('instructor_status', { length: 20 }),
+  // Profile fields originally captured during the trainer-application flow.
+  // Surfaced to the instructor's settings page (editable) and the public
+  // course detail page (read-only). Pre-filled from role_requests.profile_data
+  // on approval; instructor edits sync back to admin via audit_logs + an
+  // admin notification on every save.
+  profession: varchar('profession', { length: 255 }),
+  qualification: varchar('qualification', { length: 500 }),
+  twitter: varchar('twitter', { length: 255 }),
+  linkedin: varchar('linkedin', { length: 500 }),
 
   // Active Role - The currently selected role for multi-role users
   // This is stored as varchar to avoid circular dependency with roles table

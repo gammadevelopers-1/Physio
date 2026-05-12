@@ -53,10 +53,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50" role="status" aria-label="Loading">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
-          <p className="text-gray-600">Loading...</p>
-        </div>
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
       </div>
     );
   }

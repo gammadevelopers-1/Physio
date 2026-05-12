@@ -379,6 +379,7 @@
         "blocks.student-progress-block",
         "blocks.success-stories-block",
         "blocks.tabs-block",
+        "blocks.instructor-reviews-block",
         "blocks.testimonials-carousel",
         "blocks.timeline-block",
         "blocks.trainer-form-block",
@@ -388,6 +389,16 @@
         "blocks.video-embed",
         "blocks.featured-section-block"
       ]
+    },
+    "seo": {
+      "type": "component",
+      "repeatable": false,
+      "component": "shared.seo",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     }
   }
 }

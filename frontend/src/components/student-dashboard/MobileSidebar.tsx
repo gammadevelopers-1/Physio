@@ -12,17 +12,11 @@ import {
   BookOpen,
   Heart,
   Award,
-  ScrollText,
-  BadgeCheck,
-  FileText,
   Users,
   Settings,
   X,
   Pencil,
   Coins,
-  PlusCircle,
-  ClipboardList,
-  HelpCircle,
   Upload,
   Trash2,
 } from "lucide-react";
@@ -87,19 +81,14 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
       icon: LayoutDashboard,
     },
     {
-      label: t("sidebar.calendar"),
-      href: `/${locale}/dashboard/student/calendar`,
-      icon: CalendarIcon,
-    },
-    {
       label: t("sidebar.courses"),
       href: `/${locale}/dashboard/student/courses`,
       icon: BookOpen,
     },
     {
-      label: t("sidebar.favorites"),
-      href: `/${locale}/dashboard/student/favourites`,
-      icon: Heart,
+      label: t("sidebar.calendar"),
+      href: `/${locale}/dashboard/student/calendar`,
+      icon: CalendarIcon,
     },
     {
       label: t("sidebar.certifications"),
@@ -107,29 +96,9 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
       icon: Award,
     },
     {
-      label: t("sidebar.transcript"),
-      href: `/${locale}/dashboard/student/transcript`,
-      icon: ScrollText,
-    },
-    {
-      label: t("sidebar.badges"),
-      href: `/${locale}/dashboard/student/badges`,
-      icon: BadgeCheck,
-    },
-    {
-      label: t("sidebar.invoices"),
-      href: `/${locale}/dashboard/student/invoices`,
-      icon: FileText,
-    },
-    {
-      label: t("sidebar.applications"),
-      href: `/${locale}/dashboard/student/applications`,
-      icon: ClipboardList,
-    },
-    {
-      label: t("sidebar.support"),
-      href: `/${locale}/dashboard/student/support`,
-      icon: HelpCircle,
+      label: t("sidebar.favorites"),
+      href: `/${locale}/dashboard/student/favourites`,
+      icon: Heart,
     },
     {
       label: t("sidebar.inviteFriends"),
@@ -264,28 +233,6 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
                   style={{ width: `${user.profileCompletion}%` }}
                 />
               </div>
-            </div>
-
-            {/* Info Links */}
-            <div className="mt-4 space-y-2">
-              <Link
-                href={`/${locale}/dashboard/student/settings`}
-                className="flex items-center gap-2 text-[#D4A520] hover:text-[#B8920E] transition-colors"
-              >
-                <PlusCircle className="w-4 h-4" />
-                <span className="text-sm font-medium">
-                  {t("sidebar.personalInformation")}
-                </span>
-              </Link>
-              <Link
-                href={`/${locale}/dashboard/student/settings`}
-                className="flex items-center gap-2 text-[#D4A520] hover:text-[#B8920E] transition-colors"
-              >
-                <PlusCircle className="w-4 h-4" />
-                <span className="text-sm font-medium">
-                  {t("sidebar.contactInformation")}
-                </span>
-              </Link>
             </div>
 
             {/* View Profile Button */}

@@ -5,6 +5,7 @@ import {
   IsOptional,
   ValidateIf,
 } from 'class-validator';
+import { IsSaudiNationalId } from '../../../common/validators/saudi-national-id.validator';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -65,9 +66,12 @@ export class UpdateProfileDto {
   @MaxLength(50)
   scfhsNumber?: string;
 
+  // National ID / Iqama — KSA-validated. The service-layer one-time-set
+  // guard (see updateProfile in auth.service.ts) rejects any attempt to
+  // change this once the user already has a value.
   @IsOptional()
   @IsString()
-  @MaxLength(50)
+  @IsSaudiNationalId({ message: 'Invalid Saudi National ID / Iqama number' })
   nationalId?: string;
 
   @IsOptional()
@@ -84,4 +88,30 @@ export class UpdateProfileDto {
   @IsString()
   @MaxLength(10)
   dateOfBirth?: string;
+
+  // Instructor profile fields (also editable by other roles, harmless if blank)
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  specialty?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  profession?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  qualification?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  twitter?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  linkedin?: string;
 }

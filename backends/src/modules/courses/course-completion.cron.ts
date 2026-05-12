@@ -6,6 +6,7 @@ import { courses, enrollments, users, NELC_EVENT_TYPE } from '../../database/sch
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 import { CertificatesService } from '../certificates/certificates.service';
+import { PointsService } from '../points/points.service';
 
 /**
  * Auto-completes courses whose end date has passed.
@@ -20,6 +21,7 @@ export class CourseCompletionCronService {
     private readonly auditService: NelcAuditService,
     private readonly notificationsService: UserNotificationsService,
     private readonly certificatesService: CertificatesService,
+    private readonly pointsService: PointsService,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
@@ -90,6 +92,23 @@ export class CourseCompletionCronService {
               } catch {
                 // Skip duplicates silently
               }
+            }
+
+            // Award course-completion points (idempotent per enrollment).
+            // The unique idempotency key on the ledger row prevents double-award
+            // even if a future re-run of the cron processes the same enrollment.
+            for (const student of activeStudents) {
+              this.pointsService
+                .award(student.studentId, 'course_completed', {
+                  idempotencyKey: `course_completed:${student.id}`,
+                  sourceEntityType: 'enrollment',
+                  sourceEntityId: student.id,
+                })
+                .catch((err) =>
+                  this.logger.warn(
+                    `Course-completion points failed for enrollment ${student.id}: ${(err as Error).message}`,
+                  ),
+                );
             }
           }
 

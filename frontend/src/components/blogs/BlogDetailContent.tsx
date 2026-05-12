@@ -122,7 +122,7 @@ const BlogDetailContent = ({ blogPost, latestBlogs, blogsPage }: BlogDetailConte
                   <div className="relative h-[320px] rounded-2xl overflow-hidden">
                     <Image
                       src={imageUrl!}
-                      alt=""
+                      alt={blogPost.mainImage?.alternativeText || title || ""}
                       fill
                       className="object-cover"
                       unoptimized={imageUrl!.startsWith("http")}
@@ -264,7 +264,13 @@ const BlogDetailContent = ({ blogPost, latestBlogs, blogsPage }: BlogDetailConte
           {/* Image */}
           {hasImage && (
             <div className="relative w-full h-[200px] rounded-xl overflow-hidden mb-4">
-              <Image src={imageUrl!} alt="" fill className="object-cover" unoptimized={imageUrl!.startsWith("http")} />
+              <Image
+                src={imageUrl!}
+                alt={blogPost.mainImage?.alternativeText || title || ""}
+                fill
+                className="object-cover"
+                unoptimized={imageUrl!.startsWith("http")}
+              />
             </div>
           )}
 

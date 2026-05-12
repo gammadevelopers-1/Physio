@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   UnauthorizedException,
   ConflictException,
   BadRequestException,
@@ -30,6 +31,7 @@ import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private readonly RESET_OTP_EXPIRY_MINUTES = 10;
   private readonly RESET_MAX_ATTEMPTS = 3;
 
@@ -79,6 +81,9 @@ export class AuthService {
         lastName: dto.lastName,
         phone: dto.phone,
         scfhsNumber: dto.scfhsNumber || null,
+        // National ID / Iqama is required at registration and immutable
+        // once stored. Already validated by the DTO via @IsSaudiNationalId.
+        nationalId: dto.nationalId,
         activeRole: ROLE_NAMES.STUDENT,
       })
       .returning({
@@ -95,6 +100,21 @@ export class AuthService {
       userId: newUser.id,
       roleId: studentRole.id,
     });
+
+    // Award signup points (best-effort — never blocks registration if it fails).
+    // ModuleRef avoids a hard import dependency on PointsModule that would
+    // create a circular cycle (PointsModule depends on auth guards).
+    try {
+      const { PointsService } = await import('../points/points.service');
+      const pointsService = this.moduleRef.get(PointsService, { strict: false });
+      pointsService
+        .award(newUser.id, 'signup', { idempotencyKey: `signup:${newUser.id}` })
+        .catch((err) =>
+          console.error('Signup points award failed', err),
+        );
+    } catch (err) {
+      console.error('Failed to resolve PointsService for signup award', err);
+    }
 
     return {
       user: {
@@ -519,6 +539,15 @@ export class AuthService {
         nationality: users.nationality,
         gender: users.gender,
         dateOfBirth: users.dateOfBirth,
+        // Trainer-application fields — seeded from role_requests.profileData
+        // on approval. The instructor settings page reads these to pre-fill
+        // the Professional Information block; without them in the /auth/me
+        // SELECT the form was always blank for newly-approved trainers.
+        specialty: users.specialty,
+        profession: users.profession,
+        qualification: users.qualification,
+        twitter: users.twitter,
+        linkedin: users.linkedin,
         isActive: users.isActive,
         isVerified: users.isVerified,
         lastLoginAt: users.lastLoginAt,
@@ -712,14 +741,121 @@ export class AuthService {
     if (dto.language !== undefined) updateData.language = dto.language;
     if (dto.department !== undefined) updateData.department = dto.department;
     if (dto.scfhsNumber !== undefined) updateData.scfhsNumber = dto.scfhsNumber;
-    if (dto.nationalId !== undefined) updateData.nationalId = dto.nationalId;
+
+    // National ID / Iqama is a one-time-set field. New users provide it
+    // at registration; legacy users (pre-this-feature) have a NULL value
+    // and may set it ONCE via this endpoint. After that, any attempt to
+    // change it is rejected — uneditable from the student profile UI.
+    if (dto.nationalId !== undefined && dto.nationalId !== null && dto.nationalId !== '') {
+      if (user.nationalId && user.nationalId !== dto.nationalId) {
+        throw new BadRequestException({
+          code: 'NATIONAL_ID_LOCKED',
+          message: 'National ID / Iqama cannot be changed once set',
+        });
+      }
+      // Only persist if currently null (first-time set). If client
+      // re-sends the same value, treat as no-op.
+      if (!user.nationalId) updateData.nationalId = dto.nationalId;
+    }
     if (dto.nationality !== undefined) updateData.nationality = dto.nationality;
     if (dto.gender !== undefined) updateData.gender = dto.gender;
     if (dto.dateOfBirth !== undefined) updateData.dateOfBirth = dto.dateOfBirth;
+    if (dto.specialty !== undefined) updateData.specialty = dto.specialty;
+    if (dto.profession !== undefined) updateData.profession = dto.profession;
+    if (dto.qualification !== undefined) updateData.qualification = dto.qualification;
+    if (dto.twitter !== undefined) updateData.twitter = dto.twitter;
+    if (dto.linkedin !== undefined) updateData.linkedin = dto.linkedin;
+
+    // Compute the diff BEFORE updating so we can audit + notify with the
+    // before/after pair. Only fields the user actually changed (DTO key
+    // present AND value differs from current) end up in `changes`.
+    const trackedKeys = [
+      'firstName', 'lastName', 'firstNameAr', 'lastNameAr',
+      'phone', 'avatar', 'bio', 'location', 'language',
+      'department', 'scfhsNumber', 'nationalId', 'nationality',
+      'gender', 'dateOfBirth', 'specialty', 'profession',
+      'qualification', 'twitter', 'linkedin',
+    ] as const;
+    const changes: Record<string, { from: unknown; to: unknown }> = {};
+    for (const key of trackedKeys) {
+      if (key in updateData) {
+        const before = (user as Record<string, unknown>)[key];
+        const after = updateData[key];
+        if (before !== after) {
+          changes[key] = { from: before ?? null, to: after ?? null };
+        }
+      }
+    }
 
     await db.update(users).set(updateData).where(eq(users.id, userId));
 
+    // Side effects (best-effort) — never block the user-facing response.
+    if (Object.keys(changes).length > 0) {
+      this.recordProfileEditSideEffects(user, changes).catch((err) =>
+        this.logger.warn(
+          `Profile edit side-effects failed for ${userId}: ${(err as Error).message}`,
+        ),
+      );
+    }
+
     return this.getCurrentUser(userId);
+  }
+
+  /**
+   * Audit log + admin notification for instructor profile edits. Fired
+   * once per save with a diff. Best-effort — failures are logged, not
+   * propagated, so the user always sees a successful save.
+   *
+   * Services are pulled via ModuleRef to avoid circular-import chains
+   * with audit-logs / admin-notifications modules at boot.
+   */
+  private async recordProfileEditSideEffects(
+    user: User,
+    changes: Record<string, { from: unknown; to: unknown }>,
+  ): Promise<void> {
+    // Audit row first — single source of truth even if notification fails.
+    try {
+      const { AuditLogService } = await import('../audit-logs/audit-logs.service');
+      const auditService = this.moduleRef.get(AuditLogService, { strict: false });
+      await auditService.log({
+        entityType: 'USER',
+        entityId: user.id,
+        action: 'PROFILE_UPDATE',
+        performedBy: user.id,
+        metadata: { changes, by: 'self' },
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Audit log failed for profile edit ${user.id}: ${(err as Error).message}`,
+      );
+    }
+
+    // Notify admin only when an instructor edits their own trainer
+    // profile fields — student profile edits are not interesting to admins.
+    if (user.activeRole !== 'INSTRUCTOR') return;
+
+    try {
+      const { NotificationsService } = await import(
+        '../notifications/notifications.service'
+      );
+      const notificationsService = this.moduleRef.get(NotificationsService, {
+        strict: false,
+      });
+      const userName =
+        [user.firstName, user.lastName].filter(Boolean).join(' ') ||
+        user.email;
+      const fieldList = Object.keys(changes).join(', ');
+      await notificationsService.create({
+        type: 'info',
+        title: 'Instructor profile updated',
+        description: `${userName} updated their profile fields: ${fieldList}`,
+        link: `/dashboard/admin/users?userId=${user.id}`,
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Admin notification failed for profile edit ${user.id}: ${(err as Error).message}`,
+      );
+    }
   }
 
   // ===========================================

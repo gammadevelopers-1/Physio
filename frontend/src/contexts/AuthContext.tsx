@@ -46,6 +46,7 @@ interface RegisterData {
   firstName?: string;
   lastName?: string;
   scfhsNumber?: string;
+  nationalId: string;
   recaptchaToken?: string;
 }
 
@@ -274,6 +275,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password: data.password,
         firstName: data.firstName,
         lastName: data.lastName,
+        nationalId: data.nationalId,
         ...(data.scfhsNumber && { scfhsNumber: data.scfhsNumber }),
         ...(data.recaptchaToken && { recaptchaToken: data.recaptchaToken }),
       });

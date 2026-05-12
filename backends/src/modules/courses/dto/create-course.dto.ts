@@ -11,7 +11,9 @@ import {
   MaxLength,
   Min,
   IsDateString,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { DELIVERY_TYPE, DeliveryType } from '../../../database/schema';
 
 export class RequestChangesDto {
@@ -19,6 +21,28 @@ export class RequestChangesDto {
   @IsNotEmpty({ message: 'Review note is required' })
   @MaxLength(1000, { message: 'Review note must not exceed 1000 characters' })
   note: string;
+}
+
+export class FaqItemDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  question?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  questionAr?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(3000)
+  answer?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(3000)
+  answerAr?: string;
 }
 
 const validDeliveryTypes = Object.values(DELIVERY_TYPE);
@@ -103,6 +127,18 @@ export class CreateCourseDto {
   @MaxLength(100)
   cohort?: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  accreditationNumber?: string;
+
+  // Stored verbatim — no @IsUrl() because the client explicitly does
+  // NOT want the link blocked or transformed.
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  nelcReviewLink?: string;
+
   // Course content fields
   @IsOptional()
   @IsString()
@@ -142,6 +178,15 @@ export class CreateCourseDto {
   @IsString({ each: true })
   targetAudienceAr?: string[];
 
+  // Bilingual FAQ items — rendered only for zoom courses on the student
+  // course detail page. Items missing both EN and AR question are filtered
+  // out server-side before write.
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => FaqItemDto)
+  faqs?: FaqItemDto[];
+
   @IsOptional()
   @IsString()
   requirements?: string;
@@ -180,4 +225,30 @@ export class CreateCourseDto {
   @IsOptional()
   @IsBoolean()
   visibleOnPublicSite?: boolean;
+
+  // Per-course SEO overrides. Empty values fall back to title /
+  // description / thumbnail in the metadata helper.
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  seoTitle?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  seoDescription?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  seoKeywords?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  seoOgImage?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  seoNoindex?: boolean;
 }

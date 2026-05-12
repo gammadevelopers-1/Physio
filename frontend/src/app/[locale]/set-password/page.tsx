@@ -6,7 +6,8 @@ import { useLocale } from "next-intl";
 import { Loader2, Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { toast } from "sonner";
-import AuthNavbar from "@/components/AuthNavbar";
+import Navbar from "@/components/Navbar";
+import { useNavbarChrome } from "@/hooks/useNavbarChrome";
 import Footer from "@/components/Footer";
 import { setAccessToken } from "@/lib/api";
 
@@ -28,6 +29,7 @@ function SetPasswordContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const locale = useLocale();
+  const chrome = useNavbarChrome();
   const isRTL = locale === "ar";
   const token = searchParams.get("token") || "";
 
@@ -121,7 +123,7 @@ function SetPasswordContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
-      <AuthNavbar />
+      <Navbar siteSettings={chrome.siteSettings} navLinks={chrome.navLinks} footerLinks={chrome.footerLinks} />
       <main id="main-content" className="flex-1 flex items-center justify-center px-4 py-10 md:px-16 md:py-16">
         <div className="w-full max-w-[460px] bg-[var(--color-surface-card)] rounded-2xl shadow-sm p-8" dir={isRTL ? "rtl" : "ltr"}>
           {phase === "validating" && (

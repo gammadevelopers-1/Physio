@@ -21,9 +21,12 @@ import {
   X,
   AlertTriangle,
   RefreshCw,
+  ChevronDown,
+  Search as SearchIcon,
 } from "lucide-react";
 import DatePicker from "@/components/ui/DatePicker";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
+import { normalizeAndValidateUrl } from "@/lib/url-validation";
 
 interface EditCourseContentProps {
   courseId: string;
@@ -55,6 +58,9 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
   const [instructorId, setInstructorId] = useState("");
   const [originalInstructorId, setOriginalInstructorId] = useState("");
   const [cohort, setCohort] = useState("");
+  const [accreditationNumber, setAccreditationNumber] = useState("");
+  const [nelcReviewLink, setNelcReviewLink] = useState("");
+  const [nelcReviewLinkError, setNelcReviewLinkError] = useState<string | null>(null);
 
   // Content Details
   const [overview, setOverview] = useState("");
@@ -69,6 +75,8 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
   const [requirementsAr, setRequirementsAr] = useState("");
   const [notices, setNotices] = useState("");
   const [noticesAr, setNoticesAr] = useState("");
+  type FaqDraft = { question: string; questionAr: string; answer: string; answerAr: string };
+  const [faqs, setFaqs] = useState<FaqDraft[]>([]);
 
   // Pricing & venue
   const [price, setPrice] = useState("");
@@ -80,6 +88,15 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
   const [showContents, setShowContents] = useState(true);
   const [sectionsOrder, setSectionsOrder] = useState<string[]>(["overview", "objectives", "contents", "requirements", "reviews"]);
   const [visibleOnPublicSite, setVisibleOnPublicSite] = useState(true);
+
+  // Per-course SEO overrides (collapsed by default — empty values fall back
+  // to title / description / thumbnail in the metadata helper).
+  const [seoOpen, setSeoOpen] = useState(false);
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+  const [seoKeywords, setSeoKeywords] = useState("");
+  const [seoOgImage, setSeoOgImage] = useState("");
+  const [seoNoindex, setSeoNoindex] = useState(false);
 
   // Thumbnail
   const [thumbnailUrl, setThumbnailUrl] = useState("");
@@ -109,6 +126,12 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
         setInstructorId(courseData.instructorId);
         setOriginalInstructorId(courseData.instructorId);
         setCohort(courseData.cohort || "");
+        setAccreditationNumber(
+          (courseData as { accreditationNumber?: string | null }).accreditationNumber || "",
+        );
+        setNelcReviewLink(
+          (courseData as { nelcReviewLink?: string | null }).nelcReviewLink || "",
+        );
 
         // Content Details
         setOverview((courseData as any).overview || "");
@@ -123,6 +146,19 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
         setRequirementsAr((courseData as any).requirementsAr || "");
         setNotices((courseData as any).notices || "");
         setNoticesAr((courseData as any).noticesAr || "");
+        // Faqs come back as an array of partials. Normalise to filled drafts
+        // so the inputs are controlled (no undefined → controlled-warning).
+        const rawFaqs = (courseData as any).faqs;
+        if (Array.isArray(rawFaqs)) {
+          setFaqs(
+            rawFaqs.map((f: any) => ({
+              question: f?.question || "",
+              questionAr: f?.questionAr || "",
+              answer: f?.answer || "",
+              answerAr: f?.answerAr || "",
+            })),
+          );
+        }
 
         // Pricing & venue
         setPrice((courseData as any).price?.toString() || "");
@@ -135,6 +171,14 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
         setLanguage((courseData as any).language || "en");
         setShowContents((courseData as any).showContents !== false);
         setVisibleOnPublicSite((courseData as any).visibleOnPublicSite !== false);
+
+        // SEO overrides
+        setSeoTitle((courseData as any).seoTitle || "");
+        setSeoDescription((courseData as any).seoDescription || "");
+        setSeoKeywords((courseData as any).seoKeywords || "");
+        setSeoOgImage((courseData as any).seoOgImage || "");
+        setSeoNoindex(!!(courseData as any).seoNoindex);
+
         const savedOrder = (courseData as any).sectionsOrder;
         if (Array.isArray(savedOrder) && savedOrder.length > 0) {
           setSectionsOrder(savedOrder);
@@ -207,6 +251,14 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
       return;
     }
 
+    const nelcLinkResult = normalizeAndValidateUrl(nelcReviewLink);
+    if (!nelcLinkResult.valid) {
+      setNelcReviewLinkError(t("createCourse.nelcReviewLinkInvalid"));
+      toast.error(t("createCourse.nelcReviewLinkInvalid"));
+      return;
+    }
+    setNelcReviewLinkError(null);
+
     setSubmitting(true);
     try {
       const payload: Record<string, unknown> = {
@@ -220,6 +272,10 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
       if (descriptionAr.trim()) payload.descriptionAr = descriptionAr.trim();
       if (startDate) payload.startDate = new Date(startDate).toISOString();
       if (endDate) payload.endDate = new Date(endDate).toISOString();
+      // Send these on every save (empty string clears them) so a manager
+      // can also REMOVE previously-set values.
+      payload.accreditationNumber = accreditationNumber.trim();
+      payload.nelcReviewLink = nelcLinkResult.normalized;
       if (cohort.trim()) payload.cohort = cohort.trim();
 
       // Content Details
@@ -242,6 +298,19 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
       if (requirementsAr.trim()) payload.requirementsAr = requirementsAr.trim();
       if (notices.trim()) payload.notices = notices.trim();
       if (noticesAr.trim()) payload.noticesAr = noticesAr.trim();
+      // FAQs (zoom only) — always send (empty array clears) so editing a
+      // course can also drop all FAQs.
+      if (deliveryType === 'zoom') {
+        const cleanedFaqs = faqs
+          .map((f) => ({
+            question: f.question.trim(),
+            questionAr: f.questionAr.trim(),
+            answer: f.answer.trim(),
+            answerAr: f.answerAr.trim(),
+          }))
+          .filter((f) => (f.question || f.questionAr) && (f.answer || f.answerAr));
+        payload.faqs = cleanedFaqs;
+      }
 
       // Pricing & venue
       if (venue.trim()) payload.venue = venue.trim();
@@ -262,6 +331,14 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
       }
       payload.sectionsOrder = sectionsOrder;
       payload.visibleOnPublicSite = visibleOnPublicSite;
+
+      // SEO overrides — always send (empty string clears) so manager can
+      // also remove a previously-set override.
+      payload.seoTitle = seoTitle.trim();
+      payload.seoDescription = seoDescription.trim();
+      payload.seoKeywords = seoKeywords.trim();
+      payload.seoOgImage = seoOgImage.trim();
+      payload.seoNoindex = seoNoindex;
 
       await courseManagerApi.updateCourse(courseId, payload);
 
@@ -712,6 +789,93 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       />
                     </div>
 
+                    {/* FAQs — zoom (online) courses only */}
+                    {deliveryType === 'zoom' && (
+                      <div className="pt-3 border-t border-[var(--color-border)]">
+                        <div className="flex items-baseline justify-between mb-2">
+                          <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
+                            {t("createCourse.faqsTitle")}
+                          </h4>
+                          <p className="text-xs text-[var(--color-text-secondary)]">
+                            {t("createCourse.faqsHint")}
+                          </p>
+                        </div>
+                        {faqs.map((faq, i) => (
+                          <div key={i} className="mb-4 rounded-lg border border-[var(--color-border)] p-3 bg-[var(--color-surface-page)]">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-medium text-[var(--color-text-secondary)]">
+                                {t("createCourse.faqItemLabel")} {i + 1}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setFaqs(faqs.filter((_, j) => j !== i))}
+                                className="text-red-500 text-xs hover:underline"
+                              >
+                                {t("createCourse.removeFaq")}
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                              <input
+                                type="text"
+                                value={faq.question}
+                                onChange={(e) => {
+                                  const next = [...faqs];
+                                  next[i] = { ...next[i], question: e.target.value };
+                                  setFaqs(next);
+                                }}
+                                placeholder={t("createCourse.faqQuestionEnPlaceholder")}
+                                className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
+                              />
+                              <input
+                                type="text"
+                                value={faq.questionAr}
+                                onChange={(e) => {
+                                  const next = [...faqs];
+                                  next[i] = { ...next[i], questionAr: e.target.value };
+                                  setFaqs(next);
+                                }}
+                                placeholder={t("createCourse.faqQuestionArPlaceholder")}
+                                dir="rtl"
+                                className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
+                              />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              <textarea
+                                value={faq.answer}
+                                onChange={(e) => {
+                                  const next = [...faqs];
+                                  next[i] = { ...next[i], answer: e.target.value };
+                                  setFaqs(next);
+                                }}
+                                placeholder={t("createCourse.faqAnswerEnPlaceholder")}
+                                rows={3}
+                                className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] resize-none"
+                              />
+                              <textarea
+                                value={faq.answerAr}
+                                onChange={(e) => {
+                                  const next = [...faqs];
+                                  next[i] = { ...next[i], answerAr: e.target.value };
+                                  setFaqs(next);
+                                }}
+                                placeholder={t("createCourse.faqAnswerArPlaceholder")}
+                                rows={3}
+                                dir="rtl"
+                                className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] resize-none"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setFaqs([...faqs, { question: "", questionAr: "", answer: "", answerAr: "" }])}
+                          className="text-sm text-[var(--color-primary)] hover:underline"
+                        >
+                          {t("createCourse.addFaq")}
+                        </button>
+                      </div>
+                    )}
+
                     {/* Show Contents toggle — only for self-paced and blended */}
                     {(deliveryType === 'self-paced' || deliveryType === 'blended') && (
                       <div className="pt-3 border-t border-[var(--color-border)]">
@@ -914,6 +1078,71 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       </p>
                     </div>
                     <div>
+                      <label
+                        htmlFor="edit-accreditation-number"
+                        className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1"
+                      >
+                        {t("createCourse.accreditationNumber")}
+                      </label>
+                      <input
+                        id="edit-accreditation-number"
+                        type="text"
+                        value={accreditationNumber}
+                        onChange={(e) => setAccreditationNumber(e.target.value)}
+                        placeholder={t("createCourse.accreditationNumberPlaceholder")}
+                        maxLength={100}
+                        className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
+                      />
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                        {t("createCourse.accreditationNumberHint")}
+                      </p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label
+                        htmlFor="edit-nelc-review-link"
+                        className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1"
+                      >
+                        {t("createCourse.nelcReviewLink")}
+                      </label>
+                      <input
+                        id="edit-nelc-review-link"
+                        type="url"
+                        value={nelcReviewLink}
+                        onChange={(e) => {
+                          setNelcReviewLink(e.target.value);
+                          if (nelcReviewLinkError) setNelcReviewLinkError(null);
+                        }}
+                        onBlur={() => {
+                          const result = normalizeAndValidateUrl(nelcReviewLink);
+                          if (result.valid && result.normalized && result.normalized !== nelcReviewLink) {
+                            setNelcReviewLink(result.normalized);
+                          }
+                          setNelcReviewLinkError(
+                            result.valid ? null : t("createCourse.nelcReviewLinkInvalid"),
+                          );
+                        }}
+                        placeholder={t("createCourse.nelcReviewLinkPlaceholder")}
+                        maxLength={500}
+                        className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 ${
+                          nelcReviewLinkError
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-[var(--color-input-border)] focus:ring-[var(--color-input-focus)]"
+                        }`}
+                        dir="ltr"
+                        aria-invalid={!!nelcReviewLinkError}
+                        aria-describedby={nelcReviewLinkError ? "edit-nelc-review-link-error" : undefined}
+                      />
+                      {nelcReviewLinkError ? (
+                        <p id="edit-nelc-review-link-error" className="text-xs text-red-600 mt-1">
+                          {nelcReviewLinkError}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                          {t("createCourse.nelcReviewLinkHint")}
+                        </p>
+                      )}
+                    </div>
+                    <div>
                       <label htmlFor="edit-start-date" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("createCourse.startDate")}
                       </label>
@@ -1024,6 +1253,126 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       </>
                     )}
                   </div>
+                </div>
+
+                {/* SEO (collapsible) — empty fields fall back to course
+                    title / description / thumbnail in the metadata helper. */}
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
+                  <button
+                    type="button"
+                    onClick={() => setSeoOpen((v) => !v)}
+                    className="w-full flex items-center justify-between px-5 py-4 text-left"
+                    aria-expanded={seoOpen}
+                  >
+                    <div className="flex items-center gap-2">
+                      <SearchIcon className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                      <div>
+                        <div className="text-sm font-semibold text-[var(--color-text-primary)]">
+                          {t("createCourse.seoTitle")}
+                        </div>
+                        <div className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                          {t("createCourse.seoSubtitle")}
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-[var(--color-text-secondary)] transition-transform ${seoOpen ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {seoOpen && (
+                    <div className="px-5 pb-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <label htmlFor="edit-seo-title" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                          {t("createCourse.seoMetaTitleLabel")}
+                        </label>
+                        <input
+                          id="edit-seo-title"
+                          type="text"
+                          value={seoTitle}
+                          onChange={(e) => setSeoTitle(e.target.value)}
+                          placeholder={t("createCourse.seoMetaTitlePlaceholder")}
+                          maxLength={150}
+                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
+                        />
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                          {t("createCourse.seoMetaTitleHint")} ({seoTitle.length}/150)
+                        </p>
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label htmlFor="edit-seo-description" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                          {t("createCourse.seoMetaDescriptionLabel")}
+                        </label>
+                        <textarea
+                          id="edit-seo-description"
+                          value={seoDescription}
+                          onChange={(e) => setSeoDescription(e.target.value)}
+                          placeholder={t("createCourse.seoMetaDescriptionPlaceholder")}
+                          maxLength={300}
+                          rows={3}
+                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] resize-none"
+                        />
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                          {t("createCourse.seoMetaDescriptionHint")} ({seoDescription.length}/300)
+                        </p>
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label htmlFor="edit-seo-keywords" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                          {t("createCourse.seoKeywordsLabel")}
+                        </label>
+                        <input
+                          id="edit-seo-keywords"
+                          type="text"
+                          value={seoKeywords}
+                          onChange={(e) => setSeoKeywords(e.target.value)}
+                          placeholder={t("createCourse.seoKeywordsPlaceholder")}
+                          maxLength={500}
+                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
+                          dir="ltr"
+                        />
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                          {t("createCourse.seoKeywordsHint")}
+                        </p>
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label htmlFor="edit-seo-og-image" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                          {t("createCourse.seoOgImageLabel")}
+                        </label>
+                        <input
+                          id="edit-seo-og-image"
+                          type="url"
+                          value={seoOgImage}
+                          onChange={(e) => setSeoOgImage(e.target.value)}
+                          placeholder={t("createCourse.seoOgImagePlaceholder")}
+                          maxLength={500}
+                          className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
+                          dir="ltr"
+                        />
+                        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                          {t("createCourse.seoOgImageHint")}
+                        </p>
+                      </div>
+
+                      <div className="md:col-span-2 flex items-start gap-3 pt-2">
+                        <input
+                          id="edit-seo-noindex"
+                          type="checkbox"
+                          checked={seoNoindex}
+                          onChange={(e) => setSeoNoindex(e.target.checked)}
+                          className="mt-1 w-4 h-4 accent-[var(--color-primary)]"
+                        />
+                        <label htmlFor="edit-seo-noindex" className="cursor-pointer">
+                          <span className="block text-sm font-medium text-[var(--color-text-primary)]">
+                            {t("createCourse.seoNoindexLabel")}
+                          </span>
+                          <span className="block text-xs text-[var(--color-text-secondary)] mt-0.5">
+                            {t("createCourse.seoNoindexHint")}
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Submit */}

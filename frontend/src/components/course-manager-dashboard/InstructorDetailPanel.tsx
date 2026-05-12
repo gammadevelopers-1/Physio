@@ -16,6 +16,7 @@ import {
   GraduationCap,
   Mail,
   Calendar,
+  Star,
 } from "lucide-react";
 
 interface InstructorPerformance {
@@ -41,6 +42,21 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
   const [data, setData] = useState<InstructorPerformance | null>(null);
   const [loading, setLoading] = useState(true);
   const [visible, setVisible] = useState(false);
+  const [reviews, setReviews] = useState<{
+    data: Array<{
+      id: string;
+      courseId: string;
+      courseTitle: string;
+      courseTitleAr: string | null;
+      rating: number;
+      reviewText: string | null;
+      createdAt: string;
+      studentName: string;
+    }>;
+    avgRating: number;
+    totalRatings: number;
+  } | null>(null);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
@@ -51,6 +67,16 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
       .finally(() => setLoading(false));
     // Trigger slide-in after mount
     requestAnimationFrame(() => setVisible(true));
+  }, [instructorId]);
+
+  // Load instructor reviews — published + approved across every course taught
+  useEffect(() => {
+    setReviewsLoading(true);
+    courseManagerApi
+      .getReviewsForInstructor(instructorId, 20)
+      .then(setReviews)
+      .catch(() => setReviews(null))
+      .finally(() => setReviewsLoading(false));
   }, [instructorId]);
 
   const handleClose = () => {
@@ -275,6 +301,82 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Reviews — approved + published instructor reviews across courses */}
+                <div className="mt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      {isRTL ? "مراجعات الطلاب" : "Student Reviews"}
+                    </h4>
+                    {reviews && reviews.totalRatings > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <Star className="w-3.5 h-3.5 text-[var(--color-star)] fill-[var(--color-star)]" />
+                        <span className="text-sm font-semibold text-[var(--color-text-primary)]">
+                          {reviews.avgRating.toFixed(1)}
+                        </span>
+                        <span className="text-xs text-[var(--color-text-secondary)]">
+                          ({reviews.totalRatings})
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {reviewsLoading ? (
+                    <div className="py-6 flex justify-center">
+                      <Loader2 className="w-4 h-4 animate-spin text-[var(--color-text-secondary)]" />
+                    </div>
+                  ) : !reviews || reviews.data.length === 0 ? (
+                    <div className="py-6 text-center rounded-xl border border-[var(--color-border)] bg-[#FAFAFA]">
+                      <Star className="w-6 h-6 text-[var(--color-star-border)] mx-auto mb-2" />
+                      <p className="text-sm text-[var(--color-text-secondary)]">
+                        {isRTL ? "لا توجد مراجعات بعد" : "No reviews yet"}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="max-h-[280px] overflow-y-auto space-y-2 rounded-xl border border-[var(--color-border)] p-2 bg-[#FAFAFA]">
+                      {reviews.data.map((r) => {
+                        const courseTitle =
+                          isRTL && r.courseTitleAr ? r.courseTitleAr : r.courseTitle;
+                        return (
+                          <div
+                            key={r.id}
+                            className="p-3 bg-[var(--color-surface-card)] rounded-lg border border-[#F3F4F6]"
+                          >
+                            <div className="flex items-start justify-between gap-2 mb-1.5">
+                              <div className="min-w-0">
+                                <p className="text-xs font-semibold text-[var(--color-text-primary)] truncate">
+                                  {r.studentName}
+                                </p>
+                                <span className="inline-block mt-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] truncate max-w-[180px]">
+                                  {courseTitle}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-0.5 flex-shrink-0">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star
+                                    key={s}
+                                    className={`w-3 h-3 ${
+                                      s <= r.rating
+                                        ? "text-[var(--color-star)] fill-[var(--color-star)]"
+                                        : "text-[var(--color-star-border)]"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            {r.reviewText && (
+                              <p
+                                dir="auto"
+                                className="text-xs text-[var(--color-text-secondary)] whitespace-pre-line line-clamp-3"
+                              >
+                                {r.reviewText}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             </>

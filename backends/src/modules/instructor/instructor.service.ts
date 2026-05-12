@@ -20,6 +20,7 @@ import {
   userRoles,
   roles,
   courseRatings,
+  instructorRatings,
   materialProgress,
   ATTENDANCE_STATUS,
   INTERVENTION_TYPE,
@@ -509,17 +510,30 @@ export class InstructorService {
       totalStudents = Number(studentCount?.count ?? 0);
     }
 
-    // ─── Average Course Rating across instructor's courses ──
+    // ─── Instructor Rating across reviews of this instructor ──
+    // Sourced from instructor_ratings (direct ratings of the instructor),
+    // not course_ratings — they're now tracked separately and the
+    // instructor's dashboard reflects what students rated THEM specifically.
     let avgCourseRating = 0;
-    if (courseIds.length > 0) {
+    {
       const [ratingResult] = await db
-        .select({ avg: sql<number>`ROUND(AVG(${courseRatings.rating})::numeric, 1)`.as('avg') })
-        .from(courseRatings)
-        .where(inArray(courseRatings.courseId, courseIds));
+        .select({
+          avg: sql<number>`ROUND(AVG(${instructorRatings.rating})::numeric, 1)`.as(
+            'avg',
+          ),
+        })
+        .from(instructorRatings)
+        .where(
+          and(
+            eq(instructorRatings.instructorId, user.id),
+            eq(instructorRatings.moderationStatus, 'approved'),
+            eq(instructorRatings.isPublished, true),
+          ),
+        );
       avgCourseRating = Number(ratingResult?.avg ?? 0);
     }
 
-    // ─── Recent Feedback (course ratings) ────────────────────
+    // ─── Recent Feedback (instructor ratings) ────────────────
     let recentFeedback: {
       overallRating: number;
       totalReviews: number;
@@ -535,32 +549,44 @@ export class InstructorService {
       }[];
     } = { overallRating: 0, totalReviews: 0, feedbackItems: [] };
 
-    if (courseIds.length > 0) {
-      // Overall stats
+    {
       const [overallStats] = await db
         .select({
-          avgRating: sql<number>`COALESCE(ROUND(AVG(${courseRatings.rating})::numeric, 1), 0)`.as('avg_rating'),
+          avgRating: sql<number>`COALESCE(ROUND(AVG(${instructorRatings.rating})::numeric, 1), 0)`.as(
+            'avg_rating',
+          ),
           totalReviews: count(),
         })
-        .from(courseRatings)
-        .where(inArray(courseRatings.courseId, courseIds));
+        .from(instructorRatings)
+        .where(
+          and(
+            eq(instructorRatings.instructorId, user.id),
+            eq(instructorRatings.moderationStatus, 'approved'),
+            eq(instructorRatings.isPublished, true),
+          ),
+        );
 
-      // 5 most recent ratings with student + course names
       const recentRatings = await db
         .select({
-          id: courseRatings.id,
-          rating: courseRatings.rating,
-          reviewText: courseRatings.reviewText,
-          createdAt: courseRatings.createdAt,
+          id: instructorRatings.id,
+          rating: instructorRatings.rating,
+          reviewText: instructorRatings.reviewText,
+          createdAt: instructorRatings.createdAt,
           studentFirstName: users.firstName,
           studentLastName: users.lastName,
           courseTitle: courses.title,
         })
-        .from(courseRatings)
-        .innerJoin(users, eq(courseRatings.studentId, users.id))
-        .innerJoin(courses, eq(courseRatings.courseId, courses.id))
-        .where(inArray(courseRatings.courseId, courseIds))
-        .orderBy(desc(courseRatings.createdAt))
+        .from(instructorRatings)
+        .innerJoin(users, eq(instructorRatings.studentId, users.id))
+        .innerJoin(courses, eq(instructorRatings.courseId, courses.id))
+        .where(
+          and(
+            eq(instructorRatings.instructorId, user.id),
+            eq(instructorRatings.moderationStatus, 'approved'),
+            eq(instructorRatings.isPublished, true),
+          ),
+        )
+        .orderBy(desc(instructorRatings.createdAt))
         .limit(5);
 
       recentFeedback = {
@@ -1908,6 +1934,18 @@ export class InstructorService {
    * Enriched instructor list with workload metrics.
    * Only available to MANAGER and ADMIN roles.
    */
+  /**
+   * Delegate to CoursesService — instructor reviews live alongside course
+   * reviews in the courses module (they're course-scoped). Manager
+   * side-sheet calls this to populate the instructor's review list.
+   */
+  async listReviewsForInstructor(
+    instructorId: string,
+    params: { limit?: number } = {},
+  ) {
+    return this.coursesService.listReviewsForInstructor(instructorId, params);
+  }
+
   async getInstructorRoster(user: AuthenticatedUser) {
     // Collect IDs of instructors teaching this manager's courses (for tagging)
     let managedInstructorIds = new Set<string>();
@@ -1979,16 +2017,23 @@ export class InstructorService {
       studentCounts.map((s) => [s.instructorId, Number(s.studentsCount)]),
     );
 
-    // Batch: avg rating per instructor (via courses → courseRatings)
+    // Batch: avg rating per instructor — sourced from instructor_ratings
+    // (direct ratings of the instructor) restricted to approved + published.
+    // This is what students rated the INSTRUCTOR, not the course.
     const avgRatings = await db
       .select({
-        instructorId: courses.instructorId,
-        avgRating: sql<number>`COALESCE(ROUND(AVG(${courseRatings.rating})::NUMERIC, 1), 0)`.as('avg_rating'),
+        instructorId: instructorRatings.instructorId,
+        avgRating: sql<number>`COALESCE(ROUND(AVG(${instructorRatings.rating})::NUMERIC, 1), 0)`.as('avg_rating'),
       })
-      .from(courseRatings)
-      .innerJoin(courses, eq(courseRatings.courseId, courses.id))
-      .where(inArray(courses.instructorId, instructorIds))
-      .groupBy(courses.instructorId);
+      .from(instructorRatings)
+      .where(
+        and(
+          inArray(instructorRatings.instructorId, instructorIds),
+          eq(instructorRatings.moderationStatus, 'approved'),
+          eq(instructorRatings.isPublished, true),
+        ),
+      )
+      .groupBy(instructorRatings.instructorId);
 
     const avgRatingMap = new Map(
       avgRatings.map((r) => [r.instructorId, Number(r.avgRating)]),

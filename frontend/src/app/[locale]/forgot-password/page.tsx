@@ -4,7 +4,8 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import AuthNavbar from "@/components/AuthNavbar";
+import Navbar from "@/components/Navbar";
+import { useNavbarChrome } from "@/hooks/useNavbarChrome";
 import Footer from "@/components/Footer";
 import { useTranslations, useLocale } from "next-intl";
 import { authApi } from "@/lib/api";
@@ -14,6 +15,7 @@ import { Loader2, ArrowLeft } from "lucide-react";
 export default function ForgotPasswordPage() {
   const t = useTranslations("forgotPasswordPage");
   const locale = useLocale();
+  const chrome = useNavbarChrome();
   const isRTL = locale === "ar";
   const router = useRouter();
 
@@ -46,7 +48,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
-      <AuthNavbar />
+      <Navbar siteSettings={chrome.siteSettings} navLinks={chrome.navLinks} footerLinks={chrome.footerLinks} />
 
       <main
         id="main-content"

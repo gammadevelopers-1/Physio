@@ -4292,6 +4292,8 @@
         "cityPlaceholder": "Select city",
         "pastTimeError": "Cannot schedule in the past",
         "venueRequired": "Venue address is required for on-site/hybrid sessions",
+        "generateWebinar": "Generate Zoom Webinar registration link",
+        "generateWebinarHint": "Creates a shareable registration page for external attendees. Enrolled students are auto-registered on Start.",
         "cancel": "Cancel",
         "schedule": "Schedule"
       },
@@ -4300,6 +4302,7 @@
         "error": "Failed to schedule lecture"
       },
       "zoomAutoCreate": "Zoom meeting will be auto-created for the course instructor.",
+      "zoomAutoCreateWebinar": "A Zoom Webinar will be created — students and external attendees register through a public Zoom-hosted page.",
       "allInstructors": "All Instructors",
       "moreFilters": "More Filters",
       "lessFilters": "Less Filters",

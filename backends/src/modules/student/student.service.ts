@@ -3,7 +3,9 @@ import {
   NotFoundException,
   BadRequestException,
   Logger,
+  Inject,
 } from '@nestjs/common';
+import { ZOOM_SERVICE, IZoomService } from '../zoom/zoom.interface';
 import { eq, and, desc, asc, count, sql, ilike, or, gte, lte } from 'drizzle-orm';
 import { db } from '../../database';
 import {
@@ -28,6 +30,7 @@ import {
   assessmentRetakeGrants,
   assessmentOverrides,
   courseRatings,
+  webinarRegistrations,
 } from '../../database/schema';
 import type { SubmissionAnswer } from '../../database/schema/submissions';
 import { computeEffectiveScore } from '../../common/score-policy';
@@ -79,6 +82,7 @@ export class StudentService {
     private readonly userNotificationsService: UserNotificationsService,
     private readonly emailService: EmailService,
     private readonly thresholdEvaluationService: ThresholdEvaluationService,
+    @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
   ) {}
 
   // ─── Dashboard Stats ────────────────────────────────────
@@ -692,6 +696,8 @@ export class StudentService {
         durationMinutes: sessions.durationMinutes,
         status: sessions.status,
         zoomLink: sessions.zoomLink,
+        isWebinar: sessions.isWebinar,
+        webinarRegistrationUrl: sessions.webinarRegistrationUrl,
         roomName: sessions.roomName,
         venueAddress: sessions.venueAddress,
       })
@@ -2951,15 +2957,15 @@ export class StudentService {
         type: sessions.type,
         status: sessions.status,
         zoomLink: sessions.zoomLink,
+        isWebinar: sessions.isWebinar,
+        zoomWebinarId: sessions.zoomWebinarId,
+        webinarRegistrationUrl: sessions.webinarRegistrationUrl,
       })
       .from(sessions)
       .where(eq(sessions.id, sessionId))
       .limit(1);
 
     if (!session) throw new NotFoundException('Session not found');
-    if (!session.zoomLink) {
-      throw new BadRequestException('This session has no Zoom link');
-    }
     if (session.type !== 'zoom' && session.type !== 'hybrid') {
       throw new BadRequestException('This is not a Zoom session');
     }
@@ -2982,6 +2988,100 @@ export class StudentService {
 
     if (!enrollment) {
       throw new NotFoundException('You are not enrolled in this course');
+    }
+
+    // ── Webinar branch ─────────────────────────────────────
+    // For webinar sessions, auto-register the student via Zoom and return
+    // their personal join URL. Fall back to the public registration page
+    // if their profile is missing required fields or the API call fails —
+    // the student then fills the form themselves, exactly like an external
+    // attendee would.
+    if (session.isWebinar && session.zoomWebinarId) {
+      const [student] = await db
+        .select({
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          phone: users.phone,
+          nationalId: users.nationalId,
+          scfhsNumber: users.scfhsNumber,
+        })
+        .from(users)
+        .where(eq(users.id, studentId))
+        .limit(1);
+
+      if (!student?.email || !student?.firstName) {
+        if (session.webinarRegistrationUrl) {
+          return { joinUrl: session.webinarRegistrationUrl };
+        }
+        throw new BadRequestException(
+          'Your profile is missing the first name needed to auto-register. Please complete your profile.',
+        );
+      }
+
+      try {
+        const result = await this.zoomService.registerForWebinar(
+          session.zoomWebinarId,
+          {
+            email: student.email,
+            firstName: student.firstName,
+            lastName: student.lastName || '',
+            phone: student.phone || undefined,
+            nationalId: student.nationalId || undefined,
+            scfhsNumber: student.scfhsNumber || undefined,
+          },
+        );
+
+        // Mirror into our own table so attendance correlation works even
+        // before the webhook fires. Conflict on (sessionId, email) → just
+        // refresh the joinUrl/registrantId.
+        await db
+          .insert(webinarRegistrations)
+          .values({
+            sessionId,
+            userId: studentId,
+            email: student.email,
+            firstName: student.firstName,
+            lastName: student.lastName,
+            phone: student.phone,
+            nationalId: student.nationalId,
+            scfhsNumber: student.scfhsNumber,
+            zoomRegistrantId: result.registrantId,
+            joinUrl: result.joinUrl,
+            status: 'approved',
+          })
+          .onConflictDoUpdate({
+            target: [webinarRegistrations.sessionId, webinarRegistrations.email],
+            set: {
+              zoomRegistrantId: result.registrantId,
+              joinUrl: result.joinUrl,
+              userId: studentId,
+              updatedAt: new Date(),
+            },
+          })
+          .catch((err) =>
+            this.logger.warn(
+              `Failed to mirror webinar registration: ${err?.message || err}`,
+            ),
+          );
+
+        return { joinUrl: result.joinUrl };
+      } catch (error) {
+        this.logger.warn(
+          `Auto-registration failed for student ${studentId} on webinar ${session.zoomWebinarId}: ${(error as Error).message}`,
+        );
+        if (session.webinarRegistrationUrl) {
+          return { joinUrl: session.webinarRegistrationUrl };
+        }
+        throw new BadRequestException(
+          'Could not register you for this webinar. Please try again later.',
+        );
+      }
+    }
+
+    // ── Meeting branch (existing behaviour) ────────────────
+    if (!session.zoomLink) {
+      throw new BadRequestException('This session has no Zoom link');
     }
 
     // Get student name

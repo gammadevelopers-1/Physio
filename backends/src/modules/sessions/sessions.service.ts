@@ -86,11 +86,60 @@ export class SessionsService {
    * - Admin: can specify instructorId, course just needs to exist.
    */
   async create(user: AuthenticatedUser, dto: CreateSessionDto) {
-    // Auto-create Zoom meeting if type is zoom or hybrid
+    // Zoom artefacts populated below depending on whether the session is a
+    // standard Meeting, a Webinar (registration page), or neither (onsite).
     let zoomLink = dto.zoomLink || null;
     let meetingId = dto.meetingId || null;
+    let isWebinar = false;
+    let zoomWebinarId: string | null = null;
+    let webinarRegistrationUrl: string | null = null;
 
-    if (
+    const wantsWebinar = dto.isWebinar === true && dto.type === SESSION_TYPE.ZOOM;
+    if (wantsWebinar && dto.zoomLink) {
+      throw new BadRequestException(
+        'A session cannot have a manual Zoom link AND a webinar registration. Pick one.',
+      );
+    }
+
+    if (wantsWebinar) {
+      try {
+        const [instructor] = await db
+          .select({ email: users.email, zoomEmail: users.zoomEmail })
+          .from(users)
+          .where(eq(users.id, user.id))
+          .limit(1);
+        const hostEmail = instructor?.zoomEmail || instructor?.email || undefined;
+
+        const webinar = await this.zoomService.createWebinar({
+          topic: dto.title,
+          startTime: new Date(dto.scheduledAt),
+          durationMinutes: dto.durationMinutes || 60,
+          recordingEnabled: dto.recordingEnabled !== false,
+          hostEmail,
+        });
+        // Configure standard custom questions (Phone, ID/Iqama, SCFHS).
+        // Non-fatal: if it fails the webinar still works with default fields.
+        await this.zoomService
+          .configureStandardWebinarQuestions(webinar.webinarId)
+          .catch((err) =>
+            this.logger.warn(
+              `Webinar question configuration failed: ${err?.message || err}`,
+            ),
+          );
+
+        isWebinar = true;
+        zoomWebinarId = webinar.webinarId;
+        webinarRegistrationUrl = webinar.registrationUrl;
+        this.logger.log(
+          `Zoom webinar auto-created: ${zoomWebinarId} for session "${dto.title}"`,
+        );
+      } catch (error) {
+        this.logger.error('Failed to auto-create Zoom webinar', error);
+        throw new BadRequestException(
+          'Failed to create Zoom webinar. The Webinars add-on may be unavailable.',
+        );
+      }
+    } else if (
       (dto.type === SESSION_TYPE.ZOOM || dto.type === SESSION_TYPE.HYBRID) &&
       !dto.zoomLink
     ) {
@@ -166,6 +215,9 @@ export class SessionsService {
           durationMinutes: dto.durationMinutes,
           zoomLink,
           meetingId,
+          isWebinar,
+          zoomWebinarId,
+          webinarRegistrationUrl,
           roomName: dto.roomName,
           venueAddress: dto.venueAddress,
           city: dto.city,
@@ -654,13 +706,27 @@ export class SessionsService {
       },
     });
 
-    // Sync Zoom meeting if time/duration/title changed on a Zoom/hybrid session
+    // Sync Zoom meeting / webinar if time/duration/title changed.
     // Item #14: surface Zoom update failures to user instead of silently swallowing
     let zoomSyncError: string | null = null;
-    if (
+    const needsSync = dto.scheduledAt || dto.durationMinutes || dto.title;
+    if (needsSync && updated.zoomWebinarId) {
+      try {
+        await this.zoomService.updateWebinar(updated.zoomWebinarId, {
+          topic: dto.title || undefined,
+          startTime: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
+          durationMinutes: dto.durationMinutes || undefined,
+        });
+        this.logger.log(`Zoom webinar ${updated.zoomWebinarId} synced with session update`);
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`Failed to sync Zoom webinar ${updated.zoomWebinarId}: ${msg}`);
+        zoomSyncError = `Lecture updated but Zoom webinar sync failed: ${msg}`;
+      }
+    } else if (
+      needsSync &&
       updated.meetingId &&
-      (updated.type === SESSION_TYPE.ZOOM || updated.type === SESSION_TYPE.HYBRID) &&
-      (dto.scheduledAt || dto.durationMinutes || dto.title)
+      (updated.type === SESSION_TYPE.ZOOM || updated.type === SESSION_TYPE.HYBRID)
     ) {
       try {
         await this.zoomService.updateMeeting(updated.meetingId, {
@@ -1273,6 +1339,22 @@ export class SessionsService {
       );
     }
 
+    // Best-effort cleanup of the Zoom resource. Webinars and meetings are
+    // mutually exclusive on a session — try whichever is set.
+    if (session.zoomWebinarId) {
+      this.zoomService.deleteWebinar(session.zoomWebinarId).catch((err) => {
+        this.logger.warn(
+          `Failed to delete Zoom webinar ${session.zoomWebinarId} on session delete: ${err?.message || err}`,
+        );
+      });
+    } else if (session.meetingId) {
+      this.zoomService.deleteMeeting(session.meetingId).catch((err) => {
+        this.logger.warn(
+          `Failed to delete Zoom meeting ${session.meetingId} on session delete: ${err?.message || err}`,
+        );
+      });
+    }
+
     await db.delete(sessions).where(eq(sessions.id, sessionId));
 
     return { message: 'Lecture deleted successfully' };
@@ -1296,8 +1378,14 @@ export class SessionsService {
       throw new BadRequestException(`Cannot cancel a ${session.status} lecture`);
     }
 
-    // Delete Zoom meeting
-    if (
+    // Delete Zoom resource — webinar or meeting, whichever is set.
+    if (session.zoomWebinarId) {
+      try {
+        await this.zoomService.deleteWebinar(session.zoomWebinarId);
+      } catch (error) {
+        this.logger.warn(`Failed to delete Zoom webinar ${session.zoomWebinarId} on manager cancel`, error);
+      }
+    } else if (
       session.meetingId &&
       (session.type === SESSION_TYPE.ZOOM || session.type === SESSION_TYPE.HYBRID)
     ) {

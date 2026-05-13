@@ -422,6 +422,11 @@ export interface CourseSession {
   durationMinutes: number;
   zoomLink: string | null;
   meetingId: string | null;
+  // Webinar fields — only populated when the session is a Zoom Webinar
+  // (mutually exclusive with meetingId / zoomLink-as-meeting).
+  isWebinar?: boolean;
+  zoomWebinarId?: string | null;
+  webinarRegistrationUrl?: string | null;
   roomName: string | null;
   venueAddress: string | null;
   city: string | null;

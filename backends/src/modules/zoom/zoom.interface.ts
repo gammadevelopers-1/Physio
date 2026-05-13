@@ -59,6 +59,55 @@ export interface ZoomRecordingFile {
   password?: string;
 }
 
+// ─── Webinar types ─────────────────────────────────────────────────────────
+
+export interface CreateZoomWebinarParams {
+  topic: string;
+  startTime: Date;
+  durationMinutes: number;
+  /** Instructor / manager email. Webinar is created under their account if licensed. */
+  hostEmail?: string;
+  recordingEnabled?: boolean;
+}
+
+export interface CreateZoomWebinarResult {
+  /** Numeric webinar ID (stringified). */
+  webinarId: string;
+  /** Public Zoom-hosted registration page URL. */
+  registrationUrl: string;
+  /** Start URL used by the host. */
+  startUrl: string;
+}
+
+export interface UpdateZoomWebinarParams {
+  topic?: string;
+  startTime?: Date;
+  durationMinutes?: number;
+}
+
+/**
+ * Custom registration questions the manager wants on every webinar's
+ * registration page. Default Zoom questions (First Name, Last Name, Email)
+ * are always present; we add ID/Iqama, Phone, SCFHS as custom required.
+ */
+export interface WebinarRegistrantInput {
+  email: string;
+  firstName: string;
+  lastName?: string;
+  phone?: string;
+  /** Custom field: ID / Iqama number. */
+  nationalId?: string;
+  /** Custom field: SCFHS license number; pass 'NO' when not applicable. */
+  scfhsNumber?: string;
+}
+
+export interface WebinarRegistrantResult {
+  /** Opaque Zoom registrant id. */
+  registrantId: string;
+  /** Personal join URL for this registrant. */
+  joinUrl: string;
+}
+
 export interface IZoomService {
   createMeeting(params: CreateZoomMeetingParams): Promise<CreateZoomMeetingResult>;
   getMeeting(meetingId: string): Promise<ZoomMeetingDetails>;
@@ -71,4 +120,15 @@ export interface IZoomService {
   getRecordingShareUrl(meetingId: string): Promise<string | null>;
   removeRecordingPasscode(meetingId: string): Promise<boolean>;
   promoteToCohost(meetingId: string, participantId: string): Promise<void>;
+
+  // Webinar surface
+  createWebinar(params: CreateZoomWebinarParams): Promise<CreateZoomWebinarResult>;
+  /** Add ID/Iqama, Phone, SCFHS as required custom registration questions. */
+  configureStandardWebinarQuestions(webinarId: string): Promise<void>;
+  updateWebinar(webinarId: string, params: UpdateZoomWebinarParams): Promise<void>;
+  deleteWebinar(webinarId: string): Promise<{ deleted: boolean; error?: string }>;
+  registerForWebinar(
+    webinarId: string,
+    registrant: WebinarRegistrantInput,
+  ): Promise<WebinarRegistrantResult>;
 }

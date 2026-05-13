@@ -94,6 +94,8 @@ export interface CourseSession {
   durationMinutes: number;
   status: string;
   zoomLink: string | null;
+  isWebinar?: boolean | null;
+  webinarRegistrationUrl?: string | null;
   roomName: string | null;
   venueAddress: string | null;
 }

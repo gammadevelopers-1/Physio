@@ -44,6 +44,13 @@ export const sessions = pgTable(
     autoEndWarningSentAt: timestamp('auto_end_warning_sent_at'),
     recordingEnabled: boolean('recording_enabled').notNull().default(true),
     zoomSyncedAt: timestamp('zoom_synced_at'),
+    // Webinar support — when true, this session was created as a Zoom
+    // Webinar (with a public registration page) instead of a Meeting.
+    // The two are mutually exclusive: a session is either a meeting
+    // (meetingId set) OR a webinar (zoomWebinarId set), never both.
+    isWebinar: boolean('is_webinar').notNull().default(false),
+    zoomWebinarId: varchar('zoom_webinar_id', { length: 50 }),
+    webinarRegistrationUrl: varchar('webinar_registration_url', { length: 500 }),
     isMakeup: boolean('is_makeup').notNull().default(false),
     parentSessionId: uuid('parent_session_id').references((): AnyPgColumn => sessions.id, { onDelete: 'set null' }),
     assignedStudents: jsonb('assigned_students').$type<string[]>(),

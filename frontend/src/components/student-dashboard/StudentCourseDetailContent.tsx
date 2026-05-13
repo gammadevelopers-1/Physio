@@ -121,13 +121,21 @@ const StudentCourseDetailContent = () => {
   // CTA. Otherwise, the next session that's still in the future drives a
   // disabled "Starts in 2h 15m" countdown state.
   const isZoom = data?.course.deliveryType === "zoom";
+  // A session is "joinable from our app" when it has either a meeting link
+  // OR is a webinar (auto-registration produces the join URL on demand).
+  const canDispatchJoin = (s: { zoomLink: string | null; isWebinar?: boolean | null }) =>
+    !!s.zoomLink || !!s.isWebinar;
   const nextJoinableSession = useMemo(() => {
     if (!isZoom) return null;
-    return upcomingSessions.find((s) => s.zoomLink && isJoinable(s.scheduledAt)) ?? null;
+    return (
+      upcomingSessions.find(
+        (s) => canDispatchJoin(s) && isJoinable(s.scheduledAt),
+      ) ?? null
+    );
   }, [isZoom, upcomingSessions]);
   const nextUpcomingSession = useMemo(() => {
     if (!isZoom) return null;
-    return upcomingSessions.find((s) => !!s.zoomLink) ?? null;
+    return upcomingSessions.find(canDispatchJoin) ?? null;
   }, [isZoom, upcomingSessions]);
 
   // Details ↔ FAQs tab (zoom + faqs present only)
@@ -704,7 +712,7 @@ const StudentCourseDetailContent = () => {
                                   {t("calendar.mins")}
                                 </span>
                               </div>
-                              {session.zoomLink && (
+                              {(session.zoomLink || session.isWebinar) && (
                                 isJoinable(session.scheduledAt) ? (
                                   <button
                                     type="button"

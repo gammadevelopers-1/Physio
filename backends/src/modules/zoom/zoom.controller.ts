@@ -9,7 +9,7 @@ import {
   BadRequestException,
   Inject,
 } from '@nestjs/common';
-import { eq, and, isNotNull, isNull } from 'drizzle-orm';
+import { eq, and, or, isNotNull, isNull } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   sessions,
@@ -142,6 +142,29 @@ export class ZoomController {
         await this.handleMeetingDeleted(body.payload?.object);
       } else if (event === 'recording.completed') {
         await this.handleRecordingCompleted(body.payload?.object);
+      } else if (
+        event === 'webinar.started' ||
+        event === 'webinar.sharing_started'
+      ) {
+        // Webinars reuse the meeting lifecycle handler — the session lookup
+        // helper transparently resolves either meeting_id or zoom_webinar_id.
+        await this.handleMeetingStarted(body.payload?.object);
+      } else if (event === 'webinar.ended') {
+        await this.handleMeetingEnded(body.payload?.object);
+      } else if (
+        event === 'webinar.participant_joined' ||
+        event === 'webinar.attendee_joined'
+      ) {
+        await this.webhookService.handleParticipantJoined(body.payload?.object);
+      } else if (
+        event === 'webinar.participant_left' ||
+        event === 'webinar.attendee_left'
+      ) {
+        await this.webhookService.handleParticipantLeft(body.payload?.object);
+      } else if (event === 'webinar.registration_created') {
+        await this.webhookService.handleWebinarRegistrationCreated(
+          body.payload?.object,
+        );
       } else {
         this.logger.debug(`Unhandled Zoom event: ${event}`);
       }
@@ -191,8 +214,8 @@ export class ZoomController {
   }
 
   /**
-   * When a Zoom meeting starts, find the session by meetingId
-   * and update its status to live (if still scheduled).
+   * When a Zoom meeting or webinar starts, find the session by meetingId
+   * or webinarId and update its status to live (if still scheduled).
    */
   private async handleMeetingStarted(meeting: any) {
     if (!meeting?.id) {
@@ -200,18 +223,23 @@ export class ZoomController {
       return;
     }
 
-    const meetingId = String(meeting.id);
-    this.logger.log(`Meeting started: ${meetingId}`);
+    const zoomId = String(meeting.id);
+    this.logger.log(`Meeting/Webinar started: ${zoomId}`);
 
     const [session] = await db
       .select()
       .from(sessions)
-      .where(eq(sessions.meetingId, meetingId))
+      .where(
+        or(
+          eq(sessions.meetingId, zoomId),
+          eq(sessions.zoomWebinarId, zoomId),
+        ),
+      )
       .limit(1);
 
     if (!session) {
       this.logger.warn(
-        `No session found for Zoom meetingId: ${meetingId}`,
+        `No session found for Zoom id: ${zoomId}`,
       );
       return;
     }
@@ -264,18 +292,23 @@ export class ZoomController {
       return;
     }
 
-    const meetingId = String(meeting.id);
-    this.logger.log(`Meeting ended: ${meetingId}`);
+    const zoomId = String(meeting.id);
+    this.logger.log(`Meeting/Webinar ended: ${zoomId}`);
 
     const [session] = await db
       .select()
       .from(sessions)
-      .where(eq(sessions.meetingId, meetingId))
+      .where(
+        or(
+          eq(sessions.meetingId, zoomId),
+          eq(sessions.zoomWebinarId, zoomId),
+        ),
+      )
       .limit(1);
 
     if (!session) {
       this.logger.warn(
-        `No session found for Zoom meetingId: ${meetingId}`,
+        `No session found for Zoom id: ${zoomId}`,
       );
       return;
     }

@@ -8,6 +8,11 @@ import {
   ZoomMeetingDetails,
   ZoomParticipantReport,
   ZoomRecordingFile,
+  CreateZoomWebinarParams,
+  CreateZoomWebinarResult,
+  UpdateZoomWebinarParams,
+  WebinarRegistrantInput,
+  WebinarRegistrantResult,
 } from './zoom.interface';
 
 interface ZoomTokenResponse {
@@ -627,5 +632,263 @@ export class ZoomService implements IZoomService, OnModuleInit {
     this.logger.log(
       `Promoted participant ${participantId} to co-host in meeting ${meetingId}`,
     );
+  }
+
+  // ─── Webinars ─────────────────────────────────────────────────────────
+  // Webinars live under /v2/users/{userId}/webinars (separate endpoint
+  // from meetings). They require the Zoom Webinars add-on on the account.
+  // Registration is required (registration_type: 1 = once); attendees fill
+  // a Zoom-hosted form whose URL is returned in registration_url.
+
+  async createWebinar(
+    params: CreateZoomWebinarParams,
+  ): Promise<CreateZoomWebinarResult> {
+    const token = await this.getAccessToken();
+
+    const body = {
+      topic: params.topic,
+      type: 5, // 5 = scheduled webinar
+      start_time: params.startTime.toISOString(),
+      duration: params.durationMinutes,
+      timezone: 'UTC',
+      settings: {
+        // 1 = attendees register once and can attend any occurrence; suits
+        // our single-session-per-webinar model.
+        registration_type: 1,
+        // 0 = automatically approve everyone (no manual moderation).
+        approval_type: 0,
+        // We send our own platform emails; suppress Zoom defaults to avoid
+        // duplicates. The confirmation email with the personal join URL is
+        // still sent on registration — controlled by registrants_confirmation_email.
+        registrants_email_notification: true,
+        registrants_confirmation_email: true,
+        auto_recording: params.recordingEnabled !== false ? 'cloud' : 'none',
+        // Practice session lets host prep before the live broadcast.
+        practice_session: false,
+        // HD video for both panelists and attendees.
+        hd_video: true,
+      },
+    };
+
+    const userId = params.hostEmail ? encodeURIComponent(params.hostEmail) : 'me';
+    let response = await this.zoomFetch(
+      `https://api.zoom.us/v2/users/${userId}/webinars`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      },
+    );
+
+    // Fall back to app owner if the named host isn't licensed for Webinars.
+    if (!response.ok && userId !== 'me') {
+      this.logger.warn(
+        `Zoom: host ${params.hostEmail} not webinar-licensed, falling back to app owner`,
+      );
+      response = await this.zoomFetch(
+        'https://api.zoom.us/v2/users/me/webinars',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        },
+      );
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      this.logger.error(`Zoom create webinar failed: ${errorText}`);
+      throw new Error(`Failed to create Zoom webinar: ${response.status}`);
+    }
+
+    const webinar: {
+      id: number;
+      start_url: string;
+      registration_url?: string;
+      join_url?: string;
+    } = await response.json();
+
+    this.logger.log(`Zoom webinar created: ${webinar.id}`);
+
+    return {
+      webinarId: String(webinar.id),
+      // For registration-required webinars Zoom returns registration_url;
+      // some account types only return join_url which still routes through
+      // the registration page when registration is required.
+      registrationUrl: webinar.registration_url || webinar.join_url || '',
+      startUrl: webinar.start_url,
+    };
+  }
+
+  /**
+   * Add ID/Iqama, Phone, SCFHS as required custom registration questions.
+   * The default Zoom fields (First Name, Last Name, Email) are always
+   * present and cannot be removed.
+   */
+  async configureStandardWebinarQuestions(webinarId: string): Promise<void> {
+    const token = await this.getAccessToken();
+
+    const body = {
+      // Built-in fields we want enabled + required (default questions list).
+      questions: [
+        { field_name: 'phone', required: true },
+      ],
+      // Custom questions — text fields shown after the defaults.
+      custom_questions: [
+        {
+          title: 'ID No / Iqama',
+          type: 'short',
+          required: true,
+          answers: [],
+        },
+        {
+          title: 'Saudi Health Commission License Number (write "NO" if not applicable)',
+          type: 'short',
+          required: true,
+          answers: [],
+        },
+      ],
+    };
+
+    const response = await this.zoomFetch(
+      `https://api.zoom.us/v2/webinars/${encodeURIComponent(webinarId)}/registrants/questions`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      // Non-fatal: the webinar still works with default fields if this fails.
+      this.logger.warn(
+        `Failed to configure webinar questions for ${webinarId}: ${response.status} - ${errorText}`,
+      );
+      return;
+    }
+
+    this.logger.log(`Configured custom registration questions for webinar ${webinarId}`);
+  }
+
+  async updateWebinar(
+    webinarId: string,
+    params: UpdateZoomWebinarParams,
+  ): Promise<void> {
+    const token = await this.getAccessToken();
+
+    const body: Record<string, unknown> = {};
+    if (params.topic) body.topic = params.topic;
+    if (params.startTime) body.start_time = params.startTime.toISOString();
+    if (params.durationMinutes !== undefined) body.duration = params.durationMinutes;
+    if (params.startTime) body.timezone = 'UTC';
+
+    if (Object.keys(body).length === 0) return;
+
+    const response = await this.zoomFetch(
+      `https://api.zoom.us/v2/webinars/${encodeURIComponent(webinarId)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      },
+    );
+
+    if (!response.ok && response.status !== 204) {
+      const errorText = await response.text();
+      this.logger.error(`Zoom update webinar failed: ${errorText}`);
+      throw new Error(`Failed to update Zoom webinar: ${response.status}`);
+    }
+  }
+
+  async deleteWebinar(
+    webinarId: string,
+  ): Promise<{ deleted: boolean; error?: string }> {
+    const token = await this.getAccessToken();
+
+    const response = await this.zoomFetch(
+      `https://api.zoom.us/v2/webinars/${encodeURIComponent(webinarId)}`,
+      {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+
+    // 404 means it's already gone — treat as success.
+    if (response.ok || response.status === 404) {
+      this.logger.log(`Zoom webinar deleted: ${webinarId}`);
+      return { deleted: true };
+    }
+
+    const errorText = await response.text();
+    this.logger.error(`Zoom delete webinar failed: ${errorText}`);
+    return { deleted: false, error: errorText };
+  }
+
+  /**
+   * Register a single user for a webinar. Zoom dedupes by email — if the
+   * email is already registered, Zoom returns the existing registrant's
+   * data (including their join URL), which is what we want.
+   */
+  async registerForWebinar(
+    webinarId: string,
+    registrant: WebinarRegistrantInput,
+  ): Promise<WebinarRegistrantResult> {
+    const token = await this.getAccessToken();
+
+    const body: Record<string, unknown> = {
+      email: registrant.email,
+      first_name: registrant.firstName,
+      last_name: registrant.lastName || '',
+    };
+    if (registrant.phone) body.phone = registrant.phone;
+    // Custom questions are submitted as a name-keyed array. Names must
+    // match what was configured in configureStandardWebinarQuestions.
+    const custom: Array<{ title: string; value: string }> = [];
+    if (registrant.nationalId) {
+      custom.push({ title: 'ID No / Iqama', value: registrant.nationalId });
+    }
+    custom.push({
+      title: 'Saudi Health Commission License Number (write "NO" if not applicable)',
+      value: registrant.scfhsNumber || 'NO',
+    });
+    if (custom.length > 0) body.custom_questions = custom;
+
+    const response = await this.zoomFetch(
+      `https://api.zoom.us/v2/webinars/${encodeURIComponent(webinarId)}/registrants`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      this.logger.error(`Zoom webinar register failed: ${errorText}`);
+      throw new Error(`Failed to register for webinar: ${response.status}`);
+    }
+
+    const data: { registrant_id?: string; id?: string; join_url: string } =
+      await response.json();
+    return {
+      registrantId: String(data.registrant_id || data.id || ''),
+      joinUrl: data.join_url,
+    };
   }
 }

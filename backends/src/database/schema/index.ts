@@ -19,6 +19,7 @@ export * from './course-modules';
 
 // Session schemas
 export * from './sessions';
+export * from './webinar-registrations';
 
 // Enrollment & Attendance schemas
 export * from './enrollments';

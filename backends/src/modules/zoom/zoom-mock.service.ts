@@ -7,6 +7,11 @@ import {
   ZoomMeetingDetails,
   ZoomParticipantReport,
   ZoomRecordingFile,
+  CreateZoomWebinarParams,
+  CreateZoomWebinarResult,
+  UpdateZoomWebinarParams,
+  WebinarRegistrantInput,
+  WebinarRegistrantResult,
 } from './zoom.interface';
 
 /**
@@ -141,5 +146,68 @@ export class ZoomMockService implements IZoomService {
     this.logger.log(
       `[MOCK] Seeded ${participants.length} participants for meeting ${meetingId}`,
     );
+  }
+
+  // ─── Webinars (mock) ────────────────────────────────────────
+  private webinars = new Map<
+    string,
+    { topic: string; startTime: Date; registrants: WebinarRegistrantResult[] }
+  >();
+
+  async createWebinar(
+    params: CreateZoomWebinarParams,
+  ): Promise<CreateZoomWebinarResult> {
+    const webinarId = String(Math.floor(80000000000 + Math.random() * 10000000000));
+    this.webinars.set(webinarId, {
+      topic: params.topic,
+      startTime: params.startTime,
+      registrants: [],
+    });
+    this.logger.log(`[MOCK] Webinar created: ${webinarId} — "${params.topic}"`);
+    return {
+      webinarId,
+      registrationUrl: `https://us02web.zoom.us/webinar/register/mock_${webinarId}`,
+      startUrl: `https://zoom.us/s/${webinarId}?mock=true&role=host`,
+    };
+  }
+
+  async configureStandardWebinarQuestions(webinarId: string): Promise<void> {
+    this.logger.log(`[MOCK] Configured standard questions for webinar ${webinarId}`);
+  }
+
+  async updateWebinar(
+    webinarId: string,
+    params: UpdateZoomWebinarParams,
+  ): Promise<void> {
+    const w = this.webinars.get(webinarId);
+    if (w) {
+      if (params.topic) w.topic = params.topic;
+      if (params.startTime) w.startTime = params.startTime;
+    }
+    this.logger.log(`[MOCK] Webinar updated: ${webinarId}`);
+  }
+
+  async deleteWebinar(
+    webinarId: string,
+  ): Promise<{ deleted: boolean; error?: string }> {
+    this.webinars.delete(webinarId);
+    this.logger.log(`[MOCK] Webinar deleted: ${webinarId}`);
+    return { deleted: true };
+  }
+
+  async registerForWebinar(
+    webinarId: string,
+    registrant: WebinarRegistrantInput,
+  ): Promise<WebinarRegistrantResult> {
+    const result: WebinarRegistrantResult = {
+      registrantId: `mock_reg_${Math.random().toString(36).slice(2, 10)}`,
+      joinUrl: `https://zoom.us/w/${webinarId}?mock=true&email=${encodeURIComponent(registrant.email)}`,
+    };
+    const w = this.webinars.get(webinarId);
+    if (w) w.registrants.push(result);
+    this.logger.log(
+      `[MOCK] Registered ${registrant.email} for webinar ${webinarId}`,
+    );
+    return result;
   }
 }

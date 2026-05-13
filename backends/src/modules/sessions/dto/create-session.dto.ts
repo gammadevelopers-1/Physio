@@ -67,6 +67,15 @@ export class CreateSessionDto {
   @MaxLength(100)
   meetingId?: string;
 
+  /**
+   * When true (only valid for type='zoom'), creates a Zoom Webinar with a
+   * public registration page instead of a Meeting. Mutually exclusive
+   * with manual `zoomLink`.
+   */
+  @IsOptional()
+  @IsBoolean()
+  isWebinar?: boolean;
+
   @IsOptional()
   @IsString()
   @MaxLength(255)

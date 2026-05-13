@@ -7,9 +7,11 @@ import {
   attendanceLogs,
   sessionAssistants,
   users,
+  webinarRegistrations,
   ATTENDANCE_LOG_EVENT,
   NELC_EVENT_TYPE,
 } from '../../database/schema';
+import { or } from 'drizzle-orm';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { matchParticipantToUser, getSessionInstructorId, isParticipantHost } from './zoom.helpers';
@@ -46,6 +48,91 @@ export class ZoomWebhookService {
   }
 
   /**
+   * Find a session by either its zoom meeting id OR its webinar id. Zoom
+   * uses the same payload shape for both surfaces, so a single helper
+   * dispatches participant/lifecycle events to the right session row.
+   */
+  private async findSessionByZoomId(zoomId: string) {
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(or(eq(sessions.meetingId, zoomId), eq(sessions.zoomWebinarId, zoomId)))
+      .limit(1);
+    return session;
+  }
+
+  /**
+   * webinar.registration_created — fires when someone completes the
+   * Zoom-hosted registration form. We mirror the registrant into our
+   * webinar_registrations table so attendance correlation and the manager
+   * "registrants" count don't depend on later polling.
+   */
+  async handleWebinarRegistrationCreated(payload: any): Promise<void> {
+    const webinarId = String(payload?.id || payload?.object?.id || '');
+    const registrant = payload?.registrant || payload?.object?.registrant;
+    if (!webinarId || !registrant?.email) {
+      this.logger.warn('webinar.registration_created: missing webinar id or registrant');
+      return;
+    }
+
+    const session = await this.findSessionByZoomId(webinarId);
+    if (!session) {
+      this.logger.warn(`No session found for webinarId: ${webinarId}`);
+      return;
+    }
+
+    const email = String(registrant.email).toLowerCase();
+    // Try to match the registrant to a system user by email (excluding the
+    // instructor — we don't count the host as an attendee).
+    const instructorId = await getSessionInstructorId(session.id);
+    const matched = await matchParticipantToUser(email, instructorId, []);
+
+    // Pull custom-question answers if Zoom included them in the payload.
+    const customByTitle = new Map<string, string>();
+    const customs: Array<{ title?: string; value?: string }> =
+      registrant.custom_questions || [];
+    for (const q of customs) {
+      if (q?.title && q?.value) customByTitle.set(q.title, q.value);
+    }
+
+    await db
+      .insert(webinarRegistrations)
+      .values({
+        sessionId: session.id,
+        userId: matched?.id || null,
+        email,
+        firstName: registrant.first_name || null,
+        lastName: registrant.last_name || null,
+        phone: registrant.phone || null,
+        nationalId: customByTitle.get('ID No / Iqama') || null,
+        scfhsNumber:
+          customByTitle.get(
+            'Saudi Health Commission License Number (write "NO" if not applicable)',
+          ) || null,
+        zoomRegistrantId: registrant.registrant_id || registrant.id || null,
+        joinUrl: registrant.join_url || null,
+        status: registrant.status || 'approved',
+      })
+      .onConflictDoUpdate({
+        target: [webinarRegistrations.sessionId, webinarRegistrations.email],
+        set: {
+          zoomRegistrantId: registrant.registrant_id || registrant.id || null,
+          joinUrl: registrant.join_url || null,
+          firstName: registrant.first_name || null,
+          lastName: registrant.last_name || null,
+          phone: registrant.phone || null,
+          status: registrant.status || 'approved',
+          updatedAt: new Date(),
+        },
+      })
+      .catch((err) =>
+        this.logger.warn(
+          `Failed to mirror webinar registration from webhook: ${err?.message || err}`,
+        ),
+      );
+  }
+
+  /**
    * Handle participant joined event from Zoom webhook.
    * 1. Find session by meetingId
    * 2. Match participant email -> system user (case-insensitive via shared helper)
@@ -71,22 +158,19 @@ export class ZoomWebhookService {
       return;
     }
 
-    // 1. Find session by meetingId
-    const [session] = await db
-      .select()
-      .from(sessions)
-      .where(eq(sessions.meetingId, meetingId))
-      .limit(1);
+    // 1. Find session by meetingId OR zoomWebinarId — Zoom uses the same
+    //    payload shape for both surfaces; the id can be either.
+    const session = await this.findSessionByZoomId(meetingId);
 
     if (!session) {
-      this.logger.warn(`No session found for meetingId: ${meetingId}`);
+      this.logger.warn(`No session found for zoom id: ${meetingId}`);
       return;
     }
 
     // 2. Match participant to system user (item #5, #9: shared, case-insensitive)
     // Exclude the course instructor AND the Zoom meeting host from attendance
     const instructorId = await getSessionInstructorId(session.id);
-    const hostEmail = await this.getHostEmail(meetingId);
+    const hostEmail = session.meetingId ? await this.getHostEmail(session.meetingId) : null;
     const excludeEmails = hostEmail ? [hostEmail] : [];
     const matchedUser = await matchParticipantToUser(participantEmail, instructorId, excludeEmails);
 
@@ -167,21 +251,17 @@ export class ZoomWebhookService {
       return;
     }
 
-    // Find session
-    const [session] = await db
-      .select()
-      .from(sessions)
-      .where(eq(sessions.meetingId, meetingId))
-      .limit(1);
+    // Find session (matches meeting OR webinar id — same payload shape)
+    const session = await this.findSessionByZoomId(meetingId);
 
     if (!session) {
-      this.logger.warn(`No session found for meetingId: ${meetingId}`);
+      this.logger.warn(`No session found for zoom id: ${meetingId}`);
       return;
     }
 
     // Exclude course instructor AND Zoom host from attendance
     const instructorId = await getSessionInstructorId(session.id);
-    const hostEmail = await this.getHostEmail(meetingId);
+    const hostEmail = session.meetingId ? await this.getHostEmail(session.meetingId) : null;
     const excludeEmails = hostEmail ? [hostEmail] : [];
     const matchedUser = await matchParticipantToUser(participantEmail, instructorId, excludeEmails);
 

@@ -31,6 +31,8 @@ import {
   Check,
   ClipboardList,
   Download,
+  Copy,
+  Share2,
 } from "lucide-react";
 import SkeletonCard from "@/components/shared/SkeletonCard";
 import ExportButton from "@/components/shared/ExportButton";
@@ -71,6 +73,9 @@ function ScheduleSessionModal({
   const [venueAddress, setVenueAddress] = useState("");
   const [city, setCity] = useState("");
   const [zoomLink, setZoomLink] = useState("");
+  // Generate a Zoom Webinar (registration page) instead of a Meeting.
+  // Only valid for zoom-type sessions; mutually exclusive with manual zoomLink.
+  const [isWebinar, setIsWebinar] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async () => {
@@ -101,6 +106,9 @@ function ScheduleSessionModal({
       }
       if ((type === "zoom" || type === "hybrid") && zoomLink.trim()) {
         data.zoomLink = zoomLink.trim();
+      }
+      if (type === "zoom" && isWebinar) {
+        data.isWebinar = true;
       }
       await courseManagerApi.createSession(data);
       toast.success(t("sessionsPage.schedule.success") || "Lecture scheduled successfully");
@@ -223,9 +231,32 @@ function ScheduleSessionModal({
           <div className="flex items-start gap-2 p-3 bg-[var(--color-border-subtle)] rounded-lg">
             <Video className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0 mt-0.5" />
             <p className="text-xs text-[#1E40AF]">
-              {t("sessionsPage.zoomAutoCreate") || "Zoom meeting will be auto-created for the instructor."}
+              {isWebinar && type === "zoom"
+                ? (t("sessionsPage.zoomAutoCreateWebinar") || "A Zoom Webinar will be created — students and external attendees register through a public Zoom-hosted page.")
+                : (t("sessionsPage.zoomAutoCreate") || "Zoom meeting will be auto-created for the instructor.")}
             </p>
           </div>
+        )}
+
+        {/* Webinar toggle — zoom only. Generates a Zoom Webinar with a
+            public registration page instead of a regular meeting. */}
+        {type === "zoom" && (
+          <label className="flex items-start gap-3 p-3 border border-[var(--color-border)] rounded-lg cursor-pointer hover:bg-[var(--color-border-subtle)] transition-colors">
+            <input
+              type="checkbox"
+              checked={isWebinar}
+              onChange={(e) => setIsWebinar(e.target.checked)}
+              className="mt-0.5 w-4 h-4 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-input-focus)]"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                {t("sessionsPage.form.generateWebinar") || "Generate Zoom Webinar registration link"}
+              </p>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                {t("sessionsPage.form.generateWebinarHint") || "Creates a shareable registration page for external attendees. Enrolled students are auto-registered on Start."}
+              </p>
+            </div>
+          </label>
         )}
 
         {/* Venue fields */}
@@ -284,6 +315,9 @@ interface SessionWithInstructor {
   durationMinutes: number;
   zoomLink: string | null;
   meetingId: string | null;
+  isWebinar?: boolean;
+  zoomWebinarId?: string | null;
+  webinarRegistrationUrl?: string | null;
   venueAddress: string | null;
   status: "scheduled" | "live" | "ended" | "completed" | "cancelled" | "missed" | "rescheduled";
   cancelReason: string | null;
@@ -699,6 +733,11 @@ const SessionsContent = () => {
                     CONFLICT
                   </span>
                 )}
+                {session.isWebinar && (
+                  <span className="px-1.5 py-0.5 bg-[#EDE9FE] text-[#7C3AED] text-[10px] font-semibold rounded">
+                    {isRTL ? "ندوة" : "WEBINAR"}
+                  </span>
+                )}
                 {taThresholds[session.courseId] && taThresholds[session.courseId].requiredTAs > 0 && (
                   <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${
                     taThresholds[session.courseId].deficit > 0
@@ -782,6 +821,39 @@ const SessionsContent = () => {
                     >
                       <Users className="w-4 h-4" /> {t("sessionsPage.viewAttendance")}
                     </button>
+                  )}
+                  {session.isWebinar && session.webinarRegistrationUrl && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActionDropdown(null);
+                          navigator.clipboard.writeText(session.webinarRegistrationUrl || '');
+                          toast.success(isRTL ? "تم نسخ الرابط" : "Registration link copied");
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)]"
+                      >
+                        <Copy className="w-4 h-4" />
+                        {isRTL ? "نسخ رابط التسجيل" : "Copy registration link"}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActionDropdown(null);
+                          const when = new Date(session.scheduledAt).toLocaleString(isRTL ? 'ar-SA' : 'en-US', {
+                            month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
+                          });
+                          const msg = isRTL
+                            ? `📅 ${session.title}\n🕐 ${when}\n\nسجل عبر:\n${session.webinarRegistrationUrl}`
+                            : `📅 ${session.title}\n🕐 ${when}\n\nRegister here:\n${session.webinarRegistrationUrl}`;
+                          window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)]"
+                      >
+                        <Share2 className="w-4 h-4" />
+                        {isRTL ? "مشاركة عبر واتساب" : "Share via WhatsApp"}
+                      </button>
+                    </>
                   )}
                   {(session.status === "scheduled" || session.status === "live") && (
                     <>

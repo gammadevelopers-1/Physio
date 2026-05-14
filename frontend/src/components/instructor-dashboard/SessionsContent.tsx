@@ -11,7 +11,8 @@ import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import DatePicker from "@/components/ui/DatePicker";
 import { CitySelect } from "@/components/ui/CitySelect";
-import { instructorApi, zoomAttendanceApi, courseAssistantsApi, type ThresholdStatus } from "@/lib/api";
+import { instructorApi, zoomAttendanceApi, courseAssistantsApi, courseManagerApi, type ThresholdStatus } from "@/lib/api";
+import WebinarRegistrantsDrawer from "@/components/shared/WebinarRegistrantsDrawer";
 import type {
   CourseSession,
   InstructorCourse,
@@ -47,6 +48,9 @@ import {
   Lock,
   CheckCircle,
   XCircle,
+  Radio,
+  Copy,
+  Share2,
 } from "lucide-react";
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -1453,6 +1457,11 @@ function SessionCard({
   onEdit,
   onDelete,
   onReschedule,
+  onStartAsHost,
+  onRegistrants,
+  onCopyRegistration,
+  onShareWhatsApp,
+  registrantsCount,
   actionLoading,
   taThreshold,
   t,
@@ -1469,6 +1478,11 @@ function SessionCard({
   onEdit: () => void;
   onDelete: () => void;
   onReschedule: () => void;
+  onStartAsHost?: () => void;
+  onRegistrants?: () => void;
+  onCopyRegistration?: () => void;
+  onShareWhatsApp?: () => void;
+  registrantsCount?: number;
   actionLoading: boolean;
   taThreshold?: ThresholdStatus;
   t: ReturnType<typeof useTranslations>;
@@ -1511,28 +1525,42 @@ function SessionCard({
 
   const isLive = session.status === "live";
 
+  const isWebinar = !!session.isWebinar;
+
   return (
     <div className={`px-4 py-3 transition-colors ${
-      isLive ? "bg-[#FEF2F2]/50" : "hover:bg-[var(--color-border-subtle)]"
+      isLive ? "bg-[#FEF2F2]/50" : isWebinar ? "hover:bg-[#FAF5FF]" : "hover:bg-[var(--color-border-subtle)]"
     } ${isPast ? "opacity-70" : ""}`}>
       {/* Main row */}
       <div className="flex items-center gap-3">
         {/* Type icon */}
-        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${isPast ? "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]" : getTypeBadgeStyle(session.type)}`}>
-          {getTypeIcon(session.type)}
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+          isPast
+            ? "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
+            : isWebinar
+              ? "bg-[#F3E8FF] text-[#A855F7]"
+              : getTypeBadgeStyle(session.type)
+        }`}>
+          {isWebinar ? <Radio className="w-4 h-4" /> : getTypeIcon(session.type)}
         </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h3 className={`text-sm font-semibold truncate ${isPast ? "text-[var(--color-text-secondary)]" : "text-[var(--color-text-primary)]"}`}>
               {session.title}
             </h3>
+            {isWebinar && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#A855F7] text-white text-[10px] font-bold rounded-full uppercase tracking-wide flex-shrink-0">
+                <Radio className="w-2.5 h-2.5" />
+                {locale === "ar" ? "ندوة" : "Webinar"}
+              </span>
+            )}
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${badge.bg} ${badge.text}`}>
               {isLive && <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444] animate-pulse" />}
               {badge.label}
             </span>
-            {taThreshold && taThreshold.requiredTAs > 0 && (
+            {!isWebinar && taThreshold && taThreshold.requiredTAs > 0 && (
               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${
                 taThreshold.deficit > 0
                   ? "bg-[#FEF2F2] text-[#EF4444]"
@@ -1574,72 +1602,124 @@ function SessionCard({
 
         {/* Actions */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          {session.status === "scheduled" && (
+          {/* ── Webinar: manager-controlled. Instructor only gets
+                Start-as-Host (opens Zoom directly) + read-only Registrants. */}
+          {isWebinar ? (
             <>
-              <button
-                onClick={onStart}
-                disabled={actionLoading}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg hover:bg-[var(--color-primary-dark)] disabled:opacity-50 transition-colors"
-              >
-                {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
-                {t("sessionsPage.start")}
-              </button>
-              <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
-                <ClipboardCheck className="w-3.5 h-3.5" />
-              </button>
-              <button onClick={onEdit} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors" aria-label={t("sessionsPage.edit")}>
-                <Edit className="w-3.5 h-3.5" />
-              </button>
-              <button onClick={onCancel} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors" aria-label={t("sessionsPage.cancel")}>
-                <Ban className="w-3.5 h-3.5" />
-              </button>
-            </>
-          )}
-
-          {isLive && (
-            <>
-              <button
-                onClick={onEnd}
-                disabled={actionLoading}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#EF4444] text-white text-xs font-medium rounded-lg hover:bg-[#DC2626] disabled:opacity-50 transition-colors"
-              >
-                {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
-                {t("sessionsPage.endSession")}
-              </button>
-              <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
-                <ClipboardCheck className="w-3.5 h-3.5" />
-              </button>
-              {session.zoomLink && (
-                <a href={session.zoomLink} target="_blank" rel="noopener noreferrer" className="p-1.5 border border-[#BFDBFE] rounded-lg text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] transition-colors" title={t("sessionsPage.rejoinZoom")}>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+              {onRegistrants && (
+                <button
+                  onClick={onRegistrants}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#FAF5FF] hover:bg-[#F3E8FF] border border-[#E9D5FF] text-[#7C3AED] text-xs font-semibold rounded-lg transition-colors"
+                  title={locale === "ar" ? "عرض المسجلين" : "View registrants"}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  {registrantsCount ?? 0}
+                  <span className="hidden sm:inline">{locale === "ar" ? " مسجل" : " registered"}</span>
+                </button>
               )}
+              {session.webinarRegistrationUrl && onCopyRegistration && (
+                <button
+                  type="button"
+                  onClick={onCopyRegistration}
+                  className="p-1.5 rounded-md text-[#7C3AED] hover:bg-[#F3E8FF] transition-colors"
+                  title={locale === "ar" ? "نسخ رابط التسجيل" : "Copy registration link"}
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                </button>
+              )}
+              {session.webinarRegistrationUrl && onShareWhatsApp && (
+                <button
+                  type="button"
+                  onClick={onShareWhatsApp}
+                  className="p-1.5 rounded-md text-[#25D366] hover:bg-[#DCFCE7] transition-colors"
+                  title={locale === "ar" ? "مشاركة عبر واتساب" : "Share via WhatsApp"}
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+              {(session.status === "scheduled" || isLive) && onStartAsHost && (
+                <button
+                  onClick={onStartAsHost}
+                  disabled={actionLoading}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#A855F7] hover:bg-[#9333EA] text-white text-xs font-medium rounded-lg disabled:opacity-50 transition-colors"
+                  title={locale === "ar" ? "ابدأ كمضيف" : "Start as Host"}
+                >
+                  {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Radio className="w-3.5 h-3.5" />}
+                  {locale === "ar" ? "ابدأ كمضيف" : "Start as Host"}
+                </button>
+              )}
+              {/* No edit / cancel / mark-attendance on webinars — manager only */}
             </>
-          )}
-
-          {session.status === "ended" && (
-            <button onClick={onAttendance} className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#16A34A] border border-[#BBF7D0] bg-[#F0FDF4] rounded-lg hover:bg-[#DCFCE7] transition-colors">
-              <ClipboardCheck className="w-3.5 h-3.5" />
-              {locale === "ar" ? "الحضور" : "Attendance"}
-            </button>
-          )}
-
-          {session.status === "completed" && (
-            <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
-              <ClipboardCheck className="w-3.5 h-3.5" />
-            </button>
-          )}
-
-          {/* Cancelled sessions: no actions — only manager can delete */}
-
-          {session.status === "missed" && (
+          ) : (
             <>
-              <button onClick={onReschedule} className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] rounded-lg hover:bg-[#FEF3C7] transition-colors">
-                Reschedule
-              </button>
-              <button onClick={onCancel} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors">
-                <Ban className="w-3.5 h-3.5" />
-              </button>
+              {session.status === "scheduled" && (
+                <>
+                  <button
+                    onClick={onStart}
+                    disabled={actionLoading}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg hover:bg-[var(--color-primary-dark)] disabled:opacity-50 transition-colors"
+                  >
+                    {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+                    {t("sessionsPage.start")}
+                  </button>
+                  <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
+                    <ClipboardCheck className="w-3.5 h-3.5" />
+                  </button>
+                  <button onClick={onEdit} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors" aria-label={t("sessionsPage.edit")}>
+                    <Edit className="w-3.5 h-3.5" />
+                  </button>
+                  <button onClick={onCancel} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors" aria-label={t("sessionsPage.cancel")}>
+                    <Ban className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              )}
+
+              {isLive && (
+                <>
+                  <button
+                    onClick={onEnd}
+                    disabled={actionLoading}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#EF4444] text-white text-xs font-medium rounded-lg hover:bg-[#DC2626] disabled:opacity-50 transition-colors"
+                  >
+                    {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
+                    {t("sessionsPage.endSession")}
+                  </button>
+                  <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
+                    <ClipboardCheck className="w-3.5 h-3.5" />
+                  </button>
+                  {session.zoomLink && (
+                    <a href={session.zoomLink} target="_blank" rel="noopener noreferrer" className="p-1.5 border border-[#BFDBFE] rounded-lg text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] transition-colors" title={t("sessionsPage.rejoinZoom")}>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </>
+              )}
+
+              {session.status === "ended" && (
+                <button onClick={onAttendance} className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#16A34A] border border-[#BBF7D0] bg-[#F0FDF4] rounded-lg hover:bg-[#DCFCE7] transition-colors">
+                  <ClipboardCheck className="w-3.5 h-3.5" />
+                  {locale === "ar" ? "الحضور" : "Attendance"}
+                </button>
+              )}
+
+              {session.status === "completed" && (
+                <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
+                  <ClipboardCheck className="w-3.5 h-3.5" />
+                </button>
+              )}
+
+              {/* Cancelled sessions: no actions — only manager can delete */}
+
+              {session.status === "missed" && (
+                <>
+                  <button onClick={onReschedule} className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] rounded-lg hover:bg-[#FEF3C7] transition-colors">
+                    Reschedule
+                  </button>
+                  <button onClick={onCancel} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors">
+                    <Ban className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              )}
             </>
           )}
         </div>
@@ -1927,6 +2007,16 @@ const SessionsContent = () => {
   const [editSessionData, setEditSessionData] = useState<CourseSession | null>(null);
   const [recordingsSession, setRecordingsSession] = useState<CourseSession | null>(null);
 
+  // Webinar registrants drawer (instructor sees it read-only — Copy/WhatsApp
+  // hidden via the readOnly prop on the shared component).
+  const [registrantsDrawer, setRegistrantsDrawer] = useState<{
+    sessionId: string;
+    sessionTitle: string;
+    scheduledAt: string;
+    registrationUrl: string | null;
+  } | null>(null);
+  const [webinarCounts, setWebinarCounts] = useState<Record<string, number>>({});
+
   // Makeup session pre-fill from query params
   const makeupCourseId = searchParams.get("courseId") || undefined;
   const isMakeupParam = searchParams.get("isMakeup") === "true";
@@ -2017,6 +2107,36 @@ const SessionsContent = () => {
     return () => clearInterval(interval);
   }, [hasLiveSessions, sessions]);
 
+  // Lazy-load registrant counts for visible webinar rows so the chip on
+  // each webinar action area shows "X registered" without per-row fetches.
+  useEffect(() => {
+    const ids = sessions
+      .filter((s: any) => s.isWebinar && webinarCounts[s.id] === undefined)
+      .map((s) => s.id);
+    if (ids.length === 0) return;
+    let cancelled = false;
+    Promise.all(
+      ids.map((id) =>
+        courseManagerApi
+          .getWebinarRegistrants(id)
+          .then((res) => [id, res.totalRegistered] as const)
+          .catch(() => null),
+      ),
+    ).then((results) => {
+      if (cancelled) return;
+      setWebinarCounts((prev) => {
+        const next = { ...prev };
+        for (const r of results) {
+          if (r) next[r[0]] = r[1];
+        }
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [sessions, webinarCounts]);
+
   // Date range validation
   const dateRangeInvalid = !!(filterDateFrom && filterDateTo && filterDateFrom > filterDateTo);
 
@@ -2082,6 +2202,54 @@ const SessionsContent = () => {
     } finally {
       setActionLoadingId(null);
     }
+  };
+
+  // Webinar: open Zoom's host start_url directly. We don't flip the
+  // session to 'live' from our side — Zoom's webinar.started webhook does.
+  const handleStartAsHost = async (session: CourseSession) => {
+    if (actionLoadingId) return;
+    setActionLoadingId(session.id);
+    try {
+      const result = await courseManagerApi.getWebinarStartUrl(session.id);
+      if (result.startUrl) {
+        window.open(result.startUrl, "_blank", "noopener,noreferrer");
+      } else {
+        toast.error(locale === "ar" ? "تعذر فتح رابط الندوة" : "Could not get webinar start URL");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || (locale === "ar" ? "تعذر فتح رابط الندوة" : "Could not open webinar"));
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleOpenRegistrants = (session: CourseSession) => {
+    setRegistrantsDrawer({
+      sessionId: session.id,
+      sessionTitle: session.title,
+      scheduledAt: session.scheduledAt,
+      registrationUrl: session.webinarRegistrationUrl || null,
+    });
+  };
+
+  const handleCopyRegistration = (session: CourseSession) => {
+    const url = session.webinarRegistrationUrl;
+    if (!url) return;
+    navigator.clipboard.writeText(url);
+    toast.success(locale === "ar" ? "تم نسخ الرابط" : "Registration link copied");
+  };
+
+  const handleShareWebinarWhatsApp = (session: CourseSession) => {
+    const url = session.webinarRegistrationUrl;
+    if (!url) return;
+    const when = new Date(session.scheduledAt).toLocaleString(
+      locale === "ar" ? "ar-SA" : "en-US",
+      { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" },
+    );
+    const msg = locale === "ar"
+      ? `📅 ${session.title}\n🕐 ${when}\n\nسجل عبر:\n${url}`
+      : `📅 ${session.title}\n🕐 ${when}\n\nRegister here:\n${url}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
   };
 
   const handleEnd = (session: CourseSession) => {
@@ -2299,6 +2467,11 @@ const SessionsContent = () => {
                 setRescheduleSession(session);
                 setRescheduleForm({ reason: "", date: "", time: "", durationHours: Math.floor((session.durationMinutes || 60) / 60), durationMins: (session.durationMinutes || 60) % 60 });
               }}
+              onStartAsHost={() => handleStartAsHost(session)}
+              onRegistrants={() => handleOpenRegistrants(session)}
+              onCopyRegistration={() => handleCopyRegistration(session)}
+              onShareWhatsApp={() => handleShareWebinarWhatsApp(session)}
+              registrantsCount={webinarCounts[session.id]}
               actionLoading={actionLoadingId === session.id}
               taThreshold={taThresholds[session.courseId]}
               t={t}
@@ -2588,6 +2761,16 @@ const SessionsContent = () => {
           onClose={() => setAttendanceSession(null)}
           t={t}
           locale={locale}
+        />
+      )}
+
+      {registrantsDrawer && (
+        <WebinarRegistrantsDrawer
+          sessionId={registrantsDrawer.sessionId}
+          sessionTitle={registrantsDrawer.sessionTitle}
+          scheduledAt={registrantsDrawer.scheduledAt}
+          registrationUrl={registrantsDrawer.registrationUrl}
+          onClose={() => setRegistrantsDrawer(null)}
         />
       )}
 

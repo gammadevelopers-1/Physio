@@ -219,4 +219,15 @@ export class ZoomMockService implements IZoomService {
       userType: 2,
     };
   }
+
+  async getWebinar(webinarId: string) {
+    const w = this.webinars.get(webinarId);
+    return {
+      startUrl: `https://zoom.us/s/${webinarId}?mock=host`,
+      joinUrl: `https://zoom.us/w/${webinarId}?mock=true`,
+      hostEmail: null,
+      topic: w?.topic || '[mock webinar]',
+      startTime: w?.startTime?.toISOString?.() || new Date().toISOString(),
+    };
+  }
 }

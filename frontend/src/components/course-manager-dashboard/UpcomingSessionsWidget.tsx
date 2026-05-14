@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations, useLocale } from "next-intl";
-import { Calendar, Video, MapPin, AlertTriangle, ChevronRight } from "lucide-react";
+import { Calendar, Video, MapPin, AlertTriangle, ChevronRight, Radio } from "lucide-react";
 import Link from "next/link";
 
 interface Session {
@@ -15,6 +15,7 @@ interface Session {
   enrolled: number;
   capacity: number;
   hasConflict?: boolean;
+  isWebinar?: boolean;
 }
 
 interface UpcomingSessionsWidgetProps {
@@ -80,10 +81,18 @@ const UpcomingSessionsWidget = ({ sessions }: UpcomingSessionsWidgetProps) => {
                   {session.date} - {session.time}
                 </p>
 
-                {/* Session Title */}
-                <h4 className="text-[14px] font-semibold text-[var(--color-text-primary)] truncate" title={session.title}>
-                  {session.title}
-                </h4>
+                {/* Session Title + webinar pill */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h4 className="text-[14px] font-semibold text-[var(--color-text-primary)] truncate" title={session.title}>
+                    {session.title}
+                  </h4>
+                  {session.isWebinar && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#A855F7] text-white text-[10px] font-bold rounded-full uppercase tracking-wide flex-shrink-0">
+                      <Radio className="w-2.5 h-2.5" />
+                      {isRTL ? "ندوة" : "Webinar"}
+                    </span>
+                  )}
+                </div>
 
                 {/* Course Name */}
                 {session.courseName && (
@@ -108,6 +117,11 @@ const UpcomingSessionsWidget = ({ sessions }: UpcomingSessionsWidgetProps) => {
                     <span className="inline-flex items-center gap-1 text-[12px] font-medium text-[var(--functional-red-600)]">
                       <AlertTriangle className="w-3.5 h-3.5" />
                       {t("schedules.conflict")}
+                    </span>
+                  ) : session.isWebinar ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#FAF5FF] text-[#7C3AED] text-[11px] font-medium rounded border border-[#E9D5FF]">
+                      <Radio className="w-3 h-3" />
+                      {isRTL ? "ندوة" : "Webinar"}
                     </span>
                   ) : session.type === "zoom" ? (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[var(--color-border-subtle)] text-[var(--functional-blue-600)] text-[11px] font-medium rounded">

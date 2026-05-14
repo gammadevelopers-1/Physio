@@ -319,18 +319,33 @@ export class SessionsController {
   }
 
   /**
-   * GET /sessions/:id/registrants — Webinar registrants list (manager/admin only).
-   * Returns merged data from local webinar_registrations table + Zoom API
-   * registrants (Zoom is source of truth for late-arriving rows we may not
-   * have caught via webhook yet).
+   * GET /sessions/:id/registrants — Webinar registrants list.
+   * Manager/admin: any session in scope. Instructor: only if it's their own
+   * session (read-only — they see the same data but the UI hides
+   * sharing/edit actions).
    */
-  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole, 'INSTRUCTOR' as UserRole)
   @Get(':id/registrants')
   async getWebinarRegistrants(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.sessionsService.getWebinarRegistrants(id, user);
+  }
+
+  /**
+   * GET /sessions/:id/webinar-start — Zoom host start_url for a webinar.
+   * Manager/admin OR the session's instructor only. Used by the
+   * "Start as Host" button — opens Zoom directly so the instructor hosts
+   * from our app.
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole, 'INSTRUCTOR' as UserRole)
+  @Get(':id/webinar-start')
+  async getWebinarStartUrl(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.sessionsService.getWebinarStartUrl(id, user);
   }
 
   /**

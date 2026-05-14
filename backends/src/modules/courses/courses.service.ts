@@ -861,6 +861,9 @@ export class CoursesService {
       id: string; title: string; type: string;
       scheduledAt: Date; durationMinutes: number;
       venueAddress: string | null; roomName: string | null; city: string | null; status: string;
+      isWebinar: boolean | null;
+      zoomWebinarId: string | null;
+      webinarRegistrationUrl: string | null;
     }> = [];
     if (data.deliveryType !== 'self-paced') {
       sessionsList = await db
@@ -874,6 +877,9 @@ export class CoursesService {
           roomName: sessions.roomName,
           city: sessions.city,
           status: sessions.status,
+          isWebinar: sessions.isWebinar,
+          zoomWebinarId: sessions.zoomWebinarId,
+          webinarRegistrationUrl: sessions.webinarRegistrationUrl,
         })
         .from(sessions)
         .where(

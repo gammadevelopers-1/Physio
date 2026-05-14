@@ -21,7 +21,8 @@ import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import type { CalendarFormat } from "@/lib/hijri";
 import { useInstructorCourseDetail } from "@/hooks/useInstructorCourseDetail";
-import { instructorApi, materialsApi, publicApi } from "@/lib/api";
+import { instructorApi, materialsApi, publicApi, courseManagerApi } from "@/lib/api";
+import WebinarRegistrantsDrawer from "@/components/shared/WebinarRegistrantsDrawer";
 import type { CourseModule, CourseSession, CourseMaterialResponse } from "@/types/instructor-dashboard";
 import {
   ArrowLeft,
@@ -60,6 +61,9 @@ import {
   Eye,
   Star,
   ArrowRight,
+  Radio,
+  Copy,
+  Share2,
 } from "lucide-react";
 
 interface CourseDetailContentProps {
@@ -752,6 +756,86 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       setSessionSaving(false);
     }
   };
+
+  // Webinar — open Zoom's host start_url + read-only registrants drawer
+  const [registrantsDrawer, setRegistrantsDrawer] = useState<{
+    sessionId: string;
+    sessionTitle: string;
+    scheduledAt: string;
+    registrationUrl: string | null;
+  } | null>(null);
+  const [webinarCounts, setWebinarCounts] = useState<Record<string, number>>({});
+
+  const handleOpenWebinarRegistrants = (session: any) => {
+    setRegistrantsDrawer({
+      sessionId: session.id,
+      sessionTitle: session.title,
+      scheduledAt: session.scheduledAt,
+      registrationUrl: session.webinarRegistrationUrl || null,
+    });
+  };
+
+  const handleCopyWebinarLink = (session: any) => {
+    const url = session.webinarRegistrationUrl;
+    if (!url) return;
+    navigator.clipboard.writeText(url);
+    toast.success(locale === "ar" ? "تم نسخ الرابط" : "Registration link copied");
+  };
+
+  const handleShareWebinarWhatsApp = (session: any) => {
+    const url = session.webinarRegistrationUrl;
+    if (!url) return;
+    const when = new Date(session.scheduledAt).toLocaleString(
+      locale === "ar" ? "ar-SA" : "en-US",
+      { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" },
+    );
+    const msg = locale === "ar"
+      ? `📅 ${session.title}\n🕐 ${when}\n\nسجل عبر:\n${url}`
+      : `📅 ${session.title}\n🕐 ${when}\n\nRegister here:\n${url}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleStartWebinarAsHost = async (session: any) => {
+    try {
+      const result = await courseManagerApi.getWebinarStartUrl(session.id);
+      if (result.startUrl) {
+        window.open(result.startUrl, "_blank", "noopener,noreferrer");
+      } else {
+        toast.error(locale === "ar" ? "تعذر فتح رابط الندوة" : "Could not get webinar start URL");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || (locale === "ar" ? "تعذر فتح الندوة" : "Could not open webinar"));
+    }
+  };
+
+  // Lazy-load registrant counts for visible webinar sessions
+  useEffect(() => {
+    const ids = sessions
+      .filter((s: any) => s.isWebinar && webinarCounts[s.id] === undefined)
+      .map((s) => s.id);
+    if (ids.length === 0) return;
+    let cancelled = false;
+    Promise.all(
+      ids.map((id) =>
+        courseManagerApi
+          .getWebinarRegistrants(id)
+          .then((res) => [id, res.totalRegistered] as const)
+          .catch(() => null),
+      ),
+    ).then((results) => {
+      if (cancelled) return;
+      setWebinarCounts((prev) => {
+        const next = { ...prev };
+        for (const r of results) {
+          if (r) next[r[0]] = r[1];
+        }
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [sessions, webinarCounts]);
 
   const handleStartSession = async (sessionId: string) => {
     try {
@@ -1511,13 +1595,18 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                             <p className="text-sm text-[var(--color-text-secondary)]">{t("courseDetail.noSessions")}</p>
                           </div>
                         ) : (
-                          sessions.map((session) => (
-                            <div key={session.id} className="flex items-center justify-between p-4 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors">
+                          sessions.map((session) => {
+                            const isWebinar = !!(session as any).isWebinar;
+                            return (
+                            <div key={session.id} className={`flex items-center justify-between p-4 border rounded-lg transition-colors ${isWebinar ? "border-[#E9D5FF] bg-[#FAF5FF]/40 hover:bg-[#FAF5FF]" : "border-[var(--color-border)] hover:bg-[var(--color-border-subtle)]"}`}>
                               <div className="flex items-center gap-3">
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                  isWebinar ? "bg-[#F3E8FF]" :
                                   session.type === "zoom" ? "bg-[var(--color-border-subtle)]" : session.type === "onsite" ? "bg-[#DCFCE7]" : "bg-[#F3E8FF]"
                                 }`}>
-                                  {session.type === "zoom" ? (
+                                  {isWebinar ? (
+                                    <Radio className="w-5 h-5 text-[#A855F7]" />
+                                  ) : session.type === "zoom" ? (
                                     <Video className="w-5 h-5 text-[var(--color-primary)]" />
                                   ) : session.type === "onsite" ? (
                                     <MapPin className="w-5 h-5 text-[#22C55E]" />
@@ -1526,13 +1615,19 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                   )}
                                 </div>
                                 <div>
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-sm font-medium text-[var(--color-text-secondary)]">{session.title}</p>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="text-sm font-medium text-[var(--color-text-primary)]">{session.title}</p>
+                                    {isWebinar && (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#A855F7] text-white text-[10px] font-bold rounded-full uppercase tracking-wide">
+                                        <Radio className="w-2.5 h-2.5" />
+                                        {locale === "ar" ? "ندوة" : "Webinar"}
+                                      </span>
+                                    )}
                                     <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${getSessionStatusColor(session.status)}`}>
                                       {t(`courseDetail.sessionStatus.${session.status}`)}
                                     </span>
                                   </div>
-                                  <p className="text-xs text-[var(--color-text-secondary)]">
+                                  <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
                                     {formatSessionDateLocal(session.scheduledAt, calendarFormat, locale)} &bull;{" "}
                                     {formatSessionTime(session.scheduledAt, session.durationMinutes)}
                                     {" "}&bull; {session.durationMinutes} {t("courseDetail.minutes")}
@@ -1540,75 +1635,123 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                {session.status === "scheduled" && (
-                                  <button
-                                    onClick={() => handleStartSession(session.id)}
-                                    className="px-3 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors"
-                                  >
-                                    {t("courseDetail.startSession")}
-                                  </button>
-                                )}
-                                {session.status === "live" && (
+                                {isWebinar ? (
+                                  /* Webinar: manager-controlled. Instructor
+                                     gets Registrants drawer + Copy + WhatsApp
+                                     + Start-as-Host. */
                                   <>
                                     <button
-                                      onClick={() => handleEndSession(session.id)}
-                                      className="px-3 py-1.5 bg-[#22C55E] text-white text-xs font-medium rounded-lg hover:bg-[#16A34A] transition-colors"
+                                      onClick={() => handleOpenWebinarRegistrants(session)}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#FAF5FF] hover:bg-[#F3E8FF] border border-[#E9D5FF] text-[#7C3AED] text-xs font-semibold rounded-lg transition-colors"
                                     >
-                                      {t("courseDetail.endSession")}
+                                      <Users className="w-3.5 h-3.5" />
+                                      {webinarCounts[session.id] ?? 0}
+                                      <span className="hidden sm:inline">{locale === "ar" ? " مسجل" : " registered"}</span>
                                     </button>
-                                    {session.zoomLink && (
-                                      <a
-                                        href={session.zoomLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="p-1.5 border border-[#BFDBFE] rounded-lg text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] transition-colors"
-                                        title={t("courseDetail.rejoinZoom")}
+                                    {(session as any).webinarRegistrationUrl && (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleCopyWebinarLink(session)}
+                                          className="p-1.5 rounded-md text-[#7C3AED] hover:bg-[#F3E8FF] transition-colors"
+                                          title={locale === "ar" ? "نسخ رابط التسجيل" : "Copy registration link"}
+                                        >
+                                          <Copy className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleShareWebinarWhatsApp(session)}
+                                          className="p-1.5 rounded-md text-[#25D366] hover:bg-[#DCFCE7] transition-colors"
+                                          title={locale === "ar" ? "مشاركة عبر واتساب" : "Share via WhatsApp"}
+                                        >
+                                          <Share2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </>
+                                    )}
+                                    {(session.status === "scheduled" || session.status === "live") && (
+                                      <button
+                                        onClick={() => handleStartWebinarAsHost(session)}
+                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#A855F7] hover:bg-[#9333EA] text-white text-xs font-medium rounded-lg transition-colors"
                                       >
-                                        <ExternalLink className="w-4 h-4" />
-                                      </a>
+                                        <Radio className="w-3.5 h-3.5" />
+                                        {locale === "ar" ? "ابدأ كمضيف" : "Start as Host"}
+                                      </button>
                                     )}
                                   </>
-                                )}
-                                {(session.status === "scheduled" || session.status === "live") && (
+                                ) : (
                                   <>
-                                    <button
-                                      onClick={() => openEditSession(session)}
-                                      className="p-1.5 hover:bg-[var(--color-border-subtle)] rounded"
-                                      aria-label={t("courseDetail.editSession")}
-                                    >
-                                      <Edit className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                                    </button>
-                                    <button
-                                      onClick={() => { setCancelModal({ open: true, sessionId: session.id }); setCancelReason(""); }}
-                                      className="p-1.5 hover:bg-[#FEE2E2] rounded"
-                                      aria-label={t("courseDetail.cancelSession")}
-                                    >
-                                      <X className="w-4 h-4 text-[#EF4444]" />
-                                    </button>
-                                  </>
-                                )}
-                                {session.status === "missed" && (
-                                  <>
-                                    <button
-                                      onClick={() => {
-                                        setRescheduleModal({ open: true, sessionId: session.id });
-                                        setRescheduleData({ reason: "", newDate: "", newTime: "", durationHours: Math.floor((session.durationMinutes || 60) / 60), durationMins: (session.durationMinutes || 60) % 60 });
-                                      }}
-                                      className="px-2.5 py-1 text-xs font-medium text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] rounded-lg hover:bg-[#FEF3C7] transition-colors"
-                                    >
-                                      Reschedule
-                                    </button>
-                                    <button
-                                      onClick={() => { setCancelModal({ open: true, sessionId: session.id }); setCancelReason(""); }}
-                                      className="p-1.5 hover:bg-[#FEE2E2] rounded"
-                                    >
-                                      <X className="w-4 h-4 text-[#EF4444]" />
-                                    </button>
+                                    {session.status === "scheduled" && (
+                                      <button
+                                        onClick={() => handleStartSession(session.id)}
+                                        className="px-3 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors"
+                                      >
+                                        {t("courseDetail.startSession")}
+                                      </button>
+                                    )}
+                                    {session.status === "live" && (
+                                      <>
+                                        <button
+                                          onClick={() => handleEndSession(session.id)}
+                                          className="px-3 py-1.5 bg-[#22C55E] text-white text-xs font-medium rounded-lg hover:bg-[#16A34A] transition-colors"
+                                        >
+                                          {t("courseDetail.endSession")}
+                                        </button>
+                                        {session.zoomLink && (
+                                          <a
+                                            href={session.zoomLink}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-1.5 border border-[#BFDBFE] rounded-lg text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] transition-colors"
+                                            title={t("courseDetail.rejoinZoom")}
+                                          >
+                                            <ExternalLink className="w-4 h-4" />
+                                          </a>
+                                        )}
+                                      </>
+                                    )}
+                                    {(session.status === "scheduled" || session.status === "live") && (
+                                      <>
+                                        <button
+                                          onClick={() => openEditSession(session)}
+                                          className="p-1.5 hover:bg-[var(--color-border-subtle)] rounded"
+                                          aria-label={t("courseDetail.editSession")}
+                                        >
+                                          <Edit className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                                        </button>
+                                        <button
+                                          onClick={() => { setCancelModal({ open: true, sessionId: session.id }); setCancelReason(""); }}
+                                          className="p-1.5 hover:bg-[#FEE2E2] rounded"
+                                          aria-label={t("courseDetail.cancelSession")}
+                                        >
+                                          <X className="w-4 h-4 text-[#EF4444]" />
+                                        </button>
+                                      </>
+                                    )}
+                                    {session.status === "missed" && (
+                                      <>
+                                        <button
+                                          onClick={() => {
+                                            setRescheduleModal({ open: true, sessionId: session.id });
+                                            setRescheduleData({ reason: "", newDate: "", newTime: "", durationHours: Math.floor((session.durationMinutes || 60) / 60), durationMins: (session.durationMinutes || 60) % 60 });
+                                          }}
+                                          className="px-2.5 py-1 text-xs font-medium text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] rounded-lg hover:bg-[#FEF3C7] transition-colors"
+                                        >
+                                          Reschedule
+                                        </button>
+                                        <button
+                                          onClick={() => { setCancelModal({ open: true, sessionId: session.id }); setCancelReason(""); }}
+                                          className="p-1.5 hover:bg-[#FEE2E2] rounded"
+                                        >
+                                          <X className="w-4 h-4 text-[#EF4444]" />
+                                        </button>
+                                      </>
+                                    )}
                                   </>
                                 )}
                               </div>
                             </div>
-                          ))
+                            );
+                          })
                         )}
                         {!isCourseReadOnly && (
                           <button
@@ -2317,6 +2460,16 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
             </video>
           </div>
         </div>
+      )}
+
+      {registrantsDrawer && (
+        <WebinarRegistrantsDrawer
+          sessionId={registrantsDrawer.sessionId}
+          sessionTitle={registrantsDrawer.sessionTitle}
+          scheduledAt={registrantsDrawer.scheduledAt}
+          registrationUrl={registrantsDrawer.registrationUrl}
+          onClose={() => setRegistrantsDrawer(null)}
+        />
       )}
     </>
   );

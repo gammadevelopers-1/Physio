@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import SkeletonCard from "@/components/shared/SkeletonCard";
 import ExportButton from "@/components/shared/ExportButton";
+import WebinarRegistrantsDrawer from "@/components/shared/WebinarRegistrantsDrawer";
 import DatePicker from "@/components/ui/DatePicker";
 import DateTimePicker from "@/components/ui/DateTimePicker";
 import { CitySelect } from "@/components/ui/CitySelect";
@@ -506,35 +507,15 @@ const SessionsContent = () => {
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
 
-  // Webinar registrants drawer + per-row registered counts
-  type RegistrantRow = {
-    id: string;
-    email: string;
-    firstName: string | null;
-    lastName: string | null;
-    phone: string | null;
-    nationalId: string | null;
-    scfhsNumber: string | null;
-    attended: boolean;
-    joinedAt: string | null;
-    leftAt: string | null;
-    attendedDurationMinutes: number;
-    createdAt: string;
-    source: 'platform' | 'external';
-    status: string;
-  };
+  // Webinar registrants drawer (shared component fetches its own data) +
+  // per-row registered counts so the inline chip on each webinar row shows
+  // the count without opening the drawer.
   const [registrantsDrawer, setRegistrantsDrawer] = useState<{
     sessionId: string;
     sessionTitle: string;
     registrationUrl: string | null;
     scheduledAt: string;
   } | null>(null);
-  const [registrantsData, setRegistrantsData] = useState<{
-    totalRegistered: number;
-    totalAttended: number;
-    rows: RegistrantRow[];
-  } | null>(null);
-  const [registrantsLoading, setRegistrantsLoading] = useState(false);
   const [webinarCounts, setWebinarCounts] = useState<Record<string, { registered: number; attended: number }>>({});
 
   // Build dateRange for backend: "YYYY-MM-DD,YYYY-MM-DD"
@@ -618,32 +599,15 @@ const SessionsContent = () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
   };
 
-  // Open registrants drawer and fetch
-  const openRegistrantsDrawer = async (session: SessionWithInstructor) => {
+  // Open registrants drawer — the shared <WebinarRegistrantsDrawer />
+  // handles its own fetch; we just hand it the session metadata.
+  const openRegistrantsDrawer = (session: SessionWithInstructor) => {
     setRegistrantsDrawer({
       sessionId: session.id,
       sessionTitle: session.title,
       registrationUrl: session.webinarRegistrationUrl || null,
       scheduledAt: session.scheduledAt,
     });
-    setRegistrantsData(null);
-    setRegistrantsLoading(true);
-    try {
-      const res = await courseManagerApi.getWebinarRegistrants(session.id);
-      setRegistrantsData({
-        totalRegistered: res.totalRegistered,
-        totalAttended: res.totalAttended,
-        rows: res.registrants as RegistrantRow[],
-      });
-      setWebinarCounts((p) => ({
-        ...p,
-        [session.id]: { registered: res.totalRegistered, attended: res.totalAttended },
-      }));
-    } catch {
-      toast.error(isRTL ? "تعذر تحميل المسجلين" : "Failed to load registrants");
-    } finally {
-      setRegistrantsLoading(false);
-    }
   };
 
   // TA threshold status per course
@@ -1062,7 +1026,7 @@ const SessionsContent = () => {
               </button>
               {actionDropdown === session.id && (
                 <div className={`absolute ${isRTL ? "left-0" : "right-0"} top-full mt-1 w-48 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg z-10 py-1`}>
-                  {(session.status === "completed" || session.status === "ended" || session.status === "cancelled") && (
+                  {!session.isWebinar && (session.status === "completed" || session.status === "ended" || session.status === "cancelled") && (
                     <button
                       onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setAttendanceModal({ id: session.id, title: session.title, courseId: session.courseId }); }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)]"
@@ -1415,153 +1379,13 @@ const SessionsContent = () => {
 
       {/* Webinar Registrants Drawer */}
       {registrantsDrawer && (
-        <div
-          className="fixed inset-0 z-50 bg-black/50"
-          onClick={(e) => e.target === e.currentTarget && setRegistrantsDrawer(null)}
-        >
-          <div
-            className={`fixed top-0 ${isRTL ? "left-0" : "right-0"} h-full w-full max-w-2xl bg-[var(--color-surface-card)] shadow-2xl flex flex-col`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between p-5 border-b border-[var(--color-border)]">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <Radio className="w-4 h-4 text-[#A855F7]" />
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-[#7C3AED]">
-                    {isRTL ? "ندوة" : "Webinar"}
-                  </span>
-                </div>
-                <h3 className="text-lg font-semibold text-[var(--color-text-primary)] truncate">
-                  {registrantsDrawer.sessionTitle}
-                </h3>
-                <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-                  {new Date(registrantsDrawer.scheduledAt).toLocaleString(isRTL ? "ar-SA" : "en-US", {
-                    month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit",
-                  })}
-                </p>
-              </div>
-              <button
-                onClick={() => setRegistrantsDrawer(null)}
-                className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors flex-shrink-0"
-              >
-                <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
-              </button>
-            </div>
-
-            <div className="px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-border-subtle)] flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#FAF5FF] border border-[#E9D5FF] rounded-full">
-                <Users className="w-3.5 h-3.5 text-[#7C3AED]" />
-                <span className="text-xs font-semibold text-[#7C3AED]">
-                  {registrantsData?.totalRegistered ?? "…"} {isRTL ? "مسجل" : "registered"}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#DCFCE7] border border-[#86EFAC] rounded-full">
-                <Check className="w-3.5 h-3.5 text-[#16A34A]" />
-                <span className="text-xs font-semibold text-[#16A34A]">
-                  {registrantsData?.totalAttended ?? "…"} {isRTL ? "حضر" : "attended"}
-                </span>
-              </div>
-              <div className="flex-1" />
-              {registrantsDrawer.registrationUrl && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyRegistrationLink(registrantsDrawer.registrationUrl)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[var(--color-surface-card)] border border-[var(--color-border)] hover:border-[#A855F7] hover:text-[#7C3AED] text-xs font-medium text-[var(--color-text-primary)] transition-colors"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                    {isRTL ? "نسخ الرابط" : "Copy link"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleShareWhatsApp(registrantsDrawer.sessionTitle, registrantsDrawer.scheduledAt, registrantsDrawer.registrationUrl)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#25D366] hover:bg-[#1FAB55] text-white text-xs font-medium transition-colors"
-                  >
-                    <Share2 className="w-3.5 h-3.5" />
-                    {isRTL ? "واتساب" : "WhatsApp"}
-                  </button>
-                  <a
-                    href={registrantsDrawer.registrationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[var(--color-surface-card)] border border-[var(--color-border)] hover:border-[#A855F7] hover:text-[#7C3AED] text-xs font-medium text-[var(--color-text-primary)] transition-colors"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    {isRTL ? "فتح صفحة التسجيل" : "Open page"}
-                  </a>
-                </>
-              )}
-            </div>
-
-            <div className="flex-1 overflow-auto">
-              {registrantsLoading ? (
-                <div className="flex items-center justify-center py-16">
-                  <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />
-                </div>
-              ) : !registrantsData || registrantsData.rows.length === 0 ? (
-                <div className="px-5 py-12 text-center">
-                  <Users className="w-10 h-10 text-[var(--color-text-secondary)] mx-auto opacity-30 mb-3" />
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                    {isRTL ? "لا يوجد مسجلون بعد" : "No registrants yet"}
-                  </p>
-                  <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                    {isRTL
-                      ? "شارك رابط التسجيل عبر واتساب لبدء استقبال التسجيلات"
-                      : "Share the registration link via WhatsApp to start collecting sign-ups"}
-                  </p>
-                </div>
-              ) : (
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-[var(--color-surface-card)] border-b border-[var(--color-border)] z-10">
-                    <tr className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">
-                      <th className="px-4 py-2.5 text-start font-medium">{isRTL ? "الاسم" : "Name"}</th>
-                      <th className="px-4 py-2.5 text-start font-medium">{isRTL ? "البريد" : "Email"}</th>
-                      <th className="px-4 py-2.5 text-start font-medium">{isRTL ? "الهاتف" : "Phone"}</th>
-                      <th className="px-4 py-2.5 text-start font-medium">{isRTL ? "الهوية" : "ID/Iqama"}</th>
-                      <th className="px-4 py-2.5 text-start font-medium">SCFHS</th>
-                      <th className="px-4 py-2.5 text-start font-medium">{isRTL ? "المصدر" : "Source"}</th>
-                      <th className="px-4 py-2.5 text-start font-medium">{isRTL ? "الحضور" : "Attended"}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {registrantsData.rows.map((r) => (
-                      <tr key={r.id} className="border-b border-[var(--color-border)] hover:bg-[var(--color-border-subtle)]">
-                        <td className="px-4 py-2.5 text-[var(--color-text-primary)]">
-                          {[r.firstName, r.lastName].filter(Boolean).join(" ") || "—"}
-                        </td>
-                        <td className="px-4 py-2.5 text-[var(--color-text-secondary)] text-xs">{r.email}</td>
-                        <td className="px-4 py-2.5 text-[var(--color-text-secondary)] text-xs">{r.phone || "—"}</td>
-                        <td className="px-4 py-2.5 text-[var(--color-text-secondary)] text-xs">{r.nationalId || "—"}</td>
-                        <td className="px-4 py-2.5 text-[var(--color-text-secondary)] text-xs">{r.scfhsNumber || "—"}</td>
-                        <td className="px-4 py-2.5">
-                          <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                            r.source === "platform"
-                              ? "bg-[#DBEAFE] text-[#1D4ED8]"
-                              : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
-                          }`}>
-                            {r.source === "platform"
-                              ? (isRTL ? "طالب مسجل" : "Student")
-                              : (isRTL ? "خارجي" : "External")}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5">
-                          {r.attended ? (
-                            <span className="inline-flex items-center gap-1 text-[#16A34A] text-xs font-medium">
-                              <Check className="w-3.5 h-3.5" />
-                              {r.attendedDurationMinutes > 0 && `${r.attendedDurationMinutes}m`}
-                            </span>
-                          ) : (
-                            <span className="text-[var(--color-text-secondary)] text-xs">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        </div>
+        <WebinarRegistrantsDrawer
+          sessionId={registrantsDrawer.sessionId}
+          sessionTitle={registrantsDrawer.sessionTitle}
+          scheduledAt={registrantsDrawer.scheduledAt}
+          registrationUrl={registrantsDrawer.registrationUrl}
+          onClose={() => setRegistrantsDrawer(null)}
+        />
       )}
 
       {/* Cancel Modal */}

@@ -728,24 +728,36 @@ const StudentCourseDetailContent = () => {
                                   {t("courseDetail.webinarInfoNotice") || "Information session — registration required. Does not affect your course progress."}
                                 </p>
                               )}
-                              {(session.zoomLink || session.isWebinar) && (
+                              {/* Webinar register: always available, no 15-min gate.
+                                  Meeting join: only inside the 15-min pre-start window. */}
+                              {session.isWebinar ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleJoinZoom(session.id)}
+                                  disabled={joiningSessionId === session.id}
+                                  className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-md bg-[#A855F7] hover:bg-[#9333EA] text-white text-xs font-medium disabled:opacity-60 transition-colors"
+                                >
+                                  {joiningSessionId === session.id ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <Radio className="w-3.5 h-3.5" />
+                                  )}
+                                  {t("courseDetail.registerForWebinar") || "Register for Webinar"}
+                                </button>
+                              ) : session.zoomLink ? (
                                 isJoinable(session.scheduledAt) ? (
                                   <button
                                     type="button"
                                     onClick={() => handleJoinZoom(session.id)}
                                     disabled={joiningSessionId === session.id}
-                                    className={`inline-flex items-center gap-1 mt-2 text-xs hover:underline disabled:opacity-60 ${session.isWebinar ? "text-[#7C3AED]" : "text-[var(--color-primary)]"}`}
+                                    className="inline-flex items-center gap-1 mt-2 text-xs hover:underline disabled:opacity-60 text-[var(--color-primary)]"
                                   >
                                     {joiningSessionId === session.id ? (
                                       <Loader2 className="w-3 h-3 animate-spin" />
-                                    ) : session.isWebinar ? (
-                                      <Radio className="w-3 h-3" />
                                     ) : (
                                       <Video className="w-3 h-3" />
                                     )}
-                                    {session.isWebinar
-                                      ? (t("courseDetail.registerForWebinar") || "Register & join")
-                                      : t("courseDetail.joinSession")}
+                                    {t("courseDetail.joinSession")}
                                   </button>
                                 ) : (
                                   <p className="inline-flex items-center gap-1 mt-2 text-xs text-[var(--color-text-secondary)] opacity-70">
@@ -753,7 +765,7 @@ const StudentCourseDetailContent = () => {
                                     {t("courseDetail.joinAvailableIn", { time: formatTimeUntil(session.scheduledAt) })}
                                   </p>
                                 )
-                              )}
+                              ) : null}
                               {session.venueAddress && (
                                 <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
                                   <MapPin className="w-3 h-3 inline mr-1" />
@@ -1083,14 +1095,40 @@ const StudentCourseDetailContent = () => {
                         the next upcoming lecture. Hidden when the course has
                         ended (completed enrollment uses the cert card below). */}
                     {isZoom && data.enrollment.status === "active" && nextUpcomingSession && (
-                      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
-                        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
-                          {isRTL ? "ابدأ المحاضرة" : "Live Lecture"}
-                        </h3>
+                      <div className={`rounded-xl border p-5 ${nextUpcomingSession.isWebinar ? "bg-[#FAF5FF] border-[#E9D5FF]" : "bg-[var(--color-surface-card)] border-[var(--color-border)]"}`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+                            {nextUpcomingSession.isWebinar
+                              ? (isRTL ? "ندوة قادمة" : "Upcoming Webinar")
+                              : (isRTL ? "ابدأ المحاضرة" : "Live Lecture")}
+                          </h3>
+                          {nextUpcomingSession.isWebinar && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#A855F7] text-white text-[10px] font-bold rounded uppercase tracking-wide">
+                              <Radio className="w-2.5 h-2.5" />
+                              {isRTL ? "ندوة" : "Webinar"}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-[var(--color-text-secondary)] mb-3 line-clamp-1">
                           {nextUpcomingSession.title}
                         </p>
-                        {nextJoinableSession ? (
+                        {nextUpcomingSession.isWebinar ? (
+                          /* Webinar: register button is always enabled — Zoom
+                             handles "already registered → join here" itself. */
+                          <button
+                            type="button"
+                            onClick={() => handleJoinZoom(nextUpcomingSession.id)}
+                            disabled={joiningSessionId === nextUpcomingSession.id}
+                            className="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#A855F7] hover:bg-[#9333EA] text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
+                          >
+                            {joiningSessionId === nextUpcomingSession.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Radio className="w-4 h-4" />
+                            )}
+                            {t("courseDetail.registerForWebinar") || "Register for Webinar"}
+                          </button>
+                        ) : nextJoinableSession ? (
                           <button
                             type="button"
                             onClick={() => handleJoinZoom(nextJoinableSession.id)}

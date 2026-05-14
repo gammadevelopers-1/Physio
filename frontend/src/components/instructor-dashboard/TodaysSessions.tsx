@@ -15,6 +15,8 @@ interface Session {
   enrolled: number;
   time: string;
   zoomLink?: string;
+  isWebinar?: boolean;
+  webinarRegistrationUrl?: string | null;
 }
 
 interface TodaysSessionsProps {
@@ -23,6 +25,9 @@ interface TodaysSessionsProps {
   onEndSession?: (sessionId: string) => void;
   onAttendance?: (sessionId: string) => void;
   onShare?: (sessionId: string) => void;
+  onStartAsHost?: (sessionId: string) => void;
+  onRegistrants?: (session: Session) => void;
+  webinarCounts?: Record<string, number>;
 }
 
 const TodaysSessions = ({
@@ -31,6 +36,9 @@ const TodaysSessions = ({
   onEndSession,
   onAttendance,
   onShare,
+  onStartAsHost,
+  onRegistrants,
+  webinarCounts,
 }: TodaysSessionsProps) => {
   const t = useTranslations("instructorDashboard");
   const router = useRouter();
@@ -75,6 +83,9 @@ const TodaysSessions = ({
                 onEnd={() => onEndSession?.(session.id)}
                 onAttendance={() => onAttendance?.(session.id)}
                 onShare={() => onShare?.(session.id)}
+                onStartAsHost={() => onStartAsHost?.(session.id)}
+                onRegistrants={() => onRegistrants?.(session)}
+                registrantsCount={webinarCounts?.[session.id]}
               />
             ))}
           </div>

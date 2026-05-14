@@ -12,6 +12,7 @@ import {
   ClipboardCheck,
   Upload,
   ExternalLink,
+  Radio,
 } from "lucide-react";
 
 interface Session {
@@ -24,6 +25,8 @@ interface Session {
   enrolled: number;
   time: string;
   zoomLink?: string;
+  isWebinar?: boolean;
+  webinarRegistrationUrl?: string | null;
 }
 
 interface TAThreshold {
@@ -39,6 +42,9 @@ interface SessionCardProps {
   onEnd?: () => void;
   onAttendance?: () => void;
   onShare?: () => void;
+  onStartAsHost?: () => void;
+  onRegistrants?: () => void;
+  registrantsCount?: number;
 }
 
 const SessionCard = ({
@@ -48,6 +54,9 @@ const SessionCard = ({
   onEnd,
   onAttendance,
   onShare,
+  onStartAsHost,
+  onRegistrants,
+  registrantsCount,
 }: SessionCardProps) => {
   const t = useTranslations("instructorDashboard");
 
@@ -61,15 +70,15 @@ const SessionCard = ({
     rescheduled: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessions.statusRescheduled") },
   };
 
-  const typeIcon = session.type === "zoom" ? <Video className="w-3 h-3" /> :
+  const isWebinar = !!session.isWebinar;
+
+  const typeIcon = isWebinar ? <Radio className="w-3 h-3" /> :
+                   session.type === "zoom" ? <Video className="w-3 h-3" /> :
                    session.type === "hybrid" ? <RefreshCw className="w-3 h-3" /> :
                    <MapPin className="w-3 h-3" />;
 
-  const typeLabel = session.type === "zoom" ? t("sessions.zoomSession") :
-                    session.type === "hybrid" ? t("sessions.hybridSession") :
-                    t("sessions.onsite");
-
-  const typeBg = session.type === "zoom" ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]" :
+  const typeBg = isWebinar ? "bg-[#F3E8FF] text-[#A855F7]" :
+                 session.type === "zoom" ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)]" :
                  session.type === "hybrid" ? "bg-[#F3E8FF] text-[#9333EA]" :
                  "bg-[#DCFCE7] text-[#22C55E]";
 
@@ -98,15 +107,21 @@ const SessionCard = ({
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h3 className={`text-sm font-semibold truncate ${isCompleted || isInactive ? "text-[var(--color-text-secondary)]" : "text-[var(--color-text-primary)]"}`}>
               {session.title}
             </h3>
+            {isWebinar && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#A855F7] text-white text-[10px] font-bold rounded-full uppercase tracking-wide flex-shrink-0">
+                <Radio className="w-2.5 h-2.5" />
+                {t("sessions.webinar") || "Webinar"}
+              </span>
+            )}
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${badge.bg} ${badge.text}`}>
               {isLive && <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444] animate-pulse" />}
               {badge.label}
             </span>
-            {taThreshold && taThreshold.requiredTAs > 0 && (
+            {!isWebinar && taThreshold && taThreshold.requiredTAs > 0 && (
               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${
                 taThreshold.deficit > 0
                   ? "bg-[#FEF2F2] text-[#EF4444]"
@@ -137,57 +152,83 @@ const SessionCard = ({
 
         {/* Actions */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          {isScheduled && (
-            <button
-              onClick={onStart}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors"
-            >
-              <Play className="w-3.5 h-3.5" />
-              {t("sessions.startSession")}
-            </button>
-          )}
-
-          {isLive && (
+          {isWebinar ? (
             <>
-              <button
-                onClick={onEnd}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EF4444] text-white text-xs font-medium rounded-lg hover:bg-[#DC2626] transition-colors"
-              >
-                <Square className="w-3.5 h-3.5" />
-                {t("sessions.endSession")}
-              </button>
-              {session.zoomLink && (
-                <a
-                  href={session.zoomLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-1.5 text-[var(--color-primary)] border border-[#BFDBFE] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
-                  title="Rejoin Zoom"
+              {onRegistrants && (
+                <button
+                  onClick={onRegistrants}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#FAF5FF] hover:bg-[#F3E8FF] border border-[#E9D5FF] text-[#7C3AED] text-xs font-semibold rounded-lg transition-colors"
+                  title={t("sessions.viewRegistrants") || "View registrants"}
                 >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+                  <Users className="w-3.5 h-3.5" />
+                  {registrantsCount ?? 0}
+                </button>
+              )}
+              {(isScheduled || isLive) && onStartAsHost && (
+                <button
+                  onClick={onStartAsHost}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#A855F7] hover:bg-[#9333EA] text-white text-xs font-medium rounded-lg transition-colors"
+                >
+                  <Radio className="w-3.5 h-3.5" />
+                  {t("sessions.startAsHost") || "Start as Host"}
+                </button>
               )}
             </>
-          )}
+          ) : (
+            <>
+              {isScheduled && (
+                <button
+                  onClick={onStart}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg hover:bg-[var(--color-primary-dark)] transition-colors"
+                >
+                  <Play className="w-3.5 h-3.5" />
+                  {t("sessions.startSession")}
+                </button>
+              )}
 
-          {!isInactive && (
-            <button
-              onClick={onAttendance}
-              className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
-              aria-label={t("sessions.attendance")}
-            >
-              <ClipboardCheck className="w-3.5 h-3.5" />
-            </button>
-          )}
+              {isLive && (
+                <>
+                  <button
+                    onClick={onEnd}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EF4444] text-white text-xs font-medium rounded-lg hover:bg-[#DC2626] transition-colors"
+                  >
+                    <Square className="w-3.5 h-3.5" />
+                    {t("sessions.endSession")}
+                  </button>
+                  {session.zoomLink && (
+                    <a
+                      href={session.zoomLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 text-[var(--color-primary)] border border-[#BFDBFE] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
+                      title="Rejoin Zoom"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </>
+              )}
 
-          {(isScheduled || isLive) && (
-            <button
-              onClick={onShare}
-              className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
-              aria-label={t("sessions.shareMaterials")}
-            >
-              <Upload className="w-3.5 h-3.5" />
-            </button>
+              {!isInactive && (
+                <button
+                  onClick={onAttendance}
+                  className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
+                  aria-label={t("sessions.attendance")}
+                >
+                  <ClipboardCheck className="w-3.5 h-3.5" />
+                </button>
+              )}
+
+              {(isScheduled || isLive) && (
+                <button
+                  onClick={onShare}
+                  className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
+                  aria-label={t("sessions.shareMaterials")}
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -134,6 +134,17 @@ export interface IZoomService {
 
   // Webinar surface
   createWebinar(params: CreateZoomWebinarParams): Promise<CreateZoomWebinarResult>;
+  /**
+   * Retrieve a webinar's metadata + the host's personal `start_url` so the
+   * instructor (host) can open the webinar in Zoom from our app.
+   */
+  getWebinar(webinarId: string): Promise<{
+    startUrl: string;
+    joinUrl: string;
+    hostEmail: string | null;
+    topic: string;
+    startTime: string;
+  }>;
   /** Add ID/Iqama, Phone, SCFHS as required custom registration questions. */
   configureStandardWebinarQuestions(webinarId: string): Promise<void>;
   updateWebinar(webinarId: string, params: UpdateZoomWebinarParams): Promise<void>;

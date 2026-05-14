@@ -409,6 +409,9 @@ export class SessionsService {
         scheduledAt: sessions.scheduledAt,
         durationMinutes: sessions.durationMinutes,
         zoomLink: sessions.zoomLink,
+        isWebinar: sessions.isWebinar,
+        zoomWebinarId: sessions.zoomWebinarId,
+        webinarRegistrationUrl: sessions.webinarRegistrationUrl,
         status: sessions.status,
         roomName: sessions.roomName,
         venueAddress: sessions.venueAddress,
@@ -558,6 +561,9 @@ export class SessionsService {
         venueAddress: sessions.venueAddress,
         zoomLink: sessions.zoomLink,
         meetingId: sessions.meetingId,
+        isWebinar: sessions.isWebinar,
+        zoomWebinarId: sessions.zoomWebinarId,
+        webinarRegistrationUrl: sessions.webinarRegistrationUrl,
         cancelReason: sessions.cancelReason,
         isMakeup: sessions.isMakeup,
         assignedStudents: sessions.assignedStudents,
@@ -693,6 +699,15 @@ export class SessionsService {
     dto: UpdateSessionDto,
   ) {
     const session = await this.verifySessionAccess(sessionId, user);
+
+    // Webinar sessions are manager/admin-controlled. Instructors host them
+    // but can't edit metadata (title, time, duration) — that's the manager's
+    // decision because the webinar is published externally.
+    if (session.isWebinar && !isManagerOrAbove(user)) {
+      throw new BadRequestException(
+        'Webinar sessions are managed by the course manager only.',
+      );
+    }
 
     // Prevent modifications to live, completed, or cancelled sessions
     if (session.status !== SESSION_STATUS.SCHEDULED) {
@@ -886,6 +901,15 @@ export class SessionsService {
    */
   async start(sessionId: string, user: AuthenticatedUser) {
     const session = await this.verifySessionAccess(sessionId, user);
+
+    // Webinars don't use the start-lecture flow. The host opens the webinar
+    // directly via GET /sessions/:id/webinar-start; status is flipped to
+    // live by Zoom's webinar.started webhook.
+    if (session.isWebinar) {
+      throw new BadRequestException(
+        'Webinars are started from Zoom via the host link. Use "Start as Host".',
+      );
+    }
 
     if (session.status === SESSION_STATUS.LIVE) {
       throw new BadRequestException(
@@ -1322,6 +1346,13 @@ export class SessionsService {
   ) {
     const session = await this.verifySessionAccess(sessionId, user);
 
+    // Webinar lifecycle is manager/admin-controlled.
+    if (session.isWebinar && !isManagerOrAbove(user)) {
+      throw new BadRequestException(
+        'Webinar sessions are managed by the course manager only.',
+      );
+    }
+
     if (
       session.status === SESSION_STATUS.COMPLETED ||
       session.status === SESSION_STATUS.CANCELLED ||
@@ -1397,6 +1428,12 @@ export class SessionsService {
     data: { reason: string; newScheduledAt?: string; newDurationMinutes?: number },
   ) {
     const session = await this.verifySessionAccess(sessionId, user);
+
+    if (session.isWebinar && !isManagerOrAbove(user)) {
+      throw new BadRequestException(
+        'Webinar sessions are managed by the course manager only.',
+      );
+    }
 
     if (
       session.status === SESSION_STATUS.COMPLETED ||
@@ -1850,11 +1887,12 @@ export class SessionsService {
 
   /**
    * Get webinar registrants for a session.
-   * Manager/admin-only. Returns mirrored local rows plus a flag indicating
-   * whether each registrant is an enrolled student (source = "platform")
-   * or external (source = "external"). Webinar attendance is captured
-   * inline on each row — webinars don't write to the meeting attendance
-   * table because they don't contribute to enrolled-student progress.
+   * Manager/admin: any session in scope. Instructor: their own session only.
+   * Returns mirrored local rows + a flag indicating whether each registrant
+   * is an enrolled student (source = "platform") or external. Webinar
+   * attendance is captured inline on each row — webinars don't write to
+   * the meeting attendance table because they don't contribute to enrolled-
+   * student progress.
    */
   async getWebinarRegistrants(sessionId: string, user: AuthenticatedUser) {
     const session = await this.verifySessionAccess(sessionId, user);
@@ -1896,6 +1934,47 @@ export class SessionsService {
         source: r.userId ? 'platform' : 'external',
       })),
     };
+  }
+
+  /**
+   * Returns the Zoom host start_url for a webinar so the instructor (or
+   * manager/admin) can launch it from our app. Cloud Run-friendly: each
+   * call hits Zoom GET /webinars/{id} since the start_url is short-lived.
+   */
+  async getWebinarStartUrl(sessionId: string, user: AuthenticatedUser) {
+    const session = await this.verifySessionAccess(sessionId, user);
+    if (!session.isWebinar || !session.zoomWebinarId) {
+      throw new BadRequestException('This session is not a webinar');
+    }
+    if (session.status === SESSION_STATUS.CANCELLED) {
+      throw new BadRequestException('This webinar has been cancelled');
+    }
+    try {
+      const w = await this.zoomService.getWebinar(session.zoomWebinarId);
+      this.auditService
+        .log({
+          eventType: NELC_EVENT_TYPE.ZOOM_JOIN_LINK_GENERATED,
+          entityType: 'session',
+          entityId: sessionId,
+          userId: user.id,
+          metadata: {
+            sessionId,
+            mode: 'webinar_start',
+            zoomWebinarId: session.zoomWebinarId,
+          },
+        })
+        .catch(() => {});
+      return {
+        startUrl: w.startUrl,
+        joinUrl: w.joinUrl,
+        hostEmail: w.hostEmail,
+      };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      throw new BadRequestException(
+        `Could not fetch webinar start URL: ${msg}`,
+      );
+    }
   }
 
   /** Get session recordings (item #22) */

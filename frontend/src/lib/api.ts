@@ -1646,6 +1646,11 @@ export const courseManagerApi = {
       error?: string;
     }>(`/zoom/check-webinar-license?email=${encodeURIComponent(email)}`),
 
+  getWebinarStartUrl: (sessionId: string) =>
+    api.get<{ startUrl: string; joinUrl: string; hostEmail: string | null }>(
+      `/sessions/${sessionId}/webinar-start`,
+    ),
+
   getSessionConflicts: () =>
     api.get<Array<{
       sessionA: { id: string; title: string; scheduledAt: string; durationMinutes: number };

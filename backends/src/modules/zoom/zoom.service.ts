@@ -727,6 +727,40 @@ export class ZoomService implements IZoomService, OnModuleInit {
   }
 
   /**
+   * Fetch webinar details — primarily for the host start_url so the
+   * instructor can launch the webinar from our app.
+   */
+  async getWebinar(webinarId: string): Promise<{
+    startUrl: string;
+    joinUrl: string;
+    hostEmail: string | null;
+    topic: string;
+    startTime: string;
+  }> {
+    const token = await this.getAccessToken();
+    const response = await this.zoomFetch(
+      `https://api.zoom.us/v2/webinars/${encodeURIComponent(webinarId)}`,
+      {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    if (!response.ok) {
+      const errorText = await response.text();
+      this.logger.error(`Zoom get webinar failed: ${errorText}`);
+      throw new Error(`Failed to get Zoom webinar: ${response.status}`);
+    }
+    const w: any = await response.json();
+    return {
+      startUrl: w.start_url || '',
+      joinUrl: w.join_url || '',
+      hostEmail: w.host_email || null,
+      topic: w.topic || '',
+      startTime: w.start_time || '',
+    };
+  }
+
+  /**
    * Add ID/Iqama, Phone, SCFHS as required custom registration questions.
    * The default Zoom fields (First Name, Last Name, Email) are always
    * present and cannot be removed.

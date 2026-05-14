@@ -15,6 +15,7 @@ import {
   Upload,
   Users,
   Video,
+  Radio,
 } from "lucide-react";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
 import {
@@ -36,6 +37,8 @@ interface CalendarSession {
   enrolled: number;
   dayIndex: number;
   date: string; // YYYY-MM-DD
+  isWebinar?: boolean;
+  webinarRegistrationUrl?: string | null;
 }
 
 interface MyLecturesWidgetProps {
@@ -44,6 +47,9 @@ interface MyLecturesWidgetProps {
   onEndSession?: (id: string) => void;
   onAttendance?: (id: string) => void;
   onShareMaterials?: (id: string) => void;
+  onStartWebinarAsHost?: (id: string) => void;
+  onOpenWebinarRegistrants?: (s: CalendarSession) => void;
+  webinarCounts?: Record<string, number>;
   readOnly?: boolean;
 }
 
@@ -65,6 +71,9 @@ const MyLecturesWidget = ({
   onEndSession,
   onAttendance,
   onShareMaterials,
+  onStartWebinarAsHost,
+  onOpenWebinarRegistrants,
+  webinarCounts,
   readOnly = false,
 }: MyLecturesWidgetProps) => {
   const t = useTranslations("instructorDashboard");
@@ -390,6 +399,12 @@ const MyLecturesWidget = ({
                           <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
                             {s.title}
                           </p>
+                          {s.isWebinar && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#A855F7] text-white text-[10px] font-bold rounded-full uppercase tracking-wide">
+                              <Radio className="w-2.5 h-2.5" />
+                              {locale === "ar" ? "ندوة" : "Webinar"}
+                            </span>
+                          )}
                           {isLive && (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white bg-[#EF4444]">
                               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
@@ -427,45 +442,72 @@ const MyLecturesWidget = ({
                     {/* Right: actions */}
                     {!readOnly && !isCancelled && (
                       <div className="flex items-center gap-1 flex-shrink-0">
-                        {isScheduled && onStartSession && (
-                          <button
-                            type="button"
-                            onClick={() => onStartSession(s.id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-dark)] transition-colors"
-                          >
-                            <Play className="w-3 h-3" />
-                            {t("sessionsCalendar.start")}
-                          </button>
-                        )}
-                        {isLive && onEndSession && (
-                          <button
-                            type="button"
-                            onClick={() => onEndSession(s.id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold bg-[#EF4444] text-white hover:bg-[#DC2626] transition-colors"
-                          >
-                            <Square className="w-3 h-3" />
-                            {locale === "ar" ? "إنهاء" : "End"}
-                          </button>
-                        )}
-                        {onAttendance && (
-                          <button
-                            type="button"
-                            onClick={() => onAttendance(s.id)}
-                            className="p-1.5 rounded-md border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
-                            title={t("sessionsCalendar.attendance")}
-                          >
-                            <ClipboardCheck className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                        {isScheduled && onShareMaterials && (
-                          <button
-                            type="button"
-                            onClick={() => onShareMaterials(s.id)}
-                            className="p-1.5 rounded-md border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
-                            title={t("sessionsCalendar.shareMaterials")}
-                          >
-                            <Upload className="w-3.5 h-3.5" />
-                          </button>
+                        {s.isWebinar ? (
+                          <>
+                            {onOpenWebinarRegistrants && (
+                              <button
+                                type="button"
+                                onClick={() => onOpenWebinarRegistrants(s)}
+                                className="inline-flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-semibold bg-[#FAF5FF] hover:bg-[#F3E8FF] border border-[#E9D5FF] text-[#7C3AED] transition-colors"
+                              >
+                                <Users className="w-3 h-3" />
+                                {webinarCounts?.[s.id] ?? 0}
+                              </button>
+                            )}
+                            {(isScheduled || isLive) && onStartWebinarAsHost && (
+                              <button
+                                type="button"
+                                onClick={() => onStartWebinarAsHost(s.id)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold bg-[#A855F7] text-white hover:bg-[#9333EA] transition-colors"
+                              >
+                                <Radio className="w-3 h-3" />
+                                {locale === "ar" ? "ابدأ كمضيف" : "Start as Host"}
+                              </button>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {isScheduled && onStartSession && (
+                              <button
+                                type="button"
+                                onClick={() => onStartSession(s.id)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-dark)] transition-colors"
+                              >
+                                <Play className="w-3 h-3" />
+                                {t("sessionsCalendar.start")}
+                              </button>
+                            )}
+                            {isLive && onEndSession && (
+                              <button
+                                type="button"
+                                onClick={() => onEndSession(s.id)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold bg-[#EF4444] text-white hover:bg-[#DC2626] transition-colors"
+                              >
+                                <Square className="w-3 h-3" />
+                                {locale === "ar" ? "إنهاء" : "End"}
+                              </button>
+                            )}
+                            {onAttendance && (
+                              <button
+                                type="button"
+                                onClick={() => onAttendance(s.id)}
+                                className="p-1.5 rounded-md border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
+                                title={t("sessionsCalendar.attendance")}
+                              >
+                                <ClipboardCheck className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {isScheduled && onShareMaterials && (
+                              <button
+                                type="button"
+                                onClick={() => onShareMaterials(s.id)}
+                                className="p-1.5 rounded-md border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
+                                title={t("sessionsCalendar.shareMaterials")}
+                              >
+                                <Upload className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     )}

@@ -18,6 +18,7 @@ import {
   X,
   Loader2,
   AlertTriangle,
+  Radio,
 } from "lucide-react";
 import api from "@/lib/api";
 import { taApi } from "@/lib/api";
@@ -36,6 +37,8 @@ interface AssignedSession {
   venueAddress: string | null;
   assistantRole: string;
   assessmentId?: string | null;
+  isWebinar?: boolean | null;
+  webinarRegistrationUrl?: string | null;
 }
 
 interface TASessionsContentProps {
@@ -219,8 +222,14 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
     return (
       <div key={session.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)] truncate">{session.title}</h3>
+            {session.isWebinar && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#A855F7] text-white text-[10px] font-bold rounded-full uppercase tracking-wide flex-shrink-0">
+                <Radio className="w-2.5 h-2.5" />
+                {locale === "ar" ? "ندوة" : "Webinar"}
+              </span>
+            )}
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${getStatusBadge(session.status)}`}>
               {session.status === "live" && (
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse mr-1" />

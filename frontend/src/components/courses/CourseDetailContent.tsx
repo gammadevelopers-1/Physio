@@ -1568,29 +1568,6 @@ const CourseDetailContent = ({
                       </div>
                     </div>
 
-                    {/* Tabby Payment — only for PAID courses */}
-                    {!apiIsFree && (
-                      <div className="border border-[var(--color-border)] rounded-xl p-4 mb-4">
-                        <div className="flex items-start justify-between">
-                          <div className={isRTL ? "text-right" : "text-left"}>
-                            <p className="text-sm text-[var(--color-text-secondary)]">
-                              {t("pricingCard.asLowAs")}{" "}
-                              <span className="font-semibold">
-                                <Image src="/icons/rayal-icon.svg" alt="SAR" width={12} height={13} className="inline -mt-0.5" />
-                                {" "}{(apiPrice / 4).toFixed(2)}{t("pricingCard.perMonth")}
-                              </span>
-                            </p>
-                            <p className="text-sm text-[var(--color-text-secondary)]">{t("pricingCard.interestFree")}</p>
-                            <p className="text-sm text-[var(--color-text-secondary)]">
-                              {t("pricingCard.shariahCompliant")}{" "}
-                              <Link href="#" className="font-semibold underline">{t("pricingCard.learnMore")}</Link>
-                            </p>
-                          </div>
-                          <Image src="/images/tabby.svg" alt="Tabby" width={70} height={28} className="mt-1" />
-                        </div>
-                      </div>
-                    )}
-
                     {/* Primary Action Button */}
                     {!canEnroll ? (
                       /* UNAVAILABLE — disabled with reason */
@@ -1895,24 +1872,6 @@ const CourseDetailContent = ({
                       <span className="text-[var(--color-text-secondary)] text-xs leading-[16px]">{feature}</span>
                     </div>
                   ))}
-                </div>
-              </div>
-            )}
-
-            {/* Tabby Payment — only for PAID courses */}
-            {!apiIsFree && (
-              <div className="border border-[var(--color-border)] rounded-xl p-3 mb-4">
-                <div className="flex items-start justify-between">
-                  <div className={isRTL ? "text-right" : "text-left"}>
-                    <p className="text-sm text-[var(--color-text-secondary)]">
-                      {t("pricingCard.asLowAs")} <span className="font-semibold">{(apiPrice / 4).toFixed(2)}{t("pricingCard.perMonth")}</span>
-                    </p>
-                    <p className="text-xs text-[var(--color-text-secondary)]">{t("pricingCard.interestFree")}</p>
-                    <p className="text-xs text-[var(--color-text-secondary)]">
-                      {t("pricingCard.shariahCompliant")} <Link href="#" className="font-semibold underline">{t("pricingCard.learnMore")}</Link>
-                    </p>
-                  </div>
-                  <Image src="/images/tabby.svg" alt="Tabby" width={50} height={20} />
                 </div>
               </div>
             )}

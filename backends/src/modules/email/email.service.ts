@@ -232,6 +232,7 @@ export class EmailService {
         subject: t(s.otpSubject, { code }),
         html: getOtpEmailHtml(code, deviceName, locale),
         text: getOtpEmailText(code, deviceName, locale),
+        skipPreferenceCheck: true,
       });
       this.logger.log(`OTP email sent to ${to} (device: ${deviceName})`);
     } catch (error) {

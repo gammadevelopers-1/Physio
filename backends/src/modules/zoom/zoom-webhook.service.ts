@@ -134,11 +134,13 @@ export class ZoomWebhookService {
 
   /**
    * Handle participant joined event from Zoom webhook.
-   * 1. Find session by meetingId
-   * 2. Match participant email -> system user (case-insensitive via shared helper)
-   * 3. Insert 'join' record in attendance_logs
-   * 4. Upsert attendance record (status='present', joinedAt)
-   * 5. Audit log
+   *
+   * Branches on session.isWebinar:
+   *   • Webinar — write attended/joinedAt onto the matching
+   *     webinar_registrations row. Do NOT touch the meeting attendance
+   *     table (webinars are info-only for enrolled-student progress).
+   *   • Meeting — original attendance flow: attendance_logs + attendance
+   *     upsert + co-host promotion.
    */
   async handleParticipantJoined(payload: any): Promise<void> {
     const meetingId = String(payload?.meeting?.id || payload?.id || '');
@@ -158,23 +160,42 @@ export class ZoomWebhookService {
       return;
     }
 
-    // 1. Find session by meetingId OR zoomWebinarId — Zoom uses the same
-    //    payload shape for both surfaces; the id can be either.
     const session = await this.findSessionByZoomId(meetingId);
-
     if (!session) {
       this.logger.warn(`No session found for zoom id: ${meetingId}`);
       return;
     }
 
-    // 2. Match participant to system user (item #5, #9: shared, case-insensitive)
-    // Exclude the course instructor AND the Zoom meeting host from attendance
+    // ── Webinar branch ───────────────────────────────────────────
+    if (session.isWebinar) {
+      if (!participantEmail) {
+        this.logger.warn(
+          `webinar participant_joined without email; webinarId=${meetingId}`,
+        );
+        return;
+      }
+      await db
+        .update(webinarRegistrations)
+        .set({
+          attended: true,
+          joinedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(webinarRegistrations.sessionId, session.id),
+            sql`LOWER(${webinarRegistrations.email}) = LOWER(${participantEmail})`,
+          ),
+        );
+      return;
+    }
+
+    // ── Meeting branch (original flow) ───────────────────────────
     const instructorId = await getSessionInstructorId(session.id);
     const hostEmail = session.meetingId ? await this.getHostEmail(session.meetingId) : null;
     const excludeEmails = hostEmail ? [hostEmail] : [];
     const matchedUser = await matchParticipantToUser(participantEmail, instructorId, excludeEmails);
 
-    // 3. Insert join log
     await db.insert(attendanceLogs).values({
       sessionId: session.id,
       studentId: matchedUser?.id || null,
@@ -185,7 +206,6 @@ export class ZoomWebhookService {
       rawPayload: payload,
     });
 
-    // 4. Upsert attendance record if user matched
     if (matchedUser) {
       await db
         .insert(attendance)
@@ -203,7 +223,6 @@ export class ZoomWebhookService {
           },
         });
 
-      // 5. Audit log
       await this.auditService.log({
         eventType: NELC_EVENT_TYPE.ATTENDANCE_ZOOM_JOIN,
         entityType: 'attendance',
@@ -222,16 +241,13 @@ export class ZoomWebhookService {
       );
     }
 
-    // 6. Promote TA to co-host if assigned with 'co_host' role
     await this.promoteIfTA(session.id, meetingId, participantId, participantEmail);
   }
 
   /**
    * Handle participant left event from Zoom webhook.
-   * 1. Insert 'leave' record in attendance_logs
-   * 2. Recalculate total durationMinutes from all join/leave pairs
-   * 3. Update attendance record (leftAt, durationMinutes)
-   * 4. Audit log
+   * For webinars: update webinar_registrations.leftAt + attendedDurationMinutes.
+   * For meetings: original attendance flow.
    */
   async handleParticipantLeft(payload: any): Promise<void> {
     const meetingId = String(payload?.meeting?.id || payload?.id || '');
@@ -245,27 +261,59 @@ export class ZoomWebhookService {
       return;
     }
 
-    // Skip Zoom host by role or host_id match
     if (participantRole === 'host' || isParticipantHost(payload?.meeting || payload)) {
       this.logger.debug(`Skipping Zoom host leave: ${participantEmail}`);
       return;
     }
 
-    // Find session (matches meeting OR webinar id — same payload shape)
     const session = await this.findSessionByZoomId(meetingId);
-
     if (!session) {
       this.logger.warn(`No session found for zoom id: ${meetingId}`);
       return;
     }
 
-    // Exclude course instructor AND Zoom host from attendance
+    // ── Webinar branch ───────────────────────────────────────────
+    if (session.isWebinar) {
+      if (!participantEmail) return;
+      const [reg] = await db
+        .select({
+          id: webinarRegistrations.id,
+          joinedAt: webinarRegistrations.joinedAt,
+          existing: webinarRegistrations.attendedDurationMinutes,
+        })
+        .from(webinarRegistrations)
+        .where(
+          and(
+            eq(webinarRegistrations.sessionId, session.id),
+            sql`LOWER(${webinarRegistrations.email}) = LOWER(${participantEmail})`,
+          ),
+        )
+        .limit(1);
+      if (!reg) return;
+
+      const now = new Date();
+      const sessionMinutes = reg.joinedAt
+        ? Math.max(0, Math.round((now.getTime() - reg.joinedAt.getTime()) / 60000))
+        : 0;
+      const total = (reg.existing || 0) + sessionMinutes;
+
+      await db
+        .update(webinarRegistrations)
+        .set({
+          leftAt: now,
+          attendedDurationMinutes: total,
+          updatedAt: now,
+        })
+        .where(eq(webinarRegistrations.id, reg.id));
+      return;
+    }
+
+    // ── Meeting branch (original flow) ───────────────────────────
     const instructorId = await getSessionInstructorId(session.id);
     const hostEmail = session.meetingId ? await this.getHostEmail(session.meetingId) : null;
     const excludeEmails = hostEmail ? [hostEmail] : [];
     const matchedUser = await matchParticipantToUser(participantEmail, instructorId, excludeEmails);
 
-    // 1. Insert leave log
     await db.insert(attendanceLogs).values({
       sessionId: session.id,
       studentId: matchedUser?.id || null,
@@ -276,7 +324,6 @@ export class ZoomWebhookService {
       rawPayload: payload,
     });
 
-    // 2. Recalculate duration and update attendance if matched
     if (matchedUser) {
       const totalMinutes = await this.calculateTotalDuration(
         session.id,
@@ -296,7 +343,6 @@ export class ZoomWebhookService {
           ),
         );
 
-      // 3. Audit log
       await this.auditService.log({
         eventType: NELC_EVENT_TYPE.ATTENDANCE_ZOOM_LEAVE,
         entityType: 'attendance',

@@ -33,6 +33,8 @@ import {
   Download,
   Copy,
   Share2,
+  Radio,
+  ExternalLink,
 } from "lucide-react";
 import SkeletonCard from "@/components/shared/SkeletonCard";
 import ExportButton from "@/components/shared/ExportButton";
@@ -56,7 +58,7 @@ function ScheduleSessionModal({
   onScheduled,
   t,
 }: {
-  courses: { id: string; title: string }[];
+  courses: { id: string; title: string; instructorEmail?: string | null; instructorName?: string | null }[];
   onClose: () => void;
   onScheduled: () => void;
   t: ReturnType<typeof useTranslations>;
@@ -64,6 +66,8 @@ function ScheduleSessionModal({
   const [courseId, setCourseId] = useState("");
   const [title, setTitle] = useState("");
   const [type, setType] = useState<"zoom" | "onsite" | "hybrid">("zoom");
+  // Sub-format under Zoom: a regular meeting or a webinar (registration page).
+  const [zoomFormat, setZoomFormat] = useState<"meeting" | "webinar">("meeting");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [durationHours, setDurationHours] = useState(1);
@@ -73,10 +77,44 @@ function ScheduleSessionModal({
   const [venueAddress, setVenueAddress] = useState("");
   const [city, setCity] = useState("");
   const [zoomLink, setZoomLink] = useState("");
-  // Generate a Zoom Webinar (registration page) instead of a Meeting.
-  // Only valid for zoom-type sessions; mutually exclusive with manual zoomLink.
-  const [isWebinar, setIsWebinar] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const isWebinar = type === "zoom" && zoomFormat === "webinar";
+  const selectedCourse = courses.find((c) => c.id === courseId);
+
+  // Webinar license precheck for the course instructor — fires when both a
+  // course is selected and Webinar format is picked. Non-blocking: just
+  // shows a warning chip so the manager can decide whether to proceed.
+  const [licenseStatus, setLicenseStatus] = useState<
+    null | { hasLicense: boolean; checking: boolean; userExists: boolean }
+  >(null);
+  useEffect(() => {
+    if (!isWebinar || !selectedCourse?.instructorEmail) {
+      setLicenseStatus(null);
+      return;
+    }
+    setLicenseStatus({ hasLicense: false, checking: true, userExists: false });
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      courseManagerApi
+        .checkWebinarLicense(selectedCourse.instructorEmail!)
+        .then((res) => {
+          if (cancelled) return;
+          setLicenseStatus({
+            hasLicense: res.hasWebinarLicense,
+            checking: false,
+            userExists: res.userExists,
+          });
+        })
+        .catch(() => {
+          if (!cancelled) setLicenseStatus(null);
+        });
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [isWebinar, selectedCourse?.instructorEmail]);
 
   const handleSubmit = async () => {
     if (!courseId || !title.trim() || !date || !time) return;
@@ -104,7 +142,7 @@ function ScheduleSessionModal({
         if (venueAddress) data.venueAddress = venueAddress;
         if (city) data.city = city;
       }
-      if ((type === "zoom" || type === "hybrid") && zoomLink.trim()) {
+      if (type === "hybrid" && zoomLink.trim()) {
         data.zoomLink = zoomLink.trim();
       }
       if (type === "zoom" && isWebinar) {
@@ -226,37 +264,91 @@ function ScheduleSessionModal({
           </div>
         </div>
 
-        {/* Zoom info */}
-        {(type === "zoom" || type === "hybrid") && (
-          <div className="flex items-start gap-2 p-3 bg-[var(--color-border-subtle)] rounded-lg">
-            <Video className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-[#1E40AF]">
-              {isWebinar && type === "zoom"
-                ? (t("sessionsPage.zoomAutoCreateWebinar") || "A Zoom Webinar will be created — students and external attendees register through a public Zoom-hosted page.")
+        {/* Zoom format — Meeting vs Webinar segmented selector */}
+        {type === "zoom" && (
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
+              {t("sessionsPage.form.zoomFormat") || "Zoom Format"} *
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setZoomFormat("meeting")}
+                className={`flex items-start gap-2.5 p-3 rounded-lg text-start transition-colors ${
+                  zoomFormat === "meeting"
+                    ? "border-2 border-[var(--color-primary)] bg-[var(--color-border-subtle)]"
+                    : "border border-[var(--color-border)] hover:border-[var(--color-primary)]"
+                }`}
+              >
+                <Video className={`w-5 h-5 flex-shrink-0 mt-0.5 ${zoomFormat === "meeting" ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)]"}`} />
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium ${zoomFormat === "meeting" ? "text-[var(--color-primary)]" : "text-[var(--color-text-primary)]"}`}>
+                    {t("sessionsPage.form.zoomMeeting") || "Zoom Meeting"}
+                  </p>
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 leading-snug">
+                    {t("sessionsPage.form.zoomMeetingHint") || "Live class for enrolled students. Counts toward attendance."}
+                  </p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setZoomFormat("webinar")}
+                className={`flex items-start gap-2.5 p-3 rounded-lg text-start transition-colors ${
+                  zoomFormat === "webinar"
+                    ? "border-2 border-[#A855F7] bg-[#FAF5FF]"
+                    : "border border-[var(--color-border)] hover:border-[#A855F7]"
+                }`}
+              >
+                <Radio className={`w-5 h-5 flex-shrink-0 mt-0.5 ${zoomFormat === "webinar" ? "text-[#A855F7]" : "text-[var(--color-text-secondary)]"}`} />
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium ${zoomFormat === "webinar" ? "text-[#7C3AED]" : "text-[var(--color-text-primary)]"}`}>
+                    {t("sessionsPage.form.zoomWebinar") || "Zoom Webinar"}
+                  </p>
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 leading-snug">
+                    {t("sessionsPage.form.zoomWebinarHint") || "Public registration link. Shareable. Does not count for course progress."}
+                  </p>
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Info ribbon — context-aware */}
+        {type === "zoom" && (
+          <div className={`flex items-start gap-2 p-3 rounded-lg ${isWebinar ? "bg-[#FAF5FF] border border-[#E9D5FF]" : "bg-[var(--color-border-subtle)]"}`}>
+            {isWebinar ? (
+              <Radio className="w-4 h-4 text-[#A855F7] flex-shrink-0 mt-0.5" />
+            ) : (
+              <Video className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0 mt-0.5" />
+            )}
+            <p className={`text-xs ${isWebinar ? "text-[#6B21A8]" : "text-[#1E40AF]"}`}>
+              {isWebinar
+                ? (t("sessionsPage.zoomAutoCreateWebinar") || "Public registration page is created on Zoom. Share its link via WhatsApp; Zoom emails each registrant their personal join link automatically.")
                 : (t("sessionsPage.zoomAutoCreate") || "Zoom meeting will be auto-created for the instructor.")}
             </p>
           </div>
         )}
+        {type === "hybrid" && (
+          <div className="flex items-start gap-2 p-3 bg-[var(--color-border-subtle)] rounded-lg">
+            <Video className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-[#1E40AF]">
+              {t("sessionsPage.zoomAutoCreate") || "Zoom meeting will be auto-created for the instructor."}
+            </p>
+          </div>
+        )}
 
-        {/* Webinar toggle — zoom only. Generates a Zoom Webinar with a
-            public registration page instead of a regular meeting. */}
-        {type === "zoom" && (
-          <label className="flex items-start gap-3 p-3 border border-[var(--color-border)] rounded-lg cursor-pointer hover:bg-[var(--color-border-subtle)] transition-colors">
-            <input
-              type="checkbox"
-              checked={isWebinar}
-              onChange={(e) => setIsWebinar(e.target.checked)}
-              className="mt-0.5 w-4 h-4 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-input-focus)]"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                {t("sessionsPage.form.generateWebinar") || "Generate Zoom Webinar registration link"}
-              </p>
-              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-                {t("sessionsPage.form.generateWebinarHint") || "Creates a shareable registration page for external attendees. Enrolled students are auto-registered on Start."}
+        {/* License precheck warning — webinar + course selected */}
+        {isWebinar && licenseStatus && !licenseStatus.checking && (
+          (!licenseStatus.hasLicense || !licenseStatus.userExists) && (
+            <div className="flex items-start gap-2 p-3 bg-[#FFFBEB] border border-[#FCD34D] rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-[#D97706] flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-[#92400E] leading-snug">
+                {!licenseStatus.userExists
+                  ? (t("sessionsPage.form.instructorNotOnZoom") || "Instructor doesn't have a Zoom account on this workspace. The webinar will be hosted from the platform owner account.")
+                  : (t("sessionsPage.form.instructorNoWebinarLicense") || "Instructor has no Webinar license. The webinar will be created under the platform owner account instead.")}
               </p>
             </div>
-          </label>
+          )
         )}
 
         {/* Venue fields */}
@@ -384,7 +476,7 @@ const SessionsContent = () => {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [showMoreFilters, setShowMoreFilters] = useState(false);
-  const [coursesList, setCoursesList] = useState<{ id: string; title: string }[]>([]);
+  const [coursesList, setCoursesList] = useState<{ id: string; title: string; instructorEmail?: string | null; instructorName?: string | null }[]>([]);
 
   // Action modal states
   const [actionDropdown, setActionDropdown] = useState<string | null>(null);
@@ -414,6 +506,37 @@ const SessionsContent = () => {
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
 
+  // Webinar registrants drawer + per-row registered counts
+  type RegistrantRow = {
+    id: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    phone: string | null;
+    nationalId: string | null;
+    scfhsNumber: string | null;
+    attended: boolean;
+    joinedAt: string | null;
+    leftAt: string | null;
+    attendedDurationMinutes: number;
+    createdAt: string;
+    source: 'platform' | 'external';
+    status: string;
+  };
+  const [registrantsDrawer, setRegistrantsDrawer] = useState<{
+    sessionId: string;
+    sessionTitle: string;
+    registrationUrl: string | null;
+    scheduledAt: string;
+  } | null>(null);
+  const [registrantsData, setRegistrantsData] = useState<{
+    totalRegistered: number;
+    totalAttended: number;
+    rows: RegistrantRow[];
+  } | null>(null);
+  const [registrantsLoading, setRegistrantsLoading] = useState(false);
+  const [webinarCounts, setWebinarCounts] = useState<Record<string, { registered: number; attended: number }>>({});
+
   // Build dateRange for backend: "YYYY-MM-DD,YYYY-MM-DD"
   const dateRange = useMemo(() => {
     if (dateFrom && dateTo) return `${dateFrom},${dateTo}`;
@@ -439,6 +562,89 @@ const SessionsContent = () => {
     if (!typeFilter) return all;
     return all.filter((s) => s.type === typeFilter);
   }, [rawSessions, typeFilter]);
+
+  // Lazy-load registrant counts for visible webinar rows so the row chip
+  // shows "X registered" without each row firing on mount.
+  useEffect(() => {
+    const webinarSessionIds = sessions
+      .filter((s) => s.isWebinar && !webinarCounts[s.id])
+      .map((s) => s.id);
+    if (webinarSessionIds.length === 0) return;
+    let cancelled = false;
+    Promise.all(
+      webinarSessionIds.map((id) =>
+        courseManagerApi
+          .getWebinarRegistrants(id)
+          .then((res) => [id, { registered: res.totalRegistered, attended: res.totalAttended }] as const)
+          .catch(() => null),
+      ),
+    ).then((results) => {
+      if (cancelled) return;
+      setWebinarCounts((prev) => {
+        const next = { ...prev };
+        for (const r of results) {
+          if (r) next[r[0]] = r[1];
+        }
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [sessions, webinarCounts]);
+
+  // Helpers — copy + WhatsApp share for the webinar registration link
+  const handleCopyRegistrationLink = (url: string | null | undefined) => {
+    if (!url) return;
+    navigator.clipboard.writeText(url);
+    toast.success(isRTL ? "تم نسخ الرابط" : "Registration link copied");
+  };
+  const handleShareWhatsApp = (
+    title: string,
+    scheduledAt: string,
+    url: string | null | undefined,
+  ) => {
+    if (!url) return;
+    const when = new Date(scheduledAt).toLocaleString(isRTL ? "ar-SA" : "en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    const msg = isRTL
+      ? `📅 ${title}\n🕐 ${when}\n\nسجل عبر:\n${url}`
+      : `📅 ${title}\n🕐 ${when}\n\nRegister here:\n${url}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+  };
+
+  // Open registrants drawer and fetch
+  const openRegistrantsDrawer = async (session: SessionWithInstructor) => {
+    setRegistrantsDrawer({
+      sessionId: session.id,
+      sessionTitle: session.title,
+      registrationUrl: session.webinarRegistrationUrl || null,
+      scheduledAt: session.scheduledAt,
+    });
+    setRegistrantsData(null);
+    setRegistrantsLoading(true);
+    try {
+      const res = await courseManagerApi.getWebinarRegistrants(session.id);
+      setRegistrantsData({
+        totalRegistered: res.totalRegistered,
+        totalAttended: res.totalAttended,
+        rows: res.registrants as RegistrantRow[],
+      });
+      setWebinarCounts((p) => ({
+        ...p,
+        [session.id]: { registered: res.totalRegistered, attended: res.totalAttended },
+      }));
+    } catch {
+      toast.error(isRTL ? "تعذر تحميل المسجلين" : "Failed to load registrants");
+    } finally {
+      setRegistrantsLoading(false);
+    }
+  };
 
   // TA threshold status per course
   const [taThresholds, setTaThresholds] = useState<Record<string, ThresholdStatus>>({});
@@ -470,7 +676,12 @@ const SessionsContent = () => {
       );
     }).catch(() => {});
     courseManagerApi.getCourses({ limit: 200 }).then((res) => {
-      setCoursesList((res.data || []).filter((c: any) => c.status === "active" && c.deliveryType !== "self-paced").map((c: { id: string; title: string }) => ({ id: c.id, title: c.title })));
+      setCoursesList((res.data || []).filter((c: any) => c.status === "active" && c.deliveryType !== "self-paced").map((c: any) => ({
+        id: c.id,
+        title: c.title,
+        instructorEmail: c.instructorEmail || c.instructor?.email || null,
+        instructorName: c.instructorName || (c.instructor ? `${c.instructor.firstName || ""} ${c.instructor.lastName || ""}`.trim() : null) || null,
+      })));
     }).catch(() => {});
   }, []);
 
@@ -724,7 +935,7 @@ const SessionsContent = () => {
               {getTypeIcon(session.type)}
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className={`text-sm font-semibold ${dimmed ? "text-[var(--color-text-secondary)]" : "text-[var(--color-text-primary)]"}`}>
                   {session.title}
                 </h3>
@@ -734,8 +945,9 @@ const SessionsContent = () => {
                   </span>
                 )}
                 {session.isWebinar && (
-                  <span className="px-1.5 py-0.5 bg-[#EDE9FE] text-[#7C3AED] text-[10px] font-semibold rounded">
-                    {isRTL ? "ندوة" : "WEBINAR"}
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#A855F7] text-white text-[10px] font-bold rounded-full uppercase tracking-wide">
+                    <Radio className="w-3 h-3" />
+                    {isRTL ? "ندوة" : "Webinar"}
                   </span>
                 )}
                 {taThresholds[session.courseId] && taThresholds[session.courseId].requiredTAs > 0 && (
@@ -775,7 +987,43 @@ const SessionsContent = () => {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {session.isWebinar && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); openRegistrantsDrawer(session); }}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#FAF5FF] hover:bg-[#F3E8FF] border border-[#E9D5FF] text-[#7C3AED] text-xs font-semibold transition-colors"
+                  title={isRTL ? "عرض المسجلين" : "View registrants"}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  {webinarCounts[session.id]?.registered ?? 0}
+                  <span className="hidden sm:inline">
+                    {isRTL ? " مسجل" : " registered"}
+                  </span>
+                </button>
+                {session.webinarRegistrationUrl && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleCopyRegistrationLink(session.webinarRegistrationUrl); }}
+                      className="p-1.5 rounded-md text-[#7C3AED] hover:bg-[#F3E8FF] transition-colors"
+                      title={isRTL ? "نسخ رابط التسجيل" : "Copy registration link"}
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleShareWhatsApp(session.title, session.scheduledAt, session.webinarRegistrationUrl); }}
+                      className="p-1.5 rounded-md text-[#25D366] hover:bg-[#DCFCE7] transition-colors"
+                      title={isRTL ? "مشاركة عبر واتساب" : "Share via WhatsApp"}
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
             {session.nelcLimit != null && session.nelcLimit > 0 && (
               <div className="flex items-center gap-2 min-w-[120px]">
                 <div className="flex-1 h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
@@ -822,38 +1070,14 @@ const SessionsContent = () => {
                       <Users className="w-4 h-4" /> {t("sessionsPage.viewAttendance")}
                     </button>
                   )}
-                  {session.isWebinar && session.webinarRegistrationUrl && (
-                    <>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActionDropdown(null);
-                          navigator.clipboard.writeText(session.webinarRegistrationUrl || '');
-                          toast.success(isRTL ? "تم نسخ الرابط" : "Registration link copied");
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)]"
-                      >
-                        <Copy className="w-4 h-4" />
-                        {isRTL ? "نسخ رابط التسجيل" : "Copy registration link"}
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActionDropdown(null);
-                          const when = new Date(session.scheduledAt).toLocaleString(isRTL ? 'ar-SA' : 'en-US', {
-                            month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
-                          });
-                          const msg = isRTL
-                            ? `📅 ${session.title}\n🕐 ${when}\n\nسجل عبر:\n${session.webinarRegistrationUrl}`
-                            : `📅 ${session.title}\n🕐 ${when}\n\nRegister here:\n${session.webinarRegistrationUrl}`;
-                          window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)]"
-                      >
-                        <Share2 className="w-4 h-4" />
-                        {isRTL ? "مشاركة عبر واتساب" : "Share via WhatsApp"}
-                      </button>
-                    </>
+                  {session.isWebinar && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setActionDropdown(null); openRegistrantsDrawer(session); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)]"
+                    >
+                      <Users className="w-4 h-4" />
+                      {isRTL ? "المسجلون" : "Registrants"}
+                    </button>
                   )}
                   {(session.status === "scheduled" || session.status === "live") && (
                     <>
@@ -1186,6 +1410,157 @@ const SessionsContent = () => {
             onScheduled={() => { setShowScheduleModal(false); refetch(); }}
             t={t}
           />
+        </div>
+      )}
+
+      {/* Webinar Registrants Drawer */}
+      {registrantsDrawer && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50"
+          onClick={(e) => e.target === e.currentTarget && setRegistrantsDrawer(null)}
+        >
+          <div
+            className={`fixed top-0 ${isRTL ? "left-0" : "right-0"} h-full w-full max-w-2xl bg-[var(--color-surface-card)] shadow-2xl flex flex-col`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between p-5 border-b border-[var(--color-border)]">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <Radio className="w-4 h-4 text-[#A855F7]" />
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-[#7C3AED]">
+                    {isRTL ? "ندوة" : "Webinar"}
+                  </span>
+                </div>
+                <h3 className="text-lg font-semibold text-[var(--color-text-primary)] truncate">
+                  {registrantsDrawer.sessionTitle}
+                </h3>
+                <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                  {new Date(registrantsDrawer.scheduledAt).toLocaleString(isRTL ? "ar-SA" : "en-US", {
+                    month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit",
+                  })}
+                </p>
+              </div>
+              <button
+                onClick={() => setRegistrantsDrawer(null)}
+                className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors flex-shrink-0"
+              >
+                <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
+              </button>
+            </div>
+
+            <div className="px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-border-subtle)] flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#FAF5FF] border border-[#E9D5FF] rounded-full">
+                <Users className="w-3.5 h-3.5 text-[#7C3AED]" />
+                <span className="text-xs font-semibold text-[#7C3AED]">
+                  {registrantsData?.totalRegistered ?? "…"} {isRTL ? "مسجل" : "registered"}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#DCFCE7] border border-[#86EFAC] rounded-full">
+                <Check className="w-3.5 h-3.5 text-[#16A34A]" />
+                <span className="text-xs font-semibold text-[#16A34A]">
+                  {registrantsData?.totalAttended ?? "…"} {isRTL ? "حضر" : "attended"}
+                </span>
+              </div>
+              <div className="flex-1" />
+              {registrantsDrawer.registrationUrl && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyRegistrationLink(registrantsDrawer.registrationUrl)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[var(--color-surface-card)] border border-[var(--color-border)] hover:border-[#A855F7] hover:text-[#7C3AED] text-xs font-medium text-[var(--color-text-primary)] transition-colors"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    {isRTL ? "نسخ الرابط" : "Copy link"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleShareWhatsApp(registrantsDrawer.sessionTitle, registrantsDrawer.scheduledAt, registrantsDrawer.registrationUrl)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#25D366] hover:bg-[#1FAB55] text-white text-xs font-medium transition-colors"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                    {isRTL ? "واتساب" : "WhatsApp"}
+                  </button>
+                  <a
+                    href={registrantsDrawer.registrationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[var(--color-surface-card)] border border-[var(--color-border)] hover:border-[#A855F7] hover:text-[#7C3AED] text-xs font-medium text-[var(--color-text-primary)] transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    {isRTL ? "فتح صفحة التسجيل" : "Open page"}
+                  </a>
+                </>
+              )}
+            </div>
+
+            <div className="flex-1 overflow-auto">
+              {registrantsLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />
+                </div>
+              ) : !registrantsData || registrantsData.rows.length === 0 ? (
+                <div className="px-5 py-12 text-center">
+                  <Users className="w-10 h-10 text-[var(--color-text-secondary)] mx-auto opacity-30 mb-3" />
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                    {isRTL ? "لا يوجد مسجلون بعد" : "No registrants yet"}
+                  </p>
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                    {isRTL
+                      ? "شارك رابط التسجيل عبر واتساب لبدء استقبال التسجيلات"
+                      : "Share the registration link via WhatsApp to start collecting sign-ups"}
+                  </p>
+                </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-[var(--color-surface-card)] border-b border-[var(--color-border)] z-10">
+                    <tr className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">
+                      <th className="px-4 py-2.5 text-start font-medium">{isRTL ? "الاسم" : "Name"}</th>
+                      <th className="px-4 py-2.5 text-start font-medium">{isRTL ? "البريد" : "Email"}</th>
+                      <th className="px-4 py-2.5 text-start font-medium">{isRTL ? "الهاتف" : "Phone"}</th>
+                      <th className="px-4 py-2.5 text-start font-medium">{isRTL ? "الهوية" : "ID/Iqama"}</th>
+                      <th className="px-4 py-2.5 text-start font-medium">SCFHS</th>
+                      <th className="px-4 py-2.5 text-start font-medium">{isRTL ? "المصدر" : "Source"}</th>
+                      <th className="px-4 py-2.5 text-start font-medium">{isRTL ? "الحضور" : "Attended"}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {registrantsData.rows.map((r) => (
+                      <tr key={r.id} className="border-b border-[var(--color-border)] hover:bg-[var(--color-border-subtle)]">
+                        <td className="px-4 py-2.5 text-[var(--color-text-primary)]">
+                          {[r.firstName, r.lastName].filter(Boolean).join(" ") || "—"}
+                        </td>
+                        <td className="px-4 py-2.5 text-[var(--color-text-secondary)] text-xs">{r.email}</td>
+                        <td className="px-4 py-2.5 text-[var(--color-text-secondary)] text-xs">{r.phone || "—"}</td>
+                        <td className="px-4 py-2.5 text-[var(--color-text-secondary)] text-xs">{r.nationalId || "—"}</td>
+                        <td className="px-4 py-2.5 text-[var(--color-text-secondary)] text-xs">{r.scfhsNumber || "—"}</td>
+                        <td className="px-4 py-2.5">
+                          <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                            r.source === "platform"
+                              ? "bg-[#DBEAFE] text-[#1D4ED8]"
+                              : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
+                          }`}>
+                            {r.source === "platform"
+                              ? (isRTL ? "طالب مسجل" : "Student")
+                              : (isRTL ? "خارجي" : "External")}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          {r.attended ? (
+                            <span className="inline-flex items-center gap-1 text-[#16A34A] text-xs font-medium">
+                              <Check className="w-3.5 h-3.5" />
+                              {r.attendedDurationMinutes > 0 && `${r.attendedDurationMinutes}m`}
+                            </span>
+                          ) : (
+                            <span className="text-[var(--color-text-secondary)] text-xs">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

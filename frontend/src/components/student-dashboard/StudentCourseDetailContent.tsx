@@ -27,6 +27,7 @@ import {
   XCircle,
   AlertTriangle,
   Star,
+  Radio,
 } from "lucide-react";
 import ReviewModal, { type ReviewKind } from "./ReviewModal";
 import DashboardSidebar from "./DashboardSidebar";
@@ -685,19 +686,29 @@ const StudentCourseDetailContent = () => {
                         {upcomingSessions.map((session) => (
                           <div
                             key={session.id}
-                            className="flex items-start gap-3 p-3 rounded-lg border border-[var(--color-border)]"
+                            className={`flex items-start gap-3 p-3 rounded-lg border ${session.isWebinar ? "border-[#E9D5FF] bg-[#FAF5FF]" : "border-[var(--color-border)]"}`}
                           >
-                            <div className="w-10 h-10 bg-[#FFFBEB] rounded-lg flex items-center justify-center flex-shrink-0">
-                              {session.type === "zoom" || session.type === "online" ? (
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${session.isWebinar ? "bg-[#F3E8FF]" : "bg-[#FFFBEB]"}`}>
+                              {session.isWebinar ? (
+                                <Radio className="w-5 h-5 text-[#A855F7]" />
+                              ) : session.type === "zoom" || session.type === "online" ? (
                                 <Video className="w-5 h-5 text-[#D4A520]" />
                               ) : (
                                 <MapPin className="w-5 h-5 text-[#D4A520]" />
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">
-                                {session.title}
-                              </p>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                                  {session.title}
+                                </p>
+                                {session.isWebinar && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#A855F7] text-white text-[10px] font-bold rounded uppercase tracking-wide">
+                                    <Radio className="w-2.5 h-2.5" />
+                                    {t("courseDetail.webinar") || "Webinar"}
+                                  </span>
+                                )}
+                              </div>
                               <div className="flex flex-wrap gap-3 text-xs text-[var(--color-text-secondary)] mt-1">
                                 <span className="flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
@@ -712,20 +723,29 @@ const StudentCourseDetailContent = () => {
                                   {t("calendar.mins")}
                                 </span>
                               </div>
+                              {session.isWebinar && (
+                                <p className="mt-1.5 text-[11px] text-[#6B21A8] leading-snug">
+                                  {t("courseDetail.webinarInfoNotice") || "Information session — registration required. Does not affect your course progress."}
+                                </p>
+                              )}
                               {(session.zoomLink || session.isWebinar) && (
                                 isJoinable(session.scheduledAt) ? (
                                   <button
                                     type="button"
                                     onClick={() => handleJoinZoom(session.id)}
                                     disabled={joiningSessionId === session.id}
-                                    className="inline-flex items-center gap-1 mt-2 text-xs text-[var(--color-primary)] hover:underline disabled:opacity-60"
+                                    className={`inline-flex items-center gap-1 mt-2 text-xs hover:underline disabled:opacity-60 ${session.isWebinar ? "text-[#7C3AED]" : "text-[var(--color-primary)]"}`}
                                   >
                                     {joiningSessionId === session.id ? (
                                       <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : session.isWebinar ? (
+                                      <Radio className="w-3 h-3" />
                                     ) : (
                                       <Video className="w-3 h-3" />
                                     )}
-                                    {t("courseDetail.joinSession")}
+                                    {session.isWebinar
+                                      ? (t("courseDetail.registerForWebinar") || "Register & join")
+                                      : t("courseDetail.joinSession")}
                                   </button>
                                 ) : (
                                   <p className="inline-flex items-center gap-1 mt-2 text-xs text-[var(--color-text-secondary)] opacity-70">

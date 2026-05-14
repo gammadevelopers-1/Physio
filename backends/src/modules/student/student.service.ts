@@ -3,9 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   Logger,
-  Inject,
 } from '@nestjs/common';
-import { ZOOM_SERVICE, IZoomService } from '../zoom/zoom.interface';
 import { eq, and, desc, asc, count, sql, ilike, or, gte, lte } from 'drizzle-orm';
 import { db } from '../../database';
 import {
@@ -30,7 +28,6 @@ import {
   assessmentRetakeGrants,
   assessmentOverrides,
   courseRatings,
-  webinarRegistrations,
 } from '../../database/schema';
 import type { SubmissionAnswer } from '../../database/schema/submissions';
 import { computeEffectiveScore } from '../../common/score-policy';
@@ -82,7 +79,6 @@ export class StudentService {
     private readonly userNotificationsService: UserNotificationsService,
     private readonly emailService: EmailService,
     private readonly thresholdEvaluationService: ThresholdEvaluationService,
-    @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
   ) {}
 
   // ─── Dashboard Stats ────────────────────────────────────
@@ -2991,92 +2987,50 @@ export class StudentService {
     }
 
     // ── Webinar branch ─────────────────────────────────────
-    // For webinar sessions, auto-register the student via Zoom and return
-    // their personal join URL. Fall back to the public registration page
-    // if their profile is missing required fields or the API call fails —
-    // the student then fills the form themselves, exactly like an external
-    // attendee would.
-    if (session.isWebinar && session.zoomWebinarId) {
+    // Webinars are info-only for enrolled students (do not contribute to
+    // course progress). The student is sent to Zoom's standard registration
+    // page with first_name / last_name / email / phone pre-filled via URL
+    // params so they only need to confirm the form. Zoom then emails the
+    // join URL and adds a calendar event automatically.
+    if (session.isWebinar && session.webinarRegistrationUrl) {
       const [student] = await db
         .select({
           email: users.email,
           firstName: users.firstName,
           lastName: users.lastName,
           phone: users.phone,
-          nationalId: users.nationalId,
-          scfhsNumber: users.scfhsNumber,
         })
         .from(users)
         .where(eq(users.id, studentId))
         .limit(1);
 
-      if (!student?.email || !student?.firstName) {
-        if (session.webinarRegistrationUrl) {
-          return { joinUrl: session.webinarRegistrationUrl };
-        }
-        throw new BadRequestException(
-          'Your profile is missing the first name needed to auto-register. Please complete your profile.',
-        );
-      }
+      const params = new URLSearchParams();
+      if (student?.firstName) params.set('first_name', student.firstName);
+      if (student?.lastName) params.set('last_name', student.lastName);
+      if (student?.email) params.set('email', student.email);
+      if (student?.phone) params.set('phone', student.phone);
 
-      try {
-        const result = await this.zoomService.registerForWebinar(
-          session.zoomWebinarId,
-          {
-            email: student.email,
-            firstName: student.firstName,
-            lastName: student.lastName || '',
-            phone: student.phone || undefined,
-            nationalId: student.nationalId || undefined,
-            scfhsNumber: student.scfhsNumber || undefined,
-          },
-        );
+      const separator = session.webinarRegistrationUrl.includes('?') ? '&' : '?';
+      const joinUrl = params.toString()
+        ? `${session.webinarRegistrationUrl}${separator}${params.toString()}`
+        : session.webinarRegistrationUrl;
 
-        // Mirror into our own table so attendance correlation works even
-        // before the webhook fires. Conflict on (sessionId, email) → just
-        // refresh the joinUrl/registrantId.
-        await db
-          .insert(webinarRegistrations)
-          .values({
+      this.auditService
+        .log({
+          eventType: NELC_EVENT_TYPE.ZOOM_JOIN_LINK_GENERATED,
+          entityType: 'session',
+          entityId: sessionId,
+          userId: studentId,
+          metadata: {
             sessionId,
-            userId: studentId,
-            email: student.email,
-            firstName: student.firstName,
-            lastName: student.lastName,
-            phone: student.phone,
-            nationalId: student.nationalId,
-            scfhsNumber: student.scfhsNumber,
-            zoomRegistrantId: result.registrantId,
-            joinUrl: result.joinUrl,
-            status: 'approved',
-          })
-          .onConflictDoUpdate({
-            target: [webinarRegistrations.sessionId, webinarRegistrations.email],
-            set: {
-              zoomRegistrantId: result.registrantId,
-              joinUrl: result.joinUrl,
-              userId: studentId,
-              updatedAt: new Date(),
-            },
-          })
-          .catch((err) =>
-            this.logger.warn(
-              `Failed to mirror webinar registration: ${err?.message || err}`,
-            ),
-          );
+            courseId: session.courseId,
+            mode: 'webinar_prefill',
+            zoomWebinarId: session.zoomWebinarId,
+          },
+        })
+        .catch(() => {});
 
-        return { joinUrl: result.joinUrl };
-      } catch (error) {
-        this.logger.warn(
-          `Auto-registration failed for student ${studentId} on webinar ${session.zoomWebinarId}: ${(error as Error).message}`,
-        );
-        if (session.webinarRegistrationUrl) {
-          return { joinUrl: session.webinarRegistrationUrl };
-        }
-        throw new BadRequestException(
-          'Could not register you for this webinar. Please try again later.',
-        );
-      }
+      return { joinUrl };
     }
 
     // ── Meeting branch (existing behaviour) ────────────────

@@ -20,6 +20,7 @@ import {
   sessionAssistants,
   courseAssistants,
   assessments,
+  webinarRegistrations,
   SESSION_STATUS,
   SESSION_TYPE,
 } from '../../database/schema';
@@ -103,10 +104,22 @@ export class SessionsService {
 
     if (wantsWebinar) {
       try {
+        // Host is the course instructor — not necessarily the user creating
+        // the session (manager can create on behalf of an instructor).
+        let hostUserId = user.id;
+        if (isManagerOrAbove(user)) {
+          const [course] = await db
+            .select({ instructorId: courses.instructorId })
+            .from(courses)
+            .where(eq(courses.id, dto.courseId))
+            .limit(1);
+          hostUserId =
+            dto.instructorId || course?.instructorId || user.id;
+        }
         const [instructor] = await db
           .select({ email: users.email, zoomEmail: users.zoomEmail })
           .from(users)
-          .where(eq(users.id, user.id))
+          .where(eq(users.id, hostUserId))
           .limit(1);
         const hostEmail = instructor?.zoomEmail || instructor?.email || undefined;
 
@@ -144,11 +157,22 @@ export class SessionsService {
       !dto.zoomLink
     ) {
       try {
-        // Look up instructor email to create meeting under their Zoom account
+        // Look up the course instructor's email so the meeting is created
+        // under their Zoom account, not the manager's.
+        let hostUserId = user.id;
+        if (isManagerOrAbove(user)) {
+          const [course] = await db
+            .select({ instructorId: courses.instructorId })
+            .from(courses)
+            .where(eq(courses.id, dto.courseId))
+            .limit(1);
+          hostUserId =
+            dto.instructorId || course?.instructorId || user.id;
+        }
         const [instructor] = await db
           .select({ email: users.email, zoomEmail: users.zoomEmail })
           .from(users)
-          .where(eq(users.id, user.id))
+          .where(eq(users.id, hostUserId))
           .limit(1);
         const hostEmail = instructor?.zoomEmail || instructor?.email || undefined;
 
@@ -685,6 +709,115 @@ export class SessionsService {
     // Convert scheduledAt string to Date for timestamp column
     if (dto.scheduledAt) {
       updateData.scheduledAt = new Date(dto.scheduledAt);
+    }
+
+    // ── Toggle: meeting ↔ webinar conversion ──────────────────
+    // If the manager flips isWebinar after creation we tear down the old
+    // Zoom resource and create the new one. Manual zoomLink + webinar are
+    // mutually exclusive — same as create().
+    const wantsWebinarToggle =
+      typeof dto.isWebinar === 'boolean' && dto.isWebinar !== session.isWebinar;
+
+    if (wantsWebinarToggle && session.type !== SESSION_TYPE.ZOOM) {
+      throw new BadRequestException(
+        'Webinar toggle is only valid for Zoom sessions',
+      );
+    }
+
+    if (wantsWebinarToggle && dto.isWebinar === true) {
+      if (dto.zoomLink || session.zoomLink) {
+        throw new BadRequestException(
+          'A session cannot have a manual Zoom link AND a webinar registration. Remove the link first.',
+        );
+      }
+      // Tear down old meeting if present
+      if (session.meetingId) {
+        await this.zoomService
+          .deleteMeeting(session.meetingId)
+          .catch((err) =>
+            this.logger.warn(
+              `Old meeting ${session.meetingId} cleanup failed: ${err?.message || err}`,
+            ),
+          );
+      }
+      const courseInstructorId = session.instructorId;
+      const [instructor] = courseInstructorId
+        ? await db
+            .select({ email: users.email, zoomEmail: users.zoomEmail })
+            .from(users)
+            .where(eq(users.id, courseInstructorId))
+            .limit(1)
+        : [];
+      const hostEmail = instructor?.zoomEmail || instructor?.email || undefined;
+      try {
+        const webinar = await this.zoomService.createWebinar({
+          topic: dto.title || session.title,
+          startTime: dto.scheduledAt
+            ? new Date(dto.scheduledAt)
+            : session.scheduledAt,
+          durationMinutes:
+            dto.durationMinutes || session.durationMinutes || 60,
+          recordingEnabled: session.recordingEnabled !== false,
+          hostEmail,
+        });
+        await this.zoomService
+          .configureStandardWebinarQuestions(webinar.webinarId)
+          .catch((err) =>
+            this.logger.warn(
+              `Webinar question configuration failed: ${err?.message || err}`,
+            ),
+          );
+        updateData.zoomWebinarId = webinar.webinarId;
+        updateData.webinarRegistrationUrl = webinar.registrationUrl;
+        updateData.meetingId = null;
+        updateData.zoomLink = null;
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        throw new BadRequestException(
+          `Failed to create Zoom webinar: ${msg}`,
+        );
+      }
+    } else if (wantsWebinarToggle && dto.isWebinar === false) {
+      // Webinar → meeting: tear down webinar, create meeting
+      if (session.zoomWebinarId) {
+        await this.zoomService
+          .deleteWebinar(session.zoomWebinarId)
+          .catch((err) =>
+            this.logger.warn(
+              `Old webinar ${session.zoomWebinarId} cleanup failed: ${err?.message || err}`,
+            ),
+          );
+      }
+      const courseInstructorId = session.instructorId;
+      const [instructor] = courseInstructorId
+        ? await db
+            .select({ email: users.email, zoomEmail: users.zoomEmail })
+            .from(users)
+            .where(eq(users.id, courseInstructorId))
+            .limit(1)
+        : [];
+      const hostEmail = instructor?.zoomEmail || instructor?.email || undefined;
+      try {
+        const meeting = await this.zoomService.createMeeting({
+          topic: dto.title || session.title,
+          startTime: dto.scheduledAt
+            ? new Date(dto.scheduledAt)
+            : session.scheduledAt,
+          durationMinutes:
+            dto.durationMinutes || session.durationMinutes || 60,
+          recordingEnabled: session.recordingEnabled !== false,
+          hostEmail,
+        });
+        updateData.meetingId = meeting.meetingId;
+        updateData.zoomLink = meeting.joinUrl;
+        updateData.zoomWebinarId = null;
+        updateData.webinarRegistrationUrl = null;
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        throw new BadRequestException(
+          `Failed to create Zoom meeting: ${msg}`,
+        );
+      }
     }
 
     const [updated] = await db
@@ -1713,6 +1846,56 @@ export class SessionsService {
       .orderBy(asc(attendanceLogs.timestamp));
 
     return logs;
+  }
+
+  /**
+   * Get webinar registrants for a session.
+   * Manager/admin-only. Returns mirrored local rows plus a flag indicating
+   * whether each registrant is an enrolled student (source = "platform")
+   * or external (source = "external"). Webinar attendance is captured
+   * inline on each row — webinars don't write to the meeting attendance
+   * table because they don't contribute to enrolled-student progress.
+   */
+  async getWebinarRegistrants(sessionId: string, user: AuthenticatedUser) {
+    const session = await this.verifySessionAccess(sessionId, user);
+    if (!session.isWebinar) {
+      throw new BadRequestException('This session is not a webinar');
+    }
+
+    const rows = await db
+      .select({
+        id: webinarRegistrations.id,
+        email: webinarRegistrations.email,
+        firstName: webinarRegistrations.firstName,
+        lastName: webinarRegistrations.lastName,
+        phone: webinarRegistrations.phone,
+        nationalId: webinarRegistrations.nationalId,
+        scfhsNumber: webinarRegistrations.scfhsNumber,
+        zoomRegistrantId: webinarRegistrations.zoomRegistrantId,
+        joinUrl: webinarRegistrations.joinUrl,
+        status: webinarRegistrations.status,
+        userId: webinarRegistrations.userId,
+        attended: webinarRegistrations.attended,
+        joinedAt: webinarRegistrations.joinedAt,
+        leftAt: webinarRegistrations.leftAt,
+        attendedDurationMinutes: webinarRegistrations.attendedDurationMinutes,
+        createdAt: webinarRegistrations.createdAt,
+      })
+      .from(webinarRegistrations)
+      .where(eq(webinarRegistrations.sessionId, sessionId))
+      .orderBy(desc(webinarRegistrations.createdAt));
+
+    return {
+      sessionId,
+      zoomWebinarId: session.zoomWebinarId,
+      registrationUrl: session.webinarRegistrationUrl,
+      totalRegistered: rows.length,
+      totalAttended: rows.filter((r) => r.attended).length,
+      registrants: rows.map((r) => ({
+        ...r,
+        source: r.userId ? 'platform' : 'external',
+      })),
+    };
   }
 
   /** Get session recordings (item #22) */

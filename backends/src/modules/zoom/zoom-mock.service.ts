@@ -210,4 +210,13 @@ export class ZoomMockService implements IZoomService {
     );
     return result;
   }
+
+  async checkWebinarLicense(email: string) {
+    this.logger.log(`[MOCK] License check for ${email}`);
+    return {
+      userExists: true,
+      hasWebinarLicense: true,
+      userType: 2,
+    };
+  }
 }

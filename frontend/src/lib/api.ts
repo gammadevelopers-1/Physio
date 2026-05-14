@@ -1603,8 +1603,48 @@ export const courseManagerApi = {
   createSession: (data: Record<string, unknown>) =>
     api.post<CourseSession>('/sessions', data),
 
+  updateSession: (sessionId: string, data: Record<string, unknown>) =>
+    api.patch<CourseSession>(`/sessions/${sessionId}`, data),
+
   getUpcomingSessions: () =>
     api.get<CourseSession[]>('/sessions/upcoming'),
+
+  // Webinar — registrants list and license precheck
+  getWebinarRegistrants: (sessionId: string) =>
+    api.get<{
+      sessionId: string;
+      zoomWebinarId: string | null;
+      registrationUrl: string | null;
+      totalRegistered: number;
+      totalAttended: number;
+      registrants: Array<{
+        id: string;
+        email: string;
+        firstName: string | null;
+        lastName: string | null;
+        phone: string | null;
+        nationalId: string | null;
+        scfhsNumber: string | null;
+        zoomRegistrantId: string | null;
+        joinUrl: string | null;
+        status: string;
+        userId: string | null;
+        attended: boolean;
+        joinedAt: string | null;
+        leftAt: string | null;
+        attendedDurationMinutes: number;
+        createdAt: string;
+        source: 'platform' | 'external';
+      }>;
+    }>(`/sessions/${sessionId}/registrants`),
+
+  checkWebinarLicense: (email: string) =>
+    api.get<{
+      userExists: boolean;
+      hasWebinarLicense: boolean;
+      userType: number | null;
+      error?: string;
+    }>(`/zoom/check-webinar-license?email=${encodeURIComponent(email)}`),
 
   getSessionConflicts: () =>
     api.get<Array<{

@@ -4,6 +4,7 @@ import {
   IsInt,
   IsIn,
   IsDateString,
+  IsBoolean,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -56,4 +57,14 @@ export class UpdateSessionDto {
   @IsString()
   @MaxLength(100)
   city?: string;
+
+  /**
+   * Toggle whether a zoom-type session is a Zoom Webinar (registration
+   * link) instead of a Zoom Meeting. Switching this AFTER creation will
+   * delete the old Zoom resource and create the new one — only allowed
+   * while the session is still scheduled (not live / ended / completed).
+   */
+  @IsOptional()
+  @IsBoolean()
+  isWebinar?: boolean;
 }

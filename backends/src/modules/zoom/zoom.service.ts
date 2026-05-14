@@ -891,4 +891,70 @@ export class ZoomService implements IZoomService, OnModuleInit {
       joinUrl: data.join_url,
     };
   }
+
+  /**
+   * Check whether a Zoom user has a webinar license assigned. Used by the
+   * manager dashboard to warn before submit if the picked instructor isn't
+   * webinar-licensed. We probe GET /users/{email} and inspect feature flags
+   * (zoom_webinar / large_meeting_capacity / type=2 Licensed).
+   */
+  async checkWebinarLicense(email: string) {
+    if (!email) {
+      return {
+        userExists: false,
+        hasWebinarLicense: false,
+        userType: null,
+        error: 'No email provided',
+      };
+    }
+    try {
+      const token = await this.getAccessToken();
+      const response = await this.zoomFetch(
+        `https://api.zoom.us/v2/users/${encodeURIComponent(email)}?login_type=99`,
+        {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      if (response.status === 404) {
+        return {
+          userExists: false,
+          hasWebinarLicense: false,
+          userType: null,
+        };
+      }
+      if (!response.ok) {
+        const errorText = await response.text();
+        this.logger.warn(`Zoom license check failed (${email}): ${errorText}`);
+        return {
+          userExists: false,
+          hasWebinarLicense: false,
+          userType: null,
+          error: `Zoom API ${response.status}`,
+        };
+      }
+
+      const user: any = await response.json();
+      const features = user?.feature || {};
+      const hasWebinar =
+        features.zoom_webinar === true ||
+        Boolean(features.webinar_capacity) ||
+        Boolean(features.large_meeting_capacity);
+      return {
+        userExists: true,
+        hasWebinarLicense: hasWebinar,
+        userType: typeof user?.type === 'number' ? user.type : null,
+      };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Zoom license check threw for ${email}: ${msg}`);
+      return {
+        userExists: false,
+        hasWebinarLicense: false,
+        userType: null,
+        error: msg,
+      };
+    }
+  }
 }

@@ -108,6 +108,17 @@ export interface WebinarRegistrantResult {
   joinUrl: string;
 }
 
+export interface WebinarLicenseCheckResult {
+  /** Zoom user exists for this email. */
+  userExists: boolean;
+  /** User has a webinar add-on assigned. */
+  hasWebinarLicense: boolean;
+  /** Zoom user type — 1=Basic, 2=Licensed, 3=On-Prem. Webinars require 2. */
+  userType: number | null;
+  /** Free-form error if we couldn't probe (rate limit, account access etc). */
+  error?: string;
+}
+
 export interface IZoomService {
   createMeeting(params: CreateZoomMeetingParams): Promise<CreateZoomMeetingResult>;
   getMeeting(meetingId: string): Promise<ZoomMeetingDetails>;
@@ -131,4 +142,6 @@ export interface IZoomService {
     webinarId: string,
     registrant: WebinarRegistrantInput,
   ): Promise<WebinarRegistrantResult>;
+  /** Check whether a Zoom user has a webinar add-on assigned. */
+  checkWebinarLicense(email: string): Promise<WebinarLicenseCheckResult>;
 }

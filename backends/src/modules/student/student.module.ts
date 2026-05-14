@@ -6,7 +6,6 @@ import { CertificatesModule } from '../certificates/certificates.module';
 import { StorageModule } from '../storage/storage.module';
 import { UserNotificationsModule } from '../user-notifications/user-notifications.module';
 import { CourseAssistantsModule } from '../course-assistants/course-assistants.module';
-import { ZoomModule } from '../zoom/zoom.module';
 
 @Module({
   imports: [
@@ -15,7 +14,6 @@ import { ZoomModule } from '../zoom/zoom.module';
     StorageModule,
     UserNotificationsModule,
     CourseAssistantsModule,
-    ZoomModule,
   ],
   controllers: [StudentController],
   providers: [StudentService],

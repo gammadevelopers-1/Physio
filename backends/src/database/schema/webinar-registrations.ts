@@ -6,6 +6,8 @@ import {
   timestamp,
   index,
   unique,
+  boolean,
+  integer,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { sessions } from './sessions';
@@ -50,6 +52,14 @@ export const webinarRegistrations = pgTable(
     // the default since our webinars are configured for automatic approval.
     status: varchar('status', { length: 20 }).notNull().default('approved'),
 
+    // Attendance — driven by webinar.participant_joined/left webhooks.
+    // We do NOT write to the meeting `attendance` table for webinars, since
+    // webinars are info-only and don't contribute to enrolled-student progress.
+    attended: boolean('attended').notNull().default(false),
+    joinedAt: timestamp('joined_at'),
+    leftAt: timestamp('left_at'),
+    attendedDurationMinutes: integer('attended_duration_minutes').notNull().default(0),
+
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -57,6 +67,7 @@ export const webinarRegistrations = pgTable(
     index('webinar_registrations_session_id_idx').on(table.sessionId),
     index('webinar_registrations_user_id_idx').on(table.userId),
     index('webinar_registrations_email_idx').on(table.email),
+    index('webinar_registrations_attended_idx').on(table.sessionId, table.attended),
     unique('webinar_registrations_session_email_unique').on(table.sessionId, table.email),
   ],
 );

@@ -1,6 +1,8 @@
 import {
   Controller,
   Post,
+  Get,
+  Query,
   Body,
   Headers,
   HttpCode,
@@ -8,6 +10,7 @@ import {
   Logger,
   BadRequestException,
   Inject,
+  UseGuards,
 } from '@nestjs/common';
 import { eq, and, or, isNotNull, isNull } from 'drizzle-orm';
 import { db } from '../../database';
@@ -17,11 +20,13 @@ import {
   sessionRecordings,
   SESSION_STATUS,
   NELC_EVENT_TYPE,
+  UserRole,
 } from '../../database/schema';
 import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { ZoomWebhookService } from './zoom-webhook.service';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
-import { Public } from '../auth/decorators';
+import { Public, Roles } from '../auth/decorators';
+import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import * as crypto from 'crypto';
 
 /** Deduplication: track processed webhook event IDs with TTL (item #15) */
@@ -503,5 +508,21 @@ export class ZoomController {
         },
       });
     }
+  }
+
+  /**
+   * GET /zoom/check-webinar-license?email=...
+   * Manager-only. Probes Zoom GET /users/{email} and reports whether the
+   * user has a webinar license. Used by the manager UI to show a warning
+   * before creating a webinar under an instructor that isn't licensed.
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get('check-webinar-license')
+  async checkWebinarLicense(@Query('email') email?: string) {
+    if (!email) {
+      throw new BadRequestException('email query param is required');
+    }
+    return this.zoomService.checkWebinarLicense(email);
   }
 }

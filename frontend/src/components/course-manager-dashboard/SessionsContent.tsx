@@ -1038,33 +1038,8 @@ const SessionsContent = () => {
                       <Users className="w-4 h-4" /> {t("sessionsPage.viewAttendance")}
                     </button>
                   )}
-                  {session.isWebinar && (
-                    <>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setActionDropdown(null); openRegistrantsDrawer(session); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)]"
-                      >
-                        <Users className="w-4 h-4" />
-                        {isRTL ? "المسجلون" : "Registrants"}
-                      </button>
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          setActionDropdown(null);
-                          try {
-                            await courseManagerApi.reconfigureWebinarQuestions(session.id);
-                            toast.success(isRTL ? "تم تحديث حقول التسجيل" : "Registration fields refreshed");
-                          } catch (err: any) {
-                            toast.error(err?.message || (isRTL ? "تعذر تحديث الحقول" : "Failed to refresh fields"));
-                          }
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)]"
-                      >
-                        <RefreshCw className="w-4 h-4" />
-                        {isRTL ? "تحديث حقول التسجيل" : "Refresh registration fields"}
-                      </button>
-                    </>
-                  )}
+                  {/* Webinar registrants drawer is opened from the inline
+                      chip on the row — no duplicate entry in dropdown. */}
                   {(session.status === "scheduled" || session.status === "live") && (
                     <>
                       <button

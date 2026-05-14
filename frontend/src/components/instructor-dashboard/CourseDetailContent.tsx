@@ -23,6 +23,7 @@ import type { CalendarFormat } from "@/lib/hijri";
 import { useInstructorCourseDetail } from "@/hooks/useInstructorCourseDetail";
 import { instructorApi, materialsApi, publicApi, courseManagerApi } from "@/lib/api";
 import WebinarRegistrantsDrawer from "@/components/shared/WebinarRegistrantsDrawer";
+import { openWebinarWhatsAppShare } from "@/lib/webinar-share";
 import type { CourseModule, CourseSession, CourseMaterialResponse } from "@/types/instructor-dashboard";
 import {
   ArrowLeft,
@@ -65,6 +66,9 @@ import {
   Copy,
   Share2,
 } from "lucide-react";
+
+// Zoom Webinar plan capacity (300 attendees).
+const ZOOM_WEBINAR_CAPACITY = 300;
 
 interface CourseDetailContentProps {
   courseId: string;
@@ -763,6 +767,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
     sessionTitle: string;
     scheduledAt: string;
     registrationUrl: string | null;
+    sessionStatus: string;
   } | null>(null);
   const [webinarCounts, setWebinarCounts] = useState<Record<string, number>>({});
 
@@ -772,6 +777,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       sessionTitle: session.title,
       scheduledAt: session.scheduledAt,
       registrationUrl: session.webinarRegistrationUrl || null,
+      sessionStatus: session.status,
     });
   };
 
@@ -783,16 +789,14 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   };
 
   const handleShareWebinarWhatsApp = (session: any) => {
-    const url = session.webinarRegistrationUrl;
-    if (!url) return;
-    const when = new Date(session.scheduledAt).toLocaleString(
-      locale === "ar" ? "ar-SA" : "en-US",
-      { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" },
-    );
-    const msg = locale === "ar"
-      ? `📅 ${session.title}\n🕐 ${when}\n\nسجل عبر:\n${url}`
-      : `📅 ${session.title}\n🕐 ${when}\n\nRegister here:\n${url}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+    if (!session.webinarRegistrationUrl) return;
+    openWebinarWhatsAppShare({
+      title: session.title,
+      scheduledAt: session.scheduledAt,
+      registrationUrl: session.webinarRegistrationUrl,
+      durationMinutes: session.durationMinutes ?? undefined,
+      locale,
+    });
   };
 
   const handleStartWebinarAsHost = async (session: any) => {
@@ -1645,10 +1649,10 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                       className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#FAF5FF] hover:bg-[#F3E8FF] border border-[#E9D5FF] text-[#7C3AED] text-xs font-semibold rounded-lg transition-colors"
                                     >
                                       <Users className="w-3.5 h-3.5" />
-                                      {webinarCounts[session.id] ?? 0}
+                                      {webinarCounts[session.id] ?? 0}/{ZOOM_WEBINAR_CAPACITY}
                                       <span className="hidden sm:inline">{locale === "ar" ? " مسجل" : " registered"}</span>
                                     </button>
-                                    {(session as any).webinarRegistrationUrl && (
+                                    {(session as any).webinarRegistrationUrl && session.status === "scheduled" && (
                                       <>
                                         <button
                                           type="button"
@@ -2468,6 +2472,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
           sessionTitle={registrantsDrawer.sessionTitle}
           scheduledAt={registrantsDrawer.scheduledAt}
           registrationUrl={registrantsDrawer.registrationUrl}
+          sessionStatus={registrantsDrawer.sessionStatus}
           onClose={() => setRegistrantsDrawer(null)}
         />
       )}

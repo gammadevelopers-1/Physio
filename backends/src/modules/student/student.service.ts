@@ -2987,11 +2987,13 @@ export class StudentService {
     }
 
     // ── Webinar branch ─────────────────────────────────────
-    // Webinars are info-only for enrolled students (do not contribute to
-    // course progress). The student is sent to Zoom's standard registration
-    // page with first_name / last_name / email / phone pre-filled via URL
-    // params so they only need to confirm the form. Zoom then emails the
-    // join URL and adds a calendar event automatically.
+    // Webinars are info-only for enrolled students (no impact on course
+    // progress). The student goes to the SAME public Zoom registration
+    // page that external attendees see — but with their standard fields
+    // (first_name, last_name, email, phone) prefilled via URL params.
+    // They click Register manually, Zoom emails them the confirmation
+    // + personal join link. The Phone + ID/Iqama + SCFHS custom questions
+    // appear too — those they fill themselves.
     if (session.isWebinar && session.webinarRegistrationUrl) {
       const [student] = await db
         .select({
@@ -3021,12 +3023,7 @@ export class StudentService {
           entityType: 'session',
           entityId: sessionId,
           userId: studentId,
-          metadata: {
-            sessionId,
-            courseId: session.courseId,
-            mode: 'webinar_prefill',
-            zoomWebinarId: session.zoomWebinarId,
-          },
+          metadata: { sessionId, mode: 'webinar_prefill' },
         })
         .catch(() => {});
 

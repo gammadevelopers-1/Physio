@@ -663,8 +663,11 @@ export class ZoomService implements IZoomService, OnModuleInit {
         registrants_email_notification: true,
         registrants_confirmation_email: true,
         auto_recording: params.recordingEnabled !== false ? 'cloud' : 'none',
-        // Practice session lets host prep before the live broadcast.
-        practice_session: false,
+        // Practice session always ON. Host + panelists join privately to
+        // prep mic/screen/etc.; registered attendees who click their join
+        // link land in the waiting room. When the host clicks
+        // "Start Webinar", all waiting attendees enter at once.
+        practice_session: true,
         // HD video for both panelists and attendees.
         hd_video: true,
       },
@@ -769,11 +772,12 @@ export class ZoomService implements IZoomService, OnModuleInit {
     const token = await this.getAccessToken();
 
     const body = {
-      // Built-in fields we want enabled + required (default questions list).
+      // Built-in fields. Phone is OPTIONAL per client spec.
       questions: [
-        { field_name: 'phone', required: true },
+        { field_name: 'phone', required: false },
       ],
       // Custom questions — text fields shown after the defaults.
+      // ID/Iqama is required; SCFHS is optional (write "NO" if not applicable).
       custom_questions: [
         {
           title: 'ID No / Iqama',
@@ -784,7 +788,7 @@ export class ZoomService implements IZoomService, OnModuleInit {
         {
           title: 'Saudi Health Commission License Number (write "NO" if not applicable)',
           type: 'short',
-          required: true,
+          required: false,
           answers: [],
         },
       ],
@@ -804,11 +808,12 @@ export class ZoomService implements IZoomService, OnModuleInit {
 
     if (!response.ok) {
       const errorText = await response.text();
-      // Non-fatal: the webinar still works with default fields if this fails.
-      this.logger.warn(
+      this.logger.error(
         `Failed to configure webinar questions for ${webinarId}: ${response.status} - ${errorText}`,
       );
-      return;
+      throw new Error(
+        `Failed to configure webinar registration questions: ${response.status} ${errorText.slice(0, 200)}`,
+      );
     }
 
     this.logger.log(`Configured custom registration questions for webinar ${webinarId}`);

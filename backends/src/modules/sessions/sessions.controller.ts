@@ -349,6 +349,22 @@ export class SessionsController {
   }
 
   /**
+   * POST /sessions/:id/reconfigure-webinar-questions — Re-applies the
+   * standard registration questions (Phone optional, ID/Iqama required,
+   * SCFHS optional) on an existing webinar. Manager/admin only. Used to
+   * recover any webinar whose questions PATCH failed at creation.
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/reconfigure-webinar-questions')
+  @HttpCode(HttpStatus.OK)
+  async reconfigureWebinarQuestions(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.sessionsService.reconfigureWebinarQuestions(id, user);
+  }
+
+  /**
    * GET /sessions/:id/recordings — Get session recordings (item #22)
    * Students: use Zoom share URL for passcode-free playback, hide timeline files.
    * Instructors/admins: get full data including all recording types.

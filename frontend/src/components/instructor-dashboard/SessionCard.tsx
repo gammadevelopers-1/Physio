@@ -15,6 +15,9 @@ import {
   Radio,
 } from "lucide-react";
 
+// Zoom Webinar plan capacity (currently 300 attendees).
+const ZOOM_WEBINAR_CAPACITY = 300;
+
 interface Session {
   id: string;
   title: string;
@@ -161,7 +164,7 @@ const SessionCard = ({
                   title={t("sessions.viewRegistrants") || "View registrants"}
                 >
                   <Users className="w-3.5 h-3.5" />
-                  {registrantsCount ?? 0}
+                  {registrantsCount ?? 0}/{ZOOM_WEBINAR_CAPACITY}
                 </button>
               )}
               {(isScheduled || isLive) && onStartAsHost && (

@@ -130,15 +130,18 @@ export class SessionsService {
           recordingEnabled: dto.recordingEnabled !== false,
           hostEmail,
         });
-        // Configure standard custom questions (Phone, ID/Iqama, SCFHS).
-        // Non-fatal: if it fails the webinar still works with default fields.
-        await this.zoomService
-          .configureStandardWebinarQuestions(webinar.webinarId)
-          .catch((err) =>
-            this.logger.warn(
-              `Webinar question configuration failed: ${err?.message || err}`,
-            ),
+        // Configure standard custom questions (Phone optional, ID/Iqama
+        // required, SCFHS optional). This now throws on failure so the
+        // caller knows the webinar's registration form is incomplete and
+        // can react (we still store the webinar — the manager can use the
+        // reconfigure-webinar-questions endpoint to retry).
+        try {
+          await this.zoomService.configureStandardWebinarQuestions(webinar.webinarId);
+        } catch (err) {
+          this.logger.error(
+            `Webinar ${webinar.webinarId} created but question configuration failed: ${(err as Error).message}`,
           );
+        }
 
         isWebinar = true;
         zoomWebinarId = webinar.webinarId;
@@ -1363,8 +1366,24 @@ export class SessionsService {
       );
     }
 
-    // Delete Zoom meeting if this is a Zoom/hybrid session
-    if (
+    // Delete the Zoom resource — webinar OR meeting, whichever is set.
+    // Hard delete on cancel so the registration link / meeting URL stops
+    // working immediately (Zoom shows "cannot register / webinar ended").
+    if (session.isWebinar && session.zoomWebinarId) {
+      try {
+        const result = await this.zoomService.deleteWebinar(session.zoomWebinarId);
+        if (!result.deleted) {
+          this.logger.warn(
+            `Failed to delete Zoom webinar ${session.zoomWebinarId} on cancel: ${result.error}`,
+          );
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Error deleting Zoom webinar ${session.zoomWebinarId} on cancel`,
+          error,
+        );
+      }
+    } else if (
       session.meetingId &&
       (session.type === SESSION_TYPE.ZOOM || session.type === SESSION_TYPE.HYBRID)
     ) {
@@ -1465,16 +1484,36 @@ export class SessionsService {
       updateData.durationMinutes = data.newDurationMinutes;
     }
 
-    // Sync Zoom meeting if rescheduling with new time
-    if (data.newScheduledAt && session.meetingId &&
-      (session.type === SESSION_TYPE.ZOOM || session.type === SESSION_TYPE.HYBRID)) {
-      try {
-        await this.zoomService.updateMeeting(session.meetingId, {
-          startTime: new Date(data.newScheduledAt),
-          durationMinutes: data.newDurationMinutes || undefined,
-        });
-      } catch (err) {
-        this.logger.warn(`Failed to update Zoom meeting: ${err?.message}`);
+    // Sync Zoom resource (meeting OR webinar) when rescheduling with new time.
+    // Webinar: reuse the same Zoom webinar — same registration link, same
+    // registrants keep their access. Just PATCH the start_time.
+    if (data.newScheduledAt) {
+      if (session.isWebinar && session.zoomWebinarId) {
+        try {
+          await this.zoomService.updateWebinar(session.zoomWebinarId, {
+            startTime: new Date(data.newScheduledAt),
+            durationMinutes: data.newDurationMinutes || undefined,
+          });
+          this.logger.log(
+            `Zoom webinar ${session.zoomWebinarId} rescheduled to ${data.newScheduledAt}`,
+          );
+        } catch (err) {
+          this.logger.warn(
+            `Failed to update Zoom webinar on reschedule: ${(err as Error).message}`,
+          );
+        }
+      } else if (
+        session.meetingId &&
+        (session.type === SESSION_TYPE.ZOOM || session.type === SESSION_TYPE.HYBRID)
+      ) {
+        try {
+          await this.zoomService.updateMeeting(session.meetingId, {
+            startTime: new Date(data.newScheduledAt),
+            durationMinutes: data.newDurationMinutes || undefined,
+          });
+        } catch (err) {
+          this.logger.warn(`Failed to update Zoom meeting: ${(err as Error).message}`);
+        }
       }
     }
 
@@ -1934,6 +1973,26 @@ export class SessionsService {
         source: r.userId ? 'platform' : 'external',
       })),
     };
+  }
+
+  /**
+   * Re-apply the standard registration questions on an existing webinar.
+   * Used to recover webinars whose questions PATCH failed at creation
+   * (or were created by a previous code version with stricter required
+   * flags than the client now wants).
+   */
+  async reconfigureWebinarQuestions(sessionId: string, user: AuthenticatedUser) {
+    const session = await this.verifySessionAccess(sessionId, user);
+    if (!session.isWebinar || !session.zoomWebinarId) {
+      throw new BadRequestException('This session is not a webinar');
+    }
+    try {
+      await this.zoomService.configureStandardWebinarQuestions(session.zoomWebinarId);
+      return { ok: true, webinarId: session.zoomWebinarId };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      throw new BadRequestException(`Failed to reconfigure questions: ${msg}`);
+    }
   }
 
   /**

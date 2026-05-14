@@ -39,6 +39,7 @@ import {
 import SkeletonCard from "@/components/shared/SkeletonCard";
 import ExportButton from "@/components/shared/ExportButton";
 import WebinarRegistrantsDrawer from "@/components/shared/WebinarRegistrantsDrawer";
+import { openWebinarWhatsAppShare } from "@/lib/webinar-share";
 import DatePicker from "@/components/ui/DatePicker";
 import DateTimePicker from "@/components/ui/DateTimePicker";
 import { CitySelect } from "@/components/ui/CitySelect";
@@ -52,6 +53,10 @@ const INSTRUCTOR_COLORS = [
   "border-s-[#14B8A6]", "border-s-[#F97316]", "border-s-[#6366F1]",
   "border-s-[#84CC16]",
 ];
+
+// Zoom Webinar add-on capacity. Matches the client's current plan
+// (300 attendees). Bump this if/when they upgrade.
+const ZOOM_WEBINAR_CAPACITY = 300;
 
 function ScheduleSessionModal({
   courses,
@@ -515,6 +520,7 @@ const SessionsContent = () => {
     sessionTitle: string;
     registrationUrl: string | null;
     scheduledAt: string;
+    sessionStatus: string;
   } | null>(null);
   const [webinarCounts, setWebinarCounts] = useState<Record<string, { registered: number; attended: number }>>({});
 
@@ -584,19 +590,16 @@ const SessionsContent = () => {
     title: string,
     scheduledAt: string,
     url: string | null | undefined,
+    durationMinutes?: number | null,
   ) => {
     if (!url) return;
-    const when = new Date(scheduledAt).toLocaleString(isRTL ? "ar-SA" : "en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
+    openWebinarWhatsAppShare({
+      title,
+      scheduledAt,
+      registrationUrl: url,
+      durationMinutes: durationMinutes ?? undefined,
+      locale,
     });
-    const msg = isRTL
-      ? `📅 ${title}\n🕐 ${when}\n\nسجل عبر:\n${url}`
-      : `📅 ${title}\n🕐 ${when}\n\nRegister here:\n${url}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
   };
 
   // Open registrants drawer — the shared <WebinarRegistrantsDrawer />
@@ -607,6 +610,7 @@ const SessionsContent = () => {
       sessionTitle: session.title,
       registrationUrl: session.webinarRegistrationUrl || null,
       scheduledAt: session.scheduledAt,
+      sessionStatus: session.status,
     });
   };
 
@@ -961,12 +965,12 @@ const SessionsContent = () => {
                   title={isRTL ? "عرض المسجلين" : "View registrants"}
                 >
                   <Users className="w-3.5 h-3.5" />
-                  {webinarCounts[session.id]?.registered ?? 0}
+                  {webinarCounts[session.id]?.registered ?? 0}/{ZOOM_WEBINAR_CAPACITY}
                   <span className="hidden sm:inline">
                     {isRTL ? " مسجل" : " registered"}
                   </span>
                 </button>
-                {session.webinarRegistrationUrl && (
+                {session.webinarRegistrationUrl && session.status === "scheduled" && (
                   <>
                     <button
                       type="button"
@@ -978,7 +982,7 @@ const SessionsContent = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); handleShareWhatsApp(session.title, session.scheduledAt, session.webinarRegistrationUrl); }}
+                      onClick={(e) => { e.stopPropagation(); handleShareWhatsApp(session.title, session.scheduledAt, session.webinarRegistrationUrl, session.durationMinutes); }}
                       className="p-1.5 rounded-md text-[#25D366] hover:bg-[#DCFCE7] transition-colors"
                       title={isRTL ? "مشاركة عبر واتساب" : "Share via WhatsApp"}
                     >
@@ -988,7 +992,7 @@ const SessionsContent = () => {
                 )}
               </div>
             )}
-            {session.nelcLimit != null && session.nelcLimit > 0 && (
+            {!session.isWebinar && session.nelcLimit != null && session.nelcLimit > 0 && (
               <div className="flex items-center gap-2 min-w-[120px]">
                 <div className="flex-1 h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                   <div
@@ -1035,13 +1039,31 @@ const SessionsContent = () => {
                     </button>
                   )}
                   {session.isWebinar && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setActionDropdown(null); openRegistrantsDrawer(session); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)]"
-                    >
-                      <Users className="w-4 h-4" />
-                      {isRTL ? "المسجلون" : "Registrants"}
-                    </button>
+                    <>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setActionDropdown(null); openRegistrantsDrawer(session); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)]"
+                      >
+                        <Users className="w-4 h-4" />
+                        {isRTL ? "المسجلون" : "Registrants"}
+                      </button>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          setActionDropdown(null);
+                          try {
+                            await courseManagerApi.reconfigureWebinarQuestions(session.id);
+                            toast.success(isRTL ? "تم تحديث حقول التسجيل" : "Registration fields refreshed");
+                          } catch (err: any) {
+                            toast.error(err?.message || (isRTL ? "تعذر تحديث الحقول" : "Failed to refresh fields"));
+                          }
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)]"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                        {isRTL ? "تحديث حقول التسجيل" : "Refresh registration fields"}
+                      </button>
+                    </>
                   )}
                   {(session.status === "scheduled" || session.status === "live") && (
                     <>
@@ -1384,6 +1406,7 @@ const SessionsContent = () => {
           sessionTitle={registrantsDrawer.sessionTitle}
           scheduledAt={registrantsDrawer.scheduledAt}
           registrationUrl={registrantsDrawer.registrationUrl}
+          sessionStatus={registrantsDrawer.sessionStatus}
           onClose={() => setRegistrantsDrawer(null)}
         />
       )}

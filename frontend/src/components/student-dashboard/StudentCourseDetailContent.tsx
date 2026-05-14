@@ -723,14 +723,11 @@ const StudentCourseDetailContent = () => {
                                   {t("calendar.mins")}
                                 </span>
                               </div>
-                              {session.isWebinar && (
-                                <p className="mt-1.5 text-[11px] text-[#6B21A8] leading-snug">
-                                  {t("courseDetail.webinarInfoNotice") || "Information session — registration required. Does not affect your course progress."}
-                                </p>
-                              )}
-                              {/* Webinar register: always available, no 15-min gate.
+                              {/* Webinar register: only while session is still
+                                  scheduled (registration closes the moment the
+                                  host starts the webinar via Zoom webhook).
                                   Meeting join: only inside the 15-min pre-start window. */}
-                              {session.isWebinar ? (
+                              {session.isWebinar && session.status === "scheduled" ? (
                                 <button
                                   type="button"
                                   onClick={() => handleJoinZoom(session.id)}
@@ -744,6 +741,13 @@ const StudentCourseDetailContent = () => {
                                   )}
                                   {t("courseDetail.registerForWebinar") || "Register for Webinar"}
                                 </button>
+                              ) : session.isWebinar ? (
+                                <p className="mt-2 inline-flex items-center gap-1 text-xs text-[var(--color-text-secondary)] opacity-70">
+                                  <Radio className="w-3 h-3" />
+                                  {session.status === "live"
+                                    ? (locale === "ar" ? "الندوة جارية" : "Webinar in progress")
+                                    : (locale === "ar" ? "انتهت الندوة" : "Webinar ended")}
+                                </p>
                               ) : session.zoomLink ? (
                                 isJoinable(session.scheduledAt) ? (
                                   <button
@@ -1112,9 +1116,8 @@ const StudentCourseDetailContent = () => {
                         <p className="text-xs text-[var(--color-text-secondary)] mb-3 line-clamp-1">
                           {nextUpcomingSession.title}
                         </p>
-                        {nextUpcomingSession.isWebinar ? (
-                          /* Webinar: register button is always enabled — Zoom
-                             handles "already registered → join here" itself. */
+                        {nextUpcomingSession.isWebinar && nextUpcomingSession.status === "scheduled" ? (
+                          /* Webinar: register button while still scheduled. */
                           <button
                             type="button"
                             onClick={() => handleJoinZoom(nextUpcomingSession.id)}
@@ -1128,6 +1131,14 @@ const StudentCourseDetailContent = () => {
                             )}
                             {t("courseDetail.registerForWebinar") || "Register for Webinar"}
                           </button>
+                        ) : nextUpcomingSession.isWebinar ? (
+                          /* Webinar in progress or ended — registration closed. */
+                          <div className="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg cursor-not-allowed">
+                            <Radio className="w-4 h-4" />
+                            {nextUpcomingSession.status === "live"
+                              ? (locale === "ar" ? "الندوة جارية" : "Webinar in progress")
+                              : (locale === "ar" ? "انتهت الندوة" : "Webinar ended")}
+                          </div>
                         ) : nextJoinableSession ? (
                           <button
                             type="button"

@@ -13,6 +13,7 @@ import DatePicker from "@/components/ui/DatePicker";
 import { CitySelect } from "@/components/ui/CitySelect";
 import { instructorApi, zoomAttendanceApi, courseAssistantsApi, courseManagerApi, type ThresholdStatus } from "@/lib/api";
 import WebinarRegistrantsDrawer from "@/components/shared/WebinarRegistrantsDrawer";
+import { openWebinarWhatsAppShare } from "@/lib/webinar-share";
 import type {
   CourseSession,
   InstructorCourse,
@@ -52,6 +53,10 @@ import {
   Copy,
   Share2,
 } from "lucide-react";
+
+// Zoom Webinar add-on capacity. Mirrors the client's current plan
+// (300 attendees). Bump if/when they upgrade.
+const ZOOM_WEBINAR_CAPACITY = 300;
 
 // ─── Helpers ─────────────────────────────────────────────────
 
@@ -1587,7 +1592,7 @@ function SessionCard({
                 <span className="truncate">{session.venueAddress || session.roomName}</span>
               </span>
             )}
-            {session.nelcLimit != null && session.nelcLimit > 0 && (
+            {!isWebinar && session.nelcLimit != null && session.nelcLimit > 0 && (
               <span className={`flex items-center gap-1 font-medium ${
                 (session.capacityPercent || 0) >= 95 ? "text-[#EF4444]"
                 : (session.capacityPercent || 0) >= 80 ? "text-[#D97706]"
@@ -1613,11 +1618,11 @@ function SessionCard({
                   title={locale === "ar" ? "عرض المسجلين" : "View registrants"}
                 >
                   <Users className="w-3.5 h-3.5" />
-                  {registrantsCount ?? 0}
+                  {registrantsCount ?? 0}/{ZOOM_WEBINAR_CAPACITY}
                   <span className="hidden sm:inline">{locale === "ar" ? " مسجل" : " registered"}</span>
                 </button>
               )}
-              {session.webinarRegistrationUrl && onCopyRegistration && (
+              {session.webinarRegistrationUrl && session.status === "scheduled" && onCopyRegistration && (
                 <button
                   type="button"
                   onClick={onCopyRegistration}
@@ -1627,7 +1632,7 @@ function SessionCard({
                   <Copy className="w-3.5 h-3.5" />
                 </button>
               )}
-              {session.webinarRegistrationUrl && onShareWhatsApp && (
+              {session.webinarRegistrationUrl && session.status === "scheduled" && onShareWhatsApp && (
                 <button
                   type="button"
                   onClick={onShareWhatsApp}
@@ -2014,6 +2019,7 @@ const SessionsContent = () => {
     sessionTitle: string;
     scheduledAt: string;
     registrationUrl: string | null;
+    sessionStatus: string;
   } | null>(null);
   const [webinarCounts, setWebinarCounts] = useState<Record<string, number>>({});
 
@@ -2229,6 +2235,7 @@ const SessionsContent = () => {
       sessionTitle: session.title,
       scheduledAt: session.scheduledAt,
       registrationUrl: session.webinarRegistrationUrl || null,
+      sessionStatus: session.status,
     });
   };
 
@@ -2240,16 +2247,14 @@ const SessionsContent = () => {
   };
 
   const handleShareWebinarWhatsApp = (session: CourseSession) => {
-    const url = session.webinarRegistrationUrl;
-    if (!url) return;
-    const when = new Date(session.scheduledAt).toLocaleString(
-      locale === "ar" ? "ar-SA" : "en-US",
-      { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" },
-    );
-    const msg = locale === "ar"
-      ? `📅 ${session.title}\n🕐 ${when}\n\nسجل عبر:\n${url}`
-      : `📅 ${session.title}\n🕐 ${when}\n\nRegister here:\n${url}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+    if (!session.webinarRegistrationUrl) return;
+    openWebinarWhatsAppShare({
+      title: session.title,
+      scheduledAt: session.scheduledAt,
+      registrationUrl: session.webinarRegistrationUrl,
+      durationMinutes: session.durationMinutes ?? undefined,
+      locale,
+    });
   };
 
   const handleEnd = (session: CourseSession) => {
@@ -2770,6 +2775,7 @@ const SessionsContent = () => {
           sessionTitle={registrantsDrawer.sessionTitle}
           scheduledAt={registrantsDrawer.scheduledAt}
           registrationUrl={registrantsDrawer.registrationUrl}
+          sessionStatus={registrantsDrawer.sessionStatus}
           onClose={() => setRegistrantsDrawer(null)}
         />
       )}

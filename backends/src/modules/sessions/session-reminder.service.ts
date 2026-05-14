@@ -193,6 +193,11 @@ export class SessionReminderService {
     if (missedSessions.length === 0) return;
 
     for (const session of missedSessions) {
+      // Soft miss — we update our DB status but leave the Zoom resource
+      // alive so the manager can reschedule it without losing existing
+      // registrants. The UI hides Register/Copy/WhatsApp/Start-as-Host
+      // buttons based on status, so attendees can't accidentally land on
+      // a stale registration page through our app.
       await db
         .update(sessions)
         .set({ status: 'missed' as any, updatedAt: new Date() })

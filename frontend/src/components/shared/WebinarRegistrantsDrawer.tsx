@@ -14,6 +14,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { courseManagerApi } from "@/lib/api";
+import { openWebinarWhatsAppShare } from "@/lib/webinar-share";
 
 export interface RegistrantRow {
   id: string;
@@ -39,6 +40,11 @@ interface WebinarRegistrantsDrawerProps {
   scheduledAt: string;
   registrationUrl: string | null;
   /**
+   * Session lifecycle status. Used to hide share actions once the
+   * webinar is live/ended (registration is effectively closed).
+   */
+  sessionStatus?: string;
+  /**
    * Read-only mode hides the Copy / WhatsApp / Open-page actions in the
    * drawer header. Used by instructor (manager keeps full controls).
    */
@@ -51,9 +57,14 @@ export default function WebinarRegistrantsDrawer({
   sessionTitle,
   scheduledAt,
   registrationUrl,
+  sessionStatus,
   readOnly = false,
   onClose,
 }: WebinarRegistrantsDrawerProps) {
+  // Share actions only make sense before the webinar starts. Once it's
+  // live/ended/cancelled/missed, registration is closed so sharing the
+  // link is meaningless.
+  const shareableStatus = !sessionStatus || sessionStatus === "scheduled";
   const t = useTranslations("courseManagerDashboard.sessionsPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
@@ -98,24 +109,12 @@ export default function WebinarRegistrantsDrawer({
 
   const handleWhatsApp = () => {
     if (!registrationUrl) return;
-    const when = new Date(scheduledAt).toLocaleString(
-      isRTL ? "ar-SA" : "en-US",
-      {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      },
-    );
-    const msg = isRTL
-      ? `📅 ${sessionTitle}\n🕐 ${when}\n\nسجل عبر:\n${registrationUrl}`
-      : `📅 ${sessionTitle}\n🕐 ${when}\n\nRegister here:\n${registrationUrl}`;
-    window.open(
-      `https://wa.me/?text=${encodeURIComponent(msg)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    openWebinarWhatsAppShare({
+      title: sessionTitle,
+      scheduledAt,
+      registrationUrl,
+      locale,
+    });
   };
 
   return (
@@ -171,7 +170,7 @@ export default function WebinarRegistrantsDrawer({
             </span>
           </div>
           <div className="flex-1" />
-          {!readOnly && registrationUrl && (
+          {!readOnly && registrationUrl && shareableStatus && (
             <>
               <button
                 type="button"
@@ -199,6 +198,11 @@ export default function WebinarRegistrantsDrawer({
                 {isRTL ? "فتح صفحة التسجيل" : "Open page"}
               </a>
             </>
+          )}
+          {!readOnly && registrationUrl && !shareableStatus && (
+            <span className="text-xs text-[var(--color-text-secondary)] italic">
+              {isRTL ? "التسجيل مغلق" : "Registration closed"}
+            </span>
           )}
         </div>
 

@@ -1651,6 +1651,12 @@ export const courseManagerApi = {
       `/sessions/${sessionId}/webinar-start`,
     ),
 
+  reconfigureWebinarQuestions: (sessionId: string) =>
+    api.post<{ ok: boolean; webinarId: string }>(
+      `/sessions/${sessionId}/reconfigure-webinar-questions`,
+      {},
+    ),
+
   getSessionConflicts: () =>
     api.get<Array<{
       sessionA: { id: string; title: string; scheduledAt: string; durationMinutes: number };

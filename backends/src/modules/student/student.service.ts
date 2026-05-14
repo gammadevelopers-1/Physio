@@ -28,6 +28,7 @@ import {
   assessmentRetakeGrants,
   assessmentOverrides,
   courseRatings,
+  webinarRegistrations,
 } from '../../database/schema';
 import type { SubmissionAnswer } from '../../database/schema/submissions';
 import { computeEffectiveScore } from '../../common/score-policy';
@@ -683,6 +684,8 @@ export class StudentService {
 
     // Get sessions for this course — return all non-cancelled so frontend
     // can split them into upcoming / past / inactive based on date + status.
+    // Left-join webinar_registrations so each webinar session also reports
+    // whether THIS student has registered + their personal Zoom join URL.
     const upcomingSessions = await db
       .select({
         id: sessions.id,
@@ -696,8 +699,17 @@ export class StudentService {
         webinarRegistrationUrl: sessions.webinarRegistrationUrl,
         roomName: sessions.roomName,
         venueAddress: sessions.venueAddress,
+        studentWebinarJoinUrl: webinarRegistrations.joinUrl,
+        studentWebinarRegistrationId: webinarRegistrations.id,
       })
       .from(sessions)
+      .leftJoin(
+        webinarRegistrations,
+        and(
+          eq(webinarRegistrations.sessionId, sessions.id),
+          eq(webinarRegistrations.userId, studentId),
+        ),
+      )
       .where(
         and(
           eq(sessions.courseId, courseId),

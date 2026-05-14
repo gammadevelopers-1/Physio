@@ -723,11 +723,36 @@ const StudentCourseDetailContent = () => {
                                   {t("calendar.mins")}
                                 </span>
                               </div>
-                              {/* Webinar register: only while session is still
-                                  scheduled (registration closes the moment the
-                                  host starts the webinar via Zoom webhook).
+                              {/* Webinar state machine for enrolled students:
+                                   - registered + within 15 min of start OR live:
+                                       Join Webinar button → opens personal Zoom join URL
+                                   - registered + more than 15 min away:
+                                       countdown timer "Webinar starts in X"
+                                   - not registered + scheduled:
+                                       Register & join button → opens Zoom form
+                                   - not registered + live/ended/missed:
+                                       "Webinar in progress" / "Webinar ended" label
                                   Meeting join: only inside the 15-min pre-start window. */}
-                              {session.isWebinar && session.status === "scheduled" ? (
+                              {session.isWebinar && session.studentWebinarJoinUrl && (session.status === "scheduled" || session.status === "live") ? (
+                                isJoinable(session.scheduledAt) || session.status === "live" ? (
+                                  <a
+                                    href={session.studentWebinarJoinUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-md bg-[#16A34A] hover:bg-[#15803D] text-white text-xs font-medium transition-colors"
+                                  >
+                                    <Radio className="w-3.5 h-3.5" />
+                                    {locale === "ar" ? "انضم للندوة" : "Join Webinar"}
+                                  </a>
+                                ) : (
+                                  <p className="inline-flex items-center gap-1 mt-2 text-xs text-[#7C3AED]">
+                                    <Clock className="w-3 h-3" />
+                                    {locale === "ar"
+                                      ? `تبدأ الندوة خلال ${formatTimeUntil(session.scheduledAt)}`
+                                      : `Webinar starts in ${formatTimeUntil(session.scheduledAt)}`}
+                                  </p>
+                                )
+                              ) : session.isWebinar && session.status === "scheduled" ? (
                                 <button
                                   type="button"
                                   onClick={() => handleJoinZoom(session.id)}
@@ -1116,8 +1141,29 @@ const StudentCourseDetailContent = () => {
                         <p className="text-xs text-[var(--color-text-secondary)] mb-3 line-clamp-1">
                           {nextUpcomingSession.title}
                         </p>
-                        {nextUpcomingSession.isWebinar && nextUpcomingSession.status === "scheduled" ? (
-                          /* Webinar: register button while still scheduled. */
+                        {nextUpcomingSession.isWebinar && nextUpcomingSession.studentWebinarJoinUrl && (nextUpcomingSession.status === "scheduled" || nextUpcomingSession.status === "live") ? (
+                          /* Already registered. Show Join button if joinable
+                             (within 15 min or live); otherwise countdown. */
+                          isJoinable(nextUpcomingSession.scheduledAt) || nextUpcomingSession.status === "live" ? (
+                            <a
+                              href={nextUpcomingSession.studentWebinarJoinUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#16A34A] hover:bg-[#15803D] text-white text-sm font-semibold rounded-lg transition-colors"
+                            >
+                              <Radio className="w-4 h-4" />
+                              {locale === "ar" ? "انضم للندوة" : "Join Webinar"}
+                            </a>
+                          ) : (
+                            <div className="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#FAF5FF] text-[#7C3AED] border border-[#E9D5FF] text-sm font-semibold rounded-lg">
+                              <Clock className="w-4 h-4" />
+                              {locale === "ar"
+                                ? `تبدأ خلال ${formatTimeUntil(nextUpcomingSession.scheduledAt)}`
+                                : `Starts in ${formatTimeUntil(nextUpcomingSession.scheduledAt)}`}
+                            </div>
+                          )
+                        ) : nextUpcomingSession.isWebinar && nextUpcomingSession.status === "scheduled" ? (
+                          /* Not registered, still scheduled — show Register button. */
                           <button
                             type="button"
                             onClick={() => handleJoinZoom(nextUpcomingSession.id)}
@@ -1132,7 +1178,7 @@ const StudentCourseDetailContent = () => {
                             {t("courseDetail.registerForWebinar") || "Register for Webinar"}
                           </button>
                         ) : nextUpcomingSession.isWebinar ? (
-                          /* Webinar in progress or ended — registration closed. */
+                          /* Webinar in progress / ended — registration closed. */
                           <div className="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg cursor-not-allowed">
                             <Radio className="w-4 h-4" />
                             {nextUpcomingSession.status === "live"

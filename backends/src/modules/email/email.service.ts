@@ -60,6 +60,10 @@ import {
   getSessionStartedText,
 } from './templates/session-started.template';
 import {
+  getWebinarLiveHtml,
+  getWebinarLiveText,
+} from './templates/webinar-live.template';
+import {
   getSessionEndedHtml,
   getSessionEndedText,
 } from './templates/session-ended.template';
@@ -564,6 +568,43 @@ export class EmailService {
     } catch (error) {
       this.logger.error(
         `Failed to send session started email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send "Webinar is Live, join now" email to a webinar registrant with
+   * their personal Zoom join URL embedded. Used by the webinar.started
+   * webhook to blast all registrants the moment the host clicks Start.
+   */
+  async sendWebinarLive(
+    to: string,
+    params: {
+      recipientName: string;
+      webinarTitle: string;
+      courseName?: string | null;
+      personalJoinUrl: string;
+    },
+    locale: EmailLocale = 'en',
+  ): Promise<void> {
+    try {
+      const subject =
+        locale === 'ar'
+          ? `🔴 الندوة "${params.webinarTitle}" بدأت — انضم الآن`
+          : `🔴 "${params.webinarTitle}" is LIVE — Join now`;
+      await this.send({
+        to,
+        subject,
+        html: getWebinarLiveHtml(params, locale),
+        text: getWebinarLiveText(params, locale),
+      });
+      this.logger.log(
+        `Webinar live email sent to ${to} for "${params.webinarTitle}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send webinar live email to ${to}`,
         error,
       );
     }

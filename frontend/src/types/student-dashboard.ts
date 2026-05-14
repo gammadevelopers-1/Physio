@@ -96,6 +96,12 @@ export interface CourseSession {
   zoomLink: string | null;
   isWebinar?: boolean | null;
   webinarRegistrationUrl?: string | null;
+  /**
+   * For webinar sessions: the current student's personal Zoom join URL
+   * if they've already registered. Null when they haven't registered yet.
+   */
+  studentWebinarJoinUrl?: string | null;
+  studentWebinarRegistrationId?: string | null;
   roomName: string | null;
   venueAddress: string | null;
 }

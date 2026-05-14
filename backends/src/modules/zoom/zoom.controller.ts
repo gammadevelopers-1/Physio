@@ -25,6 +25,7 @@ import {
 import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { ZoomWebhookService } from './zoom-webhook.service';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
+import { EmailService } from '../email/email.service';
 import { Public, Roles } from '../auth/decorators';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import * as crypto from 'crypto';
@@ -53,6 +54,7 @@ export class ZoomController {
     @Inject(ZOOM_SERVICE) private zoomService: IZoomService,
     private webhookService: ZoomWebhookService,
     private auditService: NelcAuditService,
+    private emailService: EmailService,
   ) {}
 
   /**
@@ -285,6 +287,83 @@ export class ZoomController {
     this.logger.log(
       `Session ${session.id} marked as live via Zoom meeting.started webhook`,
     );
+
+    // For webinars: fire-and-forget email blast to every registrant with
+    // their personal join URL. Best-effort; failures are logged but do not
+    // affect the webhook response.
+    if (session.isWebinar) {
+      this.sendWebinarLiveEmailsToRegistrants(session.id, session.title, session.courseId)
+        .catch((err) =>
+          this.logger.warn(
+            `Failed to dispatch webinar-live emails for ${session.id}: ${(err as Error).message}`,
+          ),
+        );
+    }
+  }
+
+  /**
+   * Email every registrant in webinar_registrations for this session
+   * with their personal Zoom join URL. Called from handleMeetingStarted
+   * when the session is a webinar.
+   */
+  private async sendWebinarLiveEmailsToRegistrants(
+    sessionId: string,
+    sessionTitle: string,
+    courseId: string,
+  ): Promise<void> {
+    // Lazy-imports to avoid circular module deps at the top.
+    const { webinarRegistrations, courses } = await import('../../database/schema');
+    const registrants = await db
+      .select({
+        email: webinarRegistrations.email,
+        firstName: webinarRegistrations.firstName,
+        lastName: webinarRegistrations.lastName,
+        joinUrl: webinarRegistrations.joinUrl,
+      })
+      .from(webinarRegistrations)
+      .where(eq(webinarRegistrations.sessionId, sessionId));
+
+    if (registrants.length === 0) {
+      this.logger.log(
+        `webinar.started for ${sessionId}: no registrants to email`,
+      );
+      return;
+    }
+
+    // Resolve course name once for the email body.
+    let courseName: string | null = null;
+    try {
+      const [course] = await db
+        .select({ title: courses.title })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .limit(1);
+      courseName = course?.title || null;
+    } catch {
+      /* non-fatal */
+    }
+
+    this.logger.log(
+      `Dispatching webinar-live email to ${registrants.length} registrant(s) for session ${sessionId}`,
+    );
+
+    for (const r of registrants) {
+      if (!r.email || !r.joinUrl) continue;
+      const recipientName =
+        [r.firstName, r.lastName].filter(Boolean).join(' ') || 'there';
+      await this.emailService
+        .sendWebinarLive(r.email, {
+          recipientName,
+          webinarTitle: sessionTitle,
+          courseName,
+          personalJoinUrl: r.joinUrl,
+        })
+        .catch((err) =>
+          this.logger.warn(
+            `Webinar-live email to ${r.email} failed: ${(err as Error).message}`,
+          ),
+        );
+    }
   }
 
   /**

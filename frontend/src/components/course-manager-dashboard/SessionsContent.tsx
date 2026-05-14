@@ -1021,6 +1021,19 @@ const SessionsContent = () => {
               {getStatusBadge(session.status).label}
             </span>
             {/* Action dropdown */}
+            {(() => {
+              // Hide the kebab entirely when no menu items would render.
+              // Items: View Attendance (non-webinar + ended-ish), or
+              // Cancel/Reschedule (scheduled or live).
+              const hasViewAttendance = !session.isWebinar && (
+                session.status === "completed" ||
+                session.status === "ended" ||
+                session.status === "cancelled"
+              );
+              const hasLifecycleActions = session.status === "scheduled" || session.status === "live";
+              const hasActions = hasViewAttendance || hasLifecycleActions;
+              if (!hasActions) return null;
+              return (
             <div className="relative">
               <button
                 onClick={(e) => { e.stopPropagation(); setActionDropdown(actionDropdown === session.id ? null : session.id); }}
@@ -1065,6 +1078,8 @@ const SessionsContent = () => {
                 </div>
               )}
             </div>
+              );
+            })()}
           </div>
         </div>
       </div>

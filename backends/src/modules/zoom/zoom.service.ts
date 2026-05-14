@@ -778,18 +778,19 @@ export class ZoomService implements IZoomService, OnModuleInit {
       ],
       // Custom questions — text fields shown after the defaults.
       // ID/Iqama is required; SCFHS is optional (write "NO" if not applicable).
+      // NOTE: `answers` is omitted because Zoom only accepts it for
+      // type=single/multiple choice questions; including `answers: []` on
+      // a short-text question fails with "Invalid field".
       custom_questions: [
         {
           title: 'ID No / Iqama',
           type: 'short',
           required: true,
-          answers: [],
         },
         {
           title: 'Saudi Health Commission License Number (write "NO" if not applicable)',
           type: 'short',
           required: false,
-          answers: [],
         },
       ],
     };

@@ -12,6 +12,7 @@ import {
   Share2,
   ExternalLink,
   Loader2,
+  Download,
 } from "lucide-react";
 import { courseManagerApi } from "@/lib/api";
 import { openWebinarWhatsAppShare } from "@/lib/webinar-share";
@@ -40,6 +41,11 @@ interface WebinarRegistrantsDrawerProps {
   scheduledAt: string;
   registrationUrl: string | null;
   /**
+   * Zoom webinar ID — surfaced inside the WhatsApp share message as
+   * "Meeting ID: …" so registrants can keep it for reference.
+   */
+  zoomWebinarId?: string | null;
+  /**
    * Session lifecycle status. Used to hide share actions once the
    * webinar is live/ended (registration is effectively closed).
    */
@@ -57,6 +63,7 @@ export default function WebinarRegistrantsDrawer({
   sessionTitle,
   scheduledAt,
   registrationUrl,
+  zoomWebinarId,
   sessionStatus,
   readOnly = false,
   onClose,
@@ -113,8 +120,94 @@ export default function WebinarRegistrantsDrawer({
       title: sessionTitle,
       scheduledAt,
       registrationUrl,
+      zoomWebinarId: zoomWebinarId ?? null,
       locale,
     });
+  };
+
+  const handleDownloadCsv = () => {
+    if (!data || data.rows.length === 0) return;
+
+    // ISO-ish, Excel-friendly; empty when null
+    const fmtDateTime = (iso: string | null) => {
+      if (!iso) return "";
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return "";
+      const pad = (n: number) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
+
+    const escape = (val: unknown): string => {
+      if (val == null) return "";
+      const s = String(val);
+      // Quote when the field contains comma, quote, CR, or LF; escape inner quotes.
+      if (/[",\r\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+      return s;
+    };
+
+    const headers = [
+      "First name",
+      "Last name",
+      "Email",
+      "Phone",
+      "National ID / Iqama",
+      "SCFHS number",
+      "Source",
+      "Registration status",
+      "Registered at",
+      "Attended",
+      "Joined at",
+      "Left at",
+      "Attended duration (min)",
+    ];
+
+    const lines = data.rows.map((r) =>
+      [
+        r.firstName,
+        r.lastName,
+        r.email,
+        r.phone,
+        r.nationalId,
+        r.scfhsNumber,
+        r.source === "platform" ? "Student" : "External",
+        r.status,
+        fmtDateTime(r.createdAt),
+        r.attended ? "Yes" : "No",
+        fmtDateTime(r.joinedAt),
+        fmtDateTime(r.leftAt),
+        r.attendedDurationMinutes ?? 0,
+      ]
+        .map(escape)
+        .join(",")
+    );
+
+    // BOM so Excel opens UTF-8 (Arabic names) correctly. CRLF for Excel.
+    const csv = "﻿" + [headers.map(escape).join(","), ...lines].join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const slug =
+      sessionTitle
+        .toLowerCase()
+        .replace(/[^a-z0-9؀-ۿ]+/gi, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 60) || "webinar";
+    const datePart = new Date(scheduledAt).toISOString().slice(0, 10);
+    const fname = `webinar-registrants_${slug}_${datePart}.csv`;
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast.success(
+      isRTL
+        ? `تم تنزيل ${data.rows.length} مسجل`
+        : `Downloaded ${data.rows.length} registrants`
+    );
   };
 
   return (
@@ -170,6 +263,19 @@ export default function WebinarRegistrantsDrawer({
             </span>
           </div>
           <div className="flex-1" />
+          {/* CSV export — manager only, but available in both pre- and
+              post-webinar states (lead list before, attendance report after). */}
+          {!readOnly && data && data.rows.length > 0 && (
+            <button
+              type="button"
+              onClick={handleDownloadCsv}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[var(--color-surface-card)] border border-[var(--color-border)] hover:border-[#A855F7] hover:text-[#7C3AED] text-xs font-medium text-[var(--color-text-primary)] transition-colors"
+              aria-label={isRTL ? "تنزيل CSV" : "Download CSV"}
+            >
+              <Download className="w-3.5 h-3.5" />
+              {isRTL ? "تنزيل CSV" : "Download CSV"}
+            </button>
+          )}
           {!readOnly && registrationUrl && shareableStatus && (
             <>
               <button

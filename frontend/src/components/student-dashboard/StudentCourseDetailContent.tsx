@@ -11,8 +11,6 @@ import {
   Award,
   BookOpen,
   Calendar,
-  ChevronDown,
-  ChevronUp,
   Clock,
   ClipboardCheck,
   Loader2,
@@ -20,10 +18,8 @@ import {
   UserCheck,
   Users,
   Video,
-  MapPin,
   CheckCircle2,
   Circle,
-  X,
   XCircle,
   AlertTriangle,
   Star,
@@ -42,7 +38,6 @@ import { formatDateReadable } from "@/lib/hijri";
 import { isJoinable, formatTimeUntil, canDropCourseNow } from "@/lib/calendar-utils";
 import Accordion, { type AccordionItem } from "@/components/ui/Accordion";
 import Image from "next/image";
-import { HelpCircle } from "lucide-react";
 
 const StudentCourseDetailContent = () => {
   const locale = useLocale();
@@ -90,29 +85,15 @@ const StudentCourseDetailContent = () => {
 
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
 
-  // Collapse past lectures by default (matches Attendance History pattern); user expands.
-  const [showPastLectures, setShowPastLectures] = useState(false);
-  const [pastPage, setPastPage] = useState(5);
-
-  // Split sessions into upcoming/past/inactive — strictly date-driven for
-  // upcoming/past, with only `cancelled` excluded explicitly. Statuses like
-  // `missed`/`rescheduled` on a FUTURE-dated row (left over from rescheduling)
-  // would otherwise wrongly disappear from upcoming.
+  // Upcoming sessions still drive the right-rail "Live Lecture / Start Now"
+  // card and the joinable-now CTA — the full Upcoming / Past / Cancelled lists
+  // now live inside the /learn workspace.
   const upcomingSessions = useMemo(() => {
     const now = Date.now();
     return (
       data?.sessions.filter((s) => {
         if (s.status === "cancelled") return false;
         return new Date(s.scheduledAt).getTime() >= now;
-      }) ?? []
-    );
-  }, [data?.sessions]);
-  const completedSessions = useMemo(() => {
-    const now = Date.now();
-    return (
-      data?.sessions.filter((s) => {
-        if (s.status === "cancelled") return false;
-        return new Date(s.scheduledAt).getTime() < now;
       }) ?? []
     );
   }, [data?.sessions]);
@@ -149,10 +130,6 @@ const StudentCourseDetailContent = () => {
   }, [data?.course.faqs]);
   const hasFaqs = isZoom && courseFaqs.length > 0;
   const [activeTab, setActiveTab] = useState<"details" | "faqs">("details");
-  const inactiveSessions = useMemo(
-    () => data?.sessions.filter((s) => s.status === "cancelled") ?? [],
-    [data?.sessions]
-  );
 
   const handleJoinZoom = async (sessionId: string) => {
     if (joiningSessionId) return;
@@ -192,24 +169,18 @@ const StudentCourseDetailContent = () => {
     }
   };
 
-  const getAttendanceStatusBadge = (status: string) => {
-    switch (status) {
-      case "present": return { bg: "bg-[#DCFCE7]", text: "text-[#16A34A]", label: t("courseDetail.statusPresent") };
-      case "absent": return { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: t("courseDetail.statusAbsent") };
-      case "late": return { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("courseDetail.statusLate") };
-      case "excused": return { bg: "bg-[var(--color-border-subtle)]", text: "text-[var(--color-primary)]", label: t("courseDetail.statusExcused") };
-      default: return { bg: "bg-[var(--color-border-subtle)]", text: "text-[var(--color-text-secondary)]", label: status };
-    }
-  };
-
   const formatDate = (dateStr: string | null) =>
     formatDateReadable(dateStr, calendarFormat, locale);
 
-  const formatTime = (dateStr: string) => {
-    return new Date(dateStr).toLocaleTimeString(
-      locale === "ar" ? "ar-SA" : "en-US",
-      { hour: "2-digit", minute: "2-digit" }
-    );
+  // Deep-link helpers for the clickable stat tiles below.
+  const learnUrl = (tab: "modules" | "lectures") =>
+    `/${locale}/dashboard/student/courses/${courseId}/learn?tab=${tab}`;
+  const scrollToAssessments = () => {
+    if (typeof window === "undefined") return;
+    document.getElementById("assessments-section")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
   return (
@@ -321,20 +292,15 @@ const StudentCourseDetailContent = () => {
                       </div>
                     </div>
 
-                    {/* State-aware primary CTA — Continue/Start when active,
-                        View Certificate when completed, hidden when dropped.
-                        For zoom courses with no modules, Start Learning is
-                        meaningless — the right-rail "Start Now" CTA drives
-                        lecture entry instead. */}
-                    {data.enrollment.status === "active" && !(isZoom && data.modules.length === 0) && (
+                    {/* State-aware primary CTA — opens the /learn workspace,
+                        which now holds Modules + Lectures + Attendance in one
+                        place. Smart-default lands the student in Modules if
+                        any exist, otherwise Lectures. */}
+                    {data.enrollment.status === "active" && (
                       <div className="mt-4">
                         <Link
                           href={`/${locale}/dashboard/student/courses/${courseId}/learn`}
-                          className={`inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-medium rounded-lg hover:opacity-90 transition-opacity ${
-                            isZoom
-                              ? "border border-[var(--color-border)] text-[var(--color-text-primary)] bg-[var(--color-surface-card)]"
-                              : "btn-gold text-[var(--color-button-text)]"
-                          }`}
+                          className="inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-medium rounded-lg hover:opacity-90 transition-opacity btn-gold text-[var(--color-button-text)]"
                         >
                           <Play className="w-4 h-4" />
                           {data.enrollment.progress > 0
@@ -423,42 +389,64 @@ const StudentCourseDetailContent = () => {
                     </div>
                   )}
 
-                  {/* Course Info Grid */}
+                  {/* Stat tiles — each is a deep-link into the /learn
+                      workspace (or scrolls to the assessments section) so
+                      students can jump straight to what they care about. */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                    {/* Modules */}
-                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center">
-                          <BookOpen className="w-5 h-5 text-[var(--color-primary)]" />
+                    {/* Modules → /learn?tab=modules (when modules exist) */}
+                    {data.modules.length > 0 ? (
+                      <Link
+                        href={learnUrl("modules")}
+                        className="group bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 hover:border-[var(--color-primary)] hover:shadow-sm transition-all cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center group-hover:bg-[#EEF4FE] transition-colors">
+                            <BookOpen className="w-5 h-5 text-[var(--color-primary)]" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-[var(--color-text-secondary)]">
+                              {t("courseDetail.modules")}
+                            </p>
+                            <p className="text-lg font-semibold text-[var(--color-text-primary)]">
+                              {data.modules.filter((m) => m.isCompleted).length}/
+                              {data.modules.length}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs text-[var(--color-text-secondary)]">
-                            {t("courseDetail.modules")}
-                          </p>
-                          <p className="text-lg font-semibold text-[var(--color-text-secondary)]">
-                            {data.modules.filter((m) => m.isCompleted).length}/
-                            {data.modules.length}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Attendance — hidden for self-paced */}
-                    {data.course.deliveryType !== "self-paced" && (
+                      </Link>
+                    ) : (
                       <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                         <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center">
+                            <BookOpen className="w-5 h-5 text-[var(--color-primary)]" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-[var(--color-text-secondary)]">
+                              {t("courseDetail.modules")}
+                            </p>
+                            <p className="text-lg font-semibold text-[var(--color-text-secondary)]">0/0</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Attendance → /learn?tab=lectures (hidden for self-paced) */}
+                    {data.course.deliveryType !== "self-paced" && (
+                      <Link
+                        href={learnUrl("lectures")}
+                        className="group bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 hover:border-[var(--color-primary)] hover:shadow-sm transition-all cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
                           <div
-                            className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                              data.attendanceSummary &&
-                              data.attendanceSummary.percentage >= 70
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                              data.attendanceSummary && data.attendanceSummary.percentage >= 70
                                 ? "bg-[#F0FDF4]"
                                 : "bg-[#FEF2F2]"
                             }`}
                           >
                             <UserCheck
                               className={`w-5 h-5 ${
-                                data.attendanceSummary &&
-                                data.attendanceSummary.percentage >= 70
+                                data.attendanceSummary && data.attendanceSummary.percentage >= 70
                                   ? "text-[#16A34A]"
                                   : "text-[#DC2626]"
                               }`}
@@ -468,7 +456,7 @@ const StudentCourseDetailContent = () => {
                             <p className="text-xs text-[var(--color-text-secondary)]">
                               {t("courseDetail.attendance")}
                             </p>
-                            <p className="text-lg font-semibold text-[var(--color-text-secondary)]">
+                            <p className="text-lg font-semibold text-[var(--color-text-primary)]">
                               {data.attendanceSummary
                                 ? `${data.attendanceSummary.attended}/${data.attendanceSummary.total}`
                                 : "0/0"}
@@ -487,11 +475,16 @@ const StudentCourseDetailContent = () => {
                               )}
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     )}
 
-                    {/* Assessments */}
-                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
+                    {/* Assessments → scroll-to-section (lives on this page) */}
+                    <button
+                      type="button"
+                      onClick={scrollToAssessments}
+                      disabled={data.assessments.length === 0}
+                      className="group text-start bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 hover:border-[var(--color-primary)] hover:shadow-sm transition-all cursor-pointer disabled:cursor-default disabled:hover:border-[var(--color-border)] disabled:hover:shadow-none"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-[#FFFBEB] rounded-lg flex items-center justify-center">
                           <ClipboardCheck className="w-5 h-5 text-[#D4A520]" />
@@ -500,7 +493,7 @@ const StudentCourseDetailContent = () => {
                           <p className="text-xs text-[var(--color-text-secondary)]">
                             {t("courseDetail.assessments")}
                           </p>
-                          <p className="text-lg font-semibold text-[var(--color-text-secondary)]">
+                          <p className="text-lg font-semibold text-[var(--color-text-primary)]">
                             {data.assessmentSummary
                               ? `${data.assessmentSummary.completed}/${data.assessmentSummary.total}`
                               : `${data.assessments.length}`}
@@ -509,17 +502,15 @@ const StudentCourseDetailContent = () => {
                             data.assessmentSummary.completed > 0 && (
                               <p className="text-xs text-[var(--color-text-secondary)]">
                                 {t("courseDetail.averageScore", {
-                                  score: Math.round(
-                                    data.assessmentSummary.averageScore
-                                  ),
+                                  score: Math.round(data.assessmentSummary.averageScore),
                                 })}
                               </p>
                             )}
                         </div>
                       </div>
-                    </div>
+                    </button>
 
-                    {/* Status */}
+                    {/* Status — display only */}
                     <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-[#F0FDF4] rounded-lg flex items-center justify-center">
@@ -541,446 +532,18 @@ const StudentCourseDetailContent = () => {
                     </div>
                   </div>
 
-                  {/* ── Two-column layout: main content + side panel ── */}
+                  {/* ── Two-column layout: main content + side panel ──
+                       Modules + Upcoming + Past + Cancelled lists now live
+                       inside the /learn workspace. Only Assessments remains
+                       here — it's the off-ramp the stat tile scrolls to. */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   <div className="lg:col-span-2 space-y-4">
-                  {/* Modules List — hidden for zoom courses with no modules
-                      (lectures are the primary surface there). */}
-                  {!(isZoom && data.modules.length === 0) && (
-                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
-                    <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-4">
-                      {t("courseDetail.courseModules")}
-                    </h2>
 
-                    {data.modules.length === 0 ? (
-                      <p className="text-sm text-[var(--color-text-secondary)] py-4 text-center">
-                        {t("courseDetail.noModules")}
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {data.modules
-                          .sort((a, b) => a.orderIndex - b.orderIndex)
-                          .map((module, index) => {
-                            const moduleAssessments = data.assessments.filter((a) => a.moduleId === module.id);
-                            return (
-                              <div key={module.id} className="rounded-lg border border-[var(--color-border)]">
-                                <Link
-                                  href={`/${locale}/dashboard/student/courses/${courseId}/learn`}
-                                  className="flex items-center gap-3 p-3 hover:bg-[var(--color-border-subtle)] transition-colors cursor-pointer"
-                                >
-                                  {module.isCompleted ? (
-                                    <div className="w-8 h-8 rounded-full bg-[#F0FDF4] flex items-center justify-center flex-shrink-0">
-                                      <CheckCircle2 className="w-5 h-5 text-[#16A34A]" />
-                                    </div>
-                                  ) : (
-                                    <div className="w-8 h-8 rounded-full bg-[var(--color-border-subtle)] flex items-center justify-center flex-shrink-0">
-                                      <span className="text-xs font-medium text-[var(--color-text-secondary)]">
-                                        {index + 1}
-                                      </span>
-                                    </div>
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">
-                                      {isRTL && module.titleAr
-                                        ? module.titleAr
-                                        : module.title}
-                                    </p>
-                                    <div className="flex items-center gap-3 text-xs text-[var(--color-text-secondary)]">
-                                      {module.type && (
-                                        <span className="capitalize">
-                                          {module.type}
-                                        </span>
-                                      )}
-                                      {module.durationMinutes && (
-                                        <span className="flex items-center gap-1">
-                                          <Clock className="w-3 h-3" />
-                                          {module.durationMinutes}{" "}
-                                          {t("calendar.mins")}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </Link>
-                                {moduleAssessments.length > 0 && (
-                                  <div className="border-t border-[var(--color-border)] px-3 py-2 space-y-1.5">
-                                    {moduleAssessments.map((ma) => {
-                                      // Mirror the standalone Assessments section: when there's
-                                      // no submission and the deadline has passed (or the course
-                                      // itself has wrapped) the row is missed — read-only and red.
-                                      const now = new Date();
-                                      const courseClosed =
-                                        data.enrollment.status === "completed" ||
-                                        (data.course.endDate != null && now > new Date(data.course.endDate));
-                                      const deadlinePassed =
-                                        ma.dueDate != null && now > new Date(ma.dueDate);
-                                      const maMissed = !ma.submission && (deadlinePassed || courseClosed);
-
-                                      const innerContent = (
-                                        <>
-                                          <ClipboardCheck className={`w-3.5 h-3.5 flex-shrink-0 ${maMissed ? "text-[#DC2626]" : "text-[var(--color-text-secondary)]"}`} />
-                                          <span className={`text-xs flex-1 truncate ${maMissed ? "text-[#DC2626] font-medium" : "text-[var(--color-text-secondary)]"}`}>{ma.title}</span>
-                                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                                            ma.type === "assignment" ? "bg-amber-50 text-amber-700" : ma.type === "exam" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-blue-700"
-                                          }`}>
-                                            {ma.type}
-                                          </span>
-                                          {ma.submission?.status === "graded" ? (
-                                            <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A] flex-shrink-0" />
-                                          ) : ma.submission?.status === "submitted" ? (
-                                            <Clock className="w-3.5 h-3.5 text-[#D4A520] flex-shrink-0" />
-                                          ) : maMissed ? (
-                                            <span className="text-[10px] font-semibold text-[#DC2626] bg-red-100 px-1.5 py-0.5 rounded flex-shrink-0">
-                                              {t("courseDetail.missed")}
-                                            </span>
-                                          ) : (
-                                            <Circle className="w-3.5 h-3.5 text-[var(--color-border)] flex-shrink-0" />
-                                          )}
-                                        </>
-                                      );
-
-                                      // Allow Review for any submitted attempt, but lock the row
-                                      // entirely when it's been missed (no clickable link).
-                                      if (maMissed) {
-                                        return (
-                                          <div
-                                            key={ma.id}
-                                            className="flex items-center gap-2 px-2 py-1.5 rounded bg-red-50/40 border border-red-100 cursor-not-allowed"
-                                          >
-                                            {innerContent}
-                                          </div>
-                                        );
-                                      }
-
-                                      const href = ma.submission
-                                        ? `/${locale}/dashboard/student/courses/${courseId}/assessment/${ma.id}?review=true`
-                                        : `/${locale}/dashboard/student/courses/${courseId}/assessment/${ma.id}`;
-
-                                      return (
-                                        <Link
-                                          key={ma.id}
-                                          href={href}
-                                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[var(--color-border-subtle)] transition-colors"
-                                        >
-                                          {innerContent}
-                                        </Link>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                      </div>
-                    )}
-                  </div>
-                  )}
-
-                  {/* Upcoming Sessions (hidden for self-paced) */}
-                  {data.course.deliveryType !== "self-paced" && upcomingSessions.length > 0 && (
-                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
-                      <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-4">
-                        {t("courseDetail.upcomingSessions")}
-                      </h2>
-
-                      <div className="space-y-3">
-                        {upcomingSessions.map((session) => (
-                          <div
-                            key={session.id}
-                            className={`flex items-start gap-3 p-3 rounded-lg border ${session.isWebinar ? "border-[#E9D5FF] bg-[#FAF5FF]" : "border-[var(--color-border)]"}`}
-                          >
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${session.isWebinar ? "bg-[#F3E8FF]" : "bg-[#FFFBEB]"}`}>
-                              {session.isWebinar ? (
-                                <Radio className="w-5 h-5 text-[#A855F7]" />
-                              ) : session.type === "zoom" || session.type === "online" ? (
-                                <Video className="w-5 h-5 text-[#D4A520]" />
-                              ) : (
-                                <MapPin className="w-5 h-5 text-[#D4A520]" />
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                                  {session.title}
-                                </p>
-                                {session.isWebinar && (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#A855F7] text-white text-[10px] font-bold rounded uppercase tracking-wide">
-                                    <Radio className="w-2.5 h-2.5" />
-                                    {t("courseDetail.webinar") || "Webinar"}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex flex-wrap gap-3 text-xs text-[var(--color-text-secondary)] mt-1">
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3" />
-                                  {formatDate(session.scheduledAt)}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  {formatTime(session.scheduledAt)}
-                                </span>
-                                <span>
-                                  {session.durationMinutes}{" "}
-                                  {t("calendar.mins")}
-                                </span>
-                              </div>
-                              {/* Webinar state machine for enrolled students:
-                                   - registered + within 15 min of start OR live:
-                                       Join Webinar button → opens personal Zoom join URL
-                                   - registered + more than 15 min away:
-                                       countdown timer "Webinar starts in X"
-                                   - not registered + scheduled:
-                                       Register & join button → opens Zoom form
-                                   - not registered + live/ended/missed:
-                                       "Webinar in progress" / "Webinar ended" label
-                                  Meeting join: only inside the 15-min pre-start window. */}
-                              {session.isWebinar && session.studentWebinarJoinUrl && (session.status === "scheduled" || session.status === "live") ? (
-                                isJoinable(session.scheduledAt) || session.status === "live" ? (
-                                  <a
-                                    href={session.studentWebinarJoinUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-md bg-[#16A34A] hover:bg-[#15803D] text-white text-xs font-medium transition-colors"
-                                  >
-                                    <Radio className="w-3.5 h-3.5" />
-                                    {locale === "ar" ? "انضم للندوة" : "Join Webinar"}
-                                  </a>
-                                ) : (
-                                  <p className="inline-flex items-center gap-1 mt-2 text-xs text-[#7C3AED]">
-                                    <Clock className="w-3 h-3" />
-                                    {locale === "ar"
-                                      ? `تبدأ الندوة خلال ${formatTimeUntil(session.scheduledAt)}`
-                                      : `Webinar starts in ${formatTimeUntil(session.scheduledAt)}`}
-                                  </p>
-                                )
-                              ) : session.isWebinar && session.status === "scheduled" ? (
-                                <button
-                                  type="button"
-                                  onClick={() => handleJoinZoom(session.id)}
-                                  disabled={joiningSessionId === session.id}
-                                  className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-md bg-[#A855F7] hover:bg-[#9333EA] text-white text-xs font-medium disabled:opacity-60 transition-colors"
-                                >
-                                  {joiningSessionId === session.id ? (
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                  ) : (
-                                    <Radio className="w-3.5 h-3.5" />
-                                  )}
-                                  {t("courseDetail.registerForWebinar") || "Register for Webinar"}
-                                </button>
-                              ) : session.isWebinar ? (
-                                <p className="mt-2 inline-flex items-center gap-1 text-xs text-[var(--color-text-secondary)] opacity-70">
-                                  <Radio className="w-3 h-3" />
-                                  {session.status === "live"
-                                    ? (locale === "ar" ? "الندوة جارية" : "Webinar in progress")
-                                    : (locale === "ar" ? "انتهت الندوة" : "Webinar ended")}
-                                </p>
-                              ) : session.zoomLink ? (
-                                isJoinable(session.scheduledAt) ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleJoinZoom(session.id)}
-                                    disabled={joiningSessionId === session.id}
-                                    className="inline-flex items-center gap-1 mt-2 text-xs hover:underline disabled:opacity-60 text-[var(--color-primary)]"
-                                  >
-                                    {joiningSessionId === session.id ? (
-                                      <Loader2 className="w-3 h-3 animate-spin" />
-                                    ) : (
-                                      <Video className="w-3 h-3" />
-                                    )}
-                                    {t("courseDetail.joinSession")}
-                                  </button>
-                                ) : (
-                                  <p className="inline-flex items-center gap-1 mt-2 text-xs text-[var(--color-text-secondary)] opacity-70">
-                                    <Clock className="w-3 h-3" />
-                                    {t("courseDetail.joinAvailableIn", { time: formatTimeUntil(session.scheduledAt) })}
-                                  </p>
-                                )
-                              ) : null}
-                              {session.venueAddress && (
-                                <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
-                                  <MapPin className="w-3 h-3 inline mr-1" />
-                                  {session.venueAddress}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Past Lectures — merged Attendance History + Past Sessions.
-                      Each row shows the lecture metadata, the student's attendance
-                      badge / presence %, and a Recording button. Collapsed by
-                      default, paginated 10 at a time via "Show more". */}
-                  {data.course.deliveryType !== "self-paced" && completedSessions.length > 0 && (
-                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
-                      <button
-                        type="button"
-                        onClick={() => setShowPastLectures((v) => !v)}
-                        className={`w-full flex items-center justify-between gap-2 ${showPastLectures ? "mb-4" : ""}`}
-                        aria-expanded={showPastLectures}
-                      >
-                        <div className="flex items-center gap-3">
-                          <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)]">
-                            {t("courseDetail.pastSessions")} ({completedSessions.length})
-                          </h2>
-                          {data.attendanceSummary && (
-                            <span className="text-xs text-[var(--color-text-secondary)]">
-                              {data.attendanceSummary.attended}/{data.attendanceSummary.total} ({data.attendanceSummary.percentage}%)
-                            </span>
-                          )}
-                        </div>
-                        {showPastLectures ? (
-                          <ChevronUp className="w-5 h-5 text-[var(--color-text-secondary)]" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 text-[var(--color-text-secondary)]" />
-                        )}
-                      </button>
-
-                      {showPastLectures && (
-                        <>
-                          {/* Marked by info — shown once if any record carries it */}
-                          {(() => {
-                            const marker = data.attendanceRecords?.find((r) => (r as any).markedByName);
-                            if (!marker) return null;
-                            const role = (marker as any).markedByRole;
-                            const roleLabel =
-                              role === "TEACHING_ASSISTANT"
-                                ? "TA"
-                                : role === "INSTRUCTOR"
-                                  ? "Instructor"
-                                  : role || "System";
-                            return (
-                              <div className="mb-3 px-3 py-2 bg-[var(--color-border-subtle)] rounded-lg text-[10px] text-[var(--color-text-secondary)]">
-                                Marked by:{" "}
-                                <span className="font-medium">{(marker as any).markedByName}</span>{" "}
-                                ({roleLabel})
-                              </div>
-                            );
-                          })()}
-
-                          <div className="space-y-3">
-                            {completedSessions.slice(0, pastPage).map((session) => {
-                              const attRecord = data.attendanceRecords?.find((r) => r.sessionId === session.id);
-                              const badge = attRecord ? getAttendanceStatusBadge(attRecord.status) : null;
-                              const wasAbsent = attRecord?.status === "absent";
-                              const isPresentish =
-                                attRecord?.status === "present" || attRecord?.status === "late";
-
-                              return (
-                                <div
-                                  key={session.id}
-                                  className={`flex items-start gap-3 p-3 rounded-lg border ${wasAbsent ? "border-[#FCA5A5] bg-[#FEF2F2]" : "border-[var(--color-border)]"}`}
-                                >
-                                  <div
-                                    className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${wasAbsent ? "bg-[#FEE2E2]" : isPresentish ? "bg-[#F0FDF4]" : "bg-[var(--color-border-subtle)]"}`}
-                                  >
-                                    {wasAbsent ? (
-                                      <XCircle className="w-5 h-5 text-[#EF4444]" />
-                                    ) : isPresentish ? (
-                                      <CheckCircle2 className="w-5 h-5 text-[#16A34A]" />
-                                    ) : (
-                                      <Clock className="w-5 h-5 text-[var(--color-text-secondary)]" />
-                                    )}
-                                  </div>
-
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">
-                                      {session.title}
-                                    </p>
-                                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-[var(--color-text-secondary)] mt-1">
-                                      <span className="flex items-center gap-1">
-                                        <Calendar className="w-3 h-3" />
-                                        {formatDate(session.scheduledAt)}
-                                      </span>
-                                      <span className="flex items-center gap-1">
-                                        <Clock className="w-3 h-3" />
-                                        {formatTime(session.scheduledAt)}
-                                      </span>
-                                      <span>
-                                        {session.durationMinutes} {t("calendar.mins")}
-                                      </span>
-                                      {attRecord?.joinedAt && (
-                                        <span>
-                                          {t("courseDetail.joinedAt")}: {formatTime(attRecord.joinedAt)}
-                                        </span>
-                                      )}
-                                      {attRecord?.leftAt && (
-                                        <span>
-                                          {t("courseDetail.leftAt")}: {formatTime(attRecord.leftAt)}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                                    <div className="flex items-center gap-2">
-                                      {attRecord?.presencePercent != null && (
-                                        <span
-                                          className={`text-[10px] font-semibold ${attRecord.presencePercent >= 70 ? "text-[#16A34A]" : "text-[#EF4444]"}`}
-                                        >
-                                          {attRecord.presencePercent}%
-                                        </span>
-                                      )}
-                                      {badge && (
-                                        <span
-                                          className={`px-2 py-1 rounded text-[10px] font-medium ${badge.bg} ${badge.text}`}
-                                        >
-                                          {badge.label}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-
-                          {completedSessions.length > pastPage && (
-                            <button
-                              onClick={() => setPastPage((p) => p + 10)}
-                              className="w-full mt-3 py-2 text-xs font-medium text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
-                            >
-                              Show more ({completedSessions.length - pastPage} remaining)
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Missed/Rescheduled Lectures — hidden for self-paced */}
-                  {data.course.deliveryType !== "self-paced" && inactiveSessions.length > 0 && (
-                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
-                      <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-secondary)] mb-4">
-                        Cancelled / Rescheduled Lectures
-                      </h2>
-                      <div className="space-y-3">
-                        {inactiveSessions.map((session) => (
-                          <div key={session.id} className="flex items-start gap-3 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-page)]">
-                            <div className="w-10 h-10 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center flex-shrink-0">
-                              <XCircle className="w-5 h-5 text-[var(--color-text-secondary)]" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">{session.title}</p>
-                              <div className="flex flex-wrap gap-3 text-xs text-[var(--color-text-secondary)] mt-1">
-                                <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{formatDate(session.scheduledAt)}</span>
-                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                                  session.status === "cancelled" ? "bg-[#FEE2E2] text-[#EF4444]"
-                                  : session.status === "missed" ? "bg-[#FEE2E2] text-[#EF4444]"
-                                  : "bg-[#FEF3C7] text-[#D97706]"
-                                }`}>{session.status === "cancelled" ? "Cancelled" : session.status === "missed" ? "Missed" : "Rescheduled"}</span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Assessments */}
+                  {/* Assessments — the "Assessments" stat tile scrolls to
+                      this anchor. The tile is disabled when there are none,
+                      so we don't need an empty-state here. */}
                   {data.assessments.length > 0 && (
-                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
+                    <div id="assessments-section" className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6 scroll-mt-24">
                       <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("courseDetail.assessments")}
                       </h2>

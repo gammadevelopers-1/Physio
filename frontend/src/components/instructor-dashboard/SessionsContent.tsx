@@ -2020,6 +2020,7 @@ const SessionsContent = () => {
     scheduledAt: string;
     registrationUrl: string | null;
     sessionStatus: string;
+    zoomWebinarId: string | null;
   } | null>(null);
   const [webinarCounts, setWebinarCounts] = useState<Record<string, number>>({});
 
@@ -2236,6 +2237,7 @@ const SessionsContent = () => {
       scheduledAt: session.scheduledAt,
       registrationUrl: session.webinarRegistrationUrl || null,
       sessionStatus: session.status,
+      zoomWebinarId: session.zoomWebinarId ?? null,
     });
   };
 
@@ -2253,6 +2255,7 @@ const SessionsContent = () => {
       scheduledAt: session.scheduledAt,
       registrationUrl: session.webinarRegistrationUrl,
       durationMinutes: session.durationMinutes ?? undefined,
+      zoomWebinarId: session.zoomWebinarId ?? null,
       locale,
     });
   };
@@ -2775,6 +2778,7 @@ const SessionsContent = () => {
           sessionTitle={registrantsDrawer.sessionTitle}
           scheduledAt={registrantsDrawer.scheduledAt}
           registrationUrl={registrantsDrawer.registrationUrl}
+          zoomWebinarId={registrantsDrawer.zoomWebinarId}
           sessionStatus={registrantsDrawer.sessionStatus}
           onClose={() => setRegistrantsDrawer(null)}
         />

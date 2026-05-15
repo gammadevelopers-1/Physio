@@ -719,8 +719,34 @@ export class SessionsService {
       );
     }
 
+    // If the date is moving, validate it still falls inside the course's
+    // date range. `localDate` mirrors the create path — it's the user's
+    // YYYY-MM-DD, used to avoid timezone drift when comparing.
+    if (dto.scheduledAt) {
+      const [course] = await db
+        .select({
+          startDate: courses.startDate,
+          endDate: courses.endDate,
+        })
+        .from(courses)
+        .where(eq(courses.id, session.courseId))
+        .limit(1);
+      if (course) {
+        this.validateSessionDateRange(
+          dto.scheduledAt,
+          course.startDate,
+          course.endDate,
+          dto.localDate,
+        );
+      }
+    }
+
+    // `localDate` is a validation-only hint — keep it out of the DB write.
+    const { localDate: _ignoredLocalDate, ...persistedDto } = dto;
+    void _ignoredLocalDate;
+
     const updateData: Record<string, unknown> = {
-      ...dto,
+      ...persistedDto,
       updatedAt: new Date(),
     };
 

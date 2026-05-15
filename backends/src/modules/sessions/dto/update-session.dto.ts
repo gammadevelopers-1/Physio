@@ -29,6 +29,16 @@ export class UpdateSessionDto {
   @IsDateString({}, { message: 'scheduledAt must be a valid ISO date string' })
   scheduledAt?: string;
 
+  /**
+   * The user's local YYYY-MM-DD, sent alongside `scheduledAt` so the
+   * server can validate the lecture date against the course's start/end
+   * dates without timezone drift. Not persisted — used only for the
+   * validation comparison.
+   */
+  @IsOptional()
+  @IsString()
+  localDate?: string;
+
   @IsOptional()
   @IsInt()
   @Min(1)

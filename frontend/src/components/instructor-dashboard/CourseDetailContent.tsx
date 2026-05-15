@@ -768,6 +768,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
     scheduledAt: string;
     registrationUrl: string | null;
     sessionStatus: string;
+    zoomWebinarId: string | null;
   } | null>(null);
   const [webinarCounts, setWebinarCounts] = useState<Record<string, number>>({});
 
@@ -778,6 +779,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       scheduledAt: session.scheduledAt,
       registrationUrl: session.webinarRegistrationUrl || null,
       sessionStatus: session.status,
+      zoomWebinarId: session.zoomWebinarId ?? null,
     });
   };
 
@@ -795,6 +797,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       scheduledAt: session.scheduledAt,
       registrationUrl: session.webinarRegistrationUrl,
       durationMinutes: session.durationMinutes ?? undefined,
+      zoomWebinarId: session.zoomWebinarId ?? null,
       locale,
     });
   };
@@ -2472,6 +2475,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
           sessionTitle={registrantsDrawer.sessionTitle}
           scheduledAt={registrantsDrawer.scheduledAt}
           registrationUrl={registrantsDrawer.registrationUrl}
+          zoomWebinarId={registrantsDrawer.zoomWebinarId}
           sessionStatus={registrantsDrawer.sessionStatus}
           onClose={() => setRegistrantsDrawer(null)}
         />

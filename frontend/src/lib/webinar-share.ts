@@ -1,7 +1,12 @@
 /**
  * Shared helpers for sharing a webinar's public registration link via
- * WhatsApp (and elsewhere). One source of truth so manager + instructor
- * surfaces never drift out of sync.
+ * WhatsApp. One source of truth so manager + instructor surfaces never
+ * drift out of sync.
+ *
+ * The WhatsApp message is ALWAYS bilingual (English block, then divider,
+ * then Arabic block) and ALWAYS uses Riyadh time — by client request, so
+ * the same prefilled text works for any recipient regardless of the
+ * sender's UI locale.
  */
 
 interface ShareOpts {
@@ -9,58 +14,75 @@ interface ShareOpts {
   scheduledAt: string;
   durationMinutes?: number | null;
   registrationUrl: string;
-  locale: string;
+  /**
+   * Zoom webinar ID — surfaced in the message as "Meeting ID" the way
+   * Zoom itself labels it on the registration confirmation page.
+   * Optional: omitted line if the session predates Zoom integration.
+   */
+  zoomWebinarId?: string | null;
+  /**
+   * Kept for backwards-compat at the call sites — the template no
+   * longer branches on it, but pass it anyway so future changes can
+   * pick it up without touching every caller.
+   */
+  locale?: string;
+}
+
+const SUPPORT_PHONE = "920035022";
+
+// Always format in Riyadh time so the message reads the same to any
+// recipient regardless of the manager's browser timezone.
+function formatRiyadh(scheduledAt: string, lang: "en" | "ar"): string {
+  const d = new Date(scheduledAt);
+  return d.toLocaleString(lang === "ar" ? "ar-SA" : "en-US", {
+    timeZone: "Asia/Riyadh",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 }
 
 /**
- * Build a polished, copy-paste-ready WhatsApp message announcing a
- * webinar. Includes title, formatted date/time, duration, and the
- * registration link with a brief instruction.
+ * Build a polished, copy-paste-ready bilingual WhatsApp message
+ * announcing a webinar.
  */
 export function buildWebinarWhatsAppMessage(opts: ShareOpts): string {
-  const isRTL = opts.locale === "ar";
-  const dateObj = new Date(opts.scheduledAt);
-  const formattedDateTime = dateObj.toLocaleString(
-    isRTL ? "ar-SA" : "en-US",
-    {
-      weekday: "long",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    },
-  );
-  const durationLine =
-    opts.durationMinutes && opts.durationMinutes > 0
-      ? isRTL
-        ? `⏱️ المدة: ${opts.durationMinutes} دقيقة\n`
-        : `⏱️ Duration: ${opts.durationMinutes} minutes\n`
-      : "";
+  const enDateTime = formatRiyadh(opts.scheduledAt, "en");
+  const arDateTime = formatRiyadh(opts.scheduledAt, "ar");
 
-  if (isRTL) {
-    return (
-      `🎙️ *دعوة لحضور ندوة عبر Zoom*\n\n` +
-      `📚 *${opts.title}*\n` +
-      `📅 ${formattedDateTime}\n` +
-      durationLine +
-      `\n` +
-      `سجّل مجاناً عبر الرابط التالي:\n` +
-      `${opts.registrationUrl}\n\n` +
-      `يُرجى التسجيل مسبقاً، وستصلك رسالة تأكيد إلى بريدك الإلكتروني تحتوي على رابط الانضمام الشخصي.\n\n` +
-      `نتطلع لرؤيتك! 🌟`
-    );
-  }
-  return (
-    `🎙️ *You're invited to a Zoom Webinar*\n\n` +
-    `📚 *${opts.title}*\n` +
-    `📅 ${formattedDateTime}\n` +
-    durationLine +
-    `\n` +
-    `Register for free here:\n` +
+  const meetingIdLine = opts.zoomWebinarId
+    ? `Meeting ID: ${opts.zoomWebinarId}\n`
+    : "";
+
+  const en =
+    `Hi there,\n` +
+    `You are invited to register for a Zoom webinar\n\n` +
+    `When: ${enDateTime} Riyadh Time\n` +
+    `Topic: ${opts.title}\n\n` +
+    `Register in advance for this webinar:\n` +
     `${opts.registrationUrl}\n\n` +
-    `Please register in advance — you'll receive a confirmation email with your personal join link.\n\n` +
-    `Looking forward to seeing you there! 🌟`
+    `After registering, you will receive a confirmation email containing information about joining the webinar.`;
+
+  const ar =
+    `أهلاً،\n` +
+    `أنت مدعو للتسجيل في ندوة عبر الإنترنت Zoom\n\n` +
+    `الزمان: ${arDateTime} بتوقيت الرياض\n` +
+    `الموضوع: ${opts.title}\n\n` +
+    `يمكنك التسجيل مسبقاً لهذه الندوة عبر الويب:\n` +
+    `${opts.registrationUrl}\n\n` +
+    `بعد التسجيل، ستتلقى رسالة تأكيد بالبريد الإلكتروني تحتوي على معلومات حول الانضمام إلى الندوة عبر الويب.\n\n` +
+    `في حال واجهتكم أي مشكلة، الرجاء التواصل مع الدعم الفني عبر واتس اب على الرقم الموحد:\n` +
+    `${SUPPORT_PHONE}`;
+
+  return (
+    `${en}\n\n` +
+    `---\n\n` +
+    `${ar}\n\n` +
+    `${meetingIdLine}` +
+    `-----------------------------------------------`
   );
 }
 

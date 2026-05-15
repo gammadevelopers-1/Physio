@@ -24,6 +24,9 @@ import {
   AlertTriangle,
   Star,
   Radio,
+  Sparkles,
+  Trophy,
+  ChevronRight,
 } from "lucide-react";
 import ReviewModal, { type ReviewKind } from "./ReviewModal";
 import DashboardSidebar from "./DashboardSidebar";
@@ -130,6 +133,26 @@ const StudentCourseDetailContent = () => {
   }, [data?.course.faqs]);
   const hasFaqs = isZoom && courseFaqs.length > 0;
   const [activeTab, setActiveTab] = useState<"details" | "faqs">("details");
+
+  // Helpers for the new main-column blocks ("What's Next" + Up-Next previews).
+  // All derived from the existing payload — no extra fetch.
+  const nextInProgressModule = useMemo(() => {
+    if (!data?.modules?.length) return null;
+    const sorted = [...data.modules].sort((a, b) => a.orderIndex - b.orderIndex);
+    return sorted.find((m) => !m.isCompleted) ?? null;
+  }, [data?.modules]);
+  const nearestUpcoming = upcomingSessions[0] ?? null;
+  const upcomingPreview = upcomingSessions.slice(0, 2);
+  const inProgressModulesPreview = useMemo(() => {
+    if (!data?.modules?.length) return [];
+    return [...data.modules]
+      .sort((a, b) => a.orderIndex - b.orderIndex)
+      .filter((m) => !m.isCompleted)
+      .slice(0, 2);
+  }, [data?.modules]);
+  const hasLectures =
+    data?.course.deliveryType !== "self-paced" && (data?.sessions?.length ?? 0) > 0;
+  const hasModules = (data?.modules?.length ?? 0) > 0;
 
   const handleJoinZoom = async (sessionId: string) => {
     if (joiningSessionId) return;
@@ -292,10 +315,14 @@ const StudentCourseDetailContent = () => {
                       </div>
                     </div>
 
-                    {/* State-aware primary CTA — opens the /learn workspace,
-                        which now holds Modules + Lectures + Attendance in one
-                        place. Smart-default lands the student in Modules if
-                        any exist, otherwise Lectures. */}
+                    {/* Primary CTA row.
+                        - active:    Start/Continue Learning → /learn (writable)
+                        - completed: Review Course Material → /learn (read-only;
+                                     inside-of-learn guards block joining live
+                                     lectures, taking assessments and marking
+                                     modules complete). When the cert is
+                                     approved, also show View Certificate
+                                     side-by-side. */}
                     {data.enrollment.status === "active" && (
                       <div className="mt-4">
                         <Link
@@ -309,13 +336,16 @@ const StudentCourseDetailContent = () => {
                         </Link>
                       </div>
                     )}
-                    {/* View Certificate — only when the manager has
-                        approved the request. Links to the PUBLIC
-                        verification page so the same URL works whether
-                        the student is signed in or shares it externally. */}
-                    {data.enrollment.status === "completed" &&
-                      data.certificateRequest?.status === "approved" && (
-                        <div className="mt-4">
+                    {data.enrollment.status === "completed" && (
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <Link
+                          href={`/${locale}/dashboard/student/courses/${courseId}/learn`}
+                          className="inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-medium rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] hover:border-[var(--color-primary)] hover:shadow-sm transition-all"
+                        >
+                          <BookOpen className="w-4 h-4" />
+                          {t("courseDetail.reviewCourseMaterial")}
+                        </Link>
+                        {data.certificateRequest?.status === "approved" && (
                           <Link
                             href={`/${locale}/verify/${data.certificateRequest.id}`}
                             className="inline-flex items-center justify-center gap-2 px-6 py-2.5 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
@@ -323,8 +353,9 @@ const StudentCourseDetailContent = () => {
                             <Award className="w-4 h-4" />
                             {locale === "ar" ? "عرض الشهادة" : "View Certificate"}
                           </Link>
-                        </div>
-                      )}
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Course Description + (optional) FAQs tab — FAQs tab only
@@ -538,6 +569,295 @@ const StudentCourseDetailContent = () => {
                        here — it's the off-ramp the stat tile scrolls to. */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   <div className="lg:col-span-2 space-y-4">
+
+                  {/* ── "What's Next" smart hero card ──────────────────────
+                       Adapts to course state so the main column always opens
+                       with a clear next-action — not a guttered empty space.
+                       Lightly duplicates the right-rail Live Lecture for
+                       zoom-active courses (different layout, same intent). */}
+                  {data.enrollment.status === "completed" ? (
+                    <div className="rounded-xl border border-[#FDE68A] bg-gradient-to-br from-[#FFFBEB] to-white p-5 sm:p-6">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#FEF3C7] flex items-center justify-center flex-shrink-0">
+                          <Trophy className="w-5 h-5 text-[#D97706]" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-[#92400E] mb-1">
+                            {locale === "ar" ? "اكتملت الدورة" : "Course Completed"}
+                          </p>
+                          <h2 className="text-base sm:text-lg font-bold text-[var(--color-text-primary)] mb-1">
+                            {locale === "ar"
+                              ? `تهانينا على إكمال ${isRTL && data.course.titleAr ? data.course.titleAr : data.course.title}`
+                              : `Congrats on completing ${data.course.title}`}
+                          </h2>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--color-text-secondary)]">
+                            {data.enrollment.completedAt && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {formatDate(data.enrollment.completedAt)}
+                              </span>
+                            )}
+                            {data.course.isCmeAccredited && (
+                              <span className="flex items-center gap-1 text-[#D4A520] font-medium">
+                                <Award className="w-3 h-3" />
+                                {t("courseDetail.cmeHours", { hours: data.course.cmeHours ?? 0 })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : nearestUpcoming ? (
+                    <Link
+                      href={`/${locale}/dashboard/student/courses/${courseId}/learn?tab=lectures&session=${nearestUpcoming.id}`}
+                      className={`block rounded-xl border p-5 sm:p-6 transition-all hover:shadow-md ${
+                        nearestUpcoming.isWebinar
+                          ? "border-[#E9D5FF] bg-gradient-to-br from-[#FAF5FF] to-white hover:border-[#A855F7]"
+                          : "border-[var(--color-border)] bg-gradient-to-br from-[var(--color-surface-card)] to-[var(--color-surface-page)] hover:border-[var(--color-primary)]"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                          nearestUpcoming.isWebinar ? "bg-[#F3E8FF]" : "bg-[#EEF4FE]"
+                        }`}>
+                          {nearestUpcoming.isWebinar ? (
+                            <Radio className="w-5 h-5 text-[#A855F7]" />
+                          ) : (
+                            <Sparkles className="w-5 h-5 text-[var(--color-primary)]" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-1">
+                            {isJoinable(nearestUpcoming.scheduledAt) || nearestUpcoming.status === "live"
+                              ? (locale === "ar" ? "ابدأ الآن" : "Happening now")
+                              : (locale === "ar" ? "التالي في جدولك" : "Up Next")}
+                          </p>
+                          <h2 className="text-base sm:text-lg font-bold text-[var(--color-text-primary)] mb-1 truncate">
+                            {nearestUpcoming.title}
+                          </h2>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--color-text-secondary)]">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {formatDate(nearestUpcoming.scheduledAt)}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {isJoinable(nearestUpcoming.scheduledAt) || nearestUpcoming.status === "live"
+                                ? (locale === "ar" ? "جاهز للانضمام" : "Ready to join")
+                                : (locale === "ar"
+                                  ? `يبدأ خلال ${formatTimeUntil(nearestUpcoming.scheduledAt)}`
+                                  : `Starts in ${formatTimeUntil(nearestUpcoming.scheduledAt)}`)}
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight className={`w-5 h-5 text-[var(--color-text-secondary)] flex-shrink-0 mt-1 ${isRTL ? "rotate-180" : ""}`} />
+                      </div>
+                    </Link>
+                  ) : nextInProgressModule ? (
+                    <Link
+                      href={`/${locale}/dashboard/student/courses/${courseId}/learn?tab=modules&module=${nextInProgressModule.id}`}
+                      className="block rounded-xl border border-[var(--color-border)] bg-gradient-to-br from-[var(--color-surface-card)] to-[var(--color-surface-page)] p-5 sm:p-6 hover:border-[var(--color-primary)] hover:shadow-md transition-all"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#EEF4FE] flex items-center justify-center flex-shrink-0">
+                          <BookOpen className="w-5 h-5 text-[var(--color-primary)]" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-1">
+                            {data.enrollment.progress > 0
+                              ? (locale === "ar" ? "تابع من حيث توقفت" : "Pick up where you left off")
+                              : (locale === "ar" ? "ابدأ الآن" : "Get started")}
+                          </p>
+                          <h2 className="text-base sm:text-lg font-bold text-[var(--color-text-primary)] mb-1 truncate">
+                            {isRTL && nextInProgressModule.titleAr
+                              ? nextInProgressModule.titleAr
+                              : nextInProgressModule.title}
+                          </h2>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--color-text-secondary)]">
+                            <span className="capitalize">{nextInProgressModule.type}</span>
+                            {nextInProgressModule.durationMinutes && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {nextInProgressModule.durationMinutes} {t("calendar.mins")}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <ChevronRight className={`w-5 h-5 text-[var(--color-text-secondary)] flex-shrink-0 mt-1 ${isRTL ? "rotate-180" : ""}`} />
+                      </div>
+                    </Link>
+                  ) : (
+                    <Link
+                      href={`/${locale}/dashboard/student/courses/${courseId}/learn`}
+                      className="block rounded-xl border border-[var(--color-border)] bg-gradient-to-br from-[var(--color-surface-card)] to-[var(--color-surface-page)] p-5 sm:p-6 hover:border-[var(--color-primary)] hover:shadow-md transition-all"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#EEF4FE] flex items-center justify-center flex-shrink-0">
+                          <Sparkles className="w-5 h-5 text-[var(--color-primary)]" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-1">
+                            {locale === "ar" ? "مرحباً بك في الدورة" : "Welcome to your course"}
+                          </p>
+                          <h2 className="text-base sm:text-lg font-bold text-[var(--color-text-primary)] mb-1">
+                            {locale === "ar" ? "افتح مساحة التعلم لاستكشاف المحتوى" : "Open the workspace to explore content"}
+                          </h2>
+                        </div>
+                        <ChevronRight className={`w-5 h-5 text-[var(--color-text-secondary)] flex-shrink-0 mt-1 ${isRTL ? "rotate-180" : ""}`} />
+                      </div>
+                    </Link>
+                  )}
+
+                  {/* ── Up Next previews — adaptive 1 or 2 column grid ─────
+                       Two compact cards: next lectures + next modules.
+                       Each hidden when not applicable (zoom courses with no
+                       modules hide the Modules card; self-paced hides the
+                       Lectures card; both hidden = entire row skipped). */}
+                  {(hasLectures && upcomingPreview.length > 0) || (hasModules && inProgressModulesPreview.length > 0) ? (
+                    <div className={`grid grid-cols-1 ${
+                      (hasLectures && upcomingPreview.length > 0) && (hasModules && inProgressModulesPreview.length > 0)
+                        ? "md:grid-cols-2"
+                        : ""
+                    } gap-4`}>
+                      {hasLectures && upcomingPreview.length > 0 && (
+                        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+                              {locale === "ar" ? "المحاضرات القادمة" : "Upcoming Lectures"}
+                            </h3>
+                            <Link
+                              href={`/${locale}/dashboard/student/courses/${courseId}/learn?tab=lectures`}
+                              className="text-[11px] font-medium text-[var(--color-primary)] hover:underline inline-flex items-center gap-0.5"
+                            >
+                              {locale === "ar" ? "عرض الكل" : "View all"}
+                              <ChevronRight className={`w-3 h-3 ${isRTL ? "rotate-180" : ""}`} />
+                            </Link>
+                          </div>
+                          <div className="space-y-2">
+                            {upcomingPreview.map((s) => (
+                              <Link
+                                key={s.id}
+                                href={`/${locale}/dashboard/student/courses/${courseId}/learn?tab=lectures&session=${s.id}`}
+                                className="flex items-center gap-2.5 p-2 -mx-2 rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
+                              >
+                                <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${
+                                  s.isWebinar ? "bg-[#FAF5FF]" : "bg-[#FFFBEB]"
+                                }`}>
+                                  {s.isWebinar ? (
+                                    <Radio className="w-3.5 h-3.5 text-[#A855F7]" />
+                                  ) : (
+                                    <Video className="w-3.5 h-3.5 text-[#D4A520]" />
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium text-[var(--color-text-primary)] truncate">{s.title}</p>
+                                  <p className="text-[10px] text-[var(--color-text-secondary)]">
+                                    {formatDate(s.scheduledAt)} · {formatTimeUntil(s.scheduledAt)}
+                                  </p>
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {hasModules && inProgressModulesPreview.length > 0 && (
+                        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+                              {locale === "ar" ? "وحدات قيد التقدم" : "Continue Modules"}
+                            </h3>
+                            <Link
+                              href={`/${locale}/dashboard/student/courses/${courseId}/learn?tab=modules`}
+                              className="text-[11px] font-medium text-[var(--color-primary)] hover:underline inline-flex items-center gap-0.5"
+                            >
+                              {locale === "ar" ? "عرض الكل" : "View all"}
+                              <ChevronRight className={`w-3 h-3 ${isRTL ? "rotate-180" : ""}`} />
+                            </Link>
+                          </div>
+                          <div className="space-y-2">
+                            {inProgressModulesPreview.map((m) => (
+                              <Link
+                                key={m.id}
+                                href={`/${locale}/dashboard/student/courses/${courseId}/learn?tab=modules&module=${m.id}`}
+                                className="flex items-center gap-2.5 p-2 -mx-2 rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
+                              >
+                                <div className="w-7 h-7 rounded-md bg-[#EEF4FE] flex items-center justify-center flex-shrink-0">
+                                  <BookOpen className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium text-[var(--color-text-primary)] truncate">
+                                    {isRTL && m.titleAr ? m.titleAr : m.title}
+                                  </p>
+                                  <p className="text-[10px] text-[var(--color-text-secondary)] capitalize">
+                                    {m.type}
+                                    {m.durationMinutes ? ` · ${m.durationMinutes}m` : ""}
+                                  </p>
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+
+                  {/* ── Inline Reviews block — completed + reviews pending.
+                       Compact: one card covering BOTH course + (optional)
+                       instructor review with the existing combined modal. */}
+                  {data.enrollment.status === "completed" &&
+                    reviewStatus &&
+                    !reviewStatus.allRequiredSubmitted && (
+                      <div className="rounded-xl border border-[#FDE68A] bg-[#FFFBEB] p-4 sm:p-5">
+                        <div className="flex items-start gap-3 mb-3">
+                          <div className="w-9 h-9 rounded-lg bg-[#FEF3C7] flex items-center justify-center flex-shrink-0">
+                            <Star className="w-4 h-4 text-[#D97706]" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-0.5">
+                              {locale === "ar" ? "شاركنا تجربتك" : "Share your experience"}
+                            </h3>
+                            <p className="text-xs text-[var(--color-text-secondary)]">
+                              {locale === "ar"
+                                ? "أكمل مراجعتك لطلب الشهادة"
+                                : "Complete your review to unlock your certificate"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3 text-xs">
+                          <span className="flex items-center gap-1.5">
+                            {reviewStatus.courseReviewSubmitted ? (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A]" />
+                            ) : (
+                              <Circle className="w-3.5 h-3.5 text-[#D97706]" />
+                            )}
+                            <span className={reviewStatus.courseReviewSubmitted ? "text-[var(--color-text-secondary)]" : "font-medium text-[var(--color-text-primary)]"}>
+                              {locale === "ar" ? "مراجعة الدورة" : "Course review"}
+                            </span>
+                          </span>
+                          {reviewStatus.instructorRequired && (
+                            <span className="flex items-center gap-1.5">
+                              {reviewStatus.instructorReviewSubmitted ? (
+                                <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A]" />
+                              ) : (
+                                <Circle className="w-3.5 h-3.5 text-[#D97706]" />
+                              )}
+                              <span className={reviewStatus.instructorReviewSubmitted ? "text-[var(--color-text-secondary)]" : "font-medium text-[var(--color-text-primary)]"}>
+                                {locale === "ar" ? "مراجعة المدرب" : "Instructor review"}
+                              </span>
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setReviewModalOpen(true)}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-[#B45309] text-white hover:bg-[#92400E] transition-colors cursor-pointer"
+                        >
+                          <Star className="w-3.5 h-3.5" />
+                          {locale === "ar" ? "إرسال المراجعة" : "Submit Review"}
+                        </button>
+                      </div>
+                    )}
 
                   {/* Assessments — the "Assessments" stat tile scrolls to
                       this anchor. The tile is disabled when there are none,

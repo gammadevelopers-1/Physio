@@ -2027,6 +2027,7 @@
       "startRetake": "Start Retake",
       "startLearning": "Start Learning",
       "continueLearning": "Continue Learning",
+      "reviewCourseMaterial": "Review Course Material",
       "complete": "complete",
       "cmeHours": "{hours} CME Hours",
       "attendance": "Attendance",

@@ -770,6 +770,10 @@ const CourseLearningContent = () => {
   }, []);
 
   const handleMarkComplete = async (moduleId: string) => {
+    // Completed enrollment is read-only — block the video auto-complete
+    // callback from silently posting progress when a returning student
+    // re-watches material after the course wrapped.
+    if (data?.enrollment?.status === "completed") return;
     setCompletingModule(moduleId);
     try {
       await studentApi.updateProgress(courseId, { moduleId, status: "completed" });

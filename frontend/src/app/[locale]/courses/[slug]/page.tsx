@@ -10,7 +10,6 @@ import type { SideLoadedData } from "@/lib/strapi/types";
 import { buildMetadata, SITE_URL } from "@/lib/seo";
 import JsonLd from "@/components/seo/JsonLd";
 import { courseLD, type CourseInstructorLD } from "@/lib/structured-data";
-import Breadcrumb from "@/components/shared/Breadcrumb";
 
 const BACKEND_API_URL =
   process.env.BACKEND_API_URL || "http://physio-backend:8080/api";
@@ -148,9 +147,6 @@ export default async function CourseDetailPage({
       })
     : null;
 
-  const courseTitleForCrumb =
-    (locale === "ar" && courseForLd?.titleAr ? courseForLd.titleAr : courseForLd?.title) || "";
-
   return (
     <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
       {courseLdJson && <JsonLd id="ld-course" data={courseLdJson} />}
@@ -158,16 +154,9 @@ export default async function CourseDetailPage({
 
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
 
-      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 pt-4">
-        <Breadcrumb
-          locale={locale}
-          crumbs={[
-            { label: locale === "ar" ? "الرئيسية" : "Home", href: `/${locale}` },
-            { label: locale === "ar" ? "الدورات" : "Courses", href: `/${locale}/courses` },
-            { label: courseTitleForCrumb || (locale === "ar" ? "الدورة" : "Course") },
-          ]}
-        />
-      </div>
+      {/* Breadcrumb is rendered inside CourseDetailContent (icon variant
+          tuned to the hero), so this wrapper deliberately omits the
+          duplicate page-level <Breadcrumb /> we used to render here. */}
 
       <CourseDetailContent
         noReviewsText={courseDetailPage?.noReviewsText || undefined}

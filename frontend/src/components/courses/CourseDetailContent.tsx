@@ -639,6 +639,28 @@ const CourseDetailContent = ({
     );
   };
 
+  // Enrollment deadline: always render in Riyadh time + label it. The
+  // manager picks it in Riyadh tz (see riyadh-time.ts) and a viewer in
+  // any other zone would otherwise see a shifted time on this public
+  // page. Keeping it canonical removes the ambiguity.
+  const formatDeadline = (dateStr: string | null) => {
+    if (!dateStr) return "—";
+    const formatted = new Date(dateStr).toLocaleString(
+      locale === "ar" ? "ar-SA" : "en-US",
+      {
+        timeZone: "Asia/Riyadh",
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      },
+    );
+    const suffix = locale === "ar" ? "بتوقيت الرياض" : "Riyadh time";
+    return `${formatted} (${suffix})`;
+  };
+
   // Delivery type label
   const getDeliveryLabel = () => {
     if (dt === "zoom") return isRTL ? "عبر الإنترنت" : "Live Online";
@@ -1404,7 +1426,7 @@ const CourseDetailContent = ({
                         <Calendar className="w-5 h-5 text-[var(--color-text-secondary)] mt-0.5" />
                         <div className={isRTL ? "text-right" : "text-left"}>
                           <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{t("courseDetails.registrationDeadline")}</p>
-                          <p className="text-sm text-[var(--color-text-secondary)]">{formatDate(apiCourse.enrollmentDeadline)}</p>
+                          <p className="text-sm text-[var(--color-text-secondary)]">{formatDeadline(apiCourse.enrollmentDeadline)}</p>
                         </div>
                       </div>
                     )}
@@ -1710,8 +1732,12 @@ const CourseDetailContent = ({
           <div className="max-w-[1200px] mx-auto">
             {(() => {
               const defaultOrder = ["overview", "objectives", "instructor", "contents", "requirements", "faqs", "reviews"];
-              const order = (apiCourse.sectionsOrder && apiCourse.sectionsOrder.length > 0)
-                ? apiCourse.sectionsOrder
+              // Honour the manager's saved ordering, but append any default
+              // sections that aren't in it yet (e.g. courses saved before
+              // we added "instructor" / "faqs" still get those blocks).
+              const saved = apiCourse.sectionsOrder ?? [];
+              const order = saved.length > 0
+                ? [...saved, ...defaultOrder.filter((k) => !saved.includes(k))]
                 : defaultOrder;
               const sectionMap: Record<string, React.ReactNode> = {
                 overview: <div key="overview">{renderOverview(false)}</div>,
@@ -2076,8 +2102,9 @@ const CourseDetailContent = ({
 
           {(() => {
             const defaultOrder = ["overview", "objectives", "instructor", "contents", "requirements", "faqs", "reviews"];
-            const order = (apiCourse.sectionsOrder && apiCourse.sectionsOrder.length > 0)
-              ? apiCourse.sectionsOrder
+            const saved = apiCourse.sectionsOrder ?? [];
+            const order = saved.length > 0
+              ? [...saved, ...defaultOrder.filter((k) => !saved.includes(k))]
               : defaultOrder;
             const sectionMap: Record<string, React.ReactNode> = {
               overview: <div key="overview">{renderOverview(true)}</div>,

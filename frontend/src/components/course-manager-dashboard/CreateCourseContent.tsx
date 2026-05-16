@@ -1184,6 +1184,9 @@ const CreateCourseContent = () => {
                       <div>
                         <label htmlFor="enrollment-deadline" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                           {t("createCourse.enrollmentDeadlineLabel")}
+                          <span className="ms-1 text-xs text-[var(--color-text-secondary)] font-normal">
+                            ({locale === "ar" ? "بتوقيت الرياض" : "Riyadh time"})
+                          </span>
                         </label>
                         <DateTimePicker
                           id="enrollment-deadline"

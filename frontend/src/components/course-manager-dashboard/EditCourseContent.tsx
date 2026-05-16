@@ -88,7 +88,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
   const [enrollmentDeadline, setEnrollmentDeadline] = useState("");
   const [language, setLanguage] = useState("en");
   const [showContents, setShowContents] = useState(true);
-  const [sectionsOrder, setSectionsOrder] = useState<string[]>(["overview", "objectives", "contents", "requirements", "reviews"]);
+  const [sectionsOrder, setSectionsOrder] = useState<string[]>(["overview", "objectives", "instructor", "contents", "requirements", "faqs", "reviews"]);
   const [visibleOnPublicSite, setVisibleOnPublicSite] = useState(true);
 
   // Per-course SEO overrides (collapsed by default — empty values fall back
@@ -189,7 +189,13 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
         const savedOrder = (courseData as any).sectionsOrder;
         if (Array.isArray(savedOrder) && savedOrder.length > 0) {
-          setSectionsOrder(savedOrder);
+          // Honour the saved order, but append any newly-introduced
+          // sections (e.g. "instructor", "faqs") that didn't exist when
+          // the course was last saved. Without this, an existing course
+          // would permanently miss those blocks on the public page.
+          const defaults = ["overview", "objectives", "instructor", "contents", "requirements", "faqs", "reviews"];
+          const merged = [...savedOrder, ...defaults.filter((k) => !savedOrder.includes(k))];
+          setSectionsOrder(merged);
         }
 
         if (courseData.startDate) {
@@ -935,8 +941,10 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                           const labels: Record<string, string> = {
                             overview: t("createCourse.sectionOverview"),
                             objectives: t("createCourse.sectionObjectives"),
+                            instructor: t("createCourse.sectionInstructor"),
                             contents: t("createCourse.sectionContents"),
                             requirements: t("createCourse.sectionRequirements"),
+                            faqs: t("createCourse.sectionFaqs"),
                             reviews: t("createCourse.sectionReviews"),
                           };
                           const moveUp = () => {
@@ -1209,6 +1217,9 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                     <div>
                       <label htmlFor="edit-enrollment-deadline" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("createCourse.enrollmentDeadlineLabel")}
+                        <span className="ms-1 text-xs text-[var(--color-text-secondary)] font-normal">
+                          ({locale === "ar" ? "بتوقيت الرياض" : "Riyadh time"})
+                        </span>
                       </label>
                       <DateTimePicker
                         id="edit-enrollment-deadline"

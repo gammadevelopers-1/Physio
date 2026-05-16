@@ -2014,25 +2014,11 @@ export class CoursesService {
       }
     }
 
-    // Must have at least 1 session — only enforced at ACTIVATION, not at
-    // review-submission time. Instructors are allowed to hand off the
-    // course shell for managerial review before any lectures have been
-    // scheduled; sessions can be added later, but the manager still can't
-    // publish a non-self-paced course with zero sessions to students.
-    if (
-      context === 'activation' &&
-      courseDetail.deliveryType !== 'self-paced'
-    ) {
-      const sessionCount = await db
-        .select({ count: sql<number>`count(*)`.mapWith(Number) })
-        .from(sessions)
-        .where(eq(sessions.courseId, courseId));
-      if (sessionCount[0].count === 0) {
-        throw new BadRequestException(
-          `Course must have at least one session before ${label}`,
-        );
-      }
-    }
+    // Note: no minimum-session check. Both review submission and
+    // activation/approval allow zoom/onsite/blended courses with zero
+    // scheduled lectures — lectures can be added later by the instructor
+    // or manager. The card shows the current lecture count so a manager
+    // can choose to wait before approving if they want.
 
     if (!courseDetail.startDate || !courseDetail.endDate) {
       throw new BadRequestException(

@@ -68,6 +68,13 @@ export interface CreateZoomWebinarParams {
   /** Instructor / manager email. Webinar is created under their account if licensed. */
   hostEmail?: string;
   recordingEnabled?: boolean;
+  /**
+   * Optional description shown on the Zoom-hosted registration page,
+   * directly below the topic. We use this to surface the parent course
+   * name so registrants see the broader context (e.g. "Part of: …").
+   * Max ~2000 chars per Zoom API.
+   */
+  agenda?: string;
 }
 
 export interface CreateZoomWebinarResult {

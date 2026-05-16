@@ -16,6 +16,7 @@ export * from './user-notifications';
 // Course schemas
 export * from './courses';
 export * from './course-modules';
+export * from './module-completions';
 
 // Session schemas
 export * from './sessions';

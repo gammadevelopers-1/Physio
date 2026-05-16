@@ -158,6 +158,39 @@ export class ReportsController {
     return new StreamableFile(result.buffer);
   }
 
+  // ─── 4b. Webinar Registrants Report ────────────────────────
+
+  /**
+   * GET /instructor/reports/webinar-registrants
+   * Query: ?courseId, ?sessionId, ?format=csv|pdf|xlsx, ?tz
+   *
+   * Returns every webinar registrant across the user's accessible
+   * courses, with both registration + attendance fields. Mirrors the
+   * per-webinar CSV download in the registrants drawer, but rolled up
+   * so a manager can audit all webinars at once.
+   */
+  @Get('webinar-registrants')
+  async getWebinarRegistrantsReport(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('courseId') courseId?: string,
+    @Query('sessionId') sessionId?: string,
+    @Query('format') format?: string,
+    @Query('tz') tz?: string,
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<StreamableFile> {
+    const result = await this.reportsService.generateWebinarRegistrantsReport(
+      user,
+      { courseId, sessionId, format, tz },
+    );
+
+    res!.set({
+      'Content-Type': result.contentType,
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
+    });
+
+    return new StreamableFile(result.buffer);
+  }
+
   // ─── 5. Satisfaction Report ────────────────────────────────
 
   /**

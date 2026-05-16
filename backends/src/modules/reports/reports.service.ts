@@ -17,6 +17,7 @@ import {
   users,
   scheduledReports,
   courseAssistants,
+  webinarRegistrations,
 } from '../../database/schema';
 import { courseMaterials } from '../../database/schema/course-materials';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -801,6 +802,122 @@ export class ReportsService {
     }
 
     return this.formatReport('CME Eligibility Report', headers, rows, format, metadata);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // ─── Webinar Registrants Report ───────────────────────────
+  // ═══════════════════════════════════════════════════════════
+
+  /**
+   * Export every webinar registrant the user can see — across all their
+   * courses (or scoped to a single course / single session). Same rows
+   * the manager's in-drawer "Download CSV" button surfaces, but rolled up
+   * for the whole catalogue so they can pull a single audit-friendly file.
+   */
+  async generateWebinarRegistrantsReport(
+    user: AuthenticatedUser,
+    params: { courseId?: string; sessionId?: string; format?: string; tz?: string },
+  ): Promise<ReportResult> {
+    const format = this.validateFormat(params.format);
+    const userTz = params.tz || TZ;
+    this.activeTz = userTz;
+    const courseIds = await this.resolveCourseIds(user, params.courseId);
+    const metadata = await this.buildMetadata(user, params.courseId);
+
+    const headers = [
+      'Course',
+      'Webinar',
+      'Webinar Date',
+      'First Name',
+      'Last Name',
+      'Email',
+      'Phone',
+      'National ID / Iqama',
+      'SCFHS Number',
+      'Source',
+      'Registration Status',
+      'Registered At',
+      'Attended',
+      'Joined At',
+      'Left At',
+      'Attended Duration (min)',
+    ];
+
+    if (courseIds.length === 0) {
+      return this.formatReport(
+        'Webinar Registrants Report',
+        headers,
+        [],
+        format,
+        metadata,
+      );
+    }
+
+    const conditions: any[] = [
+      inArray(sessions.courseId, courseIds),
+      eq(sessions.isWebinar, true),
+    ];
+    if (params.sessionId) {
+      conditions.push(eq(sessions.id, params.sessionId));
+    }
+
+    const rowsData = await db
+      .select({
+        courseTitle: courses.title,
+        sessionTitle: sessions.title,
+        scheduledAt: sessions.scheduledAt,
+        firstName: webinarRegistrations.firstName,
+        lastName: webinarRegistrations.lastName,
+        email: webinarRegistrations.email,
+        phone: webinarRegistrations.phone,
+        nationalId: webinarRegistrations.nationalId,
+        scfhsNumber: webinarRegistrations.scfhsNumber,
+        userId: webinarRegistrations.userId,
+        status: webinarRegistrations.status,
+        registeredAt: webinarRegistrations.createdAt,
+        attended: webinarRegistrations.attended,
+        joinedAt: webinarRegistrations.joinedAt,
+        leftAt: webinarRegistrations.leftAt,
+        attendedMin: webinarRegistrations.attendedDurationMinutes,
+      })
+      .from(webinarRegistrations)
+      .innerJoin(sessions, eq(webinarRegistrations.sessionId, sessions.id))
+      .innerJoin(courses, eq(sessions.courseId, courses.id))
+      .where(and(...conditions))
+      .orderBy(
+        asc(courses.title),
+        asc(sessions.scheduledAt),
+        asc(webinarRegistrations.createdAt),
+      );
+
+    const fmtNullable = (d: Date | null) =>
+      d ? this.formatTimestamp(d) : '';
+    const rows: string[][] = rowsData.map((r) => [
+      r.courseTitle ?? '',
+      r.sessionTitle ?? '',
+      this.formatTimestamp(r.scheduledAt),
+      r.firstName ?? '',
+      r.lastName ?? '',
+      r.email ?? '',
+      r.phone ?? '',
+      r.nationalId ?? '',
+      r.scfhsNumber ?? '',
+      r.userId ? 'Student' : 'External',
+      r.status ?? '',
+      this.formatTimestamp(r.registeredAt),
+      r.attended ? 'Yes' : 'No',
+      fmtNullable(r.joinedAt),
+      fmtNullable(r.leftAt),
+      String(r.attendedMin ?? 0),
+    ]);
+
+    return this.formatReport(
+      'Webinar Registrants Report',
+      headers,
+      rows,
+      format,
+      metadata,
+    );
   }
 
   // ═══════════════════════════════════════════════════════════

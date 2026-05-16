@@ -522,6 +522,7 @@ const SessionsContent = () => {
     scheduledAt: string;
     sessionStatus: string;
     zoomWebinarId: string | null;
+    courseName: string | null;
   } | null>(null);
   const [webinarCounts, setWebinarCounts] = useState<Record<string, { registered: number; attended: number }>>({});
 
@@ -593,6 +594,7 @@ const SessionsContent = () => {
     url: string | null | undefined,
     durationMinutes?: number | null,
     zoomWebinarId?: string | null,
+    courseName?: string | null,
   ) => {
     if (!url) return;
     openWebinarWhatsAppShare({
@@ -601,6 +603,7 @@ const SessionsContent = () => {
       registrationUrl: url,
       durationMinutes: durationMinutes ?? undefined,
       zoomWebinarId: zoomWebinarId ?? null,
+      courseName: courseName ?? null,
       locale,
     });
   };
@@ -615,6 +618,7 @@ const SessionsContent = () => {
       scheduledAt: session.scheduledAt,
       sessionStatus: session.status,
       zoomWebinarId: session.zoomWebinarId ?? null,
+      courseName: coursesList.find((c) => c.id === session.courseId)?.title ?? null,
     });
   };
 
@@ -986,7 +990,7 @@ const SessionsContent = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); handleShareWhatsApp(session.title, session.scheduledAt, session.webinarRegistrationUrl, session.durationMinutes, session.zoomWebinarId); }}
+                      onClick={(e) => { e.stopPropagation(); handleShareWhatsApp(session.title, session.scheduledAt, session.webinarRegistrationUrl, session.durationMinutes, session.zoomWebinarId, coursesList.find((c) => c.id === session.courseId)?.title ?? null); }}
                       className="p-1.5 rounded-md text-[#25D366] hover:bg-[#DCFCE7] transition-colors"
                       title={isRTL ? "مشاركة عبر واتساب" : "Share via WhatsApp"}
                     >
@@ -1401,6 +1405,7 @@ const SessionsContent = () => {
           scheduledAt={registrantsDrawer.scheduledAt}
           registrationUrl={registrantsDrawer.registrationUrl}
           zoomWebinarId={registrantsDrawer.zoomWebinarId}
+          courseName={registrantsDrawer.courseName}
           sessionStatus={registrantsDrawer.sessionStatus}
           onClose={() => setRegistrantsDrawer(null)}
         />

@@ -645,12 +645,15 @@ export class ZoomService implements IZoomService, OnModuleInit {
   ): Promise<CreateZoomWebinarResult> {
     const token = await this.getAccessToken();
 
-    const body = {
+    const body: Record<string, unknown> = {
       topic: params.topic,
       type: 5, // 5 = scheduled webinar
       start_time: params.startTime.toISOString(),
       duration: params.durationMinutes,
       timezone: 'UTC',
+      // Agenda is rendered as the description under the topic on Zoom's
+      // hosted registration page — we surface the parent course here.
+      ...(params.agenda ? { agenda: params.agenda } : {}),
       settings: {
         // 1 = attendees register once and can attend any occurrence; suits
         // our single-session-per-webinar model.

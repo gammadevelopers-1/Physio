@@ -37,6 +37,7 @@ import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { SessionNotificationService } from './session-notification.service';
 import { NELC_EVENT_TYPE } from '../../database/schema';
 import { classifyCourse, getNelcMaxEnrollment } from '../courses/nelc-config';
+import { recomputeProgressForCohort } from '../enrollments/progress.helper';
 
 @Injectable()
 export class SessionsService {
@@ -105,16 +106,21 @@ export class SessionsService {
     if (wantsWebinar) {
       try {
         // Host is the course instructor — not necessarily the user creating
-        // the session (manager can create on behalf of an instructor).
+        // the session (manager can create on behalf of an instructor). We
+        // also pull the course title to feed into Zoom's agenda field so
+        // the registration page surfaces the broader course context.
         let hostUserId = user.id;
+        const [courseRow] = await db
+          .select({
+            instructorId: courses.instructorId,
+            title: courses.title,
+          })
+          .from(courses)
+          .where(eq(courses.id, dto.courseId))
+          .limit(1);
         if (isManagerOrAbove(user)) {
-          const [course] = await db
-            .select({ instructorId: courses.instructorId })
-            .from(courses)
-            .where(eq(courses.id, dto.courseId))
-            .limit(1);
           hostUserId =
-            dto.instructorId || course?.instructorId || user.id;
+            dto.instructorId || courseRow?.instructorId || user.id;
         }
         const [instructor] = await db
           .select({ email: users.email, zoomEmail: users.zoomEmail })
@@ -129,6 +135,9 @@ export class SessionsService {
           durationMinutes: dto.durationMinutes || 60,
           recordingEnabled: dto.recordingEnabled !== false,
           hostEmail,
+          agenda: courseRow?.title
+            ? `Part of: ${courseRow.title}`
+            : undefined,
         });
         // Configure standard custom questions (Phone optional, ID/Iqama
         // required, SCFHS optional). This now throws on failure so the
@@ -793,6 +802,11 @@ export class SessionsService {
             .limit(1)
         : [];
       const hostEmail = instructor?.zoomEmail || instructor?.email || undefined;
+      const [parentCourse] = await db
+        .select({ title: courses.title })
+        .from(courses)
+        .where(eq(courses.id, session.courseId))
+        .limit(1);
       try {
         const webinar = await this.zoomService.createWebinar({
           topic: dto.title || session.title,
@@ -803,6 +817,9 @@ export class SessionsService {
             dto.durationMinutes || session.durationMinutes || 60,
           recordingEnabled: session.recordingEnabled !== false,
           hostEmail,
+          agenda: parentCourse?.title
+            ? `Part of: ${parentCourse.title}`
+            : undefined,
         });
         await this.zoomService
           .configureStandardWebinarQuestions(webinar.webinarId)
@@ -1279,84 +1296,21 @@ export class SessionsService {
   }
 
   /**
-   * Recalculate enrollment progress based on attendance for synchronous courses.
-   * For zoom/onsite: progress = (sessions attended / total completed sessions) * 100
-   * For blended/self-paced: progress is module-based, not updated here.
+   * Recalculate enrollment progress for every student in this course's
+   * cohort. Called after a session is finalized — attendance records have
+   * settled, so the unified-progress formula (modules + attendance +
+   * assessments) should be refreshed.
+   *
+   * Delegates to the shared {@link recomputeProgressForCohort} helper so
+   * the same formula applies for every delivery type — not the previous
+   * attendance-only override that locked zoom courses out of module-based
+   * progress increments.
    */
   private async recalcAttendanceProgress(courseId: string): Promise<void> {
     try {
-      // Only recalculate for zoom/onsite courses
-      const [course] = await db
-        .select({ deliveryType: courses.deliveryType })
-        .from(courses)
-        .where(eq(courses.id, courseId))
-        .limit(1);
-
-      if (!course || course.deliveryType === 'self-paced' || course.deliveryType === 'blended') {
-        return; // Module-based progress, handled by completeModule()
-      }
-
-      // Get total completed (finalized) sessions for this course
-      const [totalResult] = await db
-        .select({ count: count() })
-        .from(sessions)
-        .where(
-          and(
-            eq(sessions.courseId, courseId),
-            eq(sessions.status, SESSION_STATUS.COMPLETED),
-          ),
-        );
-      const totalSessions = Number(totalResult?.count || 0);
-      if (totalSessions === 0) return;
-
-      // Get all active enrolled students
-      const enrolledStudents = await db
-        .select({ id: enrollments.id, studentId: enrollments.studentId })
-        .from(enrollments)
-        .where(
-          and(
-            eq(enrollments.courseId, courseId),
-            sql`${enrollments.status} IN ('active', 'completed')`,
-          ),
-        );
-
-      if (enrolledStudents.length === 0) return;
-
-      // Get all completed session IDs
-      const completedSessions = await db
-        .select({ id: sessions.id })
-        .from(sessions)
-        .where(
-          and(
-            eq(sessions.courseId, courseId),
-            eq(sessions.status, SESSION_STATUS.COMPLETED),
-          ),
-        );
-      const sessionIds = completedSessions.map((s) => s.id);
-
-      // For each student, count attended sessions and update progress
-      for (const enrollment of enrolledStudents) {
-        const [attendedResult] = await db
-          .select({ count: count() })
-          .from(attendance)
-          .where(
-            and(
-              sql`${attendance.sessionId} IN (${sql.join(sessionIds.map(id => sql`${id}`), sql`, `)})`,
-              eq(attendance.studentId, enrollment.studentId),
-              sql`${attendance.status} IN ('present', 'late')`,
-            ),
-          );
-        const attended = Number(attendedResult?.count || 0);
-        const progress = Math.min(Math.round((attended / totalSessions) * 100), 100);
-
-        await db
-          .update(enrollments)
-          .set({ progress, lastAccessedAt: new Date() })
-          .where(eq(enrollments.id, enrollment.id));
-      }
-
+      await recomputeProgressForCohort(courseId);
       this.logger.log(
-        `[recalcProgress] Updated attendance-based progress for ${enrolledStudents.length} student(s) in course ${courseId}`,
+        `[recalcProgress] Recomputed unified progress for cohort of course ${courseId}`,
       );
     } catch (error) {
       this.logger.error(

@@ -15,6 +15,12 @@ interface ShareOpts {
   durationMinutes?: number | null;
   registrationUrl: string;
   /**
+   * Course this webinar belongs to. Surfaced as a "Course / الدورة"
+   * line above the topic so recipients know the context. Optional —
+   * omitted if not passed in.
+   */
+  courseName?: string | null;
+  /**
    * Zoom webinar ID — surfaced in the message as "Meeting ID" the way
    * Zoom itself labels it on the registration confirmation page.
    * Optional: omitted line if the session predates Zoom integration.
@@ -28,7 +34,7 @@ interface ShareOpts {
   locale?: string;
 }
 
-const SUPPORT_PHONE = "920035022";
+const SUPPORT_PHONE = "0555614285";
 
 // Always format in Riyadh time so the message reads the same to any
 // recipient regardless of the manager's browser timezone.
@@ -57,10 +63,14 @@ export function buildWebinarWhatsAppMessage(opts: ShareOpts): string {
     ? `Meeting ID: ${opts.zoomWebinarId}\n`
     : "";
 
+  const enCourseLine = opts.courseName ? `Course: ${opts.courseName}\n` : "";
+  const arCourseLine = opts.courseName ? `الدورة: ${opts.courseName}\n` : "";
+
   const en =
     `Hi there,\n` +
     `You are invited to register for a Zoom webinar\n\n` +
     `When: ${enDateTime} Riyadh Time\n` +
+    enCourseLine +
     `Topic: ${opts.title}\n\n` +
     `Register in advance for this webinar:\n` +
     `${opts.registrationUrl}\n\n` +
@@ -70,6 +80,7 @@ export function buildWebinarWhatsAppMessage(opts: ShareOpts): string {
     `أهلاً،\n` +
     `أنت مدعو للتسجيل في ندوة عبر الإنترنت Zoom\n\n` +
     `الزمان: ${arDateTime} بتوقيت الرياض\n` +
+    arCourseLine +
     `الموضوع: ${opts.title}\n\n` +
     `يمكنك التسجيل مسبقاً لهذه الندوة عبر الويب:\n` +
     `${opts.registrationUrl}\n\n` +

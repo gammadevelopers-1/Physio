@@ -28,6 +28,7 @@ import {
   AlertCircle,
   X,
   Award,
+  Radio,
 } from "lucide-react";
 import DatePicker from "@/components/ui/DatePicker";
 
@@ -101,6 +102,14 @@ const REPORT_TYPES: ReportTypeConfig[] = [
     icon: Award,
     iconBg: "bg-[#FEF3C7]",
     iconColor: "text-[#D97706]",
+    requiresCourse: false,
+    supportsDateRange: false,
+  },
+  {
+    id: "webinar-registrants",
+    icon: Radio,
+    iconBg: "bg-[#FAF5FF]",
+    iconColor: "text-[#A855F7]",
     requiresCourse: false,
     supportsDateRange: false,
   },

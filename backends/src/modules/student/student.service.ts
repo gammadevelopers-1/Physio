@@ -29,7 +29,9 @@ import {
   assessmentOverrides,
   courseRatings,
   webinarRegistrations,
+  moduleCompletions,
 } from '../../database/schema';
+import { recomputeEnrollmentProgress } from '../enrollments/progress.helper';
 import type { SubmissionAnswer } from '../../database/schema/submissions';
 import { computeEffectiveScore } from '../../common/score-policy';
 import { ThresholdEvaluationService } from '../course-assistants/threshold-evaluation.service';
@@ -913,16 +915,25 @@ export class StudentService {
       averageScore: avgScore,
     };
 
-    // Add module completion flags (based on progress %)
-    const totalModules = modules.length;
-    const completedModulesCount =
-      totalModules > 0
-        ? Math.floor((enrollment.progress / 100) * totalModules)
-        : 0;
-
-    const modulesWithCompletion = modules.map((m, index) => ({
+    // Add module completion flags. Reads directly from the per-student
+    // module_completions table (source of truth) rather than reverse-
+    // engineering from progress percentage, which never worked for
+    // non-sequential completion or zoom/onsite courses.
+    const completedModuleRows = await db
+      .select({ moduleId: moduleCompletions.moduleId })
+      .from(moduleCompletions)
+      .where(
+        and(
+          eq(moduleCompletions.studentId, studentId),
+          eq(moduleCompletions.courseId, courseId),
+        ),
+      );
+    const completedModuleSet = new Set(
+      completedModuleRows.map((r) => r.moduleId),
+    );
+    const modulesWithCompletion = modules.map((m) => ({
       ...m,
-      isCompleted: index < completedModulesCount,
+      isCompleted: completedModuleSet.has(m.id),
     }));
 
     // Per-session attendance records for this student+course
@@ -1287,48 +1298,28 @@ export class StudentService {
       }
     }
 
-    // Fetch course delivery type to determine progress calculation method
-    const [courseForProgress] = await db
-      .select({ deliveryType: courses.deliveryType })
-      .from(courses)
-      .where(eq(courses.id, courseId))
-      .limit(1);
+    // Persist the per-module completion record (idempotent via UNIQUE).
+    // Replaces the previous in-place "progress +=" increment that drifted
+    // on repeat clicks and was delivery-type-conditional.
+    await db
+      .insert(moduleCompletions)
+      .values({
+        studentId,
+        courseId,
+        moduleId: dto.moduleId,
+      })
+      .onConflictDoNothing();
 
-    const deliveryType = courseForProgress?.deliveryType;
-
-    // For zoom/onsite courses: progress is attendance-based (calculated on session finalize)
-    // Module completion is supplementary and should NOT override attendance progress
-    if (deliveryType === 'zoom' || deliveryType === 'onsite') {
-      const [updated] = await db
-        .update(enrollments)
-        .set({ lastAccessedAt: new Date() })
-        .where(eq(enrollments.id, enrollment.id))
-        .returning();
-      return updated;
-    }
-
-    // For self-paced and blended: progress is module-based
-    const [moduleCount] = await db
-      .select({ count: count() })
-      .from(courseModules)
-      .where(eq(courseModules.courseId, courseId));
-
-    const totalModules = Number(moduleCount?.count || 1);
-    const progressPerModule = Math.round(100 / totalModules);
-    const newProgress = Math.min(
-      enrollment.progress + progressPerModule,
-      100,
-    );
+    // Recompute the unified progress aggregate (modules + attendance +
+    // assessments) — applies the same formula to every delivery type, so
+    // zoom courses no longer stay stuck at 0% when modules get done.
+    await recomputeEnrollmentProgress(studentId, courseId);
 
     const [updated] = await db
-      .update(enrollments)
-      .set({
-        progress: newProgress,
-        lastAccessedAt: new Date(),
-      })
+      .select()
+      .from(enrollments)
       .where(eq(enrollments.id, enrollment.id))
-      .returning();
-
+      .limit(1);
     return updated;
   }
 
@@ -2236,6 +2227,15 @@ export class StudentService {
       assessmentId,
     ).catch((err) => this.logger.warn(`Failed to notify instructor: ${err.message}`));
 
+    // Refresh the unified progress aggregate — assessment submission is
+    // one of the signals (alongside module completion and attendance).
+    await recomputeEnrollmentProgress(studentId, assessment.courseId).catch(
+      (err) =>
+        this.logger.warn(
+          `Failed to recompute progress after submission: ${err?.message || err}`,
+        ),
+    );
+
     return {
       submissionId: submission.id,
       score: totalScore,
@@ -2591,6 +2591,14 @@ export class StudentService {
       'assignment',
       assessmentId,
     ).catch((err) => this.logger.warn(`Failed to notify instructor: ${err.message}`));
+
+    // Refresh unified progress (same as other submission paths).
+    await recomputeEnrollmentProgress(studentId, assessment.courseId).catch(
+      (err) =>
+        this.logger.warn(
+          `Failed to recompute progress after assignment submission: ${err?.message || err}`,
+        ),
+    );
 
     return {
       submissionId: submission.id,

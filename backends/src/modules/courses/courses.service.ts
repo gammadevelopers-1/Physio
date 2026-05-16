@@ -2014,8 +2014,15 @@ export class CoursesService {
       }
     }
 
-    // Must have at least 1 session (skip for self-paced courses)
-    if (courseDetail.deliveryType !== 'self-paced') {
+    // Must have at least 1 session — only enforced at ACTIVATION, not at
+    // review-submission time. Instructors are allowed to hand off the
+    // course shell for managerial review before any lectures have been
+    // scheduled; sessions can be added later, but the manager still can't
+    // publish a non-self-paced course with zero sessions to students.
+    if (
+      context === 'activation' &&
+      courseDetail.deliveryType !== 'self-paced'
+    ) {
       const sessionCount = await db
         .select({ count: sql<number>`count(*)`.mapWith(Number) })
         .from(sessions)

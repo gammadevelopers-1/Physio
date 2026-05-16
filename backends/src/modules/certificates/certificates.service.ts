@@ -18,6 +18,8 @@ import {
   assessments,
   submissions,
   users,
+  courseModules,
+  moduleCompletions,
   CERTIFICATE_STATUS,
   NELC_EVENT_TYPE,
 } from '../../database/schema';
@@ -224,7 +226,7 @@ export class CertificatesService {
 
     // 3. Course completion
     const [enrollment] = await db
-      .select({ status: enrollments.status, progress: enrollments.progress })
+      .select({ status: enrollments.status })
       .from(enrollments)
       .where(
         and(
@@ -234,15 +236,40 @@ export class CertificatesService {
       )
       .limit(1);
 
+    // For self-paced / blended we need to know whether ALL modules are
+    // marked complete by this student. Previously this was inferred from
+    // `enrollment.progress >= 100`, but progress is now a unified aggregate
+    // (modules + attendance + assessments) and would yield false positives.
+    // Read directly from module_completions instead.
+    let allModulesDone = true;
+    if (isSelfPaced || isBlended) {
+      const [moduleCountRow] = await db
+        .select({ c: count() })
+        .from(courseModules)
+        .where(eq(courseModules.courseId, courseId));
+      const [completedRow] = await db
+        .select({ c: count() })
+        .from(moduleCompletions)
+        .where(
+          and(
+            eq(moduleCompletions.studentId, studentId),
+            eq(moduleCompletions.courseId, courseId),
+          ),
+        );
+      const totalModules = Number(moduleCountRow?.c ?? 0);
+      const completedModules = Number(completedRow?.c ?? 0);
+      allModulesDone = totalModules > 0 && completedModules >= totalModules;
+    }
+
     let courseCompleted = false;
 
     if (isSelfPaced) {
-      // Self-paced: 100% module completion required
-      courseCompleted = enrollment ? enrollment.progress >= 100 : false;
+      // Self-paced: every module must be marked complete.
+      courseCompleted = allModulesDone;
     } else if (isBlended) {
-      // Blended: enrollment completed AND 100% module progress
+      // Blended: enrollment marked completed AND every module done.
       courseCompleted = enrollment
-        ? enrollment.status === 'completed' && enrollment.progress >= 100
+        ? enrollment.status === 'completed' && allModulesDone
         : false;
     } else {
       // Synchronous (zoom/onsite): enrollment status is 'completed'

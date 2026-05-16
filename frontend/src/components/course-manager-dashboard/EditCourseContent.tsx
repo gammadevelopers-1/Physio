@@ -25,6 +25,8 @@ import {
   Search as SearchIcon,
 } from "lucide-react";
 import DatePicker from "@/components/ui/DatePicker";
+import DateTimePicker from "@/components/ui/DateTimePicker";
+import { fromRiyadhLocal, toRiyadhLocal } from "@/lib/riyadh-time";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { normalizeAndValidateUrl } from "@/lib/url-validation";
 
@@ -166,7 +168,13 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
         setVenue((courseData as any).venue || "");
         setVenueAr((courseData as any).venueAr || "");
         if ((courseData as any).enrollmentDeadline) {
-          setEnrollmentDeadline((courseData as any).enrollmentDeadline.split("T")[0]);
+          // Convert stored UTC timestamp → "YYYY-MM-DDTHH:mm" Riyadh-local
+          // for the DateTimePicker. Previously this dropped the time half
+          // by splitting on "T", which is why the deadline appeared to be
+          // at the start of the chosen day even after the manager set it.
+          setEnrollmentDeadline(
+            toRiyadhLocal((courseData as any).enrollmentDeadline),
+          );
         }
         setLanguage((courseData as any).language || "en");
         setShowContents((courseData as any).showContents !== false);
@@ -323,7 +331,9 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
         payload.cmeHours = 0;
         payload.isCmeAccredited = false;
       }
-      if (enrollmentDeadline) payload.enrollmentDeadline = enrollmentDeadline;
+      if (enrollmentDeadline) {
+        payload.enrollmentDeadline = fromRiyadhLocal(enrollmentDeadline);
+      }
       if (language !== 'en') payload.language = language;
       // Only send showContents for self-paced/blended courses
       if (deliveryType === 'self-paced' || deliveryType === 'blended') {
@@ -1200,7 +1210,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       <label htmlFor="edit-enrollment-deadline" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("createCourse.enrollmentDeadlineLabel")}
                       </label>
-                      <DatePicker
+                      <DateTimePicker
                         id="edit-enrollment-deadline"
                         value={enrollmentDeadline}
                         onChange={setEnrollmentDeadline}

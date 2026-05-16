@@ -1368,7 +1368,7 @@ export const materialsApi = {
 // ===========================================
 // Reports API (binary file download)
 // ===========================================
-export type ReportType = 'attendance' | 'gradebook' | 'enrollment' | 'completion' | 'cme-eligibility';
+export type ReportType = 'attendance' | 'gradebook' | 'enrollment' | 'completion' | 'cme-eligibility' | 'webinar-registrants';
 export type ReportFormat = 'csv' | 'pdf' | 'xlsx';
 
 export const reportsApi = {

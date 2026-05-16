@@ -26,6 +26,8 @@ import {
   Search,
 } from "lucide-react";
 import DatePicker from "@/components/ui/DatePicker";
+import DateTimePicker from "@/components/ui/DateTimePicker";
+import { fromRiyadhLocal } from "@/lib/riyadh-time";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { normalizeAndValidateUrl } from "@/lib/url-validation";
@@ -415,7 +417,14 @@ const CreateCourseContent = () => {
       if (venue.trim()) payload.venue = venue.trim();
       if (venueAr.trim()) payload.venueAr = venueAr.trim();
       if (price) payload.price = Number(price);
-      if (enrollmentDeadline) payload.enrollmentDeadline = enrollmentDeadline;
+      // Convert the picker's local "YYYY-MM-DDTHH:mm" Riyadh string to a
+      // proper UTC ISO so the backend's `new Date()` parses the exact
+      // moment intended (otherwise it would treat the value as the
+      // runtime's local zone — usually UTC — and close enrollment hours
+      // earlier than the manager picked).
+      if (enrollmentDeadline) {
+        payload.enrollmentDeadline = fromRiyadhLocal(enrollmentDeadline);
+      }
       if (language !== 'en') payload.language = language;
       // Only send showContents for self-paced/blended courses
       if (deliveryType === 'self-paced' || deliveryType === 'blended') {
@@ -1176,7 +1185,7 @@ const CreateCourseContent = () => {
                         <label htmlFor="enrollment-deadline" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                           {t("createCourse.enrollmentDeadlineLabel")}
                         </label>
-                        <DatePicker
+                        <DateTimePicker
                           id="enrollment-deadline"
                           value={enrollmentDeadline}
                           onChange={setEnrollmentDeadline}

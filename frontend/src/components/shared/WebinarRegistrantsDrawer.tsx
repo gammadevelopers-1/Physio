@@ -46,6 +46,11 @@ interface WebinarRegistrantsDrawerProps {
    */
   zoomWebinarId?: string | null;
   /**
+   * Course this webinar belongs to. Included in the WhatsApp share
+   * message so recipients see the course name alongside the topic.
+   */
+  courseName?: string | null;
+  /**
    * Session lifecycle status. Used to hide share actions once the
    * webinar is live/ended (registration is effectively closed).
    */
@@ -64,6 +69,7 @@ export default function WebinarRegistrantsDrawer({
   scheduledAt,
   registrationUrl,
   zoomWebinarId,
+  courseName,
   sessionStatus,
   readOnly = false,
   onClose,
@@ -121,6 +127,7 @@ export default function WebinarRegistrantsDrawer({
       scheduledAt,
       registrationUrl,
       zoomWebinarId: zoomWebinarId ?? null,
+      courseName: courseName ?? null,
       locale,
     });
   };

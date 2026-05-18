@@ -1,5 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import { eq, and, sql } from 'drizzle-orm';
+import { ModuleRef } from '@nestjs/core';
+import { eq, and, sql, isNull, lt, ne } from 'drizzle-orm';
 import { randomBytes } from 'crypto';
 import * as argon2 from 'argon2';
 import { db } from '../../database';
@@ -17,6 +18,7 @@ import {
   ATTENDANCE_LOG_EVENT,
   NELC_EVENT_TYPE,
   ROLE_NAMES,
+  SESSION_STATUS,
 } from '../../database/schema';
 import { or } from 'drizzle-orm';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
@@ -24,6 +26,14 @@ import { PasswordSetupService } from '../auth/password-setup.service';
 import { EmailService } from '../email/email.service';
 import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { matchParticipantToUser, getSessionInstructorId, isParticipantHost } from './zoom.helpers';
+import { recomputeProgressForCohort } from '../enrollments/progress.helper';
+
+/**
+ * Attendance threshold for webinars — student must be present for at least
+ * this fraction of the actual meeting duration to be counted "present".
+ * Below the threshold → "absent". Matches the cert eligibility cutoff.
+ */
+const WEBINAR_PRESENCE_THRESHOLD = 0.75;
 
 @Injectable()
 export class ZoomWebhookService {
@@ -37,6 +47,7 @@ export class ZoomWebhookService {
     @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
     private readonly passwordSetupService: PasswordSetupService,
     private readonly emailService: EmailService,
+    private readonly moduleRef: ModuleRef,
   ) {}
 
   /**
@@ -319,6 +330,29 @@ export class ZoomWebhookService {
       this.logger.log(
         `Auto-created student ${userId} from Zoom webinar registration (${params.email})`,
       );
+
+      // Award the same welcome ("signup") points a normal /auth/register
+      // user gets. The Zoom-form auto-creation path is the user's first
+      // touch with the platform — without this hook they'd start at zero
+      // while every form-registered student starts with the admin-configured
+      // welcome balance. ModuleRef avoids a Zoom↔Points↔Enrollments DI loop.
+      try {
+        const { PointsService } = await import('../points/points.service');
+        const pointsService = this.moduleRef.get(PointsService, {
+          strict: false,
+        });
+        pointsService
+          .award(userId, 'signup', { idempotencyKey: `signup:${userId}` })
+          .catch((err) =>
+            this.logger.warn(
+              `Signup points award failed for webinar-created user ${userId}: ${(err as Error).message}`,
+            ),
+          );
+      } catch (err) {
+        this.logger.warn(
+          `Failed to resolve PointsService for webinar signup award: ${(err as Error).message}`,
+        );
+      }
     }
 
     // Enroll (or re-activate if previously dropped). Capacity checks
@@ -849,5 +883,164 @@ export class ZoomWebhookService {
     );
 
     await this.zoomService.promoteToCohost(meetingId, participantId);
+  }
+
+  /**
+   * Finalize a webinar session after Zoom signals it ended. Webinars have no
+   * instructor "Finalize" UI step (attendance is fully Zoom-driven), so this
+   * is what flips the session into COMPLETED and pulls everyone's attendance
+   * into the unified progress + cert pipeline.
+   *
+   * Steps:
+   *   1. Close out any open webinar_registrations rows (joinedAt set, leftAt
+   *      null) — same close-out the meeting flow does for `attendance`.
+   *   2. Apply the {@link WEBINAR_PRESENCE_THRESHOLD} duration rule:
+   *        - Enrolled student with duration ≥ threshold → status=present
+   *        - Enrolled student with duration < threshold (or no attendance row
+   *          at all) → status=absent
+   *      Threshold base is the ACTUAL meeting duration when both
+   *      actualStartedAt + actualEndedAt are known, otherwise the scheduled
+   *      `durationMinutes`. Using actual is fairer when an instructor ends
+   *      a webinar early.
+   *   3. Mirror the same rule onto webinar_registrations.attended so the
+   *      manager registrants drawer + CSV export show outsiders correctly.
+   *   4. Flip session.status → COMPLETED so attendanceSummary picks it up.
+   *   5. Recompute progress for the whole cohort.
+   *
+   * Idempotent — safe to re-run (everything is upsert/set-based). Never
+   * throws — Zoom webhook handlers must return 200 OK.
+   */
+  async finalizeWebinarSession(
+    session: typeof sessions.$inferSelect,
+    endedAt: Date,
+  ): Promise<void> {
+    if (!session.isWebinar) return;
+
+    try {
+      // ── 1. Close out open webinar_registrations rows ─────────────
+      const openRegs = await db
+        .select({
+          id: webinarRegistrations.id,
+          joinedAt: webinarRegistrations.joinedAt,
+          existing: webinarRegistrations.attendedDurationMinutes,
+        })
+        .from(webinarRegistrations)
+        .where(
+          and(
+            eq(webinarRegistrations.sessionId, session.id),
+            eq(webinarRegistrations.attended, true),
+            isNull(webinarRegistrations.leftAt),
+          ),
+        );
+      for (const reg of openRegs) {
+        if (!reg.joinedAt) continue;
+        const elapsed = Math.max(
+          0,
+          Math.floor((endedAt.getTime() - new Date(reg.joinedAt).getTime()) / 60000),
+        );
+        const total = (reg.existing || 0) + elapsed;
+        await db
+          .update(webinarRegistrations)
+          .set({ leftAt: endedAt, attendedDurationMinutes: total, updatedAt: endedAt })
+          .where(eq(webinarRegistrations.id, reg.id));
+      }
+
+      // ── 2. Compute the 75% threshold ─────────────────────────────
+      const actualStart = session.actualStartedAt
+        ? new Date(session.actualStartedAt).getTime()
+        : null;
+      const actualMinutes =
+        actualStart !== null
+          ? Math.max(0, Math.floor((endedAt.getTime() - actualStart) / 60000))
+          : 0;
+      const meetingMinutes =
+        actualMinutes > 0 ? actualMinutes : session.durationMinutes || 0;
+      const requiredMinutes = Math.floor(
+        meetingMinutes * WEBINAR_PRESENCE_THRESHOLD,
+      );
+
+      // ── 3. Apply rule to existing attendance rows ────────────────
+      const existingAtt = await db
+        .select({
+          id: attendance.id,
+          studentId: attendance.studentId,
+          durationMinutes: attendance.durationMinutes,
+        })
+        .from(attendance)
+        .where(eq(attendance.sessionId, session.id));
+
+      const studentsWithAttendance = new Set<string>();
+      for (const row of existingAtt) {
+        studentsWithAttendance.add(row.studentId);
+        const dur = row.durationMinutes ?? 0;
+        const newStatus = dur >= requiredMinutes ? 'present' : 'absent';
+        await db
+          .update(attendance)
+          .set({ status: newStatus })
+          .where(eq(attendance.id, row.id));
+      }
+
+      // ── 4. Auto-create absent rows for enrolled no-shows ─────────
+      const enrolled = await db
+        .select({ studentId: enrollments.studentId })
+        .from(enrollments)
+        .where(
+          and(
+            eq(enrollments.courseId, session.courseId),
+            eq(enrollments.status, 'active'),
+          ),
+        );
+      for (const e of enrolled) {
+        if (studentsWithAttendance.has(e.studentId)) continue;
+        await db
+          .insert(attendance)
+          .values({
+            sessionId: session.id,
+            studentId: e.studentId,
+            status: 'absent',
+            durationMinutes: 0,
+          })
+          .onConflictDoNothing({
+            target: [attendance.sessionId, attendance.studentId],
+          });
+      }
+
+      // ── 5. Mirror rule onto webinar_registrations.attended ───────
+      // After finalize, `attended` means "met the threshold". Joiners
+      // who fell short flip to false; their actual duration is still in
+      // attendedDurationMinutes so the data isn't lost.
+      if (requiredMinutes > 0) {
+        await db
+          .update(webinarRegistrations)
+          .set({ attended: false, updatedAt: endedAt })
+          .where(
+            and(
+              eq(webinarRegistrations.sessionId, session.id),
+              eq(webinarRegistrations.attended, true),
+              lt(webinarRegistrations.attendedDurationMinutes, requiredMinutes),
+            ),
+          );
+      }
+
+      // ── 6. Flip status → COMPLETED ───────────────────────────────
+      await db
+        .update(sessions)
+        .set({ status: SESSION_STATUS.COMPLETED, updatedAt: endedAt })
+        .where(eq(sessions.id, session.id));
+
+      // ── 7. Recompute progress for the cohort ─────────────────────
+      await recomputeProgressForCohort(session.courseId);
+
+      this.logger.log(
+        `Webinar ${session.id} finalized: threshold=${requiredMinutes}min ` +
+          `(${meetingMinutes}min meeting × ${Math.round(WEBINAR_PRESENCE_THRESHOLD * 100)}%), ` +
+          `${existingAtt.length} attendance rows reclassified, ` +
+          `${enrolled.length - studentsWithAttendance.size} absent rows created`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to finalize webinar ${session.id}: ${(error as Error).message}`,
+      );
+    }
   }
 }

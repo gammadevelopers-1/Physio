@@ -95,7 +95,15 @@ const StudentCourseDetailContent = () => {
     const now = Date.now();
     return (
       data?.sessions.filter((s) => {
-        if (s.status === "cancelled") return false;
+        // Terminal statuses are never "upcoming" — an instructor can end a
+        // session before its scheduledAt (or miss it). Otherwise the home
+        // card stays stuck on "Ready to join" / "HAPPENING NOW" forever.
+        if (
+          s.status === "cancelled" ||
+          s.status === "ended" ||
+          s.status === "completed" ||
+          s.status === "missed"
+        ) return false;
         return new Date(s.scheduledAt).getTime() >= now;
       }) ?? []
     );

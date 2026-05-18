@@ -461,6 +461,16 @@ export class ZoomController {
     this.logger.log(
       `Session ${session.id} marked as ended via Zoom webhook (instructor must finalize after marking attendance)`,
     );
+
+    // Webinars auto-finalize — attendance is fully Zoom-driven, there's no
+    // instructor "Finalize" step. Apply the 75% presence rule, mark no-show
+    // enrollees absent, flip to COMPLETED, and recompute cohort progress.
+    if (session.isWebinar) {
+      await this.webhookService.finalizeWebinarSession(
+        { ...session, actualEndedAt: endedAt },
+        endedAt,
+      );
+    }
   }
 
   /**

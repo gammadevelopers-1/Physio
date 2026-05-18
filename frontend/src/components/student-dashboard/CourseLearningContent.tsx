@@ -288,10 +288,20 @@ function LectureRow({
   const now = new Date().getTime();
   const startMs = new Date(session.scheduledAt).getTime();
   const endMs = startMs + (session.durationMinutes || 0) * 60_000;
-  const isLive = session.status === "live" || (now >= startMs && now < endMs && session.status !== "cancelled" && session.status !== "missed");
-  const isPast = now >= endMs && !isLive;
+  // Time-based "live" fallback is ONLY valid while the session is still
+  // scheduled — once it's been ended/completed/missed/cancelled, the actual
+  // status wins. Otherwise an instructor-ended webinar inside its duration
+  // window still gets a LIVE pill.
+  const isLive =
+    session.status === "live" ||
+    (session.status === "scheduled" && now >= startMs && now < endMs);
+  const isPast =
+    session.status === "ended" ||
+    session.status === "completed" ||
+    session.status === "missed" ||
+    (now >= endMs && !isLive);
   const isWebinar = !!session.isWebinar;
-  const canJoinNow = isJoinable(session.scheduledAt) || isLive;
+  const canJoinNow = !isPast && (isJoinable(session.scheduledAt) || isLive);
 
   // Right-side meta: attendance for past, status chip otherwise.
   let trailing: React.ReactNode = null;
@@ -403,10 +413,18 @@ function LectureDetailCanvas({
   const now = new Date().getTime();
   const startMs = new Date(session.scheduledAt).getTime();
   const endMs = startMs + (session.durationMinutes || 0) * 60_000;
-  const isLive = session.status === "live" || (now >= startMs && now < endMs && session.status !== "cancelled" && session.status !== "missed");
-  const isPast = now >= endMs && !isLive;
+  // See comment on the same helper above — terminal statuses must not be
+  // treated as live just because we're still inside the duration window.
+  const isLive =
+    session.status === "live" ||
+    (session.status === "scheduled" && now >= startMs && now < endMs);
+  const isPast =
+    session.status === "ended" ||
+    session.status === "completed" ||
+    session.status === "missed" ||
+    (now >= endMs && !isLive);
   const isWebinar = !!session.isWebinar;
-  const canJoinMeeting = !!session.zoomLink && (isJoinable(session.scheduledAt) || isLive);
+  const canJoinMeeting = !isPast && !!session.zoomLink && (isJoinable(session.scheduledAt) || isLive);
 
   // Status pill
   const statusPill = (() => {
@@ -709,17 +727,30 @@ const CourseLearningContent = () => {
     currentModule?.id || null
   );
 
-  // Lectures split
+  // Lectures split.
+  // A session whose status is ended/completed/missed always counts as past,
+  // even if its scheduledAt is still in the future (instructor ended early
+  // or missed the slot). Without this, the upcoming rail keeps showing
+  // "Join Now" for a webinar the instructor already wrapped.
+  const isTerminalPast = (status: string) =>
+    status === "ended" || status === "completed" || status === "missed";
   const upcomingSessions = useMemo(() => {
     const now = Date.now();
     return sessions
-      .filter((s) => s.status !== "cancelled" && new Date(s.scheduledAt).getTime() >= now)
+      .filter((s) => {
+        if (s.status === "cancelled" || isTerminalPast(s.status)) return false;
+        return new Date(s.scheduledAt).getTime() >= now;
+      })
       .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
   }, [sessions]);
   const pastSessions = useMemo(() => {
     const now = Date.now();
     return sessions
-      .filter((s) => s.status !== "cancelled" && new Date(s.scheduledAt).getTime() < now)
+      .filter((s) => {
+        if (s.status === "cancelled") return false;
+        if (isTerminalPast(s.status)) return true;
+        return new Date(s.scheduledAt).getTime() < now;
+      })
       .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
   }, [sessions]);
   const inactiveSessions = useMemo(
@@ -738,14 +769,19 @@ const CourseLearningContent = () => {
       ? data.attendanceRecords.find((r) => r.sessionId === currentSession.id) ?? null
       : null;
 
-  // Join-now banner — the soonest joinable session (meeting OR webinar)
+  // Join-now banner — the soonest joinable session (meeting OR webinar).
+  // upcomingSessions already filters out terminal statuses, so this is
+  // mostly belt-and-suspenders; we keep the explicit status checks to make
+  // the predicate self-contained.
   const joinableNow = useMemo(() => {
     const now = Date.now();
     return upcomingSessions.find((s) => {
       const startMs = new Date(s.scheduledAt).getTime();
       const endMs = startMs + (s.durationMinutes || 0) * 60_000;
-      const isLive = s.status === "live" || (now >= startMs && now < endMs);
-      if (s.status === "cancelled" || s.status === "missed") return false;
+      const isLive =
+        s.status === "live" ||
+        (s.status === "scheduled" && now >= startMs && now < endMs);
+      if (s.status !== "scheduled" && s.status !== "live") return false;
       if (s.isWebinar) {
         return !!s.studentWebinarJoinUrl && (isJoinable(s.scheduledAt) || isLive);
       }

@@ -281,28 +281,22 @@ export class EnrollmentsService {
   }
 
   /**
-   * Webinar Course post-enrollment hook. For each webinar session linked to
-   * the course, programmatically register the student in Zoom and mirror
-   * the registration into webinar_registrations so the dashboard surfaces
-   * the personal join URL. Idempotent — Zoom dedupes by email and our
-   * upsert handles re-runs.
+   * Post-enrollment hook: for every webinar session linked to the course
+   * (Webinar Course or any other course type that has a webinar mixed in),
+   * register the student in Zoom and mirror the registration into
+   * webinar_registrations so the dashboard surfaces the personal join URL.
+   * Idempotent — Zoom dedupes by email and our upsert handles re-runs.
+   * Counterpart to SessionsService.autoRegisterEnrolledStudentsForWebinar,
+   * which fires when the webinar is created AFTER students are enrolled.
    *
-   * No-op for non-Webinar Courses. Failures are logged, never thrown — the
-   * enrollment itself must not be blocked by Zoom downtime.
+   * No-op when the course has no webinar sessions. Failures are logged,
+   * never thrown — the enrollment itself must not be blocked by Zoom
+   * downtime.
    */
   private async autoRegisterStudentForWebinarCourse(
     courseId: string,
     studentId: string,
   ): Promise<void> {
-    const [course] = await db
-      .select({
-        deliveryType: courses.deliveryType,
-      })
-      .from(courses)
-      .where(eq(courses.id, courseId))
-      .limit(1);
-    if (course?.deliveryType !== 'webinar') return;
-
     const [student] = await db
       .select({
         email: users.email,

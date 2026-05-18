@@ -217,6 +217,12 @@ export class CreateCourseDto {
   @IsBoolean()
   showContents?: boolean;
 
+  // Webinar Course only — when true, the recording is surfaced in enrolled
+  // students' dashboards after Zoom finishes processing it. Default false.
+  @IsOptional()
+  @IsBoolean()
+  recordingShareEnabled?: boolean;
+
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

@@ -14,7 +14,7 @@ import { PublicCourse } from "@/types/instructor-dashboard";
 import { useLocale } from "next-intl";
 import { Archive, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 
-const DELIVERY_TYPES = ["zoom", "onsite", "blended", "self-paced"];
+const DELIVERY_TYPES = ["zoom", "onsite", "blended", "self-paced", "webinar"];
 
 interface CoursesPageContentProps extends CourseFiltersLabels {
   heroTitle?: string;

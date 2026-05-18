@@ -36,7 +36,7 @@ import type { StudentEnrolledCourse } from "@/types/student-dashboard";
 import EmptyStateIllustration from "./EmptyStateIllustration";
 
 type StatusFilter = "all" | "active" | "completed" | "dropped";
-type DeliveryFilter = "all" | "zoom" | "onsite" | "blended" | "self-paced";
+type DeliveryFilter = "all" | "zoom" | "onsite" | "blended" | "self-paced" | "webinar";
 type SortOption = "recent" | "title" | "completed_date" | "newest";
 
 const ITEMS_PER_PAGE = 12;
@@ -337,6 +337,7 @@ const MyCoursesContent = () => {
                     <option value="onsite">{t("myCourses.deliveryOnsite")}</option>
                     <option value="blended">{t("myCourses.deliveryBlended")}</option>
                     <option value="self-paced">{t("myCourses.deliverySelfPaced")}</option>
+                    <option value="webinar">{t("myCourses.deliveryWebinar")}</option>
                   </select>
 
                   {/* Sort */}

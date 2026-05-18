@@ -53,7 +53,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
   const [titleAr, setTitleAr] = useState("");
   const [description, setDescription] = useState("");
   const [descriptionAr, setDescriptionAr] = useState("");
-  const [deliveryType, setDeliveryType] = useState<"zoom" | "onsite" | "blended" | "self-paced">("zoom");
+  const [deliveryType, setDeliveryType] = useState<"zoom" | "onsite" | "blended" | "self-paced" | "webinar">("zoom");
   const [maxEnrollment, setMaxEnrollment] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -90,6 +90,9 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
   const [showContents, setShowContents] = useState(true);
   const [sectionsOrder, setSectionsOrder] = useState<string[]>(["overview", "objectives", "instructor", "contents", "requirements", "faqs", "reviews"]);
   const [visibleOnPublicSite, setVisibleOnPublicSite] = useState(true);
+  // Webinar Course only — surface the recording in students' dashboards
+  // after Zoom finishes processing it.
+  const [recordingShareEnabled, setRecordingShareEnabled] = useState(false);
 
   // Per-course SEO overrides (collapsed by default — empty values fall back
   // to title / description / thumbnail in the metadata helper).
@@ -123,7 +126,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
         setTitleAr(courseData.titleAr || "");
         setDescription(courseData.description || "");
         setDescriptionAr(courseData.descriptionAr || "");
-        setDeliveryType(courseData.deliveryType as "zoom" | "onsite" | "blended" | "self-paced");
+        setDeliveryType(courseData.deliveryType as "zoom" | "onsite" | "blended" | "self-paced" | "webinar");
         setMaxEnrollment(courseData.maxEnrollment?.toString() || "");
         setInstructorId(courseData.instructorId);
         setOriginalInstructorId(courseData.instructorId);
@@ -179,6 +182,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
         setLanguage((courseData as any).language || "en");
         setShowContents((courseData as any).showContents !== false);
         setVisibleOnPublicSite((courseData as any).visibleOnPublicSite !== false);
+        setRecordingShareEnabled(!!(courseData as any).recordingShareEnabled);
 
         // SEO overrides
         setSeoTitle((courseData as any).seoTitle || "");
@@ -344,6 +348,10 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
       // Only send showContents for self-paced/blended courses
       if (deliveryType === 'self-paced' || deliveryType === 'blended') {
         payload.showContents = showContents;
+      }
+      // Webinar Course recording-share toggle
+      if (deliveryType === 'webinar') {
+        payload.recordingShareEnabled = recordingShareEnabled;
       }
       payload.sectionsOrder = sectionsOrder;
       payload.visibleOnPublicSite = visibleOnPublicSite;
@@ -912,6 +920,28 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       </div>
                     )}
 
+                    {/* Share recording toggle — Webinar Course only */}
+                    {deliveryType === 'webinar' && (
+                      <div className="pt-3 border-t border-[var(--color-border)]">
+                        <label className="flex items-start gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={recordingShareEnabled}
+                            onChange={(e) => setRecordingShareEnabled(e.target.checked)}
+                            className="mt-0.5 w-4 h-4 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-input-focus)]"
+                          />
+                          <div>
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">
+                              {t("createCourse.shareRecordingLabel")}
+                            </p>
+                            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                              {t("createCourse.shareRecordingDesc")}
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                    )}
+
                     {/* Visible on public site toggle */}
                     <div className="pt-3 border-t border-[var(--color-border)]">
                       <label className="flex items-start gap-3 cursor-pointer">
@@ -1040,7 +1070,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         value={deliveryType}
                         onChange={(e) =>
                           setDeliveryType(
-                            e.target.value as "zoom" | "onsite" | "blended" | "self-paced"
+                            e.target.value as "zoom" | "onsite" | "blended" | "self-paced" | "webinar"
                           )
                         }
                         className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] bg-[var(--color-surface-card)]"
@@ -1057,7 +1087,15 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         <option value="self-paced">
                           {t("createCourse.deliverySelfPaced")}
                         </option>
+                        <option value="webinar">
+                          {t("createCourse.deliveryWebinar")}
+                        </option>
                       </select>
+                      {deliveryType === "webinar" && (
+                        <p className="mt-1.5 text-xs text-[var(--color-text-secondary)]">
+                          {t("createCourse.deliveryWebinarHint")}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label htmlFor="edit-max-enrollment" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">

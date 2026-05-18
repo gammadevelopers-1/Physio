@@ -439,6 +439,10 @@ const CourseDetailContent = ({
     success: boolean;
     message: string;
   } | null>(null);
+  // Checkout modal — opens for paid courses when the user clicks Buy Now
+  // (placeholder payment for now; real provider integration drops in later).
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   // Points redemption — populated once on mount when the user is logged in.
   // null = not eligible / not loaded; object = redeemable for points.
@@ -535,6 +539,49 @@ const CourseDetailContent = ({
     }
   };
 
+  // Paid-course Buy Now → opens the checkout modal (placeholder payment),
+  // but ONLY for Webinar Courses. Other paid course types still hit the
+  // original "contact us" message until the real payment provider is
+  // wired — otherwise the placeholder would let students enrol for free.
+  const openCheckout = () => {
+    if (!apiCourse) return;
+    if (!isAuthenticated) {
+      handleGuestRedirect();
+      return;
+    }
+    if (!isStudent) {
+      alert(t("enrollment.contactMessage"));
+      return;
+    }
+    if (apiCourse.deliveryType !== "webinar") {
+      alert(t("enrollment.contactMessage"));
+      return;
+    }
+    setEnrollResult(null);
+    setCheckoutOpen(true);
+  };
+
+  const handlePay = async () => {
+    if (!apiCourse) return;
+    setCheckoutLoading(true);
+    try {
+      await studentApi.checkoutCourse(apiCourse.id);
+      setCheckoutOpen(false);
+      setEnrollResult({ success: true, message: t("enrollment.success") });
+      router.push(`/${locale}/dashboard/student/courses/${apiCourse.id}`);
+    } catch (err) {
+      const message =
+        err instanceof ApiError && err.code === "ENROLLMENT_DEADLINE_PASSED"
+          ? t("enrollment.deadlinePassed")
+          : err instanceof Error
+            ? err.message
+            : t("enrollment.error");
+      setEnrollResult({ success: false, message });
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
   // Fetch redeem eligibility once when the course + auth state are ready.
   // Skipped for guests, non-students, and free courses (no need to redeem).
   useEffect(() => {
@@ -616,8 +663,11 @@ const CourseDetailContent = ({
 
   // Delivery-type based section visibility
   const dt = apiCourse?.deliveryType || "";
-  // Sessions list shown only for onsite/blended (zoom-only courses hide lectures list)
-  const showSessions = dt === "onsite" || dt === "blended";
+  const isWebinarCourse = dt === "webinar";
+  // Sessions list shown for onsite/blended (lecture list) AND webinar
+  // (the webinar event itself). Zoom-only meeting courses hide the lectures
+  // list because the manager's drip schedule is internal.
+  const showSessions = dt === "onsite" || dt === "blended" || isWebinarCourse;
   const showModules = (dt === "self-paced" || dt === "blended") && apiCourse?.showContents !== false;
   const showVenue = dt === "onsite" || dt === "blended";
   const showRequirements = (dt === "onsite" || dt === "blended") && !!getRequirements();
@@ -667,6 +717,7 @@ const CourseDetailContent = ({
     if (dt === "onsite") return isRTL ? "حضوري" : "On-site";
     if (dt === "blended") return isRTL ? "مدمج" : "Blended";
     if (dt === "self-paced") return isRTL ? "ذاتي" : "Self-paced";
+    if (dt === "webinar") return isRTL ? "ويبينار" : "Webinar";
     return dt;
   };
 
@@ -1637,28 +1688,16 @@ const CourseDetailContent = ({
                         )}
                       </div>
                     ) : (
-                      /* PAID COURSE — Buy Now + Add to Cart + (optional) Redeem */
+                      /* PAID COURSE — Buy Now opens the checkout modal */
                       <>
                         <button
-                          onClick={() => {
-                            if (!isAuthenticated) {
-                              handleGuestRedirect();
-                            } else if (isStudent) {
-                              alert(t("enrollment.contactMessage"));
-                            }
-                          }}
+                          onClick={openCheckout}
                           className="w-full h-12 btn-gold rounded-xl text-white font-medium mb-3"
                         >
                           {t("pricingCard.buyNow")}
                         </button>
                         <button
-                          onClick={() => {
-                            if (!isAuthenticated) {
-                              handleGuestRedirect();
-                            } else if (isStudent) {
-                              alert(t("enrollment.contactMessage"));
-                            }
-                          }}
+                          onClick={openCheckout}
                           className="w-full h-12 bg-[var(--color-text-primary)] rounded-xl text-white font-medium flex items-center justify-center gap-2 mb-3"
                         >
                           {t("pricingCard.addToCart")}
@@ -1949,25 +1988,13 @@ const CourseDetailContent = ({
             ) : (
               <>
                 <button
-                  onClick={() => {
-                    if (!isAuthenticated) {
-                      handleGuestRedirect();
-                    } else if (isStudent) {
-                      alert(t("enrollment.contactMessage"));
-                    }
-                  }}
+                  onClick={openCheckout}
                   className="w-full h-10 btn-gold rounded-xl text-white text-sm font-medium mb-2"
                 >
                   {t("pricingCard.buyNow")}
                 </button>
                 <button
-                  onClick={() => {
-                    if (!isAuthenticated) {
-                      handleGuestRedirect();
-                    } else if (isStudent) {
-                      alert(t("enrollment.contactMessage"));
-                    }
-                  }}
+                  onClick={openCheckout}
                   className="w-full h-10 bg-[var(--color-text-primary)] rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2 mb-2"
                 >
                   {t("pricingCard.addToCart")}
@@ -2156,6 +2183,103 @@ const CourseDetailContent = ({
           locale={locale}
           reviewsHeading={reviewsHeading}
         />
+      )}
+
+      {/* Checkout Modal — placeholder payment flow for paid courses */}
+      {checkoutOpen && apiCourse && user && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className={`bg-[var(--color-surface-card)] rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl ${isRTL ? "text-right" : "text-left"}`} dir={isRTL ? "rtl" : "ltr"}>
+            <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
+              <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                {isRTL ? "إتمام الدفع" : "Checkout"}
+              </h2>
+              <button
+                onClick={() => !checkoutLoading && setCheckoutOpen(false)}
+                disabled={checkoutLoading}
+                className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors disabled:opacity-50"
+                aria-label={isRTL ? "إغلاق" : "Close"}
+              >
+                <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              {/* Course summary */}
+              <div className="flex items-start gap-3 p-3 bg-[var(--color-border-subtle)] rounded-lg">
+                {apiCourse.thumbnail && (
+                  <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
+                    <Image src={apiCourse.thumbnail} alt={apiCourse.title} fill className="object-cover" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
+                    {isRTL && apiCourse.titleAr ? apiCourse.titleAr : apiCourse.title}
+                  </p>
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{getDeliveryLabel()}</p>
+                </div>
+              </div>
+
+              {/* Price line */}
+              <div className="flex items-center justify-between p-3 border border-[var(--color-border)] rounded-lg">
+                <span className="text-sm text-[var(--color-text-secondary)]">
+                  {isRTL ? "المبلغ المستحق" : "Amount due"}
+                </span>
+                <span className="text-lg font-bold text-[var(--color-text-primary)]">
+                  {Number(apiCourse.price ?? 0).toFixed(2)} SAR
+                </span>
+              </div>
+
+              {/* Profile confirm */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">
+                  {isRTL ? "بيانات المتدرب" : "Trainee details"}
+                </p>
+                <div className="grid grid-cols-1 gap-2 text-sm">
+                  <div className="flex justify-between gap-3">
+                    <span className="text-[var(--color-text-secondary)]">{isRTL ? "الاسم" : "Name"}</span>
+                    <span className="text-[var(--color-text-primary)] font-medium">{[user.firstName, user.lastName].filter(Boolean).join(" ") || "—"}</span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-[var(--color-text-secondary)]">{isRTL ? "البريد الإلكتروني" : "Email"}</span>
+                    <span className="text-[var(--color-text-primary)] font-medium break-all">{user.email}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Placeholder payment notice */}
+              <div className="flex items-start gap-2 p-3 bg-[#FFFBEB] border border-[#FDE68A] rounded-lg">
+                <AlertTriangle className="w-4 h-4 text-[#D97706] flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-[#92400E] leading-snug">
+                  {isRTL
+                    ? "بوابة الدفع قيد التكامل. سيتم تأكيد التسجيل تلقائيًا بعد الضغط على \"دفع\"، وسيتم استبدال هذه الخطوة بمزود الدفع الفعلي قريبًا."
+                    : 'Payment gateway is pending integration. Clicking "Pay" will confirm your enrollment immediately — this step will be replaced by the real payment provider soon.'}
+                </p>
+              </div>
+
+              {enrollResult && !enrollResult.success && (
+                <p className="text-xs text-[#DC2626]">{enrollResult.message}</p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-[var(--color-border)]">
+              <button
+                onClick={() => setCheckoutOpen(false)}
+                disabled={checkoutLoading}
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors disabled:opacity-50"
+              >
+                {isRTL ? "إلغاء" : "Cancel"}
+              </button>
+              <button
+                onClick={handlePay}
+                disabled={checkoutLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-60"
+              >
+                {checkoutLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {isRTL ? "دفع" : "Pay"} {Number(apiCourse.price ?? 0).toFixed(2)} SAR
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

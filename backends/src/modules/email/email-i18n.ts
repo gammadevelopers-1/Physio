@@ -30,6 +30,9 @@ const strings = {
   passwordResetIntro:      { en: 'Use this code to reset your password:', ar: 'استخدم هذا الرمز لإعادة تعيين كلمة المرور:' },
   passwordResetExpiry:     { en: 'This code expires in 10 minutes. If you didn\'t request a password reset, please ignore this email.', ar: 'ينتهي هذا الرمز خلال 10 دقائق. إذا لم تطلب إعادة تعيين كلمة المرور، تجاهل هذا البريد.' },
 
+  /* ── Webinar Course auto-enrollment ──────────────────── */
+  webinarRegSetupSubject: { en: 'Welcome to PhysioGuidance — Set Your Password', ar: 'مرحبًا بك في PhysioGuidance — قم بتعيين كلمة المرور' },
+
   /* ── Application ─────────────────────────────────────── */
   appApprovedSubject:  { en: 'Your Trainer Application Has Been Approved!', ar: 'تمت الموافقة على طلب المدرب الخاص بك!' },
   appApprovedTitle:    { en: 'Application Approved!',      ar: 'تمت الموافقة على الطلب!' },

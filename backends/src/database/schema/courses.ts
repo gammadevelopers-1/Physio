@@ -53,6 +53,11 @@ export const courses = pgTable(
     // button after completion — students click through to NELC's hosted
     // form. Stored verbatim; never validated, transformed, or proxied.
     nelcReviewLink: varchar('nelc_review_link', { length: 500 }),
+    // Webinar Course toggle: when true, the webinar recording is surfaced
+    // in enrolled students' dashboards after the event finishes (Zoom
+    // typically takes 5–60 min to process). Default false — the manager
+    // opts in per course. Non-Webinar courses ignore this field.
+    recordingShareEnabled: boolean('recording_share_enabled').default(false).notNull(),
     // Course content fields (managed by course manager)
     overview: text('overview'),
     overviewAr: text('overview_ar'),
@@ -108,7 +113,7 @@ export const courses = pgTable(
     index('courses_status_idx').on(table.status),
     check(
       'courses_delivery_type_check',
-      sql`${table.deliveryType} IN ('zoom', 'onsite', 'blended', 'self-paced')`,
+      sql`${table.deliveryType} IN ('zoom', 'onsite', 'blended', 'self-paced', 'webinar')`,
     ),
     check(
       'courses_status_check',
@@ -150,6 +155,7 @@ export const DELIVERY_TYPE = {
   ONSITE: 'onsite',
   BLENDED: 'blended',
   SELF_PACED: 'self-paced',
+  WEBINAR: 'webinar',
 } as const;
 
 export type DeliveryType =

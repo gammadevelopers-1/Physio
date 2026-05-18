@@ -88,6 +88,23 @@ export class SessionsService {
    * - Admin: can specify instructorId, course just needs to exist.
    */
   async create(user: AuthenticatedUser, dto: CreateSessionDto) {
+    // Webinar Courses can only host Zoom-webinar lectures. Reject anything
+    // else up front — keeps the guarantee that a Webinar Course's sessions
+    // are exclusively webinars, which is what attendance + cert eligibility
+    // assume downstream.
+    const [courseDeliveryRow] = await db
+      .select({ deliveryType: courses.deliveryType })
+      .from(courses)
+      .where(eq(courses.id, dto.courseId))
+      .limit(1);
+    if (courseDeliveryRow?.deliveryType === 'webinar') {
+      if (dto.type !== SESSION_TYPE.ZOOM || dto.isWebinar !== true) {
+        throw new BadRequestException(
+          'Webinar courses can only host Zoom webinar lectures. Set the lecture type to Zoom and enable the webinar option.',
+        );
+      }
+    }
+
     // Zoom artefacts populated below depending on whether the session is a
     // standard Meeting, a Webinar (registration page), or neither (onsite).
     let zoomLink = dto.zoomLink || null;

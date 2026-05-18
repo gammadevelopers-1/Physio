@@ -16,6 +16,10 @@ import {
   getApplicationApprovedSetPasswordText,
 } from './templates/application-approved-set-password.template';
 import {
+  getWebinarRegistrationSetupHtml,
+  getWebinarRegistrationSetupText,
+} from './templates/webinar-registration-setup.template';
+import {
   getApplicationRejectedHtml,
   getApplicationRejectedText,
 } from './templates/application-rejected.template';
@@ -284,6 +288,32 @@ export class EmailService {
       this.logger.log(`Approval+set-password email sent to ${to}`);
     } catch (error) {
       this.logger.error(`Failed to send approval+set-password email to ${to}`, error);
+    }
+  }
+
+  /**
+   * Welcome email for a webinar registrant whose account we auto-created on
+   * Zoom registration. Includes a magic-link "Set Password" button so they
+   * can log into the dashboard and claim their CME certificate.
+   */
+  async sendWebinarRegistrationSetPassword(
+    to: string,
+    registrantName: string,
+    courseTitle: string,
+    setupUrl: string,
+    locale: EmailLocale = 'en',
+  ): Promise<void> {
+    try {
+      const s = getEmailStrings(locale);
+      await this.send({
+        to,
+        subject: s.webinarRegSetupSubject,
+        html: getWebinarRegistrationSetupHtml(registrantName, courseTitle, setupUrl, locale),
+        text: getWebinarRegistrationSetupText(registrantName, courseTitle, setupUrl, locale),
+      });
+      this.logger.log(`Webinar set-password email sent to ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send webinar set-password email to ${to}`, error);
     }
   }
 

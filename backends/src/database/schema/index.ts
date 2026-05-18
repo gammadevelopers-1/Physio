@@ -26,6 +26,9 @@ export * from './webinar-registrations';
 export * from './enrollments';
 export * from './attendance';
 
+// Payment schemas
+export * from './payments';
+
 // Assessment schemas
 export * from './assessments';
 export * from './questions';

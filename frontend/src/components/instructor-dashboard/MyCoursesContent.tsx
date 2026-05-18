@@ -258,6 +258,9 @@ const MyCoursesContent = () => {
                       <option value="self-paced">
                         {t("courses.filters.self-paced")}
                       </option>
+                      <option value="webinar">
+                        {t("courses.filters.webinar")}
+                      </option>
                     </select>
 
                     <select

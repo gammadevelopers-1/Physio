@@ -94,6 +94,7 @@ export class AssessmentsService {
     // Inherit course-level assessment defaults at creation time
     const [course] = await db
       .select({
+        deliveryType: courses.deliveryType,
         assessmentTimeLimitEnforced: courses.assessmentTimeLimitEnforced,
         assessmentMaxRetakes: courses.assessmentMaxRetakes,
         assessmentRetakeCoolingHours: courses.assessmentRetakeCoolingHours,
@@ -103,6 +104,13 @@ export class AssessmentsService {
       .from(courses)
       .where(eq(courses.id, dto.courseId))
       .limit(1);
+
+    // Webinar Courses are attendance-only — assessments are not allowed.
+    if (course?.deliveryType === 'webinar') {
+      throw new BadRequestException(
+        'Webinar courses cannot contain assessments. Eligibility is attendance-based only.',
+      );
+    }
 
     // Enforce 1 attempt for quiz/exam
     const attemptsAllowed =

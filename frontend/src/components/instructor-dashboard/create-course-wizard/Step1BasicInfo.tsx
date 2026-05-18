@@ -111,7 +111,13 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
             <option value="onsite">On-site</option>
             <option value="blended">Blended</option>
             <option value="self-paced">{t("deliverySelfPaced")}</option>
+            <option value="webinar">{t("deliveryWebinar")}</option>
           </select>
+          {state.deliveryType === "webinar" && (
+            <p className="mt-1.5 text-xs text-[var(--color-text-secondary)] max-w-xl">
+              {t("deliveryWebinarHint")}
+            </p>
+          )}
         </div>
 
         {/* Schedule fields for self-paced (since Step 2 is skipped) */}

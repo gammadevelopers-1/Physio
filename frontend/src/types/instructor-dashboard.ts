@@ -327,7 +327,7 @@ export interface InstructorCourse {
   titleAr: string | null;
   description: string | null;
   descriptionAr: string | null;
-  deliveryType: 'zoom' | 'onsite' | 'blended' | 'self-paced';
+  deliveryType: 'zoom' | 'onsite' | 'blended' | 'self-paced' | 'webinar';
   status: 'draft' | 'pending_review' | 'changes_requested' | 'active' | 'completed' | 'archived';
   thumbnail: string | null;
   maxEnrollment: number | null;
@@ -387,7 +387,7 @@ export interface CourseDetailResponse {
   titleAr: string | null;
   description: string | null;
   descriptionAr: string | null;
-  deliveryType: 'zoom' | 'onsite' | 'blended' | 'self-paced';
+  deliveryType: 'zoom' | 'onsite' | 'blended' | 'self-paced' | 'webinar';
   status: 'draft' | 'pending_review' | 'changes_requested' | 'active' | 'completed' | 'archived';
   reviewNote?: string | null;
   thumbnail: string | null;
@@ -571,7 +571,7 @@ export interface CreateCourseData {
   titleAr?: string;
   description?: string;
   descriptionAr?: string;
-  deliveryType: 'zoom' | 'onsite' | 'blended' | 'self-paced';
+  deliveryType: 'zoom' | 'onsite' | 'blended' | 'self-paced' | 'webinar';
   thumbnail?: string;
   maxEnrollment?: number;
   startDate?: string;

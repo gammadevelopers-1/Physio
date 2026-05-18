@@ -1,5 +1,7 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { eq, and, sql } from 'drizzle-orm';
+import { randomBytes } from 'crypto';
+import * as argon2 from 'argon2';
 import { db } from '../../database';
 import {
   sessions,
@@ -7,12 +9,18 @@ import {
   attendanceLogs,
   sessionAssistants,
   users,
+  courses,
+  enrollments,
+  roles,
+  userRoles,
   webinarRegistrations,
   ATTENDANCE_LOG_EVENT,
   NELC_EVENT_TYPE,
+  ROLE_NAMES,
 } from '../../database/schema';
 import { or } from 'drizzle-orm';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
+import { PasswordSetupService } from '../auth/password-setup.service';
 import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { matchParticipantToUser, getSessionInstructorId, isParticipantHost } from './zoom.helpers';
 
@@ -26,6 +34,7 @@ export class ZoomWebhookService {
   constructor(
     private readonly auditService: NelcAuditService,
     @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
+    private readonly passwordSetupService: PasswordSetupService,
   ) {}
 
   /**
@@ -95,6 +104,12 @@ export class ZoomWebhookService {
       if (q?.title && q?.value) customByTitle.set(q.title, q.value);
     }
 
+    const nationalId = customByTitle.get('ID No / Iqama') || null;
+    const scfhsNumber =
+      customByTitle.get(
+        'Saudi Health Commission License Number (write "NO" if not applicable)',
+      ) || null;
+
     await db
       .insert(webinarRegistrations)
       .values({
@@ -104,11 +119,8 @@ export class ZoomWebhookService {
         firstName: registrant.first_name || null,
         lastName: registrant.last_name || null,
         phone: registrant.phone || null,
-        nationalId: customByTitle.get('ID No / Iqama') || null,
-        scfhsNumber:
-          customByTitle.get(
-            'Saudi Health Commission License Number (write "NO" if not applicable)',
-          ) || null,
+        nationalId,
+        scfhsNumber,
         zoomRegistrantId: registrant.registrant_id || registrant.id || null,
         joinUrl: registrant.join_url || null,
         status: registrant.status || 'approved',
@@ -130,6 +142,290 @@ export class ZoomWebhookService {
           `Failed to mirror webinar registration from webhook: ${err?.message || err}`,
         ),
       );
+
+    // For free Webinar Course sessions: auto-create student account (if new)
+    // and enroll. Outsiders who registered via the public Zoom form become
+    // real students, ready to attend the webinar and claim the certificate.
+    try {
+      const provisioned = await this.maybeAutoEnrollWebinarRegistrant({
+        sessionId: session.id,
+        courseId: session.courseId,
+        email,
+        firstName: registrant.first_name || null,
+        lastName: registrant.last_name || null,
+        phone: registrant.phone || null,
+        nationalId,
+        scfhsNumber,
+        existingUserId: matched?.id || null,
+      });
+      if (provisioned?.userId) {
+        await db
+          .update(webinarRegistrations)
+          .set({ userId: provisioned.userId, updatedAt: new Date() })
+          .where(
+            and(
+              eq(webinarRegistrations.sessionId, session.id),
+              eq(webinarRegistrations.email, email),
+            ),
+          );
+      }
+    } catch (err) {
+      this.logger.error(
+        `Webinar auto-enroll failed for ${email} on session ${session.id}: ${(err as Error).message}`,
+      );
+    }
+  }
+
+  /**
+   * For a free Webinar Course session: ensure a student account exists for
+   * the registrant (auto-create if new) and ensure they're enrolled.
+   * Returns { userId, isNewUser } when the course is a free Webinar Course,
+   * otherwise returns null (so the standard mirror-only behaviour applies).
+   */
+  private async maybeAutoEnrollWebinarRegistrant(params: {
+    sessionId: string;
+    courseId: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    phone: string | null;
+    nationalId: string | null;
+    scfhsNumber: string | null;
+    existingUserId: string | null;
+  }): Promise<{ userId: string; isNewUser: boolean } | null> {
+    const [course] = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        deliveryType: courses.deliveryType,
+        price: courses.price,
+        language: courses.language,
+      })
+      .from(courses)
+      .where(eq(courses.id, params.courseId))
+      .limit(1);
+
+    if (!course || course.deliveryType !== 'webinar') return null;
+    // Paid Webinar Courses use the post-checkout auto-register flow instead.
+    // Only free Webinar Courses auto-enroll on Zoom-form registration.
+    const priceValue = course.price ? Number(course.price) : 0;
+    if (priceValue > 0) return null;
+
+    // Resolve user — either pre-matched, or by email lookup, or create new.
+    let userId = params.existingUserId;
+    let isNewUser = false;
+    let registrantName =
+      `${params.firstName || ''} ${params.lastName || ''}`.trim() ||
+      params.email.split('@')[0];
+
+    if (!userId) {
+      const [byEmail] = await db
+        .select({ id: users.id, firstName: users.firstName, lastName: users.lastName })
+        .from(users)
+        .where(eq(users.email, params.email))
+        .limit(1);
+      if (byEmail) {
+        userId = byEmail.id;
+        registrantName =
+          `${byEmail.firstName || ''} ${byEmail.lastName || ''}`.trim() ||
+          registrantName;
+      }
+    }
+
+    if (!userId) {
+      // Create a placeholder student account. The random password is
+      // unguessable; the user sets a real one via the set-password email.
+      const randomPassword = randomBytes(48).toString('hex');
+      const passwordHash = await argon2.hash(randomPassword);
+      const [created] = await db
+        .insert(users)
+        .values({
+          email: params.email,
+          passwordHash,
+          firstName: params.firstName,
+          lastName: params.lastName,
+          phone: params.phone,
+          nationalId: params.nationalId,
+          scfhsNumber: params.scfhsNumber,
+          activeRole: ROLE_NAMES.STUDENT,
+          isVerified: true,
+        })
+        .returning({ id: users.id });
+      userId = created.id;
+      isNewUser = true;
+
+      const [studentRole] = await db
+        .select({ id: roles.id })
+        .from(roles)
+        .where(eq(roles.name, ROLE_NAMES.STUDENT))
+        .limit(1);
+      if (studentRole) {
+        await db
+          .insert(userRoles)
+          .values({ userId, roleId: studentRole.id })
+          .onConflictDoNothing();
+      } else {
+        this.logger.warn(
+          'STUDENT role row missing; created webinar user has no user_roles entry',
+        );
+      }
+      this.logger.log(
+        `Auto-created student ${userId} from Zoom webinar registration (${params.email})`,
+      );
+    }
+
+    // Enroll (or re-activate if previously dropped). Capacity checks
+    // intentionally skipped — free webinars use Zoom's capacity, not ours.
+    const [existingEnrollment] = await db
+      .select({ id: enrollments.id, status: enrollments.status })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.courseId, course.id),
+          eq(enrollments.studentId, userId),
+        ),
+      )
+      .limit(1);
+    if (existingEnrollment) {
+      if (existingEnrollment.status !== 'active') {
+        await db
+          .update(enrollments)
+          .set({ status: 'active' })
+          .where(eq(enrollments.id, existingEnrollment.id));
+      }
+    } else {
+      await db
+        .insert(enrollments)
+        .values({ courseId: course.id, studentId: userId });
+    }
+
+    // Send the set-password email only for newly created users.
+    if (isNewUser) {
+      const locale = (course.language === 'ar' ? 'ar' : 'en') as 'en' | 'ar';
+      this.passwordSetupService
+        .sendWebinarSetupEmail({
+          email: params.email,
+          registrantName,
+          courseTitle: course.title,
+          locale,
+        })
+        .catch((err) =>
+          this.logger.error(
+            `Failed to send webinar set-password email to ${params.email}: ${(err as Error).message}`,
+          ),
+        );
+    }
+
+    return { userId, isNewUser };
+  }
+
+  /**
+   * For a Webinar Course session, mirror the webinar registrant's join/leave
+   * into the meeting `attendance` table when the registrant matches an
+   * enrolled student. The existing progress + certificate engine reads
+   * attendance, so this is what makes webinars count toward CME — without
+   * this mirror, webinars stay info-only (which is correct for standalone
+   * non-course webinars).
+   */
+  private async maybeRecordWebinarCourseAttendance(params: {
+    sessionId: string;
+    courseId: string;
+    email: string;
+    participantId: string;
+    payload: any;
+    event: 'join' | 'leave';
+  }): Promise<void> {
+    const [course] = await db
+      .select({ deliveryType: courses.deliveryType })
+      .from(courses)
+      .where(eq(courses.id, params.courseId))
+      .limit(1);
+    if (course?.deliveryType !== 'webinar') return;
+
+    const [row] = await db
+      .select({ userId: users.id })
+      .from(users)
+      .innerJoin(enrollments, eq(enrollments.studentId, users.id))
+      .where(
+        and(
+          sql`LOWER(${users.email}) = LOWER(${params.email})`,
+          eq(enrollments.courseId, params.courseId),
+          eq(enrollments.status, 'active'),
+        ),
+      )
+      .limit(1);
+    if (!row?.userId) return;
+
+    const studentId = row.userId;
+    const now = new Date();
+
+    await db.insert(attendanceLogs).values({
+      sessionId: params.sessionId,
+      studentId,
+      eventType:
+        params.event === 'join'
+          ? ATTENDANCE_LOG_EVENT.JOIN
+          : ATTENDANCE_LOG_EVENT.LEAVE,
+      timestamp: now,
+      zoomParticipantId: params.participantId,
+      zoomUserEmail: params.email,
+      rawPayload: params.payload,
+    });
+
+    if (params.event === 'join') {
+      await db
+        .insert(attendance)
+        .values({
+          sessionId: params.sessionId,
+          studentId,
+          status: 'present',
+          joinedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: [attendance.sessionId, attendance.studentId],
+          set: { status: 'present', joinedAt: now },
+        });
+      await this.auditService.log({
+        eventType: NELC_EVENT_TYPE.ATTENDANCE_ZOOM_JOIN,
+        entityType: 'attendance',
+        entityId: params.sessionId,
+        userId: studentId,
+        metadata: {
+          sessionId: params.sessionId,
+          source: 'webinar_course',
+          participantEmail: params.email,
+        },
+      });
+    } else {
+      const totalMinutes = await this.calculateTotalDuration(
+        params.sessionId,
+        studentId,
+      );
+      await db
+        .update(attendance)
+        .set({
+          leftAt: now,
+          durationMinutes: totalMinutes,
+        })
+        .where(
+          and(
+            eq(attendance.sessionId, params.sessionId),
+            eq(attendance.studentId, studentId),
+          ),
+        );
+      await this.auditService.log({
+        eventType: NELC_EVENT_TYPE.ATTENDANCE_ZOOM_LEAVE,
+        entityType: 'attendance',
+        entityId: params.sessionId,
+        userId: studentId,
+        metadata: {
+          sessionId: params.sessionId,
+          source: 'webinar_course',
+          participantEmail: params.email,
+          durationMinutes: totalMinutes,
+        },
+      });
+    }
   }
 
   /**
@@ -187,6 +483,19 @@ export class ZoomWebhookService {
             sql`LOWER(${webinarRegistrations.email}) = LOWER(${participantEmail})`,
           ),
         );
+
+      // For Webinar Course sessions, also record attendance for enrolled
+      // students so the existing progress + certificate engine picks them
+      // up. Non-Webinar-Course webinars (legacy / standalone outreach)
+      // stay info-only — same as before.
+      await this.maybeRecordWebinarCourseAttendance({
+        sessionId: session.id,
+        courseId: session.courseId,
+        email: participantEmail,
+        participantId,
+        payload,
+        event: 'join',
+      });
       return;
     }
 
@@ -305,6 +614,18 @@ export class ZoomWebhookService {
           updatedAt: now,
         })
         .where(eq(webinarRegistrations.id, reg.id));
+
+      // Webinar Course attendance leave — mirror duration into attendance
+      // table for enrolled students so progress + certificate eligibility
+      // see the same number.
+      await this.maybeRecordWebinarCourseAttendance({
+        sessionId: session.id,
+        courseId: session.courseId,
+        email: participantEmail,
+        participantId,
+        payload,
+        event: 'leave',
+      });
       return;
     }
 

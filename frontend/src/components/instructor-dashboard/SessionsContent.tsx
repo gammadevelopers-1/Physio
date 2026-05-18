@@ -1151,6 +1151,16 @@ function ScheduleSessionModal({
       : ""
   );
   const [type, setType] = useState<"zoom" | "onsite" | "hybrid">("zoom");
+  // Webinar Courses can only host Zoom webinars — lock the type picker and
+  // tag the payload with isWebinar so the backend creates a Zoom Webinar
+  // (not a Meeting). Any other lecture type is rejected by the backend.
+  const selectedCourseForForm = courses.find((c) => c.id === courseId);
+  const isWebinarCourse = selectedCourseForForm?.deliveryType === "webinar";
+  useEffect(() => {
+    if (isWebinarCourse) {
+      setType("zoom");
+    }
+  }, [isWebinarCourse]);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [durationHours, setDurationHours] = useState(1);
@@ -1220,6 +1230,9 @@ function ScheduleSessionModal({
       }
       if ((type === "zoom" || type === "hybrid") && zoomLink.trim()) {
         data.zoomLink = zoomLink.trim();
+      }
+      if (isWebinarCourse) {
+        data.isWebinar = true;
       }
       if (isMakeup) {
         data.isMakeup = true;
@@ -1350,36 +1363,48 @@ function ScheduleSessionModal({
           </div>
         </div>
 
-        {/* Session Type */}
-        <div>
-          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
-            {t("sessionsPage.form.sessionType")}
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {(["zoom", "onsite", "hybrid"] as const).map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => setType(opt)}
-                className={`flex flex-col items-center gap-1.5 p-3 rounded-lg transition-colors ${
-                  type === opt
-                    ? "border-2 border-[var(--color-primary)] bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
-                    : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] hover:text-[var(--color-primary)]"
-                }`}
-              >
-                {opt === "zoom" && <Video className="w-5 h-5" />}
-                {opt === "onsite" && <MapPin className="w-5 h-5" />}
-                {opt === "hybrid" && <RefreshCw className="w-5 h-5" />}
-                <span className="text-xs font-medium">
-                  {t(`sessionsPage.type.${opt}`)}
-                </span>
-              </button>
-            ))}
+        {/* Webinar Course notice — locked to Zoom Webinar */}
+        {isWebinarCourse && (
+          <div className="flex items-start gap-2 p-3 bg-[#FAF5FF] border border-[#E9D5FF] rounded-lg">
+            <Radio className="w-4 h-4 text-[#A855F7] flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-[#6B21A8]">
+              {t("sessionsPage.form.webinarCourseLock") || "Webinar Course — this lecture will be created as a Zoom Webinar. Other lecture types are not available."}
+            </p>
           </div>
-        </div>
+        )}
+
+        {/* Session Type — hidden for Webinar Courses (locked to Zoom Webinar) */}
+        {!isWebinarCourse && (
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
+              {t("sessionsPage.form.sessionType")}
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {(["zoom", "onsite", "hybrid"] as const).map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setType(opt)}
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-lg transition-colors ${
+                    type === opt
+                      ? "border-2 border-[var(--color-primary)] bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
+                      : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] hover:text-[var(--color-primary)]"
+                  }`}
+                >
+                  {opt === "zoom" && <Video className="w-5 h-5" />}
+                  {opt === "onsite" && <MapPin className="w-5 h-5" />}
+                  {opt === "hybrid" && <RefreshCw className="w-5 h-5" />}
+                  <span className="text-xs font-medium">
+                    {t(`sessionsPage.type.${opt}`)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Zoom auto-create info */}
-        {(type === "zoom" || type === "hybrid") && (
+        {!isWebinarCourse && (type === "zoom" || type === "hybrid") && (
           <div className="flex items-start gap-2 p-3 bg-[var(--color-border-subtle)] rounded-lg">
             <Video className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0 mt-0.5" />
             <p className="text-xs text-[#1E40AF]">

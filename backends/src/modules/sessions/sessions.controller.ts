@@ -17,7 +17,7 @@ import { SessionsService } from './sessions.service';
 import { ZoomSyncService } from '../zoom/zoom-sync.service';
 import { ZOOM_SERVICE, IZoomService } from '../zoom/zoom.interface';
 import { db } from '../../database';
-import { sessionRecordings } from '../../database/schema';
+import { sessionRecordings, sessions as sessionsTable, courses } from '../../database/schema';
 import { eq } from 'drizzle-orm';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
@@ -378,6 +378,25 @@ export class SessionsController {
     let recordings = await this.sessionsService.getRecordings(id);
 
     if (user.roles.includes('STUDENT' as UserRole)) {
+      // Webinar Course gate: don't surface recordings to students when the
+      // course-level "share recording" toggle is off. Other course types
+      // are not affected (manager decides per session).
+      const [courseRow] = await db
+        .select({
+          deliveryType: courses.deliveryType,
+          recordingShareEnabled: courses.recordingShareEnabled,
+        })
+        .from(sessionsTable)
+        .innerJoin(courses, eq(sessionsTable.courseId, courses.id))
+        .where(eq(sessionsTable.id, id))
+        .limit(1);
+      if (
+        courseRow?.deliveryType === 'webinar' &&
+        !courseRow.recordingShareEnabled
+      ) {
+        return [];
+      }
+
       // If recordings still have a passcode, remove it via Zoom API (one-time fix)
       const hasPasscode = recordings.some((r) => r.password);
       if (hasPasscode && recordings.length > 0) {

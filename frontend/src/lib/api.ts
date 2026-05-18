@@ -1478,7 +1478,7 @@ export interface CreateCourseManagerData {
   titleAr?: string;
   description?: string;
   descriptionAr?: string;
-  deliveryType: 'zoom' | 'onsite' | 'blended' | 'self-paced';
+  deliveryType: 'zoom' | 'onsite' | 'blended' | 'self-paced' | 'webinar';
   thumbnail?: string;
   maxEnrollment?: number;
   cmeHours?: number;
@@ -1515,6 +1515,8 @@ export interface CreateCourseManagerData {
   showContents?: boolean;
   sectionsOrder?: string[];
   visibleOnPublicSite?: boolean;
+  /** Webinar Course only — surface the post-event recording in students' dashboards. */
+  recordingShareEnabled?: boolean;
 }
 
 export interface SessionsParams {
@@ -2610,6 +2612,23 @@ export const studentApi = {
 
   selfEnroll: (courseId: string) =>
     api.post<EnrollmentResponse>(`/student/enroll/${courseId}`, {}),
+
+  /**
+   * Placeholder checkout for paid courses. Simulates a successful payment,
+   * records the placeholder row, enrolls the student. When the real payment
+   * provider lands, only the backend body changes — the contract here is
+   * stable.
+   */
+  checkoutCourse: (courseId: string) =>
+    api.post<{
+      paymentId: string;
+      enrollmentId: string;
+      courseId: string;
+      amount: number;
+      currency: string;
+      provider: string;
+      placeholder: boolean;
+    }>(`/student/courses/${courseId}/checkout`, {}),
 
   dropCourse: (courseId: string) =>
     api.delete<EnrollmentResponse>(`/student/courses/${courseId}/drop`),

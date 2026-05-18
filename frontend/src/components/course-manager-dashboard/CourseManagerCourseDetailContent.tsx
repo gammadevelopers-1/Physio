@@ -715,7 +715,8 @@ const CourseManagerCourseDetailContent = ({
                   </div>
                 )}
 
-                {/* Modules */}
+                {/* Modules — hidden for Webinar Courses (attendance-only by design) */}
+                {course.deliveryType !== "webinar" && (
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
                   <div className="p-5 border-b border-[var(--color-border)] flex items-center justify-between">
                     <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
@@ -896,6 +897,7 @@ const CourseManagerCourseDetailContent = ({
                     </div>
                   )}
                 </div>
+                )}
 
                 {/* Course Metadata */}
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">

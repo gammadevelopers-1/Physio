@@ -64,7 +64,7 @@ function ScheduleSessionModal({
   onScheduled,
   t,
 }: {
-  courses: { id: string; title: string; instructorEmail?: string | null; instructorName?: string | null }[];
+  courses: { id: string; title: string; deliveryType?: string | null; instructorEmail?: string | null; instructorName?: string | null }[];
   onClose: () => void;
   onScheduled: () => void;
   t: ReturnType<typeof useTranslations>;
@@ -74,6 +74,18 @@ function ScheduleSessionModal({
   const [type, setType] = useState<"zoom" | "onsite" | "hybrid">("zoom");
   // Sub-format under Zoom: a regular meeting or a webinar (registration page).
   const [zoomFormat, setZoomFormat] = useState<"meeting" | "webinar">("meeting");
+  // Webinar Courses can only host Zoom webinars — once a Webinar Course is
+  // selected, both the type and zoom-format pickers are locked.
+  const isWebinarCourse = useMemo(
+    () => courses.find((c) => c.id === courseId)?.deliveryType === "webinar",
+    [courses, courseId],
+  );
+  useEffect(() => {
+    if (isWebinarCourse) {
+      setType("zoom");
+      setZoomFormat("webinar");
+    }
+  }, [isWebinarCourse]);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [durationHours, setDurationHours] = useState(1);
@@ -244,34 +256,46 @@ function ScheduleSessionModal({
           </div>
         </div>
 
-        {/* Session Type */}
-        <div>
-          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
-            {t("sessionsPage.form.sessionType") || "Session Type"}
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {(["zoom", "onsite", "hybrid"] as const).map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => setType(opt)}
-                className={`flex flex-col items-center gap-1.5 p-3 rounded-lg transition-colors ${
-                  type === opt
-                    ? "border-2 border-[var(--color-primary)] bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
-                    : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)]"
-                }`}
-              >
-                {opt === "zoom" && <Video className="w-5 h-5" />}
-                {opt === "onsite" && <MapPin className="w-5 h-5" />}
-                {opt === "hybrid" && <RefreshCw className="w-5 h-5" />}
-                <span className="text-xs font-medium">{t(`sessionsPage.type.${opt}`)}</span>
-              </button>
-            ))}
+        {/* Webinar Course notice — locked to Zoom Webinar, both pickers hidden */}
+        {isWebinarCourse && (
+          <div className="flex items-start gap-2 p-3 bg-[#FAF5FF] border border-[#E9D5FF] rounded-lg">
+            <Radio className="w-4 h-4 text-[#A855F7] flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-[#6B21A8]">
+              {t("sessionsPage.form.webinarCourseLock") || "Webinar Course — this lecture will be created as a Zoom Webinar. Other lecture types are not available."}
+            </p>
           </div>
-        </div>
+        )}
 
-        {/* Zoom format — Meeting vs Webinar segmented selector */}
-        {type === "zoom" && (
+        {/* Session Type — hidden for Webinar Courses (locked to Zoom Webinar) */}
+        {!isWebinarCourse && (
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
+              {t("sessionsPage.form.sessionType") || "Session Type"}
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {(["zoom", "onsite", "hybrid"] as const).map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setType(opt)}
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-lg transition-colors ${
+                    type === opt
+                      ? "border-2 border-[var(--color-primary)] bg-[var(--color-border-subtle)] text-[var(--color-primary)]"
+                      : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)]"
+                  }`}
+                >
+                  {opt === "zoom" && <Video className="w-5 h-5" />}
+                  {opt === "onsite" && <MapPin className="w-5 h-5" />}
+                  {opt === "hybrid" && <RefreshCw className="w-5 h-5" />}
+                  <span className="text-xs font-medium">{t(`sessionsPage.type.${opt}`)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Zoom format — Meeting vs Webinar segmented selector — hidden for Webinar Courses */}
+        {type === "zoom" && !isWebinarCourse && (
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
               {t("sessionsPage.form.zoomFormat") || "Zoom Format"} *
@@ -482,7 +506,7 @@ const SessionsContent = () => {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [showMoreFilters, setShowMoreFilters] = useState(false);
-  const [coursesList, setCoursesList] = useState<{ id: string; title: string; instructorEmail?: string | null; instructorName?: string | null }[]>([]);
+  const [coursesList, setCoursesList] = useState<{ id: string; title: string; deliveryType?: string | null; instructorEmail?: string | null; instructorName?: string | null }[]>([]);
 
   // Action modal states
   const [actionDropdown, setActionDropdown] = useState<string | null>(null);
@@ -655,6 +679,7 @@ const SessionsContent = () => {
       setCoursesList((res.data || []).filter((c: any) => c.status === "active" && c.deliveryType !== "self-paced").map((c: any) => ({
         id: c.id,
         title: c.title,
+        deliveryType: c.deliveryType || null,
         instructorEmail: c.instructorEmail || c.instructor?.email || null,
         instructorName: c.instructorName || (c.instructor ? `${c.instructor.firstName || ""} ${c.instructor.lastName || ""}`.trim() : null) || null,
       })));

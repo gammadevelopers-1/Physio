@@ -32,6 +32,7 @@ import { AuditLogModule } from './modules/audit-logs/audit-logs.module';
 import { StudentModule } from './modules/student/student.module';
 import { UserNotificationsModule } from './modules/user-notifications/user-notifications.module';
 import { PointsModule } from './modules/points/points.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 import { JwtAuthGuard } from './modules/auth/guards';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
@@ -112,6 +113,7 @@ import processingConfig from './config/processing.config';
     StudentModule,
     UserNotificationsModule,
     PointsModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [

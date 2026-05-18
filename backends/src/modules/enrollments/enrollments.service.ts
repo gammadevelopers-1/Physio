@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject,
   Logger,
 } from '@nestjs/common';
 import { eq, and, ne, desc, count, sql, or, inArray } from 'drizzle-orm';
@@ -15,6 +16,7 @@ import {
   waitlists,
   sessionAssistants,
   courseAssistants,
+  webinarRegistrations,
   NELC_EVENT_TYPE,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -27,6 +29,7 @@ import { SessionAssistantsService } from '../session-assistants/session-assistan
 import { ThresholdEvaluationService } from '../course-assistants/threshold-evaluation.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 import { EmailService } from '../email/email.service';
+import { ZOOM_SERVICE, IZoomService } from '../zoom/zoom.interface';
 import {
   classifyCourse,
   getNelcMaxEnrollment,
@@ -42,6 +45,7 @@ export class EnrollmentsService {
     private readonly thresholdEvaluationService: ThresholdEvaluationService,
     private readonly userNotificationsService: UserNotificationsService,
     private readonly emailService: EmailService,
+    @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -219,6 +223,13 @@ export class EnrollmentsService {
       // Item #13: TA re-allocation on enrollment change
       await this.triggerTaReallocation(courseId);
 
+      // For Webinar Courses: auto-register the student in Zoom for every
+      // webinar session so the personal join URL is immediately available
+      // in their dashboard — no Zoom-form roundtrip.
+      this.autoRegisterStudentForWebinarCourse(courseId, studentId).catch((err) =>
+        this.logger.error('Webinar Course auto-register failed', err),
+      );
+
       // Notify student of enrollment
       this.notifyStudentOfEnrollment(courseId, studentId).catch((err) =>
         this.logger.error('Failed to send enrollment notification', err),
@@ -254,12 +265,114 @@ export class EnrollmentsService {
     // Item #13: TA re-allocation on enrollment change
     await this.triggerTaReallocation(courseId);
 
+    // For Webinar Courses: auto-register the student in Zoom for every
+    // webinar session so the personal join URL is immediately available
+    // in their dashboard — no Zoom-form roundtrip.
+    this.autoRegisterStudentForWebinarCourse(courseId, studentId).catch((err) =>
+      this.logger.error('Webinar Course auto-register failed', err),
+    );
+
     // Notify student of enrollment
     this.notifyStudentOfEnrollment(courseId, studentId).catch((err) =>
       this.logger.error('Failed to send enrollment notification', err),
     );
 
     return enrollment;
+  }
+
+  /**
+   * Webinar Course post-enrollment hook. For each webinar session linked to
+   * the course, programmatically register the student in Zoom and mirror
+   * the registration into webinar_registrations so the dashboard surfaces
+   * the personal join URL. Idempotent — Zoom dedupes by email and our
+   * upsert handles re-runs.
+   *
+   * No-op for non-Webinar Courses. Failures are logged, never thrown — the
+   * enrollment itself must not be blocked by Zoom downtime.
+   */
+  private async autoRegisterStudentForWebinarCourse(
+    courseId: string,
+    studentId: string,
+  ): Promise<void> {
+    const [course] = await db
+      .select({
+        deliveryType: courses.deliveryType,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+    if (course?.deliveryType !== 'webinar') return;
+
+    const [student] = await db
+      .select({
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        phone: users.phone,
+        nationalId: users.nationalId,
+        scfhsNumber: users.scfhsNumber,
+      })
+      .from(users)
+      .where(eq(users.id, studentId))
+      .limit(1);
+    if (!student?.email) return;
+
+    const webinarSessions = await db
+      .select({
+        id: sessions.id,
+        zoomWebinarId: sessions.zoomWebinarId,
+      })
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.courseId, courseId),
+          eq(sessions.isWebinar, true),
+          ne(sessions.status, 'cancelled'),
+        ),
+      );
+
+    for (const ws of webinarSessions) {
+      if (!ws.zoomWebinarId) continue;
+      try {
+        const result = await this.zoomService.registerForWebinar(ws.zoomWebinarId, {
+          email: student.email,
+          firstName: student.firstName || student.email.split('@')[0],
+          lastName: student.lastName || '',
+          phone: student.phone || undefined,
+          nationalId: student.nationalId || undefined,
+          scfhsNumber: student.scfhsNumber || undefined,
+        });
+        await db
+          .insert(webinarRegistrations)
+          .values({
+            sessionId: ws.id,
+            userId: studentId,
+            email: student.email.toLowerCase(),
+            firstName: student.firstName || null,
+            lastName: student.lastName || null,
+            phone: student.phone || null,
+            nationalId: student.nationalId || null,
+            scfhsNumber: student.scfhsNumber || null,
+            zoomRegistrantId: result.registrantId || null,
+            joinUrl: result.joinUrl || null,
+            status: 'approved',
+          })
+          .onConflictDoUpdate({
+            target: [webinarRegistrations.sessionId, webinarRegistrations.email],
+            set: {
+              userId: studentId,
+              zoomRegistrantId: result.registrantId || null,
+              joinUrl: result.joinUrl || null,
+              status: 'approved',
+              updatedAt: new Date(),
+            },
+          });
+      } catch (err) {
+        this.logger.warn(
+          `Zoom auto-register failed for session ${ws.id} / student ${studentId}: ${(err as Error).message}`,
+        );
+      }
+    }
   }
 
   /**

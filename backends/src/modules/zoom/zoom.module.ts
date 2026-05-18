@@ -6,10 +6,11 @@ import { ZoomWebhookService } from './zoom-webhook.service';
 import { ZoomSyncService } from './zoom-sync.service';
 import { ZoomController } from './zoom.controller';
 import { ZOOM_SERVICE } from './zoom.interface';
+import { AuthModule } from '../auth/auth.module';
 import zoomConfig from '../../config/zoom.config';
 
 @Module({
-  imports: [ConfigModule.forFeature(zoomConfig)],
+  imports: [ConfigModule.forFeature(zoomConfig), AuthModule],
   controllers: [ZoomController],
   providers: [
     {

@@ -18,6 +18,7 @@ import {
   scheduledReports,
   courseAssistants,
   webinarRegistrations,
+  payments,
 } from '../../database/schema';
 import { courseMaterials } from '../../database/schema/course-materials';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -824,7 +825,11 @@ export class ReportsService {
     const courseIds = await this.resolveCourseIds(user, params.courseId);
     const metadata = await this.buildMetadata(user, params.courseId);
 
-    const headers = [
+    // The full audit set (CSV / XLSX). Payment + CME + certificate columns
+    // sit at the end so Webinar Course audits surface all the SCFHS-relevant
+    // fields in one row. Non-Webinar webinars leave those columns blank.
+    // The PDF view below uses a slimmer subset for landscape-A4 readability.
+    const fullHeaders = [
       'Course',
       'Webinar',
       'Webinar Date',
@@ -841,7 +846,25 @@ export class ReportsService {
       'Joined At',
       'Left At',
       'Attended Duration (min)',
+      'Payment Status',
+      'CME Hours',
+      'Certificate Status',
     ];
+    const pdfHeaders = [
+      'Course',
+      'Webinar',
+      'Name',
+      'Email',
+      'Phone',
+      'National ID',
+      'Source',
+      'Attended',
+      'Min.',
+      'Payment',
+      'Cert',
+    ];
+    const isPdf = format === 'pdf';
+    const headers = isPdf ? pdfHeaders : fullHeaders;
 
     if (courseIds.length === 0) {
       return this.formatReport(
@@ -863,7 +886,10 @@ export class ReportsService {
 
     const rowsData = await db
       .select({
+        courseId: courses.id,
         courseTitle: courses.title,
+        courseDeliveryType: courses.deliveryType,
+        courseCmeHours: courses.cmeHours,
         sessionTitle: sessions.title,
         scheduledAt: sessions.scheduledAt,
         firstName: webinarRegistrations.firstName,
@@ -890,26 +916,115 @@ export class ReportsService {
         asc(webinarRegistrations.createdAt),
       );
 
+    // Pre-fetch payment + certificate status keyed by (userId, courseId) so
+    // we don't N+1 across rows. Only relevant for registrants we matched
+    // to a system user (external registrants stay blank).
+    const userCourseKeys = Array.from(
+      new Set(
+        rowsData
+          .filter((r) => r.userId)
+          .map((r) => `${r.userId}|${r.courseId}`),
+      ),
+    );
+    const paymentByKey = new Map<string, string>();
+    const certStatusByKey = new Map<string, string>();
+    if (userCourseKeys.length > 0) {
+      const userIds = Array.from(
+        new Set(rowsData.filter((r) => r.userId).map((r) => r.userId as string)),
+      );
+      const courseIdsForLookup = Array.from(
+        new Set(rowsData.map((r) => r.courseId)),
+      );
+      const paymentRows = await db
+        .select({
+          userId: payments.userId,
+          courseId: payments.courseId,
+          status: payments.status,
+          createdAt: payments.createdAt,
+        })
+        .from(payments)
+        .where(
+          and(
+            inArray(payments.userId, userIds),
+            inArray(payments.courseId, courseIdsForLookup),
+          ),
+        )
+        .orderBy(desc(payments.createdAt));
+      for (const p of paymentRows) {
+        const key = `${p.userId}|${p.courseId}`;
+        // First (latest by ORDER BY) wins per key.
+        if (!paymentByKey.has(key)) paymentByKey.set(key, p.status);
+      }
+      const certRows = await db
+        .select({
+          studentId: certificateRequests.studentId,
+          courseId: certificateRequests.courseId,
+          status: certificateRequests.status,
+        })
+        .from(certificateRequests)
+        .where(
+          and(
+            inArray(certificateRequests.studentId, userIds),
+            inArray(certificateRequests.courseId, courseIdsForLookup),
+          ),
+        );
+      for (const c of certRows) {
+        certStatusByKey.set(`${c.studentId}|${c.courseId}`, c.status);
+      }
+    }
+
     const fmtNullable = (d: Date | null) =>
       d ? this.formatTimestamp(d) : '';
-    const rows: string[][] = rowsData.map((r) => [
-      r.courseTitle ?? '',
-      r.sessionTitle ?? '',
-      this.formatTimestamp(r.scheduledAt),
-      r.firstName ?? '',
-      r.lastName ?? '',
-      r.email ?? '',
-      r.phone ?? '',
-      r.nationalId ?? '',
-      r.scfhsNumber ?? '',
-      r.userId ? 'Student' : 'External',
-      r.status ?? '',
-      this.formatTimestamp(r.registeredAt),
-      r.attended ? 'Yes' : 'No',
-      fmtNullable(r.joinedAt),
-      fmtNullable(r.leftAt),
-      String(r.attendedMin ?? 0),
-    ]);
+    const rows: string[][] = rowsData.map((r) => {
+      const fullName = [r.firstName, r.lastName].filter(Boolean).join(' ');
+      const source = r.userId ? 'Student' : 'External';
+      const key = r.userId ? `${r.userId}|${r.courseId}` : null;
+      const paymentStatus = key ? (paymentByKey.get(key) ?? '') : '';
+      const certStatus = key ? (certStatusByKey.get(key) ?? '') : '';
+      // CME hours only meaningful for Webinar Courses where attendance =
+      // certificate eligibility. For non-Webinar webinars the CME column
+      // would mislead, so blank it.
+      const cmeHours =
+        r.courseDeliveryType === 'webinar'
+          ? String(r.courseCmeHours ?? 0)
+          : '';
+      if (isPdf) {
+        return [
+          r.courseTitle ?? '',
+          r.sessionTitle ?? '',
+          fullName,
+          r.email ?? '',
+          r.phone ?? '',
+          r.nationalId ?? '',
+          source,
+          r.attended ? 'Yes' : 'No',
+          String(r.attendedMin ?? 0),
+          paymentStatus || '—',
+          certStatus || '—',
+        ];
+      }
+      return [
+        r.courseTitle ?? '',
+        r.sessionTitle ?? '',
+        this.formatTimestamp(r.scheduledAt),
+        r.firstName ?? '',
+        r.lastName ?? '',
+        r.email ?? '',
+        r.phone ?? '',
+        r.nationalId ?? '',
+        r.scfhsNumber ?? '',
+        source,
+        r.status ?? '',
+        this.formatTimestamp(r.registeredAt),
+        r.attended ? 'Yes' : 'No',
+        fmtNullable(r.joinedAt),
+        fmtNullable(r.leftAt),
+        String(r.attendedMin ?? 0),
+        paymentStatus,
+        cmeHours,
+        certStatus,
+      ];
+    });
 
     return this.formatReport(
       'Webinar Registrants Report',
@@ -1965,7 +2080,7 @@ export class ReportsService {
       const startX = doc.page.margins.left;
 
       // Smart column widths — wider for name/email/reason, narrower for status/numbers
-      const wideColumns = new Set(['Student Name', 'Student', 'Email', 'Instructor', 'Course', 'Session', 'Reason (if not earned)']);
+      const wideColumns = new Set(['Student Name', 'Student', 'Name', 'Email', 'Instructor', 'Course', 'Session', 'Webinar', 'Reason (if not earned)']);
       const wrapColumns = new Set(['Reason (if not earned)']); // columns that allow text wrap
       const defaultColWidth = pageWidth / headers.length;
       const wideCount = headers.filter(h => wideColumns.has(h)).length;

@@ -348,6 +348,9 @@ const CoursesContent = () => {
                       <option value="blended">
                         {t("coursesPage.delivery.blended")}
                       </option>
+                      <option value="webinar">
+                        {t("coursesPage.delivery.webinar")}
+                      </option>
                     </select>
 
                     <select

@@ -1181,6 +1181,45 @@ export class CoursesService {
       }
     }
 
+    // Switching a course to 'webinar' delivery type is only valid if the
+    // course has no modules, no assessments, and no non-webinar sessions.
+    // Webinar Courses are attendance-only by contract — we cannot retain
+    // pre-existing content that would break that guarantee.
+    if (dto.deliveryType === 'webinar' && existing.deliveryType !== 'webinar') {
+      const [moduleRow] = await db
+        .select({ count: count() })
+        .from(courseModules)
+        .where(eq(courseModules.courseId, courseId));
+      if (Number(moduleRow?.count || 0) > 0) {
+        throw new BadRequestException(
+          'Cannot switch to Webinar Course: this course already has modules. Remove them first.',
+        );
+      }
+      const [assessmentRow] = await db
+        .select({ count: count() })
+        .from(assessments)
+        .where(eq(assessments.courseId, courseId));
+      if (Number(assessmentRow?.count || 0) > 0) {
+        throw new BadRequestException(
+          'Cannot switch to Webinar Course: this course already has assessments. Remove them first.',
+        );
+      }
+      const [nonWebinarSessionRow] = await db
+        .select({ count: count() })
+        .from(sessions)
+        .where(
+          and(
+            eq(sessions.courseId, courseId),
+            eq(sessions.isWebinar, false),
+          ),
+        );
+      if (Number(nonWebinarSessionRow?.count || 0) > 0) {
+        throw new BadRequestException(
+          'Cannot switch to Webinar Course: this course already has non-webinar lectures. Remove them first.',
+        );
+      }
+    }
+
     const { price, enrollmentDeadline, ...restDto } = dto;
     const updateData: Record<string, any> = {
       ...restDto,
@@ -1480,6 +1519,18 @@ export class CoursesService {
     dto: CreateModuleDto,
   ) {
     await this.verifyCourseAccess(courseId, user);
+
+    // Webinar Courses are attendance-only — modules are not allowed.
+    const [course] = await db
+      .select({ deliveryType: courses.deliveryType })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+    if (course?.deliveryType === 'webinar') {
+      throw new BadRequestException(
+        'Webinar courses cannot contain modules. Add a webinar lecture instead.',
+      );
+    }
 
     // If no orderIndex provided, append at the end
     let orderIndex = dto.orderIndex;
@@ -2095,6 +2146,7 @@ export class CoursesService {
       .select({
         id: courses.id,
         status: courses.status,
+        deliveryType: courses.deliveryType,
         enrollmentDeadline: courses.enrollmentDeadline,
         startDate: courses.startDate,
         maxEnrollment: courses.maxEnrollment,

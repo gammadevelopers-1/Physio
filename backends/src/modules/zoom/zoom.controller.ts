@@ -510,26 +510,36 @@ export class ZoomController {
   /**
    * Handle recording.completed event from Zoom (item #22).
    * Stores recording files in session_recordings table.
+   *
+   * Matches the session by either meetingId (regular Zoom meetings) OR
+   * zoomWebinarId (Zoom webinars) — both surfaces fire this webhook with
+   * the same shape but the id is different per surface.
    */
   private async handleRecordingCompleted(payload: any) {
-    const meetingId = String(payload?.id || '');
-    if (!meetingId) {
-      this.logger.warn('recording.completed: no meeting id in payload');
+    const zoomId = String(payload?.id || '');
+    if (!zoomId) {
+      this.logger.warn('recording.completed: no meeting/webinar id in payload');
       return;
     }
 
     const [session] = await db
-      .select({ id: sessions.id })
+      .select({ id: sessions.id, isWebinar: sessions.isWebinar })
       .from(sessions)
-      .where(eq(sessions.meetingId, meetingId))
+      .where(
+        or(
+          eq(sessions.meetingId, zoomId),
+          eq(sessions.zoomWebinarId, zoomId),
+        ),
+      )
       .limit(1);
 
     if (!session) {
       this.logger.warn(
-        `No session found for recording meetingId: ${meetingId}`,
+        `No session found for recording zoomId: ${zoomId}`,
       );
       return;
     }
+    const meetingId = zoomId;
 
     const recordingFiles = payload?.recording_files || [];
     const shareUrl = payload?.share_url || null;

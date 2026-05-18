@@ -1564,6 +1564,7 @@
       "deliveryOnsite": "Onsite",
       "deliveryBlended": "Blended",
       "deliverySelfPaced": "Self-paced",
+      "deliveryWebinar": "Webinar",
       "sortRecent": "Most recent",
       "sortNewest": "Newest enrolled",
       "sortTitle": "Title (A–Z)",
@@ -2284,7 +2285,8 @@
         "zoom": "Zoom",
         "onsite": "On-site",
         "blended": "Blended",
-        "self-paced": "Self-paced"
+        "self-paced": "Self-paced",
+        "webinar": "Webinar"
       },
       "sort": {
         "newest": "Newest First",
@@ -2754,6 +2756,10 @@
       "courseSettings": "Course Settings",
       "deliveryType": "Delivery Type",
       "deliverySelfPaced": "Self-paced",
+      "deliveryWebinar": "Webinar",
+      "deliveryWebinarHint": "Webinar courses are attendance-only — no modules or assessments. Trainees register through Zoom and earn the certificate by attending at least 75% of the webinar(s).",
+      "shareRecordingLabel": "Share webinar recording with enrolled students",
+      "shareRecordingDesc": "When enabled, the webinar recording is surfaced in students' dashboards after Zoom finishes processing it (typically 5–60 minutes after the event ends).",
       "maxEnrollment": "Max Enrollment",
       "startDate": "Start Date",
       "endDate": "End Date",
@@ -3990,7 +3996,8 @@
         "zoom": "Zoom",
         "onsite": "On-site",
         "blended": "Blended",
-        "self-paced": "Self-paced"
+        "self-paced": "Self-paced",
+        "webinar": "Webinar"
       },
       "sort": {
         "newest": "Newest First",
@@ -4063,6 +4070,10 @@
       "deliveryOnsite": "On-site",
       "deliveryBlended": "Blended",
       "deliverySelfPaced": "Self-paced",
+      "deliveryWebinar": "Webinar",
+      "deliveryWebinarHint": "Webinar courses are attendance-only — no modules or assessments. Trainees register through Zoom and earn the certificate by attending at least 75% of the webinar(s).",
+      "shareRecordingLabel": "Share webinar recording with enrolled students",
+      "shareRecordingDesc": "When enabled, the webinar recording is surfaced in students' dashboards after Zoom finishes processing it (typically 5–60 minutes after the event ends).",
       "maxEnrollment": "Max Enrollment",
       "startDate": "Start Date",
       "endDate": "End Date",
@@ -4336,6 +4347,7 @@
         "zoomMeetingHint": "Live class for enrolled students. Counts toward attendance.",
         "zoomWebinar": "Zoom Webinar",
         "zoomWebinarHint": "Public registration link. Shareable. Does not count for course progress.",
+        "webinarCourseLock": "Webinar Course — this lecture will be created as a Zoom Webinar. Other lecture types are not available.",
         "instructorNoWebinarLicense": "Instructor has no Webinar license. The webinar will be created under the platform owner account instead.",
         "instructorNotOnZoom": "Instructor doesn't have a Zoom account on this workspace. The webinar will be hosted from the platform owner account.",
         "cancel": "Cancel",

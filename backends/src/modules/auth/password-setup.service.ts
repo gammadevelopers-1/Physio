@@ -247,4 +247,29 @@ export class PasswordSetupService {
       params.locale,
     );
   }
+
+  /**
+   * Webinar Course auto-enrollment variant. Issues the token and sends the
+   * webinar-themed set-password email referencing the linked course title.
+   */
+  async sendWebinarSetupEmail(params: {
+    email: string;
+    registrantName: string;
+    courseTitle: string;
+    locale: 'en' | 'ar';
+  }): Promise<void> {
+    const token = await this.issueToken(params.email);
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') ||
+      'https://physioguidance.org';
+    const url = `${frontendUrl}/${params.locale}/set-password?token=${token}`;
+
+    await this.emailService.sendWebinarRegistrationSetPassword(
+      params.email,
+      params.registrantName,
+      params.courseTitle,
+      url,
+      params.locale,
+    );
+  }
 }

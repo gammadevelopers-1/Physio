@@ -19,6 +19,7 @@ export interface CourseFiltersLabels {
   filterOnsiteLabel?: string;
   filterBlendedLabel?: string;
   filterSelfPacedLabel?: string;
+  filterWebinarLabel?: string;
   filterPricingLabel?: string;
   filterFreeLabel?: string;
   filterPaidLabel?: string;
@@ -86,6 +87,7 @@ const CourseFilters = ({
   filterOnsiteLabel,
   filterBlendedLabel,
   filterSelfPacedLabel,
+  filterWebinarLabel,
   filterPricingLabel,
   filterFreeLabel,
   filterPaidLabel,
@@ -110,12 +112,16 @@ const CourseFilters = ({
     }
   };
 
-  // Option → label mapping (empty label = hidden)
+  // Option → label mapping (empty label = hidden).
+  // Webinar falls back to a built-in localized label so the filter always
+  // works even before the Strapi catalog entity is updated with the new
+  // `filterWebinarLabel` field.
   const deliveryLabelMap: Record<string, string | undefined> = {
     zoom: filterZoomLabel,
     onsite: filterOnsiteLabel,
     blended: filterBlendedLabel,
     "self-paced": filterSelfPacedLabel,
+    webinar: filterWebinarLabel ?? (isRTL ? "ويبينار" : "Webinar"),
   };
 
   const visibleCourseTypes = courseTypes.filter((t) => !!deliveryLabelMap[t]);

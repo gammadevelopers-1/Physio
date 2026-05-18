@@ -155,7 +155,7 @@ const CreateCourseContent = () => {
   const [description, setDescription] = useState("");
   const [descriptionAr, setDescriptionAr] = useState("");
   const [deliveryType, setDeliveryType] = useState<
-    "zoom" | "onsite" | "blended" | "self-paced"
+    "zoom" | "onsite" | "blended" | "self-paced" | "webinar"
   >("zoom");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
@@ -197,6 +197,9 @@ const CreateCourseContent = () => {
   const [language, setLanguage] = useState("en");
   const [showContents, setShowContents] = useState(true);
   const [visibleOnPublicSite, setVisibleOnPublicSite] = useState(true);
+  // Webinar Course only: when true, the webinar recording is surfaced in
+  // enrolled students' dashboards after Zoom finishes processing it.
+  const [recordingShareEnabled, setRecordingShareEnabled] = useState(false);
   // NELC compliance flags — always enabled, shown as static indicators
   const nelcAccreditation = true;
   const bilingualContent = true;
@@ -431,6 +434,11 @@ const CreateCourseContent = () => {
         payload.showContents = showContents;
       }
       payload.visibleOnPublicSite = visibleOnPublicSite;
+      // Webinar Course only — toggle controls whether the recording is
+      // surfaced in students' dashboards after the event ends.
+      if (deliveryType === 'webinar') {
+        payload.recordingShareEnabled = recordingShareEnabled;
+      }
 
       const created = await courseManagerApi.createCourse(payload);
 
@@ -475,6 +483,8 @@ const CreateCourseContent = () => {
         return t("createCourse.deliveryBlended");
       case "self-paced":
         return t("createCourse.deliverySelfPaced");
+      case "webinar":
+        return t("createCourse.deliveryWebinar");
       default:
         return dt;
     }
@@ -591,7 +601,7 @@ const CreateCourseContent = () => {
                           value={deliveryType}
                           onChange={(e) =>
                             setDeliveryType(
-                              e.target.value as "zoom" | "onsite" | "blended" | "self-paced",
+                              e.target.value as "zoom" | "onsite" | "blended" | "self-paced" | "webinar",
                             )
                           }
                           className={selectClass}
@@ -608,7 +618,15 @@ const CreateCourseContent = () => {
                           <option value="self-paced">
                             {t("createCourse.deliverySelfPaced")}
                           </option>
+                          <option value="webinar">
+                            {t("createCourse.deliveryWebinar")}
+                          </option>
                         </select>
+                        {deliveryType === "webinar" && (
+                          <p className="mt-1.5 text-xs text-[var(--color-text-secondary)]">
+                            {t("createCourse.deliveryWebinarHint")}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -985,6 +1003,28 @@ const CreateCourseContent = () => {
                               <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("createCourse.showContentsLabel")}</p>
                               <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
                                 {t("createCourse.showContentsDesc")}
+                              </p>
+                            </div>
+                          </label>
+                        </div>
+                      )}
+
+                      {/* Share recording toggle — Webinar Course only */}
+                      {deliveryType === 'webinar' && (
+                        <div className="pt-3 border-t border-[var(--color-border)]">
+                          <label className="flex items-start gap-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={recordingShareEnabled}
+                              onChange={(e) => setRecordingShareEnabled(e.target.checked)}
+                              className="mt-0.5 w-4 h-4 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-input-focus)]"
+                            />
+                            <div>
+                              <p className="text-sm font-medium text-[var(--color-text-secondary)]">
+                                {t("createCourse.shareRecordingLabel")}
+                              </p>
+                              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                                {t("createCourse.shareRecordingDesc")}
                               </p>
                             </div>
                           </label>

@@ -2903,7 +2903,8 @@
         "zoom": "زووم (عبر الإنترنت)",
         "onsite": "حضوري",
         "blended": "مدمج",
-        "self-paced": "تعلم ذاتي"
+        "self-paced": "تعلم ذاتي",
+        "webinar": "ندوة"
       },
       "thumbnail": "الصورة المصغرة",
       "changeThumbnail": "تغيير الصورة المصغرة",
@@ -4444,7 +4445,8 @@
         "zoom": "زوم (عبر الإنترنت)",
         "onsite": "حضوري",
         "blended": "مدمج",
-        "self-paced": "تعلم ذاتي"
+        "self-paced": "تعلم ذاتي",
+        "webinar": "ندوة"
       },
       "maxEnrollment": "الحد الأقصى للتسجيل",
       "startDate": "تاريخ البدء",

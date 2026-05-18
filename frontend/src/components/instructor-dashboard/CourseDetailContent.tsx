@@ -1765,7 +1765,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                             );
                           })
                         )}
-                        {!isCourseReadOnly && (
+                        {!isCourseReadOnly && !isWebinarCourse && (
                           <button
                             onClick={openAddSession}
                             className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors"
@@ -1773,6 +1773,13 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                             <Plus className="w-4 h-4" />
                             {t("courseDetail.scheduleSession")}
                           </button>
+                        )}
+                        {!isCourseReadOnly && isWebinarCourse && sessions.length === 0 && (
+                          <div className="w-full p-4 border-2 border-dashed border-[#E9D5FF] bg-[#FAF5FF]/30 rounded-lg text-center text-sm text-[#7C3AED]">
+                            {locale === "ar"
+                              ? "هذه دورة ندوة — تتم إدارة الندوات من قبل مدير الدورة."
+                              : "This is a Webinar Course — webinars are scheduled by the course manager."}
+                          </div>
                         )}
                       </div>
                     )}

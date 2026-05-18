@@ -316,9 +316,9 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
       if (requirementsAr.trim()) payload.requirementsAr = requirementsAr.trim();
       if (notices.trim()) payload.notices = notices.trim();
       if (noticesAr.trim()) payload.noticesAr = noticesAr.trim();
-      // FAQs (zoom only) — always send (empty array clears) so editing a
-      // course can also drop all FAQs.
-      if (deliveryType === 'zoom') {
+      // FAQs — always send (empty array clears) so editing a course can
+      // also drop all FAQs. Available for every delivery type.
+      {
         const cleanedFaqs = faqs
           .map((f) => ({
             question: f.question.trim(),
@@ -813,9 +813,8 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       />
                     </div>
 
-                    {/* FAQs — zoom (online) courses only */}
-                    {deliveryType === 'zoom' && (
-                      <div className="pt-3 border-t border-[var(--color-border)]">
+                    {/* FAQs — available for every delivery type */}
+                    <div className="pt-3 border-t border-[var(--color-border)]">
                         <div className="flex items-baseline justify-between mb-2">
                           <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
                             {t("createCourse.faqsTitle")}
@@ -898,7 +897,6 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                           {t("createCourse.addFaq")}
                         </button>
                       </div>
-                    )}
 
                     {/* Show Contents toggle — only for self-paced and blended */}
                     {(deliveryType === 'self-paced' || deliveryType === 'blended') && (

@@ -21,6 +21,7 @@ import {
 import { or } from 'drizzle-orm';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { PasswordSetupService } from '../auth/password-setup.service';
+import { EmailService } from '../email/email.service';
 import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { matchParticipantToUser, getSessionInstructorId, isParticipantHost } from './zoom.helpers';
 
@@ -35,6 +36,7 @@ export class ZoomWebhookService {
     private readonly auditService: NelcAuditService,
     @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
     private readonly passwordSetupService: PasswordSetupService,
+    private readonly emailService: EmailService,
   ) {}
 
   /**
@@ -207,9 +209,54 @@ export class ZoomWebhookService {
 
     if (!course || course.deliveryType !== 'webinar') return null;
     // Paid Webinar Courses use the post-checkout auto-register flow instead.
-    // Only free Webinar Courses auto-enroll on Zoom-form registration.
+    // Only free Webinar Courses auto-enroll on Zoom-form registration. For
+    // a paid course we still send a "nudge" email pointing the registrant to
+    // the public course page so they can enroll (and pay) to unlock CME +
+    // certificate. Without enrollment they can attend the live broadcast but
+    // earn no CME and no certificate (attendance won't be recorded against
+    // a non-existent enrollment).
     const priceValue = course.price ? Number(course.price) : 0;
-    if (priceValue > 0) return null;
+    if (priceValue > 0) {
+      // Don't nudge users who are already enrolled (e.g. paid through the
+      // checkout flow earlier, then ALSO filled the public Zoom form).
+      let alreadyEnrolled = false;
+      if (params.existingUserId) {
+        const [enr] = await db
+          .select({ id: enrollments.id })
+          .from(enrollments)
+          .where(
+            and(
+              eq(enrollments.courseId, course.id),
+              eq(enrollments.studentId, params.existingUserId),
+              eq(enrollments.status, 'active'),
+            ),
+          )
+          .limit(1);
+        alreadyEnrolled = !!enr;
+      }
+      if (!alreadyEnrolled) {
+        const locale = (course.language === 'ar' ? 'ar' : 'en') as 'en' | 'ar';
+        const frontendUrl = (process.env.FRONTEND_URL || 'https://physioguidance.org').replace(/\/$/, '');
+        const courseUrl = `${frontendUrl}/${locale}/courses/${course.id}`;
+        const registrantName =
+          `${params.firstName || ''} ${params.lastName || ''}`.trim() ||
+          params.email.split('@')[0];
+        await this.emailService
+          .sendWebinarPaidEnrollmentNudge(
+            params.email,
+            registrantName,
+            course.title,
+            courseUrl,
+            locale,
+          )
+          .catch((err) =>
+            this.logger.warn(
+              `Failed to send paid-webinar nudge to ${params.email}: ${(err as Error).message}`,
+            ),
+          );
+      }
+      return null;
+    }
 
     // Resolve user — either pre-matched, or by email lookup, or create new.
     let userId = params.existingUserId;

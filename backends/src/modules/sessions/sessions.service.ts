@@ -103,6 +103,14 @@ export class SessionsService {
           'Webinar courses can only host Zoom webinar lectures. Set the lecture type to Zoom and enable the webinar option.',
         );
       }
+      // Only managers (and admins) can schedule webinars on a Webinar Course.
+      // Instructors must not create webinars themselves — Zoom host assignment
+      // and registration-page governance sit with the course manager.
+      if (!isManagerOrAbove(user)) {
+        throw new BadRequestException(
+          'Only the course manager can schedule webinars for a Webinar Course.',
+        );
+      }
     }
 
     // Zoom artefacts populated below depending on whether the session is a
@@ -312,6 +320,23 @@ export class SessionsService {
           .catch(() => {});
       }
 
+      // Webinar Course: register every already-enrolled student in this new
+      // webinar so they don't have to fill the Zoom form a second time. The
+      // post-enrollment hook covers people who enroll AFTER the webinar
+      // exists; this covers the reverse direction. Fire-and-forget — Zoom
+      // failures must not roll back the session insert.
+      if (isWebinar && zoomWebinarId) {
+        this.autoRegisterEnrolledStudentsForWebinar(
+          session.id,
+          dto.courseId,
+          zoomWebinarId,
+        ).catch((err) => {
+          this.logger.warn(
+            `Auto-register enrolled students for webinar ${session.id} failed: ${(err as Error).message}`,
+          );
+        });
+      }
+
       return session;
     }
 
@@ -389,6 +414,85 @@ export class SessionsService {
       .catch(() => {});
 
     return session;
+  }
+
+  /**
+   * For a newly-created Webinar Course webinar, register every already-active
+   * enrollee in Zoom and mirror the registration into webinar_registrations.
+   * Counterpart to EnrollmentsService.autoRegisterStudentForWebinarCourse,
+   * which fires when a student enrolls AFTER the webinar exists. Idempotent
+   * via the (sessionId, email) upsert; safe to run twice. Never throws —
+   * Zoom downtime must not break session creation.
+   */
+  private async autoRegisterEnrolledStudentsForWebinar(
+    sessionId: string,
+    courseId: string,
+    zoomWebinarId: string,
+  ): Promise<void> {
+    const enrolled = await db
+      .select({
+        studentId: enrollments.studentId,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        phone: users.phone,
+        nationalId: users.nationalId,
+        scfhsNumber: users.scfhsNumber,
+      })
+      .from(enrollments)
+      .innerJoin(users, eq(users.id, enrollments.studentId))
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          eq(enrollments.status, 'active'),
+        ),
+      );
+
+    for (const s of enrolled) {
+      if (!s.email) continue;
+      try {
+        const result = await this.zoomService.registerForWebinar(zoomWebinarId, {
+          email: s.email,
+          firstName: s.firstName || s.email.split('@')[0],
+          lastName: s.lastName || '',
+          phone: s.phone || undefined,
+          nationalId: s.nationalId || undefined,
+          scfhsNumber: s.scfhsNumber || undefined,
+        });
+        await db
+          .insert(webinarRegistrations)
+          .values({
+            sessionId,
+            userId: s.studentId,
+            email: s.email.toLowerCase(),
+            firstName: s.firstName || null,
+            lastName: s.lastName || null,
+            phone: s.phone || null,
+            nationalId: s.nationalId || null,
+            scfhsNumber: s.scfhsNumber || null,
+            zoomRegistrantId: result.registrantId || null,
+            joinUrl: result.joinUrl || null,
+            status: 'approved',
+          })
+          .onConflictDoUpdate({
+            target: [webinarRegistrations.sessionId, webinarRegistrations.email],
+            set: {
+              userId: s.studentId,
+              zoomRegistrantId: result.registrantId || null,
+              joinUrl: result.joinUrl || null,
+              status: 'approved',
+              updatedAt: new Date(),
+            },
+          });
+      } catch (err) {
+        this.logger.warn(
+          `Zoom auto-register failed for webinar ${sessionId} / student ${s.studentId}: ${(err as Error).message}`,
+        );
+      }
+    }
+    this.logger.log(
+      `Auto-registered ${enrolled.length} enrolled student(s) in webinar ${sessionId}`,
+    );
   }
 
   /**
@@ -1959,16 +2063,54 @@ export class SessionsService {
       .where(eq(webinarRegistrations.sessionId, sessionId))
       .orderBy(desc(webinarRegistrations.createdAt));
 
+    // Course-level context: paid vs free decides whether the "Not paid"
+    // badge is meaningful in the UI. Free webinars don't need it (everyone
+    // gets auto-enrolled from the Zoom form).
+    const [courseRow] = await db
+      .select({ price: courses.price })
+      .from(courses)
+      .where(eq(courses.id, session.courseId))
+      .limit(1);
+    const coursePaid = courseRow?.price ? Number(courseRow.price) > 0 : false;
+
+    // Per-row enrollment lookup — one query, indexed on (courseId, email
+    // via users join). We resolve enrollment by EMAIL not userId so people
+    // who registered via the public Zoom form (no userId on the row) and
+    // later enrolled with the same email still show as Paid.
+    const emails = Array.from(new Set(rows.map((r) => r.email.toLowerCase()))).filter(Boolean);
+    const enrolledEmails = new Set<string>();
+    if (emails.length > 0) {
+      const enrolledRows = await db
+        .select({ email: users.email })
+        .from(enrollments)
+        .innerJoin(users, eq(users.id, enrollments.studentId))
+        .where(
+          and(
+            eq(enrollments.courseId, session.courseId),
+            eq(enrollments.status, 'active'),
+            sql`LOWER(${users.email}) IN (${sql.join(emails.map((e) => sql`${e}`), sql`, `)})`,
+          ),
+        );
+      for (const r of enrolledRows) {
+        if (r.email) enrolledEmails.add(r.email.toLowerCase());
+      }
+    }
+
     return {
       sessionId,
       zoomWebinarId: session.zoomWebinarId,
       registrationUrl: session.webinarRegistrationUrl,
+      coursePaid,
       totalRegistered: rows.length,
       totalAttended: rows.filter((r) => r.attended).length,
-      registrants: rows.map((r) => ({
-        ...r,
-        source: r.userId ? 'platform' : 'external',
-      })),
+      registrants: rows.map((r) => {
+        const enrolled = enrolledEmails.has(r.email.toLowerCase());
+        return {
+          ...r,
+          source: r.userId ? 'platform' : 'external',
+          enrolled,
+        };
+      }),
     };
   }
 

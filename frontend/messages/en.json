@@ -2306,7 +2306,8 @@
         "zoom": "Zoom",
         "onsite": "On-site",
         "blended": "Blended",
-        "self-paced": "Self-paced"
+        "self-paced": "Self-paced",
+        "webinar": "Webinar"
       },
       "student": "student",
       "students": "students",
@@ -2687,7 +2688,8 @@
         "zoom": "Zoom (Online)",
         "onsite": "On-site",
         "blended": "Blended",
-        "self-paced": "Self-paced"
+        "self-paced": "Self-paced",
+        "webinar": "Webinar"
       },
       "thumbnail": "Thumbnail",
       "changeThumbnail": "Change Thumbnail",
@@ -4236,7 +4238,8 @@
         "zoom": "Zoom (Online)",
         "onsite": "On-site",
         "blended": "Blended",
-        "self-paced": "Self-paced"
+        "self-paced": "Self-paced",
+        "webinar": "Webinar"
       },
       "maxEnrollment": "Max Enrollment",
       "startDate": "Start Date",

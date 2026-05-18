@@ -20,6 +20,10 @@ import {
   getWebinarRegistrationSetupText,
 } from './templates/webinar-registration-setup.template';
 import {
+  getWebinarPaidEnrollmentNudgeHtml,
+  getWebinarPaidEnrollmentNudgeText,
+} from './templates/webinar-paid-enrollment-nudge.template';
+import {
   getApplicationRejectedHtml,
   getApplicationRejectedText,
 } from './templates/application-rejected.template';
@@ -314,6 +318,33 @@ export class EmailService {
       this.logger.log(`Webinar set-password email sent to ${to}`);
     } catch (error) {
       this.logger.error(`Failed to send webinar set-password email to ${to}`, error);
+    }
+  }
+
+  /**
+   * Nudge email for a paid Webinar Course registrant — they filled the Zoom
+   * form (so they have a registration + join link) but haven't paid for the
+   * course, so they get no CME / no certificate / no portal access. The
+   * email points them to the public course page to complete enrollment.
+   */
+  async sendWebinarPaidEnrollmentNudge(
+    to: string,
+    registrantName: string,
+    courseTitle: string,
+    courseUrl: string,
+    locale: EmailLocale = 'en',
+  ): Promise<void> {
+    try {
+      const s = getEmailStrings(locale);
+      await this.send({
+        to,
+        subject: s.webinarPaidNudgeSubject,
+        html: getWebinarPaidEnrollmentNudgeHtml(registrantName, courseTitle, courseUrl, locale),
+        text: getWebinarPaidEnrollmentNudgeText(registrantName, courseTitle, courseUrl, locale),
+      });
+      this.logger.log(`Webinar paid-enrollment nudge sent to ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send webinar paid-enrollment nudge to ${to}`, error);
     }
   }
 

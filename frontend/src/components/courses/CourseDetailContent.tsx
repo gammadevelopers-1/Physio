@@ -978,10 +978,9 @@ const CourseDetailContent = ({
     );
   };
 
-  // FAQs section renderer — zoom courses only. Hidden when the course has
-  // no FAQ entries.
+  // FAQs section renderer — available for every delivery type. Still
+  // hidden when the course has no FAQ entries.
   const renderFaqs = (isMobile: boolean = false) => {
-    if (apiCourse?.deliveryType !== "zoom") return null;
     const list = Array.isArray(apiCourse?.faqs) ? apiCourse.faqs : [];
     const items = list
       .filter((f) => (f?.question || f?.questionAr) && (f?.answer || f?.answerAr))

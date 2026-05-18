@@ -403,8 +403,8 @@ const CreateCourseContent = () => {
       if (requirementsAr.trim()) payload.requirementsAr = requirementsAr.trim();
       if (notices.trim()) payload.notices = notices.trim();
       if (noticesAr.trim()) payload.noticesAr = noticesAr.trim();
-      // Only persist FAQs for zoom courses; drop empty rows.
-      if (deliveryType === 'zoom') {
+      // FAQs are available on every delivery type; drop empty rows.
+      {
         const cleanedFaqs = faqs
           .map((f) => ({
             question: f.question.trim(),
@@ -902,9 +902,8 @@ const CreateCourseContent = () => {
                         />
                       </div>
 
-                      {/* FAQs — zoom (online) courses only */}
-                      {deliveryType === 'zoom' && (
-                        <div className="pt-3 border-t border-[var(--color-border)]">
+                      {/* FAQs — available for every delivery type */}
+                      <div className="pt-3 border-t border-[var(--color-border)]">
                           <div className="flex items-baseline justify-between mb-2">
                             <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
                               {t("createCourse.faqsTitle")}
@@ -987,7 +986,6 @@ const CreateCourseContent = () => {
                             {t("createCourse.addFaq")}
                           </button>
                         </div>
-                      )}
 
                       {/* Show Contents toggle — only for self-paced and blended */}
                       {(deliveryType === 'self-paced' || deliveryType === 'blended') && (

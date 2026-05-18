@@ -1057,14 +1057,17 @@ const SessionsContent = () => {
             {(() => {
               // Hide the kebab entirely when no menu items would render.
               // Items: View Attendance (non-webinar + ended-ish), or
-              // Cancel/Reschedule (scheduled or live).
+              // Cancel/Reschedule (scheduled or live), or Reschedule-only
+              // (missed — webinar OR meeting, the Zoom resource is still
+              // alive and can be re-pointed to a new start time).
               const hasViewAttendance = !session.isWebinar && (
                 session.status === "completed" ||
                 session.status === "ended" ||
                 session.status === "cancelled"
               );
               const hasLifecycleActions = session.status === "scheduled" || session.status === "live";
-              const hasActions = hasViewAttendance || hasLifecycleActions;
+              const hasRescheduleOnly = session.status === "missed";
+              const hasActions = hasViewAttendance || hasLifecycleActions || hasRescheduleOnly;
               if (!hasActions) return null;
               return (
             <div className="relative">
@@ -1086,14 +1089,16 @@ const SessionsContent = () => {
                   )}
                   {/* Webinar registrants drawer is opened from the inline
                       chip on the row — no duplicate entry in dropdown. */}
-                  {(session.status === "scheduled" || session.status === "live") && (
+                  {(session.status === "scheduled" || session.status === "live" || session.status === "missed") && (
                     <>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setCancelModal({ id: session.id, title: session.title }); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#EF4444] hover:bg-[#FEF2F2]"
-                      >
-                        <XCircle className="w-4 h-4" /> {t("sessionsPage.cancelSession")}
-                      </button>
+                      {(session.status === "scheduled" || session.status === "live") && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setCancelModal({ id: session.id, title: session.title }); }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#EF4444] hover:bg-[#FEF2F2]"
+                        >
+                          <XCircle className="w-4 h-4" /> {t("sessionsPage.cancelSession")}
+                        </button>
+                      )}
                       <button
                         onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setRescheduleModal({ id: session.id, title: session.title, scheduledAt: session.scheduledAt }); (() => { const d = new Date(session.scheduledAt); const local = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}T${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; setRescheduleDate(local); })(); }}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)]"

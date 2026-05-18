@@ -33,6 +33,12 @@ export interface RegistrantRow {
   attendedDurationMinutes: number;
   createdAt: string;
   source: "platform" | "external";
+  /**
+   * Whether this registrant currently has an active enrollment in the
+   * parent course (joined by email). Only meaningful when coursePaid is
+   * true — for free courses everyone is auto-enrolled from the Zoom form.
+   */
+  enrolled?: boolean;
 }
 
 interface WebinarRegistrantsDrawerProps {
@@ -86,6 +92,7 @@ export default function WebinarRegistrantsDrawer({
   const [data, setData] = useState<{
     totalRegistered: number;
     totalAttended: number;
+    coursePaid: boolean;
     rows: RegistrantRow[];
   } | null>(null);
 
@@ -99,6 +106,7 @@ export default function WebinarRegistrantsDrawer({
         setData({
           totalRegistered: res.totalRegistered,
           totalAttended: res.totalAttended,
+          coursePaid: !!(res as { coursePaid?: boolean }).coursePaid,
           rows: res.registrants as RegistrantRow[],
         });
       })
@@ -160,6 +168,7 @@ export default function WebinarRegistrantsDrawer({
       "National ID / Iqama",
       "SCFHS number",
       "Source",
+      ...(data.coursePaid ? ["Payment status"] : []),
       "Registration status",
       "Registered at",
       "Attended",
@@ -177,6 +186,7 @@ export default function WebinarRegistrantsDrawer({
         r.nationalId,
         r.scfhsNumber,
         r.source === "platform" ? "Student" : "External",
+        ...(data.coursePaid ? [r.enrolled ? "Paid" : "Not paid"] : []),
         r.status,
         fmtDateTime(r.createdAt),
         r.attended ? "Yes" : "No",
@@ -269,6 +279,17 @@ export default function WebinarRegistrantsDrawer({
               {data?.totalAttended ?? "…"} {isRTL ? "حضر" : "attended"}
             </span>
           </div>
+          {data?.coursePaid && (() => {
+            const notPaid = data.rows.filter((r) => !r.enrolled).length;
+            if (notPaid === 0) return null;
+            return (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#FFF7ED] border border-[#FDBA74] rounded-full">
+                <span className="text-xs font-semibold text-[#9A3412]">
+                  {notPaid} {isRTL ? "غير مدفوع" : "not paid"}
+                </span>
+              </div>
+            );
+          })()}
           <div className="flex-1" />
           {/* CSV export — manager only, but available in both pre- and
               post-webinar states (lead list before, attendance report after). */}
@@ -360,16 +381,27 @@ export default function WebinarRegistrantsDrawer({
                   <th className="px-4 py-2.5 text-start font-medium">
                     {isRTL ? "المصدر" : "Source"}
                   </th>
+                  {data.coursePaid && (
+                    <th className="px-4 py-2.5 text-start font-medium">
+                      {isRTL ? "الدفع" : "Payment"}
+                    </th>
+                  )}
                   <th className="px-4 py-2.5 text-start font-medium">
                     {isRTL ? "الحضور" : "Attended"}
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {data.rows.map((r) => (
+                {data.rows.map((r) => {
+                  // Highlight rows that haven't paid on a paid Webinar Course
+                  // so the manager can quickly spot leads to follow up with.
+                  const unpaidHighlight = data.coursePaid && !r.enrolled;
+                  return (
                   <tr
                     key={r.id}
-                    className="border-b border-[var(--color-border)] hover:bg-[var(--color-border-subtle)]"
+                    className={`border-b border-[var(--color-border)] hover:bg-[var(--color-border-subtle)] ${
+                      unpaidHighlight ? "bg-[#FFF7ED]/40" : ""
+                    }`}
                   >
                     <td className="px-4 py-2.5 text-[var(--color-text-primary)]">
                       {[r.firstName, r.lastName].filter(Boolean).join(" ") || "—"}
@@ -403,6 +435,19 @@ export default function WebinarRegistrantsDrawer({
                             : "External"}
                       </span>
                     </td>
+                    {data.coursePaid && (
+                      <td className="px-4 py-2.5">
+                        {r.enrolled ? (
+                          <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#DCFCE7] text-[#15803D]">
+                            {isRTL ? "مدفوع" : "Paid"}
+                          </span>
+                        ) : (
+                          <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#FED7AA] text-[#9A3412]">
+                            {isRTL ? "غير مدفوع" : "Not paid"}
+                          </span>
+                        )}
+                      </td>
+                    )}
                     <td className="px-4 py-2.5">
                       {r.attended ? (
                         <span className="inline-flex items-center gap-1 text-[#16A34A] text-xs font-medium">
@@ -417,7 +462,8 @@ export default function WebinarRegistrantsDrawer({
                       )}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           )}

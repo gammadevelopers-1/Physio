@@ -32,6 +32,7 @@ const strings = {
 
   /* ── Webinar Course auto-enrollment ──────────────────── */
   webinarRegSetupSubject: { en: 'Welcome to PhysioGuidance — Set Your Password', ar: 'مرحبًا بك في PhysioGuidance — قم بتعيين كلمة المرور' },
+  webinarPaidNudgeSubject: { en: 'Webinar registered — enroll to earn CME + certificate', ar: 'تم تسجيلك في الندوة — سجّل في الدورة لكسب CME والشهادة' },
 
   /* ── Application ─────────────────────────────────────── */
   appApprovedSubject:  { en: 'Your Trainer Application Has Been Approved!', ar: 'تمت الموافقة على طلب المدرب الخاص بك!' },

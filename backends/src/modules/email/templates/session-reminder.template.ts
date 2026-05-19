@@ -16,9 +16,13 @@ export function getSessionReminderHtml(params: {
   const s = getEmailStrings(locale);
   const { recipientName, sessionTitle, courseName, scheduledAt, durationMinutes, zoomLink, isInstructor } = params;
 
+  // Format every lecture time in Asia/Riyadh — the platform serves
+  // Saudi Arabia, and our WhatsApp share/dashboard already use Riyadh.
+  // Without an explicit timeZone these calls would render in the
+  // server's UTC, which is what the user reported as the bug.
   const date = new Date(scheduledAt);
-  const formattedDate = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-  const formattedTime = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const formattedDate = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Riyadh' });
+  const formattedTime = `${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Riyadh' })} (Riyadh Time)`;
 
   const roleText = isInstructor ? s.roleInstructor : s.roleStudent;
   const platformUrl = process.env.FRONTEND_URL || 'https://physioguidance.org';
@@ -170,9 +174,11 @@ export function getSessionReminderText(params: {
   const s = getEmailStrings(locale);
   const { recipientName, sessionTitle, courseName, scheduledAt, durationMinutes, zoomLink, isInstructor } = params;
 
+  // Same Riyadh-time formatting as the HTML variant above — see comment
+  // there for why we hardcode timeZone instead of using the server TZ.
   const date = new Date(scheduledAt);
-  const formattedDate = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-  const formattedTime = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const formattedDate = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Riyadh' });
+  const formattedTime = `${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Riyadh' })} (Riyadh Time)`;
 
   const roleText = isInstructor ? s.roleInstructor : s.roleStudent;
 

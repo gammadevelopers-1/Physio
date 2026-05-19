@@ -169,7 +169,11 @@ export class ZoomService implements IZoomService, OnModuleInit {
       type: 2,
       start_time: params.startTime.toISOString(),
       duration: params.durationMinutes,
-      timezone: 'UTC',
+      // Riyadh — the platform serves Saudi Arabia. Zoom uses this to
+      // render the time in its confirmation/reminder emails; the
+      // start_time (above) is still sent as a UTC ISO string so the
+      // absolute instant is unambiguous regardless of timezone label.
+      timezone: 'Asia/Riyadh',
       settings: {
         join_before_host: false,
         waiting_room: true,
@@ -650,7 +654,11 @@ export class ZoomService implements IZoomService, OnModuleInit {
       type: 5, // 5 = scheduled webinar
       start_time: params.startTime.toISOString(),
       duration: params.durationMinutes,
-      timezone: 'UTC',
+      // Riyadh — the platform serves Saudi Arabia. Zoom uses this to
+      // render the time in its confirmation/reminder emails; the
+      // start_time (above) is still sent as a UTC ISO string so the
+      // absolute instant is unambiguous regardless of timezone label.
+      timezone: 'Asia/Riyadh',
       // Agenda is rendered as the description under the topic on Zoom's
       // hosted registration page — we surface the parent course here.
       ...(params.agenda ? { agenda: params.agenda } : {}),

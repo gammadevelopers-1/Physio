@@ -24,6 +24,8 @@ export function getTaAssignmentHtml(params: {
     isAutoAssigned,
   } = params;
 
+  // Riyadh timezone — platform default. See session-reminder.template
+  // for why this is hardcoded instead of relying on server TZ.
   const dateLocale = locale === 'ar' ? 'ar-SA' : 'en-US';
   const date = new Date(scheduledAt);
   const formattedDate = date.toLocaleDateString(dateLocale, {
@@ -31,11 +33,13 @@ export function getTaAssignmentHtml(params: {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
+    timeZone: 'Asia/Riyadh',
   });
-  const formattedTime = date.toLocaleTimeString(dateLocale, {
+  const formattedTime = `${date.toLocaleTimeString(dateLocale, {
     hour: '2-digit',
     minute: '2-digit',
-  });
+    timeZone: 'Asia/Riyadh',
+  })}${locale === 'ar' ? ' (بتوقيت الرياض)' : ' (Riyadh Time)'}`;
 
   const assignmentLabel = isAutoAssigned ? s.taAutoAssigned : s.taManualAssigned;
 
@@ -184,6 +188,8 @@ export function getTaAssignmentText(params: {
     isAutoAssigned,
   } = params;
 
+  // Riyadh timezone — platform default. See session-reminder.template
+  // for why this is hardcoded instead of relying on server TZ.
   const dateLocale = locale === 'ar' ? 'ar-SA' : 'en-US';
   const date = new Date(scheduledAt);
   const formattedDate = date.toLocaleDateString(dateLocale, {
@@ -191,11 +197,13 @@ export function getTaAssignmentText(params: {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
+    timeZone: 'Asia/Riyadh',
   });
-  const formattedTime = date.toLocaleTimeString(dateLocale, {
+  const formattedTime = `${date.toLocaleTimeString(dateLocale, {
     hour: '2-digit',
     minute: '2-digit',
-  });
+    timeZone: 'Asia/Riyadh',
+  })}${locale === 'ar' ? ' (بتوقيت الرياض)' : ' (Riyadh Time)'}`;
 
   const assignmentLabel = isAutoAssigned ? s.taAutoAssigned : s.taManualAssigned;
 

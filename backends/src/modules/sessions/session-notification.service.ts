@@ -144,12 +144,17 @@ export class SessionNotificationService {
 
       const config = EVENT_CONFIG[eventType];
 
-      // Format scheduled date for messages
+      // Format scheduled date for messages. Riyadh timezone is the
+      // platform default — Saudi-based audience, matches the WhatsApp
+      // share + dashboard renderings. Without timeZone: 'Asia/Riyadh'
+      // this formats in the server's TZ (UTC on Cloud Run), which is
+      // what the user saw in their inbox.
       const scheduledDateStr = session.scheduledAt
-        ? new Date(session.scheduledAt).toLocaleString('en-US', {
+        ? `${new Date(session.scheduledAt).toLocaleString('en-US', {
             dateStyle: 'medium',
             timeStyle: 'short',
-          })
+            timeZone: 'Asia/Riyadh',
+          })} (Riyadh Time)`
         : '';
 
       // 3. In-app notifications — group by language for localized messages
@@ -288,14 +293,15 @@ export class SessionNotificationService {
       const courseName = course?.title || '';
       const isAr = instructor.language === 'ar';
       const scheduledDate = session.scheduledAt
-        ? new Date(session.scheduledAt).toLocaleDateString(isAr ? 'ar-SA' : 'en-US', {
+        ? `${new Date(session.scheduledAt).toLocaleDateString(isAr ? 'ar-SA' : 'en-US', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
-          })
+            timeZone: 'Asia/Riyadh',
+          })}${isAr ? ' (بتوقيت الرياض)' : ' (Riyadh Time)'}`
         : '';
 
       // In-app notification

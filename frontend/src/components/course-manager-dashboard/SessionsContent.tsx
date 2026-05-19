@@ -39,7 +39,7 @@ import {
 import SkeletonCard from "@/components/shared/SkeletonCard";
 import ExportButton from "@/components/shared/ExportButton";
 import WebinarRegistrantsDrawer from "@/components/shared/WebinarRegistrantsDrawer";
-import { openWebinarWhatsAppShare } from "@/lib/webinar-share";
+import { openWebinarWhatsAppShare, openCoursePageWhatsAppShare } from "@/lib/webinar-share";
 import DatePicker from "@/components/ui/DatePicker";
 import DateTimePicker from "@/components/ui/DateTimePicker";
 import { CitySelect } from "@/components/ui/CitySelect";
@@ -506,7 +506,7 @@ const SessionsContent = () => {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [showMoreFilters, setShowMoreFilters] = useState(false);
-  const [coursesList, setCoursesList] = useState<{ id: string; title: string; deliveryType?: string | null; instructorEmail?: string | null; instructorName?: string | null }[]>([]);
+  const [coursesList, setCoursesList] = useState<{ id: string; title: string; deliveryType?: string | null; price?: number | string | null; instructorEmail?: string | null; instructorName?: string | null }[]>([]);
 
   // Action modal states
   const [actionDropdown, setActionDropdown] = useState<string | null>(null);
@@ -547,6 +547,7 @@ const SessionsContent = () => {
     sessionStatus: string;
     zoomWebinarId: string | null;
     courseName: string | null;
+    courseId: string;
   } | null>(null);
   const [webinarCounts, setWebinarCounts] = useState<Record<string, { registered: number; attended: number }>>({});
 
@@ -606,11 +607,38 @@ const SessionsContent = () => {
     };
   }, [sessions, webinarCounts]);
 
+  // For paid Webinar Courses we never expose the raw Zoom registration
+  // URL — the share buttons hand out the public course page link instead
+  // so outsiders go through checkout before they can register on Zoom.
+  // Free webinars / free Webinar Courses keep the direct Zoom-link share.
+  const isCoursePaid = (courseId: string) => {
+    const c = coursesList.find((x) => x.id === courseId);
+    const p = c?.price == null ? 0 : Number(c.price);
+    return c?.deliveryType === "webinar" && p > 0;
+  };
+  const buildCoursePageUrl = (courseId: string) =>
+    typeof window !== "undefined"
+      ? `${window.location.origin}/${locale}/courses/${courseId}`
+      : `/${locale}/courses/${courseId}`;
+
   // Helpers — copy + WhatsApp share for the webinar registration link
-  const handleCopyRegistrationLink = (url: string | null | undefined) => {
-    if (!url) return;
-    navigator.clipboard.writeText(url);
-    toast.success(isRTL ? "تم نسخ الرابط" : "Registration link copied");
+  const handleCopyRegistrationLink = (
+    url: string | null | undefined,
+    courseId?: string,
+  ) => {
+    const paid = courseId ? isCoursePaid(courseId) : false;
+    const target = paid && courseId ? buildCoursePageUrl(courseId) : url;
+    if (!target) return;
+    navigator.clipboard.writeText(target);
+    toast.success(
+      isRTL
+        ? paid
+          ? "تم نسخ رابط الدورة"
+          : "تم نسخ الرابط"
+        : paid
+          ? "Course page link copied"
+          : "Registration link copied",
+    );
   };
   const handleShareWhatsApp = (
     title: string,
@@ -619,7 +647,17 @@ const SessionsContent = () => {
     durationMinutes?: number | null,
     zoomWebinarId?: string | null,
     courseName?: string | null,
+    courseId?: string,
   ) => {
+    if (courseId && isCoursePaid(courseId)) {
+      openCoursePageWhatsAppShare({
+        webinarTitle: title,
+        scheduledAt,
+        courseName: courseName ?? null,
+        courseUrl: buildCoursePageUrl(courseId),
+      });
+      return;
+    }
     if (!url) return;
     openWebinarWhatsAppShare({
       title,
@@ -643,6 +681,7 @@ const SessionsContent = () => {
       sessionStatus: session.status,
       zoomWebinarId: session.zoomWebinarId ?? null,
       courseName: coursesList.find((c) => c.id === session.courseId)?.title ?? null,
+      courseId: session.courseId,
     });
   };
 
@@ -680,6 +719,7 @@ const SessionsContent = () => {
         id: c.id,
         title: c.title,
         deliveryType: c.deliveryType || null,
+        price: c.price ?? null,
         instructorEmail: c.instructorEmail || c.instructor?.email || null,
         instructorName: c.instructorName || (c.instructor ? `${c.instructor.firstName || ""} ${c.instructor.lastName || ""}`.trim() : null) || null,
       })));
@@ -1007,7 +1047,7 @@ const SessionsContent = () => {
                   <>
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); handleCopyRegistrationLink(session.webinarRegistrationUrl); }}
+                      onClick={(e) => { e.stopPropagation(); handleCopyRegistrationLink(session.webinarRegistrationUrl, session.courseId); }}
                       className="p-1.5 rounded-md text-[#7C3AED] hover:bg-[#F3E8FF] transition-colors"
                       title={isRTL ? "نسخ رابط التسجيل" : "Copy registration link"}
                     >
@@ -1015,7 +1055,7 @@ const SessionsContent = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); handleShareWhatsApp(session.title, session.scheduledAt, session.webinarRegistrationUrl, session.durationMinutes, session.zoomWebinarId, coursesList.find((c) => c.id === session.courseId)?.title ?? null); }}
+                      onClick={(e) => { e.stopPropagation(); handleShareWhatsApp(session.title, session.scheduledAt, session.webinarRegistrationUrl, session.durationMinutes, session.zoomWebinarId, coursesList.find((c) => c.id === session.courseId)?.title ?? null, session.courseId); }}
                       className="p-1.5 rounded-md text-[#25D366] hover:bg-[#DCFCE7] transition-colors"
                       title={isRTL ? "مشاركة عبر واتساب" : "Share via WhatsApp"}
                     >
@@ -1436,6 +1476,7 @@ const SessionsContent = () => {
           registrationUrl={registrantsDrawer.registrationUrl}
           zoomWebinarId={registrantsDrawer.zoomWebinarId}
           courseName={registrantsDrawer.courseName}
+          courseId={registrantsDrawer.courseId}
           sessionStatus={registrantsDrawer.sessionStatus}
           onClose={() => setRegistrantsDrawer(null)}
         />

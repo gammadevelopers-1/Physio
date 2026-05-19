@@ -109,3 +109,63 @@ export function openWebinarWhatsAppShare(opts: ShareOpts): void {
     "noopener,noreferrer",
   );
 }
+
+/**
+ * Variant for PAID Webinar Courses. We do NOT share the raw Zoom
+ * registration URL because that would let outsiders register and join
+ * without paying. Instead the share points to the public course page
+ * where the outsider goes through checkout → enrollment → backend
+ * programmatically registers them in Zoom and emails the personal join
+ * link. The Zoom URL itself never leaves our UI.
+ */
+interface CoursePageShareOpts {
+  webinarTitle: string;
+  scheduledAt: string;
+  courseName?: string | null;
+  courseUrl: string;
+}
+
+export function buildCoursePageWhatsAppMessage(opts: CoursePageShareOpts): string {
+  const enDateTime = formatRiyadh(opts.scheduledAt, "en");
+  const arDateTime = formatRiyadh(opts.scheduledAt, "ar");
+  const enCourseLine = opts.courseName ? `Course: ${opts.courseName}\n` : "";
+  const arCourseLine = opts.courseName ? `الدورة: ${opts.courseName}\n` : "";
+
+  const en =
+    `Hi there,\n` +
+    `You are invited to join an upcoming live webinar.\n\n` +
+    `When: ${enDateTime} Riyadh Time\n` +
+    enCourseLine +
+    `Topic: ${opts.webinarTitle}\n\n` +
+    `To attend the webinar, earn CME hours, and receive your certificate, please enroll in the course here:\n` +
+    `${opts.courseUrl}\n\n` +
+    `After completing enrollment, you will receive your personal join link by email.`;
+
+  const ar =
+    `أهلاً،\n` +
+    `أنت مدعو للانضمام إلى ندوة مباشرة قادمة.\n\n` +
+    `الزمان: ${arDateTime} بتوقيت الرياض\n` +
+    arCourseLine +
+    `الموضوع: ${opts.webinarTitle}\n\n` +
+    `لحضور الندوة وكسب ساعات CME والحصول على الشهادة، يُرجى التسجيل في الدورة عبر الرابط التالي:\n` +
+    `${opts.courseUrl}\n\n` +
+    `بعد إتمام التسجيل، ستصلك رسالة بريد إلكتروني تحتوي على رابط الانضمام الخاص بك.\n\n` +
+    `في حال واجهتكم أي مشكلة، الرجاء التواصل مع الدعم الفني عبر واتس اب على الرقم الموحد:\n` +
+    `${SUPPORT_PHONE}`;
+
+  return (
+    `${en}\n\n` +
+    `---\n\n` +
+    `${ar}\n\n` +
+    `-----------------------------------------------`
+  );
+}
+
+export function openCoursePageWhatsAppShare(opts: CoursePageShareOpts): void {
+  const msg = buildCoursePageWhatsAppMessage(opts);
+  window.open(
+    `https://wa.me/?text=${encodeURIComponent(msg)}`,
+    "_blank",
+    "noopener,noreferrer",
+  );
+}

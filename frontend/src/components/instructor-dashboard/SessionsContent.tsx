@@ -13,7 +13,7 @@ import DatePicker from "@/components/ui/DatePicker";
 import { CitySelect } from "@/components/ui/CitySelect";
 import { instructorApi, zoomAttendanceApi, courseAssistantsApi, courseManagerApi, type ThresholdStatus } from "@/lib/api";
 import WebinarRegistrantsDrawer from "@/components/shared/WebinarRegistrantsDrawer";
-import { openWebinarWhatsAppShare } from "@/lib/webinar-share";
+import { openWebinarWhatsAppShare, openCoursePageWhatsAppShare } from "@/lib/webinar-share";
 import type {
   CourseSession,
   InstructorCourse,
@@ -2047,6 +2047,7 @@ const SessionsContent = () => {
     sessionStatus: string;
     zoomWebinarId: string | null;
     courseName: string | null;
+    courseId: string;
   } | null>(null);
   const [webinarCounts, setWebinarCounts] = useState<Record<string, number>>({});
 
@@ -2265,17 +2266,50 @@ const SessionsContent = () => {
       sessionStatus: session.status,
       zoomWebinarId: session.zoomWebinarId ?? null,
       courseName: courses.find((c) => c.id === session.courseId)?.title ?? null,
+      courseId: session.courseId,
     });
   };
 
+  // For paid Webinar Courses we never share the raw Zoom URL — share the
+  // course page link instead so outsiders go through checkout first.
+  const isCoursePaidWebinar = (courseId: string) => {
+    const c = courses.find((x) => x.id === courseId);
+    return c?.deliveryType === "webinar" && Number(c?.price ?? 0) > 0;
+  };
+  const buildCoursePageUrl = (courseId: string) =>
+    typeof window !== "undefined"
+      ? `${window.location.origin}/${locale}/courses/${courseId}`
+      : `/${locale}/courses/${courseId}`;
+
   const handleCopyRegistration = (session: CourseSession) => {
-    const url = session.webinarRegistrationUrl;
-    if (!url) return;
-    navigator.clipboard.writeText(url);
-    toast.success(locale === "ar" ? "تم نسخ الرابط" : "Registration link copied");
+    const paid = isCoursePaidWebinar(session.courseId);
+    const target = paid
+      ? buildCoursePageUrl(session.courseId)
+      : session.webinarRegistrationUrl;
+    if (!target) return;
+    navigator.clipboard.writeText(target);
+    toast.success(
+      locale === "ar"
+        ? paid
+          ? "تم نسخ رابط الدورة"
+          : "تم نسخ الرابط"
+        : paid
+          ? "Course page link copied"
+          : "Registration link copied",
+    );
   };
 
   const handleShareWebinarWhatsApp = (session: CourseSession) => {
+    const courseName = courses.find((c) => c.id === session.courseId)?.title ?? null;
+    if (isCoursePaidWebinar(session.courseId)) {
+      openCoursePageWhatsAppShare({
+        webinarTitle: session.title,
+        scheduledAt: session.scheduledAt,
+        courseName,
+        courseUrl: buildCoursePageUrl(session.courseId),
+      });
+      return;
+    }
     if (!session.webinarRegistrationUrl) return;
     openWebinarWhatsAppShare({
       title: session.title,
@@ -2283,7 +2317,7 @@ const SessionsContent = () => {
       registrationUrl: session.webinarRegistrationUrl,
       durationMinutes: session.durationMinutes ?? undefined,
       zoomWebinarId: session.zoomWebinarId ?? null,
-      courseName: courses.find((c) => c.id === session.courseId)?.title ?? null,
+      courseName,
       locale,
     });
   };
@@ -2808,6 +2842,7 @@ const SessionsContent = () => {
           registrationUrl={registrantsDrawer.registrationUrl}
           zoomWebinarId={registrantsDrawer.zoomWebinarId}
           courseName={registrantsDrawer.courseName}
+          courseId={registrantsDrawer.courseId}
           sessionStatus={registrantsDrawer.sessionStatus}
           onClose={() => setRegistrantsDrawer(null)}
         />

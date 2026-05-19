@@ -15,7 +15,10 @@ import {
   Download,
 } from "lucide-react";
 import { courseManagerApi } from "@/lib/api";
-import { openWebinarWhatsAppShare } from "@/lib/webinar-share";
+import {
+  openWebinarWhatsAppShare,
+  openCoursePageWhatsAppShare,
+} from "@/lib/webinar-share";
 
 export interface RegistrantRow {
   id: string;
@@ -57,6 +60,13 @@ interface WebinarRegistrantsDrawerProps {
    */
   courseName?: string | null;
   /**
+   * Course id — used to build the public course page URL when sharing
+   * a PAID Webinar Course (the share UI hides the Zoom registration
+   * URL and hands out the course page instead, so outsiders must go
+   * through checkout before they can register on Zoom).
+   */
+  courseId?: string | null;
+  /**
    * Session lifecycle status. Used to hide share actions once the
    * webinar is live/ended (registration is effectively closed).
    */
@@ -76,6 +86,7 @@ export default function WebinarRegistrantsDrawer({
   registrationUrl,
   zoomWebinarId,
   courseName,
+  courseId,
   sessionStatus,
   readOnly = false,
   onClose,
@@ -122,13 +133,42 @@ export default function WebinarRegistrantsDrawer({
     };
   }, [sessionId, isRTL]);
 
+  // For paid Webinar Courses we deliberately hide the Zoom registration
+  // URL — sharing goes through the public course page so outsiders must
+  // complete checkout before they can register on Zoom. Free webinars
+  // keep the existing direct-Zoom-link behavior.
+  const coursePaid = !!data?.coursePaid;
+  const coursePageUrl =
+    coursePaid && courseId
+      ? `${typeof window !== "undefined" ? window.location.origin : ""}/${locale}/courses/${courseId}`
+      : null;
+  const shareUrl = coursePaid ? coursePageUrl : registrationUrl;
+
   const handleCopy = () => {
-    if (!registrationUrl) return;
-    navigator.clipboard.writeText(registrationUrl);
-    toast.success(isRTL ? "تم نسخ الرابط" : "Registration link copied");
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl);
+    toast.success(
+      isRTL
+        ? coursePaid
+          ? "تم نسخ رابط صفحة الدورة"
+          : "تم نسخ الرابط"
+        : coursePaid
+          ? "Course page link copied"
+          : "Registration link copied",
+    );
   };
 
   const handleWhatsApp = () => {
+    if (!shareUrl) return;
+    if (coursePaid && coursePageUrl) {
+      openCoursePageWhatsAppShare({
+        webinarTitle: sessionTitle,
+        scheduledAt,
+        courseName: courseName ?? null,
+        courseUrl: coursePageUrl,
+      });
+      return;
+    }
     if (!registrationUrl) return;
     openWebinarWhatsAppShare({
       title: sessionTitle,
@@ -304,7 +344,7 @@ export default function WebinarRegistrantsDrawer({
               {isRTL ? "تنزيل CSV" : "Download CSV"}
             </button>
           )}
-          {!readOnly && registrationUrl && shareableStatus && (
+          {!readOnly && shareUrl && shareableStatus && (
             <>
               <button
                 type="button"
@@ -312,7 +352,13 @@ export default function WebinarRegistrantsDrawer({
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[var(--color-surface-card)] border border-[var(--color-border)] hover:border-[#A855F7] hover:text-[#7C3AED] text-xs font-medium text-[var(--color-text-primary)] transition-colors"
               >
                 <Copy className="w-3.5 h-3.5" />
-                {isRTL ? "نسخ الرابط" : "Copy link"}
+                {isRTL
+                  ? coursePaid
+                    ? "نسخ رابط الدورة"
+                    : "نسخ الرابط"
+                  : coursePaid
+                    ? "Copy course link"
+                    : "Copy link"}
               </button>
               <button
                 type="button"
@@ -323,22 +369,38 @@ export default function WebinarRegistrantsDrawer({
                 {isRTL ? "واتساب" : "WhatsApp"}
               </button>
               <a
-                href={registrationUrl}
+                href={shareUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[var(--color-surface-card)] border border-[var(--color-border)] hover:border-[#A855F7] hover:text-[#7C3AED] text-xs font-medium text-[var(--color-text-primary)] transition-colors"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
-                {isRTL ? "فتح صفحة التسجيل" : "Open page"}
+                {isRTL
+                  ? coursePaid
+                    ? "فتح صفحة الدورة"
+                    : "فتح صفحة التسجيل"
+                  : coursePaid
+                    ? "Open course page"
+                    : "Open page"}
               </a>
             </>
           )}
-          {!readOnly && registrationUrl && !shareableStatus && (
+          {!readOnly && shareUrl && !shareableStatus && (
             <span className="text-xs text-[var(--color-text-secondary)] italic">
               {isRTL ? "التسجيل مغلق" : "Registration closed"}
             </span>
           )}
         </div>
+
+        {/* Paid Webinar Course — explain why the share link is the course
+            page, not the Zoom registration form. */}
+        {!readOnly && coursePaid && shareableStatus && (
+          <div className="px-5 py-2.5 border-b border-[var(--color-border)] bg-[#FFF7ED] text-xs text-[#7C2D12] leading-relaxed">
+            {isRTL
+              ? "هذه دورة مدفوعة. مشاركة الرابط توجه المستخدمين إلى صفحة الدورة لإتمام الدفع والتسجيل — يتم إضافتهم تلقائيًا إلى ندوة Zoom بعد إتمام الدفع."
+              : "Paid Webinar Course — the share buttons hand out the course page link, not the Zoom registration link. Outsiders go through checkout, then we auto-register them in Zoom."}
+          </div>
+        )}
 
         <div className="flex-1 overflow-auto">
           {loading ? (

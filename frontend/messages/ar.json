@@ -4363,7 +4363,7 @@
       "nelcReviewLinkPlaceholder": "https://services.futurex.sa/program-evaluation/...",
       "nelcReviewLinkHint": "اختياري. بعد الإكمال، يرى الطلاب هذا الرابط فوق زر طلب الشهادة. يتم لصقه كما هو — يفتح في علامة تبويب جديدة.",
       "nelcReviewLinkInvalid": "يرجى إدخال رابط صالح (مثل https://example.com).",
-      "faqsTitle": "الأسئلة الشائعة (دورات أونلاين فقط)",
+      "faqsTitle": "الأسئلة الشائعة",
       "faqsHint": "تظهر كتبويب في صفحة تفاصيل الدورة للطالب.",
       "faqItemLabel": "سؤال",
       "addFaq": "+ إضافة سؤال",

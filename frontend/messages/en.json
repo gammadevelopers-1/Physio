@@ -4179,7 +4179,7 @@
       "nelcReviewLinkPlaceholder": "https://services.futurex.sa/program-evaluation/...",
       "nelcReviewLinkHint": "Optional. After completion, students see this link above the Request Certificate button. Pasted exactly as provided — opens in a new tab.",
       "nelcReviewLinkInvalid": "Please enter a valid URL (e.g. https://example.com).",
-      "faqsTitle": "FAQs (online courses only)",
+      "faqsTitle": "FAQs",
       "faqsHint": "Shown as a tab on the student course detail page.",
       "faqItemLabel": "FAQ",
       "addFaq": "+ Add FAQ",

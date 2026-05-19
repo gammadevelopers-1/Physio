@@ -135,7 +135,8 @@ const StudentCourseDetailContent = () => {
     return upcomingSessions.find(canDispatchJoin) ?? null;
   }, [isZoom, upcomingSessions]);
 
-  // Details ↔ FAQs tab (zoom + faqs present only)
+  // Details ↔ FAQs tab. FAQs are now editable on every delivery type; the
+  // tab surfaces whenever the course has at least one non-empty FAQ.
   const courseFaqs = useMemo(() => {
     const list = data?.course.faqs;
     if (!Array.isArray(list)) return [];
@@ -143,7 +144,7 @@ const StudentCourseDetailContent = () => {
       (f) => (f?.question || f?.questionAr) && (f?.answer || f?.answerAr),
     );
   }, [data?.course.faqs]);
-  const hasFaqs = isZoom && courseFaqs.length > 0;
+  const hasFaqs = courseFaqs.length > 0;
   const [activeTab, setActiveTab] = useState<"details" | "faqs">("details");
 
   // Helpers for the new main-column blocks ("What's Next" + Up-Next previews).
@@ -370,8 +371,8 @@ const StudentCourseDetailContent = () => {
                     )}
                   </div>
 
-                  {/* Course Description + (optional) FAQs tab — FAQs tab only
-                      surfaces for zoom courses that have at least one FAQ. */}
+                  {/* Course Description + (optional) FAQs tab — FAQs tab
+                      surfaces for any course that has at least one FAQ. */}
                   {(data.course.description || data.course.descriptionAr || hasFaqs) && (
                     <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
                       {hasFaqs ? (

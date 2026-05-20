@@ -131,26 +131,32 @@ export function buildCoursePageWhatsAppMessage(opts: CoursePageShareOpts): strin
   const enCourseLine = opts.courseName ? `Course: ${opts.courseName}\n` : "";
   const arCourseLine = opts.courseName ? `الدورة: ${opts.courseName}\n` : "";
 
+  // WhatsApp does NOT render markdown links — URLs go on their own line
+  // and the WhatsApp client auto-linkifies them. Keep the bilingual
+  // structure (English block, divider, Arabic block) so a single
+  // pre-filled message works for any recipient.
   const en =
-    `Hi there,\n` +
-    `You are invited to join an upcoming live webinar.\n\n` +
+    `Hi there,\n\n` +
     `When: ${enDateTime} Riyadh Time\n` +
     enCourseLine +
-    `Topic: ${opts.webinarTitle}\n\n` +
-    `To attend the webinar, earn CME hours, and receive your certificate, please enroll in the course here:\n` +
+    `\n` +
+    `To join the course, please complete registration via the link below:\n` +
     `${opts.courseUrl}\n\n` +
-    `After completing enrollment, you will receive your personal join link by email.`;
+    `Once registration is complete, your personal access link for the course will be sent automatically to your registered email.\n\n` +
+    `Please note that attendance is available only to officially registered participants.\n\n` +
+    `If you face any issue, please contact technical support on WhatsApp at the unified number:\n` +
+    `${SUPPORT_PHONE}`;
 
   const ar =
-    `أهلاً،\n` +
-    `أنت مدعو للانضمام إلى ندوة مباشرة قادمة.\n\n` +
+    `أهلاً،\n\n` +
     `الزمان: ${arDateTime} بتوقيت الرياض\n` +
     arCourseLine +
-    `الموضوع: ${opts.webinarTitle}\n\n` +
-    `لحضور الندوة وكسب ساعات CME والحصول على الشهادة، يُرجى التسجيل في الدورة عبر الرابط التالي:\n` +
+    `\n` +
+    `للانضمام إلى الدورة، يرجى إكمال التسجيل عبر الرابط التالي:\n` +
     `${opts.courseUrl}\n\n` +
-    `بعد إتمام التسجيل، ستصلك رسالة بريد إلكتروني تحتوي على رابط الانضمام الخاص بك.\n\n` +
-    `في حال واجهتكم أي مشكلة، الرجاء التواصل مع الدعم الفني عبر واتس اب على الرقم الموحد:\n` +
+    `بعد إتمام التسجيل بنجاح، سيتم إرسال رابط الدخول الشخصي الخاص بالدورة تلقائياً إلى بريدكم الإلكتروني المسجل.\n\n` +
+    `يرجى ملاحظة أن حضور الدورة متاح فقط للمشاركين المسجلين رسمياً.\n\n` +
+    `في حال واجهتكم أي مشكلة، يرجى التواصل مع الدعم الفني عبر واتس اب على الرقم الموحد:\n` +
     `${SUPPORT_PHONE}`;
 
   return (

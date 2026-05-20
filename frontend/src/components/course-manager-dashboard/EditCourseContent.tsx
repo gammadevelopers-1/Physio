@@ -264,11 +264,6 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
       toast.error(t("createCourse.instructorRequired"));
       return;
     }
-    if (Number(price) > 0 && !cmeHours) {
-      toast.error(t("createCourse.cmeHours") + " is required");
-      return;
-    }
-
     const nelcLinkResult = normalizeAndValidateUrl(nelcReviewLink);
     if (!nelcLinkResult.valid) {
       setNelcReviewLinkError(t("createCourse.nelcReviewLinkInvalid"));
@@ -1232,7 +1227,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                     </div>
                     <div>
                       <label htmlFor="edit-cme-hours" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                        {t("createCourse.cmeHours")}{Number(price) > 0 ? " *" : ""}
+                        {t("createCourse.cmeHours")}
                       </label>
                       <input
                         id="edit-cme-hours"
@@ -1240,14 +1235,11 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         value={cmeHours}
                         onChange={(e) => setCmeHours(e.target.value)}
                         placeholder="5"
-                        min={Number(price) > 0 ? 1 : 0}
-                        required={Number(price) > 0}
+                        min={0}
                         className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                       />
                       <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                        {Number(price) > 0
-                          ? t("createCourse.cmeHoursHint")
-                          : (t("createCourse.cmeHoursOptionalHint") || "Optional for free courses — leave empty to hide CME info")}
+                        {t("createCourse.cmeHoursOptionalHint") || "Optional — leave empty to hide CME info"}
                       </p>
                     </div>
                     <div>

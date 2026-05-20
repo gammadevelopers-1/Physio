@@ -126,45 +126,73 @@ interface CoursePageShareOpts {
 }
 
 export function buildCoursePageWhatsAppMessage(opts: CoursePageShareOpts): string {
-  const enDateTime = formatRiyadh(opts.scheduledAt, "en");
-  const arDateTime = formatRiyadh(opts.scheduledAt, "ar");
+  // Date/time formatting per client template:
+  //   EN: "DD/MM/YYYY" + "h:mm AM/PM (Riyadh Time)"
+  //   AR: "YYYY/MM/DD" (Arabic-Indic digits) + "h:mm صباحاً/مساءً بتوقيت الرياض"
+  // Both blocks always render in Asia/Riyadh regardless of sender TZ.
+  const dt = new Date(opts.scheduledAt);
+  const partsEn = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Riyadh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).formatToParts(dt);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    partsEn.find((p) => p.type === type)?.value ?? "";
+  const yyyy = get("year");
+  const mm = get("month");
+  const dd = get("day");
+  const hh = get("hour");
+  const min = get("minute");
+  const ampm = get("dayPeriod"); // "AM" | "PM"
+
+  const enDate = `${dd}/${mm}/${yyyy}`;
+  const enTime = `${hh}:${min} ${ampm}`;
+
+  const toArabicDigits = (s: string) =>
+    s.replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
+  const arDate = toArabicDigits(`${yyyy}/${mm}/${dd}`);
+  const arTime = `${toArabicDigits(`${hh}:${min}`)} ${ampm === "AM" ? "صباحاً" : "مساءً"}`;
+
   const enCourseLine = opts.courseName ? `Course: ${opts.courseName}\n` : "";
   const arCourseLine = opts.courseName ? `الدورة: ${opts.courseName}\n` : "";
 
-  // WhatsApp does NOT render markdown links — URLs go on their own line
-  // and the WhatsApp client auto-linkifies them. Keep the bilingual
-  // structure (English block, divider, Arabic block) so a single
-  // pre-filled message works for any recipient.
+  // Markdown-style links: WhatsApp does NOT render `[label](url)` as a
+  // hyperlink, but it DOES auto-linkify the bare URL inside the parens,
+  // so the user sees `[Enroll in the Course](` then a clickable URL
+  // then `)`. That's the exact format the client supplied — keep it.
   const en =
-    `Hi there,\n\n` +
-    `When: ${enDateTime} Riyadh Time\n` +
+    `Hi there,\n` +
+    `You are invited to attend an upcoming live webinar hosted by Physioguidance.\n\n` +
+    `Date: ${enDate}\n` +
+    `Time: ${enTime} (Riyadh Time)\n` +
     enCourseLine +
     `\n` +
-    `To join the course, please complete registration via the link below:\n` +
-    `${opts.courseUrl}\n\n` +
-    `Once registration is complete, your personal access link for the course will be sent automatically to your registered email.\n\n` +
-    `Please note that attendance is available only to officially registered participants.\n\n` +
-    `If you face any issue, please contact technical support on WhatsApp at the unified number:\n` +
-    `${SUPPORT_PHONE}`;
+    `To join the webinar, please complete your course enrollment through the link below:\n` +
+    `[Enroll in the Course](${opts.courseUrl})\n\n` +
+    `After successfully completing your enrollment, your personal webinar access link will be automatically sent to your registered email address.\n\n` +
+    `Please note that webinar access is available exclusively for officially enrolled participants.`;
 
   const ar =
-    `أهلاً،\n\n` +
-    `الزمان: ${arDateTime} بتوقيت الرياض\n` +
+    `أهلاً،\n` +
+    `يسرنا دعوتكم لحضور دورة مباشرة مقدمة من منصة Physioguidance.\n\n` +
+    `التاريخ: ${arDate}\n` +
+    `الوقت: ${arTime} بتوقيت الرياض\n` +
     arCourseLine +
     `\n` +
     `للانضمام إلى الدورة، يرجى إكمال التسجيل عبر الرابط التالي:\n` +
-    `${opts.courseUrl}\n\n` +
+    `[التسجيل في الدورة](${opts.courseUrl})\n\n` +
     `بعد إتمام التسجيل بنجاح، سيتم إرسال رابط الدخول الشخصي الخاص بالدورة تلقائياً إلى بريدكم الإلكتروني المسجل.\n\n` +
     `يرجى ملاحظة أن حضور الدورة متاح فقط للمشاركين المسجلين رسمياً.\n\n` +
     `في حال واجهتكم أي مشكلة، يرجى التواصل مع الدعم الفني عبر واتس اب على الرقم الموحد:\n` +
     `${SUPPORT_PHONE}`;
 
-  return (
-    `${en}\n\n` +
-    `---\n\n` +
-    `${ar}\n\n` +
-    `-----------------------------------------------`
-  );
+  // No divider line, no trailing dashes — per client template the two
+  // blocks sit back-to-back with a blank line between them.
+  return `${en}\n\n${ar}`;
 }
 
 export function openCoursePageWhatsAppShare(opts: CoursePageShareOpts): void {

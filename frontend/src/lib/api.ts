@@ -254,7 +254,7 @@ async function fetchApi<T>(
 // ===========================================
 // FormData Upload (multipart/form-data)
 // ===========================================
-async function uploadFormData<T>(
+export async function uploadFormData<T>(
   endpoint: string,
   formData: FormData,
   method: 'POST' | 'PUT' = 'POST',
@@ -471,12 +471,28 @@ export const authApi = {
   resend2FA: (challengeId: string) =>
     api.post<{ challengeId: string }>('/auth/resend-2fa', { challengeId }, { skipAuth: true }),
 
-  // Password Reset
-  forgotPassword: (email: string) =>
-    api.post<{ message: string }>('/auth/forgot-password', { email }, { skipAuth: true }),
+  // Password Reset. recaptchaToken is optional in the API signature so old
+  // callers don't break; the backend verifies it when present and runs the
+  // unauthenticated path otherwise (rate limiting still defends against
+  // abuse). The forgot/reset pages always pass a token in production.
+  forgotPassword: (email: string, recaptchaToken?: string) =>
+    api.post<{ message: string }>(
+      '/auth/forgot-password',
+      { email, recaptchaToken },
+      { skipAuth: true },
+    ),
 
-  resetPassword: (email: string, code: string, newPassword: string) =>
-    api.post<{ message: string }>('/auth/reset-password', { email, code, newPassword }, { skipAuth: true }),
+  resetPassword: (
+    email: string,
+    code: string,
+    newPassword: string,
+    recaptchaToken?: string,
+  ) =>
+    api.post<{ message: string }>(
+      '/auth/reset-password',
+      { email, code, newPassword, recaptchaToken },
+      { skipAuth: true },
+    ),
 
   // Trusted Devices
   getTrustedDevices: () => api.get<TrustedDevice[]>('/auth/trusted-devices'),
@@ -529,6 +545,9 @@ export interface UserStats {
   active: number;
   pending: number;
   suspended: number;
+  /** Per-role headcount. Keys are role names (STUDENT, INSTRUCTOR, etc.).
+   *  A user with multiple roles is counted once per role. */
+  byRole?: Record<string, number>;
 }
 
 export interface PaginatedUsersResponse {
@@ -557,6 +576,26 @@ export const adminApi = {
     if (params?.status) searchParams.set('status', params.status);
     const queryString = searchParams.toString();
     return api.get<PaginatedUsersResponse>(`/auth/users${queryString ? `?${queryString}` : ''}`);
+  },
+
+  // Download all users as CSV (honors current filters). Returns the
+  // server-supplied filename via Content-Disposition where possible,
+  // falling back to `users-<date>.csv`.
+  exportUsers: async (params?: {
+    search?: string;
+    role?: string;
+    status?: string;
+  }): Promise<void> => {
+    const searchParams = new URLSearchParams();
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.role) searchParams.set('role', params.role);
+    if (params?.status) searchParams.set('status', params.status);
+    const queryString = searchParams.toString();
+    const blob = await fetchBlob(
+      `/auth/users/export${queryString ? `?${queryString}` : ''}`,
+    );
+    const ts = new Date().toISOString().slice(0, 10);
+    downloadBlob(blob, `users-${ts}.csv`);
   },
 
   // Get a user's roles
@@ -599,6 +638,13 @@ export const adminApi = {
   deleteRole: (roleId: string) =>
     api.delete<{ message: string }>(`/auth/roles/${roleId}`),
 
+  // Replace a role's permission matrix
+  updateRolePermissions: (roleId: string, permissions: RolePermissions) =>
+    api.patch<{ id: string; name: string; permissions: RolePermissions }>(
+      `/auth/roles/${roleId}/permissions`,
+      { permissions },
+    ),
+
   // Trusted Device Management (admin only)
   getUserTrustedDevices: (userId: string) =>
     api.get<TrustedDevice[]>(`/auth/users/${userId}/trusted-devices`),
@@ -609,6 +655,12 @@ export const adminApi = {
   revokeAllUserDevices: (userId: string) =>
     api.delete<{ message: string }>(`/auth/users/${userId}/trusted-devices`),
 
+  // Sidebar profile-card stats (totals + today's active users)
+  getOverviewStats: () =>
+    api.get<{ totalUsers: number; totalCourses: number; activeToday: number }>(
+      '/admin/stats/overview',
+    ),
+
   // Get all courses (admin sees all)
   getCourses: (params?: InstructorCoursesParams) => {
     const sp = new URLSearchParams();
@@ -618,16 +670,201 @@ export const adminApi = {
     if (params?.sort) sp.set('sort', params.sort);
     if (params?.page) sp.set('page', String(params.page));
     if (params?.limit) sp.set('limit', String(params.limit));
+    if (params?.instructorId) sp.set('instructorId', params.instructorId);
+    if (params?.managerId) sp.set('managerId', params.managerId);
     const qs = sp.toString();
     return api.get<InstructorCoursesResponse>(`/courses${qs ? `?${qs}` : ''}`);
   },
+
+  // Filter dropdown sources — admin-only minimal user lists
+  getInstructorsList: () =>
+    api.get<FilterPerson[]>('/admin/stats/instructors-list'),
+
+  getManagersList: () =>
+    api.get<FilterPerson[]>('/admin/stats/managers-list'),
+
+  // Course mutations — same endpoints as courseManagerApi, just
+  // surfaced here so the admin Courses page imports from a single
+  // namespace. ADMIN is in every endpoint's @Roles list, so these are
+  // permitted at the backend.
+  activateCourse: (courseId: string) =>
+    api.post<unknown>(`/courses/${courseId}/activate`, {}),
+
+  deactivateCourse: (courseId: string) =>
+    api.post<unknown>(`/courses/${courseId}/deactivate`, {}),
+
+  completeCourse: (courseId: string) =>
+    api.post<unknown>(`/courses/${courseId}/complete`, {}),
+
+  toggleCourseFeatured: (courseId: string) =>
+    api.patch<{ id: string; isFeatured: boolean }>(
+      `/courses/${courseId}/feature`,
+      {},
+    ),
+
+  requestCourseChanges: (courseId: string, note: string) =>
+    api.post<unknown>(`/courses/${courseId}/request-changes`, { note }),
+
+  updateCourse: (courseId: string, data: Record<string, unknown>) =>
+    api.patch<unknown>(`/courses/${courseId}`, data),
+
+  deleteCourse: (courseId: string) =>
+    api.delete<{ message: string }>(`/courses/${courseId}`),
+
+  // ─── Logs page: Audit Trail tab ────────────────────────
+  getAuditLogs: (params?: AdminAuditLogQuery) => {
+    const sp = new URLSearchParams();
+    if (params?.entityType) sp.set('entityType', params.entityType);
+    if (params?.action) sp.set('action', params.action);
+    if (params?.performedBy) sp.set('performedBy', params.performedBy);
+    if (params?.search) sp.set('search', params.search);
+    if (params?.from) sp.set('from', params.from);
+    if (params?.to) sp.set('to', params.to);
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return api.get<AdminAuditLogResponse>(
+      `/audit-logs/admin/list${qs ? `?${qs}` : ''}`,
+    );
+  },
+
+  getAuditLogDistinct: () =>
+    api.get<{ entityTypes: string[]; actions: string[] }>(
+      '/audit-logs/admin/distinct',
+    ),
+
+  exportAuditLogs: async (params?: AdminAuditLogQuery): Promise<void> => {
+    const sp = new URLSearchParams();
+    if (params?.entityType) sp.set('entityType', params.entityType);
+    if (params?.action) sp.set('action', params.action);
+    if (params?.performedBy) sp.set('performedBy', params.performedBy);
+    if (params?.search) sp.set('search', params.search);
+    if (params?.from) sp.set('from', params.from);
+    if (params?.to) sp.set('to', params.to);
+    const qs = sp.toString();
+    const blob = await fetchBlob(
+      `/audit-logs/admin/export${qs ? `?${qs}` : ''}`,
+    );
+    const ts = new Date().toISOString().slice(0, 10);
+    downloadBlob(blob, `audit-logs-${ts}.csv`);
+  },
+
+  // ─── Logs page: Alerts tab ────────────────────────────
+  getAdminNotifications: (params?: AdminNotificationQuery) => {
+    const sp = new URLSearchParams();
+    if (params?.type) sp.set('type', params.type);
+    if (params?.unread !== undefined) sp.set('unread', String(params.unread));
+    if (params?.from) sp.set('from', params.from);
+    if (params?.to) sp.set('to', params.to);
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return api.get<AdminNotificationListResponse>(
+      `/admin/notifications${qs ? `?${qs}` : ''}`,
+    );
+  },
+
+  getAdminNotificationCounts: () =>
+    api.get<{ unread: number; criticalUnread: number; total: number }>(
+      '/admin/notifications/counts',
+    ),
+
+  markAdminNotificationRead: (id: string) =>
+    api.patch<AdminNotificationItem>(
+      `/admin/notifications/${id}/read`,
+      {},
+    ),
+
+  markAllAdminNotificationsRead: () =>
+    api.post<{ updated: number }>('/admin/notifications/mark-all-read', {}),
 };
+
+export interface AdminAuditLogQuery {
+  entityType?: string;
+  action?: string;
+  performedBy?: string;
+  search?: string;
+  /** ISO string */
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface AdminAuditLogItem {
+  id: string;
+  entityType: string;
+  entityId: string;
+  action: string;
+  performedBy: string;
+  metadata: Record<string, unknown> | null;
+  ipAddress: string | null;
+  createdAt: string;
+  performerFirstName: string | null;
+  performerLastName: string | null;
+  performerEmail: string;
+}
+
+export interface AdminAuditLogResponse {
+  data: AdminAuditLogItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export type AdminNotificationType = 'critical' | 'warning' | 'info';
+
+export interface AdminNotificationQuery {
+  type?: AdminNotificationType;
+  /** true = unread only, false = read only, undefined = both */
+  unread?: boolean;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface AdminNotificationItem {
+  id: string;
+  type: AdminNotificationType;
+  title: string;
+  description: string;
+  link: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface AdminNotificationListResponse {
+  data: AdminNotificationItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface FilterPerson {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+}
+
+export interface PermissionFlags {
+  view: boolean;
+  create: boolean;
+  edit: boolean;
+  delete: boolean;
+}
+
+export type RolePermissions = Partial<Record<string, PermissionFlags>>;
 
 export interface RoleWithCount {
   id: string;
   name: string;
   displayName: string;
   description: string | null;
+  permissions: RolePermissions;
   createdAt: string;
   usersCount: number;
 }
@@ -1192,6 +1429,215 @@ export const preferencesApi = {
 };
 
 // ===========================================
+// Admin Settings API (platform-wide config)
+// ===========================================
+export type SettingsCategory =
+  | 'general'
+  | 'localization'
+  | 'auth'
+  | 'payments'
+  | 'notifications'
+  | 'maintenance';
+
+export interface NotificationTemplate {
+  id: string;
+  eventKey: string;
+  channel: string;
+  locale: string;
+  subject: string | null;
+  body: string;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const adminSettingsApi = {
+  /** Fetch every category in one call — used to bootstrap the Settings page. */
+  getAll: () => api.get<Record<string, Record<string, unknown>>>('/admin/settings'),
+
+  /** Fetch one category. */
+  getCategory: <T = Record<string, unknown>>(category: SettingsCategory) =>
+    api.get<{ category: string; value: T }>(`/admin/settings/${category}`),
+
+  /** Replace a category's value wholesale. */
+  updateCategory: <T = Record<string, unknown>>(
+    category: SettingsCategory,
+    value: T,
+  ) =>
+    api.patch<{ category: string; value: T }>(
+      `/admin/settings/${category}`,
+      { value },
+    ),
+
+  // Notification templates
+  listTemplates: () =>
+    api.get<NotificationTemplate[]>('/admin/settings/templates/all'),
+  getTemplate: (id: string) =>
+    api.get<NotificationTemplate>(`/admin/settings/templates/${id}`),
+  createTemplate: (data: {
+    eventKey: string;
+    channel: string;
+    locale: string;
+    subject?: string;
+    body: string;
+    enabled?: boolean;
+  }) =>
+    api.post<NotificationTemplate>('/admin/settings/templates', data),
+  updateTemplate: (
+    id: string,
+    data: { subject?: string | null; body?: string; enabled?: boolean },
+  ) => api.patch<NotificationTemplate>(`/admin/settings/templates/${id}`, data),
+  deleteTemplate: (id: string) =>
+    api.delete<void>(`/admin/settings/templates/${id}`),
+
+  getIntegrationHealth: () =>
+    api.get<
+      Record<
+        string,
+        { configured: boolean; required: boolean; description: string }
+      >
+    >('/admin/settings/integrations/health'),
+};
+
+// ===========================================
+// Templates API (admin-editable email + WhatsApp messages)
+// ===========================================
+export type TemplateChannel = 'email' | 'whatsapp';
+export type TemplateCategory =
+  | 'account'
+  | 'applications'
+  | 'enrollment'
+  | 'sessions'
+  | 'webinars'
+  | 'certificates'
+  | 'assessments'
+  | 'content'
+  | 'whatsapp';
+export type TemplateLocale = 'en' | 'ar';
+
+export interface TemplateVariable {
+  key: string;
+  label: string;
+  example: string;
+}
+
+export interface TemplateMeta {
+  eventKey: string;
+  channel: TemplateChannel;
+  category: TemplateCategory;
+  nameEn: string;
+  nameAr: string;
+  descriptionEn: string;
+  descriptionAr: string;
+  variables: TemplateVariable[];
+  defaultSubjectEn?: string;
+  defaultSubjectAr?: string;
+}
+
+export interface TemplateListItem extends TemplateMeta {
+  edited: boolean;
+  lastUpdatedAt: string | null;
+  enabled: boolean;
+}
+
+export interface TemplateDetail {
+  meta: TemplateMeta;
+  locale: TemplateLocale;
+  subject: string | null;
+  preheader: string | null;
+  body: string;
+  designJson: unknown | null;
+  enabled: boolean;
+  hasOverride: boolean;
+  updatedAt: string | null;
+}
+
+export const templatesApi = {
+  list: () => api.get<TemplateListItem[]>('/admin/templates'),
+
+  get: (eventKey: string, locale: TemplateLocale) =>
+    api.get<TemplateDetail>(`/admin/templates/${eventKey}/${locale}`),
+
+  upsert: (
+    eventKey: string,
+    locale: TemplateLocale,
+    data: {
+      subject?: string | null;
+      preheader?: string | null;
+      body: string;
+      designJson?: unknown | null;
+      enabled?: boolean;
+    },
+  ) =>
+    api.put<TemplateDetail>(`/admin/templates/${eventKey}/${locale}`, data),
+
+  reset: (eventKey: string, locale: TemplateLocale) =>
+    api.delete<void>(`/admin/templates/${eventKey}/${locale}`),
+};
+
+// ===========================================
+// Public Locale Settings (unauthenticated)
+// Used by middleware, root layout, marketing pages
+// ===========================================
+export interface PublicLocaleSettings {
+  allowedLanguages: ('en' | 'ar')[];
+  defaultLanguage: 'en' | 'ar' | 'auto';
+  dateFormat: 'DD-MM-YYYY' | 'MM-DD-YYYY' | 'YYYY-MM-DD';
+  numberSystem: 'western' | 'arabic_indic';
+}
+
+export interface PublicGeneralSettings {
+  platformName: string | null;
+  platformNameAr: string | null;
+  contactEmail: string | null;
+  supportPhone: string | null;
+  timezone: string | null;
+  whatsappNumber: string | null;
+  whatsappCompanyName: string | null;
+  whatsappGreeting: string | null;
+  whatsappReplyTime: string | null;
+}
+
+export interface PublicPasswordPolicy {
+  minLength: number;
+  requireUppercase: boolean;
+  requireNumber: boolean;
+  requireSpecial: boolean;
+}
+
+export interface PublicMaintenanceStatus {
+  enabled: boolean;
+  messageEn: string;
+  messageAr: string;
+}
+
+export const publicSettingsApi = {
+  getLocaleSettings: () =>
+    api.get<PublicLocaleSettings>('/public/locale-settings', { skipAuth: true }),
+
+  getGeneralSettings: () =>
+    api.get<PublicGeneralSettings>('/public/general-settings', { skipAuth: true }),
+
+  getPasswordPolicy: () =>
+    api.get<PublicPasswordPolicy>('/public/password-policy', { skipAuth: true }),
+
+  getMaintenanceStatus: () =>
+    api.get<PublicMaintenanceStatus>('/public/maintenance-status', { skipAuth: true }),
+
+  getWhatsAppTemplate: (eventKey: string, locale: 'en' | 'ar') =>
+    api.get<{ body: string | null; enabled: boolean }>(
+      `/public/whatsapp-template/${eventKey}/${locale}`,
+      { skipAuth: true },
+    ),
+
+  getNotificationChannels: () =>
+    api.get<{ email: boolean; whatsapp: boolean }>(
+      '/public/notification-channels',
+      { skipAuth: true },
+    ),
+};
+
+// ===========================================
 // Materials API (content management)
 // ===========================================
 export const materialsApi = {
@@ -1368,7 +1814,18 @@ export const materialsApi = {
 // ===========================================
 // Reports API (binary file download)
 // ===========================================
-export type ReportType = 'attendance' | 'gradebook' | 'enrollment' | 'completion' | 'cme-eligibility' | 'webinar-registrants';
+export type ReportType =
+  | 'attendance'
+  | 'gradebook'
+  | 'enrollment'
+  | 'completion'
+  | 'cme-eligibility'
+  | 'webinar-registrants'
+  | 'satisfaction'
+  | 'instructor-performance'
+  | 'nelc-compliance'
+  | 'course-catalog'
+  | 'revenue';
 export type ReportFormat = 'csv' | 'pdf' | 'xlsx';
 
 export const reportsApi = {
@@ -2210,13 +2667,25 @@ export const courseManagerApi = {
   removeMaterial: (materialId: string, reason?: string) =>
     api.delete<{ message: string }>(`/materials/${materialId}${reason ? `?reason=${encodeURIComponent(reason)}` : ''}`),
 
-  // Certificates (manager sees only courses where managerId = their userId)
-  getCertificates: (params?: { courseId?: string; status?: string; page?: number; limit?: number }) => {
+  // Certificates (manager sees only courses where managerId = their userId).
+  // Admin callers can additionally pass managerId + search to filter across
+  // all managers; both are ignored by the backend when the caller is not
+  // a global admin.
+  getCertificates: (params?: {
+    courseId?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+    managerId?: string;
+    search?: string;
+  }) => {
     const sp = new URLSearchParams();
     if (params?.courseId && params.courseId !== 'all') sp.set('courseId', params.courseId);
     if (params?.status && params.status !== 'all') sp.set('status', params.status);
     if (params?.page) sp.set('page', String(params.page));
     if (params?.limit) sp.set('limit', String(params.limit));
+    if (params?.managerId) sp.set('managerId', params.managerId);
+    if (params?.search) sp.set('search', params.search);
     const qs = sp.toString();
     return api.get<CertificateListResponse>(`/instructor/certificates${qs ? `?${qs}` : ''}`);
   },
@@ -2340,13 +2809,21 @@ export const nelcAuditApi = {
     );
   },
 
-  exportCsv: async () => {
-    const token = getAccessToken();
-    const res = await globalThis.fetch(`/api/nelc-audit/export`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    if (!res.ok) throw new Error('Export failed');
-    return res.blob();
+  exportCsv: async (params?: {
+    eventType?: string;
+    entityType?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<void> => {
+    const sp = new URLSearchParams();
+    if (params?.eventType) sp.set('eventType', params.eventType);
+    if (params?.entityType) sp.set('entityType', params.entityType);
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    const blob = await fetchBlob(`/nelc-audit/export${qs ? `?${qs}` : ''}`);
+    const ts = new Date().toISOString().slice(0, 10);
+    downloadBlob(blob, `nelc-events-${ts}.csv`);
   },
 };
 

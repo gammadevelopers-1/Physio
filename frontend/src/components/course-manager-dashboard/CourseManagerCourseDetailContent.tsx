@@ -8,8 +8,10 @@ import { useLocale, useTranslations } from "next-intl";
 import { formatDuration } from "@/lib/utils";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { toast } from "sonner";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
+import { useAdminProfile } from "@/hooks/useAdminProfile";
 import { courseManagerApi } from "@/lib/api";
 import type {
   CourseDetailResponse,
@@ -18,6 +20,9 @@ import type {
 import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
+import AdminNavbar from "@/components/admin-dashboard/AdminNavbar";
+import AdminSidebar from "@/components/admin-dashboard/AdminSidebar";
+import AdminMobileSidebar from "@/components/admin-dashboard/AdminMobileSidebar";
 import NELCScorecardPanel from "@/components/shared/NELCScorecardPanel";
 import CourseAssistantsManagePanel from "./CourseAssistantsManagePanel";
 import {
@@ -52,6 +57,14 @@ import {
 
 interface CourseManagerCourseDetailContentProps {
   courseId: string;
+  /**
+   * Which dashboard chrome to render around this content. Defaults to
+   * "manager" — when called from admin-namespaced routes we pass "admin"
+   * so the page stays inside the admin dashboard shell (sidebar/navbar/
+   * mobile sidebar swap, and all internal links route to /admin/...
+   * instead of /manager/...).
+   */
+  role?: "manager" | "admin";
 }
 
 // ─── Skeleton ──────────────────────────────────────────────────
@@ -85,13 +98,22 @@ const CourseDetailSkeleton = () => (
 
 const CourseManagerCourseDetailContent = ({
   courseId,
+  role = "manager",
 }: CourseManagerCourseDetailContentProps) => {
   const t = useTranslations("courseManagerDashboard");
   const locale = useLocale();
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
   const isRTL = locale === "ar";
   const router = useRouter();
-  const manager = useManagerProfile();
+  // Both hooks called unconditionally to satisfy hook rules — the unused
+  // one is cheap (it just reads user from context).
+  const managerProfile = useManagerProfile();
+  const adminProfile = useAdminProfile();
+  const isAdmin = role === "admin";
+  const manager = managerProfile;
+  const admin = adminProfile;
+  const dashboardBase = `/${locale}/dashboard/${isAdmin ? "admin" : "manager"}/courses`;
 
   const [course, setCourse] = useState<CourseDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -177,7 +199,7 @@ const CourseManagerCourseDetailContent = ({
     try {
       await courseManagerApi.deleteCourse(course.id);
       toast.success(t("courseDetail.deleteSuccess"));
-      router.push(`/${locale}/dashboard/manager/courses`);
+      router.push(dashboardBase);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : t("courseDetail.deleteError")
@@ -405,24 +427,36 @@ const CourseManagerCourseDetailContent = ({
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "—";
-    return formatDateHijri(dateStr, calendarFormat, { locale });
+    return formatDateHijri(dateStr, calendarFormat, { locale, platformSettings: platformLocale });
   };
 
   const BackArrow = isRTL ? ArrowRight : ArrowLeft;
 
   return (
     <>
-      <CourseManagerNavbar manager={manager} />
+      {isAdmin ? (
+        <AdminNavbar admin={admin} />
+      ) : (
+        <CourseManagerNavbar manager={manager} />
+      )}
 
       <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <CourseManagerSidebar manager={manager} />
+              {isAdmin ? (
+                <AdminSidebar admin={admin} />
+              ) : (
+                <CourseManagerSidebar manager={manager} />
+              )}
             </div>
 
-            <CourseManagerMobileSidebar manager={manager} />
+            {isAdmin ? (
+              <AdminMobileSidebar admin={admin} />
+            ) : (
+              <CourseManagerMobileSidebar manager={manager} />
+            )}
 
             {/* Main Content */}
             {loading ? (
@@ -445,7 +479,7 @@ const CourseManagerCourseDetailContent = ({
               <div className="flex-1 min-w-0">
                 {/* Back Link */}
                 <Link
-                  href={`/${locale}/dashboard/manager/courses`}
+                  href={dashboardBase}
                   className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] mb-4 transition-colors"
                 >
                   <BackArrow className="w-4 h-4" />
@@ -545,7 +579,7 @@ const CourseManagerCourseDetailContent = ({
                           </button>
                         )}
                         <Link
-                          href={`/${locale}/dashboard/manager/courses/${course.id}/edit`}
+                          href={`${dashboardBase}/${course.id}/edit`}
                           className="inline-flex items-center gap-1.5 px-3 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors"
                         >
                           <Edit className="w-4 h-4" />
@@ -1009,7 +1043,7 @@ const CourseManagerCourseDetailContent = ({
                       </div>
                       <div className="mt-4 pt-4 border-t border-[var(--color-border)] flex items-center justify-center">
                         <Link
-                          href={`/${locale}/dashboard/manager/courses/${courseId}/reviews`}
+                          href={`${dashboardBase}/${courseId}/reviews`}
                           className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)]"
                         >
                           {isRTL ? "عرض كل المراجعات" : "View all reviews"}

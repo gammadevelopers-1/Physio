@@ -8,6 +8,8 @@ import ReactMarkdown from "react-markdown";
 import { BlogCard, MobileBlogCard } from "@/components/blogs";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import type { StrapiBlogPost, BlogsPage } from "@/lib/strapi/types";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDateReadable } from "@/lib/platform-locale";
 
 interface BlogDetailContentProps {
   blogPost: StrapiBlogPost | null;
@@ -18,6 +20,7 @@ interface BlogDetailContentProps {
 const BlogDetailContent = ({ blogPost, latestBlogs, blogsPage }: BlogDetailContentProps) => {
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const platformLocale = usePlatformLocale();
 
   // Section labels come from Strapi only — no translation fallback
   const backToAllPostsLabel = blogsPage?.backToAllPostsLabel || "";
@@ -53,12 +56,12 @@ const BlogDetailContent = ({ blogPost, latestBlogs, blogsPage }: BlogDetailConte
 
   const getDate = (): string => {
     if (!blogPost.publishedDate) return "";
-    const date = new Date(blogPost.publishedDate);
-    const options: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" };
-    if (locale === "ar") {
-      return `نُشر في ${date.toLocaleDateString("ar-SA", options)}`;
-    }
-    return `Published on ${date.toLocaleDateString("en-US", options)}`;
+    const formatted = formatPlatformDateReadable(
+      blogPost.publishedDate,
+      platformLocale,
+      locale === "ar" ? "ar" : "en",
+    );
+    return locale === "ar" ? `نُشر في ${formatted}` : `Published on ${formatted}`;
   };
 
   // Main image comes strictly from Strapi — no local fallback

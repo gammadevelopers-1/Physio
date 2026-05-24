@@ -36,8 +36,8 @@ import StudentCourseDetailSkeleton from "./StudentCourseDetailSkeleton";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentCourseDetail } from "@/hooks/useStudentCourseDetail";
 import { studentApi, ApiError } from "@/lib/api";
-import { useCalendarPreference } from "@/contexts/CalendarContext";
-import { formatDateReadable } from "@/lib/hijri";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDateReadable } from "@/lib/platform-locale";
 import { isJoinable, formatTimeUntil, canDropCourseNow } from "@/lib/calendar-utils";
 import Accordion, { type AccordionItem } from "@/components/ui/Accordion";
 import Image from "next/image";
@@ -52,7 +52,7 @@ const StudentCourseDetailContent = () => {
   const userData = useStudentProfile();
 
   const { data, loading, error, refetch } = useStudentCourseDetail(courseId);
-  const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
 
   const [showDropConfirm, setShowDropConfirm] = useState(false);
   const [dropping, setDropping] = useState(false);
@@ -206,7 +206,7 @@ const StudentCourseDetailContent = () => {
   };
 
   const formatDate = (dateStr: string | null) =>
-    formatDateReadable(dateStr, calendarFormat, locale);
+    formatPlatformDateReadable(dateStr, platformLocale, locale === "ar" ? "ar" : "en");
 
   // Deep-link helpers for the clickable stat tiles below.
   const learnUrl = (tab: "modules" | "lectures") =>

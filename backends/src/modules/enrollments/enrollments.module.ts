@@ -6,9 +6,10 @@ import { SessionAssistantsModule } from '../session-assistants/session-assistant
 import { UserNotificationsModule } from '../user-notifications/user-notifications.module';
 import { CourseAssistantsModule } from '../course-assistants/course-assistants.module';
 import { ZoomModule } from '../zoom/zoom.module';
+import { AdminSettingsModule } from '../admin-settings/admin-settings.module';
 
 @Module({
-  imports: [AuthModule, SessionAssistantsModule, UserNotificationsModule, CourseAssistantsModule, ZoomModule],
+  imports: [AuthModule, SessionAssistantsModule, UserNotificationsModule, CourseAssistantsModule, ZoomModule, AdminSettingsModule],
   controllers: [EnrollmentsController],
   providers: [EnrollmentsService],
   exports: [EnrollmentsService],

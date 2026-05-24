@@ -14,6 +14,7 @@ import {
   users,
 } from '../../database/schema';
 import { EmailService } from '../email/email.service';
+import { AuditLogService } from '../audit-logs/audit-logs.service';
 
 @Injectable()
 export class TwoFactorService {
@@ -26,7 +27,10 @@ export class TwoFactorService {
   // Rate limit: min seconds between OTP requests per user
   private readonly OTP_COOLDOWN_SECONDS = 60;
 
-  constructor(private emailService: EmailService) {}
+  constructor(
+    private emailService: EmailService,
+    private auditLogService: AuditLogService,
+  ) {}
 
   // ===========================================
   // Device Fingerprinting
@@ -393,6 +397,16 @@ export class TwoFactorService {
       // If disabling 2FA, also remove all trusted devices
       await this.revokeAllDevices(userId);
     }
+
+    // Audit log — best-effort, never blocks the toggle response.
+    await this.auditLogService
+      .log({
+        entityType: 'user',
+        entityId: userId,
+        action: enabled ? 'auth.2fa_enabled' : 'auth.2fa_disabled',
+        performedBy: userId, // self-action (user toggling own 2FA)
+      })
+      .catch(() => {});
 
     return { twoFactorEnabled: enabled };
   }

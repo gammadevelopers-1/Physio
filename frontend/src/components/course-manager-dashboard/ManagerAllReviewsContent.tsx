@@ -24,6 +24,8 @@ import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { courseManagerApi } from "@/lib/api";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDateReadable } from "@/lib/platform-locale";
 
 type Review = {
   id: string;
@@ -49,6 +51,7 @@ export default function ManagerAllReviewsContent() {
   const locale = useLocale();
   const isRTL = locale === "ar";
   const manager = useManagerProfile();
+  const platformLocale = usePlatformLocale();
 
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -229,11 +232,7 @@ export default function ManagerAllReviewsContent() {
 
   const formatDate = (iso: string | null) =>
     iso
-      ? new Date(iso).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        })
+      ? formatPlatformDateReadable(iso, platformLocale, locale === "ar" ? "ar" : "en", { fallback: "" })
       : "";
 
   const statusBadge = (s: Review["moderationStatus"]) => {

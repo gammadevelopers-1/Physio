@@ -18,6 +18,7 @@ import {
 } from '../../database/schema';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { EmailService } from '../email/email.service';
+import { AdminSettingsService } from '../admin-settings/admin-settings.service';
 
 // NELC allocation rules — TESTING VALUES (production: LOW=25, MID=35)
 const ASSISTANT_THRESHOLDS = {
@@ -32,6 +33,7 @@ export class SessionAssistantsService {
   constructor(
     private readonly auditService: NelcAuditService,
     private readonly emailService: EmailService,
+    private readonly adminSettings: AdminSettingsService,
   ) {}
 
   /**
@@ -200,6 +202,10 @@ export class SessionAssistantsService {
         .limit(1);
 
       if (courseData && instructorData && taUser) {
+        const localeSettings = await this.adminSettings.getPublicLocaleSettings().catch(() => ({
+          numberSystem: 'western' as const,
+          dateFormat: 'DD-MM-YYYY' as const,
+        }));
         this.emailService
           .sendTaAssignment(taUser.email, {
             recipientName: `${taUser.firstName} ${taUser.lastName}`,
@@ -209,6 +215,7 @@ export class SessionAssistantsService {
             durationMinutes: session.durationMinutes,
             instructorName: `${instructorData.firstName} ${instructorData.lastName}`,
             isAutoAssigned: false,
+            numberSystem: localeSettings.numberSystem,
           })
           .catch((err) =>
             this.logger.warn(`Failed to send TA email to ${taUser.email}`, err),

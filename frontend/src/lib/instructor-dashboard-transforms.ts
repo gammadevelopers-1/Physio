@@ -5,6 +5,12 @@ import type {
   DashboardCertificate,
   DashboardCourse,
 } from "@/types/instructor-dashboard";
+import {
+  formatPlatformDateReadable,
+  formatPlatformTime,
+  toArabicIndic,
+  type PlatformLocaleSettings,
+} from "@/lib/platform-locale";
 
 // ─── KPI Cards ─────────────────────────────────────────────
 
@@ -14,7 +20,10 @@ export function transformToKPIData(summary: DashboardSummaryResponse) {
 
 // ─── Today's Sessions → Session Cards ──────────────────────
 
-export function transformToSessionCards(sessions: DashboardSession[]) {
+export function transformToSessionCards(
+  sessions: DashboardSession[],
+  settings: Pick<PlatformLocaleSettings, "numberSystem">,
+) {
   const todayStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD
 
   return sessions
@@ -29,12 +38,7 @@ export function transformToSessionCards(sessions: DashboardSession[]) {
         scheduledDate.getTime() + s.durationMinutes * 60 * 1000
       );
 
-      const formatTime = (d: Date) =>
-        d.toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        });
+      const formatTime = (d: Date) => formatPlatformTime(d, settings);
 
       return {
         id: s.id,
@@ -52,19 +56,17 @@ export function transformToSessionCards(sessions: DashboardSession[]) {
 
 // ─── Sessions → Calendar Sessions Widget ───────────────────
 
-export function transformToCalendarSessions(sessions: DashboardSession[]) {
+export function transformToCalendarSessions(
+  sessions: DashboardSession[],
+  settings: Pick<PlatformLocaleSettings, "numberSystem">,
+) {
   return sessions.map((s) => {
     const scheduledDate = new Date(s.scheduledAt);
     const endDate = new Date(
       scheduledDate.getTime() + s.durationMinutes * 60 * 1000
     );
 
-    const formatTime = (d: Date) =>
-      d.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      });
+    const formatTime = (d: Date) => formatPlatformTime(d, settings);
 
     return {
       id: s.id,
@@ -83,21 +85,17 @@ export function transformToCalendarSessions(sessions: DashboardSession[]) {
 
 // ─── Sessions → Right Sidebar Calendar Events ──────────────
 
-export function transformToCalendarEvents(sessions: DashboardSession[]) {
+export function transformToCalendarEvents(
+  sessions: DashboardSession[],
+  settings: Pick<PlatformLocaleSettings, "numberSystem">,
+) {
   return sessions.map((s) => {
     const scheduledDate = new Date(s.scheduledAt);
     const endDate = new Date(
       scheduledDate.getTime() + s.durationMinutes * 60 * 1000
     );
 
-    const formatTime = (d: Date) =>
-      d
-        .toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        })
-        .toLowerCase();
+    const formatTime = (d: Date) => formatPlatformTime(d, settings);
 
     const today = new Date();
     const isToday =
@@ -113,10 +111,11 @@ export function transformToCalendarEvents(sessions: DashboardSession[]) {
     } else if (isTomorrow) {
       dateLabel = "Tomorrow";
     } else {
-      dateLabel = scheduledDate.toLocaleDateString("en-US", {
+      const raw = scheduledDate.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
       });
+      dateLabel = settings.numberSystem === "arabic_indic" ? toArabicIndic(raw) : raw;
     }
 
     return {
@@ -192,18 +191,15 @@ export function transformToAtRiskLearners(
 // ─── Pending Certificates → Certificate Queue ─────────────
 
 export function transformToCertificateQueue(
-  certificates: DashboardCertificate[]
+  certificates: DashboardCertificate[],
+  settings: Pick<PlatformLocaleSettings, "numberSystem">,
 ) {
   return certificates.map((cert) => ({
     id: cert.id,
     studentName: `${cert.studentFirstName} ${cert.studentLastName}`.trim(),
     courseName: cert.courseName,
     completionDate: cert.createdAt
-      ? new Date(cert.createdAt).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        })
+      ? formatPlatformDateReadable(cert.createdAt, settings)
       : undefined,
     checks: {
       attendance: parseFloat(cert.attendancePercent) >= 70,

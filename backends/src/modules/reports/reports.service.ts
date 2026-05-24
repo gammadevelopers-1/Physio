@@ -23,9 +23,16 @@ import {
 import { courseMaterials } from '../../database/schema/course-materials';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { isGlobalAdmin, isManager, isTA } from '../../common/role-helpers';
+import { decryptPII } from '../../common/crypto';
 import { computeEffectiveScore } from '../../common/score-policy';
 import { NelcComplianceService } from '../nelc-compliance/nelc-compliance.service';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
+import { AdminSettingsService } from '../admin-settings/admin-settings.service';
+import {
+  formatPlatformDate as fmtPlatformDate,
+  toArabicIndic,
+  type PlatformLocaleSettings,
+} from '../../common/platform-locale';
 
 type ReportFormat = 'csv' | 'pdf' | 'xlsx';
 
@@ -54,11 +61,32 @@ export class ReportsService {
   private readonly logger = new Logger(ReportsService.name);
   /** Active timezone for current report generation (set per-request, defaults to TZ) */
   private activeTz: string = TZ;
+  /** Platform locale settings — loaded per request, honors admin dateFormat / numberSystem */
+  private activeLocale: Pick<PlatformLocaleSettings, 'dateFormat' | 'numberSystem'> = {
+    dateFormat: 'DD-MM-YYYY',
+    numberSystem: 'western',
+  };
 
   constructor(
     private readonly nelcComplianceService: NelcComplianceService,
     private readonly auditLogService: AuditLogService,
+    private readonly adminSettings: AdminSettingsService,
   ) {}
+
+  /** Load admin-configured locale settings into the request-scope cache.
+   *  Called at the top of every public report entry method. */
+  private async loadPlatformLocale(): Promise<void> {
+    try {
+      const s = await this.adminSettings.getPublicLocaleSettings();
+      this.activeLocale = {
+        dateFormat: s.dateFormat,
+        numberSystem: s.numberSystem,
+      };
+    } catch {
+      // Keep defaults on failure — never block report generation.
+      this.activeLocale = { dateFormat: 'DD-MM-YYYY', numberSystem: 'western' };
+    }
+  }
 
   // ─── Role helpers ─────────────────────────────────────────
 
@@ -134,6 +162,7 @@ export class ReportsService {
     },
   ): Promise<ReportResult> {
     const format = this.validateFormat(params.format);
+    await this.loadPlatformLocale();
     const userTz = params.tz || TZ; // Use user's timezone if provided, else default
     this.activeTz = userTz; // Set for formatTimestamp/formatDate used in rendering
     const courseIds = await this.resolveCourseIds(user, params.courseId);
@@ -328,7 +357,7 @@ export class ReportsService {
         : 0;
 
       return [
-        row.studentScfhsNumber || '',
+        decryptPII(row.studentScfhsNumber) || '',
         `${row.studentFirstName || ''} ${row.studentLastName || ''}`.trim(),
         row.studentEmail || '',
         row.sessionDate ? new Date(row.sessionDate).toLocaleDateString('en-GB', { timeZone: userTz, day: '2-digit', month: 'short', year: 'numeric' }) : '',
@@ -383,7 +412,7 @@ export class ReportsService {
 
         const pct = attendancePctMap.get(`${student.studentId}:${sess.courseId}`) || '0.00%';
         rows.push([
-          student.scfhsNumber || '',
+          decryptPII(student.scfhsNumber) || '',
           `${student.firstName || ''} ${student.lastName || ''}`.trim(),
           student.email || '',
           sess.scheduledAt ? new Date(sess.scheduledAt).toLocaleDateString('en-GB', { timeZone: userTz, day: '2-digit', month: 'short', year: 'numeric' }) : '',
@@ -414,6 +443,7 @@ export class ReportsService {
     params: { courseId?: string; format?: string },
   ): Promise<ReportResult> {
     const format = this.validateFormat(params.format);
+    await this.loadPlatformLocale();
 
     if (!params.courseId) {
       throw new BadRequestException(
@@ -547,6 +577,7 @@ export class ReportsService {
     params: { courseId?: string; format?: string },
   ): Promise<ReportResult> {
     const format = this.validateFormat(params.format);
+    await this.loadPlatformLocale();
     const courseIds = await this.resolveCourseIds(user, params.courseId);
     const instructorName = await this.getInstructorName(user.id);
 
@@ -607,6 +638,7 @@ export class ReportsService {
     params: { courseId?: string; format?: string },
   ): Promise<ReportResult> {
     const format = this.validateFormat(params.format);
+    await this.loadPlatformLocale();
     const courseIds = await this.resolveCourseIds(user, params.courseId);
     const instructorName = await this.getInstructorName(user.id);
 
@@ -673,6 +705,7 @@ export class ReportsService {
     params: { courseId?: string; format?: string },
   ): Promise<ReportResult> {
     const format = this.validateFormat(params.format);
+    await this.loadPlatformLocale();
     const courseIds = await this.resolveCourseIds(user, params.courseId);
     const metadata = await this.buildMetadata(user, params.courseId);
 
@@ -820,6 +853,7 @@ export class ReportsService {
     params: { courseId?: string; sessionId?: string; format?: string; tz?: string },
   ): Promise<ReportResult> {
     const format = this.validateFormat(params.format);
+    await this.loadPlatformLocale();
     const userTz = params.tz || TZ;
     this.activeTz = userTz;
     const courseIds = await this.resolveCourseIds(user, params.courseId);
@@ -1045,6 +1079,7 @@ export class ReportsService {
     format?: string,
   ): Promise<ReportResult> {
     const fmt = this.validateFormat(format);
+    await this.loadPlatformLocale();
     const courseIds = await this.resolveCourseIds(user, courseId);
     if (courseIds.length === 0) {
       return this.formatReport('Satisfaction Report', [], [], fmt);
@@ -1166,6 +1201,7 @@ export class ReportsService {
     format?: string,
   ): Promise<ReportResult> {
     const fmt = this.validateFormat(format);
+    await this.loadPlatformLocale();
 
     if (!isGlobalAdmin(user) && !isManager(user)) {
       // Instructors can only see their own performance
@@ -1315,6 +1351,7 @@ export class ReportsService {
     params: { courseId?: string; format?: string },
   ): Promise<ReportResult> {
     const format = this.validateFormat(params.format);
+    await this.loadPlatformLocale();
     const metadata = await this.buildMetadata(user, params.courseId);
 
     // Get all courses the user has access to
@@ -1365,6 +1402,7 @@ export class ReportsService {
     params: { courseId?: string; format?: string },
   ): Promise<ReportResult> {
     const format = this.validateFormat(params.format);
+    await this.loadPlatformLocale();
     const metadata = await this.buildMetadata(user, params.courseId);
 
     const headers = [
@@ -1466,6 +1504,7 @@ export class ReportsService {
     params: { format?: string; dateFrom?: string; dateTo?: string },
   ): Promise<ReportResult> {
     const format = this.validateFormat(params.format);
+    await this.loadPlatformLocale();
     const instructorName = await this.getInstructorName(user.id);
 
     const filterParts: string[] = [];
@@ -1673,6 +1712,7 @@ export class ReportsService {
     filters?: Record<string, string>,
   ): Promise<ReportResult> {
     const fmt = this.validateFormat(format);
+    await this.loadPlatformLocale();
 
     switch (type) {
       case 'sessions':
@@ -2059,10 +2099,15 @@ export class ReportsService {
     const hasArabic = (text: string) => /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
 
     return new Promise<Buffer>((resolve, reject) => {
+      // Top margin leaves room for the branded title band (drawn manually
+      // on every page so the layout looks like a designed report, not a
+      // raw table dump).
+      const TITLE_BAND_H = 56;
       const doc = new PDFDocument({
-        margin: 25,
+        margins: { top: TITLE_BAND_H + 18, bottom: 28, left: 25, right: 25 },
         size: 'A4',
         layout: 'landscape',
+        bufferPages: true, // needed to back-fill "Page X of Y" after end
       });
 
       // Register Arabic font
@@ -2075,65 +2120,73 @@ export class ReportsService {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
+      // PhysioGuidance brand palette — kept close to existing UI.
+      const BRAND_PRIMARY = '#002D87'; // deep blue title band
+      const HEADER_ROW_FILL = '#EEF2FF'; // very light indigo
+      const ZEBRA_FILL = '#F7F8FB'; // near-white tint for alt rows
+      const BORDER_LINE = '#D1D5DB';
+      const TEXT_MUTED = '#4B5563';
+
       const pageWidth =
         doc.page.width - doc.page.margins.left - doc.page.margins.right;
       const startX = doc.page.margins.left;
 
       // Smart column widths — wider for name/email/reason, narrower for status/numbers
       const wideColumns = new Set(['Student Name', 'Student', 'Name', 'Email', 'Instructor', 'Course', 'Session', 'Webinar', 'Reason (if not earned)']);
-      const wrapColumns = new Set(['Reason (if not earned)']); // columns that allow text wrap
+      const wrapColumns = new Set(['Reason (if not earned)']);
       const defaultColWidth = pageWidth / headers.length;
       const wideCount = headers.filter(h => wideColumns.has(h)).length;
       const narrowCount = headers.length - wideCount;
-      const widePct = headers.length > 7 ? 0.6 : 0.55; // more space for wide cols in wide tables
+      const widePct = headers.length > 7 ? 0.6 : 0.55;
       const wideWidth = wideCount > 0 ? (pageWidth * widePct) / wideCount : defaultColWidth;
       const narrowWidth = narrowCount > 0 ? (pageWidth * (1 - widePct)) / narrowCount : defaultColWidth;
       const colWidths = headers.map(h => wideColumns.has(h) ? wideWidth : narrowWidth);
       const getColX = (i: number) => startX + colWidths.slice(0, i).reduce((s, w) => s + w, 0);
 
-      // ── Title ──
-      doc
-        .fontSize(16)
-        .font('Helvetica-Bold')
-        .text(title, { align: 'center' });
-      doc.moveDown(0.3);
+      // Draws the branded title band + metadata. Called on every page so
+      // multi-page reports stay consistent and self-identifying.
+      const drawTitleBand = () => {
+        // Filled brand bar
+        doc.save();
+        doc.rect(0, 0, doc.page.width, TITLE_BAND_H).fill(BRAND_PRIMARY);
+        doc.restore();
 
-      // ── Metadata block ──
-      if (metadata?.instructorName) {
-        doc
-          .fontSize(9)
-          .font('Helvetica')
-          .text(`Instructor: ${metadata.instructorName}`, { align: 'center' });
-      }
-      if (metadata?.filters) {
-        doc
-          .fontSize(9)
-          .font('Helvetica-Oblique')
-          .text(`Filters: ${metadata.filters}`, { align: 'center' });
-      }
-      doc
-        .fontSize(9)
-        .font('Helvetica')
-        .text(`Generated: ${this.formatTimestamp(new Date())} | NELC Compliant`, {
-          align: 'center',
+        // White title + subtle PG mark
+        doc.fillColor('white').font('Helvetica-Bold').fontSize(16);
+        doc.text(title, startX, 14, {
+          width: pageWidth,
+          align: 'left',
+          lineBreak: false,
         });
-      doc.moveDown(0.8);
+        doc.font('Helvetica').fontSize(9).fillColor('#CBD5E1');
+        const metaBits: string[] = [];
+        if (metadata?.instructorName) metaBits.push(`Owner: ${metadata.instructorName}`);
+        if (metadata?.filters) metaBits.push(`Filters: ${metadata.filters}`);
+        metaBits.push(`Generated: ${this.formatTimestamp(new Date())}`);
+        doc.text(metaBits.join('  ·  '), startX, 34, {
+          width: pageWidth,
+          align: 'left',
+          lineBreak: false,
+        });
 
-      let y = doc.y;
+        // Brand mark on the right
+        doc.font('Helvetica-Bold').fontSize(11).fillColor('white');
+        doc.text('PhysioGuidance', startX, 18, {
+          width: pageWidth,
+          align: 'right',
+          lineBreak: false,
+        });
+        doc.font('Helvetica').fontSize(8).fillColor('#CBD5E1');
+        doc.text('NELC Compliant Report', startX, 34, {
+          width: pageWidth,
+          align: 'right',
+          lineBreak: false,
+        });
 
-      // ── NELC footer helper ──
-      const drawFooter = () => {
-        doc
-          .fontSize(7)
-          .font('Helvetica')
-          .text(
-            `Total records: ${rows.length}  |  NELC Compliant Report — PhysioGuidance`,
-            startX,
-            doc.page.height - doc.page.margins.bottom - 10,
-          );
+        doc.fillColor('black');
       };
 
-      // Shorten long header names for PDF
+      // Shorten long header names for the PDF column heads.
       const shortHeaders: Record<string, string> = {
         'RegistrationClassificationNumber': 'Reg. No.',
         'Student Name': 'Student',
@@ -2151,76 +2204,124 @@ export class ReportsService {
         'CME Hours': 'Hours',
       };
 
-      // ── Header row drawing helper ──
       const centerHeaderColumns = new Set(['Min.', 'Att. %', 'Status', 'Total Minutes', 'Total Attendance %']);
+      const HEADER_ROW_H = 16;
+
+      // Draws the table header row at current `y` and advances `y`.
+      // Filled background + bold text + bottom border.
       const drawHeaders = () => {
-        doc.fontSize(6.5).font('Helvetica-Bold');
+        doc.save();
+        doc.rect(startX, y, pageWidth, HEADER_ROW_H).fill(HEADER_ROW_FILL);
+        doc.restore();
+
+        doc.fontSize(7).font('Helvetica-Bold').fillColor(BRAND_PRIMARY);
         headers.forEach((header, i) => {
-          doc.text(shortHeaders[header] || header, getColX(i), y, {
-            width: colWidths[i] - 2,
+          doc.text(shortHeaders[header] || header, getColX(i) + 2, y + 4, {
+            width: colWidths[i] - 4,
             lineBreak: false,
             align: centerHeaderColumns.has(header) ? 'center' : undefined,
           });
         });
-        y += 12;
+        y += HEADER_ROW_H;
+
         doc
+          .strokeColor(BORDER_LINE)
+          .lineWidth(0.5)
           .moveTo(startX, y)
           .lineTo(startX + pageWidth, y)
           .stroke();
         y += 4;
-        doc.font('Helvetica').fontSize(6.5);
+        doc.font('Helvetica').fontSize(6.5).fillColor('black');
       };
 
+      // First page setup.
+      drawTitleBand();
+      let y = doc.page.margins.top;
       drawHeaders();
 
+      // Hook future pages to redraw the title band + headers so the
+      // report identifies itself on every sheet.
+      doc.on('pageAdded', () => {
+        drawTitleBand();
+        y = doc.page.margins.top;
+        drawHeaders();
+      });
+
       // ── Data rows ──
+      let rowIndex = 0;
+      const centerColumns = centerHeaderColumns;
       for (const row of rows) {
-        // Calculate row height — check if any wrapping column has long text
+        // Calculate row height — wrap-allowed columns may push it up.
         const rowHeight = row.reduce((maxH, cell, i) => {
           if (wrapColumns.has(headers[i]) && cell && cell.length > 30) {
             const lines = Math.ceil(cell.length / 40);
-            return Math.max(maxH, lines * 8);
+            return Math.max(maxH, lines * 8 + 4);
           }
           return maxH;
-        }, 10);
+        }, 12);
 
-        // Page break check
-        if (y > doc.page.height - doc.page.margins.bottom - 20) {
-          drawFooter();
+        // Page break check — leave room for the footer line.
+        if (y + rowHeight > doc.page.height - doc.page.margins.bottom - 4) {
           doc.addPage();
-          y = doc.page.margins.top;
-          drawHeaders();
+          // `pageAdded` hook has redrawn title + headers and reset `y`
+        }
+
+        // Zebra stripe — fill the row background on every other row.
+        if (rowIndex % 2 === 1) {
+          doc.save();
+          doc.rect(startX, y - 2, pageWidth, rowHeight).fill(ZEBRA_FILL);
+          doc.restore();
         }
 
         row.forEach((cell, i) => {
           const cellText = String(cell ?? '');
           const allowWrap = wrapColumns.has(headers[i]);
-          // Center-align numeric/short columns
-          const centerColumns = new Set(['Min.', 'Att. %', 'Status', 'Total Minutes', 'Total Attendance %']);
           const align = centerColumns.has(headers[i]) ? 'center' as const : undefined;
+
           // Use Arabic font if cell contains Arabic characters
           if (arabicFontBuf && hasArabic(cellText)) {
-            doc.font('Amiri').fontSize(6.5);
-            doc.text(cellText, getColX(i), y, {
-              width: colWidths[i] - 2,
+            doc.font('Amiri').fontSize(6.5).fillColor('black');
+            doc.text(cellText, getColX(i) + 2, y, {
+              width: colWidths[i] - 4,
               lineBreak: allowWrap,
               align,
               features: ['rtla'],
             });
             doc.font('Helvetica').fontSize(6.5);
           } else {
-            doc.text(cellText, getColX(i), y, {
-              width: colWidths[i] - 2,
+            doc.fillColor('black');
+            doc.text(cellText, getColX(i) + 2, y, {
+              width: colWidths[i] - 4,
               lineBreak: allowWrap,
               align,
             });
           }
         });
-        y += Math.max(rowHeight, 12);
+        y += rowHeight;
+        rowIndex++;
       }
 
-      // ── Footer on last page ──
-      drawFooter();
+      // Back-fill "Page X of Y" + record count on every page. Requires
+      // `bufferPages: true` above so pages are still mutable here.
+      const range = doc.bufferedPageRange();
+      const totalPages = range.count;
+      for (let i = 0; i < totalPages; i++) {
+        doc.switchToPage(range.start + i);
+        const footerY = doc.page.height - doc.page.margins.bottom + 4;
+        doc.font('Helvetica').fontSize(7).fillColor(TEXT_MUTED);
+        doc.text(
+          `Total records: ${rows.length}  ·  PhysioGuidance — Confidential`,
+          startX,
+          footerY,
+          { width: pageWidth, align: 'left', lineBreak: false },
+        );
+        doc.text(
+          `Page ${i + 1} of ${totalPages}`,
+          startX,
+          footerY,
+          { width: pageWidth, align: 'right', lineBreak: false },
+        );
+      }
 
       doc.end();
     });
@@ -2331,22 +2432,25 @@ export class ReportsService {
   private formatDate(date: Date | string | null | undefined): string {
     if (!date) return '';
     const d = date instanceof Date ? date : new Date(date);
-    const ymd = d.toLocaleDateString('en-CA', { timeZone: this.activeTz });
-    const hm = d.toLocaleTimeString('en-GB', { timeZone: this.activeTz, hour: '2-digit', minute: '2-digit' });
-    return `${ymd} ${hm}`;
+    // Get parts in the active timezone, then re-assemble using admin's dateFormat
+    const tzDate = new Date(d.toLocaleString('en-US', { timeZone: this.activeTz }));
+    const datePart = fmtPlatformDate(tzDate, this.activeLocale);
+    const hm = d.toLocaleTimeString('en-GB', {
+      timeZone: this.activeTz,
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const time =
+      this.activeLocale.numberSystem === 'arabic_indic' ? toArabicIndic(hm) : hm;
+    return `${datePart} ${time}`;
   }
 
   private formatDateTime(date: Date | string | null | undefined): string {
-    if (!date) return '';
-    const d = date instanceof Date ? date : new Date(date);
-    return d.toLocaleString('en-CA', { timeZone: this.activeTz, hour12: false }).replace(',', '');
+    return this.formatDate(date);
   }
 
   private formatTimestamp(date: Date): string {
-    const zone = this.activeTz;
-    const ymd = date.toLocaleDateString('en-CA', { timeZone: zone });
-    const hm = date.toLocaleTimeString('en-GB', { timeZone: zone, hour: '2-digit', minute: '2-digit' });
-    return `${ymd} ${hm}`;
+    return this.formatDate(date);
   }
 
   /** Convert a YYYY-MM-DD string to start of day (00:00:00) in the given timezone */

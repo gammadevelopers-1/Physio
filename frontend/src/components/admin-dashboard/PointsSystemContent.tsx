@@ -12,6 +12,11 @@ import {
   Search,
   Settings,
   TrendingUp,
+  Sparkles,
+  Percent,
+  Calendar,
+  ArrowDownToLine,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import AdminSidebar from "./AdminSidebar";
@@ -32,15 +37,26 @@ type Tab = "rules" | "config" | "courses" | "grants" | "history";
 interface AdminProfile {
   name: string;
   email: string;
-  totalUsers: number;
-  totalCourses: number;
-  uptime: number;
 }
 
 const PointsSystemContent = () => {
   const t = useTranslations("adminDashboard.points");
   const { user: currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("rules");
+
+  // Hero-level summary state — fetched once at mount so the user sees
+  // meaningful numbers without having to switch tabs. Individual tabs
+  // still fetch their own data for full CRUD.
+  const [heroRules, setHeroRules] = useState<PointRule[] | null>(null);
+  const [heroConfig, setHeroConfig] = useState<PointsConfig | null>(null);
+
+  useEffect(() => {
+    pointsAdminApi.listRules().then(setHeroRules).catch(() => setHeroRules([]));
+    pointsAdminApi.getConfig().then(setHeroConfig).catch(() => setHeroConfig(null));
+  }, []);
+
+  const activeRulesCount = heroRules?.filter((r) => r.isActive).length ?? 0;
+  const totalRulesCount = heroRules?.length ?? 0;
 
   const adminProfile: AdminProfile = {
     name:
@@ -50,9 +66,6 @@ const PointsSystemContent = () => {
       currentUser?.email ||
       "",
     email: currentUser?.email || "",
-    totalUsers: 0,
-    totalCourses: 0,
-    uptime: 99.9,
   };
 
   const tabs: Array<{ key: Tab; label: string; icon: typeof Award }> = [
@@ -76,34 +89,88 @@ const PointsSystemContent = () => {
             <AdminMobileSidebar admin={adminProfile} />
 
             <div className="flex-1 min-w-0">
-              {/* Page header */}
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-[#FEF3C7] flex items-center justify-center">
-                  <Coins className="w-5 h-5 text-[#D4A520]" />
+              {/* Hero header — gradient card with live stats from the
+                  already-loaded rules + config data. Mirrors the
+                  premium feel of the Instructor Applications hero. */}
+              <div className="relative overflow-hidden rounded-2xl mb-5 p-5 md:p-6 bg-gradient-to-br from-[#D4A520] via-[#B88A14] to-[#7C5A0D] text-white">
+                <div className="absolute -top-8 -right-6 w-32 h-32 bg-white/10 rounded-full" />
+                <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-white/5 rounded-full" />
+
+                <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                      <Coins className="w-7 h-7" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h1 className="text-xl md:text-2xl font-bold">
+                          {t("title")}
+                        </h1>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/15 rounded-full text-[10px] font-semibold uppercase tracking-wider">
+                          <Sparkles className="w-3 h-3" />
+                          {t("hero.liveBadge")}
+                        </span>
+                      </div>
+                      <p className="text-sm text-white/80 max-w-xl">
+                        {t("subtitle")}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
-                    {t("title")}
-                  </h1>
-                  <p className="text-sm text-[var(--color-text-secondary)] mt-0.5">
-                    {t("subtitle")}
-                  </p>
+
+                {/* Stat strip */}
+                <div className="relative mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <HeroStat
+                    icon={CheckCircle2}
+                    label={t("hero.activeRules")}
+                    value={
+                      heroRules ? `${activeRulesCount} / ${totalRulesCount}` : "—"
+                    }
+                  />
+                  <HeroStat
+                    icon={ArrowDownToLine}
+                    label={t("hero.conversionRate")}
+                    value={
+                      heroConfig
+                        ? t("hero.conversionRateValue", {
+                            points: heroConfig.conversionRatePointsPerSar,
+                          })
+                        : "—"
+                    }
+                  />
+                  <HeroStat
+                    icon={Calendar}
+                    label={t("hero.minRedemption")}
+                    value={
+                      heroConfig
+                        ? `${heroConfig.minRedemptionPoints} ${t("hero.pointsUnit")}`
+                        : "—"
+                    }
+                  />
+                  <HeroStat
+                    icon={Percent}
+                    label={t("hero.maxRedemption")}
+                    value={
+                      heroConfig ? `${heroConfig.maxRedemptionPct}%` : "—"
+                    }
+                  />
                 </div>
               </div>
 
-              {/* Tab strip */}
-              <div className="flex flex-wrap gap-2 border-b border-[var(--color-border)] mb-4 -mx-1 px-1 overflow-x-auto">
+              {/* Tab strip — pill style, with active tab using primary fill */}
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-1.5 mb-4 flex flex-wrap gap-1 overflow-x-auto">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
                   const active = activeTab === tab.key;
                   return (
                     <button
                       key={tab.key}
+                      type="button"
                       onClick={() => setActiveTab(tab.key)}
-                      className={`flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                      className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
                         active
-                          ? "border-[var(--color-primary)] text-[var(--color-primary)]"
-                          : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                          ? "bg-[var(--color-primary)] text-white shadow-sm"
+                          : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -114,8 +181,20 @@ const PointsSystemContent = () => {
               </div>
 
               {/* Tab content */}
-              {activeTab === "rules" && <RulesTab t={t} />}
-              {activeTab === "config" && <ConfigTab t={t} />}
+              {activeTab === "rules" && (
+                <RulesTab
+                  t={t}
+                  rules={heroRules}
+                  onRulesChange={setHeroRules}
+                />
+              )}
+              {activeTab === "config" && (
+                <ConfigTab
+                  t={t}
+                  config={heroConfig}
+                  onConfigChange={setHeroConfig}
+                />
+              )}
               {activeTab === "courses" && <CoursesTab t={t} />}
               {activeTab === "grants" && <GrantsTab t={t} />}
               {activeTab === "history" && <HistoryTab t={t} />}
@@ -127,26 +206,64 @@ const PointsSystemContent = () => {
   );
 };
 
+function HeroStat({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/15">
+      <div className="flex items-center gap-2 mb-1.5">
+        <Icon className="w-3.5 h-3.5 text-white/80" />
+        <p className="text-[10px] uppercase tracking-wider text-white/70 font-semibold truncate">
+          {label}
+        </p>
+      </div>
+      <p className="text-lg font-bold leading-tight">{value}</p>
+    </div>
+  );
+}
+
 // ─── Rules Tab ────────────────────────────────────────────────
 
 interface TabProps {
   t: ReturnType<typeof useTranslations>;
 }
 
-function RulesTab({ t }: TabProps) {
-  const [rules, setRules] = useState<PointRule[] | null>(null);
-  const [savingKey, setSavingKey] = useState<string | null>(null);
+const RULE_VISUAL: Record<
+  string,
+  { icon: React.ElementType; gradient: string; iconColor: string }
+> = {
+  signup: { icon: Sparkles, gradient: "from-[#A855F7] to-[#7C3AED]", iconColor: "text-[#7C3AED]" },
+  course_completed: { icon: Award, gradient: "from-[#22C55E] to-[#15803D]", iconColor: "text-[#15803D]" },
+  review_approved: { icon: TrendingUp, gradient: "from-[#0EA5E9] to-[#0369A1]", iconColor: "text-[#0369A1]" },
+};
+const DEFAULT_RULE_VISUAL = {
+  icon: Coins,
+  gradient: "from-[#D4A520] to-[#B88A14]",
+  iconColor: "text-[#D4A520]",
+};
 
-  useEffect(() => {
-    pointsAdminApi.listRules().then(setRules).catch(() => setRules([]));
-  }, []);
+interface RulesTabProps extends TabProps {
+  rules: PointRule[] | null;
+  onRulesChange: (rules: PointRule[] | null) => void;
+}
+
+function RulesTab({ t, rules, onRulesChange }: RulesTabProps) {
+  const [savingKey, setSavingKey] = useState<string | null>(null);
 
   const handleSave = async (rule: PointRule, patch: Partial<PointRule>) => {
     setSavingKey(rule.ruleKey);
     try {
       const updated = await pointsAdminApi.updateRule(rule.ruleKey, patch);
-      setRules((prev) =>
-        prev ? prev.map((r) => (r.ruleKey === rule.ruleKey ? updated : r)) : prev,
+      onRulesChange(
+        rules
+          ? rules.map((r) => (r.ruleKey === rule.ruleKey ? updated : r))
+          : null,
       );
       toast.success(t("toasts.ruleUpdated"));
     } catch (err) {
@@ -158,35 +275,33 @@ function RulesTab({ t }: TabProps) {
 
   if (!rules) return <TabLoader />;
 
+  if (rules.length === 0) {
+    return (
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] py-16 text-center">
+        <Coins className="w-10 h-10 text-[var(--color-text-secondary)] opacity-40 mx-auto mb-3" />
+        <p className="text-sm text-[var(--color-text-secondary)]">
+          {t("rules.empty")}
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
-      <table className="w-full text-sm">
-        <thead className="bg-[var(--color-surface-page)] text-xs text-[var(--color-text-secondary)]">
-          <tr>
-            <th className="text-start px-4 py-3 font-medium">{t("rules.ruleColumn")}</th>
-            <th className="text-start px-4 py-3 font-medium">{t("rules.amountColumn")}</th>
-            <th className="text-start px-4 py-3 font-medium">{t("rules.expiryColumn")}</th>
-            <th className="text-start px-4 py-3 font-medium">{t("rules.statusColumn")}</th>
-            <th className="text-end px-4 py-3 font-medium">{t("rules.actionsColumn")}</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-[var(--color-border)]">
-          {rules.map((rule) => (
-            <RuleRow
-              key={rule.ruleKey}
-              rule={rule}
-              saving={savingKey === rule.ruleKey}
-              onSave={(patch) => handleSave(rule, patch)}
-              t={t}
-            />
-          ))}
-        </tbody>
-      </table>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      {rules.map((rule) => (
+        <RuleCard
+          key={rule.ruleKey}
+          rule={rule}
+          saving={savingKey === rule.ruleKey}
+          onSave={(patch) => handleSave(rule, patch)}
+          t={t}
+        />
+      ))}
     </div>
   );
 }
 
-interface RuleRowProps {
+interface RuleCardProps {
   rule: PointRule;
   saving: boolean;
   onSave: (patch: Partial<PointRule>) => void;
@@ -197,7 +312,7 @@ interface RuleRowProps {
 // added in DB before code catches up) falls through to the raw key.
 const KNOWN_RULE_KEYS = ["signup", "course_completed", "review_approved"] as const;
 
-function RuleRow({ rule, saving, onSave, t }: RuleRowProps) {
+function RuleCard({ rule, saving, onSave, t }: RuleCardProps) {
   const [amount, setAmount] = useState(rule.pointsAmount);
   const [expiry, setExpiry] = useState<number | "">(rule.expiresAfterDays ?? "");
   const dirty =
@@ -214,81 +329,142 @@ function RuleRow({ rule, saving, onSave, t }: RuleRowProps) {
       ? t(`rules.keys.${rule.ruleKey}.description` as `rules.keys.signup.description`)
       : "");
 
+  const visual = RULE_VISUAL[rule.ruleKey] ?? DEFAULT_RULE_VISUAL;
+  const RuleIcon = visual.icon;
+
   return (
-    <tr>
-      <td className="px-4 py-3">
-        <p className="font-medium text-[var(--color-text-primary)]">
-          {titleText}
-        </p>
-        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-          {descriptionText}
-        </p>
-      </td>
-      <td className="px-4 py-3">
-        <input
-          type="number"
-          min={0}
-          value={amount}
-          onChange={(e) => setAmount(Number(e.target.value))}
-          className="w-20 px-2 py-1 text-sm border border-[var(--color-input-border)] rounded"
-        />
-      </td>
-      <td className="px-4 py-3">
-        <input
-          type="number"
-          min={0}
-          value={expiry}
-          onChange={(e) =>
-            setExpiry(e.target.value === "" ? "" : Number(e.target.value))
-          }
-          placeholder={t("rules.neverExpires")}
-          className="w-24 px-2 py-1 text-sm border border-[var(--color-input-border)] rounded"
-        />
-        <span className="text-xs text-[var(--color-text-secondary)] ms-2">
-          {t("rules.daysSuffix")}
-        </span>
-      </td>
-      <td className="px-4 py-3">
-        <button
-          type="button"
-          onClick={() => onSave({ isActive: !rule.isActive })}
-          className={`px-2 py-1 rounded text-xs font-medium ${rule.isActive ? "bg-[#F0FDF4] text-[#16A34A]" : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"}`}
-        >
-          {rule.isActive ? t("rules.active") : t("rules.inactive")}
-        </button>
-      </td>
-      <td className="px-4 py-3 text-end">
-        <button
-          type="button"
-          disabled={!dirty || saving}
-          onClick={() =>
-            onSave({
-              pointsAmount: amount,
-              expiresAfterDays: expiry === "" ? null : Number(expiry),
-            })
-          }
-          className="px-3 py-1.5 text-xs font-medium btn-gold rounded-lg text-white disabled:opacity-40"
-        >
-          {saving ? <Loader2 className="w-3 h-3 animate-spin inline" /> : t("save")}
-        </button>
-      </td>
-    </tr>
+    <div
+      className={`relative bg-[var(--color-surface-card)] rounded-xl border transition-all overflow-hidden ${
+        rule.isActive
+          ? "border-[var(--color-border)]"
+          : "border-[var(--color-border-subtle)] opacity-75"
+      }`}
+    >
+      {/* Top color band tied to rule visual identity */}
+      <div className={`h-1 bg-gradient-to-r ${visual.gradient}`} />
+
+      <div className="p-4 sm:p-5">
+        <div className="flex items-start gap-3 mb-4">
+          <div
+            className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${visual.gradient} text-white shadow-sm`}
+          >
+            <RuleIcon className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
+                {titleText}
+              </h3>
+              <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-secondary)] font-mono">
+                {rule.ruleKey}
+              </span>
+            </div>
+            <p className="text-xs text-[var(--color-text-secondary)] line-clamp-2">
+              {descriptionText}
+            </p>
+          </div>
+          {/* Active toggle pill */}
+          <button
+            type="button"
+            onClick={() => onSave({ isActive: !rule.isActive })}
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors flex-shrink-0 ${
+              rule.isActive
+                ? "bg-[#DCFCE7] text-[#15803D] hover:bg-[#BBF7D0]"
+                : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                rule.isActive ? "bg-[#16A34A]" : "bg-[var(--color-text-secondary)]"
+              }`}
+            />
+            {rule.isActive ? t("rules.active") : t("rules.inactive")}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <label className="block text-[10px] uppercase tracking-wider font-semibold text-[var(--color-text-secondary)] mb-1.5">
+              {t("rules.amountColumn")}
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                min={0}
+                value={amount}
+                onChange={(e) => setAmount(Number(e.target.value))}
+                className="w-full h-10 ps-3 pe-12 text-sm font-semibold border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:border-[var(--color-primary)]"
+              />
+              <span className="absolute end-3 top-1/2 -translate-y-1/2 text-[10px] uppercase tracking-wider font-semibold text-[var(--color-text-secondary)]">
+                {t("hero.pointsUnit")}
+              </span>
+            </div>
+          </div>
+          <div>
+            <label className="block text-[10px] uppercase tracking-wider font-semibold text-[var(--color-text-secondary)] mb-1.5">
+              {t("rules.expiryColumn")}
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                min={0}
+                value={expiry}
+                onChange={(e) =>
+                  setExpiry(e.target.value === "" ? "" : Number(e.target.value))
+                }
+                placeholder={t("rules.neverExpires")}
+                className="w-full h-10 ps-3 pe-12 text-sm border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:border-[var(--color-primary)]"
+              />
+              <span className="absolute end-3 top-1/2 -translate-y-1/2 text-[10px] uppercase tracking-wider font-semibold text-[var(--color-text-secondary)]">
+                {t("rules.daysSuffix")}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 pt-3 border-t border-[var(--color-border-subtle)]">
+          <p className="text-[11px] text-[var(--color-text-secondary)]">
+            {dirty ? t("rules.unsavedChanges") : t("rules.upToDate")}
+          </p>
+          <button
+            type="button"
+            disabled={!dirty || saving}
+            onClick={() =>
+              onSave({
+                pointsAmount: amount,
+                expiresAfterDays: expiry === "" ? null : Number(expiry),
+              })
+            }
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium btn-gold rounded-lg text-white disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {saving ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            )}
+            {t("save")}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
 // ─── Config Tab ───────────────────────────────────────────────
 
-function ConfigTab({ t }: TabProps) {
-  const [config, setConfig] = useState<PointsConfig | null>(null);
-  const [draft, setDraft] = useState<PointsConfig | null>(null);
+interface ConfigTabProps extends TabProps {
+  config: PointsConfig | null;
+  onConfigChange: (config: PointsConfig | null) => void;
+}
+
+function ConfigTab({ t, config, onConfigChange }: ConfigTabProps) {
+  const [draft, setDraft] = useState<PointsConfig | null>(config);
   const [saving, setSaving] = useState(false);
 
+  // Sync draft with parent state when it loads.
   useEffect(() => {
-    pointsAdminApi.getConfig().then((cfg) => {
-      setConfig(cfg);
-      setDraft(cfg);
-    });
-  }, []);
+    if (config && !draft) setDraft(config);
+  }, [config, draft]);
 
   const dirty = useMemo(() => {
     if (!config || !draft) return false;
@@ -300,7 +476,7 @@ function ConfigTab({ t }: TabProps) {
     setSaving(true);
     try {
       const updated = await pointsAdminApi.updateConfig(draft);
-      setConfig(updated);
+      onConfigChange(updated);
       setDraft(updated);
       toast.success(t("toasts.configUpdated"));
     } catch (err) {

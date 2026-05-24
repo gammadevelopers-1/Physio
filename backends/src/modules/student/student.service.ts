@@ -32,6 +32,7 @@ import {
   moduleCompletions,
 } from '../../database/schema';
 import { recomputeEnrollmentProgress } from '../enrollments/progress.helper';
+import { decryptPII } from '../../common/crypto';
 import type { SubmissionAnswer } from '../../database/schema/submissions';
 import { computeEffectiveScore } from '../../common/score-policy';
 import { ThresholdEvaluationService } from '../course-assistants/threshold-evaluation.service';
@@ -3026,11 +3027,14 @@ export class StudentService {
         .where(eq(users.id, studentId))
         .limit(1);
 
+      // student.phone is stored encrypted — decrypt before pre-filling
+      // the Zoom registration URL so the user sees their real phone.
+      const phonePlain = decryptPII(student?.phone);
       const params = new URLSearchParams();
       if (student?.firstName) params.set('first_name', student.firstName);
       if (student?.lastName) params.set('last_name', student.lastName);
       if (student?.email) params.set('email', student.email);
-      if (student?.phone) params.set('phone', student.phone);
+      if (phonePlain) params.set('phone', phonePlain);
 
       const separator = session.webinarRegistrationUrl.includes('?') ? '&' : '?';
       const joinUrl = params.toString()

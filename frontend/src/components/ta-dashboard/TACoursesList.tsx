@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { BookOpen, AlertTriangle, Clock, Search, ArrowUpDown, Users, Calendar, ChevronRight, ChevronLeft } from "lucide-react";
 import { taApi, type TAAssignedCourse } from "@/lib/api";
+import { FmtDate } from "@/components/ui/Fmt";
 
 type StatusFilter = "all" | "approved" | "suggested" | "completed";
 type SortOption = "newest" | "oldest" | "alphabetical";
@@ -241,10 +242,11 @@ const TACoursesList = () => {
                   <div className="flex items-center gap-1.5 text-[12px] text-[var(--color-text-secondary)]">
                     <Calendar className="w-3.5 h-3.5" strokeWidth={1.5} />
                     {t("courses.assignedOn")}{" "}
-                    {new Date(course.assignedAt).toLocaleDateString(
-                      locale === "ar" ? "ar-SA" : "en-US",
-                      { year: "numeric", month: "short", day: "numeric" },
-                    )}
+                    <FmtDate
+                      value={course.assignedAt}
+                      variant="readable"
+                      locale={locale === "ar" ? "ar" : "en"}
+                    />
                   </div>
 
                   <div className="flex-1" />

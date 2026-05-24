@@ -16,6 +16,8 @@ import {
   Award,
   BadgeCheck,
 } from "lucide-react";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDateReadable } from "@/lib/platform-locale";
 
 interface VerificationResult {
   id: string;
@@ -38,6 +40,7 @@ export default function CertificateVerifyContent({
   const locale = useLocale();
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
+  const platformLocale = usePlatformLocale();
 
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -102,12 +105,11 @@ export default function CertificateVerifyContent({
   const courseName =
     isRTL && result.courseNameAr ? result.courseNameAr : result.courseName;
 
-  const formattedDate = result.issuedDate
-    ? new Date(result.issuedDate).toLocaleDateString(
-        isRTL ? "ar-SA" : "en-US",
-        { year: "numeric", month: "long", day: "numeric" },
-      )
-    : "—";
+  const formattedDate = formatPlatformDateReadable(
+    result.issuedDate,
+    platformLocale,
+    isRTL ? "ar" : "en",
+  );
 
   return (
     <div className="min-h-screen bg-[#F8F9FC] flex items-center justify-center p-4">

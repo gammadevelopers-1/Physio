@@ -7,7 +7,15 @@
  * then Arabic block) and ALWAYS uses Riyadh time — by client request, so
  * the same prefilled text works for any recipient regardless of the
  * sender's UI locale.
+ *
+ * Admin override: if an admin has edited the WhatsApp template via the
+ * Templates page, the openXxx variants fetch that edited template
+ * first and substitute `{{variable}}` placeholders with the same data
+ * the hardcoded builders would have used. Hardcoded body remains the
+ * fallback when no admin override exists.
  */
+
+import { publicSettingsApi } from "./api";
 
 interface ShareOpts {
   title: string;
@@ -97,12 +105,67 @@ export function buildWebinarWhatsAppMessage(opts: ShareOpts): string {
   );
 }
 
+/** Replace {{variable}} placeholders in admin's edited template. */
+function substituteVars(input: string, vars: Record<string, string>): string {
+  return input.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (full, key: string) =>
+    Object.prototype.hasOwnProperty.call(vars, key) ? vars[key] : full,
+  );
+}
+
+/**
+ * Fetch the admin's edited WhatsApp template for an event key. Returns
+ * `null` when the admin hasn't customized it — caller falls back to
+ * the hardcoded builder above.
+ */
+async function fetchAdminTemplate(
+  eventKey: string,
+): Promise<string | null> {
+  try {
+    const { body, enabled } = await publicSettingsApi.getWhatsAppTemplate(
+      eventKey,
+      "en",
+    );
+    return enabled && body ? body : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Check the admin's master WhatsApp channel toggle. Returns `false`
+ * when the admin has disabled WhatsApp from Settings → Notifications.
+ * Fails open so a transient network blip doesn't block legitimate
+ * shares.
+ */
+async function isWhatsAppChannelEnabled(): Promise<boolean> {
+  try {
+    const { whatsapp } = await publicSettingsApi.getNotificationChannels();
+    return whatsapp !== false;
+  } catch {
+    return true;
+  }
+}
+
+const SUPPORT_PHONE_VAR = "0555614285";
+
 /**
  * Open WhatsApp's web share intent in a new tab with the message
- * pre-filled.
+ * pre-filled. Prefers admin's edited template; falls back to hardcoded.
+ * Honors the admin master WhatsApp toggle — when off, no-ops.
  */
-export function openWebinarWhatsAppShare(opts: ShareOpts): void {
-  const msg = buildWebinarWhatsAppMessage(opts);
+export async function openWebinarWhatsAppShare(opts: ShareOpts): Promise<void> {
+  if (!(await isWhatsAppChannelEnabled())) return;
+  const override = await fetchAdminTemplate("whatsapp_webinar_share");
+  const msg = override
+    ? substituteVars(override, {
+        title: opts.title,
+        courseName: opts.courseName ?? "",
+        scheduledAt: formatRiyadh(opts.scheduledAt, "en"),
+        registrationUrl: opts.registrationUrl,
+        zoomWebinarId: opts.zoomWebinarId ?? "",
+        supportPhone: SUPPORT_PHONE_VAR,
+      })
+    : buildWebinarWhatsAppMessage(opts);
   window.open(
     `https://wa.me/?text=${encodeURIComponent(msg)}`,
     "_blank",
@@ -195,8 +258,20 @@ export function buildCoursePageWhatsAppMessage(opts: CoursePageShareOpts): strin
   return `${en}\n\n${ar}`;
 }
 
-export function openCoursePageWhatsAppShare(opts: CoursePageShareOpts): void {
-  const msg = buildCoursePageWhatsAppMessage(opts);
+export async function openCoursePageWhatsAppShare(
+  opts: CoursePageShareOpts,
+): Promise<void> {
+  if (!(await isWhatsAppChannelEnabled())) return;
+  const override = await fetchAdminTemplate("whatsapp_paid_course_share");
+  const msg = override
+    ? substituteVars(override, {
+        webinarTitle: opts.webinarTitle,
+        courseName: opts.courseName ?? "",
+        scheduledAt: formatRiyadh(opts.scheduledAt, "en"),
+        courseUrl: opts.courseUrl,
+        supportPhone: SUPPORT_PHONE_VAR,
+      })
+    : buildCoursePageWhatsAppMessage(opts);
   window.open(
     `https://wa.me/?text=${encodeURIComponent(msg)}`,
     "_blank",

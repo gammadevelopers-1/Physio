@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   ArrowRight,
@@ -25,27 +26,48 @@ import {
   Twitter,
   Linkedin,
   MapPin,
+  Copy,
+  Check,
+  ExternalLink,
+  FileText,
+  Calendar,
+  Send,
+  HelpCircle,
+  History,
 } from "lucide-react";
 import { AdminSidebar, AdminNavbar } from "@/components/admin-dashboard";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import { roleRequestsApi, type RoleRequest } from "@/lib/api";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import ApplicantAvatar from "./role-requests/ApplicantAvatar";
+import {
+  getApplicantName,
+  getApplicantNameAr,
+  getApplicantSubtitle,
+  formatFullDate,
+  daysBetween,
+  STATUS_CONFIG,
+  type StatusKey,
+} from "./role-requests/helpers";
 
-const statusConfig = {
-  PENDING: { badgeBg: "bg-[#FEF3C7]", badgeText: "text-[#92400E]", icon: Clock, label: "Pending Review" },
-  APPROVED: { badgeBg: "bg-[#DCFCE7]", badgeText: "text-[#166534]", icon: CheckCircle2, label: "Approved" },
-  REJECTED: { badgeBg: "bg-[#FEE2E2]", badgeText: "text-[#991B1B]", icon: XCircle, label: "Rejected" },
-  MORE_INFO: { badgeBg: "bg-[#FFEDD5]", badgeText: "text-[#9A3412]", icon: AlertCircle, label: "More Info Needed" },
-};
+const STATUS_ICONS = {
+  PENDING: Clock,
+  APPROVED: CheckCircle2,
+  REJECTED: XCircle,
+  MORE_INFO: AlertCircle,
+} as const;
 
-interface RoleRequestReviewContentProps {
+interface Props {
   applicationId: string;
 }
 
-const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentProps) => {
+const RoleRequestReviewContent = ({ applicationId }: Props) => {
   const locale = useLocale();
-  const t = useTranslations("adminDashboard");
+  const t = useTranslations("adminDashboard.roleRequestReviewPage");
+  const tStatuses = useTranslations("adminDashboard.roleRequestsPage.statuses");
   const admin = useAdminProfile();
+  const platformLocale = usePlatformLocale();
   const isRTL = locale === "ar";
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
 
@@ -53,11 +75,21 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  // Action states
+  // Action modal
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showModal, setShowModal] = useState<"approve" | "reject" | "request-info" | null>(null);
   const [reviewNote, setReviewNote] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
+
+  // Section refs for in-page nav scroll
+  const refs = {
+    profile: useRef<HTMLDivElement>(null),
+    professional: useRef<HTMLDivElement>(null),
+    documents: useRef<HTMLDivElement>(null),
+    resume: useRef<HTMLDivElement>(null),
+    bank: useRef<HTMLDivElement>(null),
+    timeline: useRef<HTMLDivElement>(null),
+  } as const;
 
   useEffect(() => {
     const fetchApplication = async () => {
@@ -65,444 +97,643 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
         const data = await roleRequestsApi.getById(applicationId);
         setApplication(data);
       } catch (err) {
-        setFetchError(err instanceof Error ? err.message : "Failed to load application");
+        setFetchError(err instanceof Error ? err.message : t("loadFailed"));
       } finally {
         setIsLoading(false);
       }
     };
     fetchApplication();
-  }, [applicationId]);
+  }, [applicationId, t]);
 
-  const refreshApplication = async () => {
+  const refresh = async () => {
     try {
       const data = await roleRequestsApi.getById(applicationId);
       setApplication(data);
-    } catch { /* ignore refresh errors */ }
-  };
-
-  const handleApprove = async () => {
-    setActionLoading("approve");
-    setActionError(null);
-    try {
-      await roleRequestsApi.approve(applicationId, reviewNote || undefined);
-      await refreshApplication();
-      setShowModal(null);
-      setReviewNote("");
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Failed to approve");
-    } finally {
-      setActionLoading(null);
+    } catch {
+      /* ignore */
     }
   };
 
-  const handleReject = async () => {
-    if (!reviewNote.trim()) {
-      setActionError("A reason is required when rejecting an application");
+  const handleAction = async (kind: "approve" | "reject" | "request-info") => {
+    if (kind !== "approve" && !reviewNote.trim()) {
+      setActionError(t("noteRequiredError"));
       return;
     }
-    setActionLoading("reject");
+    setActionLoading(kind);
     setActionError(null);
     try {
-      await roleRequestsApi.reject(applicationId, reviewNote);
-      await refreshApplication();
+      if (kind === "approve") {
+        await roleRequestsApi.approve(applicationId, reviewNote || undefined);
+        toast.success(t("toasts.approved"));
+      } else if (kind === "reject") {
+        await roleRequestsApi.reject(applicationId, reviewNote);
+        toast.success(t("toasts.rejected"));
+      } else {
+        await roleRequestsApi.requestInfo(applicationId, reviewNote);
+        toast.success(t("toasts.infoRequested"));
+      }
+      await refresh();
       setShowModal(null);
       setReviewNote("");
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Failed to reject");
+      setActionError(err instanceof Error ? err.message : t("toasts.actionFailed"));
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleRequestInfo = async () => {
-    if (!reviewNote.trim()) {
-      setActionError("A message is required when requesting more information");
-      return;
-    }
-    setActionLoading("request-info");
-    setActionError(null);
-    try {
-      await roleRequestsApi.requestInfo(applicationId, reviewNote);
-      await refreshApplication();
-      setShowModal(null);
-      setReviewNote("");
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Failed to request info");
-    } finally {
-      setActionLoading(null);
+  // Section refs typed loosely so the dynamic key access in the nav
+  // doesn't trigger React.RefObject narrowing complaints.
+  const scrollTo = (key: keyof typeof refs) => {
+    const el = refs[key].current;
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  if (isLoading) {
+    return (
+      <>
+        <AdminNavbar admin={admin} />
+        <div className="flex flex-1 bg-[var(--color-surface-page)] min-h-screen">
+          <div className="hidden lg:block">
+            <AdminSidebar admin={admin} />
+          </div>
+          <AdminMobileSidebar admin={admin} />
+          <div className="flex-1 flex items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
+          </div>
+        </div>
+      </>
+    );
+  }
 
-  const profileData = (application?.profileData || {}) as Record<string, string>;
-  const bankData = (application?.bankData || {}) as Record<string, string>;
-  const structured = application?.structuredResume || null;
-  const rawResumeFiles = (application?.resumeFiles || []) as Array<{ type: string; url: string; filename: string }>;
+  if (fetchError || !application) {
+    return (
+      <>
+        <AdminNavbar admin={admin} />
+        <div className="flex flex-1 bg-[var(--color-surface-page)] min-h-screen">
+          <div className="hidden lg:block">
+            <AdminSidebar admin={admin} />
+          </div>
+          <AdminMobileSidebar admin={admin} />
+          <div className="flex-1 p-8">
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
+              {fetchError ?? t("notFound")}
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  const status = (application.status as StatusKey) ?? "PENDING";
+  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.PENDING;
+  const StatusIcon = STATUS_ICONS[status] ?? Clock;
+  const profile = (application.profileData || {}) as Record<string, string>;
+  const bankData = (application.bankData || {}) as Record<string, string>;
+  const structured = application.structuredResume || null;
+  const rawResumeFiles = (application.resumeFiles || []) as Array<{
+    type: string;
+    url: string;
+    filename: string;
+  }>;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
   const resumeFiles = rawResumeFiles
-    .filter((file) => file && typeof file === "object" && !Array.isArray(file) && file.url)
-    .map((file) => ({
-      ...file,
-      url: file.url.replace(/^http:\/\/localhost:\d+\/api/, apiUrl),
+    .filter((f) => f && typeof f === "object" && f.url)
+    .map((f) => ({
+      ...f,
+      url: f.url.replace(/^http:\/\/localhost:\d+\/api/, apiUrl),
     }));
-  const config = application
-    ? statusConfig[application.status as keyof typeof statusConfig] || statusConfig.PENDING
-    : statusConfig.PENDING;
-  const StatusIcon = config.icon;
 
-  const canTakeAction = application && (application.status === "PENDING" || application.status === "MORE_INFO");
+  const name = getApplicantName(application);
+  const nameAr = getApplicantNameAr(application);
+  const subtitle = getApplicantSubtitle(application);
+  const daysOld = daysBetween(application.createdAt);
+  const canAct = status === "PENDING" || status === "MORE_INFO";
+  const hasBank =
+    bankData.accountHolderName || bankData.bankName || bankData.iban;
+  const hasStructured = !!(
+    structured &&
+    (structured.education?.length ||
+      structured.professionalSkills?.length ||
+      structured.scientificResearches?.length ||
+      structured.trainingExperiences?.length)
+  );
 
   return (
     <>
       <AdminNavbar admin={admin} />
-      <div className="flex flex-1">
+      <div
+        className="flex flex-1 bg-[var(--color-surface-page)] min-h-screen"
+        dir={isRTL ? "rtl" : "ltr"}
+      >
         <div className="hidden lg:block">
           <AdminSidebar admin={admin} />
         </div>
         <AdminMobileSidebar admin={admin} />
 
-        <div className="flex-1 p-4 lg:p-8" dir={isRTL ? "rtl" : "ltr"}>
-          {/* Back button */}
+        <div className="flex-1 p-4 lg:p-8 min-w-0">
+          {/* Back link */}
           <Link
             href={`/${locale}/dashboard/admin/role-requests`}
-            className="inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors mb-6"
+            className="inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors mb-5"
           >
             <BackIcon className="w-4 h-4" />
-            {t("roleRequestReviewPage.backToList") || "Back to Role Requests"}
+            {t("backToList")}
           </Link>
 
-          {/* Loading */}
-          {isLoading && (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
-            </div>
-          )}
+          {/* Hero header */}
+          <div className="bg-gradient-to-br from-[var(--color-primary)] to-[#001d5a] rounded-2xl p-5 md:p-7 mb-5 text-white relative overflow-hidden">
+            <div className="absolute -bottom-12 -right-12 w-40 h-40 bg-white/5 rounded-full" />
+            <div className="absolute -top-10 -left-6 w-32 h-32 bg-white/5 rounded-full" />
 
-          {/* Error */}
-          {fetchError && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
-              {fetchError}
-            </div>
-          )}
-
-          {application && !isLoading && (
-            <div className="space-y-6">
-              {/* Header Card */}
-              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div>
-                    <h1 className="text-xl font-bold text-[var(--color-text-primary)]">
-                      {t("roleRequestReviewPage.title") || "Application Review"}
-                    </h1>
-                    <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-                      {profileData.fullNameEnglish || profileData.fullNameArabic || application.user?.email}
-                    </p>
+            <div className="relative flex flex-col md:flex-row md:items-start md:justify-between gap-5">
+              <div className="flex items-start gap-4 min-w-0">
+                <ApplicantAvatar request={application} size="xl" />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <h1 className="text-xl md:text-2xl font-bold truncate">{name}</h1>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold ${cfg.badgeBg} ${cfg.badgeText}`}
+                    >
+                      <StatusIcon className="w-3 h-3" />
+                      {tStatuses(status)}
+                    </span>
                   </div>
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold ${config.badgeBg} ${config.badgeText}`}>
-                    <StatusIcon className="w-4 h-4" />
-                    {config.label}
-                  </span>
+                  {nameAr && (
+                    <p className="text-sm text-white/80 mb-1" dir="rtl">
+                      {nameAr}
+                    </p>
+                  )}
+                  {subtitle && (
+                    <p className="text-sm text-white/85 mb-2">{subtitle}</p>
+                  )}
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    {profile.country && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/15 rounded-full">
+                        <MapPin className="w-3 h-3" />
+                        {[profile.city, profile.country].filter(Boolean).join(", ")}
+                      </span>
+                    )}
+                    {profile.nationality && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/15 rounded-full">
+                        <Globe className="w-3 h-3" />
+                        {profile.nationality}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/15 rounded-full">
+                      <Calendar className="w-3 h-3" />
+                      {t("submittedDaysAgo", { count: daysOld })}
+                    </span>
+                  </div>
                 </div>
-
-                {/* Review note from admin */}
-                {application.reviewNote && (
-                  <div className="mt-4 p-3 bg-[var(--color-surface-page)] rounded-lg border border-[var(--color-border)]">
-                    <p className="text-xs font-semibold text-[var(--color-text-secondary)] mb-1 uppercase tracking-wider">
-                      {t("roleRequestReviewPage.adminNote") || "Admin Note"}
-                    </p>
-                    <p className="text-sm text-[var(--color-text-secondary)]">{application.reviewNote}</p>
-                  </div>
-                )}
               </div>
 
-              {/* Profile Information */}
-              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
-                <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
-                  {t("roleRequestReviewPage.profileSection") || "Profile Information"}
+              {/* Always-visible actions */}
+              {canAct && (
+                <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModal("approve");
+                      setReviewNote("");
+                      setActionError(null);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#16A34A] hover:bg-[#15803D] text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    {t("approve")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModal("request-info");
+                      setReviewNote("");
+                      setActionError(null);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/15 hover:bg-white/25 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <HelpCircle className="w-4 h-4" />
+                    {t("requestInfo")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModal("reject");
+                      setReviewNote("");
+                      setActionError(null);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    {t("reject")}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Pending overdue banner */}
+            {status === "PENDING" && daysOld >= 7 && (
+              <div className="relative mt-4 px-3 py-2 bg-[#DC2626]/30 border border-white/20 rounded-lg flex items-center gap-2 text-sm">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{t("overdueBanner", { count: daysOld })}</span>
+              </div>
+            )}
+
+            {/* Last admin note */}
+            {application.reviewNote && (
+              <div className="relative mt-4 p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-white/70 mb-1">
+                  {t("lastAdminNote")}
+                </p>
+                <p className="text-sm">{application.reviewNote}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Section nav + content grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-5">
+            {/* Sticky nav */}
+            <nav className="hidden lg:block">
+              <div className="sticky top-6 bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-2 space-y-0.5">
+                <SectionNavItem icon={User} label={t("nav.identity")} onClick={() => scrollTo("profile")} />
+                <SectionNavItem icon={Briefcase} label={t("nav.professional")} onClick={() => scrollTo("professional")} />
+                {resumeFiles.length > 0 && (
+                  <SectionNavItem icon={FileText} label={t("nav.documents")} onClick={() => scrollTo("documents")} />
+                )}
+                {hasStructured && (
+                  <SectionNavItem icon={GraduationCap} label={t("nav.resume")} onClick={() => scrollTo("resume")} />
+                )}
+                {hasBank && (
+                  <SectionNavItem icon={CreditCard} label={t("nav.bank")} onClick={() => scrollTo("bank")} />
+                )}
+                <SectionNavItem icon={History} label={t("nav.timeline")} onClick={() => scrollTo("timeline")} />
+              </div>
+            </nav>
+
+            {/* Content */}
+            <div className="space-y-5 min-w-0">
+              {/* Identity / Contact */}
+              <section
+                ref={refs.profile}
+                className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5"
+              >
+                <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
+                  <User className="w-4 h-4 text-[var(--color-primary)]" />
+                  {t("sections.identity")}
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <InfoField icon={User} label={t("roleRequestReviewPage.fullNameAr") || "Full Name (Arabic)"} value={profileData.fullNameArabic} />
-                  <InfoField icon={User} label={t("roleRequestReviewPage.fullNameEn") || "Full Name (English)"} value={profileData.fullNameEnglish} />
-                  <InfoField icon={Mail} label={t("roleRequestReviewPage.email") || "Email"} value={profileData.email || application.user?.email} />
-                  <InfoField icon={Phone} label={t("roleRequestReviewPage.phone") || "Phone"} value={profileData.mobileNumber || profileData.phone ? `${profileData.countryCode ? `(${profileData.countryCode}) ` : ""}${profileData.mobileNumber || profileData.phone}` : undefined} />
-                  <InfoField icon={Globe} label={t("roleRequestReviewPage.nationality") || "Nationality"} value={profileData.nationality} />
-                  <InfoField icon={MapPin} label={t("roleRequestReviewPage.country") || "Country"} value={profileData.country} />
-                  <InfoField icon={MapPin} label={t("roleRequestReviewPage.state") || "State / Region"} value={profileData.state} />
-                  <InfoField icon={MapPin} label={t("roleRequestReviewPage.city") || "City"} value={profileData.city} />
-                  <InfoField icon={User} label={t("roleRequestReviewPage.gender") || "Gender"} value={profileData.gender} />
-                  <InfoField icon={Briefcase} label={t("roleRequestReviewPage.profession") || "Profession"} value={profileData.profession} />
-                  <InfoField icon={GraduationCap} label={t("roleRequestReviewPage.specialty") || "Specialty"} value={profileData.specialty} />
-                  <InfoField icon={Award} label={t("roleRequestReviewPage.qualification") || "Qualification"} value={profileData.qualification} />
-                  <InfoField icon={Award} label={t("roleRequestReviewPage.rank") || "Rank"} value={profileData.academicRank || profileData.rank} />
-                  <InfoField icon={Hash} label={t("roleRequestReviewPage.scfhsNumber") || "SCFHS Registered"} value={String(profileData.hasScfhsNumber) === "true" ? `Yes${profileData.scfhsNumber ? ` — ${profileData.scfhsNumber}` : ""}` : String(profileData.hasScfhsNumber) === "false" ? "No" : (profileData.scfhsNumber || profileData.hasScfhsNumber)} />
-                  <InfoField icon={Hash} label={t("roleRequestReviewPage.nationalId") || "National/Iqama ID"} value={profileData.nationalIqamaId || profileData.nationalId} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <InfoField icon={Mail} iconColor="#0EA5E9" label={t("fields.email")} value={profile.email || application.user?.email} copyable />
+                  <InfoField
+                    icon={Phone}
+                    iconColor="#16A34A"
+                    label={t("fields.phone")}
+                    value={
+                      profile.mobileNumber || profile.phone
+                        ? `${profile.countryCode ? `(${profile.countryCode}) ` : ""}${profile.mobileNumber || profile.phone}`
+                        : undefined
+                    }
+                    copyable
+                  />
+                  <InfoField icon={Globe} iconColor="#A855F7" label={t("fields.nationality")} value={profile.nationality} />
+                  <InfoField icon={MapPin} iconColor="#EC4899" label={t("fields.country")} value={profile.country} />
+                  <InfoField icon={MapPin} iconColor="#F59E0B" label={t("fields.state")} value={profile.state} />
+                  <InfoField icon={MapPin} iconColor="#F59E0B" label={t("fields.city")} value={profile.city} />
+                  <InfoField icon={User} iconColor="#6366F1" label={t("fields.gender")} value={profile.gender} />
+                  <InfoField
+                    icon={Hash}
+                    iconColor="#6B7280"
+                    label={t("fields.nationalId")}
+                    value={profile.nationalIqamaId || profile.nationalId}
+                    mono
+                    copyable
+                  />
                 </div>
 
-                {/* Social Links */}
-                {(profileData.twitter || profileData.linkedIn || profileData.linkedin) && (
+                {(profile.twitter || profile.linkedIn || profile.linkedin) && (
                   <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
-                    <h3 className="text-sm font-medium text-[var(--color-text-secondary)] mb-3">
-                      {t("roleRequestReviewPage.socialLinks") || "Social Links"}
-                    </h3>
-                    <div className="flex flex-wrap gap-3">
-                      {profileData.twitter && (
-                        <a href={profileData.twitter.startsWith("http") ? profileData.twitter : `https://twitter.com/${profileData.twitter}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F0F9FF] text-[#0369A1] rounded-lg text-sm hover:bg-[#E0F2FE] transition-colors">
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-[var(--color-text-secondary)] mb-2">
+                      {t("fields.social")}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {profile.twitter && (
+                        <a
+                          href={profile.twitter.startsWith("http") ? profile.twitter : `https://twitter.com/${profile.twitter}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F0F9FF] text-[#0369A1] rounded-lg text-sm hover:bg-[#E0F2FE] transition-colors"
+                        >
                           <Twitter className="w-4 h-4" />
-                          {profileData.twitter}
+                          {profile.twitter}
+                          <ExternalLink className="w-3 h-3 opacity-60" />
                         </a>
                       )}
-                      {(profileData.linkedIn || profileData.linkedin) && (
-                        <a href={(profileData.linkedIn || profileData.linkedin)!.startsWith("http") ? (profileData.linkedIn || profileData.linkedin) : `https://linkedin.com/in/${profileData.linkedIn || profileData.linkedin}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F0F9FF] text-[#0369A1] rounded-lg text-sm hover:bg-[#E0F2FE] transition-colors">
+                      {(profile.linkedIn || profile.linkedin) && (
+                        <a
+                          href={
+                            (profile.linkedIn || profile.linkedin)!.startsWith("http")
+                              ? (profile.linkedIn || profile.linkedin)!
+                              : `https://linkedin.com/in/${profile.linkedIn || profile.linkedin}`
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F0F9FF] text-[#0369A1] rounded-lg text-sm hover:bg-[#E0F2FE] transition-colors"
+                        >
                           <Linkedin className="w-4 h-4" />
-                          {profileData.linkedIn || profileData.linkedin}
+                          {profile.linkedIn || profile.linkedin}
+                          <ExternalLink className="w-3 h-3 opacity-60" />
                         </a>
                       )}
                     </div>
                   </div>
                 )}
-              </div>
+              </section>
 
-              {/* Resume / Documents */}
+              {/* Professional */}
+              <section
+                ref={refs.professional}
+                className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5"
+              >
+                <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
+                  <Briefcase className="w-4 h-4 text-[var(--color-primary)]" />
+                  {t("sections.professional")}
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <InfoField icon={Briefcase} iconColor="#15803D" label={t("fields.profession")} value={profile.profession} />
+                  <InfoField icon={GraduationCap} iconColor="#0E7490" label={t("fields.specialty")} value={profile.specialty} />
+                  <InfoField icon={Award} iconColor="#D4A520" label={t("fields.qualification")} value={profile.qualification} />
+                  <InfoField icon={Award} iconColor="#7C3AED" label={t("fields.rank")} value={profile.academicRank || profile.rank} />
+                  <InfoField
+                    icon={Hash}
+                    iconColor="#0369A1"
+                    label={t("fields.scfhs")}
+                    value={
+                      String(profile.hasScfhsNumber) === "true"
+                        ? `${t("yes")}${profile.scfhsNumber ? ` — ${profile.scfhsNumber}` : ""}`
+                        : String(profile.hasScfhsNumber) === "false"
+                          ? t("no")
+                          : profile.scfhsNumber || profile.hasScfhsNumber
+                    }
+                    mono={!!profile.scfhsNumber}
+                    copyable={!!profile.scfhsNumber}
+                  />
+                </div>
+              </section>
+
+              {/* Documents */}
               {resumeFiles.length > 0 && (
-                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
-                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
-                    {t("roleRequestReviewPage.documentsSection") || "Documents & Resume"}
+                <section
+                  ref={refs.documents}
+                  className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5"
+                >
+                  <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-[var(--color-primary)]" />
+                    {t("sections.documents")}{" "}
+                    <span className="text-xs font-normal text-[var(--color-text-secondary)]">
+                      ({resumeFiles.length})
+                    </span>
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {resumeFiles.map((file, idx) => {
+                      const ext = (file.filename || file.url).split(".").pop()?.toLowerCase() ?? "";
+                      return (
+                        <a
+                          key={idx}
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group flex items-center gap-3 p-3 border border-[var(--color-border)] rounded-lg hover:border-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] transition-all"
+                        >
+                          <div className="w-11 h-11 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center flex-shrink-0">
+                            <FileText className="w-5 h-5 text-[var(--color-primary)]" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                              {file.filename || file.type}
+                            </p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] rounded font-semibold">
+                                {ext || "FILE"}
+                              </span>
+                              <p className="text-xs text-[var(--color-text-secondary)] capitalize truncate">
+                                {file.type.replace(/_/g, " ")}
+                              </p>
+                            </div>
+                          </div>
+                          <Download className="w-4 h-4 text-[var(--color-text-secondary)] group-hover:text-[var(--color-primary)] flex-shrink-0" />
+                        </a>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+
+              {/* Structured Resume */}
+              {hasStructured && structured && (
+                <section
+                  ref={refs.resume}
+                  className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 space-y-5"
+                >
+                  <h2 className="text-base font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-[var(--color-primary)]" />
+                    {t("sections.resume")}
+                  </h2>
+
+                  {!!structured.education?.length && (
+                    <ResumeBlock
+                      title={t("resume.education")}
+                      accent="#0E7490"
+                      items={structured.education.map((e) => ({
+                        title: e.university,
+                        subtitle: `${e.qualification} · ${e.graduationYear}`,
+                        meta: [e.profession, e.specialty].filter(Boolean).join(" · "),
+                      }))}
+                    />
+                  )}
+
+                  {!!structured.professionalSkills?.length && (
+                    <ResumeBlock
+                      title={t("resume.experience")}
+                      accent="#15803D"
+                      items={structured.professionalSkills.map((s) => ({
+                        title: s.placeOfWork,
+                        subtitle:
+                          s.type +
+                          (s.type === "Academic" && s.academicRank
+                            ? ` · ${s.academicRank}`
+                            : s.type === "Practical Experience" && s.natureOfWork
+                              ? ` · ${s.natureOfWork}`
+                              : ""),
+                        meta: t("resume.yearsExperience", { count: Number(s.yearsOfExperience) || 0 }),
+                      }))}
+                    />
+                  )}
+
+                  {!!structured.scientificResearches?.length && (
+                    <ResumeBlock
+                      title={t("resume.researches")}
+                      accent="#7C3AED"
+                      items={structured.scientificResearches.map((r) => ({
+                        title: r.description,
+                        subtitle: `${r.type} · ${r.role}`,
+                      }))}
+                    />
+                  )}
+
+                  {!!structured.trainingExperiences?.length && (
+                    <ResumeBlock
+                      title={t("resume.training")}
+                      accent="#D4A520"
+                      items={structured.trainingExperiences.map((tr) => ({
+                        title: tr.eventName,
+                        subtitle: tr.executingAgency,
+                      }))}
+                    />
+                  )}
+                </section>
+              )}
+
+              {/* Bank */}
+              {hasBank && (
+                <section
+                  ref={refs.bank}
+                  className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5"
+                >
+                  <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-[var(--color-primary)]" />
+                    {t("sections.bank")}
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {resumeFiles.map((file, idx) => (
-                      <a
-                        key={idx}
-                        href={file.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
-                      >
-                        <div className="w-10 h-10 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center shrink-0">
-                          <Download className="w-5 h-5 text-[var(--color-primary)]" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{file.filename || file.type}</p>
-                          <p className="text-xs text-[var(--color-text-secondary)] capitalize">{file.type}</p>
-                        </div>
-                      </a>
-                    ))}
+                    <InfoField
+                      icon={User}
+                      iconColor="#0369A1"
+                      label={t("fields.accountHolder")}
+                      value={bankData.accountHolderName}
+                    />
+                    <InfoField
+                      icon={Building2}
+                      iconColor="#16A34A"
+                      label={t("fields.bankName")}
+                      value={bankData.bankName}
+                    />
+                    <InfoField
+                      icon={CreditCard}
+                      iconColor="#D4A520"
+                      label={t("fields.iban")}
+                      value={bankData.iban}
+                      className="sm:col-span-2"
+                      mono
+                      copyable
+                    />
                   </div>
-                </div>
-              )}
-
-              {/* Structured Resume (Create-Resume path) */}
-              {structured && (
-                (structured.education?.length || structured.professionalSkills?.length ||
-                  structured.scientificResearches?.length || structured.trainingExperiences?.length) ? (
-                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6 space-y-6">
-                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
-                      {isRTL ? "السيرة الذاتية المنشأة" : "Resume Builder"}
-                    </h2>
-
-                    {!!structured.education?.length && (
-                      <div>
-                        <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
-                          {isRTL ? "التعليم" : "Education"}
-                        </h3>
-                        <div className="grid grid-cols-1 gap-3">
-                          {structured.education.map((e, i) => (
-                            <div key={i} className="border border-[var(--color-border)] rounded-lg p-3 bg-[var(--color-surface-page)]">
-                              <p className="font-semibold text-[var(--color-text-primary)]">{e.university}</p>
-                              <p className="text-sm text-[var(--color-text-secondary)]">{e.qualification} — {e.graduationYear}</p>
-                              <p className="text-xs text-[var(--color-text-secondary)]">{e.profession} · {e.specialty}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {!!structured.professionalSkills?.length && (
-                      <div>
-                        <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
-                          {isRTL ? "المهارات المهنية" : "Professional Skills"}
-                        </h3>
-                        <div className="grid grid-cols-1 gap-3">
-                          {structured.professionalSkills.map((s, i) => (
-                            <div key={i} className="border border-[var(--color-border)] rounded-lg p-3 bg-[var(--color-surface-page)]">
-                              <p className="font-semibold text-[var(--color-text-primary)]">{s.placeOfWork}</p>
-                              <p className="text-sm text-[var(--color-text-secondary)]">
-                                {s.type}{s.type === "Academic" && s.academicRank ? ` — ${s.academicRank}` : s.type === "Practical Experience" && s.natureOfWork ? ` — ${s.natureOfWork}` : ""}
-                              </p>
-                              <p className="text-xs text-[var(--color-text-secondary)]">{s.yearsOfExperience} {isRTL ? "سنوات خبرة" : "years of experience"}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {!!structured.scientificResearches?.length && (
-                      <div>
-                        <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
-                          {isRTL ? "الأبحاث العلمية" : "Scientific Researches"}
-                        </h3>
-                        <div className="grid grid-cols-1 gap-3">
-                          {structured.scientificResearches.map((r, i) => (
-                            <div key={i} className="border border-[var(--color-border)] rounded-lg p-3 bg-[var(--color-surface-page)]">
-                              <p className="font-semibold text-[var(--color-text-primary)]">{r.description}</p>
-                              <p className="text-sm text-[var(--color-text-secondary)]">{r.type} · {r.role}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {!!structured.trainingExperiences?.length && (
-                      <div>
-                        <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
-                          {isRTL ? "الخبرة التدريبية" : "Training Experience"}
-                        </h3>
-                        <div className="grid grid-cols-1 gap-3">
-                          {structured.trainingExperiences.map((tr, i) => (
-                            <div key={i} className="border border-[var(--color-border)] rounded-lg p-3 bg-[var(--color-surface-page)]">
-                              <p className="font-semibold text-[var(--color-text-primary)]">{tr.eventName}</p>
-                              <p className="text-sm text-[var(--color-text-secondary)]">{tr.executingAgency}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : null
-              )}
-
-              {/* Bank Information */}
-              {(bankData.accountHolderName || bankData.bankName || bankData.iban) && (
-                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
-                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
-                    {t("roleRequestReviewPage.bankSection") || "Bank Information"}
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <InfoField icon={User} label={t("roleRequestReviewPage.accountHolder") || "Account Holder"} value={bankData.accountHolderName} />
-                    <InfoField icon={Building2} label={t("roleRequestReviewPage.bankName") || "Bank Name"} value={bankData.bankName} />
-                    <InfoField icon={CreditCard} label={t("roleRequestReviewPage.iban") || "IBAN"} value={bankData.iban} className="sm:col-span-2" />
-                  </div>
-                </div>
+                </section>
               )}
 
               {/* Timeline */}
-              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
-                <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
-                  {t("roleRequestReviewPage.timeline") || "Timeline"}
+              <section
+                ref={refs.timeline}
+                className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5"
+              >
+                <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
+                  <History className="w-4 h-4 text-[var(--color-primary)]" />
+                  {t("sections.timeline")}
                 </h2>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-[var(--color-border)]" />
-                    <p className="text-sm text-[var(--color-text-secondary)]">
-                      <span className="font-medium text-[var(--color-text-primary)]">{t("roleRequestReviewPage.submitted") || "Submitted"}</span>{" "}
-                      — {formatDate(application.createdAt)}
-                    </p>
-                  </div>
+                <ol className="relative ms-3 border-s-2 border-[var(--color-border)] space-y-5">
+                  <TimelineItem
+                    color="#64748B"
+                    title={t("timeline.submitted")}
+                    when={formatFullDate(application.createdAt, locale === "ar" ? "ar" : "en", platformLocale)}
+                    body={t("timeline.submittedBy", {
+                      name: application.user?.email ?? "—",
+                    })}
+                  />
                   {application.reviewedAt && (
-                    <div className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${
-                        application.status === "APPROVED" ? "bg-[#16A34A]" : application.status === "REJECTED" ? "bg-[#DC2626]" : "bg-[#F59E0B]"
-                      }`} />
-                      <p className="text-sm text-[var(--color-text-secondary)]">
-                        <span className="font-medium text-[var(--color-text-primary)]">{t("roleRequestReviewPage.reviewed") || "Reviewed"}</span>{" "}
-                        — {formatDate(application.reviewedAt)}
-                      </p>
-                    </div>
+                    <TimelineItem
+                      color={cfg.dot}
+                      title={t(`timeline.${status.toLowerCase()}`)}
+                      when={formatFullDate(application.reviewedAt, locale, platformLocale)}
+                      body={application.reviewNote ?? undefined}
+                    />
                   )}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              {canTakeAction && (
-                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
-                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
-                    {t("roleRequestReviewPage.actions") || "Actions"}
-                  </h2>
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      onClick={() => { setShowModal("approve"); setReviewNote(""); setActionError(null); }}
-                      className="px-5 py-2.5 bg-[#16A34A] text-white rounded-lg text-sm font-medium hover:bg-[#15803D] transition-colors"
-                    >
-                      {t("roleRequestReviewPage.approve") || "Approve"}
-                    </button>
-                    <button
-                      onClick={() => { setShowModal("reject"); setReviewNote(""); setActionError(null); }}
-                      className="px-5 py-2.5 bg-[#DC2626] text-white rounded-lg text-sm font-medium hover:bg-[#B91C1C] transition-colors"
-                    >
-                      {t("roleRequestReviewPage.reject") || "Reject"}
-                    </button>
-                    <button
-                      onClick={() => { setShowModal("request-info"); setReviewNote(""); setActionError(null); }}
-                      className="px-5 py-2.5 bg-[#EA580C] text-white rounded-lg text-sm font-medium hover:bg-[#C2410C] transition-colors"
-                    >
-                      {t("roleRequestReviewPage.requestInfo") || "Request More Info"}
-                    </button>
-                  </div>
-                </div>
-              )}
+                </ol>
+              </section>
             </div>
-          )}
+          </div>
         </div>
       </div>
 
       {/* Action Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => !actionLoading && setShowModal(null)}>
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => !actionLoading && setShowModal(null)}
+        >
           <div
-            className="bg-[var(--color-surface-card)] rounded-xl w-full max-w-md shadow-xl"
+            className="bg-[var(--color-surface-card)] rounded-2xl w-full max-w-md shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-1">
-                {showModal === "approve" && (t("roleRequestReviewPage.modalApproveTitle") || "Approve Application")}
-                {showModal === "reject" && (t("roleRequestReviewPage.modalRejectTitle") || "Reject Application")}
-                {showModal === "request-info" && (t("roleRequestReviewPage.modalRequestInfoTitle") || "Request More Information")}
-              </h3>
-              <p className="text-sm text-[var(--color-text-secondary)] mb-4">
-                {showModal === "approve" && (t("roleRequestReviewPage.modalApproveDesc") || "This will approve the application and assign the Instructor role.")}
-                {showModal === "reject" && (t("roleRequestReviewPage.modalRejectDesc") || "Please provide a reason for rejecting this application.")}
-                {showModal === "request-info" && (t("roleRequestReviewPage.modalRequestInfoDesc") || "Describe what additional information is needed from the applicant.")}
-              </p>
+              <div className="flex items-start gap-3 mb-4">
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                    showModal === "approve"
+                      ? "bg-[#DCFCE7]"
+                      : showModal === "reject"
+                        ? "bg-[#FEE2E2]"
+                        : "bg-[#FFEDD5]"
+                  }`}
+                >
+                  {showModal === "approve" && (
+                    <CheckCircle2 className="w-5 h-5 text-[#15803D]" />
+                  )}
+                  {showModal === "reject" && (
+                    <XCircle className="w-5 h-5 text-[#991B1B]" />
+                  )}
+                  {showModal === "request-info" && (
+                    <HelpCircle className="w-5 h-5 text-[#9A3412]" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
+                    {t(`modals.${showModal}.title`)}
+                  </h3>
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-0.5">
+                    {t(`modals.${showModal}.body`, { name })}
+                  </p>
+                </div>
+              </div>
 
               <textarea
                 value={reviewNote}
                 onChange={(e) => setReviewNote(e.target.value)}
                 placeholder={
                   showModal === "approve"
-                    ? (t("roleRequestReviewPage.noteOptional") || "Add a note (optional)...")
-                    : (t("roleRequestReviewPage.noteRequired") || "Enter your message (required)...")
+                    ? t("noteOptional")
+                    : t("noteRequired")
                 }
-                className="w-full h-28 p-3 border border-[var(--color-input-border)] rounded-lg text-sm resize-none outline-none focus:border-[#002D87]"
+                rows={5}
+                className="w-full p-3 border border-[var(--color-input-border)] rounded-lg text-sm resize-none outline-none focus:border-[var(--color-primary)]"
               />
 
               {actionError && (
-                <p className="mt-2 text-sm text-red-600">{actionError}</p>
+                <p className="mt-2 text-sm text-[#DC2626]">{actionError}</p>
               )}
 
-              <div className="flex justify-end gap-3 mt-4">
+              <div className="flex justify-end gap-2 mt-4">
                 <button
+                  type="button"
                   onClick={() => setShowModal(null)}
                   disabled={!!actionLoading}
                   className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-50"
                 >
-                  {t("roleRequestReviewPage.cancel") || "Cancel"}
+                  {t("cancel")}
                 </button>
                 <button
-                  onClick={() => {
-                    if (showModal === "approve") handleApprove();
-                    else if (showModal === "reject") handleReject();
-                    else handleRequestInfo();
-                  }}
+                  type="button"
+                  onClick={() => handleAction(showModal)}
                   disabled={!!actionLoading}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 flex items-center gap-2 ${
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 ${
                     showModal === "approve"
                       ? "bg-[#16A34A] hover:bg-[#15803D]"
                       : showModal === "reject"
@@ -511,9 +742,10 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
                   }`}
                 >
                   {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {showModal === "approve" && (t("roleRequestReviewPage.confirmApprove") || "Approve")}
-                  {showModal === "reject" && (t("roleRequestReviewPage.confirmReject") || "Reject")}
-                  {showModal === "request-info" && (t("roleRequestReviewPage.confirmRequestInfo") || "Send Request")}
+                  {!actionLoading && showModal === "approve" && <CheckCircle2 className="w-4 h-4" />}
+                  {!actionLoading && showModal === "reject" && <XCircle className="w-4 h-4" />}
+                  {!actionLoading && showModal === "request-info" && <Send className="w-4 h-4" />}
+                  {t(`modals.${showModal}.confirm`)}
                 </button>
               </div>
             </div>
@@ -524,17 +756,172 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
   );
 };
 
-function InfoField({ icon: Icon, label, value, className = "" }: { icon: React.ComponentType<{ className?: string }>; label: string; value?: string | null; className?: string }) {
+// ─── Subcomponents ──────────────────────────────────────────────
+
+function SectionNavItem({
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  icon: React.ElementType;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-start text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] hover:text-[var(--color-text-primary)] transition-colors"
+    >
+      <Icon className="w-4 h-4 text-[var(--color-primary)]" />
+      {label}
+    </button>
+  );
+}
+
+function InfoField({
+  icon: Icon,
+  iconColor,
+  label,
+  value,
+  className = "",
+  mono,
+  copyable,
+}: {
+  icon: React.ElementType;
+  iconColor: string;
+  label: string;
+  value?: string | null;
+  className?: string;
+  mono?: boolean;
+  copyable?: boolean;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* ignore */
+    }
+  };
+
   return (
     <div className={`flex items-start gap-3 ${className}`}>
-      <div className="w-9 h-9 bg-[var(--color-border-subtle)] rounded-lg flex items-center justify-center shrink-0 mt-0.5">
-        <Icon className="w-4 h-4 text-[var(--color-text-secondary)]" />
+      <div
+        className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+        style={{ backgroundColor: `${iconColor}1A` }}
+      >
+        <Icon className="w-4 h-4" style={{ color: iconColor }} />
       </div>
-      <div className="min-w-0">
-        <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">{label}</p>
-        <p className="text-sm font-medium text-[var(--color-text-secondary)] break-all">{value || "—"}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-secondary)] mb-0.5">
+          {label}
+        </p>
+        <div className="flex items-center gap-1.5">
+          <p
+            className={`text-sm text-[var(--color-text-primary)] break-words flex-1 min-w-0 ${
+              mono ? "font-mono" : ""
+            } ${!value ? "text-[var(--color-text-secondary)]" : ""}`}
+          >
+            {value || "—"}
+          </p>
+          {copyable && value && (
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors flex-shrink-0"
+              title="Copy"
+            >
+              {copied ? (
+                <Check className="w-3.5 h-3.5 text-[#16A34A]" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+            </button>
+          )}
+        </div>
       </div>
     </div>
+  );
+}
+
+function ResumeBlock({
+  title,
+  accent,
+  items,
+}: {
+  title: string;
+  accent: string;
+  items: { title: string; subtitle?: string; meta?: string }[];
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <span
+          className="w-1 h-4 rounded-full"
+          style={{ backgroundColor: accent }}
+        />
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">
+          {title}
+        </h3>
+      </div>
+      <div className="space-y-2 ms-3">
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className="border border-[var(--color-border)] rounded-lg p-3 bg-[var(--color-surface-page)]"
+          >
+            <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+              {item.title}
+            </p>
+            {item.subtitle && (
+              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                {item.subtitle}
+              </p>
+            )}
+            {item.meta && (
+              <p className="text-[11px] text-[var(--color-text-secondary)] mt-1">
+                {item.meta}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TimelineItem({
+  color,
+  title,
+  when,
+  body,
+}: {
+  color: string;
+  title: string;
+  when: string;
+  body?: string;
+}) {
+  return (
+    <li className="ms-4">
+      <span
+        className="absolute -start-[7px] w-3 h-3 rounded-full ring-2 ring-[var(--color-surface-card)]"
+        style={{ backgroundColor: color }}
+      />
+      <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+        {title}
+      </p>
+      <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{when}</p>
+      {body && (
+        <p className="text-xs text-[var(--color-text-primary)] mt-1.5 p-2.5 bg-[var(--color-border-subtle)] rounded-lg">
+          {body}
+        </p>
+      )}
+    </li>
   );
 }
 

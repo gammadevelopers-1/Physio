@@ -34,6 +34,7 @@ import SkeletonTableRow from "@/components/shared/SkeletonTableRow";
 import DateTimePicker from "@/components/ui/DateTimePicker";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -83,6 +84,7 @@ const AssessmentsContent = () => {
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
   const manager = useManagerProfile();
 
   // Course selector
@@ -1436,7 +1438,7 @@ const AssessmentsContent = () => {
                                         <td className="px-4 py-3">
                                           {sub.submittedAt ? (
                                             <p className="text-sm text-[var(--color-text-secondary)]">
-                                              {formatDateHijri(sub.submittedAt, calendarFormat, { locale })}
+                                              {formatDateHijri(sub.submittedAt, calendarFormat, { locale, platformSettings: platformLocale })}
                                             </p>
                                           ) : (
                                             <p className="text-sm text-[var(--color-text-secondary)]">—</p>
@@ -1544,7 +1546,7 @@ const AssessmentsContent = () => {
                                           <td className="px-4 py-3">
                                             {effectiveRow.submittedAt ? (
                                               <p className="text-sm text-[var(--color-text-secondary)]">
-                                                {formatDateHijri(effectiveRow.submittedAt, calendarFormat, { locale })}
+                                                {formatDateHijri(effectiveRow.submittedAt, calendarFormat, { locale, platformSettings: platformLocale })}
                                               </p>
                                             ) : (
                                               <p className="text-sm text-[var(--color-text-secondary)]">—</p>

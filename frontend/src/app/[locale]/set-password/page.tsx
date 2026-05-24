@@ -10,6 +10,8 @@ import Navbar from "@/components/Navbar";
 import { useNavbarChrome } from "@/hooks/useNavbarChrome";
 import Footer from "@/components/Footer";
 import { setAccessToken } from "@/lib/api";
+import PasswordPolicyHint from "@/components/shared/PasswordPolicyHint";
+import { usePasswordPolicy, checkPasswordAgainstPolicy } from "@/hooks/usePasswordPolicy";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
@@ -36,6 +38,7 @@ function SetPasswordContent() {
   const [phase, setPhase] = useState<"validating" | "ready" | "submitting" | "invalid">(
     "validating",
   );
+  const { policy } = usePasswordPolicy();
   const [verifiedEmail, setVerifiedEmail] = useState<string>("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -70,16 +73,9 @@ function SetPasswordContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (password.length < 8) {
-      toast.error(isRTL ? "كلمة المرور يجب أن تكون 8 أحرف على الأقل" : "Password must be at least 8 characters");
-      return;
-    }
-    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-      toast.error(
-        isRTL
-          ? "كلمة المرور يجب أن تحتوي على حرف كبير، حرف صغير، ورقم"
-          : "Password must contain at least one uppercase, lowercase, and number",
-      );
+    const policyErrors = checkPasswordAgainstPolicy(password, policy);
+    if (policyErrors.length) {
+      toast.error(policyErrors[0]);
       return;
     }
     if (password !== confirmPassword) {
@@ -184,6 +180,7 @@ function SetPasswordContent() {
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                  <PasswordPolicyHint password={password} />
                 </div>
 
                 <div className="flex flex-col gap-1.5">

@@ -32,8 +32,10 @@ function getUserName(user: { firstName: string | null; lastName: string | null; 
 }
 
 // ============================================
-// Predefined permission sets per system role
-// (visual only — backend uses role-based guards)
+// Permission matrix is sourced from the DB (`roles.permissions`).
+// We keep the category list here so the table always renders a fixed
+// set of rows even when a role's stored permissions don't include
+// every category yet.
 // ============================================
 const permissionCategories = [
   "users",
@@ -47,74 +49,16 @@ const permissionCategories = [
   "security",
 ] as const;
 
-type PermissionSet = Record<string, { view: boolean; create: boolean; edit: boolean; delete: boolean }>;
+type PermissionFlags = { view: boolean; create: boolean; edit: boolean; delete: boolean };
+type PermissionSet = Partial<Record<string, PermissionFlags>>;
 
-const SYSTEM_PERMISSIONS: Record<string, PermissionSet> = {
-  SUPER_ADMIN: Object.fromEntries(permissionCategories.map((c) => [c, { view: true, create: true, edit: true, delete: true }])),
-  ADMIN: Object.fromEntries(permissionCategories.map((c) => [c, { view: true, create: true, edit: true, delete: c !== "security" }])),
-  MANAGER: {
-    users: { view: true, create: false, edit: false, delete: false },
-    courses: { view: true, create: true, edit: true, delete: false },
-    content: { view: true, create: true, edit: true, delete: true },
-    assessments: { view: true, create: true, edit: true, delete: false },
-    certificates: { view: true, create: false, edit: false, delete: false },
-    finance: { view: true, create: false, edit: false, delete: false },
-    reports: { view: true, create: true, edit: false, delete: false },
-    settings: { view: false, create: false, edit: false, delete: false },
-    security: { view: false, create: false, edit: false, delete: false },
-  },
-  INSTRUCTOR: {
-    users: { view: false, create: false, edit: false, delete: false },
-    courses: { view: true, create: true, edit: true, delete: false },
-    content: { view: true, create: true, edit: true, delete: false },
-    assessments: { view: true, create: true, edit: true, delete: false },
-    certificates: { view: true, create: false, edit: false, delete: false },
-    finance: { view: false, create: false, edit: false, delete: false },
-    reports: { view: true, create: false, edit: false, delete: false },
-    settings: { view: false, create: false, edit: false, delete: false },
-    security: { view: false, create: false, edit: false, delete: false },
-  },
-  STUDENT: {
-    users: { view: false, create: false, edit: false, delete: false },
-    courses: { view: true, create: false, edit: false, delete: false },
-    content: { view: true, create: false, edit: false, delete: false },
-    assessments: { view: true, create: false, edit: false, delete: false },
-    certificates: { view: true, create: false, edit: false, delete: false },
-    finance: { view: false, create: false, edit: false, delete: false },
-    reports: { view: false, create: false, edit: false, delete: false },
-    settings: { view: false, create: false, edit: false, delete: false },
-    security: { view: false, create: false, edit: false, delete: false },
-  },
-  FINANCE: {
-    users: { view: true, create: false, edit: false, delete: false },
-    courses: { view: true, create: false, edit: false, delete: false },
-    content: { view: false, create: false, edit: false, delete: false },
-    assessments: { view: false, create: false, edit: false, delete: false },
-    certificates: { view: true, create: false, edit: false, delete: false },
-    finance: { view: true, create: true, edit: true, delete: false },
-    reports: { view: true, create: true, edit: false, delete: false },
-    settings: { view: false, create: false, edit: false, delete: false },
-    security: { view: false, create: false, edit: false, delete: false },
-  },
-  SUPPORT: {
-    users: { view: true, create: false, edit: false, delete: false },
-    courses: { view: true, create: false, edit: false, delete: false },
-    content: { view: true, create: false, edit: false, delete: false },
-    assessments: { view: false, create: false, edit: false, delete: false },
-    certificates: { view: false, create: false, edit: false, delete: false },
-    finance: { view: false, create: false, edit: false, delete: false },
-    reports: { view: true, create: false, edit: false, delete: false },
-    settings: { view: false, create: false, edit: false, delete: false },
-    security: { view: false, create: false, edit: false, delete: false },
-  },
-};
+const DEFAULT_FLAGS: PermissionFlags = { view: false, create: false, edit: false, delete: false };
 
-const DEFAULT_PERMISSIONS: PermissionSet = Object.fromEntries(
-  permissionCategories.map((c) => [c, { view: false, create: false, edit: false, delete: false }]),
-);
-
-function getPermissions(roleName: string): PermissionSet {
-  return SYSTEM_PERMISSIONS[roleName] || DEFAULT_PERMISSIONS;
+function getPermissionFlags(
+  permissions: PermissionSet | null | undefined,
+  category: string,
+): PermissionFlags {
+  return permissions?.[category] || DEFAULT_FLAGS;
 }
 
 const ROLE_COLORS: Record<string, string> = {
@@ -422,9 +366,6 @@ const RolesContent = () => {
   const adminProfile = {
     name: currentUser ? getUserName(currentUser) : "",
     email: currentUser?.email || "",
-    totalUsers: roles.reduce((sum, r) => sum + r.usersCount, 0),
-    totalCourses: 0,
-    uptime: 99.9,
   };
 
   return (
@@ -489,7 +430,7 @@ const RolesContent = () => {
               {!isLoading && !fetchError && (
                 <div className="space-y-4">
                   {roles.map((role) => {
-                    const permissions = getPermissions(role.name);
+                    const permissions: PermissionSet = role.permissions || {};
                     const color = getRoleColor(role.name);
                     const isSystem = SYSTEM_ROLE_NAMES.includes(role.name);
 
@@ -592,25 +533,28 @@ const RolesContent = () => {
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {permissionCategories.map((category) => (
-                                    <tr
-                                      key={category}
-                                      className="border-b border-[#F3F4F6] last:border-b-0"
-                                    >
-                                      <td className={`py-3 text-sm text-[var(--color-text-primary)] capitalize ${isRTL ? "text-right" : "text-left"}`}>
-                                        {t(`rolesPage.categories.${category}`)}
-                                      </td>
-                                      {(["view", "create", "edit", "delete"] as const).map((action) => (
-                                        <td key={action} className="py-3 text-center">
-                                          {permissions[category]?.[action] ? (
-                                            <Check className="w-5 h-5 text-[#16A34A] mx-auto" />
-                                          ) : (
-                                            <X className="w-5 h-5 text-[#DC2626] mx-auto" />
-                                          )}
+                                  {permissionCategories.map((category) => {
+                                    const flags = getPermissionFlags(permissions, category);
+                                    return (
+                                      <tr
+                                        key={category}
+                                        className="border-b border-[#F3F4F6] last:border-b-0"
+                                      >
+                                        <td className={`py-3 text-sm text-[var(--color-text-primary)] capitalize ${isRTL ? "text-right" : "text-left"}`}>
+                                          {t(`rolesPage.categories.${category}`)}
                                         </td>
-                                      ))}
-                                    </tr>
-                                  ))}
+                                        {(["view", "create", "edit", "delete"] as const).map((action) => (
+                                          <td key={action} className="py-3 text-center">
+                                            {flags[action] ? (
+                                              <Check className="w-5 h-5 text-[#16A34A] mx-auto" />
+                                            ) : (
+                                              <X className="w-5 h-5 text-[#DC2626] mx-auto" />
+                                            )}
+                                          </td>
+                                        ))}
+                                      </tr>
+                                    );
+                                  })}
                                 </tbody>
                               </table>
                             </div>

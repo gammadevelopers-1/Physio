@@ -13,6 +13,7 @@ import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { instructorApi, materialsApi } from "@/lib/api";
 import { toast } from "sonner";
@@ -819,6 +820,7 @@ const ContentManagementContent = () => {
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
 
   // Data
   const [courses, setCourses] = useState<InstructorCourse[]>([]);
@@ -1372,7 +1374,7 @@ const ContentManagementContent = () => {
                                       <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
                                         <span>v{m.version}</span>
                                         <span>&bull;</span>
-                                        <span>{formatDateHijri(m.createdAt, calendarFormat, { locale })}</span>
+                                        <span>{formatDateHijri(m.createdAt, calendarFormat, { locale, platformSettings: platformLocale })}</span>
                                         {m.version > 1 && (
                                           <span className="px-1.5 py-0.5 bg-[var(--color-border-subtle)] text-[var(--color-primary)] rounded text-[10px] font-medium">
                                             {t("content.newVersion")}

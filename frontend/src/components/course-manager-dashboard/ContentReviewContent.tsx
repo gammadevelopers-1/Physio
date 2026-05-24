@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, Fragment } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { toast } from "sonner";
 import {
   FileText,
@@ -120,6 +121,7 @@ const ContentReviewContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const locale = useLocale();
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
   const isRTL = locale === "ar";
   const manager = useManagerProfile();
   const {
@@ -285,7 +287,7 @@ const ContentReviewContent = () => {
   };
 
   const formatDate = (dateStr: string) => {
-    return formatDateHijri(dateStr, calendarFormat, { locale });
+    return formatDateHijri(dateStr, calendarFormat, { locale, platformSettings: platformLocale });
   };
 
   const formatSize = (bytes: number | null) => {

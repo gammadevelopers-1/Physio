@@ -26,6 +26,7 @@ import {
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { isGlobalAdmin, isManager, isManagerOrAbove, isTA } from '../../common/role-helpers';
+import { decryptUserPII } from '../../common/crypto';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { CancelSessionDto } from './dto/cancel-session.dto';
@@ -35,6 +36,8 @@ import { SessionAssistantsService } from '../session-assistants/session-assistan
 import { CourseAssistantsService } from '../course-assistants/course-assistants.service';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { SessionNotificationService } from './session-notification.service';
+import { AdminSettingsService } from '../admin-settings/admin-settings.service';
+import { toArabicIndic } from '../../common/platform-locale';
 import { NELC_EVENT_TYPE } from '../../database/schema';
 import { classifyCourse, getNelcMaxEnrollment } from '../courses/nelc-config';
 import { recomputeProgressForCohort } from '../enrollments/progress.helper';
@@ -50,6 +53,7 @@ export class SessionsService {
     private readonly auditLogService: AuditLogService,
     private readonly sessionNotificationService: SessionNotificationService,
     private readonly courseAssistantsService: CourseAssistantsService,
+    private readonly adminSettings: AdminSettingsService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -448,8 +452,12 @@ export class SessionsService {
         ),
       );
 
-    for (const s of enrolled) {
-      if (!s.email) continue;
+    for (const rawS of enrolled) {
+      if (!rawS.email) continue;
+      // Decrypt PII once per row so the values passed to Zoom + cached
+      // in the webinar_registrations table are plaintext (as Zoom
+      // requires and as the existing downstream code expects).
+      const s = decryptUserPII(rawS);
       try {
         const result = await this.zoomService.registerForWebinar(zoomWebinarId, {
           email: s.email,
@@ -1104,9 +1112,16 @@ export class SessionsService {
       const timeStr = diffHours > 0
         ? `${diffHours}h ${diffMins}m`
         : `${diffMins} minute(s)`;
-      const scheduledStr = scheduledAt.toLocaleString('en-US', {
+      const localeSettings = await this.adminSettings.getPublicLocaleSettings().catch(() => ({
+        numberSystem: 'western' as const,
+        dateFormat: 'DD-MM-YYYY' as const,
+      }));
+      let scheduledStr = scheduledAt.toLocaleString('en-US', {
         month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
       });
+      if (localeSettings.numberSystem === 'arabic_indic') {
+        scheduledStr = toArabicIndic(scheduledStr);
+      }
       throw new BadRequestException(
         `Cannot start lecture yet. Scheduled for ${scheduledStr}. You can start it ${GRACE_MINUTES} minutes before (in ${timeStr}).`,
       );

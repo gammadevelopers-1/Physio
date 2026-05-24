@@ -8,6 +8,7 @@ import { ChevronDown, Trash2, Mail, Image as ImageIcon, CloudUpload, CheckCircle
 import { useTranslations, useLocale } from "next-intl";
 import { useIsAuthenticated, useUser, useUserRoles, useAuth } from "@/contexts";
 import { roleRequestsApi, getAccessToken, type RoleRequest } from "@/lib/api";
+import { FmtDate } from "@/components/ui/Fmt";
 import ReCAPTCHA from "react-google-recaptcha";
 import OtpVerifyModal from "./trainer-application/OtpVerifyModal";
 import ResumeBuilder, { emptyStructuredResume, type StructuredResume } from "./trainer-application/ResumeBuilder";
@@ -1394,7 +1395,7 @@ const BecomeTrainerForm = ({
             </div>
           )}
           <p className="text-xs text-[var(--color-text-secondary)]">
-            {tt("submittedOn", "Submitted on")}: {new Date(existingApplication.createdAt).toLocaleDateString()}
+            {tt("submittedOn", "Submitted on")}: <FmtDate value={existingApplication.createdAt} />
           </p>
         </div>
       </section>

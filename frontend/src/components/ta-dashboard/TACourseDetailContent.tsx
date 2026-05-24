@@ -8,6 +8,8 @@ import TANavbar from "./TANavbar";
 import TASidebar from "./TASidebar";
 import { taApi } from "@/lib/api";
 import type { CourseDetailResponse, CourseEnrollment, CourseSession } from "@/types/instructor-dashboard";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDate, formatPlatformDateReadable, formatPlatformTime, type PlatformLocaleSettings } from "@/lib/platform-locale";
 import {
   ArrowLeft,
   Users,
@@ -27,13 +29,8 @@ interface TACourseDetailContentProps {
 
 // ─── Helpers ──────────────────────────────────────────────────
 
-function formatDate(dateStr: string | null) {
-  if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+function formatDate(dateStr: string | null, settings: PlatformLocaleSettings, locale: string) {
+  return formatPlatformDateReadable(dateStr, settings, locale === "ar" ? "ar" : "en");
 }
 
 function formatDuration(start: string | null, end: string | null) {
@@ -46,22 +43,21 @@ function formatDuration(start: string | null, end: string | null) {
   return `${days} days`;
 }
 
-function formatSessionDate(dateStr: string) {
+function formatSessionDate(dateStr: string, settings: PlatformLocaleSettings) {
   const d = new Date(dateStr);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const sessionDay = new Date(d);
   sessionDay.setHours(0, 0, 0, 0);
   if (sessionDay.getTime() === today.getTime()) return "Today";
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return formatPlatformDate(dateStr, settings);
 }
 
-function formatSessionTime(dateStr: string, durationMinutes: number) {
+function formatSessionTime(dateStr: string, durationMinutes: number, settings: PlatformLocaleSettings, locale: string) {
   const start = new Date(dateStr);
   const end = new Date(start.getTime() + durationMinutes * 60000);
-  const fmt = (d: Date) =>
-    d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  return `${fmt(start)} – ${fmt(end)}`;
+  const loc = locale === "ar" ? "ar" : "en";
+  return `${formatPlatformTime(start, settings, loc)} – ${formatPlatformTime(end, settings, loc)}`;
 }
 
 const statusBadge = (status: string) => {
@@ -86,6 +82,7 @@ const sessionTypeIcon = (type: string) => {
 export default function TACourseDetailContent({ courseId }: TACourseDetailContentProps) {
   const locale = useLocale();
   const t = useTranslations("instructorDashboard");
+  const platformLocale = usePlatformLocale();
 
   const [course, setCourse] = useState<CourseDetailResponse | null>(null);
   const [enrollments, setEnrollments] = useState<CourseEnrollment[]>([]);
@@ -320,11 +317,11 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                           </div>
                           <div className="p-4 bg-[var(--color-surface-page)] rounded-lg">
                             <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.startDate")}</p>
-                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{formatDate(course.startDate)}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{formatDate(course.startDate, platformLocale, locale)}</p>
                           </div>
                           <div className="p-4 bg-[var(--color-surface-page)] rounded-lg">
                             <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.endDate")}</p>
-                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{formatDate(course.endDate)}</p>
+                            <p className="text-sm font-medium text-[var(--color-text-secondary)]">{formatDate(course.endDate, platformLocale, locale)}</p>
                           </div>
                           <div className="p-4 bg-[var(--color-surface-page)] rounded-lg">
                             <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.enrollmentCount")}</p>
@@ -452,8 +449,8 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                                   <div className="min-w-0">
                                     <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{session.title}</p>
                                     <p className="text-xs text-[var(--color-text-secondary)]">
-                                      {formatSessionDate(session.scheduledAt)} &bull;{" "}
-                                      {formatSessionTime(session.scheduledAt, session.durationMinutes)} &bull;{" "}
+                                      {formatSessionDate(session.scheduledAt, platformLocale)} &bull;{" "}
+                                      {formatSessionTime(session.scheduledAt, session.durationMinutes, platformLocale, locale)} &bull;{" "}
                                       {session.durationMinutes} min
                                     </p>
                                   </div>

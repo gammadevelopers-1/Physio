@@ -21,6 +21,8 @@ import { studentApi } from "@/lib/api";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { formatDate } from "@/lib/hijri";
 import { formatTimeUntil } from "@/lib/calendar-utils";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformTime } from "@/lib/platform-locale";
 import EmptyStateIllustration from "../EmptyStateIllustration";
 
 interface LecturesListViewProps {
@@ -53,6 +55,7 @@ export default function LecturesListView({ events }: LecturesListViewProps) {
   const t = useTranslations("studentDashboard.lecturesPage");
   const isRTL = locale === "ar";
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
 
   const [joiningId, setJoiningId] = useState<string | null>(null);
   const [pastExpanded, setPastExpanded] = useState(false);
@@ -90,11 +93,6 @@ export default function LecturesListView({ events }: LecturesListViewProps) {
     }
   };
 
-  const timeFmt = new Intl.DateTimeFormat(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
   if (events.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -117,7 +115,6 @@ export default function LecturesListView({ events }: LecturesListViewProps) {
           ? Upload
           : TYPE_ICON[e.sessionType] || Video;
     const courseTitle = isRTL && e.courseTitleAr ? e.courseTitleAr : e.courseTitle;
-    const eventDate = new Date(e.date);
     const joinable = e.sessionType === "zoom" && e.zoomLink && isJoinable(e.date);
 
     // Attendance badge for past sessions
@@ -192,7 +189,7 @@ export default function LecturesListView({ events }: LecturesListViewProps) {
           </div>
           <div className={`flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[var(--color-text-secondary)] ${isRTL ? "flex-row-reverse" : ""}`}>
             <span>
-              {formatDate(e.date, calendarFormat, { locale })} · {timeFmt.format(eventDate)}
+              {formatDate(e.date, calendarFormat, { locale, platformSettings: platformLocale })} · {formatPlatformTime(e.date, platformLocale, locale === "ar" ? "ar" : "en")}
             </span>
             {courseTitle && (
               <>

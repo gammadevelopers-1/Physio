@@ -8,7 +8,11 @@ import { toast } from "sonner";
 import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
+import AdminNavbar from "@/components/admin-dashboard/AdminNavbar";
+import AdminSidebar from "@/components/admin-dashboard/AdminSidebar";
+import AdminMobileSidebar from "@/components/admin-dashboard/AdminMobileSidebar";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
+import { useAdminProfile } from "@/hooks/useAdminProfile";
 import { courseManagerApi, ApiError } from "@/lib/api";
 import type { InstructorListItem } from "@/lib/api";
 import type { CourseDetailResponse } from "@/types/instructor-dashboard";
@@ -32,13 +36,18 @@ import { normalizeAndValidateUrl } from "@/lib/url-validation";
 
 interface EditCourseContentProps {
   courseId: string;
+  /** See CourseManagerCourseDetailContent — same role-prop contract. */
+  role?: "manager" | "admin";
 }
 
-const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
+const EditCourseContent = ({ courseId, role = "manager" }: EditCourseContentProps) => {
   const manager = useManagerProfile();
+  const admin = useAdminProfile();
+  const isAdmin = role === "admin";
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("courseManagerDashboard");
+  const dashboardBase = `/${locale}/dashboard/${isAdmin ? "admin" : "manager"}/courses`;
 
   // Loading states
   const [loadingCourse, setLoadingCourse] = useState(true);
@@ -367,7 +376,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
       }
 
       toast.success(t("editCourse.success"));
-      router.push(`/${locale}/dashboard/manager/courses/${courseId}`);
+      router.push(`${dashboardBase}/${courseId}`);
     } catch (err) {
       if (err instanceof ApiError && err.code) {
         const codeMap: Record<string, string> = {
@@ -395,14 +404,26 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
   if (loadingCourse) {
     return (
       <>
-        <CourseManagerNavbar manager={manager} />
+        {isAdmin ? (
+          <AdminNavbar admin={admin} />
+        ) : (
+          <CourseManagerNavbar manager={manager} />
+        )}
         <div className="bg-[var(--color-surface-page)] min-h-screen">
           <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="hidden lg:block lg:flex-shrink-0">
-                <CourseManagerSidebar manager={manager} />
+                {isAdmin ? (
+                  <AdminSidebar admin={admin} />
+                ) : (
+                  <CourseManagerSidebar manager={manager} />
+                )}
               </div>
-              <CourseManagerMobileSidebar manager={manager} />
+              {isAdmin ? (
+                <AdminMobileSidebar admin={admin} />
+              ) : (
+                <CourseManagerMobileSidebar manager={manager} />
+              )}
               <div className="flex-1 min-w-0 animate-pulse space-y-4">
                 <div className="h-8 w-48 bg-[var(--color-border)] rounded" />
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6 space-y-4">
@@ -421,14 +442,26 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
   if (loadError) {
     return (
       <>
-        <CourseManagerNavbar manager={manager} />
+        {isAdmin ? (
+          <AdminNavbar admin={admin} />
+        ) : (
+          <CourseManagerNavbar manager={manager} />
+        )}
         <div className="bg-[var(--color-surface-page)] min-h-screen">
           <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="hidden lg:block lg:flex-shrink-0">
-                <CourseManagerSidebar manager={manager} />
+                {isAdmin ? (
+                  <AdminSidebar admin={admin} />
+                ) : (
+                  <CourseManagerSidebar manager={manager} />
+                )}
               </div>
-              <CourseManagerMobileSidebar manager={manager} />
+              {isAdmin ? (
+                <AdminMobileSidebar admin={admin} />
+              ) : (
+                <CourseManagerMobileSidebar manager={manager} />
+              )}
               <div className="flex-1 min-w-0">
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <AlertTriangle className="w-12 h-12 text-[#D97706] mx-auto mb-4" />
@@ -451,15 +484,27 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
   return (
     <>
-      <CourseManagerNavbar manager={manager} />
+      {isAdmin ? (
+        <AdminNavbar admin={admin} />
+      ) : (
+        <CourseManagerNavbar manager={manager} />
+      )}
 
       <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
-              <CourseManagerSidebar manager={manager} />
+              {isAdmin ? (
+                <AdminSidebar admin={admin} />
+              ) : (
+                <CourseManagerSidebar manager={manager} />
+              )}
             </div>
-            <CourseManagerMobileSidebar manager={manager} />
+            {isAdmin ? (
+              <AdminMobileSidebar admin={admin} />
+            ) : (
+              <CourseManagerMobileSidebar manager={manager} />
+            )}
 
             <div className="flex-1 min-w-0">
               {/* Back + Header */}

@@ -34,8 +34,8 @@ import { useStudentCourseDetail } from "@/hooks/useStudentCourseDetail";
 import { useModuleMaterials } from "@/hooks/useModuleMaterials";
 import { studentApi } from "@/lib/api";
 import { isJoinable, formatTimeUntil } from "@/lib/calendar-utils";
-import { formatDateReadable } from "@/lib/hijri";
-import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDateReadable, formatPlatformTime } from "@/lib/platform-locale";
 import VideoPlayer from "./VideoPlayer";
 import type { CourseSession, ModuleMaterial, StudentAttendanceRecord } from "@/types/student-dashboard";
 
@@ -649,7 +649,7 @@ const CourseLearningContent = () => {
   const courseId = params.id as string;
 
   const { data, loading, error, refetch } = useStudentCourseDetail(courseId);
-  const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
 
   // Tabs derived from query, with smart default applied once data loads
   const queryTab = searchParams.get("tab") as Tab | null;
@@ -865,13 +865,10 @@ const CourseLearningContent = () => {
   };
 
   const formatDate = (dateStr: string | null) =>
-    formatDateReadable(dateStr, calendarFormat, locale);
+    formatPlatformDateReadable(dateStr, platformLocale, locale === "ar" ? "ar" : "en");
 
   const formatTime = (dateStr: string) =>
-    new Date(dateStr).toLocaleTimeString(
-      locale === "ar" ? "ar-SA" : "en-US",
-      { hour: "2-digit", minute: "2-digit" }
-    );
+    formatPlatformTime(dateStr, platformLocale, locale === "ar" ? "ar" : "en");
 
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
 

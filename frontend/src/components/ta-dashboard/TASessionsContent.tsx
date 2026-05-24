@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { taApi } from "@/lib/api";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDate, formatPlatformTime, type PlatformLocaleSettings } from "@/lib/platform-locale";
 
 interface AssignedSession {
   id: string;
@@ -58,26 +60,18 @@ function getTodayStr(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
-function formatSessionDate(iso: string, locale: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
+function formatSessionDate(iso: string, settings: PlatformLocaleSettings): string {
+  return formatPlatformDate(iso, settings);
 }
 
-function formatSessionTime(iso: string, locale: string): string {
-  const d = new Date(iso);
-  return d.toLocaleTimeString(locale === "ar" ? "ar-SA" : "en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function formatSessionTime(iso: string, settings: PlatformLocaleSettings, locale: string): string {
+  return formatPlatformTime(iso, settings, locale === "ar" ? "ar" : "en");
 }
 
 const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsContentProps) => {
   const t = useTranslations("taDashboard");
   const locale = useLocale();
+  const platformLocale = usePlatformLocale();
 
   // View mode
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
@@ -216,8 +210,8 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
 
   // Session card renderer
   const renderSessionCard = (session: AssignedSession) => {
-    const date = formatSessionDate(session.scheduledAt, locale);
-    const time = formatSessionTime(session.scheduledAt, locale);
+    const date = formatSessionDate(session.scheduledAt, platformLocale);
+    const time = formatSessionTime(session.scheduledAt, platformLocale, locale);
 
     return (
       <div key={session.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4">
@@ -503,7 +497,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
                       <div
                         key={session.id}
                         className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] truncate cursor-pointer hover:opacity-80"
-                        title={`${session.title} - ${formatSessionTime(session.scheduledAt, locale)}`}
+                        title={`${session.title} - ${formatSessionTime(session.scheduledAt, platformLocale, locale)}`}
                       >
                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${getCalendarDotColor(session.status)}`} />
                         <span className="truncate text-[var(--color-text-secondary)]">{session.title}</span>

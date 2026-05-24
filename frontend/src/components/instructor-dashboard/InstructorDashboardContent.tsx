@@ -29,6 +29,7 @@ import {
   transformToAtRiskLearners,
   transformToCourseOptions,
 } from "@/lib/instructor-dashboard-transforms";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 
 const InstructorDashboardContent = () => {
   const t = useTranslations("instructorDashboard");
@@ -37,6 +38,7 @@ const InstructorDashboardContent = () => {
   const { markAllAsRead: markAllNotificationsRead, clearAll: clearAllNotifications } = useNotifications();
   const router = useRouter();
   const locale = useLocale();
+  const platformLocale = usePlatformLocale();
 
   // ─── Derived data from API ───────────────────────────────
   const attendanceData = dashboard?.attendanceTrend ?? [0, 0, 0, 0, 0, 0, 0];
@@ -152,7 +154,7 @@ const InstructorDashboardContent = () => {
   // ─── Derived data from API ───────────────────────────────
 
   const kpiData = dashboard ? transformToKPIData(dashboard) : { activeCourses: 0, totalStudents: 0, todaysSessions: 0, atRiskLearners: 0 };
-  const calendarSessions = dashboard ? transformToCalendarSessions([...dashboard.todaySessions, ...dashboard.upcomingSessions]) : [];
+  const calendarSessions = dashboard ? transformToCalendarSessions([...dashboard.todaySessions, ...dashboard.upcomingSessions], platformLocale) : [];
   const atRiskLearners = dashboard ? transformToAtRiskLearners(dashboard.atRiskLearners) : [];
   const courseOptions = dashboard ? transformToCourseOptions(dashboard.activeCourses) : [{ value: "all", label: t("performance.allCourses") }];
 

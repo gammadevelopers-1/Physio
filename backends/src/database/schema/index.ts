@@ -12,6 +12,8 @@ export * from './role-requests';
 export * from './blocked-national-ids';
 export * from './admin-notifications';
 export * from './user-notifications';
+export * from './system-settings';
+export * from './notification-templates';
 
 // Course schemas
 export * from './courses';

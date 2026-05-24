@@ -8,6 +8,8 @@ import { CourseCard, MobileCourseCard } from "@/components/courses";
 import { publicApi } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import type { InstructorPublicProfile } from "@/types/instructor-dashboard";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDateReadable } from "@/lib/platform-locale";
 
 interface InstructorPublicProfileContentProps {
   instructorId: string;
@@ -16,6 +18,7 @@ interface InstructorPublicProfileContentProps {
 const InstructorPublicProfileContent = ({ instructorId }: InstructorPublicProfileContentProps) => {
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const platformLocale = usePlatformLocale();
   const [profile, setProfile] = useState<InstructorPublicProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -92,15 +95,8 @@ const InstructorPublicProfileContent = ({ instructorId }: InstructorPublicProfil
       : `https://linkedin.com/in/${profile.linkedin}`
     : null;
 
-  const formatDate = (raw: string) => {
-    const d = new Date(raw);
-    if (Number.isNaN(d.getTime())) return raw;
-    return d.toLocaleDateString(isRTL ? "ar-SA" : "en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
+  const formatDate = (raw: string) =>
+    formatPlatformDateReadable(raw, platformLocale, isRTL ? "ar" : "en", { fallback: raw });
 
   const renderStars = (rating: number) => (
     <div className="flex items-center gap-0.5">

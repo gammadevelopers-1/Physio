@@ -3,6 +3,7 @@
  * Sent when an instructor is assigned as a TA to a session.
  */
 import { EmailLocale, getEmailStrings, textAlign, htmlAttrs } from '../email-i18n';
+import { toArabicIndic } from '../../../common/platform-locale';
 
 export function getTaAssignmentHtml(params: {
   recipientName: string;
@@ -12,6 +13,7 @@ export function getTaAssignmentHtml(params: {
   durationMinutes: number;
   instructorName: string;
   isAutoAssigned: boolean;
+  numberSystem?: 'western' | 'arabic_indic';
 }, locale: EmailLocale = 'en'): string {
   const s = getEmailStrings(locale);
   const {
@@ -28,18 +30,22 @@ export function getTaAssignmentHtml(params: {
   // for why this is hardcoded instead of relying on server TZ.
   const dateLocale = locale === 'ar' ? 'ar-SA' : 'en-US';
   const date = new Date(scheduledAt);
-  const formattedDate = date.toLocaleDateString(dateLocale, {
+  let formattedDate = date.toLocaleDateString(dateLocale, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
     year: 'numeric',
     timeZone: 'Asia/Riyadh',
   });
-  const formattedTime = `${date.toLocaleTimeString(dateLocale, {
+  let formattedTime = `${date.toLocaleTimeString(dateLocale, {
     hour: '2-digit',
     minute: '2-digit',
     timeZone: 'Asia/Riyadh',
   })}${locale === 'ar' ? ' (بتوقيت الرياض)' : ' (Riyadh Time)'}`;
+  if (params.numberSystem === 'arabic_indic') {
+    formattedDate = toArabicIndic(formattedDate);
+    formattedTime = toArabicIndic(formattedTime);
+  }
 
   const assignmentLabel = isAutoAssigned ? s.taAutoAssigned : s.taManualAssigned;
 
@@ -176,6 +182,7 @@ export function getTaAssignmentText(params: {
   durationMinutes: number;
   instructorName: string;
   isAutoAssigned: boolean;
+  numberSystem?: 'western' | 'arabic_indic';
 }, locale: EmailLocale = 'en'): string {
   const s = getEmailStrings(locale);
   const {
@@ -192,18 +199,22 @@ export function getTaAssignmentText(params: {
   // for why this is hardcoded instead of relying on server TZ.
   const dateLocale = locale === 'ar' ? 'ar-SA' : 'en-US';
   const date = new Date(scheduledAt);
-  const formattedDate = date.toLocaleDateString(dateLocale, {
+  let formattedDate = date.toLocaleDateString(dateLocale, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
     year: 'numeric',
     timeZone: 'Asia/Riyadh',
   });
-  const formattedTime = `${date.toLocaleTimeString(dateLocale, {
+  let formattedTime = `${date.toLocaleTimeString(dateLocale, {
     hour: '2-digit',
     minute: '2-digit',
     timeZone: 'Asia/Riyadh',
   })}${locale === 'ar' ? ' (بتوقيت الرياض)' : ' (Riyadh Time)'}`;
+  if (params.numberSystem === 'arabic_indic') {
+    formattedDate = toArabicIndic(formattedDate);
+    formattedTime = toArabicIndic(formattedTime);
+  }
 
   const assignmentLabel = isAutoAssigned ? s.taAutoAssigned : s.taManualAssigned;
 

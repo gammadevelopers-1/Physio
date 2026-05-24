@@ -8,6 +8,7 @@ import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { instructorApi } from "@/lib/api";
 import type {
@@ -47,6 +48,7 @@ const StudentsContent = () => {
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
 
   // Data state
   const [students, setStudents] = useState<EnrichedStudent[]>([]);
@@ -257,7 +259,7 @@ const StudentsContent = () => {
     if (diffHours < 24) return t("common.timeHoursAgo", { count: diffHours });
     if (diffDays < 7) return t("common.timeDaysAgo", { count: diffDays });
     if (diffDays < 30) return t("common.timeWeeksAgo", { count: Math.floor(diffDays / 7) });
-    return formatDateHijri(date, calendarFormat, { locale });
+    return formatDateHijri(date, calendarFormat, { locale, platformSettings: platformLocale });
   };
 
   const toggleSort = (field: SortField) => {

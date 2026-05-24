@@ -28,6 +28,14 @@ import { isGlobalAdmin, isManager } from '../../common/role-helpers';
 import { StorageService } from '../storage/storage.service';
 import { EmailService } from '../email/email.service';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
+import { AuditLogService } from '../audit-logs/audit-logs.service';
+import { AdminSettingsService } from '../admin-settings/admin-settings.service';
+import {
+  formatPlatformDate as fmtPlatformDate,
+  toArabicIndic,
+  type PlatformLocaleSettings,
+} from '../../common/platform-locale';
+import { decryptPII } from '../../common/crypto';
 import { RejectCertificateDto } from './dto/reject-certificate.dto';
 import { HoldCertificateDto } from './dto/hold-certificate.dto';
 import { RevokeCertificateDto } from './dto/revoke-certificate.dto';
@@ -43,9 +51,46 @@ export class CertificatesService {
     private readonly storageService: StorageService,
     private readonly emailService: EmailService,
     private readonly auditService: NelcAuditService,
+    private readonly auditLogService: AuditLogService,
+    private readonly adminSettings: AdminSettingsService,
   ) {}
 
+  /** Fetch admin-configured locale settings — used for certificate date rendering. */
+  private async getPlatformLocale(): Promise<
+    Pick<PlatformLocaleSettings, 'dateFormat' | 'numberSystem'>
+  > {
+    try {
+      const s = await this.adminSettings.getPublicLocaleSettings();
+      return { dateFormat: s.dateFormat, numberSystem: s.numberSystem };
+    } catch {
+      return { dateFormat: 'DD-MM-YYYY', numberSystem: 'western' };
+    }
+  }
+
   // ─── Role helpers ─────────────────────────────────────────
+
+  /**
+   * Write an admin-initiated certificate action to platform audit_logs.
+   * No-op when actor is not a global admin — manager actions are covered
+   * by the NELC audit (regulator-facing) and the per-row reviewedBy
+   * fields. This second log surfaces platform oversight in the admin
+   * Logs page.
+   */
+  private async maybeLogAdminCertAction(
+    actor: AuthenticatedUser,
+    certificateId: string,
+    action: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<void> {
+    if (!isGlobalAdmin(actor)) return;
+    await this.auditLogService.log({
+      entityType: 'certificate_request',
+      entityId: certificateId,
+      action,
+      performedBy: actor.id,
+      metadata,
+    });
+  }
 
   private addCourseOwnershipCondition(
     conditions: any[],
@@ -315,19 +360,29 @@ export class CertificatesService {
    * Returns limited public info about an approved certificate.
    */
   async verifyCertificate(certId: string) {
-    // Support both full UUID and exact PG-XXXXXXXX (8 hex chars) format
+    // Support full UUID OR PG-prefixed short codes. Historically codes
+    // were 8 hex chars (~4 billion combinations — brute-forceable in
+    // theory, mitigated by edge rate-limiting); new certificates issue
+    // 16-char codes (~1.8 quintillion — enumeration impractical). We
+    // accept 8-32 hex chars on input so previously-printed certificates
+    // remain verifiable while new ones are stronger.
     let lookupId = certId;
     if (certId.toUpperCase().startsWith('PG-')) {
       const shortHex = certId.slice(3).toLowerCase();
-      // Must be exactly 8 hex characters to match
-      if (!/^[0-9a-f]{8}$/i.test(shortHex)) {
+      if (!/^[0-9a-f]{8,32}$/.test(shortHex)) {
         throw new NotFoundException('Certificate not found');
       }
-      // Find UUID that starts with this exact 8-char prefix
+      // Prefix-match against the UUID's hex representation with hyphens
+      // stripped (since the displayed short code uses hyphen-free hex).
+      // Length of the prefix is whatever the caller sent — older 8-char
+      // codes still match (8 chars from the first UUID segment), newer
+      // 16-char codes match much more specifically.
       const [match] = await db
         .select({ id: certificateRequests.id })
         .from(certificateRequests)
-        .where(sql`LEFT(${certificateRequests.id}::text, 8) = ${shortHex}`)
+        .where(
+          sql`LEFT(REPLACE(${certificateRequests.id}::text, '-', ''), ${shortHex.length}) = ${shortHex}`,
+        )
         .limit(1);
       if (match) {
         lookupId = match.id;
@@ -372,7 +427,7 @@ export class CertificatesService {
       accreditationNumber: cert.accreditationNumber,
       totalHours: cert.totalHours,
       issuedDate: cert.reviewedAt || cert.createdAt,
-      certificateId: `PG-${cert.id.slice(0, 8).toUpperCase()}`,
+      certificateId: `PG-${cert.id.replace(/-/g, '').slice(0, 16).toUpperCase()}`,
     };
   }
 
@@ -415,7 +470,8 @@ export class CertificatesService {
         .where(eq(users.id, studentId))
         .limit(1);
 
-      if (!student?.scfhsNumber?.trim()) {
+      const scfhsPlain = decryptPII(student?.scfhsNumber);
+      if (!scfhsPlain?.trim()) {
         throw new BadRequestException(
           'SCFHS Registration Number is required for CPD certificate issuance. Please update your profile with your Mumaris+ number.',
         );
@@ -481,6 +537,11 @@ export class CertificatesService {
       status?: string;
       page?: number;
       limit?: number;
+      // Admin-only filters. Manager/instructor are already ownership-scoped
+      // by the role branch below, so passing these as a non-admin would just
+      // narrow further — never widen.
+      managerId?: string;
+      search?: string;
     },
   ) {
     const page = params.page || 1;
@@ -509,16 +570,39 @@ export class CertificatesService {
       conditions.push(eq(certificateRequests.courseId, params.courseId));
     }
 
-    // Default to pending if no status specified
-    const statusFilter =
-      params.status &&
-      Object.values(CERTIFICATE_STATUS).includes(params.status as any)
-        ? params.status
-        : CERTIFICATE_STATUS.PENDING;
-    conditions.push(eq(certificateRequests.status, statusFilter));
+    if (params.managerId) {
+      conditions.push(eq(courses.managerId, params.managerId));
+    }
+
+    if (params.search) {
+      const q = `%${params.search}%`;
+      conditions.push(
+        sql`(${users.firstName} ILIKE ${q} OR ${users.lastName} ILIKE ${q} OR ${users.email} ILIKE ${q})` as any,
+      );
+    }
+
+    // Status: "all" / undefined means no status filter (admin browses across
+    // statuses); manager default is still pending for back-compat with
+    // existing UI which doesn't pass status on first load.
+    if (params.status === 'all') {
+      // no status filter
+    } else {
+      const statusFilter =
+        params.status &&
+        Object.values(CERTIFICATE_STATUS).includes(params.status as any)
+          ? params.status
+          : CERTIFICATE_STATUS.PENDING;
+      conditions.push(eq(certificateRequests.status, statusFilter));
+    }
 
     const whereClause =
       conditions.length > 0 ? and(...conditions) : undefined;
+
+    // Performer name lookups via correlated subqueries (same pattern as
+    // courses.findAll). Avoids three separate user-table joins which would
+    // produce alias soup and a cartesian-product risk.
+    const performerNameSql = (col: unknown) =>
+      sql<string | null>`(SELECT TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))) FROM users u WHERE u.id = ${col as any})`;
 
     const data = await db
       .select({
@@ -533,12 +617,31 @@ export class CertificatesService {
         certificateUrl: certificateRequests.certificateUrl,
         createdAt: certificateRequests.createdAt,
         reviewedAt: certificateRequests.reviewedAt,
+        // Per-transition audit columns
+        approvedBy: certificateRequests.approvedBy,
+        approvedAt: certificateRequests.approvedAt,
+        rejectedBy: certificateRequests.rejectedBy,
+        rejectedAt: certificateRequests.rejectedAt,
+        rejectionReason: certificateRequests.rejectionReason,
+        revokedBy: certificateRequests.revokedBy,
+        revokedAt: certificateRequests.revokedAt,
+        revocationReason: certificateRequests.revocationReason,
+        // Performer display names
+        approvedByName: performerNameSql(certificateRequests.approvedBy),
+        rejectedByName: performerNameSql(certificateRequests.rejectedBy),
+        revokedByName: performerNameSql(certificateRequests.revokedBy),
+        // Student
         studentFirstName: users.firstName,
         studentLastName: users.lastName,
         studentEmail: users.email,
+        // Course + manager
+        courseTitle: courses.title,
+        courseManagerId: courses.managerId,
+        courseManagerName: sql<string | null>`(SELECT TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))) FROM users u WHERE u.id = ${courses.managerId})`,
       })
       .from(certificateRequests)
       .innerJoin(users, eq(certificateRequests.studentId, users.id))
+      .innerJoin(courses, eq(certificateRequests.courseId, courses.id))
       .where(whereClause)
       .orderBy(desc(certificateRequests.createdAt))
       .limit(limit)
@@ -547,6 +650,8 @@ export class CertificatesService {
     const [countResult] = await db
       .select({ count: count() })
       .from(certificateRequests)
+      .innerJoin(users, eq(certificateRequests.studentId, users.id))
+      .innerJoin(courses, eq(certificateRequests.courseId, courses.id))
       .where(whereClause);
 
     return {
@@ -595,7 +700,8 @@ export class CertificatesService {
       .where(eq(users.id, request.studentId))
       .limit(1);
 
-    if (!studentForScfhs?.scfhsNumber?.trim()) {
+    const scfhsNumberPlain = decryptPII(studentForScfhs?.scfhsNumber);
+    if (!scfhsNumberPlain?.trim()) {
       throw new BadRequestException(
         'Cannot issue certificate: Student has not provided their SCFHS Registration Number. The student must add their Mumaris+ number in their profile settings first.',
       );
@@ -617,16 +723,26 @@ export class CertificatesService {
       );
     }
 
+    const now = new Date();
     const [updated] = await db
       .update(certificateRequests)
       .set({
         status: CERTIFICATE_STATUS.APPROVED,
+        // Legacy single-slot fields — keep populated for manager UI back-compat
         reviewedBy: user.id,
-        reviewedAt: new Date(),
+        reviewedAt: now,
+        // Per-transition audit columns — preserve full history
+        approvedBy: user.id,
+        approvedAt: now,
         certificateUrl,
       })
       .where(eq(certificateRequests.id, id))
       .returning();
+
+    await this.maybeLogAdminCertAction(user, id, 'certificate.approve', {
+      courseId: request.courseId,
+      studentId: request.studentId,
+    });
 
     // Send email notification to student
     try {
@@ -667,16 +783,26 @@ export class CertificatesService {
       );
     }
 
+    const now = new Date();
     const [updated] = await db
       .update(certificateRequests)
       .set({
         status: CERTIFICATE_STATUS.REJECTED,
         reviewedBy: user.id,
         reviewNote: dto.note,
-        reviewedAt: new Date(),
+        reviewedAt: now,
+        rejectedBy: user.id,
+        rejectedAt: now,
+        rejectionReason: dto.note,
       })
       .where(eq(certificateRequests.id, id))
       .returning();
+
+    await this.maybeLogAdminCertAction(user, id, 'certificate.reject', {
+      courseId: request.courseId,
+      studentId: request.studentId,
+      reason: dto.note,
+    });
 
     // Send email notification to student
     try {
@@ -767,13 +893,17 @@ export class CertificatesService {
       );
     }
 
+    const now = new Date();
     const [updated] = await db
       .update(certificateRequests)
       .set({
         status: CERTIFICATE_STATUS.REVOKED,
         reviewedBy: user.id,
         reviewNote: dto.reason,
-        reviewedAt: new Date(),
+        reviewedAt: now,
+        revokedBy: user.id,
+        revokedAt: now,
+        revocationReason: dto.reason,
         certificateUrl: null, // Invalidate the PDF
       })
       .where(eq(certificateRequests.id, id))
@@ -790,6 +920,12 @@ export class CertificatesService {
         studentId: request.studentId,
         reason: dto.reason,
       },
+    });
+
+    await this.maybeLogAdminCertAction(user, id, 'certificate.revoke', {
+      courseId: request.courseId,
+      studentId: request.studentId,
+      reason: dto.reason,
     });
 
     // Send email notification to student
@@ -885,6 +1021,7 @@ export class CertificatesService {
     courseId: string,
     studentId: string,
   ): Promise<string> {
+    const platformLocale = await this.getPlatformLocale();
     const [student] = await db
       .select({
         firstName: users.firstName,
@@ -923,12 +1060,22 @@ export class CertificatesService {
     const courseTitle = course?.title || 'Course';
     const cmeHours = course?.cmeHours || 0;
     const issuedDate = new Date();
-    const dateFormatted = issuedDate.toLocaleDateString('en-US', {
+    // Long-form readable date (e.g. "24 DECEMBER 2026"). Apply admin's
+    // numberSystem to the day/year digits.
+    const longDate = issuedDate.toLocaleDateString('en-US', {
       day: '2-digit',
       month: 'long',
       year: 'numeric',
     }).toUpperCase();
-    const certificateId = `PG-${requestId.slice(0, 8).toUpperCase()}`;
+    const dateFormatted =
+      platformLocale.numberSystem === 'arabic_indic'
+        ? toArabicIndic(longDate)
+        : longDate;
+    // 16-char short ID (was 8 — hardened to defeat enumeration / brute-force).
+    // Strip hyphens from the UUID so we use 16 actual hex chars, not 12 chars
+    // ending in a hyphen-segment. Older issued certificates still verify via
+    // the 8-char path; see verifyCertificate() for the backward-compat lookup.
+    const certificateId = `PG-${requestId.replace(/-/g, '').slice(0, 16).toUpperCase()}`;
 
     // Generate QR code as base64 data URL
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -1053,8 +1200,8 @@ export class CertificatesService {
         y += 42;
         doc.font('Helvetica').fontSize(11).fillColor(gray).text('This activity has been accredited by the Saudi Commission for Health Specialties', 0, y, { align: 'center' });
         y += 16;
-        const regNumber = student?.scfhsNumber || certificateId;
-        doc.font('Helvetica').fontSize(10).fillColor(gray).text(`with accreditation number ${regNumber}   Date: ${issuedDate.toLocaleDateString('en-GB')}`, 0, y, { align: 'center' });
+        const regNumber = decryptPII(student?.scfhsNumber) || certificateId;
+        doc.font('Helvetica').fontSize(10).fillColor(gray).text(`with accreditation number ${regNumber}   Date: ${fmtPlatformDate(issuedDate, platformLocale)}`, 0, y, { align: 'center' });
         // Optional course-level accreditation number — only rendered when set.
         // Distinct from the SCFHS practitioner number above; this is the
         // accrediting body's registration ID for this specific course.

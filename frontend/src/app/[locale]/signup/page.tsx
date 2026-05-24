@@ -14,6 +14,8 @@ import { isValidSaudiNationalId } from "@/lib/saudi-id";
 import { toast } from "sonner";
 import { Loader2, CheckCircle, Eye, EyeOff } from "lucide-react";
 import ReCAPTCHA from "react-google-recaptcha";
+import PasswordPolicyHint from "@/components/shared/PasswordPolicyHint";
+import { usePasswordPolicy, checkPasswordAgainstPolicy } from "@/hooks/usePasswordPolicy";
 
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
 
@@ -29,6 +31,7 @@ function SignUpForm() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect");
 
+  const { policy } = usePasswordPolicy();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [scfhsNumber, setScfhsNumber] = useState("");
@@ -78,15 +81,12 @@ function SignUpForm() {
       return;
     }
 
-    if (password.length < 8) {
-      const msg = tToasts("passwordMinLength8");
-      setError(msg);
-      toast.error(msg);
-      return;
-    }
-
-    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-      const msg = tToasts("passwordComplexity");
+    // Pre-validate against the admin-configured password policy.
+    // Server enforces too; this short-circuits before submit so users
+    // see the rule they violated without a round-trip.
+    const policyErrors = checkPasswordAgainstPolicy(password, policy);
+    if (policyErrors.length) {
+      const msg = policyErrors[0];
       setError(msg);
       toast.error(msg);
       return;
@@ -367,9 +367,7 @@ function SignUpForm() {
                         )}
                       </button>
                     </div>
-                    <p className="text-xs text-[var(--color-text-secondary)]">
-                      {t("form.passwordHint")}
-                    </p>
+                    <PasswordPolicyHint password={password} />
                   </div>
 
                   {/* Confirm Password Field */}

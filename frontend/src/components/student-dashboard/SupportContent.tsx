@@ -27,8 +27,7 @@ import OfflineBanner from "./OfflineBanner";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentTickets } from "@/hooks/useStudentTickets";
 import { useStudentCourses } from "@/hooks/useStudentCourses";
-import { useCalendarPreference } from "@/contexts/CalendarContext";
-import { formatDateReadable, type CalendarFormat } from "@/lib/hijri";
+import { FmtDate } from "@/components/ui/Fmt";
 import { studentApi } from "@/lib/api";
 import type {
   SupportTicket,
@@ -148,13 +147,11 @@ function TicketRow({
   ticket,
   t,
   locale,
-  calendarFormat,
   onClick,
 }: {
   ticket: SupportTicket;
   t: ReturnType<typeof useTranslations>;
   locale: string;
-  calendarFormat: CalendarFormat;
   onClick: () => void;
 }) {
   const isRTL = locale === "ar";
@@ -186,9 +183,12 @@ function TicketRow({
           </p>
         )}
         <div className="flex items-center gap-2 mt-1">
-          <p className="text-[10px] text-[var(--color-text-secondary)]">
-            {formatDateReadable(ticket.createdAt, calendarFormat, locale)}
-          </p>
+          <FmtDate
+            value={ticket.createdAt}
+            variant="readable"
+            locale={locale === "ar" ? "ar" : "en"}
+            className="text-[10px] text-[var(--color-text-secondary)]"
+          />
           <SlaBadge ticket={ticket} t={t} />
         </div>
       </div>
@@ -599,7 +599,6 @@ const SupportContent = () => {
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
   const userData = useStudentProfile();
-  const { calendarFormat } = useCalendarPreference();
 
   const [mainTab, setMainTab] = useState<MainTab>("tickets");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -761,7 +760,6 @@ const SupportContent = () => {
                             ticket={ticket}
                             t={t}
                             locale={locale}
-                            calendarFormat={calendarFormat}
                             onClick={() => setSelectedTicketId(ticket.id)}
                           />
                         ))}

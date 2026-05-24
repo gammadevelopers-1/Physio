@@ -113,6 +113,10 @@ ENV_VARS="^||^NODE_ENV=production||CORS_ORIGIN=${CORS_VALUE}||API_PREFIX=api||LO
 SECRETS="DATABASE_URL=DATABASE_URL:latest"
 SECRETS="${SECRETS},JWT_SECRET=JWT_SECRET:latest"
 SECRETS="${SECRETS},JWT_REFRESH_SECRET=JWT_REFRESH_SECRET:latest"
+# Field-level encryption key for PII (national_id, phone, scfhs_number)
+# on the users table. Without this, encryptPII() falls back to plaintext
+# storage — see backends/src/common/crypto.ts.
+SECRETS="${SECRETS},PII_ENCRYPTION_KEY=PII_ENCRYPTION_KEY:latest"
 
 # Google reCAPTCHA secret (verifies tokens from /auth/login + /auth/register)
 if gcloud secrets describe RECAPTCHA_SECRET_KEY &>/dev/null 2>&1; then

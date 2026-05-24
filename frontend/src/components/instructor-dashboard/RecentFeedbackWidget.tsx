@@ -2,6 +2,8 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { Star, MessageSquare } from "lucide-react";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDateReadable } from "@/lib/platform-locale";
 
 interface FeedbackItem {
   id: string;
@@ -31,6 +33,7 @@ const RecentFeedbackWidget = ({
 }: RecentFeedbackWidgetProps) => {
   const t = useTranslations("instructorDashboard");
   const locale = useLocale();
+  const platformLocale = usePlatformLocale();
 
   // Show only the 3 most recent — beyond that the widget bloats the
   // dashboard. Per-course reviews live on each course's detail page.
@@ -41,11 +44,7 @@ const RecentFeedbackWidget = ({
   const formatDate = (raw: string) => {
     const d = new Date(raw);
     if (Number.isNaN(d.getTime())) return raw;
-    return d.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    return formatPlatformDateReadable(d, platformLocale, locale === "ar" ? "ar" : "en");
   };
 
   const renderStars = (rating: number, size: "sm" | "lg" = "sm") => {

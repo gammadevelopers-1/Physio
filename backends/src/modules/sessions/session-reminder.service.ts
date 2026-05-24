@@ -16,6 +16,7 @@ import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { NELC_EVENT_TYPE } from '../../database/schema';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { SessionNotificationService } from './session-notification.service';
+import { AdminSettingsService } from '../admin-settings/admin-settings.service';
 
 @Injectable()
 export class SessionReminderService {
@@ -27,6 +28,7 @@ export class SessionReminderService {
     private readonly auditService: NelcAuditService,
     private readonly auditLogService: AuditLogService,
     private readonly sessionNotificationService: SessionNotificationService,
+    private readonly adminSettings: AdminSettingsService,
   ) {}
 
   /**
@@ -101,6 +103,10 @@ export class SessionReminderService {
     courseName: string;
   }) {
     const scheduledAt = session.scheduledAt.toISOString();
+    const localeSettings = await this.adminSettings.getPublicLocaleSettings().catch(() => ({
+      numberSystem: 'western' as const,
+      dateFormat: 'DD-MM-YYYY' as const,
+    }));
 
     // 1. Get instructor details
     const [instructor] = await db
@@ -128,6 +134,7 @@ export class SessionReminderService {
         durationMinutes: session.durationMinutes,
         zoomLink: session.zoomLink,
         isInstructor: true,
+        numberSystem: localeSettings.numberSystem,
       }, locale);
     }
 
@@ -167,6 +174,7 @@ export class SessionReminderService {
         durationMinutes: session.durationMinutes,
         zoomLink: session.zoomLink,
         isInstructor: false,
+        numberSystem: localeSettings.numberSystem,
       }, studentLocale);
     }
   }

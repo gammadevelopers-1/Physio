@@ -7,8 +7,8 @@ import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
-import { useCalendarPreference } from "@/contexts/CalendarContext";
-import { formatDate as formatDateHijri } from "@/lib/hijri";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDate } from "@/lib/platform-locale";
 import DatePicker from "@/components/ui/DatePicker";
 import { instructorApi } from "@/lib/api";
 import { toast } from "sonner";
@@ -51,7 +51,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
   const t = useTranslations("instructorDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
 
   const [activeTab, setActiveTab] = useState<
     "overview" | "attendance" | "assessments" | "interventions"
@@ -211,7 +211,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "-";
-    return formatDateHijri(dateStr, calendarFormat, { locale });
+    return formatPlatformDate(dateStr, platformLocale, { fallback: "-" });
   };
 
   const formatLastActive = (dateStr: string | null) => {

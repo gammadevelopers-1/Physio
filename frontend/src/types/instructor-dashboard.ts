@@ -342,6 +342,8 @@ export interface InstructorCourse {
   completedSessions: number;
   nextSessionAt: string | null;
   instructorName: string | null;
+  managerId?: string | null;
+  managerName?: string | null;
   cohort?: string | null;
   totalModules?: number;
   cmeHours?: number | null;
@@ -364,6 +366,10 @@ export interface InstructorCoursesParams {
   sort?: string;
   page?: number;
   limit?: number;
+  // Admin-only filters — ignored when caller is an instructor/manager
+  // because their ownership scope already constrains visibility.
+  instructorId?: string;
+  managerId?: string;
 }
 
 // ─── Course Detail (single course page) ────────────────────
@@ -643,6 +649,27 @@ export interface CertificateRequestResponse {
   studentLastName: string;
   studentEmail: string;
   courseName?: string;
+
+  // Per-transition audit columns (added 2026-05-22). Each action populates
+  // its own actor + timestamp + reason so the full lifecycle is recoverable
+  // even after multiple state changes. See backend
+  // certificate_requests schema.
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+  approvedByName?: string | null;
+  rejectedBy?: string | null;
+  rejectedAt?: string | null;
+  rejectionReason?: string | null;
+  rejectedByName?: string | null;
+  revokedBy?: string | null;
+  revokedAt?: string | null;
+  revocationReason?: string | null;
+  revokedByName?: string | null;
+
+  // Course + manager context (admin view)
+  courseTitle?: string | null;
+  courseManagerId?: string | null;
+  courseManagerName?: string | null;
 }
 
 export interface CertificateListResponse {

@@ -23,6 +23,8 @@ import SessionsCalendarWidget from "../instructor-dashboard/SessionsCalendarWidg
 import api from "@/lib/api";
 import { taApi, userNotificationsApi } from "@/lib/api";
 import type { TAAssignedCourse, UserNotification } from "@/lib/api";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDate, formatPlatformTime, type PlatformLocaleSettings } from "@/lib/platform-locale";
 
 type TAView = "home" | "sessions" | "attendance" | "submissions";
 
@@ -47,7 +49,7 @@ interface AssignedSession {
   assessmentId?: string | null;
 }
 
-function formatRelativeDate(isoString: string): string {
+function formatRelativeDate(isoString: string, settings: PlatformLocaleSettings): string {
   try {
     const date = new Date(isoString);
     const now = new Date();
@@ -61,10 +63,7 @@ function formatRelativeDate(isoString: string): string {
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
 
-    return date.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-    });
+    return formatPlatformDate(date, settings);
   } catch {
     return "";
   }
@@ -75,6 +74,7 @@ const TADashboardContent = ({
 }: TADashboardContentProps) => {
   const t = useTranslations("taDashboard");
   const locale = useLocale();
+  const platformLocale = usePlatformLocale();
   const [currentView, setCurrentView] = useState<TAView>(initialView);
   const [todaySessions, setTodaySessions] = useState<AssignedSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -284,19 +284,11 @@ const TADashboardContent = ({
     return map[status] || status;
   };
 
-  const formatTime = (dateStr: string) => {
-    return new Date(dateStr).toLocaleTimeString(
-      locale === "ar" ? "ar-SA" : "en-US",
-      { hour: "2-digit", minute: "2-digit" }
-    );
-  };
+  const formatTime = (dateStr: string) =>
+    formatPlatformTime(dateStr, platformLocale, locale === "ar" ? "ar" : "en");
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(
-      locale === "ar" ? "ar-SA" : "en-US",
-      { weekday: "short", month: "short", day: "numeric" }
-    );
-  };
+  const formatDate = (dateStr: string) =>
+    formatPlatformDate(dateStr, platformLocale);
 
   const kpiCards = [
     {
@@ -548,7 +540,7 @@ const TADashboardContent = ({
                     <div className="flex items-center gap-1 mt-1.5">
                       <Clock className="w-3 h-3 text-[var(--color-text-secondary)]" />
                       <span className="text-[11px] text-[var(--color-text-secondary)]">
-                        {formatRelativeDate(notification.createdAt)}
+                        {formatRelativeDate(notification.createdAt, platformLocale)}
                       </span>
                     </div>
                   </div>

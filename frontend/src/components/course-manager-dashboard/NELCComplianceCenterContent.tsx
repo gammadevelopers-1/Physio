@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useCallback, Fragment } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import {
   ShieldCheck,
   Search,
@@ -259,6 +260,7 @@ const NELCComplianceCenterContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const locale = useLocale();
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
   const isRTL = locale === "ar";
   const manager = useManagerProfile();
   const { courses, totals, overallPercentage, loading, error, refetch } = useNELCCompliance();
@@ -778,7 +780,7 @@ const NELCComplianceCenterContent = () => {
                                       <p className="text-sm font-medium text-[var(--color-text-secondary)]">{vc.sessionTitle}</p>
                                       <p className="text-xs text-[var(--color-text-secondary)]">
                                         {vc.scheduledAt
-                                          ? formatDateHijri(vc.scheduledAt, calendarFormat, { locale })
+                                          ? formatDateHijri(vc.scheduledAt, calendarFormat, { locale, platformSettings: platformLocale })
                                           : "—"}{" "}
                                         · {vc.durationMinutes}min
                                       </p>

@@ -17,6 +17,8 @@ import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { instructorApi, publicApi } from "@/lib/api";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDateReadable } from "@/lib/platform-locale";
 
 interface InstructorCourseReviewsContentProps {
   courseId: string;
@@ -46,6 +48,7 @@ export default function InstructorCourseReviewsContent({
   const isRTL = locale === "ar";
   const instructor = useInstructorProfile();
   const t = useTranslations("instructorDashboard");
+  const platformLocale = usePlatformLocale();
 
   const [courseTitle, setCourseTitle] = useState<string>("");
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -101,11 +104,7 @@ export default function InstructorCourseReviewsContent({
   }, [fetchReviews]);
 
   const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
+    formatPlatformDateReadable(iso, platformLocale, locale === "ar" ? "ar" : "en");
 
   const maxDist = Math.max(1, ...Object.values(distribution));
   const Arrow = isRTL ? ArrowRight : ArrowLeft;

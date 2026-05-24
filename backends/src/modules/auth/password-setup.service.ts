@@ -18,6 +18,8 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../email/email.service';
+import { AdminSettingsService } from '../admin-settings/admin-settings.service';
+import { validatePasswordPolicy } from '../../common/password-policy';
 
 const PURPOSE = 'password-setup';
 const TOKEN_EXPIRY_HOURS = 24;
@@ -30,6 +32,7 @@ export class PasswordSetupService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
+    private readonly adminSettings: AdminSettingsService,
   ) {}
 
   /**
@@ -115,13 +118,16 @@ export class PasswordSetupService {
     accessToken: string;
     refreshToken: string;
   }> {
-    if (!params.password || params.password.length < 8) {
-      throw new BadRequestException('Password must be at least 8 characters');
-    }
-    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(params.password)) {
-      throw new BadRequestException(
-        'Password must contain at least one uppercase letter, one lowercase letter, and one number',
-      );
+    // Enforce admin-configured password policy
+    const authSettings = await this.adminSettings.getAuthSettings();
+    const policyErrors = validatePasswordPolicy(params.password, {
+      minLength: authSettings.passwordMinLength,
+      requireUppercase: authSettings.passwordRequireUppercase,
+      requireNumber: authSettings.passwordRequireNumber,
+      requireSpecial: authSettings.passwordRequireSpecial,
+    });
+    if (policyErrors.length) {
+      throw new BadRequestException(policyErrors.join('. '));
     }
 
     const codeHash = createHash('sha256').update(params.token).digest('hex');

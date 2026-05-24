@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { profileApi } from "@/lib/api";
 import { usePreferences } from "@/hooks/usePreferences";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 
 interface PreferencesSectionProps {
   /**
@@ -21,6 +22,7 @@ export default function PreferencesSection({ scope = "basic" }: PreferencesSecti
   const router = useRouter();
   const pathname = usePathname();
   const { preferences, loading, updateUi } = usePreferences();
+  const { allowedLanguages } = usePlatformLocale();
 
   if (loading) {
     return (
@@ -50,8 +52,12 @@ export default function PreferencesSection({ scope = "basic" }: PreferencesSecti
         <Row label={t("interfaceLanguage")}>
           <ButtonGroup
             options={[
-              { value: "en", label: "English" },
-              { value: "ar", label: "العربية" },
+              ...(allowedLanguages.includes("en")
+                ? [{ value: "en", label: "English" }]
+                : []),
+              ...(allowedLanguages.includes("ar")
+                ? [{ value: "ar", label: "العربية" }]
+                : []),
             ]}
             value={locale}
             onChange={switchLocale}

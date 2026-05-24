@@ -8,6 +8,8 @@ import {
 } from '../../database/schema';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 import { EmailService } from '../email/email.service';
+import { AdminSettingsService } from '../admin-settings/admin-settings.service';
+import { toArabicIndic } from '../../common/platform-locale';
 
 type SessionEventType =
   | 'session_scheduled'
@@ -96,6 +98,7 @@ export class SessionNotificationService {
   constructor(
     private readonly userNotificationsService: UserNotificationsService,
     private readonly emailService: EmailService,
+    private readonly adminSettings: AdminSettingsService,
   ) {}
 
   /**
@@ -143,19 +146,26 @@ export class SessionNotificationService {
       }
 
       const config = EVENT_CONFIG[eventType];
+      const localeSettings = await this.adminSettings.getPublicLocaleSettings().catch(() => ({
+        numberSystem: 'western' as const,
+        dateFormat: 'DD-MM-YYYY' as const,
+      }));
 
       // Format scheduled date for messages. Riyadh timezone is the
       // platform default — Saudi-based audience, matches the WhatsApp
       // share + dashboard renderings. Without timeZone: 'Asia/Riyadh'
       // this formats in the server's TZ (UTC on Cloud Run), which is
       // what the user saw in their inbox.
-      const scheduledDateStr = session.scheduledAt
+      let scheduledDateStr = session.scheduledAt
         ? `${new Date(session.scheduledAt).toLocaleString('en-US', {
             dateStyle: 'medium',
             timeStyle: 'short',
             timeZone: 'Asia/Riyadh',
           })} (Riyadh Time)`
         : '';
+      if (scheduledDateStr && localeSettings.numberSystem === 'arabic_indic') {
+        scheduledDateStr = toArabicIndic(scheduledDateStr);
+      }
 
       // 3. In-app notifications — group by language for localized messages
       const enIds = enrolledStudents
@@ -292,7 +302,11 @@ export class SessionNotificationService {
 
       const courseName = course?.title || '';
       const isAr = instructor.language === 'ar';
-      const scheduledDate = session.scheduledAt
+      const localeSettings = await this.adminSettings.getPublicLocaleSettings().catch(() => ({
+        numberSystem: 'western' as const,
+        dateFormat: 'DD-MM-YYYY' as const,
+      }));
+      let scheduledDate = session.scheduledAt
         ? `${new Date(session.scheduledAt).toLocaleDateString(isAr ? 'ar-SA' : 'en-US', {
             weekday: 'long',
             year: 'numeric',
@@ -303,6 +317,9 @@ export class SessionNotificationService {
             timeZone: 'Asia/Riyadh',
           })}${isAr ? ' (بتوقيت الرياض)' : ' (Riyadh Time)'}`
         : '';
+      if (scheduledDate && localeSettings.numberSystem === 'arabic_indic') {
+        scheduledDate = toArabicIndic(scheduledDate);
+      }
 
       // In-app notification
       await this.userNotificationsService.create({

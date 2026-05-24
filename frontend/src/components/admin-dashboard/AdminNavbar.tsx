@@ -23,8 +23,10 @@ import {
   FileText,
   BarChart3,
   ClipboardList,
+  Mail,
 } from "lucide-react";
 import { useAuth } from "@/contexts";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { RoleSwitcherDropdownItems, RoleSwitcherMobileSection } from "@/components/shared/RoleSwitcher";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
@@ -48,13 +50,16 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
   const pathname = usePathname();
   const isRTL = locale === "ar";
   const { logout } = useAuth();
+  const { allowedLanguages } = usePlatformLocale();
+  const showLocaleToggle = allowedLanguages.length > 1;
   const { settings: siteSettings } = useSiteSettings();
   const logoUrl = siteSettings?.logo?.url
     ? getStrapiMediaUrl(siteSettings.logo.url)
     : "/images/logo.png";
   const showSearch = siteSettings?.showSearchBar !== false;
 
-  // Dashboard navigation items for mobile menu
+  // Dashboard navigation items for mobile menu — order mirrors
+  // AdminSidebar.tsx so the nav reads the same on every surface.
   const dashboardNavItems = [
     {
       label: tDashboard("sidebar.dashboard"),
@@ -67,11 +72,6 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
       icon: Users,
     },
     {
-      label: tDashboard("sidebar.roles"),
-      href: `/${locale}/dashboard/admin/roles`,
-      icon: Shield,
-    },
-    {
       label: tDashboard("sidebar.courses"),
       href: `/${locale}/dashboard/admin/courses`,
       icon: BookOpen,
@@ -82,9 +82,9 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
       icon: DollarSign,
     },
     {
-      label: tDashboard("sidebar.security"),
-      href: `/${locale}/dashboard/admin/security`,
-      icon: Lock,
+      label: tDashboard("sidebar.reports"),
+      href: `/${locale}/dashboard/admin/reports`,
+      icon: BarChart3,
     },
     {
       label: tDashboard("sidebar.compliance"),
@@ -92,14 +92,19 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
       icon: FileText,
     },
     {
-      label: tDashboard("sidebar.reports"),
-      href: `/${locale}/dashboard/admin/reports`,
-      icon: BarChart3,
-    },
-    {
       label: tDashboard("sidebar.logs"),
       href: `/${locale}/dashboard/admin/logs`,
       icon: ClipboardList,
+    },
+    {
+      label: tDashboard("sidebar.security"),
+      href: `/${locale}/dashboard/admin/security`,
+      icon: Lock,
+    },
+    {
+      label: tDashboard("sidebar.templates"),
+      href: `/${locale}/dashboard/admin/templates`,
+      icon: Mail,
     },
     {
       label: tDashboard("sidebar.settings"),
@@ -143,14 +148,16 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
 
         {/* Actions */}
         <div className="flex items-center gap-4">
-          {/* Language Toggle */}
-          <button
-            onClick={switchLocale}
-            className="flex items-center gap-2 text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors cursor-pointer"
-          >
-            <Globe className="w-5 h-5" strokeWidth={1.67} />
-            <span className="text-base leading-6">{t("languageToggle")}</span>
-          </button>
+          {/* Language Toggle — hidden when only one locale is allowed */}
+          {showLocaleToggle && (
+            <button
+              onClick={switchLocale}
+              className="flex items-center gap-2 text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors cursor-pointer"
+            >
+              <Globe className="w-5 h-5" strokeWidth={1.67} />
+              <span className="text-base leading-6">{t("languageToggle")}</span>
+            </button>
+          )}
 
           {/* Separator - Hidden on mobile */}
           <div className="hidden lg:block h-6 w-px bg-[var(--on-surface-variant)] opacity-30" />

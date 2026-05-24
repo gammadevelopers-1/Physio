@@ -6,6 +6,7 @@ import { useLocale } from "next-intl";
 import { Copyright, Facebook, Linkedin, Twitter, Instagram } from "lucide-react";
 import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
+import { usePlatformGeneral } from "@/contexts/PlatformGeneralContext";
 
 interface FooterProps {
   siteSettings?: SiteSettings | null;
@@ -19,10 +20,15 @@ interface FooterProps {
 const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const platformGeneral = usePlatformGeneral();
 
   // Logo comes strictly from Strapi
   const logoUrl = siteSettings?.logo?.url ? getStrapiMediaUrl(siteSettings.logo.url) : null;
-  const siteName = siteSettings?.siteName || "";
+  // Site name prefers admin's Settings → General → Platform Name (per locale);
+  // falls back to Strapi siteName.
+  const adminName =
+    locale === "ar" ? platformGeneral.platformNameAr : platformGeneral.platformName;
+  const siteName = adminName || siteSettings?.siteName || "";
 
   // Link columns — Strapi only (no translation-based fallback arrays)
   const platformLinks = (footerLinks?.platform || []).map((l) => ({ label: l.label, href: l.url }));

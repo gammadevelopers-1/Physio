@@ -4,6 +4,7 @@ import {
   varchar,
   timestamp,
   boolean,
+  text,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -20,7 +21,10 @@ export const users = pgTable('users', {
   lastName: varchar('last_name', { length: 100 }),
   firstNameAr: varchar('first_name_ar', { length: 100 }),
   lastNameAr: varchar('last_name_ar', { length: 100 }),
-  phone: varchar('phone', { length: 20 }),
+  // Phone stored encrypted (AES-256-GCM via `encryptPII`). Type is `text`
+  // because the ciphertext is ~3x longer than the plaintext. Legacy
+  // plaintext rows remain readable; see common/crypto.ts.
+  phone: text('phone'),
   avatar: varchar('avatar', { length: 500 }),
 
   // Extended profile
@@ -28,9 +32,12 @@ export const users = pgTable('users', {
   location: varchar('location', { length: 200 }),
   language: varchar('language', { length: 10 }).default('en'),
 
-  // Learner profile fields
-  scfhsNumber: varchar('scfhs_number', { length: 50 }),
-  nationalId: varchar('national_id', { length: 50 }),
+  // Learner profile fields. scfhsNumber + nationalId are PII — stored
+  // encrypted at the application layer (see common/crypto.ts). Type is
+  // `text` to hold the ciphertext. Legacy plaintext rows remain
+  // readable until backfilled.
+  scfhsNumber: text('scfhs_number'),
+  nationalId: text('national_id'),
   nationality: varchar('nationality', { length: 100 }),
   gender: varchar('gender', { length: 20 }),
   dateOfBirth: varchar('date_of_birth', { length: 10 }),

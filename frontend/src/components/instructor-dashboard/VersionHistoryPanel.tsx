@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { materialsApi } from "@/lib/api";
 import { toast } from "sonner";
@@ -49,6 +50,7 @@ export default function VersionHistoryPanel({
   const t = useTranslations("instructorDashboard");
   const locale = useLocale();
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
   const [versions, setVersions] = useState<VersionEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [rolling, setRolling] = useState<string | null>(null);
@@ -168,7 +170,7 @@ export default function VersionHistoryPanel({
                     <p className="text-sm font-medium text-[var(--color-text-secondary)] mt-2 truncate">{v.title}</p>
                   )}
                   <div className="flex items-center gap-4 mt-1 text-xs text-[var(--color-text-secondary)]">
-                    <span>{formatDateHijri(v.createdAt, calendarFormat, { locale, includeTime: true })}</span>
+                    <span>{formatDateHijri(v.createdAt, calendarFormat, { locale, includeTime: true, platformSettings: platformLocale })}</span>
                     <span>{formatSize(v.fileSize)}</span>
                     {v.mimeType && <span>{v.mimeType.split("/").pop()}</span>}
                   </div>

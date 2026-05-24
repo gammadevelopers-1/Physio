@@ -17,6 +17,8 @@ import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import { UserMenu } from "./UserMenu";
 import { useAuth } from "@/contexts";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { usePlatformGeneral } from "@/contexts/PlatformGeneralContext";
 import { profileApi } from "@/lib/api";
 
 interface NavbarProps {
@@ -37,10 +39,17 @@ const Navbar = ({ siteSettings, navLinks = [], footerLinks }: NavbarProps) => {
   const pathname = usePathname();
   const isRTL = locale === "ar";
   const { isAuthenticated, isLoading } = useAuth();
+  const { allowedLanguages } = usePlatformLocale();
+  const platformGeneral = usePlatformGeneral();
+  const showLocaleToggle = allowedLanguages.length > 1;
 
-  // Logo comes strictly from Strapi — if empty, the site name text is shown instead
+  // Logo comes strictly from Strapi — if empty, the site name text is shown instead.
+  // Site name prefers the admin's Settings → General → Platform Name (per locale),
+  // falling back to Strapi siteName.
   const logoUrl = siteSettings?.logo?.url ? getStrapiMediaUrl(siteSettings.logo.url) : null;
-  const siteName = siteSettings?.siteName || "";
+  const adminName =
+    locale === "ar" ? platformGeneral.platformNameAr : platformGeneral.platformName;
+  const siteName = adminName || siteSettings?.siteName || "";
 
   const switchLocale = async () => {
     const newLocale = locale === "en" ? "ar" : "en";
@@ -96,16 +105,18 @@ const Navbar = ({ siteSettings, navLinks = [], footerLinks }: NavbarProps) => {
 
         {/* Actions (appears on left side in RTL due to dir="rtl") */}
         <div className="flex items-center gap-4">
-          {/* Language Toggle - Always visible */}
-          <button
-            onClick={switchLocale}
-            className="flex items-center gap-2 text-[var(--color-icon)] hover:text-[var(--color-primary)] transition-colors cursor-pointer"
-          >
-            <Globe className="w-5 h-5" strokeWidth={1.67} />
-            <span className="text-base leading-6">
-              {t("languageToggle")}
-            </span>
-          </button>
+          {/* Language Toggle — hidden when only one locale is allowed */}
+          {showLocaleToggle && (
+            <button
+              onClick={switchLocale}
+              className="flex items-center gap-2 text-[var(--color-icon)] hover:text-[var(--color-primary)] transition-colors cursor-pointer"
+            >
+              <Globe className="w-5 h-5" strokeWidth={1.67} />
+              <span className="text-base leading-6">
+                {t("languageToggle")}
+              </span>
+            </button>
+          )}
 
           {/* Separator - Hidden on mobile/tablet */}
           <div className="hidden lg:block h-6 w-px bg-[var(--on-surface-variant)] opacity-30" />

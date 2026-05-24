@@ -21,6 +21,7 @@ import {
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { isGlobalAdmin, isManager, isTA } from '../../common/role-helpers';
+import { decryptUserPII } from '../../common/crypto';
 import { MarkAttendanceDto } from './dto/mark-attendance.dto';
 import { BulkMarkAttendanceDto } from './dto/bulk-mark-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
@@ -30,6 +31,8 @@ import { ThresholdEvaluationService } from '../course-assistants/threshold-evalu
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 import { EmailService } from '../email/email.service';
 import { ZOOM_SERVICE, IZoomService } from '../zoom/zoom.interface';
+import { AdminSettingsService } from '../admin-settings/admin-settings.service';
+import { toArabicIndic } from '../../common/platform-locale';
 import {
   classifyCourse,
   getNelcMaxEnrollment,
@@ -46,6 +49,7 @@ export class EnrollmentsService {
     private readonly userNotificationsService: UserNotificationsService,
     private readonly emailService: EmailService,
     @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
+    private readonly adminSettings: AdminSettingsService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -297,7 +301,7 @@ export class EnrollmentsService {
     courseId: string,
     studentId: string,
   ): Promise<void> {
-    const [student] = await db
+    const [rawStudent] = await db
       .select({
         email: users.email,
         firstName: users.firstName,
@@ -309,7 +313,11 @@ export class EnrollmentsService {
       .from(users)
       .where(eq(users.id, studentId))
       .limit(1);
-    if (!student?.email) return;
+    if (!rawStudent?.email) return;
+    // PII fields are stored encrypted — decrypt before passing on to
+    // Zoom (which needs plaintext) and to the webinar_registrations
+    // table (denormalized cache that mirrors what Zoom received).
+    const student = decryptUserPII(rawStudent);
 
     const webinarSessions = await db
       .select({
@@ -451,13 +459,20 @@ export class EnrollmentsService {
 
     // Email notification
     if (student.email) {
-      const formattedDate = course.startDate
+      const localeSettings = await this.adminSettings.getPublicLocaleSettings().catch(() => ({
+        numberSystem: 'western' as const,
+        dateFormat: 'DD-MM-YYYY' as const,
+      }));
+      let formattedDate = course.startDate
         ? new Date(course.startDate).toLocaleDateString('en-US', {
             day: 'numeric',
             month: 'short',
             year: 'numeric',
           })
         : null;
+      if (formattedDate && localeSettings.numberSystem === 'arabic_indic') {
+        formattedDate = toArabicIndic(formattedDate);
+      }
 
       const locale = (student.language || 'en') as 'en' | 'ar';
       await this.emailService.sendEnrollmentConfirmation(student.email, {

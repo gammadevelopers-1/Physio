@@ -9,6 +9,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSecuritySettings } from "@/components/shared/useSecuritySettings";
 import TwoFactorToggle from "@/components/shared/TwoFactorToggle";
 import TrustedDevicesSection from "@/components/shared/TrustedDevicesSection";
+import PasswordPolicyHint from "@/components/shared/PasswordPolicyHint";
+import { usePasswordPolicy, checkPasswordAgainstPolicy } from "@/hooks/usePasswordPolicy";
 
 interface SecuritySectionProps {
   /** ID prefix for input ids (avoids collisions when multiple settings sections are rendered) */
@@ -21,6 +23,7 @@ export default function SecuritySection({ idPrefix = "settings" }: SecuritySecti
   const isRTL = locale === "ar";
   const { logout } = useAuth();
   const security = useSecuritySettings();
+  const { policy } = usePasswordPolicy();
 
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
@@ -33,8 +36,9 @@ export default function SecuritySection({ idPrefix = "settings" }: SecuritySecti
       toast.error(t("passwordRequired"));
       return;
     }
-    if (newPassword.length < 8) {
-      toast.error(t("passwordMinLength"));
+    const policyErrors = checkPasswordAgainstPolicy(newPassword, policy);
+    if (policyErrors.length) {
+      toast.error(policyErrors[0]);
       return;
     }
     setChanging(true);
@@ -78,6 +82,7 @@ export default function SecuritySection({ idPrefix = "settings" }: SecuritySecti
             onToggleShow={() => setShowNew((v) => !v)}
             isRTL={isRTL}
           />
+          <PasswordPolicyHint password={newPassword} />
           <button
             type="button"
             onClick={handleChangePassword}

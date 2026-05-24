@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from "next-intl";
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
+import Select from "./Select";
 import {
   DollarSign,
   TrendingUp,
@@ -138,16 +139,17 @@ const FinanceContent = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <select
+                  <Select
+                    className="w-44"
                     value={dateRange}
-                    onChange={(e) => setDateRange(e.target.value)}
-                    className="h-10 px-4 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
-                  >
-                    <option value="today">{t("financePage.dateRange.today")}</option>
-                    <option value="week">{t("financePage.dateRange.week")}</option>
-                    <option value="mtd">{t("financePage.dateRange.mtd")}</option>
-                    <option value="ytd">{t("financePage.dateRange.ytd")}</option>
-                  </select>
+                    onChange={setDateRange}
+                    options={[
+                      { value: "today", label: t("financePage.dateRange.today") },
+                      { value: "week", label: t("financePage.dateRange.week") },
+                      { value: "mtd", label: t("financePage.dateRange.mtd") },
+                      { value: "ytd", label: t("financePage.dateRange.ytd") },
+                    ]}
+                  />
                   <button className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors">
                     <Download className="w-4 h-4" />
                     {t("financePage.export")}
@@ -283,15 +285,17 @@ const FinanceContent = () => {
                     <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                       {t("financePage.recentTransactions")}
                     </h3>
-                    <select
+                    <Select
+                      size="sm"
+                      className="w-40"
                       value={transactionFilter}
-                      onChange={(e) => setTransactionFilter(e.target.value)}
-                      className="h-9 px-3 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
-                    >
-                      <option value="all">{t("financePage.filters.all")}</option>
-                      <option value="payment">{t("financePage.filters.payments")}</option>
-                      <option value="refund">{t("financePage.filters.refunds")}</option>
-                    </select>
+                      onChange={setTransactionFilter}
+                      options={[
+                        { value: "all", label: t("financePage.filters.all") },
+                        { value: "payment", label: t("financePage.filters.payments") },
+                        { value: "refund", label: t("financePage.filters.refunds") },
+                      ]}
+                    />
                   </div>
                 </div>
 

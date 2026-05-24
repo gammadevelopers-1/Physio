@@ -37,6 +37,7 @@ import {
 import { JwtAuthGuard, RolesGuard } from './guards';
 import { CurrentUser, Public, Roles } from './decorators';
 import { UserRole, RoleName } from '../../database/schema';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
@@ -72,6 +73,7 @@ export class AuthController {
   // Register
   // ===========================================
   @Public()
+  @Throttle({ auth: { limit: 5, ttl: 60_000 } }) // 5 / min / IP — abuse-prone
   @Post('register')
   async register(@Body() dto: RegisterDto) {
     await this.recaptchaService.verify(dto.recaptchaToken, 'register');
@@ -82,6 +84,7 @@ export class AuthController {
   // Login (with 2FA support)
   // ===========================================
   @Public()
+  @Throttle({ auth: { limit: 10, ttl: 60_000 } }) // 10 / min / IP — distributed brute-force defense
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(
@@ -298,9 +301,13 @@ export class AuthController {
   // Forgot Password — send reset OTP
   // ===========================================
   @Public()
+  @Throttle({ auth: { limit: 3, ttl: 60_000 } }) // 3 / min / IP — email enumeration / OTP spam defense
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
-  async forgotPassword(@Body() body: { email: string }) {
+  async forgotPassword(@Body() body: { email: string; recaptchaToken?: string }) {
+    if (body.recaptchaToken) {
+      await this.recaptchaService.verify(body.recaptchaToken, 'forgot-password');
+    }
     return this.authService.forgotPassword(body.email);
   }
 
@@ -308,11 +315,15 @@ export class AuthController {
   // Reset Password — verify OTP + set new password
   // ===========================================
   @Public()
+  @Throttle({ auth: { limit: 5, ttl: 60_000 } }) // 5 / min / IP — OTP brute-force defense
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   async resetPassword(
-    @Body() body: { email: string; code: string; newPassword: string },
+    @Body() body: { email: string; code: string; newPassword: string; recaptchaToken?: string },
   ) {
+    if (body.recaptchaToken) {
+      await this.recaptchaService.verify(body.recaptchaToken, 'reset-password');
+    }
     return this.authService.resetPassword(body.email, body.code, body.newPassword);
   }
 
@@ -328,6 +339,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ auth: { limit: 5, ttl: 60_000 } })
   @Post('password-setup/complete')
   @HttpCode(HttpStatus.OK)
   async completePasswordSetup(
@@ -499,6 +511,77 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Get('users/export')
+  async exportUsers(
+    @Query() query: GetUsersQueryDto,
+    @Res() res: Response,
+  ) {
+    const rows = await this.authService.exportAllUsers({
+      search: query.search,
+      role: query.role,
+      status: query.status,
+    });
+
+    const escape = (v: unknown): string => {
+      if (v === null || v === undefined) return '';
+      const s = String(v);
+      // Wrap in quotes if value contains comma, quote, or newline
+      if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+      return s;
+    };
+    const fmt = (d: Date | null) => (d ? new Date(d).toISOString() : '');
+
+    const headers = [
+      'ID',
+      'Email',
+      'First Name',
+      'Last Name',
+      'SCFHS Number',
+      'Active Role',
+      'All Roles',
+      'Status',
+      'Verified',
+      'Created At',
+      'Last Login At',
+    ];
+
+    const lines: string[] = [headers.join(',')];
+    for (const u of rows) {
+      const status = !u.isActive
+        ? 'suspended'
+        : !u.isVerified
+          ? 'pending'
+          : 'active';
+      lines.push(
+        [
+          escape(u.id),
+          escape(u.email),
+          escape(u.firstName),
+          escape(u.lastName),
+          escape(u.scfhsNumber),
+          escape(u.activeRole),
+          escape((u.roles || []).join('; ')),
+          escape(status),
+          escape(u.isVerified ? 'yes' : 'no'),
+          escape(fmt(u.createdAt)),
+          escape(fmt(u.lastLoginAt)),
+        ].join(','),
+      );
+    }
+    // Prepend UTF-8 BOM so Excel opens with correct encoding (Arabic names).
+    const body = '﻿' + lines.join('\r\n') + '\r\n';
+
+    const ts = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="users-${ts}.csv"`,
+    );
+    res.send(body);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
   @Get('users/:id/roles')
   async getUserRoles(@Param('id') userId: string) {
     const roles = await this.authService.getUserRoles(userId);
@@ -522,8 +605,9 @@ export class AuthController {
   async removeRole(
     @Param('id') userId: string,
     @Param('role') role: string,
+    @CurrentUser('id') adminId: string,
   ) {
-    return this.authService.removeRole(userId, role as RoleName);
+    return this.authService.removeRole(userId, role as RoleName, adminId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -542,8 +626,9 @@ export class AuthController {
   async updateUser(
     @Param('id') userId: string,
     @Body() dto: UpdateUserDto,
+    @CurrentUser('id') adminId: string,
   ) {
-    return this.authService.updateUser(userId, dto);
+    return this.authService.updateUser(userId, dto, adminId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -585,6 +670,16 @@ export class AuthController {
   @Delete('roles/:id')
   async deleteRole(@Param('id') roleId: string) {
     return this.authService.deleteRole(roleId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Patch('roles/:id/permissions')
+  async updateRolePermissions(
+    @Param('id') roleId: string,
+    @Body() body: { permissions: Record<string, { view: boolean; create: boolean; edit: boolean; delete: boolean }> },
+  ) {
+    return this.authService.updateRolePermissions(roleId, body.permissions || {});
   }
 
   // ===========================================

@@ -23,11 +23,17 @@ import {
   trustedDevices,
   ROLE_NAMES,
   RoleName,
+  PERMISSION_CATEGORIES,
+  RolePermissions,
 } from '../../database/schema';
 import { RegisterDto, LoginDto, CreateUserDto, UpdateUserDto, UpdateProfileDto } from './dto';
 import { EmailService } from '../email/email.service';
 import { JwtPayload } from './strategies/jwt.strategy';
 import { ModuleRef } from '@nestjs/core';
+import { AuditLogService } from '../audit-logs/audit-logs.service';
+import { AdminSettingsService } from '../admin-settings/admin-settings.service';
+import { encryptPII, decryptPII, decryptUserPII } from '../../common/crypto';
+import { validatePasswordPolicy } from '../../common/password-policy';
 
 @Injectable()
 export class AuthService {
@@ -40,7 +46,38 @@ export class AuthService {
     private configService: ConfigService,
     private emailService: EmailService,
     private moduleRef: ModuleRef,
+    private auditLogService: AuditLogService,
+    private adminSettings: AdminSettingsService,
   ) {}
+
+  /**
+   * Best-effort audit log write. Wrapped in try/catch so a downstream
+   * log-DB blip never breaks an auth flow. Used for sensitive admin
+   * actions (role changes, user CRUD, login outcomes, 2FA toggles)
+   * to satisfy the platform's "audit logs for sensitive admin actions"
+   * requirement.
+   */
+  private async logSecurityEvent(
+    actorId: string | null,
+    entityType: string,
+    entityId: string,
+    action: string,
+    metadata?: Record<string, unknown>,
+    ipAddress?: string,
+  ): Promise<void> {
+    try {
+      await this.auditLogService.log({
+        entityType,
+        entityId,
+        action,
+        performedBy: actorId || entityId, // self-attributed when no admin actor
+        metadata,
+        ipAddress,
+      });
+    } catch (err) {
+      this.logger.warn(`audit log write failed for ${action}: ${err}`);
+    }
+  }
 
   // ===========================================
   // Register - Creates user with STUDENT role
@@ -57,6 +94,18 @@ export class AuthService {
       throw new ConflictException('Email already registered');
     }
 
+    // Enforce admin-configured password policy
+    const authSettings = await this.adminSettings.getAuthSettings();
+    const policyErrors = validatePasswordPolicy(dto.password, {
+      minLength: authSettings.passwordMinLength,
+      requireUppercase: authSettings.passwordRequireUppercase,
+      requireNumber: authSettings.passwordRequireNumber,
+      requireSpecial: authSettings.passwordRequireSpecial,
+    });
+    if (policyErrors.length) {
+      throw new BadRequestException(policyErrors.join('. '));
+    }
+
     // Hash password
     const passwordHash = await argon2.hash(dto.password);
 
@@ -71,7 +120,9 @@ export class AuthService {
       throw new BadRequestException('System roles not initialized. Run db:seed:roles');
     }
 
-    // Create user with default STUDENT active role
+    // Create user with default STUDENT active role.
+    // phone / scfhsNumber / nationalId are PII — encrypt at application
+    // layer before storing. encryptPII is null-safe + idempotent.
     const [newUser] = await db
       .insert(users)
       .values({
@@ -79,11 +130,11 @@ export class AuthService {
         passwordHash,
         firstName: dto.firstName,
         lastName: dto.lastName,
-        phone: dto.phone,
-        scfhsNumber: dto.scfhsNumber || null,
+        phone: encryptPII(dto.phone),
+        scfhsNumber: encryptPII(dto.scfhsNumber || null),
         // National ID / Iqama is required at registration and immutable
         // once stored. Already validated by the DTO via @IsSaudiNationalId.
-        nationalId: dto.nationalId,
+        nationalId: encryptPII(dto.nationalId),
         activeRole: ROLE_NAMES.STUDENT,
       })
       .returning({
@@ -167,9 +218,12 @@ export class AuthService {
       // Increment failed login attempts
       const attempts = parseInt(user.failedLoginAttempts || '0') + 1;
 
-      // Lock account after 5 failed attempts
-      if (attempts >= 5) {
-        const lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+      // Lock account after the admin-configured attempt threshold.
+      const authSettings = await this.adminSettings.getAuthSettings();
+      if (attempts >= authSettings.lockoutAttempts) {
+        const lockUntil = new Date(
+          Date.now() + authSettings.lockoutMinutes * 60 * 1000,
+        );
         await db
           .update(users)
           .set({
@@ -178,8 +232,17 @@ export class AuthService {
           })
           .where(eq(users.id, user.id));
 
+        await this.logSecurityEvent(
+          user.id,
+          'user',
+          user.id,
+          'auth.login_locked',
+          { attempts, lockUntil: lockUntil.toISOString() },
+          ipAddress,
+        );
+
         throw new UnauthorizedException(
-          'Too many failed attempts. Account locked for 15 minutes.',
+          `Too many failed attempts. Account locked for ${authSettings.lockoutMinutes} minutes.`,
         );
       }
 
@@ -187,6 +250,15 @@ export class AuthService {
         .update(users)
         .set({ failedLoginAttempts: String(attempts) })
         .where(eq(users.id, user.id));
+
+      await this.logSecurityEvent(
+        user.id,
+        'user',
+        user.id,
+        'auth.login_failed',
+        { attempts, reason: 'invalid_password' },
+        ipAddress,
+      );
 
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -207,8 +279,17 @@ export class AuthService {
       .where(eq(users.id, user.id));
 
     // Generate tokens
-    const accessToken = this.generateAccessToken(user, userRolesList);
+    const accessToken = await this.generateAccessToken(user, userRolesList);
     const refreshToken = await this.generateRefreshToken(user.id, ipAddress, userAgent);
+
+    await this.logSecurityEvent(
+      user.id,
+      'user',
+      user.id,
+      'auth.login_success',
+      { activeRole: user.activeRole },
+      ipAddress,
+    );
 
     return {
       user: {
@@ -262,7 +343,7 @@ export class AuthService {
 
     // Generate new token with updated active role
     const updatedUser = { ...user, activeRole: newRole };
-    const accessToken = this.generateAccessToken(updatedUser, userRolesList);
+    const accessToken = await this.generateAccessToken(updatedUser, userRolesList);
 
     return {
       accessToken,
@@ -358,6 +439,14 @@ export class AuthService {
         .where(eq(users.id, userId));
     }
 
+    await this.logSecurityEvent(
+      assignedBy,
+      'user',
+      userId,
+      'role.assigned',
+      { role: roleName, targetEmail: user.email, roles: updatedRoles },
+    );
+
     return {
       message: `Role ${roleName} assigned successfully`,
       roles: updatedRoles,
@@ -370,6 +459,7 @@ export class AuthService {
   async removeRole(
     userId: string,
     roleName: RoleName,
+    removedBy?: string,
   ): Promise<{ message: string; roles: string[] }> {
     // Verify user exists
     const [user] = await db
@@ -420,6 +510,14 @@ export class AuthService {
 
     // Get updated roles list
     const updatedRoles = await this.getUserRoles(userId);
+
+    await this.logSecurityEvent(
+      removedBy ?? null,
+      'user',
+      userId,
+      'role.removed',
+      { role: roleName, targetEmail: user.email, roles: updatedRoles },
+    );
 
     return {
       message: `Role ${roleName} removed successfully`,
@@ -511,7 +609,7 @@ export class AuthService {
       .where(eq(refreshTokens.id, tokenRecord.id));
 
     // Generate new tokens
-    const accessToken = this.generateAccessToken(user, userRolesList);
+    const accessToken = await this.generateAccessToken(user, userRolesList);
     const refreshToken = await this.generateRefreshToken(user.id, ipAddress, userAgent);
 
     return { accessToken, refreshToken };
@@ -564,7 +662,7 @@ export class AuthService {
     const userRolesList = await this.getUserRoles(userId);
 
     return {
-      ...user,
+      ...decryptUserPII(user),
       roles: userRolesList,
     };
   }
@@ -572,7 +670,10 @@ export class AuthService {
   // ===========================================
   // Helper: Generate Access Token
   // ===========================================
-  private generateAccessToken(user: User, userRoles: string[]): string {
+  private async generateAccessToken(
+    user: User,
+    userRoles: string[],
+  ): Promise<string> {
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
@@ -580,8 +681,16 @@ export class AuthService {
       roles: userRoles,
     };
 
+    // Admin's Settings → Authentication → Access Token Lifetime wins;
+    // fall back to env then to "15m" if neither configured.
+    const authSettings = await this.adminSettings.getAuthSettings();
+    const expiresIn =
+      `${authSettings.sessionTimeoutMinutes}m` ||
+      this.configService.get<string>('JWT_ACCESS_EXPIRATION') ||
+      '15m';
+
     return this.jwtService.sign(payload as any, {
-      expiresIn: (this.configService.get<string>('JWT_ACCESS_EXPIRATION') || '15m') as any,
+      expiresIn: expiresIn as any,
     });
   }
 
@@ -594,14 +703,13 @@ export class AuthService {
     userAgent?: string,
   ): Promise<string> {
     const token = randomBytes(64).toString('hex');
-    const expiresAt = new Date(
-      Date.now() +
-        parseInt(this.configService.get<string>('JWT_REFRESH_EXPIRATION_DAYS') || '7') *
-          24 *
-          60 *
-          60 *
-          1000,
-    );
+    // Admin's Settings → Authentication → Refresh Token Lifetime wins;
+    // env fallback for safety.
+    const authSettings = await this.adminSettings.getAuthSettings();
+    const days =
+      authSettings.refreshTokenDays ||
+      parseInt(this.configService.get<string>('JWT_REFRESH_EXPIRATION_DAYS') || '7');
+    const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
     await db.insert(refreshTokens).values({
       userId,
@@ -661,6 +769,18 @@ export class AuthService {
       throw new ConflictException('Email already registered');
     }
 
+    // Enforce admin-configured password policy
+    const authSettings = await this.adminSettings.getAuthSettings();
+    const policyErrors = validatePasswordPolicy(dto.password, {
+      minLength: authSettings.passwordMinLength,
+      requireUppercase: authSettings.passwordRequireUppercase,
+      requireNumber: authSettings.passwordRequireNumber,
+      requireSpecial: authSettings.passwordRequireSpecial,
+    });
+    if (policyErrors.length) {
+      throw new BadRequestException(policyErrors.join('. '));
+    }
+
     // Hash password
     const passwordHash = await argon2.hash(dto.password);
 
@@ -675,7 +795,8 @@ export class AuthService {
       throw new BadRequestException(`Role ${dto.role} does not exist`);
     }
 
-    // Create user with the specified active role
+    // Create user with the specified active role. Phone is encrypted at
+    // application layer (same as register flow above).
     const [newUser] = await db
       .insert(users)
       .values({
@@ -683,7 +804,7 @@ export class AuthService {
         passwordHash,
         firstName: dto.firstName,
         lastName: dto.lastName,
-        phone: dto.phone,
+        phone: encryptPII(dto.phone),
         activeRole: dto.role,
         isVerified: true, // Admin-created users are pre-verified
       })
@@ -705,6 +826,14 @@ export class AuthService {
       roleId: role.id,
       assignedBy: createdBy,
     });
+
+    await this.logSecurityEvent(
+      createdBy,
+      'user',
+      newUser.id,
+      'user.created',
+      { email: newUser.email, role: dto.role },
+    );
 
     return {
       ...newUser,
@@ -734,20 +863,25 @@ export class AuthService {
     if (dto.lastName !== undefined) updateData.lastName = dto.lastName;
     if (dto.firstNameAr !== undefined) updateData.firstNameAr = dto.firstNameAr;
     if (dto.lastNameAr !== undefined) updateData.lastNameAr = dto.lastNameAr;
-    if (dto.phone !== undefined) updateData.phone = dto.phone;
+    if (dto.phone !== undefined) updateData.phone = encryptPII(dto.phone);
     if (dto.avatar !== undefined) updateData.avatar = dto.avatar;
     if (dto.bio !== undefined) updateData.bio = dto.bio;
     if (dto.location !== undefined) updateData.location = dto.location;
     if (dto.language !== undefined) updateData.language = dto.language;
     if (dto.department !== undefined) updateData.department = dto.department;
-    if (dto.scfhsNumber !== undefined) updateData.scfhsNumber = dto.scfhsNumber;
+    if (dto.scfhsNumber !== undefined) updateData.scfhsNumber = encryptPII(dto.scfhsNumber);
 
     // National ID / Iqama is a one-time-set field. New users provide it
     // at registration; legacy users (pre-this-feature) have a NULL value
     // and may set it ONCE via this endpoint. After that, any attempt to
     // change it is rejected — uneditable from the student profile UI.
+    //
+    // Note: user.nationalId is stored encrypted, so we decrypt before
+    // comparing to the plaintext dto value (otherwise the check would
+    // always succeed / fail nonsensically).
     if (dto.nationalId !== undefined && dto.nationalId !== null && dto.nationalId !== '') {
-      if (user.nationalId && user.nationalId !== dto.nationalId) {
+      const currentNationalId = decryptPII(user.nationalId);
+      if (currentNationalId && currentNationalId !== dto.nationalId) {
         throw new BadRequestException({
           code: 'NATIONAL_ID_LOCKED',
           message: 'National ID / Iqama cannot be changed once set',
@@ -755,7 +889,7 @@ export class AuthService {
       }
       // Only persist if currently null (first-time set). If client
       // re-sends the same value, treat as no-op.
-      if (!user.nationalId) updateData.nationalId = dto.nationalId;
+      if (!currentNationalId) updateData.nationalId = encryptPII(dto.nationalId);
     }
     if (dto.nationality !== undefined) updateData.nationality = dto.nationality;
     if (dto.gender !== undefined) updateData.gender = dto.gender;
@@ -776,11 +910,23 @@ export class AuthService {
       'gender', 'dateOfBirth', 'specialty', 'profession',
       'qualification', 'twitter', 'linkedin',
     ] as const;
+    // For PII fields the stored value is ciphertext and updateData also
+    // holds ciphertext — but two encryptions of the same plaintext yield
+    // different ciphertext (random IV), so a naive `before !== after`
+    // would always flag a "change" on every save. Decrypt both sides for
+    // these fields so the diff reflects actual plaintext changes.
+    const PII_KEYS = new Set(['phone', 'scfhsNumber', 'nationalId']);
     const changes: Record<string, { from: unknown; to: unknown }> = {};
     for (const key of trackedKeys) {
       if (key in updateData) {
-        const before = (user as Record<string, unknown>)[key];
-        const after = updateData[key];
+        const rawBefore = (user as Record<string, unknown>)[key];
+        const rawAfter = updateData[key];
+        const before = PII_KEYS.has(key)
+          ? decryptPII(rawBefore as string | null)
+          : rawBefore;
+        const after = PII_KEYS.has(key)
+          ? decryptPII(rawAfter as string | null)
+          : rawAfter;
         if (before !== after) {
           changes[key] = { from: before ?? null, to: after ?? null };
         }
@@ -870,8 +1016,16 @@ export class AuthService {
       throw new BadRequestException('Both current and new passwords are required');
     }
 
-    if (newPassword.length < 6) {
-      throw new BadRequestException('New password must be at least 6 characters');
+    // Enforce admin-configured password policy
+    const authSettings = await this.adminSettings.getAuthSettings();
+    const policyErrors = validatePasswordPolicy(newPassword, {
+      minLength: authSettings.passwordMinLength,
+      requireUppercase: authSettings.passwordRequireUppercase,
+      requireNumber: authSettings.passwordRequireNumber,
+      requireSpecial: authSettings.passwordRequireSpecial,
+    });
+    if (policyErrors.length) {
+      throw new BadRequestException(policyErrors.join('. '));
     }
 
     const [user] = await db
@@ -949,8 +1103,20 @@ export class AuthService {
   ): Promise<{ message: string }> {
     const normalizedEmail = email.toLowerCase().trim();
 
-    if (!newPassword || newPassword.length < 6) {
-      throw new BadRequestException('Password must be at least 6 characters');
+    if (!newPassword) {
+      throw new BadRequestException('Password is required');
+    }
+
+    // Enforce admin-configured password policy
+    const authSettings = await this.adminSettings.getAuthSettings();
+    const policyErrors = validatePasswordPolicy(newPassword, {
+      minLength: authSettings.passwordMinLength,
+      requireUppercase: authSettings.passwordRequireUppercase,
+      requireNumber: authSettings.passwordRequireNumber,
+      requireSpecial: authSettings.passwordRequireSpecial,
+    });
+    if (policyErrors.length) {
+      throw new BadRequestException(policyErrors.join('. '));
     }
 
     const [user] = await db
@@ -1029,6 +1195,7 @@ export class AuthService {
   async updateUser(
     userId: string,
     dto: UpdateUserDto,
+    updatedBy?: string,
   ): Promise<Partial<User> & { roles: string[] }> {
     const [user] = await db
       .select()
@@ -1044,7 +1211,7 @@ export class AuthService {
     const updateData: Record<string, unknown> = { updatedAt: new Date() };
     if (dto.firstName !== undefined) updateData.firstName = dto.firstName;
     if (dto.lastName !== undefined) updateData.lastName = dto.lastName;
-    if (dto.phone !== undefined) updateData.phone = dto.phone;
+    if (dto.phone !== undefined) updateData.phone = encryptPII(dto.phone);
     if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
     if (dto.isVerified !== undefined) updateData.isVerified = dto.isVerified;
     if (dto.activeRole !== undefined) {
@@ -1099,6 +1266,29 @@ export class AuthService {
       .limit(1);
 
     const updatedRoles = await this.getUserRoles(userId);
+
+    // Pick out the security-relevant changes only — the rest is just
+    // profile metadata. Suspended / verified / role-switch are the
+    // ones the admin Logs page wants to see at a glance.
+    const audit: Record<string, unknown> = {};
+    if (dto.isActive !== undefined && dto.isActive !== user.isActive) {
+      audit.suspended = !dto.isActive;
+    }
+    if (dto.isVerified !== undefined && dto.isVerified !== user.isVerified) {
+      audit.verifiedChange = dto.isVerified;
+    }
+    if (dto.activeRole !== undefined && dto.activeRole !== user.activeRole) {
+      audit.activeRoleChange = { from: user.activeRole, to: dto.activeRole };
+    }
+    if (Object.keys(audit).length > 0) {
+      await this.logSecurityEvent(
+        updatedBy ?? null,
+        'user',
+        userId,
+        'user.updated',
+        { email: user.email, ...audit },
+      );
+    }
 
     return {
       ...updated,
@@ -1168,6 +1358,14 @@ export class AuthService {
 
     // Invalidate all active sessions
     await db.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
+
+    await this.logSecurityEvent(
+      adminId,
+      'user',
+      userId,
+      'user.deleted',
+      { originalEmail: user.email },
+    );
 
     return { message: 'User deleted successfully' };
   }
@@ -1273,8 +1471,8 @@ export class AuthService {
     const sortColumn = sortColumnMap[sortBy] || users.createdAt;
     const orderByClause = sortOrder === 'asc' ? asc(sortColumn) : desc(sortColumn);
 
-    // Execute count, data, and stats queries in parallel
-    const [countResult, allUsers, statsResult] = await Promise.all([
+    // Execute count, data, stats, and role-breakdown queries in parallel
+    const [countResult, allUsers, statsResult, roleBreakdownRows] = await Promise.all([
       db.select({ value: count() }).from(users).where(whereClause),
       db
         .select({
@@ -1303,10 +1501,31 @@ export class AuthService {
           suspended: sql<number>`cast(count(*) filter (where ${users.isActive} = false) as int)`,
         })
         .from(users),
+      // Per-role breakdown via user_roles join. A user with multiple
+      // roles is counted once per role — matches the admin's mental
+      // model where the population on the "Instructors" filter is the
+      // count of users WITH that role, even if they're also a student.
+      db
+        .select({
+          role: roles.name,
+          count: sql<number>`cast(count(distinct ${userRoles.userId}) as int)`,
+        })
+        .from(userRoles)
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .groupBy(roles.name),
     ]);
 
     const total = Number(countResult[0].value);
     const totalPages = Math.ceil(total / limit);
+
+    // Flatten the role-breakdown rows into a name → count map. Roles
+    // with zero users aren't returned by the query (INNER JOIN) so we
+    // don't need to manually zero them out — the frontend just shows
+    // 0 when a role is absent from the map.
+    const byRole: Record<string, number> = {};
+    for (const row of roleBreakdownRows) {
+      byRole[row.role] = Number(row.count);
+    }
 
     // Batch fetch roles for all users on this page (avoids N+1)
     let usersWithRoles: (typeof allUsers[number] & { roles: string[] })[];
@@ -1329,7 +1548,7 @@ export class AuthService {
       }
 
       usersWithRoles = allUsers.map((user) => ({
-        ...user,
+        ...decryptUserPII(user),
         roles: rolesByUserId.get(user.id) || [],
       }));
     } else {
@@ -1351,15 +1570,117 @@ export class AuthService {
         active: Number(statsResult[0].active),
         pending: Number(statsResult[0].pending),
         suspended: Number(statsResult[0].suspended),
+        byRole,
       },
     };
+  }
+
+  // ===========================================
+  // Export Users (Admin) — flat list for CSV. Honors the same
+  // search/role/status filters as getAllUsers but ignores pagination
+  // and caps at a hard ceiling so a single click can't OOM the dyno.
+  // ===========================================
+  async exportAllUsers(query: {
+    search?: string;
+    role?: string;
+    status?: string;
+  } = {}): Promise<
+    Array<{
+      id: string;
+      email: string;
+      firstName: string | null;
+      lastName: string | null;
+      scfhsNumber: string | null;
+      activeRole: string | null;
+      roles: string[];
+      isActive: boolean;
+      isVerified: boolean;
+      createdAt: Date;
+      lastLoginAt: Date | null;
+    }>
+  > {
+    const EXPORT_HARD_CAP = 10000;
+    const search = query.search?.trim() || '';
+    const role = query.role?.trim().toUpperCase() || '';
+    const status = query.status?.trim().toLowerCase() || '';
+
+    const conditions: (SQL | undefined)[] = [
+      notLike(users.email, 'deleted-%@deleted.local'),
+    ];
+    if (search) {
+      conditions.push(
+        or(
+          ilike(users.firstName, `%${search}%`),
+          ilike(users.lastName, `%${search}%`),
+          ilike(users.email, `%${search}%`),
+        ),
+      );
+    }
+    if (role) conditions.push(eq(users.activeRole, role));
+    if (status === 'active') {
+      conditions.push(eq(users.isActive, true));
+      conditions.push(eq(users.isVerified, true));
+    } else if (status === 'suspended' || status === 'inactive') {
+      conditions.push(eq(users.isActive, false));
+    } else if (status === 'pending') {
+      conditions.push(eq(users.isActive, true));
+      conditions.push(eq(users.isVerified, false));
+    }
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const rows = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        scfhsNumber: users.scfhsNumber,
+        activeRole: users.activeRole,
+        isActive: users.isActive,
+        isVerified: users.isVerified,
+        createdAt: users.createdAt,
+        lastLoginAt: users.lastLoginAt,
+      })
+      .from(users)
+      .where(whereClause)
+      .orderBy(desc(users.createdAt))
+      .limit(EXPORT_HARD_CAP);
+
+    if (rows.length === 0) return [];
+
+    const userIds = rows.map((u) => u.id);
+    const allUserRoles = await db
+      .select({ userId: userRoles.userId, roleName: roles.name })
+      .from(userRoles)
+      .innerJoin(roles, eq(userRoles.roleId, roles.id))
+      .where(inArray(userRoles.userId, userIds));
+
+    const rolesByUserId = new Map<string, string[]>();
+    for (const ur of allUserRoles) {
+      const existing = rolesByUserId.get(ur.userId) || [];
+      existing.push(ur.roleName);
+      rolesByUserId.set(ur.userId, existing);
+    }
+
+    return rows.map((u) => ({
+      ...decryptUserPII(u),
+      roles: rolesByUserId.get(u.id) || [],
+    }));
   }
 
   // ===========================================
   // Get All Roles with User Counts (Admin)
   // ===========================================
   async getAllRoles(): Promise<
-    { id: string; name: string; displayName: string; description: string | null; createdAt: Date; usersCount: number }[]
+    {
+      id: string;
+      name: string;
+      displayName: string;
+      description: string | null;
+      permissions: RolePermissions;
+      createdAt: Date;
+      usersCount: number;
+    }[]
   > {
     // Get all roles
     const allRoles = await db
@@ -1368,6 +1689,7 @@ export class AuthService {
         name: roles.name,
         displayName: roles.displayName,
         description: roles.description,
+        permissions: roles.permissions,
         createdAt: roles.createdAt,
       })
       .from(roles)
@@ -1386,8 +1708,48 @@ export class AuthService {
 
     return allRoles.map((role) => ({
       ...role,
+      permissions: (role.permissions as RolePermissions) || {},
       usersCount: countMap.get(role.id) || 0,
     }));
+  }
+
+  // ===========================================
+  // Update Role Permissions (Admin)
+  // Sanitizes the incoming matrix against the known categories so a
+  // client can't smuggle in arbitrary keys.
+  // ===========================================
+  async updateRolePermissions(
+    roleId: string,
+    permissions: RolePermissions,
+  ): Promise<{ id: string; name: string; permissions: RolePermissions }> {
+    const [role] = await db
+      .select({ id: roles.id, name: roles.name })
+      .from(roles)
+      .where(eq(roles.id, roleId))
+      .limit(1);
+
+    if (!role) {
+      throw new NotFoundException('Role not found');
+    }
+
+    const sanitized: RolePermissions = {};
+    for (const category of PERMISSION_CATEGORIES) {
+      const incoming = permissions?.[category];
+      if (!incoming) continue;
+      sanitized[category] = {
+        view: !!incoming.view,
+        create: !!incoming.create,
+        edit: !!incoming.edit,
+        delete: !!incoming.delete,
+      };
+    }
+
+    await db
+      .update(roles)
+      .set({ permissions: sanitized })
+      .where(eq(roles.id, roleId));
+
+    return { id: role.id, name: role.name, permissions: sanitized };
   }
 
   // ===========================================
@@ -1531,7 +1893,7 @@ export class AuthService {
     }
 
     const userRolesList = await this.getUserRoles(userId);
-    const accessToken = this.generateAccessToken(user, userRolesList);
+    const accessToken = await this.generateAccessToken(user, userRolesList);
     const refreshToken = await this.generateRefreshToken(userId, ipAddress, userAgent);
 
     return {

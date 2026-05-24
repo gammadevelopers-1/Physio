@@ -7,6 +7,7 @@ import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { instructorApi } from "@/lib/api";
 import { toast } from "sonner";
@@ -61,6 +62,7 @@ interface ReviewModalProps {
 const ReviewModal = ({ cert, courseName, onClose, onAction, t }: ReviewModalProps) => {
   const locale = useLocale();
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
   const [note, setNote] = useState(cert.reviewNote || "");
   const [processing, setProcessing] = useState(false);
   const [activeAction, setActiveAction] = useState<string | null>(null);
@@ -133,7 +135,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, t }: ReviewModalProp
               <div>
                 <p className="text-sm font-medium text-[var(--color-text-secondary)]">{studentName}</p>
                 <p className="text-xs text-[var(--color-text-secondary)]">{cert.studentEmail}</p>
-                <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.requested")}: {formatDateHijri(cert.createdAt, calendarFormat, { locale })}</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.requested")}: {formatDateHijri(cert.createdAt, calendarFormat, { locale, platformSettings: platformLocale })}</p>
               </div>
             </div>
           </div>
@@ -313,6 +315,7 @@ const CertificatesContent = () => {
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
 
   // Data
   const [courses, setCourses] = useState<InstructorCourse[]>([]);
@@ -851,7 +854,7 @@ const CertificatesContent = () => {
                                     </div>
                                   </td>
                                   <td className="px-4 py-4">
-                                    <span className="text-sm text-[var(--color-text-secondary)]">{formatDateHijri(cert.createdAt, calendarFormat, { locale })}</span>
+                                    <span className="text-sm text-[var(--color-text-secondary)]">{formatDateHijri(cert.createdAt, calendarFormat, { locale, platformSettings: platformLocale })}</span>
                                   </td>
                                   <td className="px-4 py-4">
                                     <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusStyle(cert.status)}`}>
@@ -985,7 +988,7 @@ const CertificatesContent = () => {
                               </div>
                             </div>
 
-                            <p className="text-xs text-[var(--color-text-secondary)] mb-3">{t("certificates.requested")}: {formatDateHijri(cert.createdAt, calendarFormat, { locale })}</p>
+                            <p className="text-xs text-[var(--color-text-secondary)] mb-3">{t("certificates.requested")}: {formatDateHijri(cert.createdAt, calendarFormat, { locale, platformSettings: platformLocale })}</p>
 
                             {(cert.status === "pending" || cert.status === "held") && (
                               <div className="flex gap-2">

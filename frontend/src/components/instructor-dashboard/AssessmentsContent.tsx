@@ -6,8 +6,8 @@ import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
-import { useCalendarPreference } from "@/contexts/CalendarContext";
-import { formatDate as formatDateHijri } from "@/lib/hijri";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDate, formatPlatformDateReadable } from "@/lib/platform-locale";
 import DateTimePicker from "@/components/ui/DateTimePicker";
 import { instructorApi, ApiError } from "@/lib/api";
 import { toast } from "sonner";
@@ -1508,7 +1508,7 @@ const AssessmentsContent = () => {
   const tToasts = useTranslations("toasts");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
 
   // Global state
   const [activeTab, setActiveTab] = useState<
@@ -1906,7 +1906,7 @@ const AssessmentsContent = () => {
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "-";
-    return formatDateHijri(dateStr, calendarFormat, { locale });
+    return formatPlatformDate(dateStr, platformLocale, { fallback: "-" });
   };
 
   /* ─── Tabs ───────────────────────────────────── */
@@ -2515,7 +2515,7 @@ const AssessmentsContent = () => {
                                   )}
                                   {selAssignment.dueDate && (
                                     <p className="text-xs text-[var(--color-text-secondary)] mb-3">
-                                      {t("assessments.deadline") || "Deadline"}: {new Date(selAssignment.dueDate).toLocaleString("en-SA", { timeZone: "Asia/Riyadh" })} (KSA)
+                                      {t("assessments.deadline") || "Deadline"}: {formatPlatformDateReadable(selAssignment.dueDate, platformLocale, locale === "ar" ? "ar" : "en", { includeTime: true })} (KSA)
                                     </p>
                                   )}
                                 </div>

@@ -35,7 +35,10 @@ import { GradeSubmissionDto } from './dto/grade-submission.dto';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 import { StorageService } from '../storage/storage.service';
 import { EmailService } from '../email/email.service';
+import { AdminSettingsService } from '../admin-settings/admin-settings.service';
+import { toArabicIndic } from '../../common/platform-locale';
 import { assessmentRetakeGrants } from '../../database/schema/assessment-retake-grants';
+import { sanitizeRichText } from '../../common/sanitize-html';
 import type { EmailLocale } from '../email/email-i18n';
 import {
   computeEffectiveScoresByGroup,
@@ -64,6 +67,7 @@ export class AssessmentsService {
     private readonly userNotificationsService: UserNotificationsService,
     private readonly storageService: StorageService,
     private readonly emailService: EmailService,
+    private readonly adminSettings: AdminSettingsService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -706,9 +710,21 @@ export class AssessmentsService {
         hasManualGrading = true;
       }
 
+      // Essay / short-answer responses come from a rich-text editor and
+      // are stored as HTML. Sanitize before persisting so the grading
+      // view (and any future surface that renders student answers) can
+      // safely inject the markup without an XSS risk. MCQ/TF answers
+      // are numbers/words — pass through unchanged.
+      const isRichTextAnswer =
+        question?.type === QUESTION_TYPE.ESSAY ||
+        question?.type === QUESTION_TYPE.SHORT_ANSWER;
+      const storedAnswer = isRichTextAnswer
+        ? sanitizeRichText(ans.answer) ?? ''
+        : ans.answer;
+
       gradedAnswers.push({
         questionId: ans.questionId,
-        answer: ans.answer,
+        answer: storedAnswer,
         isCorrect,
         marksAwarded,
       });
@@ -1977,7 +1993,11 @@ export class AssessmentsService {
 
     // ── Email: student ─────────────────────────────────────
     if (studentRow.email) {
-      const newDueDateStr = newDueDate
+      const localeSettings = await this.adminSettings.getPublicLocaleSettings().catch(() => ({
+        numberSystem: 'western' as const,
+        dateFormat: 'DD-MM-YYYY' as const,
+      }));
+      let newDueDateStr = newDueDate
         ? newDueDate.toLocaleString(studentIsAr ? 'ar-SA' : 'en-US', {
             year: 'numeric',
             month: 'short',
@@ -1986,6 +2006,9 @@ export class AssessmentsService {
             minute: '2-digit',
           })
         : null;
+      if (newDueDateStr && localeSettings.numberSystem === 'arabic_indic') {
+        newDueDateStr = toArabicIndic(newDueDateStr);
+      }
       await this.emailService.sendRetakeGranted(
         studentRow.email,
         {

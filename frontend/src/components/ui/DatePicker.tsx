@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { useLocale } from "next-intl";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import {
   getHijriParts,
   getHijriMonthStart,
@@ -53,6 +54,7 @@ export default function DatePicker({
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
   // Picker has its own calendar override so flipping it never mutates the
   // user's global preference nor any other picker. Default mirrors the
   // global setting; legacy "both" coerces to Gregorian.
@@ -166,7 +168,7 @@ export default function DatePicker({
   const todayISO = toISO(now);
 
   const displayValue = value
-    ? formatDate(value, localFormat, { locale })
+    ? formatDate(value, localFormat, { locale, platformSettings: platformLocale })
     : "";
 
   return (

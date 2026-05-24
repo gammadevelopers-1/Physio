@@ -5,9 +5,34 @@ import {
   timestamp,
   primaryKey,
   text,
+  jsonb,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { users } from './users';
+
+// Permission matrix shape stored per role in `roles.permissions`.
+// Keys are categories rendered in the admin Roles page; each maps to
+// CRUD flags. New categories can be added without a migration — the
+// frontend treats missing keys as all-false.
+export const PERMISSION_CATEGORIES = [
+  'users',
+  'courses',
+  'content',
+  'assessments',
+  'certificates',
+  'finance',
+  'reports',
+  'settings',
+  'security',
+] as const;
+export type PermissionCategory = (typeof PERMISSION_CATEGORIES)[number];
+export interface PermissionFlags {
+  view: boolean;
+  create: boolean;
+  edit: boolean;
+  delete: boolean;
+}
+export type RolePermissions = Partial<Record<PermissionCategory, PermissionFlags>>;
 
 // ===========================================
 // Roles Table - Predefined system roles
@@ -17,6 +42,7 @@ export const roles = pgTable('roles', {
   name: varchar('name', { length: 50 }).notNull().unique(),
   displayName: varchar('display_name', { length: 100 }).notNull(),
   description: text('description'),
+  permissions: jsonb('permissions').$type<RolePermissions>().notNull().default({}),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

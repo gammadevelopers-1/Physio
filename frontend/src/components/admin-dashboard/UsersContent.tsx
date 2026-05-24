@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
@@ -9,6 +10,15 @@ import { useAuth } from "@/contexts";
 import { adminApi, User, CreateUserData, UpdateUserData, PaginatedUsersResponse } from "@/lib/api";
 import { toast } from "sonner";
 import UserDevicesModal from "./UserDevicesModal";
+import Select from "./Select";
+import UserAvatar from "./users/UserAvatar";
+import UserDetailDrawer from "./users/UserDetailDrawer";
+import { ROLE_ORDER } from "./users/userHelpers";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDateReadable, type PlatformLocaleSettings } from "@/lib/platform-locale";
+import { FmtDate } from "@/components/ui/Fmt";
+import PasswordPolicyHint from "@/components/shared/PasswordPolicyHint";
+import { usePasswordPolicy, checkPasswordAgainstPolicy } from "@/hooks/usePasswordPolicy";
 import {
   Search,
   Plus,
@@ -25,6 +35,15 @@ import {
   UserPlus,
   Check,
   Smartphone,
+  Eye,
+  Users as UsersIcon,
+  GraduationCap,
+  Briefcase,
+  UserCog,
+  Headphones,
+  Banknote,
+  ShieldCheck,
+  Clock,
 } from "lucide-react";
 
 // ============================================
@@ -49,16 +68,11 @@ function getUserStatus(user: User): string {
   return "active";
 }
 
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+function formatDate(dateStr: string, settings: PlatformLocaleSettings): string {
+  return formatPlatformDateReadable(dateStr, settings, "en");
 }
 
-function formatRelativeTime(dateStr: string | undefined | null): string {
+function formatRelativeTime(dateStr: string | undefined | null, settings: PlatformLocaleSettings): string {
   if (!dateStr) return "Never";
   const date = new Date(dateStr);
   const now = new Date();
@@ -71,10 +85,114 @@ function formatRelativeTime(dateStr: string | undefined | null): string {
   if (diffMin < 60) return `${diffMin}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
-  return formatDate(dateStr);
+  return formatDate(dateStr, settings);
 }
 
 const ALL_ROLES = ["ADMIN", "INSTRUCTOR", "STUDENT", "TEACHING_ASSISTANT", "MANAGER", "FINANCE", "SUPPORT"] as const;
+
+// Per-role icon + accent color used for the role-breakdown chip row
+// above the users table. Each chip is clickable to filter the table
+// to that role; the active chip uses the accent color as background.
+const ROLE_META: Record<
+  string,
+  { icon: React.ElementType; accent: string }
+> = {
+  ADMIN: { icon: ShieldCheck, accent: "#DC2626" },
+  MANAGER: { icon: UserCog, accent: "#0369A1" },
+  INSTRUCTOR: { icon: Briefcase, accent: "#15803D" },
+  TEACHING_ASSISTANT: { icon: GraduationCap, accent: "#0E7490" },
+  STUDENT: { icon: UsersIcon, accent: "#1D4ED8" },
+  FINANCE: { icon: Banknote, accent: "#92740F" },
+  SUPPORT: { icon: Headphones, accent: "#B45309" },
+};
+
+// ─── Stat & role-chip subcomponents ─────────────────────────────
+
+function StatCard({
+  icon: Icon,
+  iconColor,
+  iconBg,
+  label,
+  value,
+  valueClass,
+}: {
+  icon: React.ElementType;
+  iconColor: string;
+  iconBg: string;
+  label: string;
+  value: number;
+  valueClass?: string;
+}) {
+  return (
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-3">
+      <div
+        className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}
+      >
+        <Icon className={`w-5 h-5 ${iconColor}`} />
+      </div>
+      <div className="min-w-0">
+        <p
+          className={`text-2xl font-bold leading-tight ${
+            valueClass ?? "text-[var(--color-text-primary)]"
+          }`}
+        >
+          {value}
+        </p>
+        <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 truncate">
+          {label}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function RoleChip({
+  active,
+  icon: Icon,
+  accent,
+  label,
+  count,
+  onClick,
+}: {
+  active: boolean;
+  icon: React.ElementType;
+  accent: string;
+  label: string;
+  count: number;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+        active
+          ? "text-white shadow-sm"
+          : "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[var(--color-border-subtle)]"
+      }`}
+      style={
+        active
+          ? { backgroundColor: accent, borderColor: accent }
+          : undefined
+      }
+    >
+      <Icon
+        className="w-3.5 h-3.5"
+        style={active ? undefined : { color: accent }}
+      />
+      <span>{label}</span>
+      <span
+        className={`min-w-[20px] text-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
+          active
+            ? "bg-white/25 text-white"
+            : "bg-[var(--color-border-subtle)] text-[var(--color-text-primary)]"
+        }`}
+      >
+        {count}
+      </span>
+    </button>
+  );
+}
 
 // ============================================
 // Modal Backdrop Component
@@ -117,6 +235,7 @@ function CreateUserModal({
 }) {
   const t = useTranslations("adminDashboard");
   const tToasts = useTranslations("toasts");
+  const { policy: passwordPolicy } = usePasswordPolicy();
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -133,12 +252,9 @@ function CreateUserModal({
       toast.error(tToasts("fillRequiredFields"));
       return;
     }
-    if (form.password.length < 8) {
-      toast.error(tToasts("passwordMinLength8"));
-      return;
-    }
-    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(form.password)) {
-      toast.error(tToasts("passwordComplexity"));
+    const policyErrors = checkPasswordAgainstPolicy(form.password, passwordPolicy);
+    if (policyErrors.length) {
+      toast.error(policyErrors[0]);
       return;
     }
 
@@ -220,9 +336,9 @@ function CreateUserModal({
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
-              placeholder="Min 8 chars, uppercase, lowercase, number"
               required
             />
+            <PasswordPolicyHint password={form.password} />
           </div>
 
           <div>
@@ -237,17 +353,14 @@ function CreateUserModal({
 
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Role *</label>
-            <select
+            <Select
               value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
-            >
-              {ALL_ROLES.map((role) => (
-                <option key={role} value={role}>
-                  {t(`userManagement.roles.${role.toLowerCase()}`)}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setForm({ ...form, role: val })}
+              options={ALL_ROLES.map((role) => ({
+                value: role,
+                label: t(`userManagement.roles.${role.toLowerCase()}`),
+              }))}
+            />
           </div>
 
           <div className="flex gap-3 pt-2">
@@ -752,19 +865,32 @@ const UsersContent = () => {
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { user: currentUser } = useAuth();
+  const platformLocale = usePlatformLocale();
 
   const [users, setUsers] = useState<User[]>([]);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0, hasNext: false, hasPrev: false });
-  const [stats, setStats] = useState({ total: 0, active: 0, pending: 0, suspended: 0 });
+  const [stats, setStats] = useState<{
+    total: number;
+    active: number;
+    pending: number;
+    suspended: number;
+    byRole?: Record<string, number>;
+  }>({ total: 0, active: 0, pending: 0, suspended: 0 });
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  // Pre-fill search from `?q=` so other admin surfaces (e.g. the
+  // courses page's "view enrolled students" modal) can deep-link
+  // directly to a filtered user list.
+  const searchParams = useSearchParams();
+  const initialQ = searchParams.get("q") || "";
+  const [searchInput, setSearchInput] = useState(initialQ);
+  const [searchQuery, setSearchQuery] = useState(initialQ);
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Modal states
@@ -773,6 +899,10 @@ const UsersContent = () => {
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [managingRolesUser, setManagingRolesUser] = useState<User | null>(null);
   const [viewingDevicesUser, setViewingDevicesUser] = useState<User | null>(null);
+  // Right-side detail drawer (View Profile action). Renders the full
+  // user record with sections for contact, professional, demographics,
+  // social, roles, and login history.
+  const [detailUser, setDetailUser] = useState<User | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setIsLoadingUsers(true);
@@ -826,9 +956,6 @@ const UsersContent = () => {
   const adminProfile = {
     name: currentUser ? getUserName(currentUser) : "",
     email: currentUser?.email || "",
-    totalUsers: stats.total,
-    totalCourses: 0,
-    uptime: 99.9,
   };
 
   const getRoleBadgeStyle = (role: string) => {
@@ -905,6 +1032,25 @@ const UsersContent = () => {
     setOpenDropdownId(null);
   };
 
+  const handleExport = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      await adminApi.exportUsers({
+        search: searchQuery || undefined,
+        role: roleFilter !== "all" ? roleFilter : undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+      });
+      toast.success(t("usersPage.exportSuccess"));
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t("usersPage.exportFailed"),
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <>
       <AdminNavbar admin={adminProfile} />
@@ -940,19 +1086,70 @@ const UsersContent = () => {
                 </button>
               </div>
 
-              {/* Stats Cards */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
-                  <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{stats.total}</p>
-                  <p className="text-sm text-[var(--color-text-secondary)]">{t("usersPage.stats.total")}</p>
-                </div>
-                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
-                  <p className="text-2xl font-bold text-[#16A34A]">{stats.active}</p>
-                  <p className="text-sm text-[var(--color-text-secondary)]">{t("usersPage.stats.active")}</p>
-                </div>
-                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
-                  <p className="text-2xl font-bold text-[#DC2626]">{stats.suspended}</p>
-                  <p className="text-sm text-[var(--color-text-secondary)]">{t("usersPage.stats.suspended")}</p>
+              {/* Top stats — population health at a glance */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <StatCard
+                  icon={UsersIcon}
+                  iconColor="text-[var(--color-primary)]"
+                  iconBg="bg-[var(--color-border-subtle)]"
+                  label={t("usersPage.stats.total")}
+                  value={stats.total}
+                />
+                <StatCard
+                  icon={ShieldCheck}
+                  iconColor="text-[#16A34A]"
+                  iconBg="bg-[#DCFCE7]"
+                  label={t("usersPage.stats.active")}
+                  value={stats.active}
+                  valueClass="text-[#16A34A]"
+                />
+                <StatCard
+                  icon={Clock}
+                  iconColor="text-[#B45309]"
+                  iconBg="bg-[#FEF3C7]"
+                  label={t("usersPage.stats.pending")}
+                  value={stats.pending}
+                  valueClass="text-[#B45309]"
+                />
+                <StatCard
+                  icon={UserX}
+                  iconColor="text-[#DC2626]"
+                  iconBg="bg-[#FEE2E2]"
+                  label={t("usersPage.stats.suspended")}
+                  value={stats.suspended}
+                  valueClass="text-[#DC2626]"
+                />
+              </div>
+
+              {/* Role breakdown — clickable to filter the table to that role */}
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-3 mb-6">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-[var(--color-text-secondary)] mb-2 px-1">
+                  {t("usersPage.stats.byRoleLabel")}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <RoleChip
+                    active={roleFilter === "all"}
+                    icon={UsersIcon}
+                    accent="#64748B"
+                    label={t("usersPage.filters.allRoles")}
+                    count={stats.total}
+                    onClick={() => setRoleFilter("all")}
+                  />
+                  {ROLE_ORDER.map((role) => {
+                    const count = stats.byRole?.[role] ?? 0;
+                    const meta = ROLE_META[role];
+                    return (
+                      <RoleChip
+                        key={role}
+                        active={roleFilter === role.toLowerCase()}
+                        icon={meta.icon}
+                        accent={meta.accent}
+                        label={t(`userManagement.roles.${role.toLowerCase()}`)}
+                        count={count}
+                        onClick={() => setRoleFilter(role.toLowerCase())}
+                      />
+                    );
+                  })}
                 </div>
               </div>
 
@@ -970,34 +1167,45 @@ const UsersContent = () => {
                     />
                   </div>
 
-                  <select
+                  <Select
                     value={roleFilter}
-                    onChange={(e) => setRoleFilter(e.target.value)}
-                    className="h-10 px-4 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
-                  >
-                    <option value="all">{t("usersPage.filters.allRoles")}</option>
-                    <option value="admin">{t("userManagement.roles.admin")}</option>
-                    <option value="instructor">{t("userManagement.roles.instructor")}</option>
-                    <option value="student">{t("userManagement.roles.student")}</option>
-                    <option value="teaching_assistant">{t("userManagement.roles.teaching_assistant")}</option>
-                    <option value="manager">{t("userManagement.roles.manager")}</option>
-                    <option value="finance">{t("userManagement.roles.finance")}</option>
-                    <option value="support">{t("userManagement.roles.support")}</option>
-                  </select>
+                    onChange={setRoleFilter}
+                    className="w-40"
+                    options={[
+                      { value: "all", label: t("usersPage.filters.allRoles") },
+                      { value: "admin", label: t("userManagement.roles.admin") },
+                      { value: "instructor", label: t("userManagement.roles.instructor") },
+                      { value: "student", label: t("userManagement.roles.student") },
+                      { value: "teaching_assistant", label: t("userManagement.roles.teaching_assistant") },
+                      { value: "manager", label: t("userManagement.roles.manager") },
+                      { value: "finance", label: t("userManagement.roles.finance") },
+                      { value: "support", label: t("userManagement.roles.support") },
+                    ]}
+                  />
 
-                  <select
+                  <Select
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="h-10 px-4 border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-secondary)] focus:outline-none focus:border-[#002D87]"
-                  >
-                    <option value="all">{t("usersPage.filters.allStatus")}</option>
-                    <option value="active">{t("userManagement.statuses.active")}</option>
-                    <option value="pending">{t("userManagement.statuses.pending")}</option>
-                    <option value="suspended">{t("userManagement.statuses.suspended")}</option>
-                  </select>
+                    onChange={setStatusFilter}
+                    className="w-40"
+                    options={[
+                      { value: "all", label: t("usersPage.filters.allStatus") },
+                      { value: "active", label: t("userManagement.statuses.active") },
+                      { value: "pending", label: t("userManagement.statuses.pending") },
+                      { value: "suspended", label: t("userManagement.statuses.suspended") },
+                    ]}
+                  />
 
-                  <button className="flex items-center gap-2 px-4 h-10 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors">
-                    <Download className="w-4 h-4" />
+                  <button
+                    type="button"
+                    onClick={handleExport}
+                    disabled={isExporting}
+                    className="flex items-center gap-2 px-4 h-10 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isExporting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4" />
+                    )}
                     {t("usersPage.export")}
                   </button>
                 </div>
@@ -1062,17 +1270,32 @@ const UsersContent = () => {
                           const status = getUserStatus(user);
                           const roleKey = user.activeRole.toLowerCase();
                           return (
-                            <tr key={user.id} className="border-b border-[#F3F4F6] hover:bg-[var(--color-border-subtle)]">
-                              <td className="px-4 py-4">
+                            <tr
+                              key={user.id}
+                              className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-border-subtle)] transition-colors cursor-pointer"
+                              onClick={(e) => {
+                                // Don't open the drawer when the click
+                                // originated from the actions-menu button
+                                // or its open dropdown.
+                                const target = e.target as HTMLElement;
+                                if (target.closest("[data-row-action]")) return;
+                                setDetailUser(user);
+                              }}
+                            >
+                              <td className="px-4 py-3.5">
                                 <div className="flex items-center gap-3">
-                                  <div className={`w-10 h-10 rounded-full ${getAvatarBgColor(user.activeRole)} flex items-center justify-center flex-shrink-0`}>
-                                    <span className="text-sm font-medium text-white">{getInitials(user)}</span>
-                                  </div>
+                                  <UserAvatar user={user} size="md" showOnlineDot />
                                   <div className="min-w-0">
-                                    <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{getUserName(user)}</p>
-                                    <p className="text-xs text-[var(--color-text-secondary)] truncate">{user.email}</p>
+                                    <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
+                                      {getUserName(user)}
+                                    </p>
+                                    <p className="text-xs text-[var(--color-text-secondary)] truncate">
+                                      {user.email}
+                                    </p>
                                     {user.scfhsNumber && (
-                                      <p className="text-[10px] text-[var(--color-text-secondary)] font-mono truncate">{user.scfhsNumber}</p>
+                                      <p className="text-[10px] text-[var(--color-text-secondary)] font-mono truncate mt-0.5">
+                                        SCFHS · {user.scfhsNumber}
+                                      </p>
                                     )}
                                   </div>
                                 </div>
@@ -1088,80 +1311,115 @@ const UsersContent = () => {
                                 </span>
                               </td>
                               <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)] whitespace-nowrap">
-                                {formatRelativeTime(user.lastLoginAt)}
+                                {formatRelativeTime(user.lastLoginAt, platformLocale)}
                               </td>
                               <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)] whitespace-nowrap hidden lg:table-cell">
                                 {user.lastLoginIp || "—"}
                               </td>
                               <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)] whitespace-nowrap">
-                                {formatDate(user.createdAt)}
+                                <FmtDate value={user.createdAt} variant="readable" locale={locale === "ar" ? "ar" : "en"} />
                               </td>
-                              <td className="px-4 py-4">
-                                <div className="relative">
+                              <td className="px-4 py-3.5" data-row-action>
+                                <div className="relative inline-block">
                                   <button
+                                    type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setOpenDropdownId(openDropdownId === user.id ? null : user.id);
                                     }}
                                     className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
+                                    aria-haspopup="true"
+                                    aria-expanded={openDropdownId === user.id}
                                   >
                                     <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                   </button>
 
                                   {openDropdownId === user.id && (
-                                    <div className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[160px] z-10 ${isRTL ? "left-0" : "right-0"}`}>
+                                    <div
+                                      onClick={(e) => e.stopPropagation()}
+                                      className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[200px] z-20 ${
+                                        isRTL ? "left-0" : "right-0"
+                                      }`}
+                                      role="menu"
+                                    >
                                       <button
+                                        type="button"
+                                        onClick={() => {
+                                          setDetailUser(user);
+                                          setOpenDropdownId(null);
+                                        }}
+                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-start text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] whitespace-nowrap"
+                                        role="menuitem"
+                                      >
+                                        <Eye className="w-4 h-4 flex-shrink-0" />
+                                        <span>{t("usersPage.actions.viewProfile")}</span>
+                                      </button>
+                                      <button
+                                        type="button"
                                         onClick={() => {
                                           setEditingUser(user);
                                           setOpenDropdownId(null);
                                         }}
-                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
+                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-start text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] whitespace-nowrap"
+                                        role="menuitem"
                                       >
-                                        <Edit className="w-4 h-4" />
-                                        {t("usersPage.actions.edit")}
+                                        <Edit className="w-4 h-4 flex-shrink-0" />
+                                        <span>{t("usersPage.actions.edit")}</span>
                                       </button>
                                       <button
+                                        type="button"
                                         onClick={() => {
                                           setManagingRolesUser(user);
                                           setOpenDropdownId(null);
                                         }}
-                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
+                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-start text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] whitespace-nowrap"
+                                        role="menuitem"
                                       >
-                                        <Shield className="w-4 h-4" />
-                                        Manage Roles
+                                        <Shield className="w-4 h-4 flex-shrink-0" />
+                                        <span>{t("usersPage.actions.manageRoles")}</span>
                                       </button>
                                       <button
+                                        type="button"
                                         onClick={() => {
                                           setViewingDevicesUser(user);
                                           setOpenDropdownId(null);
                                         }}
-                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
+                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-start text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] whitespace-nowrap"
+                                        role="menuitem"
                                       >
-                                        <Smartphone className="w-4 h-4" />
-                                        Trusted Devices
+                                        <Smartphone className="w-4 h-4 flex-shrink-0" />
+                                        <span>{t("usersPage.actions.devices")}</span>
                                       </button>
                                       <div className="border-t border-[var(--color-border)] my-1" />
                                       <button
+                                        type="button"
                                         onClick={() => handleSuspendToggle(user)}
-                                        className={`flex items-center gap-2 w-full px-4 py-2 text-sm ${
+                                        className={`flex items-center gap-2 w-full px-4 py-2 text-sm text-start whitespace-nowrap ${
                                           user.isActive
-                                            ? "text-[#D97706] hover:bg-[#FEF3C7]"
-                                            : "text-[#16A34A] hover:bg-[#DCFCE7]"
+                                            ? "text-[#B45309] hover:bg-[#FEF3C7]"
+                                            : "text-[#15803D] hover:bg-[#DCFCE7]"
                                         }`}
+                                        role="menuitem"
                                       >
-                                        <UserX className="w-4 h-4" />
-                                        {user.isActive ? t("usersPage.actions.suspend") : "Activate"}
+                                        <UserX className="w-4 h-4 flex-shrink-0" />
+                                        <span>
+                                          {user.isActive
+                                            ? t("usersPage.actions.suspend")
+                                            : t("usersPage.actions.activate")}
+                                        </span>
                                       </button>
                                       {user.id !== currentUser?.id && (
                                         <button
+                                          type="button"
                                           onClick={() => {
                                             setDeletingUser(user);
                                             setOpenDropdownId(null);
                                           }}
-                                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[#DC2626] hover:bg-[#FEE2E2]"
+                                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-start text-[#DC2626] hover:bg-[#FEE2E2] whitespace-nowrap"
+                                          role="menuitem"
                                         >
-                                          <Trash2 className="w-4 h-4" />
-                                          {t("usersPage.actions.delete")}
+                                          <Trash2 className="w-4 h-4 flex-shrink-0" />
+                                          <span>{t("usersPage.actions.delete")}</span>
                                         </button>
                                       )}
                                     </div>
@@ -1268,6 +1526,34 @@ const UsersContent = () => {
         <UserDevicesModal
           user={viewingDevicesUser}
           onClose={() => setViewingDevicesUser(null)}
+        />
+      )}
+
+      {detailUser && (
+        <UserDetailDrawer
+          user={detailUser}
+          currentUserId={currentUser?.id}
+          onClose={() => setDetailUser(null)}
+          onEdit={() => {
+            setEditingUser(detailUser);
+            setDetailUser(null);
+          }}
+          onManageRoles={() => {
+            setManagingRolesUser(detailUser);
+            setDetailUser(null);
+          }}
+          onViewDevices={() => {
+            setViewingDevicesUser(detailUser);
+            setDetailUser(null);
+          }}
+          onToggleSuspend={() => {
+            handleSuspendToggle(detailUser);
+            setDetailUser(null);
+          }}
+          onDelete={() => {
+            setDeletingUser(detailUser);
+            setDetailUser(null);
+          }}
         />
       )}
     </>

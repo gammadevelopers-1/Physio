@@ -36,6 +36,10 @@ import { UserNotificationsService } from '../user-notifications/user-notificatio
 import { EmailService } from '../email/email.service';
 import { CertificatesService } from '../certificates/certificates.service';
 import { PointsService } from '../points/points.service';
+import { AuditLogService } from '../audit-logs/audit-logs.service';
+import { AdminSettingsService } from '../admin-settings/admin-settings.service';
+import { toArabicIndic } from '../../common/platform-locale';
+import { sanitizeRichText } from '../../common/sanitize-html';
 
 @Injectable()
 export class CoursesService {
@@ -47,7 +51,31 @@ export class CoursesService {
     private readonly emailService: EmailService,
     private readonly certificatesService: CertificatesService,
     private readonly pointsService: PointsService,
+    private readonly auditLogService: AuditLogService,
+    private readonly adminSettings: AdminSettingsService,
   ) {}
+
+  /**
+   * Write a course-action entry to audit_logs. Currently only fires for
+   * admin-initiated actions — manager actions are covered by NELC audit
+   * (which is the regulator-facing log). This second log surfaces
+   * platform-level oversight in the admin-only Logs page.
+   */
+  private async maybeLogAdminAction(
+    actor: AuthenticatedUser,
+    courseId: string,
+    action: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<void> {
+    if (!isGlobalAdmin(actor)) return;
+    await this.auditLogService.log({
+      entityType: 'course',
+      entityId: courseId,
+      action,
+      performedBy: actor.id,
+      metadata,
+    });
+  }
 
   /**
    * Parse an enrollment-deadline input. A bare YYYY-MM-DD is interpreted
@@ -149,9 +177,12 @@ export class CoursesService {
         cohort: dto.cohort,
         accreditationNumber: dto.accreditationNumber,
         nelcReviewLink: dto.nelcReviewLink,
-        // Content fields
-        overview: dto.overview,
-        overviewAr: dto.overviewAr,
+        // Content fields. overview / overviewAr are rich-text HTML
+        // authored in the TipTap editor by managers/instructors; sanitize
+        // before insert so stored data is always safe regardless of which
+        // surface renders it.
+        overview: sanitizeRichText(dto.overview),
+        overviewAr: sanitizeRichText(dto.overviewAr),
         objectives: dto.objectives,
         objectivesAr: dto.objectivesAr,
         features: dto.features,
@@ -192,6 +223,8 @@ export class CoursesService {
       sort?: string;
       page?: number;
       limit?: number;
+      instructorId?: string;
+      managerId?: string;
     },
   ) {
     const page = params.page || 1;
@@ -212,6 +245,17 @@ export class CoursesService {
 
     if (params.delivery) {
       conditions.push(eq(courses.deliveryType, params.delivery));
+    }
+
+    // Admin-only filters: only honored when the caller's ownership scope
+    // doesn't already constrain visibility. Manager/instructor get their
+    // own scope; passing these as a manager would still work but the
+    // intersection would just narrow further, never widen.
+    if (params.instructorId) {
+      conditions.push(eq(courses.instructorId, params.instructorId));
+    }
+    if (params.managerId) {
+      conditions.push(eq(courses.managerId, params.managerId));
     }
 
     if (params.search) {
@@ -282,6 +326,10 @@ export class CoursesService {
         instructorName: sql<string | null>`(
           SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
           WHERE u.id = "courses"."instructor_id"
+        )`,
+        managerName: sql<string | null>`(
+          SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
+          WHERE u.id = "courses"."manager_id"
         )`,
         totalModules: sql<number>`(
           SELECT COUNT(*) FROM course_modules cm WHERE cm.course_id = "courses"."id"
@@ -582,6 +630,11 @@ export class CoursesService {
     this.logger.log(
       `Course "${course.title}" featured=${updated.isFeatured} by ${user.id}`,
     );
+
+    await this.maybeLogAdminAction(user, courseId, 'course.toggle_featured', {
+      title: course.title,
+      isFeatured: updated.isFeatured,
+    });
 
     return updated;
   }
@@ -1231,12 +1284,38 @@ export class CoursesService {
     if (enrollmentDeadline !== undefined) {
       updateData.enrollmentDeadline = this.parseEnrollmentDeadline(enrollmentDeadline);
     }
+    // Sanitize rich-text fields on update too (same reason as create —
+    // these are HTML rendered by other surfaces). Only touches the
+    // fields when present in the payload, so partial updates work.
+    if ('overview' in restDto) {
+      updateData.overview = sanitizeRichText(restDto.overview);
+    }
+    if ('overviewAr' in restDto) {
+      updateData.overviewAr = sanitizeRichText(restDto.overviewAr);
+    }
 
     const [updated] = await db
       .update(courses)
       .set(updateData)
       .where(eq(courses.id, courseId))
       .returning();
+
+    // Trim the payload before logging — full course objects are noisy
+    // and have nothing we'd want to read back from an audit trail. The
+    // small set below covers the toggles the admin UI actually flips.
+    const auditPayload: Record<string, unknown> = {};
+    for (const k of [
+      'title',
+      'titleAr',
+      'price',
+      'isFeatured',
+      'visibleOnPublicSite',
+      'status',
+      'maxEnrollment',
+    ]) {
+      if (k in dto) auditPayload[k] = (dto as any)[k];
+    }
+    await this.maybeLogAdminAction(user, courseId, 'course.update', auditPayload);
 
     return updated;
   }
@@ -1271,7 +1350,17 @@ export class CoursesService {
       );
     }
 
+    // Capture title for the audit log before the row is gone
+    const [{ title }] = await db
+      .select({ title: courses.title })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1)
+      .catch(() => [{ title: null }] as any);
+
     await db.delete(courses).where(eq(courses.id, courseId));
+
+    await this.maybeLogAdminAction(user, courseId, 'course.delete', { title });
 
     return { message: 'Course deleted successfully' };
   }
@@ -1504,6 +1593,11 @@ export class CoursesService {
     }
 
     this.logger.log(`Changes requested on course "${course.title}" by ${user.id}: ${note}`);
+
+    await this.maybeLogAdminAction(user, courseId, 'course.request_changes', {
+      title: course.title,
+      note,
+    });
 
     return updated;
   }
@@ -1805,6 +1899,11 @@ export class CoursesService {
 
     this.logger.log(`Course "${course.title}" activated by ${user.id}`);
 
+    await this.maybeLogAdminAction(user, courseId, 'course.activate', {
+      title: course.title,
+      isReactivation,
+    });
+
     return updated;
   }
 
@@ -1845,6 +1944,10 @@ export class CoursesService {
     });
 
     this.logger.log(`Course "${course.title}" deactivated by ${user.id}`);
+
+    await this.maybeLogAdminAction(user, courseId, 'course.archive', {
+      title: course.title,
+    });
 
     return updated;
   }
@@ -1930,6 +2033,10 @@ export class CoursesService {
     });
 
     this.logger.log(`Course "${course.title}" marked as completed by ${user.id}`);
+
+    await this.maybeLogAdminAction(user, courseId, 'course.complete', {
+      title: course.title,
+    });
 
     return updated;
   }
@@ -2117,11 +2224,17 @@ export class CoursesService {
         ),
       );
     if (outOfRangeSessions.length > 0) {
+      const localeSettings = await this.adminSettings.getPublicLocaleSettings().catch(() => ({
+        numberSystem: 'western' as const,
+        dateFormat: 'DD-MM-YYYY' as const,
+      }));
       throw new BadRequestException({
         message: 'Some sessions are scheduled outside the course date range',
         outOfRangeSessions: outOfRangeSessions.map(
-          (s) =>
-            `${s.title} (${new Date(s.scheduledAt).toLocaleDateString()})`,
+          (s) => {
+            const dateStr = new Date(s.scheduledAt).toLocaleDateString();
+            return `${s.title} (${localeSettings.numberSystem === 'arabic_indic' ? toArabicIndic(dateStr) : dateStr})`;
+          },
         ),
       });
     }

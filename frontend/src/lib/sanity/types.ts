@@ -1,6 +1,10 @@
 // TypeScript types for Sanity blog data
 
 import type { PortableTextBlock } from "@portabletext/react";
+import {
+  formatPlatformDateReadable,
+  type PlatformLocaleSettings,
+} from "@/lib/platform-locale";
 
 // Bilingual text field
 export interface LocalizedString {
@@ -71,22 +75,19 @@ export function getLocalizedValue<T>(
 }
 
 // Format publish date based on locale
-export function formatPublishDate(dateString: string, locale: string): string {
-    const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-    };
-
+export function formatPublishDate(
+    dateString: string,
+    locale: string,
+    settings: Pick<PlatformLocaleSettings, "numberSystem">,
+): string {
+    const formatted = formatPlatformDateReadable(
+        dateString,
+        settings,
+        locale === "ar" ? "ar" : "en",
+    );
     if (locale === "ar") {
-        // Format for Arabic
-        const formatted = date.toLocaleDateString("ar-SA", options);
         return `نُشر في ${formatted}`;
     }
-
-    // Format for English
-    const formatted = date.toLocaleDateString("en-US", options);
     return `Published on ${formatted}`;
 }
 

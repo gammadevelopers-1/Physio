@@ -118,6 +118,31 @@ import {
   getReviewPendingApprovalText,
 } from './templates/review-pending-approval.template';
 import { EmailLocale, getEmailStrings, t, htmlAttrs } from './email-i18n';
+import { TemplateResolverService } from '../templates/template-resolver.service';
+import { findTemplateMeta } from '../templates/template-registry';
+import { AdminSettingsService } from '../admin-settings/admin-settings.service';
+
+/**
+ * Admin-toggleable categories. `account` is intentionally absent —
+ * OTP, password reset, and set-password emails are always allowed
+ * through regardless of admin toggles. They are security-critical.
+ */
+type ToggleableCategory =
+  | 'applications'
+  | 'enrollment'
+  | 'sessions'
+  | 'webinars'
+  | 'certificates'
+  | 'assessments'
+  | 'content';
+
+interface NotificationChannelsSettings {
+  channels?: {
+    email?: boolean;
+    whatsapp?: boolean;
+    emailCategories?: Partial<Record<ToggleableCategory, boolean>>;
+  };
+}
 
 @Injectable()
 export class EmailService {
@@ -125,7 +150,11 @@ export class EmailService {
   private resend: Resend | null = null;
   private transporter: nodemailer.Transporter | null = null;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private templateResolver: TemplateResolverService,
+    private adminSettings: AdminSettingsService,
+  ) {
     const resendApiKey = this.configService.get<string>('RESEND_API_KEY');
 
     if (resendApiKey) {
@@ -179,6 +208,45 @@ export class EmailService {
     }
   }
 
+  /**
+   * Check the admin's Settings → Notifications channel + category
+   * toggles. Returns `true` when sending is allowed. Always returns
+   * `true` for the `account` category (OTP / password reset / etc.) —
+   * those are security-critical and cannot be turned off.
+   */
+  private async isCategoryAllowed(eventKey: string): Promise<boolean> {
+    const meta = findTemplateMeta(eventKey);
+    if (!meta || meta.channel !== 'email') return true;
+    // Account-class events bypass admin toggles. Locking them out
+    // would lock admins out of their own platform.
+    if (meta.category === 'account') return true;
+    try {
+      const settings = await this.adminSettings.getCategory<NotificationChannelsSettings>(
+        'notifications',
+      );
+      const channels = settings.channels;
+      if (!channels) return true; // never configured = open
+      if (channels.email === false) {
+        this.logger.log(
+          `Skipping email ${eventKey} — master Email channel toggled off in admin Settings`,
+        );
+        return false;
+      }
+      const cat = meta.category as ToggleableCategory;
+      const catEnabled = channels.emailCategories?.[cat];
+      if (catEnabled === false) {
+        this.logger.log(
+          `Skipping email ${eventKey} — category "${cat}" toggled off in admin Settings`,
+        );
+        return false;
+      }
+      return true;
+    } catch {
+      // Fail open — never let a settings DB hiccup block transactional mail.
+      return true;
+    }
+  }
+
   private async send(options: {
     to: string | string[];
     subject: string;
@@ -186,7 +254,50 @@ export class EmailService {
     text: string;
     attachments?: { filename: string; content: Buffer }[];
     skipPreferenceCheck?: boolean;
+    /**
+     * When present, the admin's edited template overrides `subject` +
+     * `html` if a row exists in `notification_templates` for this
+     * (eventKey, locale). `text` always stays as the hardcoded
+     * fallback because admin only edits the HTML body.
+     */
+    template?: {
+      eventKey: string;
+      locale: EmailLocale;
+      params: Record<string, unknown>;
+    };
   }): Promise<void> {
+    // Category gate — check admin Notifications toggles before any
+    // template lookup or recipient-preference filtering. Account-class
+    // events (OTP, password reset, set-password) always pass through.
+    if (options.template) {
+      const allowed = await this.isCategoryAllowed(options.template.eventKey);
+      if (!allowed) return;
+    }
+
+    // Template override lookup — silently no-ops when admin hasn't
+    // edited this template or the row is disabled.
+    if (options.template) {
+      try {
+        const override = await this.templateResolver.resolveEmail(
+          options.template.eventKey,
+          options.template.locale,
+          options.template.params,
+          options.subject,
+        );
+        if (override) {
+          options.subject = override.subject;
+          options.html = override.html;
+        }
+      } catch (err) {
+        // Never block a send on resolver failure — fall through to the
+        // hardcoded defaults the caller already prepared.
+        this.logger.warn(
+          `Template resolve failed for ${options.template.eventKey} (${options.template.locale}); using hardcoded fallback`,
+          err instanceof Error ? err.message : undefined,
+        );
+      }
+    }
+
     // Check email preferences (skip for system emails like OTP)
     if (!options.skipPreferenceCheck) {
       const recipients = Array.isArray(options.to) ? options.to : [options.to];
@@ -245,6 +356,11 @@ export class EmailService {
         html: getOtpEmailHtml(code, deviceName, locale),
         text: getOtpEmailText(code, deviceName, locale),
         skipPreferenceCheck: true,
+        template: {
+          eventKey: 'otp',
+          locale,
+          params: { recipientName: '', code, expiresInMinutes: 10 },
+        },
       });
       this.logger.log(`OTP email sent to ${to} (device: ${deviceName})`);
     } catch (error) {
@@ -263,6 +379,11 @@ export class EmailService {
         subject: s.appApprovedSubject,
         html: getApplicationApprovedHtml(applicantName, locale),
         text: getApplicationApprovedText(applicantName, locale),
+        template: {
+          eventKey: 'application_approved',
+          locale,
+          params: { applicantName },
+        },
       });
       this.logger.log(`Application approved email sent to ${to}`);
     } catch (error) {
@@ -288,6 +409,11 @@ export class EmailService {
         subject: s.appApprovedSubject,
         html: getApplicationApprovedSetPasswordHtml(applicantName, setupUrl, locale),
         text: getApplicationApprovedSetPasswordText(applicantName, setupUrl, locale),
+        template: {
+          eventKey: 'application_approved_set_password',
+          locale,
+          params: { recipientName: applicantName, setupUrl, expiresInHours: 24 },
+        },
       });
       this.logger.log(`Approval+set-password email sent to ${to}`);
     } catch (error) {
@@ -314,6 +440,11 @@ export class EmailService {
         subject: s.webinarRegSetupSubject,
         html: getWebinarRegistrationSetupHtml(registrantName, courseTitle, setupUrl, locale),
         text: getWebinarRegistrationSetupText(registrantName, courseTitle, setupUrl, locale),
+        template: {
+          eventKey: 'webinar_registration_setup',
+          locale,
+          params: { studentName: registrantName, courseName: courseTitle, joinLink: setupUrl },
+        },
       });
       this.logger.log(`Webinar set-password email sent to ${to}`);
     } catch (error) {
@@ -341,6 +472,11 @@ export class EmailService {
         subject: s.webinarPaidNudgeSubject,
         html: getWebinarPaidEnrollmentNudgeHtml(registrantName, courseTitle, courseUrl, locale),
         text: getWebinarPaidEnrollmentNudgeText(registrantName, courseTitle, courseUrl, locale),
+        template: {
+          eventKey: 'webinar_paid_enrollment_nudge',
+          locale,
+          params: { recipientName: registrantName, courseName: courseTitle, courseUrl },
+        },
       });
       this.logger.log(`Webinar paid-enrollment nudge sent to ${to}`);
     } catch (error) {
@@ -356,6 +492,11 @@ export class EmailService {
         subject: s.appRejectedSubject,
         html: getApplicationRejectedHtml(applicantName, reviewNote, locale),
         text: getApplicationRejectedText(applicantName, reviewNote, locale),
+        template: {
+          eventKey: 'application_rejected',
+          locale,
+          params: { applicantName, reason: reviewNote },
+        },
       });
       this.logger.log(`Application rejected email sent to ${to}`);
     } catch (error) {
@@ -371,6 +512,11 @@ export class EmailService {
         subject: s.appMoreInfoSubject,
         html: getApplicationMoreInfoHtml(applicantName, reviewNote, locale),
         text: getApplicationMoreInfoText(applicantName, reviewNote, locale),
+        template: {
+          eventKey: 'application_more_info',
+          locale,
+          params: { applicantName, reviewerMessage: reviewNote },
+        },
       });
       this.logger.log(`More info request email sent to ${to}`);
     } catch (error) {
@@ -386,6 +532,11 @@ export class EmailService {
         subject: t(s.newAppAdminSubject, { name: applicantName }),
         html: getNewApplicationAdminHtml(applicantName, applicantEmail, locale),
         text: getNewApplicationAdminText(applicantName, applicantEmail, locale),
+        template: {
+          eventKey: 'new_application_admin',
+          locale,
+          params: { applicantName, applicationUrl: '' },
+        },
       });
       this.logger.log(`New application admin notification sent to ${adminEmails.length} admin(s)`);
     } catch (error) {
@@ -410,6 +561,11 @@ export class EmailService {
         subject: t(s.atRiskSubject, { course: courseName }),
         html: getAtRiskReminderHtml(studentName, courseName, customMessage, locale),
         text: getAtRiskReminderText(studentName, courseName, customMessage, locale),
+        template: {
+          eventKey: 'at_risk_reminder',
+          locale,
+          params: { studentName, courseName, risk: customMessage ?? '' },
+        },
       });
       this.logger.log(
         `At-risk reminder email sent to ${to} for course "${courseName}"`,
@@ -432,6 +588,7 @@ export class EmailService {
       durationMinutes: number;
       zoomLink: string | null;
       isInstructor: boolean;
+      numberSystem?: 'western' | 'arabic_indic';
     },
     locale: EmailLocale = 'en',
   ): Promise<void> {
@@ -442,6 +599,17 @@ export class EmailService {
         subject: t(s.sessionReminderSubject, { title: params.sessionTitle }),
         html: getSessionReminderHtml(params, locale),
         text: getSessionReminderText(params, locale),
+        template: {
+          eventKey: 'session_reminder_5min',
+          locale,
+          params: {
+            recipientName: params.recipientName,
+            sessionTitle: params.sessionTitle,
+            courseName: params.courseName,
+            scheduledAt: params.scheduledAt,
+            durationMinutes: params.durationMinutes,
+          },
+        },
       });
       this.logger.log(
         `Session reminder sent to ${to} for "${params.sessionTitle}"`,
@@ -468,6 +636,11 @@ export class EmailService {
         subject: t(s.certApprovedSubject, { course: courseName }),
         html: getCertificateApprovedHtml(studentName, courseName, downloadUrl, locale),
         text: getCertificateApprovedText(studentName, courseName, downloadUrl, locale),
+        template: {
+          eventKey: 'certificate_approved',
+          locale,
+          params: { studentName, courseName, certificateId: '', downloadUrl },
+        },
       });
       this.logger.log(
         `Certificate approved email sent to ${to} for "${courseName}"`,
@@ -497,6 +670,11 @@ export class EmailService {
         subject: t(s.certRejectedSubject, { course: courseName }),
         html: getCertificateRejectedHtml(studentName, courseName, reviewNote, locale),
         text: getCertificateRejectedText(studentName, courseName, reviewNote, locale),
+        template: {
+          eventKey: 'certificate_rejected',
+          locale,
+          params: { studentName, courseName, reason: reviewNote },
+        },
       });
       this.logger.log(
         `Certificate rejected email sent to ${to} for "${courseName}"`,
@@ -551,6 +729,11 @@ export class EmailService {
         subject: t(s.certHeldSubject, { course: courseName }),
         html: getCertificateHeldHtml(studentName, courseName, reviewNote, locale),
         text: getCertificateHeldText(studentName, courseName, reviewNote, locale),
+        template: {
+          eventKey: 'certificate_held',
+          locale,
+          params: { studentName, courseName, reason: reviewNote },
+        },
       });
       this.logger.log(
         `Certificate held email sent to ${to} for "${courseName}"`,
@@ -590,6 +773,16 @@ export class EmailService {
         subject,
         html: getSessionScheduledHtml(params, locale),
         text: getSessionScheduledText(params, locale),
+        template: {
+          eventKey: 'session_scheduled',
+          locale,
+          params: {
+            recipientName: params.recipientName,
+            sessionTitle: params.sessionTitle,
+            courseName: params.courseName,
+            scheduledAt: params.scheduledDate,
+          },
+        },
       });
       this.logger.log(
         `Session scheduled email sent to ${to} for "${params.sessionTitle}"`,
@@ -622,6 +815,14 @@ export class EmailService {
         subject: t(s.sessionStartedSubject, { title: params.sessionTitle }),
         html: getSessionStartedHtml(params, locale),
         text: getSessionStartedText(params, locale),
+        template: {
+          eventKey: 'session_started',
+          locale,
+          params: {
+            recipientName: params.recipientName,
+            sessionTitle: params.sessionTitle,
+          },
+        },
       });
       this.logger.log(
         `Session started email sent to ${to} for "${params.sessionTitle}"`,
@@ -659,6 +860,14 @@ export class EmailService {
         subject,
         html: getWebinarLiveHtml(params, locale),
         text: getWebinarLiveText(params, locale),
+        template: {
+          eventKey: 'webinar_live',
+          locale,
+          params: {
+            recipientName: params.recipientName,
+            webinarTitle: params.webinarTitle,
+          },
+        },
       });
       this.logger.log(
         `Webinar live email sent to ${to} for "${params.webinarTitle}"`,
@@ -690,6 +899,15 @@ export class EmailService {
         subject: t(s.sessionEndedSubject, { title: params.sessionTitle }),
         html: getSessionEndedHtml(params, locale),
         text: getSessionEndedText(params, locale),
+        template: {
+          eventKey: 'session_ended',
+          locale,
+          params: {
+            recipientName: params.recipientName,
+            sessionTitle: params.sessionTitle,
+            recordingUrl: '',
+          },
+        },
       });
       this.logger.log(
         `Session ended email sent to ${to} for "${params.sessionTitle}"`,
@@ -722,6 +940,15 @@ export class EmailService {
         subject: t(s.sessionCancelledSubject, { title: params.sessionTitle }),
         html: getSessionCancelledHtml(params, locale),
         text: getSessionCancelledText(params, locale),
+        template: {
+          eventKey: 'session_cancelled',
+          locale,
+          params: {
+            recipientName: params.recipientName,
+            sessionTitle: params.sessionTitle,
+            reason: params.cancelReason ?? '',
+          },
+        },
       });
       this.logger.log(
         `Session cancelled email sent to ${to} for "${params.sessionTitle}"`,
@@ -747,6 +974,7 @@ export class EmailService {
       durationMinutes: number;
       instructorName: string;
       isAutoAssigned: boolean;
+      numberSystem?: 'western' | 'arabic_indic';
     },
     locale: EmailLocale = 'en',
   ): Promise<void> {
@@ -757,6 +985,15 @@ export class EmailService {
         subject: t(s.taAssignSubject, { title: params.sessionTitle }),
         html: getTaAssignmentHtml(params, locale),
         text: getTaAssignmentText(params, locale),
+        template: {
+          eventKey: 'ta_assignment',
+          locale,
+          params: {
+            recipientName: params.recipientName,
+            courseName: params.courseName,
+            instructorName: params.instructorName,
+          },
+        },
       });
       this.logger.log(
         `TA assignment email sent to ${to} for "${params.sessionTitle}"`,
@@ -789,6 +1026,15 @@ export class EmailService {
         subject: t(s.taRejectionSubject, { course: params.courseName }),
         html: getTaRejectionHtml(params, locale),
         text: getTaRejectionText(params, locale),
+        template: {
+          eventKey: 'ta_rejection',
+          locale,
+          params: {
+            recipientName: params.recipientName,
+            courseName: params.courseName,
+            reason: params.rejectionReason ?? '',
+          },
+        },
       });
       this.logger.log(
         `TA rejection email sent to ${to} for "${params.courseName}"`,
@@ -829,6 +1075,16 @@ export class EmailService {
         subject: t(s.contentReviewSubject, { decision: decisionLabel, title: params.materialTitle }),
         html: getContentReviewHtml(params, locale),
         text: getContentReviewText(params, locale),
+        template: {
+          eventKey: 'content_review',
+          locale,
+          params: {
+            instructorName: params.recipientName,
+            courseName: params.courseName,
+            outcome: decisionLabel,
+            feedback: params.comment ?? '',
+          },
+        },
       });
       this.logger.log(
         `Content review email sent to ${to} for "${params.materialTitle}" (${params.decision})`,
@@ -871,6 +1127,15 @@ export class EmailService {
         subject: t(s.reviewPendingSubject, { course: params.courseName }),
         html: getReviewPendingApprovalHtml({ ...params, dashboardUrl }, locale),
         text: getReviewPendingApprovalText({ ...params, dashboardUrl }, locale),
+        template: {
+          eventKey: 'review_pending_approval',
+          locale,
+          params: {
+            reviewerName: params.recipientName,
+            courseName: params.courseName,
+            reviewSnippet: params.reviewText ?? '',
+          },
+        },
       });
       this.logger.log(`Review-pending-approval email sent to ${to}`);
     } catch (error) {
@@ -897,6 +1162,15 @@ export class EmailService {
         subject: t(s.contentPendingSubject, { title: params.materialTitle }),
         html: getContentPendingReviewHtml(params, locale),
         text: getContentPendingReviewText(params, locale),
+        template: {
+          eventKey: 'content_pending_review',
+          locale,
+          params: {
+            instructorName: params.instructorName,
+            courseName: params.courseName,
+            reviewUrl: '',
+          },
+        },
       });
       this.logger.log(
         `Content pending review email sent to ${to} for "${params.materialTitle}"`,
@@ -933,6 +1207,15 @@ export class EmailService {
         subject: t(s.assessSubmittedSubject, { type: typeLabel, title: params.assessmentTitle }),
         html: getAssessmentSubmittedHtml(params, locale),
         text: getAssessmentSubmittedText(params, locale),
+        template: {
+          eventKey: 'assessment_submitted',
+          locale,
+          params: {
+            studentName: params.studentName,
+            assessmentTitle: params.assessmentTitle,
+            courseName: params.courseName,
+          },
+        },
       });
       this.logger.log(
         `Assessment submission email sent to ${to} for "${params.assessmentTitle}"`,
@@ -957,6 +1240,17 @@ export class EmailService {
         subject: t(s.retakeGrantedSubject, { title: params.assessmentTitle }),
         html: getRetakeGrantedHtml(params, locale),
         text: getRetakeGrantedText(params, locale),
+        template: {
+          eventKey: 'retake_granted',
+          locale,
+          params: {
+            studentName: params.studentName,
+            assessmentTitle: params.assessmentTitle,
+            courseName: params.courseName,
+            reason: params.reason ?? '',
+            newDueDate: params.newDueDate ?? '',
+          },
+        },
       });
       this.logger.log(
         `Retake granted email sent to ${to} for "${params.assessmentTitle}"`,
@@ -984,6 +1278,15 @@ export class EmailService {
         }),
         html: getTimeExtensionGrantedHtml(params, locale),
         text: getTimeExtensionGrantedText(params, locale),
+        template: {
+          eventKey: 'time_extension_granted',
+          locale,
+          params: {
+            studentName: params.studentName,
+            assessmentTitle: params.assessmentTitle,
+            newDueDate: '',
+          },
+        },
       });
       this.logger.log(
         `Time extension email sent to ${to} for "${params.assessmentTitle}" (+${params.minutes} min)`,
@@ -1011,6 +1314,11 @@ export class EmailService {
         html: getPasswordResetHtml(code, locale),
         text: getPasswordResetText(code, locale),
         skipPreferenceCheck: true,
+        template: {
+          eventKey: 'password_reset',
+          locale,
+          params: { recipientName: '', code, expiresInMinutes: 10 },
+        },
       });
       this.logger.log(`Password reset email sent to ${to}`);
     } catch (error) {
@@ -1038,6 +1346,16 @@ export class EmailService {
         subject: t(s.enrollSubject, { course: params.courseName }),
         html: getEnrollmentConfirmationHtml(params, locale),
         text: getEnrollmentConfirmationText(params, locale),
+        template: {
+          eventKey: 'enrollment_confirmation',
+          locale,
+          params: {
+            studentName: params.studentName,
+            courseName: params.courseName,
+            startDate: params.startDate ?? '',
+            instructorName: params.instructorName,
+          },
+        },
       });
       this.logger.log(
         `Enrollment confirmation email sent to ${to} for "${params.courseName}"`,

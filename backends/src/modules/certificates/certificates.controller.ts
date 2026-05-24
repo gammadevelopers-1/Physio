@@ -23,6 +23,7 @@ import { CurrentUser, Roles } from '../auth/decorators';
 import { Public } from '../auth/decorators/public.decorator';
 import { UserRole } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -102,6 +103,7 @@ export class CertificatesController {
    * No authentication required.
    */
   @Public()
+  @Throttle({ 'cert-verify': { limit: 30, ttl: 60_000 } }) // 30 / min / IP — defeats enumeration of short PG-XXXXXXXX IDs
   @Get('certificates/verify/:id')
   async verifyCertificate(@Param('id') id: string) {
     return this.certificatesService.verifyCertificate(id);
@@ -212,12 +214,16 @@ export class CertificatesController {
     @Query('status') status?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('managerId') managerId?: string,
+    @Query('search') search?: string,
   ) {
     return this.certificatesService.findPending(user, {
       courseId,
       status,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
+      managerId,
+      search,
     });
   }
 }

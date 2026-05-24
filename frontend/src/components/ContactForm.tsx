@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Mail, Phone, MapPin, ChevronRight, ChevronLeft, ChevronDown } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import type { ContactPage } from "@/lib/strapi/types";
+import { usePlatformGeneral } from "@/contexts/PlatformGeneralContext";
 
 // Dynamically import Map component to avoid SSR issues with Leaflet
 const Map = dynamic(() => import("./Map"), {
@@ -15,6 +16,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
   const t = useTranslations("contactPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const platformGeneral = usePlatformGeneral();
 
   // Helper: use Strapi data if available, otherwise fall back to translations
   const s = (field: keyof ContactPage, translationKey: string) => {
@@ -44,10 +46,11 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
     { key: "other", label: s("issueTypeOther", "issueTypes.other") },
   ];
 
-  // Contact details come strictly from Strapi — no hardcoded fallbacks.
-  // If a field is empty in Strapi, the corresponding block hides entirely.
-  const email = strapiData?.generalInquiryEmail || "";
-  const phone = strapiData?.technicalSupportPhone || "";
+  // Contact details prefer admin's Settings → General values; fall back
+  // to Strapi when admin hasn't configured a value. If neither has one,
+  // the corresponding block hides entirely.
+  const email = platformGeneral.contactEmail || strapiData?.generalInquiryEmail || "";
+  const phone = platformGeneral.supportPhone || strapiData?.technicalSupportPhone || "";
   const addressTitle = strapiData?.address || "";
   const mapLat = strapiData?.mapLatitude;
   const mapLng = strapiData?.mapLongitude;

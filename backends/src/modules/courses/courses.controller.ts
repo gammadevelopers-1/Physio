@@ -126,6 +126,8 @@ export class CoursesController {
     @Query('sort') sort?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('instructorId') instructorId?: string,
+    @Query('managerId') managerId?: string,
   ) {
     return this.coursesService.findAll(user, {
       status,
@@ -134,6 +136,8 @@ export class CoursesController {
       sort,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
+      instructorId,
+      managerId,
     });
   }
 

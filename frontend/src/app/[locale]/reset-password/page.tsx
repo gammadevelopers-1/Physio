@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import ReCAPTCHA from "react-google-recaptcha";
 import Navbar from "@/components/Navbar";
 import { useNavbarChrome } from "@/hooks/useNavbarChrome";
 import Footer from "@/components/Footer";
@@ -11,6 +12,10 @@ import { useTranslations, useLocale } from "next-intl";
 import { authApi } from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import PasswordPolicyHint from "@/components/shared/PasswordPolicyHint";
+import { usePasswordPolicy, checkPasswordAgainstPolicy } from "@/hooks/usePasswordPolicy";
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
 
 function ResetPasswordForm() {
   const t = useTranslations("resetPasswordPage");
@@ -21,6 +26,7 @@ function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
 
+  const { policy } = usePasswordPolicy();
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -28,6 +34,8 @@ function ResetPasswordForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Resend cooldown timer
@@ -99,8 +107,9 @@ function ResetPasswordForm() {
       return;
     }
 
-    if (newPassword.length < 6) {
-      toast.error(t("errors.passwordTooShort"));
+    const policyErrors = checkPasswordAgainstPolicy(newPassword, policy);
+    if (policyErrors.length) {
+      toast.error(policyErrors[0]);
       return;
     }
 
@@ -108,16 +117,27 @@ function ResetPasswordForm() {
       toast.error(t("errors.passwordMismatch"));
       return;
     }
+    if (RECAPTCHA_SITE_KEY && !recaptchaToken) {
+      toast.error(t("errors.recaptchaRequired"));
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      const result = await authApi.resetPassword(email, codeStr, newPassword);
+      const result = await authApi.resetPassword(
+        email,
+        codeStr,
+        newPassword,
+        recaptchaToken ?? undefined,
+      );
       toast.success(result.message || t("success"));
       router.push(`/${locale}/signin`);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : t("errors.generic");
       toast.error(message);
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -268,6 +288,7 @@ function ResetPasswordForm() {
                         )}
                       </button>
                     </div>
+                    <PasswordPolicyHint password={newPassword} />
                   </div>
 
                   {/* Confirm Password */}
@@ -293,9 +314,22 @@ function ResetPasswordForm() {
                     />
                   </div>
 
+                  {RECAPTCHA_SITE_KEY && (
+                    <div className="flex justify-center" dir="ltr">
+                      <ReCAPTCHA
+                        ref={recaptchaRef}
+                        sitekey={RECAPTCHA_SITE_KEY}
+                        hl={locale === "ar" ? "ar" : "en"}
+                        onChange={(token) => setRecaptchaToken(token)}
+                        onExpired={() => setRecaptchaToken(null)}
+                        onErrored={() => setRecaptchaToken(null)}
+                      />
+                    </div>
+                  )}
+
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || (!!RECAPTCHA_SITE_KEY && !recaptchaToken)}
                     className="w-full h-10 px-5 py-2 rounded-xl text-white font-medium text-sm text-center hover:opacity-90 transition-opacity disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{
                       background: isRTL

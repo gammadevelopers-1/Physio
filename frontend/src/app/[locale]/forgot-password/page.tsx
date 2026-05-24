@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ReCAPTCHA from "react-google-recaptcha";
 import Navbar from "@/components/Navbar";
 import { useNavbarChrome } from "@/hooks/useNavbarChrome";
 import Footer from "@/components/Footer";
@@ -11,6 +12,8 @@ import { useTranslations, useLocale } from "next-intl";
 import { authApi } from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft } from "lucide-react";
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
 
 export default function ForgotPasswordPage() {
   const t = useTranslations("forgotPasswordPage");
@@ -21,6 +24,8 @@ export default function ForgotPasswordPage() {
 
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,10 +34,16 @@ export default function ForgotPasswordPage() {
       toast.error(t("errors.emailRequired"));
       return;
     }
+    // When the env-configured site key is present, require a token. Local
+    // dev without RECAPTCHA_SITE_KEY skips the check.
+    if (RECAPTCHA_SITE_KEY && !recaptchaToken) {
+      toast.error(t("errors.recaptchaRequired"));
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      await authApi.forgotPassword(email);
+      await authApi.forgotPassword(email, recaptchaToken ?? undefined);
       toast.success(t("codeSent"));
       router.push(
         `/${locale}/reset-password?email=${encodeURIComponent(email)}`
@@ -41,6 +52,8 @@ export default function ForgotPasswordPage() {
       const message =
         err instanceof Error ? err.message : t("errors.generic");
       toast.error(message);
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -118,9 +131,22 @@ export default function ForgotPasswordPage() {
                     />
                   </div>
 
+                  {RECAPTCHA_SITE_KEY && (
+                    <div className="flex justify-center" dir="ltr">
+                      <ReCAPTCHA
+                        ref={recaptchaRef}
+                        sitekey={RECAPTCHA_SITE_KEY}
+                        hl={locale === "ar" ? "ar" : "en"}
+                        onChange={(token) => setRecaptchaToken(token)}
+                        onExpired={() => setRecaptchaToken(null)}
+                        onErrored={() => setRecaptchaToken(null)}
+                      />
+                    </div>
+                  )}
+
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || (!!RECAPTCHA_SITE_KEY && !recaptchaToken)}
                     className="w-full h-10 px-5 py-2 rounded-xl text-white font-medium text-sm text-center hover:opacity-90 transition-opacity disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{
                       background: isRTL

@@ -1,4 +1,9 @@
 {
+  "maintenancePage": {
+    "title": "We'll be right back",
+    "subtitle": "The platform is undergoing scheduled maintenance.",
+    "autoRecoverHint": "This page will refresh automatically when we're back online."
+  },
   "navbar": {
     "home": "Home",
     "courses": "Courses",
@@ -289,7 +294,8 @@
     "backToLogin": "Back to login",
     "errors": {
       "emailRequired": "Please enter your email address",
-      "generic": "Something went wrong. Please try again."
+      "generic": "Something went wrong. Please try again.",
+      "recaptchaRequired": "Please complete the reCAPTCHA"
     }
   },
   "resetPasswordPage": {
@@ -312,7 +318,8 @@
       "passwordRequired": "Please enter a new password",
       "passwordTooShort": "Password must be at least 6 characters",
       "passwordMismatch": "Passwords do not match",
-      "generic": "Something went wrong. Please try again."
+      "generic": "Something went wrong. Please try again.",
+      "recaptchaRequired": "Please complete the reCAPTCHA"
     }
   },
   "verifyPage": {
@@ -2066,7 +2073,9 @@
       "dropError": "Failed to drop the course. Please try again.",
       "dropRestrictedMessage": "Course cannot be dropped within 3 days of start date or after it has started",
       "requirementsNotMet": "Course requirements not met",
-      "cmeHoursEarned": "CME hours earned: {hours}"
+      "cmeHoursEarned": "CME hours earned: {hours}",
+      "courseCompletedNoAccess": "This course has been completed.",
+      "joinSessionError": "Unable to join this lecture."
     },
     "learning": {
       "courseContent": "Course Content",
@@ -2380,7 +2389,12 @@
       "endSessionError": "Failed to end lecture",
       "zoomEndFailed": "Lecture completed, but the Zoom meeting could not be ended. Please end it manually in Zoom.",
       "zoomEndFailedDetail": "Lecture completed, but Zoom could not be ended: {error}. Please end it manually.",
-      "sessionEndedAuto": "\"{title}\" has ended"
+      "sessionEndedAuto": "\"{title}\" has ended",
+      "sessionStartSuccess": "Session started successfully",
+      "sessionStartError": "Failed to start session",
+      "webinar": "Webinar",
+      "viewRegistrants": "View registrants",
+      "startAsHost": "Start as Host"
     },
     "todaysSessions": {
       "title": "Today's Lectures",
@@ -2563,7 +2577,7 @@
       "startDate": "Start Date",
       "endDate": "End Date",
       "cmeHoursLabel": "CME/CPD Hours",
-      "minutes": "min",
+      "minutes": "Minutes",
       "regNumber": "Reg. No.",
       "name": "Name",
       "email": "Email",
@@ -2590,7 +2604,6 @@
       "moduleType": "Module Type",
       "moduleDuration": "Duration",
       "hours": "Hours",
-      "minutes": "Minutes",
       "moduleTypes": {
         "video": "Video",
         "document": "Document",
@@ -2638,15 +2651,6 @@
         "zoom": "Zoom",
         "onsite": "On-site",
         "hybrid": "Hybrid"
-      },
-      "sessionStatus": {
-        "scheduled": "Scheduled",
-        "live": "Live",
-        "ended": "Ended",
-        "completed": "Completed",
-        "cancelled": "Cancelled",
-        "missed": "Missed",
-        "rescheduled": "Rescheduled"
       },
       "saveSession": "Save Lecture",
       "cancelSessionConfirm": "Are you sure you want to cancel this lecture? This action cannot be undone.",
@@ -2746,7 +2750,8 @@
       "materialAssignError": "Failed to assign materials to module",
       "download": "Download",
       "previewVideo": "Preview video",
-      "durationMinutes": "min"
+      "durationMinutes": "min",
+      "noReviewsYet": "No reviews yet"
     },
     "createCourse": {
       "title": "Create New Course",
@@ -2805,7 +2810,9 @@
         "document": "Document",
         "quiz": "Quiz",
         "mixed": "Mixed"
-      }
+      },
+      "selfPacedUnlimited": "Self-paced: unlimited enrollment",
+      "syncDefaultMax": "Default: up to 2000 students"
     },
     "sessionsPage": {
       "title": "Lectures",
@@ -2849,9 +2856,36 @@
       "maxParticipants": "Max Participants",
       "description": "Description",
       "cancel": "Cancel",
-      "schedule": "Schedule",
+      "schedule": {
+        "success": "Lecture scheduled successfully",
+        "error": "Failed to schedule lecture",
+        "conflict": "Schedule conflict: overlaps with \"{session}\""
+      },
       "start": "Start",
-      "attendance": "Attendance",
+      "attendance": {
+        "title": "Mark Attendance",
+        "summary": "Summary",
+        "markAll": "Mark All",
+        "present": "Present",
+        "absent": "Absent",
+        "late": "Late",
+        "excused": "Excused",
+        "noStudents": "No students enrolled in this course",
+        "noChanges": "No attendance changes to save",
+        "saved": "Attendance saved successfully",
+        "saveError": "Failed to save attendance",
+        "loadError": "Failed to load attendance data",
+        "cancel": "Cancel",
+        "save": "Save Attendance",
+        "noteRequired": "Please add a note for all late/excused students",
+        "notePlaceholder": "Reason for late/excused status...",
+        "joinedAt": "Joined",
+        "leftAt": "Left",
+        "exportAttendance": "Export Attendance",
+        "exportError": "Failed to export attendance",
+        "readOnly": "Attendance is locked. It can only be edited during a live lecture.",
+        "close": "Close"
+      },
       "share": "Share",
       "edit": "Edit",
       "statusUpcoming": "Scheduled",
@@ -2892,12 +2926,8 @@
         "cancel": "Cancel",
         "schedule": "Schedule Lecture",
         "venueRequired": "Venue address is required for on-site and hybrid lectures",
-        "pastTimeError": "Cannot schedule a lecture in the past"
-      },
-      "schedule": {
-        "success": "Lecture scheduled successfully",
-        "error": "Failed to schedule lecture",
-        "conflict": "Schedule conflict: overlaps with \"{session}\""
+        "pastTimeError": "Cannot schedule a lecture in the past",
+        "webinarCourseLock": "Webinar Course — this lecture will be created as a Zoom Webinar. Other lecture types are not available."
       },
       "makeupTitle": "Make-up: {course}",
       "makeupCreated": "Make-up lecture scheduled",
@@ -2952,30 +2982,6 @@
         "error": "Failed to update lecture",
         "save": "Save Changes"
       },
-      "attendance": {
-        "title": "Mark Attendance",
-        "summary": "Summary",
-        "markAll": "Mark All",
-        "present": "Present",
-        "absent": "Absent",
-        "late": "Late",
-        "excused": "Excused",
-        "noStudents": "No students enrolled in this course",
-        "noChanges": "No attendance changes to save",
-        "saved": "Attendance saved successfully",
-        "saveError": "Failed to save attendance",
-        "loadError": "Failed to load attendance data",
-        "cancel": "Cancel",
-        "save": "Save Attendance",
-        "noteRequired": "Please add a note for all late/excused students",
-        "notePlaceholder": "Reason for late/excused status...",
-        "joinedAt": "Joined",
-        "leftAt": "Left",
-        "exportAttendance": "Export Attendance",
-        "exportError": "Failed to export attendance",
-        "readOnly": "Attendance is locked. It can only be edited during a live lecture.",
-        "close": "Close"
-      },
       "recordings": {
         "title": "Recordings",
         "noRecordings": "No recordings available for this lecture",
@@ -3019,7 +3025,6 @@
       "students": "students",
       "statusAtrisk": "At Risk",
       "errorLoading": "Failed to load students",
-      "allCourses": "All Courses",
       "loading": "Loading students...",
       "retry": "Retry",
       "never": "Never",
@@ -3225,7 +3230,7 @@
       "option": "Option",
       "addOption": "Add Option",
       "correctAnswer": "Correct Answer",
-      "filesUploaded": "Assignment files uploaded",
+      "filesUploaded": "Files Uploaded",
       "noFiles": "No assignment files uploaded",
       "dueDateSet": "Due date set",
       "noDueDate": "No due date set",
@@ -3282,7 +3287,6 @@
       "questionComment": "Instructor Feedback",
       "addComment": "Add Comment",
       "overallComment": "Overall Comment",
-      "filesUploaded": "Files Uploaded",
       "pastDeadline": "Past Deadline",
       "noFilesUploaded": "No files uploaded yet",
       "assignmentSubmitted": "Assignment Submitted",
@@ -3305,7 +3309,6 @@
       "selectModule": "Module (Optional)",
       "noModule": "No Module",
       "attemptsLocked": "Locked to 1 attempt",
-      "deadlineRequired": "Deadline is required for assignments",
       "durationRequired": "Duration is required for quiz/exam",
       "allQuestions": "All Questions",
       "searchByName": "Search by name...",
@@ -3421,7 +3424,16 @@
       "revokeReason": "Revocation Reason",
       "downloadSelected": "Download Selected",
       "noApprovedSelected": "No approved certificates selected for download",
-      "batchDownloadFailed": "Failed to download certificates"
+      "batchDownloadFailed": "Failed to download certificates",
+      "downloadFailed": "Failed to download certificate",
+      "allManagers": "All Managers",
+      "searchManager": "Search manager…",
+      "noMatches": "No matches",
+      "tableManager": "Manager",
+      "tableAuditTrail": "Audit Trail",
+      "auditApproved": "Approved by",
+      "auditRejected": "Rejected by",
+      "auditRevoked": "Revoked by"
     },
     "content": {
       "title": "Content Management",
@@ -4206,7 +4218,8 @@
       "seoOgImagePlaceholder": "https://… (1200×630 PNG/JPG)",
       "seoOgImageHint": "Optional. If empty, the course thumbnail is used.",
       "seoNoindexLabel": "Hide this course from search engines",
-      "seoNoindexHint": "When ON, adds a noindex tag so Google/Bing won't list this page."
+      "seoNoindexHint": "When ON, adds a noindex tag so Google/Bing won't list this page.",
+      "cmeHoursOptionalHint": "Optional — leave empty if not applicable"
     },
     "courseDetail": {
       "backToCourses": "Back to Courses",
@@ -4638,7 +4651,8 @@
         "unlimited": "Unlimited",
         "scope": "Retake Scope",
         "scopeFull": "Full Assessment",
-        "scopeFailedSections": "Failed Sections Only"
+        "scopeFailedSections": "Failed Sections Only",
+        "scorePolicyDesc": "Retakes are granted per-student from the submissions list. This policy decides which attempt counts in the gradebook."
       },
       "override": {
         "title": "Grant Extra Time",
@@ -4796,7 +4810,6 @@
       "weekly": "Weekly",
       "monthly": "Monthly",
       "create": "Create",
-      "cancel": "Cancel",
       "scheduleCreated": "Scheduled report created successfully",
       "scheduleError": "Failed to manage scheduled report",
       "recipientEmail": "Recipient Email",
@@ -5003,7 +5016,7 @@
       "dashboard": "Dashboard",
       "users": "Users",
       "roles": "Roles & Permissions",
-      "roleRequests": "Role Requests",
+      "roleRequests": "Instructor Applications",
       "courses": "All Courses",
       "finance": "Finance",
       "points": "Points System",
@@ -5011,13 +5024,16 @@
       "compliance": "NELC Compliance",
       "reports": "Reports",
       "logs": "Audit Logs",
+      "templates": "Templates",
       "settings": "Settings",
       "superAdmin": "Super Admin",
       "uptime": "Uptime",
+      "activeToday": "Active Today",
       "viewProfile": "View Profile",
       "editProfile": "Edit Profile",
       "avatarUploadError": "Failed to upload avatar. Please try again.",
-      "logout": "Logout"
+      "logout": "Logout",
+      "certificates": "Certificates"
     },
     "kpi": {
       "activeUsers": "Active Users",
@@ -5166,12 +5182,15 @@
       "addUser": "Add User",
       "searchPlaceholder": "Search users...",
       "export": "Export",
+      "exportSuccess": "Users exported",
+      "exportFailed": "Export failed",
       "noUsers": "No users found",
       "stats": {
         "total": "Total Users",
         "active": "Active",
         "pending": "Pending",
-        "suspended": "Suspended"
+        "suspended": "Suspended",
+        "byRoleLabel": "Distribution by role · click to filter"
       },
       "filters": {
         "allRoles": "All Roles",
@@ -5188,12 +5207,40 @@
       },
       "actions": {
         "view": "View",
+        "viewProfile": "View profile",
         "edit": "Edit",
+        "manageRoles": "Manage roles",
+        "devices": "Trusted devices",
         "resetPassword": "Reset Password",
         "impersonate": "Impersonate",
         "suspend": "Suspend",
+        "activate": "Activate",
         "trustedDevices": "Trusted Devices",
         "delete": "Delete"
+      },
+      "detail": {
+        "close": "Close",
+        "contact": "Contact",
+        "email": "Email",
+        "phone": "Phone",
+        "professional": "Professional",
+        "department": "Department",
+        "specialty": "Specialty",
+        "profession": "Profession",
+        "qualification": "Qualification",
+        "scfhs": "SCFHS number",
+        "demographics": "Demographics",
+        "nationality": "Nationality",
+        "gender": "Gender",
+        "dateOfBirth": "Date of birth",
+        "nationalId": "National ID / Iqama",
+        "bioSocial": "Bio & social",
+        "allRoles": "All assigned roles",
+        "activeRoleMark": "active",
+        "loginActivity": "Login activity",
+        "lastLogin": "Last login",
+        "lastIp": "Last IP",
+        "joined": "Joined"
       },
       "sampleUsers": {
         "drFaisal": "Dr. Faisal Ahmed",
@@ -5278,20 +5325,121 @@
         "pendingReview": "Pending Review",
         "changesRequested": "Changes Requested",
         "completed": "Completed",
-        "archived": "Archived"
+        "archived": "Archived",
+        "allDelivery": "All Delivery Types",
+        "zoom": "Zoom",
+        "onsite": "On-site",
+        "blended": "Blended",
+        "selfPaced": "Self-paced",
+        "webinar": "Webinar",
+        "allInstructors": "All Instructors",
+        "allManagers": "All Managers",
+        "searchInstructor": "Search instructor…",
+        "searchManager": "Search manager…",
+        "noMatches": "No matches",
+        "clear": "Clear selection"
       },
       "table": {
         "course": "Course",
         "instructor": "Instructor",
+        "manager": "Manager",
         "status": "Status",
         "enrolled": "Enrolled",
         "completion": "Completion",
-        "price": "Price"
+        "price": "Price",
+        "actions": "Actions"
+      },
+      "card": {
+        "instructor": "Instructor",
+        "manager": "Manager",
+        "unassigned": "Unassigned",
+        "students": "students",
+        "sessions": "sessions",
+        "modules": "modules",
+        "completion": "Completion",
+        "free": "Free",
+        "viewStudents": "View enrolled students"
+      },
+      "studentsModal": {
+        "title": "Enrolled Students",
+        "searchPlaceholder": "Search by name, email, or SCFHS…",
+        "empty": "No students enrolled yet",
+        "noMatches": "No students match your search",
+        "scfhs": "SCFHS",
+        "close": "Close",
+        "openCourse": "Open course"
       },
       "actions": {
         "view": "View",
         "edit": "Edit",
-        "archive": "Archive"
+        "archive": "Archive",
+        "manage": "Manage course",
+        "activate": "Activate",
+        "delete": "Delete",
+        "approve": "Approve",
+        "requestChanges": "Request changes",
+        "makePublic": "Make public",
+        "makePrivate": "Make private",
+        "feature": "Mark as featured",
+        "unfeature": "Remove featured",
+        "complete": "Mark as completed",
+        "unarchive": "Restore (unarchive)"
+      },
+      "sampleCourses": {
+        "acls": "ACLS Certification",
+        "firstAid": "First Aid Training",
+        "cpr": "CPR Certification",
+        "emergency": "Emergency Response",
+        "infection": "Infection Control"
+      },
+      "sort": {
+        "newest": "Newest first",
+        "oldest": "Oldest first",
+        "alphabetical": "Alphabetical",
+        "students": "Most enrolled"
+      },
+      "viewGrid": "Grid view",
+      "viewList": "List view",
+      "featured": "Featured",
+      "toasts": {
+        "activated": "Course activated",
+        "activateFailed": "Failed to activate course",
+        "approved": "Course approved",
+        "approveFailed": "Failed to approve course",
+        "completed": "Course marked as completed",
+        "completeFailed": "Failed to complete course",
+        "archived": "Course archived",
+        "archiveFailed": "Failed to archive course",
+        "deleted": "Course deleted",
+        "deleteFailed": "Failed to delete course",
+        "featured": "Course marked as featured",
+        "unfeatured": "Featured flag removed",
+        "featureFailed": "Failed to update featured flag",
+        "madePublic": "Course is now public",
+        "madePrivate": "Course is now private",
+        "visibilityFailed": "Failed to update visibility",
+        "requestChangesSent": "Changes requested",
+        "requestChangesFailed": "Failed to send request",
+        "studentsLoadFailed": "Failed to load enrolled students"
+      },
+      "confirmArchive": {
+        "title": "Archive this course?",
+        "body": "Archiving \"{title}\" will hide it from public listings and stop new enrollments. You can restore it later.",
+        "cancel": "Cancel",
+        "confirm": "Archive"
+      },
+      "confirmDelete": {
+        "title": "Delete this course?",
+        "body": "Permanently delete \"{title}\"? This cannot be undone. Only draft courses can be deleted.",
+        "confirm": "Delete"
+      },
+      "requestChangesModal": {
+        "title": "Request changes",
+        "body": "Send \"{title}\" back to the instructor with a note explaining what needs to change.",
+        "placeholder": "Describe what needs to change…",
+        "noteRequired": "A note is required",
+        "cancel": "Cancel",
+        "submit": "Send request"
       }
     },
     "financePage": {
@@ -5347,6 +5495,15 @@
       "title": "Points System",
       "subtitle": "Configure earn rules, redemption settings, eligible courses, and audit user balances",
       "save": "Save",
+      "hero": {
+        "liveBadge": "Live",
+        "activeRules": "Active rules",
+        "conversionRate": "Conversion rate",
+        "conversionRateValue": "{points} pts / 1 SAR",
+        "minRedemption": "Min redemption",
+        "maxRedemption": "Max coverage",
+        "pointsUnit": "pts"
+      },
       "tabs": {
         "rules": "Earn Rules",
         "config": "Redemption Config",
@@ -5363,7 +5520,7 @@
       },
       "rules": {
         "ruleColumn": "Rule",
-        "amountColumn": "Points",
+        "amountColumn": "Points awarded",
         "expiryColumn": "Expires after",
         "statusColumn": "Status",
         "actionsColumn": "",
@@ -5371,6 +5528,9 @@
         "inactive": "Inactive",
         "neverExpires": "Never",
         "daysSuffix": "days",
+        "empty": "No earn rules configured yet",
+        "unsavedChanges": "Unsaved changes",
+        "upToDate": "Saved",
         "keys": {
           "signup": {
             "title": "Welcome bonus",
@@ -5558,70 +5718,99 @@
       }
     },
     "reportsPage": {
-      "title": "Reports",
-      "subtitle": "Generate and schedule platform reports",
-      "dateRange": "Date Range",
-      "presets": {
-        "today": "Today",
-        "week": "This Week",
-        "month": "This Month",
-        "year": "This Year"
-      },
-      "generateReport": "Generate Report",
-      "readyToGenerate": "Ready to generate report with selected date range",
+      "title": "Reports & Exports",
+      "subtitle": "Generate platform-wide reports across attendance, CME, students, registrations, and financials. Export as PDF, Excel or CSV.",
+      "refresh": "Refresh",
+      "retry": "Retry",
+      "loadError": "Failed to load courses. Some reports may be limited to platform-wide scope.",
+      "helperTitle": "How reports work",
+      "helperBody": "Every report can be exported in PDF, Excel or CSV. Most reports run platform-wide by default and can optionally be narrowed to a specific course. Reports that require a course are marked accordingly.",
+      "reportsCount": "reports",
+      "close": "Close",
+      "exportReport": "Export",
+      "selectCourse": "Course",
+      "chooseCourse": "Choose a course…",
+      "allCourses": "All courses (platform-wide)",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "selectFormat": "Format",
+      "pdfDesc": "Branded, printable layout — best for compliance reviewers",
+      "excelDesc": "Editable spreadsheet — best for further analysis",
+      "csvDesc": "Plain text — best for piping into other systems",
+      "cancel": "Cancel",
       "generate": "Generate",
-      "schedule": "Schedule",
-      "scheduledReports": "Scheduled Reports",
-      "table": {
-        "reportName": "Report Name",
-        "frequency": "Frequency",
-        "nextRun": "Next Run",
-        "recipients": "Recipients",
-        "actions": "Actions"
-      },
-      "actions": {
-        "edit": "Edit",
-        "delete": "Delete"
-      },
-      "reportTypes": {
-        "users": {
-          "title": "User Reports",
-          "description": "Registrations, activity, role distribution"
+      "generating": "Generating…",
+      "downloadSuccess": "Report downloaded",
+      "downloadError": "Failed to generate report",
+      "courseRequired": "Course required",
+      "dateRangeSupported": "Date range",
+      "categories": {
+        "attendance": {
+          "title": "Attendance Reports",
+          "description": "Per-session presence, join/leave times, attendance % across all courses or a single course"
         },
-        "enrollment": {
-          "title": "Enrollment Reports",
-          "description": "By course, date, conversion funnel"
+        "cme": {
+          "title": "CME / CPD Reports",
+          "description": "Eligibility for continuing-medical-education credits — attendance %, assessment outcomes, reason if not earned"
         },
-        "completion": {
-          "title": "Completion Reports",
-          "description": "Rates, trends, dropout analysis"
+        "students": {
+          "title": "Student Reports",
+          "description": "Enrollment, completion, satisfaction and gradebook reports across the student population"
+        },
+        "registration": {
+          "title": "Registration Reports",
+          "description": "Webinar registrants, course catalog, instructor performance and NELC compliance audit data"
         },
         "financial": {
           "title": "Financial Reports",
-          "description": "Revenue, payments, refunds, profitability"
-        },
-        "instructor": {
-          "title": "Instructor Reports",
-          "description": "Performance, load, ratings"
-        },
-        "compliance": {
-          "title": "Compliance Reports",
-          "description": "NELC evidence, audit snapshots"
-        },
-        "certificate": {
-          "title": "Certificate Reports",
-          "description": "Issuance, verification stats"
+          "description": "Course revenue, paid enrollments and totals over a date range"
         }
       },
-      "frequencies": {
-        "daily": "Daily",
-        "weekly": "Weekly",
-        "monthly": "Monthly"
-      },
-      "scheduledReportNames": {
-        "weeklyUserActivity": "Weekly User Activity",
-        "monthlyRevenue": "Monthly Revenue Summary",
-        "dailySecurity": "Daily Security Audit"
+      "types": {
+        "attendance": {
+          "title": "Attendance Report",
+          "desc": "Per-session attendance with join/leave times, duration, attendance %, and audit fields"
+        },
+        "cme-eligibility": {
+          "title": "CME Eligibility Report",
+          "desc": "Per-student CME eligibility — attendance %, assessment pass, hours earned, reason if denied"
+        },
+        "enrollment": {
+          "title": "Enrollment Report",
+          "desc": "Students enrolled by course with date, status, progress and last-activity"
+        },
+        "completion": {
+          "title": "Completion Report",
+          "desc": "Completed students with completion date and certificate status"
+        },
+        "satisfaction": {
+          "title": "Satisfaction Report",
+          "desc": "Enrollment rate, completion %, attendance %, average assessment score per course"
+        },
+        "gradebook": {
+          "title": "Gradebook Report",
+          "desc": "Scores per assessment, total, percentage and pass/fail for a chosen course"
+        },
+        "webinar-registrants": {
+          "title": "Webinar Registrants",
+          "desc": "Full audit per webinar registrant — registration, attendance, payment and certificate status"
+        },
+        "course-catalog": {
+          "title": "Course Catalog",
+          "desc": "Title, status, instructor, enrolled count, completion % and average rating across all courses"
+        },
+        "instructor-performance": {
+          "title": "Instructor Performance",
+          "desc": "Per-instructor courses, student counts, completion %, attendance % and sessions per month"
+        },
+        "nelc-compliance": {
+          "title": "NELC Compliance Matrix",
+          "desc": "Seven-category compliance scorecard — governance, accreditation, content, delivery, assessment, data, reporting"
+        },
+        "revenue": {
+          "title": "Revenue Report",
+          "desc": "Course revenue and paid enrollments with totals over the selected date range"
+        }
       }
     },
     "logsPage": {
@@ -5694,12 +5883,133 @@
         "paymentReceived": "Payment received: SAR 1,200 from Ahmed K.",
         "settingsUpdated": "Updated platform notification settings",
         "ipBlocked": "Blocked IP 103.45.67.89 for suspicious activity"
+      },
+      "tabs": {
+        "audit": "Audit Trail",
+        "violations": "Violations",
+        "alerts": "Alerts"
+      },
+      "loadError": "Failed to load logs",
+      "export": "Export CSV",
+      "refresh": "Refresh",
+      "retry": "Retry",
+      "rowsFound": "{count} entries",
+      "audit": {
+        "searchPlaceholder": "Search by performer name or email…",
+        "allEntities": "All entity types",
+        "allActions": "All actions",
+        "emptyTitle": "No audit entries match these filters",
+        "emptyBody": "Try widening the date range or clearing the entity / action filter.",
+        "col": {
+          "timestamp": "Timestamp",
+          "performer": "Performer",
+          "entity": "Entity",
+          "action": "Action",
+          "ip": "IP"
+        }
+      },
+      "violations": {
+        "allTypes": "All violation types",
+        "emptyTitle": "No violations in this period",
+        "emptyBody": "Compliance checks, enrollment caps, and certificate revocations will appear here as they happen.",
+        "col": {
+          "eventType": "Event Type",
+          "entity": "Entity"
+        }
+      },
+      "detail": {
+        "entityId": "Entity ID",
+        "performerId": "Performer ID",
+        "userId": "User ID",
+        "ip": "IP Address",
+        "metadata": "Metadata"
+      },
+      "alerts": {
+        "allTypes": "All severities",
+        "allStatuses": "Read + Unread",
+        "unreadOnly": "Unread only",
+        "readOnly": "Read only",
+        "critical": "Critical",
+        "warning": "Warning",
+        "info": "Info",
+        "markRead": "Mark read",
+        "markAllRead": "Mark all read",
+        "markedRead": "Marked as read",
+        "markedAllRead": "{count} alerts marked as read",
+        "markReadError": "Failed to mark as read",
+        "open": "Open",
+        "emptyTitle": "All clear",
+        "emptyBody": "No alerts match the current filter. The platform writes here when something needs your attention."
+      }
+    },
+    "templatesPage": {
+      "title": "Message Templates",
+      "subtitle": "Edit every transactional email and WhatsApp message the platform sends. Disabled templates fall back to the platform defaults.",
+      "totalTemplates": "templates",
+      "searchPlaceholder": "Search by name, key, or description…",
+      "noMatches": "No templates match your search.",
+      "noTemplates": "No templates registered.",
+      "edit": "Edit",
+      "editedBadge": "Customized",
+      "defaultBadge": "Default",
+      "lastUpdated": "Updated",
+      "backToList": "Back to templates",
+      "loading": "Loading template…",
+      "loadFailed": "Could not load this template.",
+      "saved": "Template saved",
+      "saveFailed": "Could not save the template.",
+      "save": "Save Template",
+      "resetToDefault": "Reset to default",
+      "confirmReset": "Reset this template to the platform default? Any customizations will be lost.",
+      "resetDone": "Template reset to default",
+      "resetFailed": "Could not reset the template.",
+      "subject": "Subject",
+      "subjectPlaceholder": "e.g. Your enrollment in {{courseName}}",
+      "preheader": "Preheader",
+      "preheaderPlaceholder": "Short preview text shown in the inbox",
+      "variablesTitle": "Available variables",
+      "variablesHint": "Click a variable to insert it into the subject. In the editor body, type {{ to bring up the merge-tag menu.",
+      "clickToInsertSubject": "Click to insert into the subject",
+      "clickToInsertBody": "Click to insert at the cursor",
+      "editorLoadingHint": "The visual editor is loading. If it doesn't appear, refresh the page.",
+      "whatsappVariablesHint": "Click a variable to insert it at the cursor. WhatsApp doesn't support HTML — keep formatting plain.",
+      "messageBody": "Message body",
+      "whatsappPlaceholder": "Hi {{recipientName}},\\nYou're invited to {{courseName}}…",
+      "whatsappEditorHint": "Tip: WhatsApp templates bundle both English and Arabic in a single body, separated by a blank line.",
+      "livePreview": "Live preview",
+      "whatsappEmptyPreview": "Start typing to see the WhatsApp preview here.",
+      "categories": {
+        "account": "Account",
+        "applications": "Instructor Applications",
+        "enrollment": "Enrollment",
+        "sessions": "Live Sessions",
+        "webinars": "Webinars",
+        "certificates": "Certificates",
+        "assessments": "Assessments",
+        "content": "Content Review",
+        "whatsapp": "WhatsApp"
       }
     },
     "settingsPage": {
       "title": "Settings",
-      "subtitle": "Configure platform settings",
+      "subtitle": "Configure platform-wide settings and your personal account security",
       "saveChanges": "Save Changes",
+      "saving": "Saving…",
+      "unsavedChanges": "Unsaved changes",
+      "reset": "Reset",
+      "comingSoon": "This section is being built — coming in the next update.",
+      "loadError": "Could not load settings",
+      "toasts": {
+        "saved": "Settings saved",
+        "saveFailed": "Failed to save settings",
+        "loadFailed": "Failed to load settings"
+      },
+      "mainTabs": {
+        "platform": "Platform",
+        "security": "Security",
+        "communications": "Communications",
+        "system": "System"
+      },
       "tabs": {
         "general": "General",
         "localization": "Localization",
@@ -5708,118 +6018,357 @@
         "notifications": "Notifications",
         "payments": "Payments",
         "integrations": "Integrations",
-        "backup": "Backup",
-        "policies": "Policies",
         "maintenance": "Maintenance"
       },
       "general": {
         "title": "General Settings",
+        "subtitle": "Your profile photo, public contact info, and the WhatsApp widget. Values here override Strapi on the marketing site.",
+        "myAvatar": "My Avatar",
+        "myAvatarHelp": "Shown in the dashboard navbar and your activity entries. JPG/PNG/WebP, max 2 MB.",
+        "uploadAvatar": "Upload Avatar",
+        "changeAvatar": "Change Avatar",
+        "removeAvatar": "Remove",
+        "avatarTooLarge": "Avatar must be under 2 MB",
+        "avatarUploaded": "Avatar updated",
+        "avatarRemoved": "Avatar removed",
+        "avatarUploadFailed": "Failed to update avatar",
+        "avatarRemoveFailed": "Failed to remove avatar",
         "platformName": "Platform Name",
+        "platformNameHelp": "Shown in the public navbar/footer when set. Leave blank to use the Strapi value.",
         "contactEmail": "Contact Email",
-        "timezone": "Timezone",
-        "logo": "Platform Logo",
-        "uploadLogo": "Upload Logo"
+        "contactEmailHelp": "Shown on the public Contact page (overrides Strapi when set)",
+        "supportPhone": "Support Phone",
+        "supportPhoneHelp": "Shown on the public Contact page (overrides Strapi when set)",
+        "timezone": "Default Timezone",
+        "timezoneHelp": "Used as the default for reports and date exports",
+        "whatsappTitle": "WhatsApp Chat Widget",
+        "whatsappSubtitle": "Controls the floating WhatsApp bubble on the marketing site. Fields below override Strapi when set; leave blank to keep the Strapi values.",
+        "whatsappNumber": "WhatsApp Number",
+        "whatsappCompanyName": "Company Name",
+        "whatsappGreeting": "Greeting Message",
+        "whatsappGreetingPlaceholder": "Hi! 👋 How can we help you today?",
+        "whatsappReplyTime": "Reply Time",
+        "whatsappReplyTimePlaceholder": "Typically replies within an hour",
+        "whatsappHelp": "The widget itself can be turned on/off from Strapi (Site Settings → Show WhatsApp Button)."
       },
       "auth": {
-        "title": "Authentication Settings",
-        "require2FA": "Require 2FA for all users",
-        "require2FADesc": "Enforce two-factor authentication for enhanced security",
-        "sessionTimeout": "Session Timeout",
-        "passwordMinLength": "Minimum Password Length"
+        "title": "Authentication & Password Policy",
+        "subtitle": "Sign-in policy applied across the entire platform",
+        "warningTitle": "Security-impact settings",
+        "warningBody": "Changes here affect every user immediately. Tightening these values may force already-signed-in users to re-authenticate sooner.",
+        "sessionTimeout": "Access Token Lifetime",
+        "sessionTimeoutDesc": "How long an issued access token stays valid before refresh",
+        "refreshDays": "Refresh Token Lifetime",
+        "refreshDaysDesc": "How long a session can be refreshed without re-login",
+        "passwordPolicy": "Password Policy",
+        "passwordMinLength": "Minimum Password Length",
+        "requireUppercase": "Require an uppercase letter",
+        "requireNumber": "Require a number",
+        "requireSpecial": "Require a special character (!@#$…)",
+        "lockoutAttempts": "Failed Attempts Before Lockout",
+        "lockoutDuration": "Lockout Duration",
+        "minutes": "{n} minutes",
+        "hours": "{n, plural, one {1 hour} other {# hours}}",
+        "days": "{n, plural, one {1 day} other {# days}}",
+        "chars": "{n} characters",
+        "attempts": "{n} attempts"
+      },
+      "mySecurity": {
+        "title": "My Security",
+        "subtitle": "Your account credentials, two-factor authentication, devices, and display preferences",
+        "changePassword": "Change Password",
+        "changePasswordHint": "Use a strong, unique password. Changing it will keep this device signed in but revoke all other sessions.",
+        "currentPassword": "Current password",
+        "newPassword": "New password",
+        "confirmPassword": "Confirm new password",
+        "updatePassword": "Update Password",
+        "passwordMismatch": "New password and confirmation don't match",
+        "passwordTooShort": "Password must be at least 6 characters",
+        "passwordChanged": "Password changed successfully",
+        "passwordChangeFailed": "Failed to change password",
+        "twoFactorCardTitle": "Two-Factor Authentication",
+        "twoFactorCardHint": "Add an extra layer of protection by requiring a code from your email when signing in.",
+        "devicesCardTitle": "Trusted Devices",
+        "devicesCardHint": "Devices remembered after 2FA verification. Revoke any you don't recognize.",
+        "preferencesCardTitle": "Display Preferences",
+        "preferencesCardHint": "Your interface language and calendar style. Affects only your account.",
+        "overview": {
+          "twoFactorLabel": "Two-Factor",
+          "enabled": "Enabled",
+          "notEnabled": "Not enabled",
+          "twoFactorOnHint": "Email code required at sign-in",
+          "twoFactorOffHint": "Turn on for extra protection",
+          "devicesLabel": "Trusted Devices",
+          "deviceSingular": "device",
+          "devicePlural": "devices",
+          "devicesHint": "Includes this current device",
+          "lastSignInLabel": "Last Sign-in",
+          "never": "Never",
+          "ipUnknown": "IP unknown"
+        }
+      },
+      "localization": {
+        "title": "Localization & Regional Formatting",
+        "subtitle": "Language availability, default locale, and how dates and numbers are formatted across the platform",
+        "allowedLanguages": "Allowed Languages",
+        "allowedLanguagesHelp": "Languages users can switch between. At least one must remain enabled.",
+        "defaultLanguage": "Default Language",
+        "defaultLanguageHelp": "First-time visitors land on this language. Existing users keep their saved choice.",
+        "regionalFormatting": "Regional Formatting",
+        "dateFormat": "Date Format",
+        "numberSystem": "Number System",
+        "numWestern": "Western digits",
+        "numArabic": "Arabic-Indic digits",
+        "templatesHint": "Per-language email and WhatsApp templates are managed in the Notifications tab. Add Arabic versions there for every transactional message."
       },
       "notifications": {
-        "title": "Notification Settings",
-        "email": "Email Notifications",
-        "emailDesc": "Send notifications via email",
-        "sms": "SMS Notifications",
-        "smsDesc": "Send notifications via SMS"
+        "title": "Notification Channels",
+        "subtitle": "Master toggles for the two channels the platform sends on, plus per-category sub-toggles for fine control. Per-template content lives on the Templates page.",
+        "channelsTitle": "Delivery Channels",
+        "channelsHelp": "Turning the master off stops every message on that channel. Sub-categories let you pause one category (e.g. marketing nudges) without breaking the rest. Account-class emails (OTP, password reset) always send.",
+        "channels": {
+          "email": "Email",
+          "emailDesc": "Transactional email via Resend",
+          "whatsapp": "WhatsApp",
+          "whatsappDesc": "Pre-filled wa.me links for manager-driven outreach"
+        },
+        "alwaysOn": "Always on",
+        "categories": {
+          "account": "Account & Security",
+          "accountDesc": "OTP, password reset, set-password — cannot be disabled",
+          "applications": "Instructor Applications",
+          "applicationsDesc": "Approval, rejection, more-info requests",
+          "enrollment": "Enrollment",
+          "enrollmentDesc": "Course enrollment confirmations",
+          "sessions": "Live Sessions",
+          "sessionsDesc": "Scheduled, started, ended, cancelled, reminders",
+          "webinars": "Webinars",
+          "webinarsDesc": "Registration confirmation, paid-enrollment nudges, live alerts",
+          "certificates": "Certificates",
+          "certificatesDesc": "Approved, held, rejected notifications",
+          "assessments": "Assessments",
+          "assessmentsDesc": "Submission confirmations, retake / extension grants, at-risk reminders",
+          "content": "Content Review",
+          "contentDesc": "Pending-review alerts to managers, review outcomes to instructors"
+        },
+        "templatesMovedTitle": "Edit message templates",
+        "templatesMovedBody": "Every email and WhatsApp template the platform sends is editable on the dedicated Templates page — with a drag-and-drop email builder, live preview, and variable insertion.",
+        "openTemplates": "Open Templates"
       },
-      "maintenance": {
-        "title": "Maintenance",
-        "mode": "Maintenance Mode",
-        "modeDesc": "Enable to put the platform in maintenance mode",
-        "message": "Maintenance Message",
-        "defaultMessage": "We are currently performing scheduled maintenance. Please check back soon."
+      "payments": {
+        "title": "Payments",
+        "subtitle": "Configure the active payment gateway, credentials, webhook, currency, and bank-transfer details",
+        "providerNotConnected": "Live payment provider not yet wired",
+        "providerNotConnectedBody": "Settings here are saved but checkout uses the bank-transfer flow until the provider integration goes live. Once credentials are filled in and the gateway is selected, integration can be flipped on.",
+        "activeGateway": "Active Gateway",
+        "activeGatewayHelp": "The gateway selected here is what new checkout sessions use. Existing sessions continue with whatever they started with.",
+        "gateway": {
+          "moyasar": "Moyasar",
+          "tap": "Tap",
+          "tamara": "Tamara",
+          "bank_transfer": "Bank Transfer"
+        },
+        "testMode": "Test Mode",
+        "testModeDesc": "Use sandbox credentials. Real card data is not charged.",
+        "currency": "Currency",
+        "credentialsTitle": "Credentials",
+        "credentialsHelp": "Secret keys are stored as references — the actual value lives in GCP Secret Manager and is rotated via gcloud, not edited here.",
+        "publishableKey": "Publishable Key",
+        "publishableKeyHelp": "Safe to expose to the browser. Used on the checkout page.",
+        "secretKey": "Secret Key",
+        "secretKeyHelp": "Server-only. Never sent to the client.",
+        "merchantToken": "Merchant Token",
+        "merchantTokenHelp": "Issued by Tamara on merchant onboarding",
+        "bankTransferDetails": "Bank Transfer Details",
+        "bankName": "Bank Name",
+        "accountHolder": "Account Holder",
+        "iban": "IBAN",
+        "instructions": "Instructions to Buyer",
+        "webhookTitle": "Webhook",
+        "webhookHelp": "Paste this URL into the gateway dashboard so payment events flow back to the platform. We verify the signing secret on every callback.",
+        "webhookUrl": "Webhook URL",
+        "webhookSecret": "Webhook Signing Secret",
+        "webhookSecretHelp": "Used to verify the HMAC signature on incoming webhooks",
+        "copy": "Copy",
+        "copiedShort": "Copied",
+        "copied": "Copied to clipboard",
+        "copyFailed": "Could not copy",
+        "invoiceTitle": "Invoice & Receipt",
+        "autoSendReceipt": "Auto-send receipt by email",
+        "autoSendReceiptDesc": "When a payment succeeds, email the buyer a receipt automatically",
+        "invoiceFooter": "Invoice footer text"
       },
       "integrations": {
-        "title": "Integrations",
-        "connected": "Connected",
-        "notConnected": "Not Connected",
-        "connect": "Connect",
-        "disconnect": "Disconnect",
-        "zoom": "Zoom",
-        "tapPayments": "Tap Payments",
-        "unifonicSms": "Unifonic SMS"
+        "title": "Integration Health",
+        "subtitle": "Live status of every third-party service the platform depends on. Configured = credentials present and the integration is wired up at the infra layer.",
+        "refresh": "Refresh",
+        "required": "Required",
+        "configuredBadge": "Configured",
+        "missingBadge": "Missing",
+        "notConfiguredBadge": "Not configured",
+        "summary": {
+          "total": "Tracked",
+          "configured": "Configured",
+          "missing": "Missing (required)"
+        },
+        "providers": {
+          "zoom": "Zoom",
+          "resend": "Resend (Email)",
+          "mailFrom": "Mail-From Address",
+          "recaptcha": "Google reCAPTCHA",
+          "piiEncryption": "PII Encryption Key",
+          "redis": "Redis / Memorystore",
+          "openai": "OpenAI Whisper",
+          "malwareScanner": "Malware Scanner",
+          "cloudSqlBackup": "Cloud SQL Backup"
+        },
+        "howToConnect": "Configuring credentials",
+        "howToConnectBody": "Credentials are stored in GCP Secret Manager, not in this UI. To connect a missing integration, add the corresponding secret via gcloud and redeploy the backend."
+      },
+      "maintenance": {
+        "title": "Maintenance Mode",
+        "subtitle": "Take the public site down for planned work. Admins keep access so they can turn it back on.",
+        "currentlyOnTitle": "Maintenance mode is ON",
+        "currentlyOnBody": "Visitors and signed-in users are being redirected to the maintenance page. Toggle off when work is complete.",
+        "mode": "Maintenance Mode",
+        "modeDescDetailed": "When enabled, the entire public site and dashboards redirect to a themed maintenance page. The admin dashboard and sign-in stay reachable so you can flip it back.",
+        "messageTitle": "Outage Message",
+        "messageHelp": "Shown on the public maintenance page and inside API 503 responses. Keep it short and friendly.",
+        "message": "Outage message",
+        "previewHint": "Want to see what visitors will see?",
+        "previewLink": "Preview the maintenance page",
+        "bypassTitle": "Bypassed paths",
+        "bypassBody": "Auth endpoints, all /api/admin/* routes, payment + Zoom webhooks, and the health probe always pass through so admins can toggle this off and external integrations don't break."
       }
     },
     "roleRequestsPage": {
-      "title": "Role Requests",
-      "subtitle": "Review and manage instructor role applications",
-      "searchPlaceholder": "Search by name or email...",
+      "title": "Instructor Applications",
+      "subtitle": "Review candidates applying to become instructors. Each application includes profile, qualifications, supporting documents, and bank details.",
+      "pendingBanner": "{count} {count, plural, one {application} other {applications}} awaiting review",
+      "searchPlaceholder": "Search by name, email, profession or specialty…",
       "stats": {
         "total": "Total",
         "pending": "Pending",
+        "moreInfo": "More info",
         "approved": "Approved",
         "rejected": "Rejected"
       },
-      "filterAll": "All Status",
-      "filterPending": "Pending",
-      "filterApproved": "Approved",
-      "filterRejected": "Rejected",
-      "filterMoreInfo": "More Info",
-      "colApplicant": "Applicant",
-      "colEmail": "Email",
-      "colRole": "Role",
-      "colStatus": "Status",
-      "colSubmitted": "Submitted",
-      "colActions": "Actions",
-      "review": "Review",
-      "noResults": "No role requests found",
-      "showing": "Showing",
-      "of": "of"
+      "filters": {
+        "all": "All",
+        "pending": "Pending",
+        "moreInfo": "More info",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "statuses": {
+        "PENDING": "Pending",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected",
+        "MORE_INFO": "More info"
+      },
+      "emptyTitle": "No applications match these filters",
+      "emptyBody": "Try clearing the search or status filter to see all instructor applications across the platform.",
+      "overdue": "Overdue",
+      "actions": {
+        "approve": "Approve",
+        "quickApprove": "Quick approve — no review note"
+      },
+      "showing": "Showing {from}–{to} of {total}",
+      "toasts": {
+        "loadFailed": "Failed to load applications",
+        "approved": "Application approved",
+        "approveFailed": "Approve failed"
+      }
     },
     "roleRequestReviewPage": {
-      "title": "Application Review",
-      "backToList": "Back to Role Requests",
-      "profileSection": "Profile Information",
-      "documentsSection": "Documents & Resume",
-      "bankSection": "Bank Information",
-      "socialLinks": "Social Links",
-      "timeline": "Timeline",
-      "actions": "Actions",
-      "adminNote": "Admin Note",
-      "fullNameAr": "Full Name (Arabic)",
-      "fullNameEn": "Full Name (English)",
-      "email": "Email",
-      "phone": "Phone",
-      "nationality": "Nationality",
-      "gender": "Gender",
-      "profession": "Profession",
-      "specialty": "Specialty",
-      "qualification": "Qualification",
-      "rank": "Rank",
-      "scfhsNumber": "SCFHS Number",
-      "nationalId": "National/Iqama ID",
-      "accountHolder": "Account Holder",
-      "bankName": "Bank Name",
-      "iban": "IBAN",
-      "submitted": "Submitted",
-      "reviewed": "Reviewed",
+      "backToList": "Back to applications",
+      "loadFailed": "Failed to load application",
+      "notFound": "Application not found",
+      "submittedDaysAgo": "Submitted {count, plural, =0 {today} one {1 day ago} other {# days ago}}",
+      "overdueBanner": "This application has been pending review for {count} days — please action soon to keep candidates engaged.",
+      "lastAdminNote": "Last admin note",
       "approve": "Approve",
       "reject": "Reject",
-      "requestInfo": "Request More Info",
-      "modalApproveTitle": "Approve Application",
-      "modalApproveDesc": "This will approve the application and assign the Instructor role.",
-      "modalRejectTitle": "Reject Application",
-      "modalRejectDesc": "Please provide a reason for rejecting this application.",
-      "modalRequestInfoTitle": "Request More Information",
-      "modalRequestInfoDesc": "Describe what additional information is needed from the applicant.",
-      "noteOptional": "Add a note (optional)...",
-      "noteRequired": "Enter your message (required)...",
+      "requestInfo": "Request info",
+      "nav": {
+        "identity": "Identity",
+        "professional": "Professional",
+        "documents": "Documents",
+        "resume": "Resume",
+        "bank": "Bank",
+        "timeline": "Timeline"
+      },
+      "sections": {
+        "identity": "Identity & contact",
+        "professional": "Professional background",
+        "documents": "Uploaded documents",
+        "resume": "Resume builder entries",
+        "bank": "Bank information",
+        "timeline": "Application timeline"
+      },
+      "fields": {
+        "email": "Email",
+        "phone": "Phone",
+        "nationality": "Nationality",
+        "country": "Country",
+        "state": "State / Region",
+        "city": "City",
+        "gender": "Gender",
+        "nationalId": "National / Iqama ID",
+        "social": "Social profiles",
+        "profession": "Profession",
+        "specialty": "Specialty",
+        "qualification": "Qualification",
+        "rank": "Academic rank",
+        "scfhs": "SCFHS registration",
+        "accountHolder": "Account holder",
+        "bankName": "Bank name",
+        "iban": "IBAN"
+      },
+      "yes": "Yes",
+      "no": "No",
+      "resume": {
+        "education": "Education",
+        "experience": "Professional experience",
+        "researches": "Scientific research",
+        "training": "Training experience",
+        "yearsExperience": "{count, plural, one {1 year of experience} other {# years of experience}}"
+      },
+      "timeline": {
+        "submitted": "Application submitted",
+        "submittedBy": "By {name}",
+        "approved": "Application approved",
+        "rejected": "Application rejected",
+        "more_info": "More information requested",
+        "pending": "Status changed to pending"
+      },
+      "noteOptional": "Add an optional note for the audit trail (the candidate will not see this)…",
+      "noteRequired": "Write the message the candidate will receive…",
+      "noteRequiredError": "A message is required for this action",
       "cancel": "Cancel",
-      "confirmApprove": "Approve",
-      "confirmReject": "Reject",
-      "confirmRequestInfo": "Send Request"
+      "toasts": {
+        "approved": "Application approved",
+        "rejected": "Application rejected",
+        "infoRequested": "Information requested from candidate",
+        "actionFailed": "Action failed — please try again"
+      },
+      "modals": {
+        "approve": {
+          "title": "Approve application",
+          "body": "{name} will be granted the Instructor role and notified by email. They can then create courses immediately.",
+          "confirm": "Approve & notify"
+        },
+        "reject": {
+          "title": "Reject application",
+          "body": "{name} will be notified by email with the reason you provide below. Please be specific so they can re-apply correctly.",
+          "confirm": "Reject & notify"
+        },
+        "request-info": {
+          "title": "Request more information",
+          "body": "{name} will receive your message and can re-submit additional details. The application stays pending until they reply.",
+          "confirm": "Send request"
+        }
+      }
     }
   },
   "financeDashboard": {
@@ -6847,26 +7396,86 @@
     "hoursAgo": "{h}h ago",
     "daysAgo": "{d}d ago",
     "types": {
-      "course_approved": { "title": "Course Approved", "message": "Your course has been approved and is now active." },
-      "course_changes_requested": { "title": "Changes Requested", "message": "Changes have been requested on your course." },
-      "course_completed": { "title": "Course Completed", "message": "Your course has been marked as completed." },
-      "course_assigned": { "title": "Course Assigned", "message": "You have been assigned as instructor for a course." },
-      "course_unassigned": { "title": "Course Unassigned", "message": "You have been removed as instructor from a course." },
-      "ta_assigned": { "title": "Teaching Assistant Assigned", "message": "A teaching assistant has been assigned to your course." },
-      "ta_workload_warning": { "title": "TA Workload Notice", "message": "A teaching assistant has been assigned to multiple courses." },
-      "ta_suggestion": { "title": "TA Suggestion", "message": "A teaching assistant has been suggested for your course." },
-      "session_scheduled": { "title": "New Lecture Scheduled", "message": "A new lecture has been scheduled." },
-      "session_started": { "title": "Lecture Started", "message": "A lecture has started." },
-      "session_ended": { "title": "Lecture Ended", "message": "A lecture has ended." },
-      "session_cancelled": { "title": "Lecture Cancelled", "message": "A lecture has been cancelled." },
-      "session_rescheduled": { "title": "Lecture Rescheduled", "message": "A lecture has been rescheduled." },
-      "content_review": { "title": "Content Review Update", "message": "Your content has been reviewed." },
-      "content_pending_review": { "title": "Content Pending Review", "message": "New content is awaiting your review." },
-      "assessment_published": { "title": "New Assessment Published", "message": "A new assessment has been published." },
-      "assessment_submitted": { "title": "Assessment Submitted", "message": "A student has submitted an assessment." },
-      "enrollment_confirmed": { "title": "Enrollment Confirmed", "message": "Your enrollment has been confirmed." },
-      "intervention_email": { "title": "Course Progress Reminder", "message": "A progress reminder has been sent." },
-      "intervention_makeup": { "title": "Make-up Session Scheduled", "message": "A make-up session has been scheduled." }
+      "course_approved": {
+        "title": "Course Approved",
+        "message": "Your course has been approved and is now active."
+      },
+      "course_changes_requested": {
+        "title": "Changes Requested",
+        "message": "Changes have been requested on your course."
+      },
+      "course_completed": {
+        "title": "Course Completed",
+        "message": "Your course has been marked as completed."
+      },
+      "course_assigned": {
+        "title": "Course Assigned",
+        "message": "You have been assigned as instructor for a course."
+      },
+      "course_unassigned": {
+        "title": "Course Unassigned",
+        "message": "You have been removed as instructor from a course."
+      },
+      "ta_assigned": {
+        "title": "Teaching Assistant Assigned",
+        "message": "A teaching assistant has been assigned to your course."
+      },
+      "ta_workload_warning": {
+        "title": "TA Workload Notice",
+        "message": "A teaching assistant has been assigned to multiple courses."
+      },
+      "ta_suggestion": {
+        "title": "TA Suggestion",
+        "message": "A teaching assistant has been suggested for your course."
+      },
+      "session_scheduled": {
+        "title": "New Lecture Scheduled",
+        "message": "A new lecture has been scheduled."
+      },
+      "session_started": {
+        "title": "Lecture Started",
+        "message": "A lecture has started."
+      },
+      "session_ended": {
+        "title": "Lecture Ended",
+        "message": "A lecture has ended."
+      },
+      "session_cancelled": {
+        "title": "Lecture Cancelled",
+        "message": "A lecture has been cancelled."
+      },
+      "session_rescheduled": {
+        "title": "Lecture Rescheduled",
+        "message": "A lecture has been rescheduled."
+      },
+      "content_review": {
+        "title": "Content Review Update",
+        "message": "Your content has been reviewed."
+      },
+      "content_pending_review": {
+        "title": "Content Pending Review",
+        "message": "New content is awaiting your review."
+      },
+      "assessment_published": {
+        "title": "New Assessment Published",
+        "message": "A new assessment has been published."
+      },
+      "assessment_submitted": {
+        "title": "Assessment Submitted",
+        "message": "A student has submitted an assessment."
+      },
+      "enrollment_confirmed": {
+        "title": "Enrollment Confirmed",
+        "message": "Your enrollment has been confirmed."
+      },
+      "intervention_email": {
+        "title": "Course Progress Reminder",
+        "message": "A progress reminder has been sent."
+      },
+      "intervention_makeup": {
+        "title": "Make-up Session Scheduled",
+        "message": "A make-up session has been scheduled."
+      }
     }
   },
   "accessibility": {
@@ -6903,7 +7512,9 @@
     "hold": "Hold",
     "copyLink": "Copy link",
     "attendance": "Attendance",
-    "uploadMaterial": "Upload material"
+    "uploadMaterial": "Upload material",
+    "previousPage": "Previous page",
+    "nextPage": "Next page"
   },
   "taDashboard": {
     "title": "Teaching Assistant Dashboard",

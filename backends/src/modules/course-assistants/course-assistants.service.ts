@@ -23,6 +23,7 @@ import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { EmailService } from '../email/email.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 import { ThresholdEvaluationService, ASSISTANT_THRESHOLDS } from './threshold-evaluation.service';
+import { AdminSettingsService } from '../admin-settings/admin-settings.service';
 
 @Injectable()
 export class CourseAssistantsService {
@@ -33,6 +34,7 @@ export class CourseAssistantsService {
     private readonly emailService: EmailService,
     private readonly notificationsService: UserNotificationsService,
     private readonly thresholdService: ThresholdEvaluationService,
+    private readonly adminSettings: AdminSettingsService,
   ) {}
 
   /**
@@ -1048,6 +1050,10 @@ export class CourseAssistantsService {
 
       if (taUser && instructor) {
         const locale = (taUser.language || 'en') as 'en' | 'ar';
+        const localeSettings = await this.adminSettings.getPublicLocaleSettings().catch(() => ({
+          numberSystem: 'western' as const,
+          dateFormat: 'DD-MM-YYYY' as const,
+        }));
         await this.emailService.sendTaAssignment(taUser.email, {
           recipientName: `${taUser.firstName} ${taUser.lastName}`,
           sessionTitle: `All sessions - ${course.title}`,
@@ -1056,6 +1062,7 @@ export class CourseAssistantsService {
           durationMinutes: 0,
           instructorName: `${instructor.firstName} ${instructor.lastName}`,
           isAutoAssigned: false,
+          numberSystem: localeSettings.numberSystem,
         }, locale);
       }
     } catch (err) {

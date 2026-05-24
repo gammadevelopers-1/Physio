@@ -11,6 +11,7 @@ import { PasswordSetupService } from './password-setup.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { AdminSettingsModule } from '../admin-settings/admin-settings.module';
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -19,11 +20,15 @@ import { RolesGuard } from './guards/roles.guard';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET') || 'your-super-secret-key-change-in-production',
+        // Per-token expiresIn is set at sign-time by AuthService.signTokens
+        // so admin-configured Access Token Lifetime takes effect without
+        // a server restart. This default is the safety fallback only.
         signOptions: {
           expiresIn: (configService.get<string>('JWT_ACCESS_EXPIRATION') || '15m') as any,
         },
       }),
     }),
+    AdminSettingsModule,
   ],
   // Re-export JwtModule so other feature modules (storage, trainer-applications)
   // can inject JwtService via custom guards.

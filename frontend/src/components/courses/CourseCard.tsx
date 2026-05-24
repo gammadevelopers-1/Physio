@@ -16,6 +16,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { useRouter, usePathname } from "next/navigation";
 import { useFavourites } from "@/contexts/FavouritesContext";
 import { useAuth } from "@/contexts";
+import { FmtDate } from "@/components/ui/Fmt";
 
 interface CourseCardProps {
   course: PublicCourse;
@@ -54,12 +55,7 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
     deliveryLabelMap[course.deliveryType] || course.deliveryType;
   const DeliveryIcon = DELIVERY_ICON[course.deliveryType] || Video;
 
-  const formattedDate = course.startDate
-    ? new Date(course.startDate).toLocaleDateString(
-        locale === "ar" ? "ar-SA" : "en-US",
-        { day: "numeric", month: "short", year: "numeric" },
-      )
-    : t("card.tbd");
+  const formattedDate = course.startDate ? null : t("card.tbd");
 
   const cmeLabel =
     course.isCmeAccredited && course.cmeHours
@@ -183,7 +179,11 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
         <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[var(--color-text-secondary)] ${isRTL ? "justify-end" : ""}`}>
           <span className="flex items-center gap-1">
             <Calendar className="w-3.5 h-3.5" strokeWidth={1.5} />
-            {formattedDate}
+            {course.startDate ? (
+              <FmtDate value={course.startDate} variant="readable" locale={locale === "ar" ? "ar" : "en"} />
+            ) : (
+              formattedDate
+            )}
           </span>
           {cmeLabel && (
             <>

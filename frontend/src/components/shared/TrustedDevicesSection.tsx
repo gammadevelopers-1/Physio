@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { TrustedDevice } from "@/lib/api";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDateReadable } from "@/lib/platform-locale";
 import {
   Smartphone,
   Monitor,
@@ -37,23 +39,16 @@ export default function TrustedDevicesSection({
 }: TrustedDevicesSectionProps) {
   const t = useTranslations("securitySettings");
   const locale = useLocale();
+  const platformLocale = usePlatformLocale();
   const [confirmingCurrentDevice, setConfirmingCurrentDevice] = useState(false);
   const [includeCurrentInRevokeAll, setIncludeCurrentInRevokeAll] = useState(false);
 
   const currentDevice = devices.find((d) => d.isCurrentDevice);
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(
-      locale === "ar" ? "ar-SA" : "en-US",
-      {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }
-    );
-  };
+  const formatDate = (dateStr: string) =>
+    formatPlatformDateReadable(dateStr, platformLocale, locale === "ar" ? "ar" : "en", {
+      includeTime: true,
+    });
 
   const getDeviceIcon = (deviceName: string | null) => {
     if (!deviceName) return <Globe className="w-5 h-5" />;

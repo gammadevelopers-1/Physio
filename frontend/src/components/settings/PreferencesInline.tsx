@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { profileApi } from "@/lib/api";
 import { usePreferences } from "@/hooks/usePreferences";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 
 /**
  * Inline language + calendar block, designed to be folded into the Profile
@@ -19,6 +20,7 @@ export default function PreferencesInline() {
   const router = useRouter();
   const pathname = usePathname();
   const { preferences, loading, updateUi } = usePreferences();
+  const { allowedLanguages } = usePlatformLocale();
 
   const switchLocale = (newLocale: string) => {
     if (newLocale === locale) return;
@@ -52,28 +54,32 @@ export default function PreferencesInline() {
             {tCommon("interfaceLanguage")}
           </label>
           <div className="inline-flex bg-[var(--color-border-subtle)] rounded-lg p-1">
-            <button
-              type="button"
-              onClick={() => switchLocale("en")}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                locale === "en"
-                  ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
-                  : "text-[var(--color-text-secondary)]"
-              }`}
-            >
-              English
-            </button>
-            <button
-              type="button"
-              onClick={() => switchLocale("ar")}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                locale === "ar"
-                  ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
-                  : "text-[var(--color-text-secondary)]"
-              }`}
-            >
-              العربية
-            </button>
+            {allowedLanguages.includes("en") && (
+              <button
+                type="button"
+                onClick={() => switchLocale("en")}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  locale === "en"
+                    ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
+                    : "text-[var(--color-text-secondary)]"
+                }`}
+              >
+                English
+              </button>
+            )}
+            {allowedLanguages.includes("ar") && (
+              <button
+                type="button"
+                onClick={() => switchLocale("ar")}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  locale === "ar"
+                    ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
+                    : "text-[var(--color-text-secondary)]"
+                }`}
+              >
+                العربية
+              </button>
+            )}
           </div>
         </div>
 

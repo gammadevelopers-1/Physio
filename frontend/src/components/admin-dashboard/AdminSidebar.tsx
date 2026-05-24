@@ -21,17 +21,25 @@ import {
   Crown,
   UserCheck,
   Coins,
+  Award,
+  Mail,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { roleRequestsApi, profileApi } from "@/lib/api";
+import { roleRequestsApi, profileApi, adminApi } from "@/lib/api";
 
 interface AdminProfile {
   name: string;
   email: string;
-  totalUsers: number;
-  totalCourses: number;
-  uptime: number;
   avatar?: string;
+  /**
+   * @deprecated Stats are now fetched by the sidebar itself via
+   * `adminApi.getOverviewStats()`. These fields are ignored — callers
+   * can pass anything (or omit them). Kept on the type so the existing
+   * page-level adminProfile objects keep compiling.
+   */
+  totalUsers?: number;
+  totalCourses?: number;
+  uptime?: number;
 }
 
 interface AdminSidebarProps {
@@ -46,6 +54,11 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
   const { refreshUser } = useAuth();
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [pendingCount, setPendingCount] = useState(0);
+  const [stats, setStats] = useState<{
+    totalUsers: number;
+    totalCourses: number;
+    activeToday: number;
+  } | null>(null);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -73,21 +86,45 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
     fetchPendingCount();
   }, []);
 
+  // Fetch sidebar profile-card stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const result = await adminApi.getOverviewStats();
+        setStats(result);
+      } catch {
+        // Not admin or transient failure — keep stats null, UI shows "—"
+      }
+    };
+    fetchStats();
+  }, []);
+
+  // Sidebar items grouped by domain so the eye moves predictably:
+  //   1. Overview (Dashboard)
+  //   2. People (Users, then candidates awaiting decision)
+  //   3. Learning (Courses + their output: Certificates)
+  //   4. Engagement (Points)
+  //   5. Money (Finance)
+  //   6. Insights & governance (Reports, Compliance, Logs, Security)
+  //   7. Config (Settings)
+  //
+  // Roles & Permissions entry is intentionally absent — the page exists
+  // at /dashboard/admin/roles but the granular matrix isn't wired into
+  // backend enforcement yet. Restore when the permission system goes
+  // truly functional.
   const navItems = [
+    // Overview
     {
       label: t("sidebar.dashboard"),
       href: `/${locale}/dashboard/admin`,
       icon: LayoutDashboard,
     },
+
+    // People
     {
       label: t("sidebar.users"),
       href: `/${locale}/dashboard/admin/users`,
       icon: Users,
-    },
-    {
-      label: t("sidebar.roles"),
-      href: `/${locale}/dashboard/admin/roles`,
-      icon: Shield,
     },
     {
       label: t("sidebar.roleRequests"),
@@ -95,25 +132,38 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
       icon: UserCheck,
       badge: pendingCount > 0 ? pendingCount : undefined,
     },
+
+    // Learning
     {
       label: t("sidebar.courses"),
       href: `/${locale}/dashboard/admin/courses`,
       icon: BookOpen,
     },
     {
-      label: t("sidebar.finance"),
-      href: `/${locale}/dashboard/admin/finance`,
-      icon: DollarSign,
+      label: t("sidebar.certificates"),
+      href: `/${locale}/dashboard/admin/certificates`,
+      icon: Award,
     },
+
+    // Engagement
     {
       label: t("sidebar.points"),
       href: `/${locale}/dashboard/admin/points`,
       icon: Coins,
     },
+
+    // Money
     {
-      label: t("sidebar.security"),
-      href: `/${locale}/dashboard/admin/security`,
-      icon: Lock,
+      label: t("sidebar.finance"),
+      href: `/${locale}/dashboard/admin/finance`,
+      icon: DollarSign,
+    },
+
+    // Insights & governance
+    {
+      label: t("sidebar.reports"),
+      href: `/${locale}/dashboard/admin/reports`,
+      icon: BarChart3,
     },
     {
       label: t("sidebar.compliance"),
@@ -121,14 +171,21 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
       icon: FileText,
     },
     {
-      label: t("sidebar.reports"),
-      href: `/${locale}/dashboard/admin/reports`,
-      icon: BarChart3,
-    },
-    {
       label: t("sidebar.logs"),
       href: `/${locale}/dashboard/admin/logs`,
       icon: ClipboardList,
+    },
+    {
+      label: t("sidebar.security"),
+      href: `/${locale}/dashboard/admin/security`,
+      icon: Lock,
+    },
+
+    // Config
+    {
+      label: t("sidebar.templates"),
+      href: `/${locale}/dashboard/admin/templates`,
+      icon: Mail,
     },
     {
       label: t("sidebar.settings"),
@@ -206,19 +263,21 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
         <div className="mt-6 flex justify-around py-4 border-t border-[var(--color-border)]">
           <div className="text-center">
             <p className="text-xl font-bold text-[var(--color-text-secondary)]">
-              {admin.totalUsers.toLocaleString()}
+              {stats ? stats.totalUsers.toLocaleString() : "—"}
             </p>
             <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.users")}</p>
           </div>
           <div className="text-center">
             <p className="text-xl font-bold text-[var(--color-text-secondary)]">
-              {admin.totalCourses}
+              {stats ? stats.totalCourses : "—"}
             </p>
             <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.courses")}</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-[#16A34A]">{admin.uptime}%</p>
-            <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.uptime")}</p>
+            <p className="text-xl font-bold text-[#16A34A]">
+              {stats ? stats.activeToday : "—"}
+            </p>
+            <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.activeToday")}</p>
           </div>
         </div>
 

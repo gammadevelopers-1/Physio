@@ -5,11 +5,19 @@ import { useTranslations, useLocale } from "next-intl";
 import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
+import AdminNavbar from "@/components/admin-dashboard/AdminNavbar";
+import AdminSidebar from "@/components/admin-dashboard/AdminSidebar";
+import AdminMobileSidebar from "@/components/admin-dashboard/AdminMobileSidebar";
+import SearchableSelect, {
+  SearchableOption,
+} from "@/components/admin-dashboard/SearchableSelect";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
-import { courseManagerApi } from "@/lib/api";
+import { useAdminProfile } from "@/hooks/useAdminProfile";
+import { adminApi, courseManagerApi, FilterPerson } from "@/lib/api";
 import { toast } from "sonner";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import type {
   InstructorCourse,
   CertificateRequestResponse,
@@ -61,6 +69,7 @@ interface ReviewModalProps {
 const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t }: ReviewModalProps) => {
   const locale = useLocale();
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
   const [note, setNote] = useState(cert.reviewNote || "");
   const [processing, setProcessing] = useState(false);
   const [activeAction, setActiveAction] = useState<string | null>(null);
@@ -138,7 +147,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t 
               <div>
                 <p className="text-sm font-medium text-[var(--color-text-secondary)]">{studentName}</p>
                 <p className="text-xs text-[var(--color-text-secondary)]">{cert.studentEmail}</p>
-                <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.requested")}: {formatDateHijri(cert.createdAt, calendarFormat, { locale })}</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">{t("certificates.requested")}: {formatDateHijri(cert.createdAt, calendarFormat, { locale, platformSettings: platformLocale })}</p>
               </div>
             </div>
           </div>
@@ -312,11 +321,25 @@ const BatchBar = ({ count, onApprove, onReject, onClear, processing, t }: BatchB
 
 // ─── Main Component ────────────────────────────────────────
 
-const CertificatesContent = () => {
+interface CertificatesContentProps {
+  /**
+   * Dashboard the page is rendered inside. Default "manager" — the
+   * existing manager Certificates page is unchanged. When "admin" the
+   * component swaps to admin chrome, exposes a manager filter, sends
+   * server-side search, and shows extra audit columns (approver name,
+   * revoker name + reason).
+   */
+  role?: "manager" | "admin";
+}
+
+const CertificatesContent = ({ role = "manager" }: CertificatesContentProps = {}) => {
   const manager = useManagerProfile();
+  const admin = useAdminProfile();
+  const isAdmin = role === "admin";
   const t = useTranslations("instructorDashboard");
   const locale = useLocale();
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
   const isRTL = locale === "ar";
 
   // Data
@@ -329,12 +352,59 @@ const CertificatesContent = () => {
   const [error, setError] = useState("");
 
   // Filters
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedManagerId, setSelectedManagerId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
+
+  // Admin-only: manager filter source list. Loaded once, lazily.
+  const [managersList, setManagersList] = useState<FilterPerson[]>([]);
+  const [managersListLoading, setManagersListLoading] = useState(false);
+
+  // Debounce the search input → searchQuery (used in both client view filter
+  // and the server-side search param for admin's larger result set).
+  useEffect(() => {
+    const t = setTimeout(() => setSearchQuery(searchInput), 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  // Reset pagination when any filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCourse, selectedStatus, selectedManagerId]);
+
+  // Load manager list once for admin's filter
+  useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+    setManagersListLoading(true);
+    adminApi
+      .getManagersList()
+      .then((rows) => {
+        if (!cancelled) setManagersList(rows);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setManagersListLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin]);
+
+  const managerOptions: SearchableOption[] = useMemo(
+    () =>
+      managersList.map((p) => ({
+        value: p.id,
+        label: [p.firstName, p.lastName].filter(Boolean).join(" ") || p.email,
+        hint: p.email,
+      })),
+    [managersList],
+  );
 
   // Modal
   const [reviewingCert, setReviewingCert] = useState<CertificateRequestResponse | null>(null);
@@ -372,6 +442,15 @@ const CertificatesContent = () => {
     setLoading(true);
     setError("");
     try {
+      // Admin-only filter knobs passed transparently — backend ignores them
+      // for non-admin callers, so manager calls are unchanged.
+      const adminFilters = isAdmin
+        ? {
+            managerId: selectedManagerId ?? undefined,
+            search: searchQuery.trim() || undefined,
+          }
+        : {};
+
       const [coursesRes, certsRes, pendingRes, approvedRes, heldRes, revokedRes] = await Promise.all([
         courseManagerApi.getCourses({ limit: 100 }),
         courseManagerApi.getCertificates({
@@ -379,11 +458,12 @@ const CertificatesContent = () => {
           status: selectedStatus !== "all" ? selectedStatus : undefined,
           page: currentPage,
           limit: ITEMS_PER_PAGE,
+          ...adminFilters,
         }),
-        courseManagerApi.getCertificates({ status: "pending", limit: 1 }),
-        courseManagerApi.getCertificates({ status: "approved", limit: 1 }),
-        courseManagerApi.getCertificates({ status: "held", limit: 1 }),
-        courseManagerApi.getCertificates({ status: "revoked", limit: 1 }),
+        courseManagerApi.getCertificates({ status: "pending", limit: 1, ...adminFilters }),
+        courseManagerApi.getCertificates({ status: "approved", limit: 1, ...adminFilters }),
+        courseManagerApi.getCertificates({ status: "held", limit: 1, ...adminFilters }),
+        courseManagerApi.getCertificates({ status: "revoked", limit: 1, ...adminFilters }),
       ]);
       setCourses(coursesRes.data);
       setCertificates(certsRes.data);
@@ -400,7 +480,7 @@ const CertificatesContent = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedCourse, selectedStatus, currentPage, t]);
+  }, [selectedCourse, selectedStatus, selectedManagerId, currentPage, isAdmin, searchQuery, t]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -641,14 +721,26 @@ const CertificatesContent = () => {
 
   return (
     <>
-      <CourseManagerNavbar manager={manager} />
+      {isAdmin ? (
+        <AdminNavbar admin={admin} />
+      ) : (
+        <CourseManagerNavbar manager={manager} />
+      )}
       <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
-              <CourseManagerSidebar manager={manager} />
+              {isAdmin ? (
+                <AdminSidebar admin={admin} />
+              ) : (
+                <CourseManagerSidebar manager={manager} />
+              )}
             </div>
-            <CourseManagerMobileSidebar manager={manager} />
+            {isAdmin ? (
+              <AdminMobileSidebar admin={admin} />
+            ) : (
+              <CourseManagerMobileSidebar manager={manager} />
+            )}
 
             <div className="flex-1 min-w-0 space-y-6">
               {/* Header */}
@@ -752,8 +844,8 @@ const CertificatesContent = () => {
                         <input
                           type="text"
                           placeholder={t("certificates.searchPlaceholder")}
-                          value={searchQuery}
-                          onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                          value={searchInput}
+                          onChange={(e) => setSearchInput(e.target.value)}
                           className={`w-full py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
                         />
                       </div>
@@ -766,6 +858,20 @@ const CertificatesContent = () => {
                         <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
                       </button>
                       <div className="hidden md:flex gap-3">
+                        {isAdmin && (
+                          <div className="w-48">
+                            <SearchableSelect
+                              options={managerOptions}
+                              value={selectedManagerId}
+                              onChange={(v) => { setSelectedManagerId(v); setSelectedIds(new Set()); }}
+                              placeholder={t("certificates.allManagers")}
+                              searchPlaceholder={t("certificates.searchManager")}
+                              emptyLabel={t("certificates.noMatches")}
+                              clearLabel={t("certificates.clearSelection")}
+                              disabled={managersListLoading}
+                            />
+                          </div>
+                        )}
                         <select
                           value={selectedCourse}
                           onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); setSelectedIds(new Set()); }}
@@ -830,9 +936,15 @@ const CertificatesContent = () => {
                               </th>
                               <th className={`px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider`}>{t("certificates.tableStudent")}</th>
                               <th className={`px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider`}>{t("certificates.tableCourse")}</th>
+                              {isAdmin && (
+                                <th className={`px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider`}>{t("certificates.tableManager")}</th>
+                              )}
                               <th className={`px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider`}>{t("certificates.tableEligibility")}</th>
                               <th className={`px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider`}>{t("certificates.tableRequestDate")}</th>
                               <th className={`px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider`}>{t("certificates.tableStatus")}</th>
+                              {isAdmin && (
+                                <th className={`px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider`}>{t("certificates.tableAuditTrail")}</th>
+                              )}
                               <th className={`px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider`}>{t("certificates.tableActions")}</th>
                             </tr>
                           </thead>
@@ -864,8 +976,15 @@ const CertificatesContent = () => {
                                     </div>
                                   </td>
                                   <td className="px-4 py-4">
-                                    <span className="text-sm text-[var(--color-text-secondary)] max-w-[150px] truncate block">{courseNameMap[cert.courseId] || cert.courseId}</span>
+                                    <span className="text-sm text-[var(--color-text-secondary)] max-w-[150px] truncate block">{cert.courseTitle || courseNameMap[cert.courseId] || cert.courseId}</span>
                                   </td>
+                                  {isAdmin && (
+                                    <td className="px-4 py-4">
+                                      <span className="text-sm text-[var(--color-text-secondary)] truncate block max-w-[140px]">
+                                        {cert.courseManagerName?.trim() || "—"}
+                                      </span>
+                                    </td>
+                                  )}
                                   <td className="px-4 py-4">
                                     <div className="flex items-center gap-1">
                                       <span className={`w-5 h-5 rounded flex items-center justify-center ${elig.attendance ? "bg-[#DCFCE7] text-[#22C55E]" : "bg-[#FEE2E2] text-[#EF4444]"}`} title={`${t("certificates.attendance")}: ${parseFloat(cert.attendancePercent || "0").toFixed(1)}%`}>
@@ -881,7 +1000,7 @@ const CertificatesContent = () => {
                                     </div>
                                   </td>
                                   <td className="px-4 py-4">
-                                    <span className="text-sm text-[var(--color-text-secondary)]">{formatDateHijri(cert.createdAt, calendarFormat, { locale })}</span>
+                                    <span className="text-sm text-[var(--color-text-secondary)]">{formatDateHijri(cert.createdAt, calendarFormat, { locale, platformSettings: platformLocale })}</span>
                                   </td>
                                   <td className="px-4 py-4">
                                     <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusStyle(cert.status)}`}>
@@ -889,6 +1008,42 @@ const CertificatesContent = () => {
                                       {getStatusLabel(cert.status)}
                                     </span>
                                   </td>
+                                  {isAdmin && (
+                                    <td className="px-4 py-4 max-w-[260px]">
+                                      <div className="text-xs text-[var(--color-text-secondary)] space-y-0.5">
+                                        {cert.approvedByName && (
+                                          <p>
+                                            <span className="font-medium text-[#16A34A]">{t("certificates.auditApproved")}:</span>{" "}
+                                            {cert.approvedByName}
+                                            {cert.approvedAt && (
+                                              <span className="text-[var(--color-text-secondary)] opacity-70"> · {formatDateHijri(cert.approvedAt, calendarFormat, { locale, platformSettings: platformLocale })}</span>
+                                            )}
+                                          </p>
+                                        )}
+                                        {cert.rejectedByName && cert.status === "rejected" && (
+                                          <p>
+                                            <span className="font-medium text-[#DC2626]">{t("certificates.auditRejected")}:</span>{" "}
+                                            {cert.rejectedByName}
+                                            {cert.rejectionReason && (
+                                              <span className="block text-[#DC2626] opacity-90 mt-0.5 break-words">&ldquo;{cert.rejectionReason}&rdquo;</span>
+                                            )}
+                                          </p>
+                                        )}
+                                        {cert.revokedByName && cert.status === "revoked" && (
+                                          <p>
+                                            <span className="font-medium text-[#991B1B]">{t("certificates.auditRevoked")}:</span>{" "}
+                                            {cert.revokedByName}
+                                            {cert.revocationReason && (
+                                              <span className="block text-[#991B1B] opacity-90 mt-0.5 break-words">&ldquo;{cert.revocationReason}&rdquo;</span>
+                                            )}
+                                          </p>
+                                        )}
+                                        {!cert.approvedByName && !cert.rejectedByName && !cert.revokedByName && (
+                                          <span>—</span>
+                                        )}
+                                      </div>
+                                    </td>
+                                  )}
                                   <td className="px-4 py-4">
                                     <div className="flex items-center gap-1">
                                       <button onClick={() => setReviewingCert(cert)} className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors" title={t("certificates.review")}>
@@ -1015,7 +1170,7 @@ const CertificatesContent = () => {
                               </div>
                             </div>
 
-                            <p className="text-xs text-[var(--color-text-secondary)] mb-3">{t("certificates.requested")}: {formatDateHijri(cert.createdAt, calendarFormat, { locale })}</p>
+                            <p className="text-xs text-[var(--color-text-secondary)] mb-3">{t("certificates.requested")}: {formatDateHijri(cert.createdAt, calendarFormat, { locale, platformSettings: platformLocale })}</p>
 
                             {(cert.status === "pending" || cert.status === "held") && (
                               <div className="flex gap-2">

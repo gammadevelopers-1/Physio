@@ -2,6 +2,8 @@
 
 import { useTranslations, useLocale } from "next-intl";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import type { PlatformLocaleSettings } from "@/lib/platform-locale";
 import { formatDate as formatDateHijri, type CalendarFormat } from "@/lib/hijri";
 import { Bell, Clock } from "lucide-react";
 
@@ -21,7 +23,7 @@ interface InstructorNotificationsWidgetProps {
   onClearAll?: () => void;
 }
 
-function formatRelativeDate(isoString: string, tN: ReturnType<typeof useTranslations>, calendarFormat: CalendarFormat, locale: string): string {
+function formatRelativeDate(isoString: string, tN: ReturnType<typeof useTranslations>, calendarFormat: CalendarFormat, locale: string, platformSettings: PlatformLocaleSettings): string {
   try {
     const date = new Date(isoString);
     const now = new Date();
@@ -35,7 +37,7 @@ function formatRelativeDate(isoString: string, tN: ReturnType<typeof useTranslat
     if (diffHours < 24) return tN("hoursAgo", { h: diffHours });
     if (diffDays < 7) return tN("daysAgo", { d: diffDays });
 
-    return formatDateHijri(date, calendarFormat, { locale });
+    return formatDateHijri(date, calendarFormat, { locale, platformSettings });
   } catch {
     return "";
   }
@@ -52,6 +54,7 @@ const InstructorNotificationsWidget = ({
   const tA = useTranslations("accessibility");
   const locale = useLocale();
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -134,7 +137,7 @@ const InstructorNotificationsWidget = ({
               <div className="flex items-center gap-1 mt-1.5">
                 <Clock className="w-3 h-3 text-[var(--color-text-secondary)]" />
                 <span className="text-[11px] text-[var(--color-text-secondary)]">
-                  {formatRelativeDate(notification.date, tN, calendarFormat, locale)}
+                  {formatRelativeDate(notification.date, tN, calendarFormat, locale, platformLocale)}
                 </span>
               </div>
             </div>

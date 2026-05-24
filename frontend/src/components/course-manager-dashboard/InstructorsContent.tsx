@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
@@ -75,6 +76,7 @@ const InstructorsContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const locale = useLocale();
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
   const isRTL = locale === "ar";
   const manager = useManagerProfile();
   const [searchQuery, setSearchQuery] = useState("");
@@ -216,7 +218,7 @@ const InstructorsContent = () => {
     for (let i = 0; i < 14; i++) {
       const d = new Date(today);
       d.setDate(d.getDate() + i);
-      const dayLabel = formatDateHijri(d, calendarFormat, { locale });
+      const dayLabel = formatDateHijri(d, calendarFormat, { locale, platformSettings: platformLocale });
       const daySessions = schedule.filter((s) => {
         if (!s.scheduledAt) return false;
         const sd = new Date(s.scheduledAt);

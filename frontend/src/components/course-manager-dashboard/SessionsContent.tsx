@@ -44,6 +44,8 @@ import DatePicker from "@/components/ui/DatePicker";
 import DateTimePicker from "@/components/ui/DateTimePicker";
 import { CitySelect } from "@/components/ui/CitySelect";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformTime } from "@/lib/platform-locale";
 import { toast } from "sonner";
 
 // 10-color palette for instructor color-coding
@@ -479,6 +481,7 @@ const SessionsContent = () => {
   // calendar grid below has its own local toggle so flipping it doesn't
   // bleed into every date picker / list across the dashboard.
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
   const settingDefault: "hijri" | "gregorian" =
     calendarFormat === "hijri" ? "hijri" : "gregorian";
   const [calendarView, setCalendarView] = useState<"hijri" | "gregorian">(settingDefault);
@@ -785,13 +788,14 @@ const SessionsContent = () => {
   };
 
   const formatDate = (dateStr: string) => {
-    return formatDateHijri(dateStr, calendarFormat, { locale });
+    return formatDateHijri(dateStr, calendarFormat, { locale, platformSettings: platformLocale });
   };
 
   const formatTime = (dateStr: string, durationMins: number) => {
     const start = new Date(dateStr);
     const end = new Date(start.getTime() + durationMins * 60000);
-    return `${start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - ${end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    const localeKey = locale === "ar" ? "ar" : "en";
+    return `${formatPlatformTime(start, platformLocale, localeKey)} - ${formatPlatformTime(end, platformLocale, localeKey)}`;
   };
 
   const getInstructorName = (session: SessionWithInstructor) => {

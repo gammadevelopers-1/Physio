@@ -19,8 +19,9 @@ import DashboardNavbar from "./DashboardNavbar";
 import TicketDetailSkeleton from "./TicketDetailSkeleton";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useTicketDetail } from "@/hooks/useStudentTickets";
-import { useCalendarPreference } from "@/contexts/CalendarContext";
-import { formatDateReadable } from "@/lib/hijri";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDateReadable } from "@/lib/platform-locale";
+import { FmtDate } from "@/components/ui/Fmt";
 import { studentApi } from "@/lib/api";
 import type { TicketReply, TicketStatus } from "@/types/student-dashboard";
 
@@ -99,15 +100,12 @@ function ReplyBubble({
             isStaff ? "text-[var(--color-text-secondary)]" : "text-blue-200"
           }`}
         >
-          {new Date(reply.createdAt).toLocaleString(
-            isRTL ? "ar-SA" : "en-US",
-            {
-              month: "short",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            },
-          )}
+          <FmtDate
+            value={reply.createdAt}
+            variant="readable"
+            locale={isRTL ? "ar" : "en"}
+            includeTime
+          />
         </p>
       </div>
     </div>
@@ -192,7 +190,7 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
   const userData = useStudentProfile();
 
   const { data: ticket, loading, refetch } = useTicketDetail(ticketId);
-  const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
 
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
@@ -224,7 +222,7 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
   };
 
   const formatDate = (dateStr: string | null) =>
-    formatDateReadable(dateStr, calendarFormat, locale);
+    formatPlatformDateReadable(dateStr, platformLocale, locale === "ar" ? "ar" : "en");
 
   return (
     <>

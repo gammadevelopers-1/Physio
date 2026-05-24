@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter, usePathname } from "next/navigation";
+import DOMPurify from "isomorphic-dompurify";
 import {
   ChevronRight,
   ChevronLeft,
@@ -33,6 +34,8 @@ import { formatDuration } from "@/lib/utils";
 import { getCityLabel } from "@/lib/saudi-cities";
 import { Loader2 } from "lucide-react";
 import Accordion, { type AccordionItem } from "@/components/ui/Accordion";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDateReadable } from "@/lib/platform-locale";
 
 interface CourseDetailContentProps {
   noReviewsText?: string;
@@ -94,6 +97,7 @@ function AllReviewsModal({
   const hasAutoScrolledRef = useRef(false);
   const sixthReviewRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const platformLocale = usePlatformLocale();
 
   // Fetch first page (or reload when filter/sort changes)
   useEffect(() => {
@@ -160,11 +164,7 @@ function AllReviewsModal({
   };
 
   const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
+    formatPlatformDateReadable(iso, platformLocale, locale === "ar" ? "ar" : "en");
 
   const filterHasMore = page < totalPages;
   const maxDist = Math.max(1, ...Object.values(distribution));
@@ -368,6 +368,7 @@ const CourseDetailContent = ({
   const locale = useLocale();
   const { isFavourite, toggleFavourite } = useFavourites();
   const isRTL = locale === "ar";
+  const platformLocale = usePlatformLocale();
 
   const params = useParams();
   const slug = params.slug as string;
@@ -681,13 +682,10 @@ const CourseDetailContent = ({
   };
 
   // Date formatting helper
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleDateString(
-      locale === "ar" ? "ar-SA" : "en-US",
-      { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }
-    );
-  };
+  const formatDate = (dateStr: string | null) =>
+    formatPlatformDateReadable(dateStr, platformLocale, locale === "ar" ? "ar" : "en", {
+      includeTime: true,
+    });
 
   // Enrollment deadline: always render in Riyadh time + label it. The
   // manager picks it in Riyadh tz (see riyadh-time.ts) and a viewer in
@@ -873,10 +871,7 @@ const CourseDetailContent = ({
                 <div className={isRTL ? "text-right" : "text-left"}>
                   <p className="font-medium text-[14px]">{session.title}</p>
                   <p className="text-[13px] text-[var(--color-text-secondary)]">
-                    {new Date(session.scheduledAt).toLocaleDateString(
-                      locale === "ar" ? "ar-SA" : "en-US",
-                      { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }
-                    )}
+                    {formatPlatformDateReadable(session.scheduledAt, platformLocale, locale === "ar" ? "ar" : "en", { includeTime: true })}
                     {" · "}{formatDuration(session.durationMinutes, locale)}
                   </p>
                   {session.city && (
@@ -960,10 +955,23 @@ const CourseDetailContent = ({
     );
   };
 
-  // Overview section renderer — renders HTML from rich text editor
+  // Overview section renderer — renders HTML from rich text editor.
+  // The HTML is authored by managers/instructors in a TipTap editor and
+  // stored in the DB, so we MUST sanitize before injecting it. DOMPurify
+  // is the standard tool; isomorphic-dompurify makes it safe in both
+  // server-render and client-render paths.
   const renderOverview = (isMobile: boolean = false) => {
     const overview = getOverview();
     if (!overview) return null;
+    const safeHtml = DOMPurify.sanitize(overview, {
+      ALLOWED_TAGS: [
+        'p', 'br', 'strong', 'em', 'u', 's', 'a', 'ul', 'ol', 'li',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre',
+        'span', 'div', 'img', 'hr',
+      ],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'title', 'class'],
+      ADD_ATTR: ['target'],
+    });
     return (
       <div className={`bg-[var(--color-surface-card)] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <h2 className={`font-bold text-[var(--color-text-primary)] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} ${isRTL ? "text-right" : "text-left"}`}>
@@ -972,7 +980,7 @@ const CourseDetailContent = ({
         <div
           className={`course-overview-content text-[var(--color-text-secondary)] ${isMobile ? "text-sm" : "text-base"} leading-relaxed ${isRTL ? "text-right" : "text-left"}`}
           dir={isRTL ? "rtl" : "ltr"}
-          dangerouslySetInnerHTML={{ __html: overview }}
+          dangerouslySetInnerHTML={{ __html: safeHtml }}
         />
       </div>
     );
@@ -1338,10 +1346,7 @@ const CourseDetailContent = ({
                         )}
                       </div>
                       <p className="text-[12px] text-[var(--color-text-secondary)]">
-                        {new Date(r.createdAt).toLocaleDateString(
-                          locale === "ar" ? "ar-SA" : "en-US",
-                          { day: "numeric", month: "short", year: "numeric" }
-                        )}
+                        {formatPlatformDateReadable(r.createdAt, platformLocale, locale === "ar" ? "ar" : "en")}
                       </p>
                     </div>
                     <div className={`flex items-center gap-0.5 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>

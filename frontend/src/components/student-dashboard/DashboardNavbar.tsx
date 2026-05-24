@@ -22,6 +22,7 @@ import {
   Users,
 } from "lucide-react";
 import { useAuth } from "@/contexts";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import NotificationBell from "@/components/shared/NotificationBell";
@@ -48,6 +49,8 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
   const pathname = usePathname();
   const isRTL = locale === "ar";
   const { logout } = useAuth();
+  const { allowedLanguages } = usePlatformLocale();
+  const showLocaleToggle = allowedLanguages.length > 1;
   const { settings: siteSettings } = useSiteSettings();
   const logoUrl = siteSettings?.logo?.url
     ? getStrapiMediaUrl(siteSettings.logo.url)
@@ -128,14 +131,16 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
 
         {/* Actions */}
         <div className="flex items-center gap-4">
-          {/* Language Toggle */}
-          <button
-            onClick={switchLocale}
-            className="flex items-center gap-2 text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors cursor-pointer"
-          >
-            <Globe className="w-5 h-5" strokeWidth={1.67} />
-            <span className="text-base leading-6">{t("languageToggle")}</span>
-          </button>
+          {/* Language Toggle — hidden when only one locale is allowed */}
+          {showLocaleToggle && (
+            <button
+              onClick={switchLocale}
+              className="flex items-center gap-2 text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors cursor-pointer"
+            >
+              <Globe className="w-5 h-5" strokeWidth={1.67} />
+              <span className="text-base leading-6">{t("languageToggle")}</span>
+            </button>
+          )}
 
           {/* Separator - Hidden on mobile */}
           <div className="hidden lg:block h-6 w-px bg-[var(--on-surface-variant)] opacity-30" />

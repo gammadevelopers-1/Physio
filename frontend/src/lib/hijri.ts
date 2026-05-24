@@ -102,42 +102,78 @@ export const dayNamesAr = ["الأحد", "الإثنين", "الثلاثاء", "
 export type CalendarFormat = "hijri" | "gregorian" | "both";
 
 /**
- * Format a date according to the user's calendar preference.
+ * Format a date according to the user's calendar preference, optionally
+ * honoring the admin-configured platform date format + number system on
+ * the Gregorian path.
  *
- * - Gregorian → DD/MM/YYYY
- * - Hijri     → DD/MM/YYYY هـ
- * - Both      → DD/MM/YYYY (DD/MM/YYYY هـ)
+ * - Gregorian → admin dateFormat ("DD-MM-YYYY" / "MM-DD-YYYY" /
+ *   "YYYY-MM-DD") when `platformSettings` is provided; otherwise the
+ *   legacy DD/MM/YYYY format
+ * - Hijri     → DD/MM/YYYY هـ (digit-converted when arabic_indic)
+ * - Both      → "<gregorian> (<hijri>)"
  *
  * Accepts a Date object or ISO string.
  */
 export function formatDate(
   dateInput: Date | string | null | undefined,
   calendarFormat: CalendarFormat = "gregorian",
-  options?: { includeTime?: boolean; locale?: string },
+  options?: {
+    includeTime?: boolean;
+    locale?: string;
+    platformSettings?: {
+      dateFormat: "DD-MM-YYYY" | "MM-DD-YYYY" | "YYYY-MM-DD";
+      numberSystem: "western" | "arabic_indic";
+    };
+  },
 ): string {
   if (!dateInput) return "—";
   const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
   if (isNaN(date.getTime())) return "—";
 
+  const platform = options?.platformSettings;
+  const toIndic = (s: string) =>
+    platform?.numberSystem === "arabic_indic"
+      ? s.replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)])
+      : s;
+
   const timeStr = options?.includeTime
-    ? " " + date.toLocaleTimeString(options?.locale === "ar" ? "ar-SA" : "en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+    ? " " +
+      toIndic(
+        date.toLocaleTimeString(options?.locale === "ar" ? "ar-SA" : "en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      )
     : "";
 
   const gregorian = (() => {
     const dd = String(date.getDate()).padStart(2, "0");
     const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const yyyy = date.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
+    const yyyy = String(date.getFullYear());
+    let raw: string;
+    if (platform) {
+      switch (platform.dateFormat) {
+        case "MM-DD-YYYY":
+          raw = `${mm}-${dd}-${yyyy}`;
+          break;
+        case "YYYY-MM-DD":
+          raw = `${yyyy}-${mm}-${dd}`;
+          break;
+        case "DD-MM-YYYY":
+        default:
+          raw = `${dd}-${mm}-${yyyy}`;
+      }
+    } else {
+      raw = `${dd}/${mm}/${yyyy}`;
+    }
+    return toIndic(raw);
   })();
 
   const hijri = (() => {
     const { day, month, year } = getHijriParts(date);
     const dd = String(day).padStart(2, "0");
     const mm = String(month).padStart(2, "0");
-    return `${dd}/${mm}/${year} هـ`;
+    return toIndic(`${dd}/${mm}/${year} هـ`);
   })();
 
   if (calendarFormat === "hijri") return hijri + timeStr;

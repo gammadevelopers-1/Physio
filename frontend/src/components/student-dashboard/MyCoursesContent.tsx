@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { studentApi, ApiError } from "@/lib/api";
 import { canDropCourseNow } from "@/lib/calendar-utils";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDate, type PlatformLocaleSettings } from "@/lib/platform-locale";
 import ReviewModal, { type ReviewKind } from "./ReviewModal";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
@@ -43,7 +45,11 @@ const ITEMS_PER_PAGE = 12;
 
 type TimeT = (key: string, vars?: Record<string, string | number>) => string;
 
-function relativeTime(dateStr: string | null, tt: TimeT): string {
+function relativeTime(
+  dateStr: string | null,
+  tt: TimeT,
+  platformLocale: PlatformLocaleSettings,
+): string {
   if (!dateStr) return "";
   const diff = Date.now() - new Date(dateStr).getTime();
   const absDiff = Math.abs(diff);
@@ -55,7 +61,7 @@ function relativeTime(dateStr: string | null, tt: TimeT): string {
   const days = Math.floor(hours / 24);
   if (days === 1) return tt("time.yesterday");
   if (days < 7) return tt("time.daysAgo", { count: days });
-  return new Date(dateStr).toLocaleDateString();
+  return formatPlatformDate(dateStr, platformLocale);
 }
 
 function deadlineInfo(
@@ -99,6 +105,7 @@ const MyCoursesContent = () => {
   );
   const { isFavourite, toggleFavourite } = useFavourites();
   const userData = useStudentProfile();
+  const platformLocale = usePlatformLocale();
 
   // 300ms debounce on search input → backend
   useEffect(() => {
@@ -597,7 +604,7 @@ const MyCoursesContent = () => {
                               {course.lastAccessedAt && (
                                 <span className="flex items-center gap-1 text-[var(--color-text-secondary)]">
                                   <Clock className="w-3 h-3" />
-                                  {relativeTime(course.lastAccessedAt, t)}
+                                  {relativeTime(course.lastAccessedAt, t, platformLocale)}
                                 </span>
                               )}
                             </div>

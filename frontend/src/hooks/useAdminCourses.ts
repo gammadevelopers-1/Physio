@@ -76,6 +76,8 @@ export function useAdminCourses(
     params.sort,
     params.page,
     params.limit,
+    params.instructorId,
+    params.managerId,
     debouncedSearch,
   ]);
 

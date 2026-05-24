@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 
 const CourseManagerDashboardContent = () => {
   const t = useTranslations("courseManagerDashboard");
@@ -31,6 +32,7 @@ const CourseManagerDashboardContent = () => {
   const tToasts = useTranslations("toasts");
   const locale = useLocale();
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
   const router = useRouter();
   const manager = useManagerProfile();
   const { summary, courses, instructors, loading, error, refetch, silentRefetch } =
@@ -49,7 +51,7 @@ const CourseManagerDashboardContent = () => {
   }, []);
 
   // ─── Certificate handlers ──────────────────────────────────
-  const certificates = summary ? transformToCertificateQueue(summary.pendingCertificates) : [];
+  const certificates = summary ? transformToCertificateQueue(summary.pendingCertificates, platformLocale) : [];
 
   const handleApproveCertificate = async (id: string) => {
     await courseManagerApi.approveCertificate(id);
@@ -171,7 +173,7 @@ const CourseManagerDashboardContent = () => {
       time: d.toLocaleTimeString(locale === "ar" ? "ar-SA" : undefined, { hour: "2-digit", minute: "2-digit" }),
       date: isToday
         ? t("sessionsPage.today")
-        : formatDateHijri(d, calendarFormat, { locale }),
+        : formatDateHijri(d, calendarFormat, { locale, platformSettings: platformLocale }),
       type: (s.type === "onsite" ? "onsite" : "zoom") as "zoom" | "onsite",
       location: s.venueAddress || undefined,
       enrolled: s.enrolledCount || 0,

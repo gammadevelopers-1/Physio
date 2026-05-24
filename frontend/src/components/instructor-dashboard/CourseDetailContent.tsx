@@ -20,6 +20,12 @@ import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import type { CalendarFormat } from "@/lib/hijri";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import {
+  formatPlatformDateReadable,
+  formatPlatformTime,
+  type PlatformLocaleSettings,
+} from "@/lib/platform-locale";
 import { useInstructorCourseDetail } from "@/hooks/useInstructorCourseDetail";
 import { instructorApi, materialsApi, publicApi, courseManagerApi } from "@/lib/api";
 import WebinarRegistrantsDrawer from "@/components/shared/WebinarRegistrantsDrawer";
@@ -82,6 +88,7 @@ interface CourseDetailContentProps {
 function CourseReviewsSection({ courseId }: { courseId: string }) {
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const platformLocale = usePlatformLocale();
   const [reviews, setReviews] = useState<
     Array<{
       id: string;
@@ -118,11 +125,7 @@ function CourseReviewsSection({ courseId }: { courseId: string }) {
   }, [courseId]);
 
   const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
+    formatPlatformDateReadable(iso, platformLocale, locale === "ar" ? "ar" : "en");
 
   return (
     <div
@@ -277,11 +280,15 @@ function formatDuration(startDate: string | null, endDate: string | null): strin
   return `${diffDays} days`;
 }
 
-function formatSessionTime(iso: string, durationMinutes: number): string {
+function formatSessionTime(
+  iso: string,
+  durationMinutes: number,
+  settings: Pick<PlatformLocaleSettings, "numberSystem">,
+  locale: "en" | "ar" = "en",
+): string {
   const start = new Date(iso);
   const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
-  const timeOpts: Intl.DateTimeFormatOptions = { hour: "numeric", minute: "2-digit" };
-  return `${start.toLocaleTimeString("en-US", timeOpts)} - ${end.toLocaleTimeString("en-US", timeOpts)}`;
+  return `${formatPlatformTime(start, settings, locale)} - ${formatPlatformTime(end, settings, locale)}`;
 }
 
 function formatSessionDateLocal(iso: string, calendarFormat: CalendarFormat, locale: string): string {
@@ -342,6 +349,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   const t = useTranslations("instructorDashboard");
   const tToasts = useTranslations("toasts");
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
   const { course, enrollments, sessions, loading, error, refetch } =
@@ -1673,7 +1681,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                   </div>
                                   <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
                                     {formatSessionDateLocal(session.scheduledAt, calendarFormat, locale)} &bull;{" "}
-                                    {formatSessionTime(session.scheduledAt, session.durationMinutes)}
+                                    {formatSessionTime(session.scheduledAt, session.durationMinutes, platformLocale, locale === "ar" ? "ar" : "en")}
                                     {" "}&bull; {session.durationMinutes} {t("courseDetail.minutes")}
                                   </p>
                                 </div>

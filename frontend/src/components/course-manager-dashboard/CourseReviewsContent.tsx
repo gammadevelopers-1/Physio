@@ -15,11 +15,19 @@ import {
 import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
+import AdminNavbar from "@/components/admin-dashboard/AdminNavbar";
+import AdminSidebar from "@/components/admin-dashboard/AdminSidebar";
+import AdminMobileSidebar from "@/components/admin-dashboard/AdminMobileSidebar";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
+import { useAdminProfile } from "@/hooks/useAdminProfile";
 import { courseManagerApi } from "@/lib/api";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDateReadable } from "@/lib/platform-locale";
 
 interface CourseReviewsContentProps {
   courseId: string;
+  /** See CourseManagerCourseDetailContent — same role-prop contract. */
+  role?: "manager" | "admin";
 }
 
 type Review = {
@@ -34,10 +42,17 @@ type SortOption = "highest" | "lowest" | "newest" | "oldest";
 
 const PAGE_SIZE = 20;
 
-export default function CourseReviewsContent({ courseId }: CourseReviewsContentProps) {
+export default function CourseReviewsContent({
+  courseId,
+  role = "manager",
+}: CourseReviewsContentProps) {
   const locale = useLocale();
   const isRTL = locale === "ar";
   const manager = useManagerProfile();
+  const admin = useAdminProfile();
+  const platformLocale = usePlatformLocale();
+  const isAdmin = role === "admin";
+  const dashboardBase = `/${locale}/dashboard/${isAdmin ? "admin" : "manager"}/courses`;
   const t = useTranslations("courseManagerDashboard");
 
   const [courseTitle, setCourseTitle] = useState<string>("");
@@ -92,11 +107,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
   }, [fetchReviews]);
 
   const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
+    formatPlatformDateReadable(iso, platformLocale, locale === "ar" ? "ar" : "en");
 
   const maxDist = Math.max(1, ...Object.values(distribution));
   const Arrow = isRTL ? ArrowRight : ArrowLeft;
@@ -116,20 +127,32 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
 
   return (
     <>
-      <CourseManagerNavbar manager={manager} />
+      {isAdmin ? (
+        <AdminNavbar admin={admin} />
+      ) : (
+        <CourseManagerNavbar manager={manager} />
+      )}
       <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
-              <CourseManagerSidebar manager={manager} />
+              {isAdmin ? (
+                <AdminSidebar admin={admin} />
+              ) : (
+                <CourseManagerSidebar manager={manager} />
+              )}
             </div>
-            <CourseManagerMobileSidebar manager={manager} />
+            {isAdmin ? (
+              <AdminMobileSidebar admin={admin} />
+            ) : (
+              <CourseManagerMobileSidebar manager={manager} />
+            )}
 
             <div className="flex-1 min-w-0">
               {/* Header */}
               <div className="mb-6">
                 <Link
-                  href={`/${locale}/dashboard/manager/courses/${courseId}`}
+                  href={`${dashboardBase}/${courseId}`}
                   className={`inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors mb-3 ${isRTL ? "flex-row-reverse" : ""}`}
                 >
                   <Arrow className="w-4 h-4" />

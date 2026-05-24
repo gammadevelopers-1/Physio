@@ -2,6 +2,7 @@
 
 import type { SideLoadedData } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
+import { FmtDate } from "@/components/ui/Fmt";
 
 interface StrapiMedia {
   url: string;
@@ -36,20 +37,6 @@ interface UpcomingEventsBlockData {
 interface UpcomingEventsBlockProps {
   data: UpcomingEventsBlockData;
   sideLoadedData: SideLoadedData;
-}
-
-function formatEventDate(dateStr: string) {
-  try {
-    return new Date(dateStr).toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return dateStr;
-  }
 }
 
 export function UpcomingEventsBlock({ data }: UpcomingEventsBlockProps) {
@@ -110,7 +97,7 @@ export function UpcomingEventsBlock({ data }: UpcomingEventsBlockProps) {
                 )}
                 <div className="p-5 flex flex-col gap-2">
                   <span className="text-xs text-[var(--surface-container-primary)] font-medium">
-                    {formatEventDate(evt.date)}
+                    <FmtDate value={evt.date} variant="readable" includeTime />
                   </span>
                   <h3
                     className="font-semibold text-[var(--on-surface-default)]"
@@ -156,7 +143,7 @@ export function UpcomingEventsBlock({ data }: UpcomingEventsBlockProps) {
                 )}
                 <div className="flex flex-col gap-1 flex-1">
                   <span className="text-xs text-[var(--surface-container-primary)] font-medium">
-                    {formatEventDate(evt.date)}
+                    <FmtDate value={evt.date} variant="readable" includeTime />
                   </span>
                   <h3 className="font-semibold text-sm text-[var(--on-surface-default)]">
                     {evt.title}

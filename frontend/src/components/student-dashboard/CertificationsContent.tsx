@@ -24,8 +24,8 @@ import StudentDashboardError from "./StudentDashboardError";
 import OfflineBanner from "./OfflineBanner";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentCertificates } from "@/hooks/useStudentCertificates";
-import { useCalendarPreference } from "@/contexts/CalendarContext";
-import { formatDateReadable } from "@/lib/hijri";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { formatPlatformDateReadable } from "@/lib/platform-locale";
 import { studentApi } from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -389,7 +389,7 @@ const CertificationsContent = () => {
   const [page, setPage] = useState(1);
 
   const { data: certificates, loading, error, refetch } = useStudentCertificates();
-  const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
 
   const handleDownload = async (certId: string) => {
     setDownloadingId(certId);
@@ -428,7 +428,7 @@ const CertificationsContent = () => {
   }, [filterKey]);
 
   const formatDate = (dateStr: string | null) =>
-    formatDateReadable(dateStr, calendarFormat, locale);
+    formatPlatformDateReadable(dateStr, platformLocale, locale === "ar" ? "ar" : "en");
 
   return (
     <>

@@ -18,6 +18,8 @@ import {
   Radio,
 } from "lucide-react";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
+import { toArabicIndic } from "@/lib/platform-locale";
 import {
   getHijriParts,
   gregorianMonthNames,
@@ -80,6 +82,7 @@ const MyLecturesWidget = ({
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(() => {
     return new Date().getDay();
@@ -185,15 +188,16 @@ const MyLecturesWidget = ({
     const dayName = locale === "ar"
       ? ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"][selectedDayIndex]
       : selectedDay.date.toLocaleDateString("en-US", { weekday: "long" });
-    const dateStr = selectedDay.date.toLocaleDateString(
+    const rawDateStr = selectedDay.date.toLocaleDateString(
       locale === "ar" ? "ar-SA" : "en-US",
       { month: "short", day: "numeric" },
     );
+    const dateStr = platformLocale.numberSystem === "arabic_indic" ? toArabicIndic(rawDateStr) : rawDateStr;
     const prefix = selectedDay.isToday
       ? locale === "ar" ? "اليوم، " : "Today, "
       : "";
     return `${prefix}${dayName} ${dateStr}`;
-  }, [selectedDay, selectedDayIndex, locale]);
+  }, [selectedDay, selectedDayIndex, locale, platformLocale.numberSystem]);
 
   // Status / type styling for lecture cards.
   const cardClassesFor = (s: CalendarSession) => {

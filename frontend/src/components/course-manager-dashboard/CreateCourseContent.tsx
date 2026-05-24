@@ -32,6 +32,7 @@ import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { normalizeAndValidateUrl } from "@/lib/url-validation";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
 
@@ -141,6 +142,7 @@ const CreateCourseContent = () => {
   const tToasts = useTranslations("toasts");
   const isRTL = locale === "ar";
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
 
   // Wizard step
   const [currentStep, setCurrentStep] = useState<WizardStep>(1);
@@ -466,7 +468,7 @@ const CreateCourseContent = () => {
   const selectClass = `${inputClass} bg-[var(--color-surface-card)]`;
 
   const formatDate = (dateStr: string) => {
-    return formatDateHijri(dateStr, calendarFormat, { locale });
+    return formatDateHijri(dateStr, calendarFormat, { locale, platformSettings: platformLocale });
   };
 
   const getDeliveryTypeLabel = (dt: string) => {

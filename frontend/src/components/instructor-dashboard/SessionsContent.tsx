@@ -8,6 +8,7 @@ import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import DatePicker from "@/components/ui/DatePicker";
 import { CitySelect } from "@/components/ui/CitySelect";
@@ -1519,6 +1520,7 @@ function SessionCard({
   locale: string;
 }) {
   const { calendarFormat } = useCalendarPreference();
+  const platformLocale = usePlatformLocale();
   const getStatusBadge = (status: string) => {
     const styles: Record<string, { bg: string; text: string; label: string }> = {
       scheduled: { bg: "bg-[var(--color-border-subtle)]", text: "text-[var(--color-primary)]", label: t("sessionsPage.statusUpcoming") },
@@ -1604,7 +1606,7 @@ function SessionCard({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs text-[var(--color-text-secondary)]">
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
-              {formatDateHijri(session.scheduledAt, calendarFormat, { locale })}
+              {formatDateHijri(session.scheduledAt, calendarFormat, { locale, platformSettings: platformLocale })}
             </span>
             <span className="flex items-center gap-1">
               <Clock className="w-3 h-3" />

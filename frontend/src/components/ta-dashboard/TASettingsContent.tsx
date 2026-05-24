@@ -9,6 +9,8 @@ import TANavbar from "./TANavbar";
 import TASidebar from "./TASidebar";
 import { useAuth, useUser } from "@/contexts/AuthContext";
 import { profileApi, preferencesApi } from "@/lib/api";
+import PasswordPolicyHint from "@/components/shared/PasswordPolicyHint";
+import { usePasswordPolicy, checkPasswordAgainstPolicy } from "@/hooks/usePasswordPolicy";
 import { useSecuritySettings } from "@/components/shared/useSecuritySettings";
 import TwoFactorToggle from "@/components/shared/TwoFactorToggle";
 import TrustedDevicesSection from "@/components/shared/TrustedDevicesSection";
@@ -149,6 +151,7 @@ const TASettingsContent = () => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
+  const { policy: passwordPolicy } = usePasswordPolicy();
   const security = useSecuritySettings();
 
   const handleChangePassword = async () => {
@@ -156,8 +159,9 @@ const TASettingsContent = () => {
       toast.error(tToasts("bothPasswordFieldsRequired"));
       return;
     }
-    if (newPassword.length < 6) {
-      toast.error(tToasts("passwordMinLength"));
+    const policyErrors = checkPasswordAgainstPolicy(newPassword, passwordPolicy);
+    if (policyErrors.length) {
+      toast.error(policyErrors[0]);
       return;
     }
     setChangingPassword(true);
@@ -577,6 +581,7 @@ const TASettingsContent = () => {
                               )}
                             </button>
                           </div>
+                          <PasswordPolicyHint password={newPassword} />
                         </div>
                         <button
                           type="button"

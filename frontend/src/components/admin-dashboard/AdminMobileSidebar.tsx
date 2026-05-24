@@ -22,17 +22,23 @@ import {
   Crown,
   UserCheck,
   Coins,
+  Award,
+  Mail,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { roleRequestsApi, profileApi } from "@/lib/api";
+import { roleRequestsApi, profileApi, adminApi } from "@/lib/api";
 
 interface AdminProfile {
   name: string;
   email: string;
-  totalUsers: number;
-  totalCourses: number;
-  uptime: number;
   avatar?: string;
+  /**
+   * @deprecated Stats are now fetched by the sidebar itself via
+   * `adminApi.getOverviewStats()`. See AdminSidebar for the same shape.
+   */
+  totalUsers?: number;
+  totalCourses?: number;
+  uptime?: number;
 }
 
 interface AdminMobileSidebarProps {
@@ -42,6 +48,11 @@ interface AdminMobileSidebarProps {
 const AdminMobileSidebar = ({ admin }: AdminMobileSidebarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [stats, setStats] = useState<{
+    totalUsers: number;
+    totalCourses: number;
+    activeToday: number;
+  } | null>(null);
   const locale = useLocale();
   const pathname = usePathname();
   const t = useTranslations("adminDashboard");
@@ -75,6 +86,20 @@ const AdminMobileSidebar = ({ admin }: AdminMobileSidebarProps) => {
     fetchPendingCount();
   }, []);
 
+  // Fetch sidebar profile-card stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const result = await adminApi.getOverviewStats();
+        setStats(result);
+      } catch {
+        // Not admin or transient failure — keep null, UI shows "—"
+      }
+    };
+    fetchStats();
+  }, []);
+
+  // Mirror the AdminSidebar order so the nav is identical on mobile.
   const navItems = [
     {
       label: t("sidebar.dashboard"),
@@ -85,11 +110,6 @@ const AdminMobileSidebar = ({ admin }: AdminMobileSidebarProps) => {
       label: t("sidebar.users"),
       href: `/${locale}/dashboard/admin/users`,
       icon: Users,
-    },
-    {
-      label: t("sidebar.roles"),
-      href: `/${locale}/dashboard/admin/roles`,
-      icon: Shield,
     },
     {
       label: t("sidebar.roleRequests"),
@@ -103,9 +123,9 @@ const AdminMobileSidebar = ({ admin }: AdminMobileSidebarProps) => {
       icon: BookOpen,
     },
     {
-      label: t("sidebar.finance"),
-      href: `/${locale}/dashboard/admin/finance`,
-      icon: DollarSign,
+      label: t("sidebar.certificates"),
+      href: `/${locale}/dashboard/admin/certificates`,
+      icon: Award,
     },
     {
       label: t("sidebar.points"),
@@ -113,14 +133,9 @@ const AdminMobileSidebar = ({ admin }: AdminMobileSidebarProps) => {
       icon: Coins,
     },
     {
-      label: t("sidebar.security"),
-      href: `/${locale}/dashboard/admin/security`,
-      icon: Lock,
-    },
-    {
-      label: t("sidebar.compliance"),
-      href: `/${locale}/dashboard/admin/compliance`,
-      icon: FileText,
+      label: t("sidebar.finance"),
+      href: `/${locale}/dashboard/admin/finance`,
+      icon: DollarSign,
     },
     {
       label: t("sidebar.reports"),
@@ -128,9 +143,24 @@ const AdminMobileSidebar = ({ admin }: AdminMobileSidebarProps) => {
       icon: BarChart3,
     },
     {
+      label: t("sidebar.compliance"),
+      href: `/${locale}/dashboard/admin/compliance`,
+      icon: FileText,
+    },
+    {
       label: t("sidebar.logs"),
       href: `/${locale}/dashboard/admin/logs`,
       icon: ClipboardList,
+    },
+    {
+      label: t("sidebar.security"),
+      href: `/${locale}/dashboard/admin/security`,
+      icon: Lock,
+    },
+    {
+      label: t("sidebar.templates"),
+      href: `/${locale}/dashboard/admin/templates`,
+      icon: Mail,
     },
     {
       label: t("sidebar.settings"),
@@ -231,19 +261,21 @@ const AdminMobileSidebar = ({ admin }: AdminMobileSidebarProps) => {
             <div className="mt-6 flex justify-around py-4 border-t border-[var(--color-border)]">
               <div className="text-center">
                 <p className="text-xl font-bold text-[var(--color-text-secondary)]">
-                  {admin.totalUsers.toLocaleString()}
+                  {stats ? stats.totalUsers.toLocaleString() : "—"}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.users")}</p>
               </div>
               <div className="text-center">
                 <p className="text-xl font-bold text-[var(--color-text-secondary)]">
-                  {admin.totalCourses}
+                  {stats ? stats.totalCourses : "—"}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.courses")}</p>
               </div>
               <div className="text-center">
-                <p className="text-xl font-bold text-[#16A34A]">{admin.uptime}%</p>
-                <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.uptime")}</p>
+                <p className="text-xl font-bold text-[#16A34A]">
+                  {stats ? stats.activeToday : "—"}
+                </p>
+                <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.activeToday")}</p>
               </div>
             </div>
 

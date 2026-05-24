@@ -1,0 +1,37 @@
+{
+  "displayName": "Backend 5xx spike (>20 in 5 min)",
+  "documentation": {
+    "content": "Fires when >20 5xx responses from the backend occur in a 5-minute window. Indicates an outage, crash loop, or downstream dependency failure (DB, Redis, Zoom API, OpenAI, Resend).\n\nResponse: check Cloud Run logs for the dominant error message, check Cloud SQL/Redis dashboards, roll back the latest revision if recent.",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "backend_5xx_count > 20 over 5 min",
+      "conditionThreshold": {
+        "filter": "metric.type=\"logging.googleapis.com/user/backend_5xx_count\" AND resource.type=\"cloud_run_revision\"",
+        "aggregations": [
+          {
+            "alignmentPeriod": "300s",
+            "perSeriesAligner": "ALIGN_SUM",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 20,
+        "duration": "0s",
+        "trigger": {
+          "count": 1
+        }
+      }
+    }
+  ],
+  "alertStrategy": {
+    "autoClose": "1800s"
+  },
+  "notificationChannels": [
+    "projects/nelc-elearning-platform-479319/notificationChannels/15422204998454221054",
+    "projects/nelc-elearning-platform-479319/notificationChannels/12592801043257337597"
+  ],
+  "enabled": true
+}

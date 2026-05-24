@@ -1,0 +1,37 @@
+{
+  "displayName": "Failed login burst (>30 in 5 min)",
+  "documentation": {
+    "content": "Fires when >30 failed login attempts (HTTP 401 on /api/auth/login) occur within a 5-minute window. Indicates a likely credential-stuffing or brute-force attempt. Conservative threshold — single users typo a few times, real attacks burst far above this.\n\nResponse: check audit_logs in the admin Logs page for the attacking IP, consider tightening per-IP throttle or IP-blocking at the edge.",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "auth_login_401_count > 30 over 5 min",
+      "conditionThreshold": {
+        "filter": "metric.type=\"logging.googleapis.com/user/auth_login_401_count\" AND resource.type=\"cloud_run_revision\"",
+        "aggregations": [
+          {
+            "alignmentPeriod": "300s",
+            "perSeriesAligner": "ALIGN_SUM",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 30,
+        "duration": "0s",
+        "trigger": {
+          "count": 1
+        }
+      }
+    }
+  ],
+  "alertStrategy": {
+    "autoClose": "1800s"
+  },
+  "notificationChannels": [
+    "projects/nelc-elearning-platform-479319/notificationChannels/15422204998454221054",
+    "projects/nelc-elearning-platform-479319/notificationChannels/12592801043257337597"
+  ],
+  "enabled": true
+}

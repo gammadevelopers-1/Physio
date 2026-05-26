@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { and, count, desc, eq, gte, isNotNull, lt, notLike, sql } from 'drizzle-orm';
 import { db } from '../../database';
 import {
@@ -83,9 +83,67 @@ export interface AdminDashboardPayload {
 
 const DELETED_EMAIL_PREFIX = 'deleted-%@deleted.local';
 
+const ZERO_KPI: KpiBlock = {
+  activeUsers: 0,
+  activeUsersTrend: 0,
+  totalUsers: 0,
+  totalUsersNew: 0,
+  revenueMTD: 0,
+  revenueTrend: 0,
+  certificatesIssued: 0,
+  certificatesPeriod: 'thisMonth',
+};
+const ZERO_ANALYTICS: AnalyticsBlock = {
+  visitorToSignup: null,
+  signupToEnroll: 0,
+  enrollToPaid: 0,
+  completionRate: 0,
+};
+const ZERO_SECURITY: SecurityBlock = {
+  failedLogins: 0,
+  ipsBlocked: 0,
+  activeSessions: 0,
+  twoFaAdoption: 0,
+};
+const ZERO_FINANCE: FinanceBlock = {
+  grossRevenue: 0,
+  netRevenue: 0,
+  gateways: [],
+  refundRate: 0,
+  chargebackRate: 0,
+};
+const ZERO_COMPLIANCE: ComplianceBlock = {
+  percentage: 0,
+  passed: 0,
+  review: 0,
+  failed: 0,
+  areas: [],
+};
+
 @Injectable()
 export class AdminDashboardService {
+  private readonly logger = new Logger(AdminDashboardService.name);
+
   constructor(private readonly compliance: NelcComplianceService) {}
+
+  /**
+   * Run each builder with its own try/catch + zero fallback. A single
+   * bad sub-query (missing column, unexpected null, transient failure)
+   * used to take down the entire dashboard payload because Promise.all
+   * rejects on the first failure. Now any failing block degrades to
+   * zeros and the rest of the widgets still light up.
+   */
+  private async safe<T>(label: string, fn: () => Promise<T>, fallback: T): Promise<T> {
+    try {
+      return await fn();
+    } catch (err) {
+      this.logger.error(
+        `dashboard.${label} failed — returning zero-fallback`,
+        err instanceof Error ? err.stack : String(err),
+      );
+      return fallback;
+    }
+  }
 
   async getDashboard(user: AuthenticatedUser): Promise<AdminDashboardPayload> {
     const now = new Date();
@@ -107,13 +165,26 @@ export class AdminDashboardService {
       compliance,
       recentActivity,
     ] = await Promise.all([
-      this.buildKpi(now, startOfMonth, endOfPrevMonthSameDay, startOfPrevMonth, day30Ago, day60Ago, day7Ago),
-      this.buildAnalytics(day30Ago),
-      this.buildSecurity(day1Ago),
-      this.buildFinance(startOfMonth),
-      this.buildRecentUsers(),
-      this.buildCompliance(user),
-      this.buildRecentActivity(),
+      this.safe(
+        'kpi',
+        () =>
+          this.buildKpi(
+            now,
+            startOfMonth,
+            endOfPrevMonthSameDay,
+            startOfPrevMonth,
+            day30Ago,
+            day60Ago,
+            day7Ago,
+          ),
+        ZERO_KPI,
+      ),
+      this.safe('analytics', () => this.buildAnalytics(day30Ago), ZERO_ANALYTICS),
+      this.safe('security', () => this.buildSecurity(day1Ago), ZERO_SECURITY),
+      this.safe('finance', () => this.buildFinance(startOfMonth), ZERO_FINANCE),
+      this.safe('recentUsers', () => this.buildRecentUsers(), []),
+      this.safe('compliance', () => this.buildCompliance(user), ZERO_COMPLIANCE),
+      this.safe('recentActivity', () => this.buildRecentActivity(), []),
     ]);
 
     return {

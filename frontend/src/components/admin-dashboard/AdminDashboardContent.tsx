@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
@@ -111,6 +112,18 @@ const AdminDashboardContent = () => {
 
       if (dashboardResult.status === "fulfilled") {
         setData(dashboardResult.value);
+      } else {
+        // Surface the failure instead of silently rendering all zeros —
+        // a recurring footgun where the dashboard would look "empty"
+        // when really the backend was 500-ing on a single bad subquery.
+        const err = dashboardResult.reason;
+        const msg =
+          err && typeof err === "object" && "message" in err
+            ? String((err as { message: unknown }).message)
+            : "Failed to load dashboard data";
+        toast.error(msg);
+        // eslint-disable-next-line no-console
+        console.error("admin dashboard fetch failed", err);
       }
 
       if (notificationsResult.status === "fulfilled") {

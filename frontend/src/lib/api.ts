@@ -2993,9 +2993,30 @@ export const nelcComplianceApi = {
       courseId: string;
       courseTitle: string;
       instructorName: string;
+      deliveryType: string | null;
       overallStatus: 'passed' | 'review' | 'failed';
+      overallScore: number;
       summary: { passed: number; review: number; failed: number; total: number };
     }>>('/nelc-compliance/all-courses'),
+
+  downloadCsvReport: async () => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+    const token = getAccessToken();
+    const res = await fetch(`${API_URL}/nelc-compliance/export.csv`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Failed to export compliance report');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `nelc-compliance-${stamp}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
 
   getCourseScorecard: (courseId: string) =>
     api.get<{

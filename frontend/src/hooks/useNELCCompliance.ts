@@ -6,7 +6,7 @@ import { nelcComplianceApi } from "@/lib/api";
 interface CourseCompliance {
   courseId: string;
   courseTitle: string;
-  deliveryType?: string;
+  deliveryType?: string | null;
   instructorName: string;
   overallStatus: "passed" | "review" | "failed";
   overallScore?: number;

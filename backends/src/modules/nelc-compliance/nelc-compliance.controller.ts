@@ -46,6 +46,30 @@ export class NelcComplianceController {
   }
 
   /**
+   * GET /nelc-compliance/export.csv — One row per course with score and
+   * per-category breakdown. Used by the admin NELC page's "Export
+   * report" button.
+   */
+  @Roles(
+    'MANAGER' as UserRole,
+    'ADMIN' as UserRole,
+    'SUPER_ADMIN' as UserRole,
+  )
+  @Get('export.csv')
+  async exportCsv(
+    @CurrentUser() user: AuthenticatedUser,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    const csv = await this.complianceService.exportAllCoursesCsv(user);
+    const stamp = new Date().toISOString().slice(0, 10);
+    res.set({
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="nelc-compliance-${stamp}.csv"`,
+    });
+    return new StreamableFile(Buffer.from(csv, 'utf-8'));
+  }
+
+  /**
    * GET /nelc-compliance/session/:id — Session-level compliance check
    */
   @Roles(

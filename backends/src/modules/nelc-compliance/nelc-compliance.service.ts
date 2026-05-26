@@ -226,7 +226,9 @@ export class NelcComplianceService {
       courseId: string;
       courseTitle: string;
       instructorName: string;
+      deliveryType: string | null;
       overallStatus: ComplianceStatus;
+      overallScore: number;
       summary: { passed: number; review: number; failed: number; total: number };
     }>
   > {
@@ -287,6 +289,43 @@ export class NelcComplianceService {
     }
 
     return results;
+  }
+
+  /**
+   * Flatten the all-courses result into CSV. One row per course with
+   * the 5-category status breakdown. Manager/admin scope honored via
+   * the underlying service call. Returns a UTF-8 string (BOM-prefixed
+   * so Excel renders Arabic course titles correctly).
+   */
+  async exportAllCoursesCsv(user: AuthenticatedUser): Promise<string> {
+    const rows = await this.getAllCoursesCompliance(user);
+    const header = [
+      'Course ID',
+      'Course Title',
+      'Instructor',
+      'Delivery Type',
+      'Overall Status',
+      'Score %',
+      'Categories Passed',
+      'Categories Review',
+      'Categories Failed',
+      'Total Categories',
+    ];
+    const body = rows.map((r) =>
+      [
+        r.courseId,
+        csvEscape(r.courseTitle),
+        csvEscape(r.instructorName),
+        r.deliveryType || '',
+        r.overallStatus,
+        String(r.overallScore),
+        String(r.summary.passed),
+        String(r.summary.review),
+        String(r.summary.failed),
+        String(r.summary.total),
+      ].join(','),
+    );
+    return '﻿' + [header.join(','), ...body].join('\r\n') + '\r\n';
   }
 
   /**
@@ -1210,4 +1249,12 @@ export class NelcComplianceService {
 
     return results;
   }
+}
+
+function csvEscape(v: string | null | undefined): string {
+  const s = (v ?? '').toString();
+  if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
 }

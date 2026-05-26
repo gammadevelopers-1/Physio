@@ -68,7 +68,12 @@ import processingConfig from './config/processing.config';
     // stricter limits for sensitive endpoints via @Throttle({ auth: ... })
     // or @Throttle({ "cert-verify": ... }).
     ThrottlerModule.forRoot([
-      { name: 'default', ttl: 60_000, limit: 120 },         // 120 req / min / IP overall
+      // 600/min/IP. Earlier 120 cap was being hit by routine page
+      // loads — the admin dashboard alone fans out into ~10 calls,
+      // and an admin doing 2 refreshes inside a minute tripped the
+      // limit and saw 429s and empty widgets. 600 still protects
+      // against scrapers / brute force without punishing real users.
+      { name: 'default', ttl: 60_000, limit: 600 },
       { name: 'auth', ttl: 60_000, limit: 10 },              // 10 req / min / IP on login / forgot-password / etc.
       { name: 'cert-verify', ttl: 60_000, limit: 30 },       // 30 req / min / IP on public cert lookup
     ]),

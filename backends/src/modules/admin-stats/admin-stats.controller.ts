@@ -1,4 +1,5 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { AdminStatsService } from './admin-stats.service';
 import { AdminDashboardService } from './admin-dashboard.service';
 import { AdminSecurityService } from './admin-security.service';
@@ -7,6 +8,10 @@ import { CurrentUser, Roles } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 
+// Admin stats endpoints are gated by JwtAuthGuard + RolesGuard and
+// fired in tight bursts (the dashboard alone fans out into ~10 parallel
+// calls). The per-IP throttle would otherwise trip on every refresh.
+@SkipThrottle()
 @Controller('admin/stats')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)

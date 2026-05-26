@@ -28,6 +28,7 @@ interface CourseRow {
   courseTitle: string;
   instructorName: string;
   deliveryType: string | null;
+  createdAt: string;
   overallStatus: Status;
   overallScore: number;
   summary: { passed: number; review: number; failed: number; total: number };
@@ -57,8 +58,11 @@ interface Issue {
   status: Status;
 }
 
-type SortKey = "score" | "title" | "instructor";
+type SortKey = "latest" | "score" | "title" | "instructor";
 type StatusFilter = "all" | Status;
+type DeliveryFilter = "all" | "zoom" | "webinar" | "blended" | "onsite" | "self-paced";
+
+const PAGE_SIZE = 10;
 
 function StatusPill({ status }: { status: Status }) {
   const t = useTranslations("adminDashboard.compliance");
@@ -85,7 +89,10 @@ const ComplianceContent = () => {
   const [tab, setTab] = useState<"courses" | "virtual">("courses");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [sortBy, setSortBy] = useState<SortKey>("score");
+  const [deliveryFilter, setDeliveryFilter] = useState<DeliveryFilter>("all");
+  const [sortBy, setSortBy] = useState<SortKey>("latest");
+  const [coursePage, setCoursePage] = useState(1);
+  const [virtualPage, setVirtualPage] = useState(1);
   const [exporting, setExporting] = useState(false);
   const [openCourse, setOpenCourse] = useState<{ id: string; title: string } | null>(null);
 
@@ -124,16 +131,44 @@ const ComplianceContent = () => {
     const q = search.trim().toLowerCase();
     const rows = courses.filter((c) => {
       if (statusFilter !== "all" && c.overallStatus !== statusFilter) return false;
+      if (deliveryFilter !== "all" && c.deliveryType !== deliveryFilter) return false;
       if (q && !c.courseTitle.toLowerCase().includes(q) && !c.instructorName.toLowerCase().includes(q))
         return false;
       return true;
     });
     return rows.sort((a, b) => {
+      if (sortBy === "latest") {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
       if (sortBy === "score") return a.overallScore - b.overallScore; // worst first
       if (sortBy === "title") return a.courseTitle.localeCompare(b.courseTitle);
       return a.instructorName.localeCompare(b.instructorName);
     });
-  }, [courses, search, statusFilter, sortBy]);
+  }, [courses, search, statusFilter, deliveryFilter, sortBy]);
+
+  // Reset to page 1 whenever filters/search/sort change so users don't
+  // land on an empty page when the result set shrinks.
+  useEffect(() => {
+    setCoursePage(1);
+  }, [search, statusFilter, deliveryFilter, sortBy]);
+
+  useEffect(() => {
+    setVirtualPage(1);
+  }, [virtual.length]);
+
+  // Paginate the filtered courses on the client. The list is already
+  // capped at the server's all-courses output (≤ a few hundred), so
+  // client-side slicing is fine until that grows.
+  const courseTotalPages = Math.max(1, Math.ceil(filteredCourses.length / PAGE_SIZE));
+  const visibleCourses = useMemo(
+    () => filteredCourses.slice((coursePage - 1) * PAGE_SIZE, coursePage * PAGE_SIZE),
+    [filteredCourses, coursePage],
+  );
+  const virtualTotalPages = Math.max(1, Math.ceil(virtual.length / PAGE_SIZE));
+  const visibleVirtual = useMemo(
+    () => virtual.slice((virtualPage - 1) * PAGE_SIZE, virtualPage * PAGE_SIZE),
+    [virtual, virtualPage],
+  );
 
   // ── Top issues aggregated across courses for the sidebar ──────────
   // We don't have the per-course scorecards loaded by default, so the
@@ -301,10 +336,23 @@ const ComplianceContent = () => {
                         <option value="failed">{tShared("fail")}</option>
                       </select>
                       <select
+                        value={deliveryFilter}
+                        onChange={(e) => setDeliveryFilter(e.target.value as DeliveryFilter)}
+                        className="px-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-page)]"
+                      >
+                        <option value="all">{t("filters.allDeliveries")}</option>
+                        <option value="zoom">{t("filters.deliveryZoom")}</option>
+                        <option value="webinar">{t("filters.deliveryWebinar")}</option>
+                        <option value="blended">{t("filters.deliveryBlended")}</option>
+                        <option value="onsite">{t("filters.deliveryOnsite")}</option>
+                        <option value="self-paced">{t("filters.deliverySelfPaced")}</option>
+                      </select>
+                      <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as SortKey)}
                         className="px-3 py-2 text-sm border border-[var(--color-input-border)] rounded-lg bg-[var(--color-surface-page)]"
                       >
+                        <option value="latest">{t("filters.sortLatest")}</option>
                         <option value="score">{t("filters.sortScore")}</option>
                         <option value="title">{t("filters.sortTitle")}</option>
                         <option value="instructor">{t("filters.sortInstructor")}</option>
@@ -320,7 +368,7 @@ const ComplianceContent = () => {
                           <Loader2 className="w-6 h-6 animate-spin text-[var(--color-primary)]" />
                         </div>
                       )}
-                      {!loading && filteredCourses.length === 0 && (
+                      {!loading && visibleCourses.length === 0 && filteredCourses.length === 0 && (
                         <p className="text-sm text-[var(--color-text-secondary)] py-12 text-center">
                           {t("noCourses")}
                         </p>
@@ -347,7 +395,7 @@ const ComplianceContent = () => {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[var(--color-border)]">
-                            {filteredCourses.map((c) => (
+                            {visibleCourses.map((c) => (
                               <tr
                                 key={c.courseId}
                                 onClick={() =>
@@ -390,6 +438,15 @@ const ComplianceContent = () => {
                           </tbody>
                         </table>
                       )}
+                      {!loading && filteredCourses.length > PAGE_SIZE && (
+                        <Pagination
+                          page={coursePage}
+                          totalPages={courseTotalPages}
+                          onChange={setCoursePage}
+                          total={filteredCourses.length}
+                          isRTL={isRTL}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -431,7 +488,7 @@ const ComplianceContent = () => {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[var(--color-border)]">
-                            {virtual.map((v) => (
+                            {visibleVirtual.map((v) => (
                               <tr key={v.sessionId}>
                                 <td className="px-5 py-3">
                                   <p className="font-medium text-[var(--color-text-primary)] line-clamp-1">
@@ -468,6 +525,15 @@ const ComplianceContent = () => {
                             ))}
                           </tbody>
                         </table>
+                      )}
+                      {!loading && virtual.length > PAGE_SIZE && (
+                        <Pagination
+                          page={virtualPage}
+                          totalPages={virtualTotalPages}
+                          onChange={setVirtualPage}
+                          total={virtual.length}
+                          isRTL={isRTL}
+                        />
                       )}
                     </div>
                   )}
@@ -604,6 +670,52 @@ function TabButton({
       <Icon className="w-4 h-4" />
       {label}
     </button>
+  );
+}
+
+function Pagination({
+  page,
+  totalPages,
+  onChange,
+  total,
+  isRTL,
+}: {
+  page: number;
+  totalPages: number;
+  onChange: (p: number) => void;
+  total: number;
+  isRTL: boolean;
+}) {
+  const t = useTranslations("adminDashboard.compliancePage");
+  const start = (page - 1) * PAGE_SIZE + 1;
+  const end = Math.min(page * PAGE_SIZE, total);
+  return (
+    <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--color-border)] bg-[var(--color-surface-page)]">
+      <p className="text-xs text-[var(--color-text-secondary)]">
+        {t("pagination.showing", { start, end, total })}
+      </p>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => onChange(Math.max(1, page - 1))}
+          disabled={page <= 1}
+          className="px-3 py-1.5 text-xs border border-[var(--color-border)] rounded-md text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {isRTL ? t("pagination.next") : t("pagination.prev")}
+        </button>
+        <span className="text-xs text-[var(--color-text-secondary)] px-2">
+          {t("pagination.pageOf", { page, total: totalPages })}
+        </span>
+        <button
+          type="button"
+          onClick={() => onChange(Math.min(totalPages, page + 1))}
+          disabled={page >= totalPages}
+          className="px-3 py-1.5 text-xs border border-[var(--color-border)] rounded-md text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {isRTL ? t("pagination.prev") : t("pagination.next")}
+        </button>
+      </div>
+    </div>
   );
 }
 

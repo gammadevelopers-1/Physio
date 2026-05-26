@@ -3745,13 +3745,25 @@
       "rule_export_capability": "Export Capability",
       "rule_instructor_bio": "Instructor Bio",
       "rule_instructor_credentials": "Instructor Credentials",
+      "rule_bilingual_descriptions": "Bilingual Descriptions",
+      "rule_cme_hours_configured": "CME Hours Configured",
+      "rule_sessions_exist": "Sessions Created",
+      "rule_zoom_configuration": "Zoom Configuration",
+      "rule_attendance_tracking": "Attendance Tracking",
+      "rule_ta_allocation": "Teaching Assistant Allocation",
+      "rule_blueprint_coverage": "Blueprint Coverage",
+      "rule_graded_submissions": "Graded Submissions",
+      "rule_instructor_role": "Instructor Role",
+      "rule_credentials_uploaded": "Credentials Uploaded",
       "cat_course_structure": "Course Structure",
       "cat_accessibility": "Accessibility",
       "cat_virtual_classes": "Virtual Classes",
       "cat_assessment_quality": "Assessment Quality",
+      "cat_assessment": "Assessment Quality",
       "cat_policies": "Policies",
       "cat_data_protection": "Data Protection",
-      "cat_instructor_qualifications": "Instructor Qualifications"
+      "cat_instructor_qualifications": "Instructor Qualifications",
+      "cat_instructor": "Instructor Qualifications"
     },
     "taPanel": {
       "title": "Teaching Assistants",
@@ -5775,9 +5787,22 @@
       },
       "filters": {
         "allStatuses": "All statuses",
+        "allDeliveries": "All delivery types",
+        "deliveryZoom": "Zoom",
+        "deliveryWebinar": "Webinar",
+        "deliveryBlended": "Hybrid",
+        "deliveryOnsite": "Onsite",
+        "deliverySelfPaced": "Self-paced",
+        "sortLatest": "Sort by latest (newest first)",
         "sortScore": "Sort by score (worst first)",
         "sortTitle": "Sort by course title",
         "sortInstructor": "Sort by instructor"
+      },
+      "pagination": {
+        "showing": "Showing {start}–{end} of {total}",
+        "pageOf": "Page {page} of {total}",
+        "prev": "Previous",
+        "next": "Next"
       },
       "table": {
         "course": "Course",

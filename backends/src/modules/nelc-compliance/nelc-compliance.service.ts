@@ -227,6 +227,7 @@ export class NelcComplianceService {
       courseTitle: string;
       instructorName: string;
       deliveryType: string | null;
+      createdAt: string;
       overallStatus: ComplianceStatus;
       overallScore: number;
       summary: { passed: number; review: number; failed: number; total: number };
@@ -244,6 +245,7 @@ export class NelcComplianceService {
         title: courses.title,
         deliveryType: courses.deliveryType,
         instructorId: courses.instructorId,
+        createdAt: courses.createdAt,
       })
       .from(courses)
       .where(conditions.length ? and(...conditions) : undefined);
@@ -281,6 +283,7 @@ export class NelcComplianceService {
         courseId: course.id,
         courseTitle: course.title,
         deliveryType: course.deliveryType,
+        createdAt: course.createdAt.toISOString(),
         instructorName: instructorMap.get(course.instructorId!) || 'Unknown',
         overallStatus: scorecard.overallStatus,
         overallScore: scorecard.overallScore,
@@ -366,39 +369,53 @@ export class NelcComplianceService {
       checks: Array<{ rule: string; status: ComplianceStatus; detail: string }>;
     }> = [];
 
+    // Which rule families apply depends on how the course is delivered:
+    //   self-paced → has modules, no virtual classes
+    //   blended   → has modules AND virtual classes
+    //   zoom      → virtual classes only (modules optional/not checked)
+    //   webinar   → virtual classes only (modules optional/not checked)
+    //   onsite    → in-person sessions only (modules + zoom config skipped)
+    const isSelfPacedCourse = course.deliveryType === 'self-paced';
+    const isBlended = course.deliveryType === 'blended';
+    const isOnsite = course.deliveryType === 'onsite';
+    const requiresModules = isSelfPacedCourse || isBlended;
+    const requiresVirtualSessions = !isSelfPacedCourse;
+    const requiresZoomConfig = !isSelfPacedCourse && !isOnsite;
+
     // ─── 1. Course Structure ───
     const structureChecks: ComplianceCheck[] = [];
     const moduleCount = modules.length;
-    const isSelfPacedCourse = course.deliveryType === 'self-paced';
-    const isZoomOnly = course.deliveryType === 'zoom';
-    // Modules required for self-paced/blended; optional (review-level) for zoom/onsite
-    if (isZoomOnly || course.deliveryType === 'onsite') {
-      structureChecks.push({
-        rule: 'modules_count',
-        status: moduleCount >= 3 ? 'passed' : moduleCount > 0 ? 'review' : 'review',
-        detail: moduleCount >= 3
-          ? `${moduleCount} modules (min 3)`
-          : moduleCount > 0
-            ? `${moduleCount} module(s) — modules are optional for ${course.deliveryType} courses`
-            : `No modules — optional for ${course.deliveryType} courses`,
-      });
-    } else {
+
+    if (requiresModules) {
       structureChecks.push({
         rule: 'modules_count',
         status: moduleCount >= 3 ? 'passed' : 'failed',
-        detail: moduleCount >= 3 ? `${moduleCount} modules (min 3)` : `Only ${moduleCount} module(s)`,
+        detail:
+          moduleCount >= 3
+            ? `${moduleCount} modules (min 3)`
+            : `Only ${moduleCount} module(s)`,
+      });
+
+      const modulesWithMaterials = new Set(
+        materials.filter((m) => m.moduleId).map((m) => m.moduleId),
+      );
+      const modulesLackingMaterials = modules.filter(
+        (m) => !modulesWithMaterials.has(m.id),
+      );
+      structureChecks.push({
+        rule: 'modules_with_materials',
+        status:
+          modules.length > 0 && modulesLackingMaterials.length === 0
+            ? 'passed'
+            : 'failed',
+        detail:
+          modulesLackingMaterials.length === 0
+            ? 'All modules have materials'
+            : `${modulesLackingMaterials.length} module(s) lack materials`,
       });
     }
-
-    const modulesWithMaterials = new Set(materials.filter((m) => m.moduleId).map((m) => m.moduleId));
-    const modulesLackingMaterials = modules.filter((m) => !modulesWithMaterials.has(m.id));
-    structureChecks.push({
-      rule: 'modules_with_materials',
-      status: modules.length > 0 && modulesLackingMaterials.length === 0 ? 'passed' : 'failed',
-      detail: modulesLackingMaterials.length === 0
-        ? 'All modules have materials'
-        : `${modulesLackingMaterials.length} module(s) lack materials`,
-    });
+    // For zoom / webinar / onsite the module checks are intentionally
+    // omitted — NELC doesn't require modules for those formats.
 
     structureChecks.push({
       rule: 'bilingual_content',
@@ -466,68 +483,84 @@ export class NelcComplianceService {
       checks: accessChecks,
     });
 
-    // ─── 3. Virtual Classes (reuse existing session checks) ───
-    // Skip virtual classes category entirely for self-paced courses
+    // ─── 3. Virtual Classes ───
+    // Whole category is skipped for self-paced (no live sessions).
+    // For onsite, sessions still exist but zoom_configuration is not
+    // applicable. For zoom / webinar / blended, the full check set runs.
     const vcChecks: ComplianceCheck[] = [];
-    if (isSelfPacedCourse) {
-      vcChecks.push({ rule: 'sessions_exist', status: 'passed', detail: 'Not applicable for self-paced courses' });
-    } else if (courseSessions.length === 0) {
-      vcChecks.push({ rule: 'sessions_exist', status: 'review', detail: 'No sessions created yet' });
-    } else {
-      const zoomSessions = courseSessions.filter(
-        (s) => s.type === SESSION_TYPE.ZOOM || s.type === SESSION_TYPE.HYBRID,
-      );
-      const zoomConfigured = zoomSessions.filter((s) => s.meetingId || s.zoomLink).length;
-      if (zoomSessions.length > 0) {
+    if (requiresVirtualSessions) {
+      if (courseSessions.length === 0) {
         vcChecks.push({
-          rule: 'zoom_configuration',
-          status: zoomConfigured === zoomSessions.length ? 'passed' : 'failed',
-          detail: `${zoomConfigured}/${zoomSessions.length} virtual sessions configured`,
+          rule: 'sessions_exist',
+          status: 'review',
+          detail: 'No sessions created yet',
         });
-      }
+      } else {
+        if (requiresZoomConfig) {
+          const zoomSessions = courseSessions.filter(
+            (s) => s.type === SESSION_TYPE.ZOOM || s.type === SESSION_TYPE.HYBRID,
+          );
+          const zoomConfigured = zoomSessions.filter((s) => s.meetingId || s.zoomLink).length;
+          if (zoomSessions.length > 0) {
+            vcChecks.push({
+              rule: 'zoom_configuration',
+              status: zoomConfigured === zoomSessions.length ? 'passed' : 'failed',
+              detail: `${zoomConfigured}/${zoomSessions.length} virtual sessions configured`,
+            });
+          }
+        }
 
-      const completedSessions = courseSessions.filter((s) => s.status === SESSION_STATUS.COMPLETED);
-      if (completedSessions.length > 0) {
-        const sessionsWithAttendance = await Promise.all(
-          completedSessions.map(async (s) => {
-            const [c] = await db.select({ count: count() }).from(attendance).where(eq(attendance.sessionId, s.id));
-            return Number(c?.count || 0) > 0;
-          }),
-        );
-        const tracked = sessionsWithAttendance.filter(Boolean).length;
-        vcChecks.push({
-          rule: 'attendance_tracking',
-          status: tracked === completedSessions.length ? 'passed' : 'failed',
-          detail: `${tracked}/${completedSessions.length} completed sessions have attendance`,
-        });
-      }
-
-      // TA allocation check — required when enrollment exceeds thresholds
-      const enrolled = await db.select({ count: count() }).from(enrollments).where(
-        and(eq(enrollments.courseId, courseId), eq(enrollments.status, 'active')),
-      );
-      const enrolledCount = Number(enrolled[0]?.count || 0);
-      if (enrolledCount > 0 && courseSessions.length > 0) {
-        const requiredTAs = enrolledCount > 100 ? 2 : enrolledCount > 50 ? 1 : 0;
-        if (requiredTAs > 0) {
-          // Check if any session has TAs assigned
-          const [taCount] = await db
-            .select({ count: count() })
-            .from(sessionAssistants)
-            .where(sql`${sessionAssistants.sessionId} IN (${sql.join(courseSessions.map((s) => sql`${s.id}`), sql`, `)})`);
-          const assignedTAs = Number(taCount?.count || 0);
+        const completedSessions = courseSessions.filter((s) => s.status === SESSION_STATUS.COMPLETED);
+        if (completedSessions.length > 0) {
+          const sessionsWithAttendance = await Promise.all(
+            completedSessions.map(async (s) => {
+              const [c] = await db.select({ count: count() }).from(attendance).where(eq(attendance.sessionId, s.id));
+              return Number(c?.count || 0) > 0;
+            }),
+          );
+          const tracked = sessionsWithAttendance.filter(Boolean).length;
           vcChecks.push({
-            rule: 'ta_allocation',
-            status: assignedTAs >= requiredTAs ? 'passed' : 'failed',
-            detail: `${assignedTAs} TA(s) assigned, ${requiredTAs} required (${enrolledCount} enrolled)`,
+            rule: 'attendance_tracking',
+            status: tracked === completedSessions.length ? 'passed' : 'failed',
+            detail: `${tracked}/${completedSessions.length} completed sessions have attendance`,
           });
+        }
+
+        // TA allocation check — required when enrollment exceeds thresholds
+        const enrolled = await db
+          .select({ count: count() })
+          .from(enrollments)
+          .where(and(eq(enrollments.courseId, courseId), eq(enrollments.status, 'active')));
+        const enrolledCount = Number(enrolled[0]?.count || 0);
+        if (enrolledCount > 0 && courseSessions.length > 0) {
+          const requiredTAs = enrolledCount > 100 ? 2 : enrolledCount > 50 ? 1 : 0;
+          if (requiredTAs > 0) {
+            const [taCount] = await db
+              .select({ count: count() })
+              .from(sessionAssistants)
+              .where(
+                sql`${sessionAssistants.sessionId} IN (${sql.join(
+                  courseSessions.map((s) => sql`${s.id}`),
+                  sql`, `,
+                )})`,
+              );
+            const assignedTAs = Number(taCount?.count || 0);
+            vcChecks.push({
+              rule: 'ta_allocation',
+              status: assignedTAs >= requiredTAs ? 'passed' : 'failed',
+              detail: `${assignedTAs} TA(s) assigned, ${requiredTAs} required (${enrolledCount} enrolled)`,
+            });
+          }
         }
       }
     }
+    // Self-paced courses don't get a virtual-classes category at all —
+    // we omit the section rather than render an "N/A" placeholder.
 
-    categories.push({
+    // Only attach the category if it has at least one check.
+    if (vcChecks.length > 0) categories.push({
       category: 'virtual_classes',
-      label: isSelfPacedCourse ? 'Virtual Classes (N/A)' : 'Virtual Classes',
+      label: 'Virtual Classes',
       icon: 'Video',
       status: this.calculateOverallStatus(vcChecks),
       checks: vcChecks,

@@ -70,8 +70,23 @@ function StatusIcon({ status, className = "w-4 h-4" }: { status: Status; classNa
 
 const ComplianceScorecardDrawer = ({ courseId, courseTitle, open, onClose }: Props) => {
   const t = useTranslations("adminDashboard.compliancePage");
+  // Reuse the instructor-side NELC translation namespace so the rule
+  // and category labels stay in sync across roles — the same wording
+  // for "Modules with Materials" or "WCAG Status" appears in both
+  // instructor and admin scorecards. .has() lets us fall back to the
+  // raw key for any new rule the registry hasn't translated yet.
+  const tScore = useTranslations("instructorDashboard.nelcScorecard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  const ruleLabel = (rule: string): string => {
+    const key = `rule_${rule}`;
+    return tScore.has(key) ? tScore(key) : rule.replace(/_/g, " ");
+  };
+  const categoryLabel = (cat: string, fallback: string): string => {
+    const key = `cat_${cat}`;
+    return tScore.has(key) ? tScore(key) : fallback;
+  };
 
   const [scorecard, setScorecard] = useState<Scorecard | null>(null);
   const [loading, setLoading] = useState(false);
@@ -217,7 +232,7 @@ const ComplianceScorecardDrawer = ({ courseId, courseTitle, open, onClose }: Pro
                     </div>
                     <div className="flex-1 min-w-0 text-start">
                       <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
-                        {cat.label}
+                        {categoryLabel(cat.category, cat.label)}
                       </p>
                       <p className="text-xs text-[var(--color-text-secondary)]">
                         {passed} / {cat.checks.length} {t("rulesPassing")}
@@ -243,7 +258,7 @@ const ComplianceScorecardDrawer = ({ courseId, courseTitle, open, onClose }: Pro
                           <StatusIcon status={chk.status} className="w-4 h-4 mt-0.5" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                              {chk.rule.replace(/_/g, " ")}
+                              {ruleLabel(chk.rule)}
                             </p>
                             <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
                               {chk.detail}

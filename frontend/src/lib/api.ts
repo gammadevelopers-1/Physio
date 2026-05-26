@@ -3060,6 +3060,7 @@ export const nelcComplianceApi = {
       courseTitle: string;
       instructorName: string;
       deliveryType: string | null;
+      createdAt: string;
       overallStatus: 'passed' | 'review' | 'failed';
       overallScore: number;
       summary: { passed: number; review: number; failed: number; total: number };

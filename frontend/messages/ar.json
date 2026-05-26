@@ -3745,13 +3745,25 @@
       "rule_export_capability": "إمكانية التصدير",
       "rule_instructor_bio": "السيرة الذاتية للمدرب",
       "rule_instructor_credentials": "مؤهلات المدرب",
+      "rule_bilingual_descriptions": "أوصاف ثنائية اللغة",
+      "rule_cme_hours_configured": "ساعات CME محددة",
+      "rule_sessions_exist": "وجود جلسات",
+      "rule_zoom_configuration": "إعداد زووم",
+      "rule_attendance_tracking": "تتبع الحضور",
+      "rule_ta_allocation": "تخصيص مساعد تدريس",
+      "rule_blueprint_coverage": "تغطية المخطط",
+      "rule_graded_submissions": "التسليمات المُقيَّمة",
+      "rule_instructor_role": "دور المدرّب",
+      "rule_credentials_uploaded": "رفع المؤهلات",
       "cat_course_structure": "هيكل الدورة",
       "cat_accessibility": "إمكانية الوصول",
       "cat_virtual_classes": "الفصول الافتراضية",
       "cat_assessment_quality": "جودة التقييم",
+      "cat_assessment": "جودة التقييم",
       "cat_policies": "السياسات",
       "cat_data_protection": "حماية البيانات",
-      "cat_instructor_qualifications": "مؤهلات المدرب"
+      "cat_instructor_qualifications": "مؤهلات المدرب",
+      "cat_instructor": "مؤهلات المدرب"
     },
     "taPanel": {
       "title": "مساعدو التدريس",
@@ -5775,9 +5787,22 @@
       },
       "filters": {
         "allStatuses": "كل الحالات",
+        "allDeliveries": "كل أنواع التسليم",
+        "deliveryZoom": "زووم",
+        "deliveryWebinar": "ندوة",
+        "deliveryBlended": "مدمج",
+        "deliveryOnsite": "حضوري",
+        "deliverySelfPaced": "ذاتي السرعة",
+        "sortLatest": "ترتيب حسب الأحدث",
         "sortScore": "ترتيب حسب الدرجة (الأسوأ أولاً)",
         "sortTitle": "ترتيب حسب عنوان الدورة",
         "sortInstructor": "ترتيب حسب المدرّب"
+      },
+      "pagination": {
+        "showing": "عرض {start}–{end} من {total}",
+        "pageOf": "الصفحة {page} من {total}",
+        "prev": "السابق",
+        "next": "التالي"
       },
       "table": {
         "course": "الدورة",

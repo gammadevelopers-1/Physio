@@ -4292,7 +4292,8 @@
       "materialRemoved": "تم إزالة المحتوى بنجاح",
       "materialRemoveError": "فشل في إزالة المحتوى",
       "moduleAssessments": "التقييمات",
-      "marks": "درجات"
+      "marks": "درجات",
+      "submissions": "تسليم"
     },
     "editCourse": {
       "title": "تعديل الدورة",
@@ -5010,6 +5011,69 @@
     }
   },
   "adminDashboard": {
+    "assessmentPreview": {
+      "title": "التقييم",
+      "marks": "درجة",
+      "passing": "للنجاح",
+      "minutes": "دقيقة",
+      "questions": "سؤال",
+      "submissionsLabel": "التسليمات",
+      "viewSubmissions": "عرض التسليمات",
+      "noQuestions": "لم تتم إضافة أي أسئلة لهذا التقييم بعد.",
+      "modelAnswer": "الإجابة النموذجية"
+    },
+    "assessmentSubmissions": {
+      "title": "تسليمات التقييم",
+      "subtitle": "كل محاولة طالب مع الدرجة ووقت التسليم. اضغط على أي صف لمعاينة الإجابات.",
+      "backToCourse": "العودة للدورة",
+      "searchPlaceholder": "ابحث باسم الطالب أو البريد…",
+      "empty": "لا توجد تسليمات تطابق عوامل التصفية.",
+      "view": "عرض",
+      "filters": {
+        "all": "كل الحالات"
+      },
+      "counts": {
+        "total": "الإجمالي",
+        "graded": "مقيَّم",
+        "pending": "بانتظار التقييم",
+        "inProgress": "قيد الإجراء"
+      },
+      "statuses": {
+        "graded": "مقيَّم",
+        "submitted": "مُسلَّم",
+        "inProgress": "قيد الإجراء"
+      },
+      "table": {
+        "student": "الطالب",
+        "status": "الحالة",
+        "score": "الدرجة",
+        "submittedAt": "تاريخ التسليم",
+        "actions": "إجراءات"
+      }
+    },
+    "submissionDetail": {
+      "studentLabel": "الطالب",
+      "status": "الحالة",
+      "scoreLabel": "الدرجة",
+      "percentage": "النسبة",
+      "submittedAt": "تاريخ التسليم",
+      "instructorComment": "ملاحظة المدرّب",
+      "uploadedFiles": "الملفات المرفوعة",
+      "download": "تنزيل",
+      "missingQuestion": "لم يعد هذا السؤال موجوداً",
+      "noAnswers": "لا توجد إجابات مسجَّلة لهذا التسليم.",
+      "studentChose": "اختار الطالب",
+      "studentAnswer": "إجابة الطالب",
+      "emptyAnswer": "(لا توجد إجابة)",
+      "correctAnswer": "الإجابة الصحيحة",
+      "modelAnswer": "الإجابة النموذجية",
+      "marks": "درجة",
+      "statuses": {
+        "graded": "مقيَّم",
+        "submitted": "مُسلَّم",
+        "inProgress": "قيد الإجراء"
+      }
+    },
     "title": "لوحة تحكم المشرف",
     "subtitle": "مرحباً بعودتك، {name}! إليك نظرة عامة على المنصة.",
     "loading": "جاري تحميل البيانات...",

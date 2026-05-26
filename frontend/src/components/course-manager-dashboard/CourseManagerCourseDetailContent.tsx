@@ -23,6 +23,7 @@ import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import AdminNavbar from "@/components/admin-dashboard/AdminNavbar";
 import AdminSidebar from "@/components/admin-dashboard/AdminSidebar";
 import AdminMobileSidebar from "@/components/admin-dashboard/AdminMobileSidebar";
+import AssessmentPreviewDrawer from "@/components/admin-dashboard/assessments/AssessmentPreviewDrawer";
 import NELCScorecardPanel from "@/components/shared/NELCScorecardPanel";
 import CourseAssistantsManagePanel from "./CourseAssistantsManagePanel";
 import {
@@ -142,6 +143,7 @@ const CourseManagerCourseDetailContent = ({
 
   // Module assessments
   const [moduleAssessments, setModuleAssessments] = useState<import("@/types/instructor-dashboard").AssessmentResponse[]>([]);
+  const [previewAssessmentId, setPreviewAssessmentId] = useState<string | null>(null);
   useEffect(() => {
     if (!courseId) return;
     courseManagerApi.getAssessments({ courseId, limit: 100 }).then((res) => {
@@ -895,15 +897,23 @@ const CourseManagerCourseDetailContent = ({
                                       </p>
                                       <div className="space-y-2">
                                         {modAssessments.map((ma) => (
-                                          <div
+                                          <button
+                                            type="button"
                                             key={ma.id}
-                                            className="flex items-center gap-3 bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] px-3 py-2"
+                                            onClick={() => setPreviewAssessmentId(ma.id)}
+                                            className="w-full flex items-center gap-3 bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] px-3 py-2 hover:bg-[var(--color-border-subtle)] hover:border-[var(--color-primary)] transition-colors text-start"
                                           >
                                             <ClipboardCheck className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
                                             <div className="flex-1 min-w-0">
-                                              <p className="text-sm text-[var(--color-text-secondary)] truncate">{ma.title}</p>
+                                              <p className="text-sm text-[var(--color-text-primary)] truncate font-medium">{ma.title}</p>
                                               <p className="text-xs text-[var(--color-text-secondary)]">
                                                 {ma.totalMarks} {t("courseDetail.marks") || "marks"}
+                                                {typeof ma.submissionCount === "number" && (
+                                                  <>
+                                                    {" · "}
+                                                    {ma.submissionCount} {t("courseDetail.submissions") || "submissions"}
+                                                  </>
+                                                )}
                                               </p>
                                             </div>
                                             <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
@@ -911,7 +921,7 @@ const CourseManagerCourseDetailContent = ({
                                             }`}>
                                               {ma.type}
                                             </span>
-                                          </div>
+                                          </button>
                                         ))}
                                       </div>
                                     </div>
@@ -1191,6 +1201,16 @@ const CourseManagerCourseDetailContent = ({
             </div>
           </div>
         </div>
+      )}
+
+      {previewAssessmentId && (
+        <AssessmentPreviewDrawer
+          assessmentId={previewAssessmentId}
+          courseId={courseId}
+          open
+          onClose={() => setPreviewAssessmentId(null)}
+          submissionsHrefBase={`/${locale}/dashboard/${role === "admin" ? "admin" : "manager"}/courses/${courseId}/assessments`}
+        />
       )}
     </>
   );

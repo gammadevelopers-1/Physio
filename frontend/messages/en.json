@@ -4292,7 +4292,8 @@
       "materialRemoved": "Material removed successfully",
       "materialRemoveError": "Failed to remove material",
       "moduleAssessments": "Assessments",
-      "marks": "marks"
+      "marks": "marks",
+      "submissions": "submissions"
     },
     "editCourse": {
       "title": "Edit Course",
@@ -5010,6 +5011,69 @@
     }
   },
   "adminDashboard": {
+    "assessmentPreview": {
+      "title": "Assessment",
+      "marks": "marks",
+      "passing": "passing",
+      "minutes": "min",
+      "questions": "questions",
+      "submissionsLabel": "Submissions",
+      "viewSubmissions": "View submissions",
+      "noQuestions": "No questions have been added to this assessment yet.",
+      "modelAnswer": "Model answer"
+    },
+    "assessmentSubmissions": {
+      "title": "Assessment submissions",
+      "subtitle": "Every student attempt with score and submission timestamp. Click a row to preview the answers.",
+      "backToCourse": "Back to course",
+      "searchPlaceholder": "Search by student name or email…",
+      "empty": "No submissions match your filters.",
+      "view": "View",
+      "filters": {
+        "all": "All statuses"
+      },
+      "counts": {
+        "total": "Total",
+        "graded": "Graded",
+        "pending": "Awaiting grading",
+        "inProgress": "In progress"
+      },
+      "statuses": {
+        "graded": "Graded",
+        "submitted": "Submitted",
+        "inProgress": "In progress"
+      },
+      "table": {
+        "student": "Student",
+        "status": "Status",
+        "score": "Score",
+        "submittedAt": "Submitted",
+        "actions": "Actions"
+      }
+    },
+    "submissionDetail": {
+      "studentLabel": "Student",
+      "status": "Status",
+      "scoreLabel": "Score",
+      "percentage": "Percentage",
+      "submittedAt": "Submitted",
+      "instructorComment": "Instructor remark",
+      "uploadedFiles": "Uploaded files",
+      "download": "Download",
+      "missingQuestion": "Question no longer exists",
+      "noAnswers": "No answers recorded for this submission.",
+      "studentChose": "Student chose",
+      "studentAnswer": "Student answer",
+      "emptyAnswer": "(no answer)",
+      "correctAnswer": "Correct answer",
+      "modelAnswer": "Model answer",
+      "marks": "marks",
+      "statuses": {
+        "graded": "Graded",
+        "submitted": "Submitted",
+        "inProgress": "In progress"
+      }
+    },
     "title": "Admin Dashboard",
     "subtitle": "Welcome back, {name}! Here's your platform overview.",
     "loading": "Loading live data...",

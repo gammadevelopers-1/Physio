@@ -34,7 +34,12 @@ interface SystemMetrics {
 
 interface SecurityHealthWidgetProps {
   security: SecurityMetrics;
-  system: SystemMetrics;
+  /**
+   * Optional infra metrics (latency, uptime, last backup). We don't
+   * have a metrics pipeline wired yet, so this section is hidden when
+   * `system` is omitted — better than showing fake numbers.
+   */
+  system?: SystemMetrics;
 }
 
 const SecurityHealthWidget = ({
@@ -104,36 +109,38 @@ const SecurityHealthWidget = ({
     },
   ];
 
-  const systemItems = [
-    {
-      id: "apiLatency",
-      label: t("securityHealth.apiLatency"),
-      value: `${system.apiLatency}ms`,
-      icon: Zap,
-      status: system.apiLatencyStatus,
-    },
-    {
-      id: "errorRate",
-      label: t("securityHealth.errorRate"),
-      value: `${system.errorRate}%`,
-      icon: AlertTriangle,
-      status: system.errorRateStatus,
-    },
-    {
-      id: "lastBackup",
-      label: t("securityHealth.lastBackup"),
-      value: system.lastBackup,
-      icon: HardDrive,
-      status: "healthy",
-    },
-    {
-      id: "dbHealth",
-      label: t("securityHealth.dbHealth"),
-      value: t(`securityHealth.${system.dbHealth}`),
-      icon: Database,
-      status: system.dbHealth,
-    },
-  ];
+  const systemItems = system
+    ? [
+        {
+          id: "apiLatency",
+          label: t("securityHealth.apiLatency"),
+          value: `${system.apiLatency}ms`,
+          icon: Zap,
+          status: system.apiLatencyStatus,
+        },
+        {
+          id: "errorRate",
+          label: t("securityHealth.errorRate"),
+          value: `${system.errorRate}%`,
+          icon: AlertTriangle,
+          status: system.errorRateStatus,
+        },
+        {
+          id: "lastBackup",
+          label: t("securityHealth.lastBackup"),
+          value: system.lastBackup,
+          icon: HardDrive,
+          status: "healthy",
+        },
+        {
+          id: "dbHealth",
+          label: t("securityHealth.dbHealth"),
+          value: t(`securityHealth.${system.dbHealth}`),
+          icon: Database,
+          status: system.dbHealth,
+        },
+      ]
+    : [];
 
   return (
     <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
@@ -154,8 +161,8 @@ const SecurityHealthWidget = ({
         </Link>
       </div>
 
-      {/* Two Columns */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Columns — system column hides when no infra metrics provided. */}
+      <div className={`grid grid-cols-1 ${system ? "md:grid-cols-2" : "md:grid-cols-2"} gap-6`}>
         {/* Security Column */}
         <div>
           <h4 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase mb-3">
@@ -187,38 +194,39 @@ const SecurityHealthWidget = ({
           </div>
         </div>
 
-        {/* System Column */}
-        <div>
-          <h4 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase mb-3">
-            {t("securityHealth.system")}
-          </h4>
-          <div className="space-y-3">
-            {systemItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between py-2 border-b border-[#F3F4F6] last:border-b-0"
-                >
-                  <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                    <span className="text-sm text-[var(--color-text-secondary)]">{item.label}</span>
+        {system ? (
+          <div>
+            <h4 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase mb-3">
+              {t("securityHealth.system")}
+            </h4>
+            <div className="space-y-3">
+              {systemItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between py-2 border-b border-[#F3F4F6] last:border-b-0"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                      <span className="text-sm text-[var(--color-text-secondary)]">{item.label}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-2 h-2 rounded-full ${getStatusColor(item.status)}`}
+                      />
+                      <span
+                        className={`text-sm font-medium ${getStatusTextColor(item.status)}`}
+                      >
+                        {item.value}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`w-2 h-2 rounded-full ${getStatusColor(item.status)}`}
-                    />
-                    <span
-                      className={`text-sm font-medium ${getStatusTextColor(item.status)}`}
-                    >
-                      {item.value}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
     </div>
   );

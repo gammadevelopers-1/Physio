@@ -5012,6 +5012,7 @@
   "adminDashboard": {
     "title": "Admin Dashboard",
     "subtitle": "Welcome back, {name}! Here's your platform overview.",
+    "loading": "Loading live data...",
     "sidebar": {
       "dashboard": "Dashboard",
       "users": "Users",
@@ -5112,6 +5113,9 @@
       "pass": "Pass",
       "review": "Review",
       "fail": "Fail",
+      "passed": "passed",
+      "checks": "checks",
+      "noData": "No compliance data yet",
       "areas": {
         "accessibility": "Accessibility",
         "contentStandards": "Content Standards",
@@ -5131,6 +5135,7 @@
     },
     "alerts": {
       "title": "Alerts",
+      "empty": "No active alerts.",
       "items": {
         "highFailedLogins": "High Failed Logins",
         "highFailedLoginsDesc": "23 failed attempts from IP 192.168.x.x",
@@ -5148,6 +5153,7 @@
     "activity": {
       "title": "Recent Activity",
       "viewAll": "View All Activity",
+      "empty": "No recent activity yet.",
       "actions": {
         "registered": "registered",
         "updatedRolePermissions": "updated role permissions",

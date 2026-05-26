@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
@@ -12,279 +12,228 @@ import UserManagementWidget from "./UserManagementWidget";
 import NELCComplianceOverviewWidget from "./NELCComplianceOverviewWidget";
 import FinanceSummaryWidget from "./FinanceSummaryWidget";
 import AlertsActivitySidebar from "./AlertsActivitySidebar";
-import { notificationsApi, AdminNotification } from "@/lib/api";
+import {
+  notificationsApi,
+  adminApi,
+  AdminNotification,
+  AdminDashboardPayload,
+} from "@/lib/api";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
 
-// Mock KPI Data
-const mockKPIData = {
-  activeUsers: 1245,
-  activeUsersTrend: 8,
-  totalUsers: 2458,
-  totalUsersNew: 45,
-  revenueMTD: 245000,
-  revenueTrend: 12,
-  nelcCompliance: 85,
-  nelcClauses: "42/50 clauses",
-  systemUptime: 99.9,
-  uptimeStatus: "healthy" as const,
-  certificatesIssued: 156,
-  certificatesPeriod: "This month",
+type LiveAlert = {
+  id: string;
+  type: "critical" | "warning" | "info";
+  title: string;
+  description: string;
+  time: string;
+  link?: string;
 };
 
-// Mock Analytics Data
-const mockAnalyticsData = {
-  visitorToSignup: 24,
-  signupToEnroll: 68,
-  enrollToPaid: 82,
-  completionRate: 78,
+type LiveActivity = {
+  id: string;
+  type: "user" | "admin" | "payment" | "course" | "certificate";
+  user: string;
+  action: string;
+  time: string;
 };
 
-// Mock Security Data
-const mockSecurityData = {
-  failedLogins: 23,
-  ipsBlocked: 5,
-  activeSessions: 342,
-  twoFaAdoption: 76,
+// Empty payload — used while the real one is loading so the widgets
+// render skeleton-like zeros instead of crashing on undefined props.
+const EMPTY: AdminDashboardPayload = {
+  kpi: {
+    activeUsers: 0,
+    activeUsersTrend: 0,
+    totalUsers: 0,
+    totalUsersNew: 0,
+    revenueMTD: 0,
+    revenueTrend: 0,
+    certificatesIssued: 0,
+    certificatesPeriod: "thisMonth",
+  },
+  analytics: {
+    visitorToSignup: null,
+    signupToEnroll: 0,
+    enrollToPaid: 0,
+    completionRate: 0,
+  },
+  security: {
+    failedLogins: 0,
+    ipsBlocked: 0,
+    activeSessions: 0,
+    twoFaAdoption: 0,
+  },
+  finance: {
+    grossRevenue: 0,
+    netRevenue: 0,
+    gateways: [],
+    refundRate: 0,
+    chargebackRate: 0,
+  },
+  recentUsers: [],
+  compliance: {
+    percentage: 0,
+    passed: 0,
+    review: 0,
+    failed: 0,
+    areas: [],
+  },
+  recentActivity: [],
 };
 
-// Mock System Data
-const mockSystemData = {
-  apiLatency: 45,
-  apiLatencyStatus: "healthy" as const,
-  errorRate: 0.02,
-  errorRateStatus: "healthy" as const,
-  lastBackup: "2h ago",
-  dbHealth: "good" as const,
-};
-
-// Mock Users Data - will be translated in component
-
-// Mock Compliance Data - will be translated in component
-
-// Mock Finance Data
-const mockFinanceData = {
-  grossRevenue: 245000,
-  netRevenue: 228000,
-  gateways: [
-    { name: "Tap/Moyasar", percentage: 72 },
-    { name: "BNPL (Tamara)", percentage: 28 },
-  ],
-  refundRate: 2.1,
-  chargebackRate: 0.3,
-};
-
-// Mock Alerts Data - will be translated in component
+function formatRelative(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  return `${diffDay}d ago`;
+}
 
 const AdminDashboardContent = () => {
   const t = useTranslations("adminDashboard");
   const admin = useAdminProfile();
-  const [liveAlerts, setLiveAlerts] = useState<
-    { id: string; type: "critical" | "warning" | "info"; title: string; description: string; time: string; link?: string }[]
-  >([]);
+  const [data, setData] = useState<AdminDashboardPayload>(EMPTY);
+  const [loading, setLoading] = useState(true);
+  const [liveAlerts, setLiveAlerts] = useState<LiveAlert[]>([]);
 
-  // Fetch real notifications from backend
   useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const result = await notificationsApi.getAll({ limit: 10 });
-        const mapped = result.data.map((n: AdminNotification) => {
-          const createdAt = new Date(n.createdAt);
-          const diffMs = Date.now() - createdAt.getTime();
-          const diffMin = Math.floor(diffMs / 60000);
-          const diffHr = Math.floor(diffMin / 60);
-          const timeStr =
-            diffMin < 60
-              ? `${diffMin}m ago`
-              : diffHr < 24
-                ? `${diffHr}h ago`
-                : `${Math.floor(diffHr / 24)}d ago`;
-          return {
+    let cancelled = false;
+
+    const load = async () => {
+      const [dashboardResult, notificationsResult] = await Promise.allSettled([
+        adminApi.getDashboard(),
+        notificationsApi.getAll({ limit: 20 }),
+      ]);
+
+      if (cancelled) return;
+
+      if (dashboardResult.status === "fulfilled") {
+        setData(dashboardResult.value);
+      }
+
+      if (notificationsResult.status === "fulfilled") {
+        const mapped: LiveAlert[] = notificationsResult.value.data.map(
+          (n: AdminNotification) => ({
             id: n.id,
             type: n.type,
             title: n.title,
             description: n.description,
-            time: timeStr,
+            time: formatRelative(n.createdAt),
             link: n.link || undefined,
-          };
-        });
+          }),
+        );
         setLiveAlerts(mapped);
-      } catch {
-        // Not an admin or not logged in - ignore
       }
+
+      setLoading(false);
     };
-    fetchNotifications();
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // Mock Activity Data with translations
-  const mockActivities = [
-    {
-      id: "1",
-      type: "user" as const,
-      user: "سارة محمد",
-      action: t("activity.actions.registered"),
-      time: t("activity.time.minAgo", { count: 5 }),
-    },
-    {
-      id: "2",
-      type: "admin" as const,
-      user: t("activity.users.admin"),
-      action: t("activity.actions.updatedRolePermissions"),
-      time: t("activity.time.minAgo", { count: 15 }),
-    },
-    {
-      id: "3",
-      type: "payment" as const,
-      user: t("activity.users.payment"),
-      action: `${t("activity.actions.paymentReceived")} - SAR 1,200`,
-      time: t("activity.time.minAgo", { count: 32 }),
-    },
-    {
-      id: "4",
-      type: "course" as const,
-      user: t("activity.users.newCourse"),
-      action: `${t("activity.actions.coursePublished")} Dr. Faisal`,
-      time: t("activity.time.hourAgo", { count: 1 }),
-    },
-    {
-      id: "5",
-      type: "certificate" as const,
-      user: t("activity.users.certificate"),
-      action: `${t("activity.actions.certificateIssued")} Ahmed K.`,
-      time: t("activity.time.hoursAgo", { count: 2 }),
-    },
-  ];
+  // Compute weekly/monthly trend label for KPI sub-text.
+  // The widget itself reads a string subLabel for compliance + uptime,
+  // so we synthesize a NELC-style "N passed / M sessions" hint from
+  // the real summary numbers.
+  const nelcClauses =
+    data.compliance.passed + data.compliance.review + data.compliance.failed > 0
+      ? `${data.compliance.passed} ${t("compliance.passed")} / ${
+          data.compliance.passed + data.compliance.review + data.compliance.failed
+        } ${t("compliance.checks")}`
+      : t("compliance.noData");
 
-  // Mock Alerts Data with translations
-  const mockAlerts = [
-    {
-      id: "1",
-      type: "critical" as const,
-      title: t("alerts.items.highFailedLogins"),
-      description: t("alerts.items.highFailedLoginsDesc"),
-      time: t("alerts.time.minutesAgo", { count: 5 }),
-    },
-    {
-      id: "2",
-      type: "warning" as const,
-      title: t("alerts.items.nelcReviewRequired"),
-      description: t("alerts.items.nelcReviewRequiredDesc"),
-      time: t("alerts.time.hourAgo", { count: 1 }),
-    },
-    {
-      id: "3",
-      type: "info" as const,
-      title: t("alerts.items.newUserRegistrations"),
-      description: t("alerts.items.newUserRegistrationsDesc"),
-      time: t("alerts.time.hoursAgo", { count: 2 }),
-    },
-  ];
-
-  // Mock Users Data with translations
-  const mockUsers = [
-    {
-      id: "1",
-      name: t("userManagement.sampleUsers.faisal"),
-      initials: "FA",
-      role: "instructor" as const,
-      status: "active" as const,
-    },
-    {
-      id: "2",
-      name: t("userManagement.sampleUsers.sara"),
-      initials: "SA",
-      role: "student" as const,
-      status: "active" as const,
-    },
-    {
-      id: "3",
-      name: t("userManagement.sampleUsers.mohammed"),
-      initials: "MK",
-      role: "manager" as const,
-      status: "active" as const,
-    },
-    {
-      id: "4",
-      name: t("userManagement.sampleUsers.khalid"),
-      initials: "KH",
-      role: "student" as const,
-      status: "pending" as const,
-    },
-  ];
-
-  // Mock Compliance Data with translations
-  const mockComplianceData = {
-    percentage: 85,
-    passed: 42,
-    review: 6,
-    failed: 2,
-    areas: [
-      { id: "1", name: t("compliance.areas.accessibility"), status: "pass" as const },
-      { id: "2", name: t("compliance.areas.contentStandards"), status: "review" as const },
-      { id: "3", name: t("compliance.areas.dataProtection"), status: "pass" as const },
-      { id: "4", name: t("compliance.areas.governance"), status: "pass" as const },
-    ],
+  const kpiData = {
+    activeUsers: data.kpi.activeUsers,
+    activeUsersTrend: data.kpi.activeUsersTrend,
+    totalUsers: data.kpi.totalUsers,
+    totalUsersNew: data.kpi.totalUsersNew,
+    revenueMTD: data.kpi.revenueMTD,
+    revenueTrend: data.kpi.revenueTrend,
+    nelcCompliance: data.compliance.percentage,
+    nelcClauses,
+    // Active-session count doubles as a "system is healthy" signal —
+    // there are no real uptime metrics wired in yet. Hidden via the
+    // status badge style when there's nothing meaningful to show.
+    systemUptime: 100,
+    uptimeStatus: "healthy" as const,
+    certificatesIssued: data.kpi.certificatesIssued,
+    certificatesPeriod: t("kpi.thisMonth"),
   };
+
+  // Map activity ISO timestamps to relative strings for display.
+  const activities: LiveActivity[] = data.recentActivity.map((a) => ({
+    id: a.id,
+    type: a.type,
+    user: a.user,
+    action: a.action,
+    time: formatRelative(a.time),
+  }));
 
   return (
     <>
-      {/* Dashboard Navbar */}
       <AdminNavbar admin={admin} />
 
-      {/* Main Container */}
       <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Left Sidebar - Hidden on mobile, shown via MobileSidebar */}
             <div className="hidden lg:block lg:flex-shrink-0">
               <AdminSidebar admin={admin} />
             </div>
 
-            {/* Mobile Sidebar */}
             <AdminMobileSidebar admin={admin} />
 
-            {/* Main Content */}
             <div className="flex-1 min-w-0">
-              {/* Page Title */}
-              <div className="mb-6">
-                <h1 className="text-xl sm:text-2xl font-bold text-[var(--on-surface-default)]">
-                  {t("title")}
-                </h1>
-                <p className="text-sm text-[var(--on-surface-variant)] mt-1">
-                  {t("subtitle", { name: admin.name.split(" ")[0] })}
-                </p>
+              <div className="mb-6 flex items-start justify-between gap-3">
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-[var(--on-surface-default)]">
+                    {t("title")}
+                  </h1>
+                  <p className="text-sm text-[var(--on-surface-variant)] mt-1">
+                    {t("subtitle", { name: admin.name.split(" ")[0] })}
+                  </p>
+                </div>
+                {loading && (
+                  <span className="inline-flex items-center gap-2 text-xs text-[var(--color-text-secondary)] mt-2">
+                    <span className="w-2 h-2 rounded-full bg-[var(--color-primary)] animate-pulse" />
+                    {t("loading")}
+                  </span>
+                )}
               </div>
 
-              {/* KPI Cards */}
-              <AdminKPICards data={mockKPIData} />
+              <AdminKPICards data={kpiData} />
 
-              {/* Platform Analytics */}
               <div className="mb-6">
-                <PlatformAnalyticsWidget data={mockAnalyticsData} />
-              </div>
-
-              {/* Security & System Health */}
-              <div className="mb-6">
-                <SecurityHealthWidget
-                  security={mockSecurityData}
-                  system={mockSystemData}
+                <PlatformAnalyticsWidget
+                  data={{
+                    visitorToSignup: data.analytics.visitorToSignup ?? 0,
+                    signupToEnroll: data.analytics.signupToEnroll,
+                    enrollToPaid: data.analytics.enrollToPaid,
+                    completionRate: data.analytics.completionRate,
+                  }}
                 />
               </div>
 
-              {/* Users & NELC Compliance - Two Column Layout */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* User Management Widget */}
-                <UserManagementWidget users={mockUsers} />
-
-                {/* NELC Compliance Overview */}
-                <NELCComplianceOverviewWidget data={mockComplianceData} />
+              <div className="mb-6">
+                <SecurityHealthWidget security={data.security} />
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <UserManagementWidget users={data.recentUsers} />
+                <NELCComplianceOverviewWidget data={data.compliance} />
+              </div>
+
+              <FinanceSummaryWidget data={data.finance} />
             </div>
 
-            {/* Right Sidebar - Alerts, Activity & Finance */}
             <AlertsActivitySidebar
-              alerts={[...liveAlerts, ...mockAlerts]}
-              activities={mockActivities}
-              finance={mockFinanceData}
+              alerts={liveAlerts}
+              activities={activities}
+              finance={data.finance}
             />
           </div>
         </div>

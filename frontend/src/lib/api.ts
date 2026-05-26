@@ -661,6 +661,11 @@ export const adminApi = {
       '/admin/stats/overview',
     ),
 
+  // Full dashboard payload — drives every widget on /dashboard/admin.
+  // Real numbers; computed in a single Promise.all on the backend.
+  getDashboard: () =>
+    api.get<AdminDashboardPayload>('/admin/stats/dashboard'),
+
   // Get all courses (admin sees all)
   getCourses: (params?: InstructorCoursesParams) => {
     const sp = new URLSearchParams();
@@ -841,6 +846,62 @@ export interface AdminNotificationListResponse {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+// ── Admin dashboard payload ──────────────────────────────────────────
+// Mirrors AdminDashboardPayload on the backend. Every number here is
+// computed live from the DB — no mock data.
+export interface AdminDashboardPayload {
+  kpi: {
+    activeUsers: number;
+    activeUsersTrend: number;
+    totalUsers: number;
+    totalUsersNew: number;
+    revenueMTD: number;
+    revenueTrend: number;
+    certificatesIssued: number;
+    certificatesPeriod: 'thisMonth';
+  };
+  analytics: {
+    visitorToSignup: number | null;
+    signupToEnroll: number;
+    enrollToPaid: number;
+    completionRate: number;
+  };
+  security: {
+    failedLogins: number;
+    ipsBlocked: number;
+    activeSessions: number;
+    twoFaAdoption: number;
+  };
+  finance: {
+    grossRevenue: number;
+    netRevenue: number;
+    gateways: Array<{ name: string; percentage: number }>;
+    refundRate: number;
+    chargebackRate: number;
+  };
+  recentUsers: Array<{
+    id: string;
+    name: string;
+    initials: string;
+    role: 'admin' | 'instructor' | 'student' | 'manager';
+    status: 'active' | 'suspended' | 'pending';
+  }>;
+  compliance: {
+    percentage: number;
+    passed: number;
+    review: number;
+    failed: number;
+    areas: Array<{ id: string; name: string; status: 'pass' | 'review' | 'fail' }>;
+  };
+  recentActivity: Array<{
+    id: string;
+    type: 'user' | 'admin' | 'payment' | 'course' | 'certificate';
+    user: string;
+    action: string;
+    time: string; // ISO
+  }>;
 }
 
 export interface FilterPerson {

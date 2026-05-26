@@ -5012,6 +5012,7 @@
   "adminDashboard": {
     "title": "لوحة تحكم المشرف",
     "subtitle": "مرحباً بعودتك، {name}! إليك نظرة عامة على المنصة.",
+    "loading": "جاري تحميل البيانات...",
     "sidebar": {
       "dashboard": "لوحة التحكم",
       "users": "المستخدمون",
@@ -5112,6 +5113,9 @@
       "pass": "ناجح",
       "review": "مراجعة",
       "fail": "فاشل",
+      "passed": "ناجح",
+      "checks": "فحص",
+      "noData": "لا توجد بيانات امتثال بعد",
       "areas": {
         "accessibility": "إمكانية الوصول",
         "contentStandards": "معايير المحتوى",
@@ -5131,6 +5135,7 @@
     },
     "alerts": {
       "title": "التنبيهات",
+      "empty": "لا توجد تنبيهات نشطة.",
       "items": {
         "highFailedLogins": "محاولات تسجيل دخول فاشلة عالية",
         "highFailedLoginsDesc": "23 محاولة فاشلة من IP 192.168.x.x",
@@ -5148,6 +5153,7 @@
     "activity": {
       "title": "النشاط الأخير",
       "viewAll": "عرض كل النشاط",
+      "empty": "لا يوجد نشاط حديث بعد.",
       "actions": {
         "registered": "سجّل",
         "updatedRolePermissions": "حدّث صلاحيات الأدوار",

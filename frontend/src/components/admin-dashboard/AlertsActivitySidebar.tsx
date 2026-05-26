@@ -175,7 +175,8 @@ const AlertsActivitySidebar = ({
 
   return (
     <div className="w-full lg:w-[320px] lg:flex-shrink-0 space-y-4">
-      {/* Alerts Section */}
+      {/* Alerts Section — caps at ~440px and scrolls internally so the
+          rest of the sidebar stays visible even when there's a flood. */}
       <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -191,7 +192,12 @@ const AlertsActivitySidebar = ({
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 max-h-[440px] overflow-y-auto pr-1 -mr-1">
+          {alerts.length === 0 && (
+            <p className="text-xs text-[var(--color-text-secondary)] py-4 text-center">
+              {t("alerts.empty")}
+            </p>
+          )}
           {alerts.map((alert) => {
             const content = (
               <div className="flex items-start gap-3">
@@ -238,7 +244,12 @@ const AlertsActivitySidebar = ({
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 max-h-[360px] overflow-y-auto pr-1 -mr-1">
+          {activities.length === 0 && (
+            <p className="text-xs text-[var(--color-text-secondary)] py-4 text-center">
+              {t("activity.empty")}
+            </p>
+          )}
           {activities.map((activity) => (
             <div key={activity.id} className="flex items-start gap-3">
               {getActivityIcon(activity.type)}

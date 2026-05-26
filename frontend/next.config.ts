@@ -8,6 +8,21 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
   },
+  // Maintenance page must never be cached — the moment admin flips the
+  // toggle off, the next request should hit the real site, not a stale
+  // "we're down" HTML stuck in the browser / CDN.
+  async headers() {
+    return [
+      {
+        source: "/:locale/maintenance",
+        headers: [
+          { key: "Cache-Control", value: "no-store, no-cache, must-revalidate, max-age=0" },
+          { key: "Pragma", value: "no-cache" },
+          { key: "Expires", value: "0" },
+        ],
+      },
+    ];
+  },
   images: {
     dangerouslyAllowLocalIP: true,
     remotePatterns: [

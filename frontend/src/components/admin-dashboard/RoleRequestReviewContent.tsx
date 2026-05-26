@@ -652,7 +652,7 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
                     <TimelineItem
                       color={cfg.dot}
                       title={t(`timeline.${status.toLowerCase()}`)}
-                      when={formatFullDate(application.reviewedAt, locale, platformLocale)}
+                      when={formatFullDate(application.reviewedAt, locale === "ar" ? "ar" : "en", platformLocale)}
                       body={application.reviewNote ?? undefined}
                     />
                   )}

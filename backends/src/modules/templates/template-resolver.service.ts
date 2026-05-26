@@ -99,7 +99,12 @@ export class TemplateResolverService {
   ): Promise<ResolvedOverride | null> {
     const key = this.cacheKey(eventKey, locale);
     let cached = this.cache.get(key);
-    if (cached === undefined || Date.now() - cached.fetchedAt >= this.TTL_MS) {
+    // Treat null (cached "no override exists") as still valid until TTL;
+    // refetch only when truly absent (undefined) or past TTL.
+    if (cached === undefined) {
+      cached = await this.fetchRow(eventKey, locale).catch(() => null);
+      this.cache.set(key, cached);
+    } else if (cached !== null && Date.now() - cached.fetchedAt >= this.TTL_MS) {
       cached = await this.fetchRow(eventKey, locale).catch(() => null);
       this.cache.set(key, cached);
     }
@@ -127,7 +132,10 @@ export class TemplateResolverService {
   ): Promise<string | null> {
     const key = this.cacheKey(eventKey, locale);
     let cached = this.cache.get(key);
-    if (cached === undefined || Date.now() - cached.fetchedAt >= this.TTL_MS) {
+    if (cached === undefined) {
+      cached = await this.fetchRow(eventKey, locale).catch(() => null);
+      this.cache.set(key, cached);
+    } else if (cached !== null && Date.now() - cached.fetchedAt >= this.TTL_MS) {
       cached = await this.fetchRow(eventKey, locale).catch(() => null);
       this.cache.set(key, cached);
     }

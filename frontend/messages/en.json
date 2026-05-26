@@ -6238,7 +6238,15 @@
         "previewHint": "Want to see what visitors will see?",
         "previewLink": "Preview the maintenance page",
         "bypassTitle": "Bypassed paths",
-        "bypassBody": "Auth endpoints, all /api/admin/* routes, payment + Zoom webhooks, and the health probe always pass through so admins can toggle this off and external integrations don't break."
+        "bypassBody": "Auth endpoints, all /api/admin/* routes, payment + Zoom webhooks, and the health probe always pass through so admins can toggle this off and external integrations don't break.",
+        "confirmTitle": "Take the platform down?",
+        "confirmSubtitle": "Every non-admin visitor will be blocked.",
+        "confirmBody": "Maintenance mode redirects all public pages and student / instructor / manager dashboards to the maintenance page. Heads up:",
+        "confirmPoint1": "Every non-admin user loses access until you flip this back off.",
+        "confirmPoint2": "You (admin) stay signed in and can keep working — your dashboard and API calls bypass the gate.",
+        "confirmPoint3": "The site comes back within ~30 seconds of you turning maintenance off.",
+        "confirmCancel": "Cancel",
+        "confirmEnable": "Yes, enable maintenance"
       }
     },
     "roleRequestsPage": {

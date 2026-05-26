@@ -91,9 +91,23 @@ export default async function middleware(request: NextRequest) {
   // student/instructor/manager sees the maintenance page just like a
   // logged-out visitor. Admins keep their dashboard, sign-in/password
   // routes stay reachable so an admin can log in and turn it off, and
-  // the maintenance page itself is obviously reachable.
+  // the maintenance page itself is obviously reachable. Authenticated
+  // admins (via pg_roles cookie) skip the gate entirely — they can
+  // browse anywhere while maintenance is on so they don't lock
+  // themselves out mid-fix.
   const maint = await getMaintenance();
   if (maint.enabled) {
+    const isAdminUser = (() => {
+      const rolesRaw = request.cookies.get('pg_roles')?.value;
+      if (!rolesRaw) return false;
+      try {
+        const roles = decodeURIComponent(rolesRaw).split(',').filter(Boolean);
+        return roles.some((r) => r === 'ADMIN' || r === 'SUPER_ADMIN');
+      } catch {
+        return false;
+      }
+    })();
+
     const isAdminDashboard = /^\/(en|ar)\/dashboard\/admin(\/|$)/.test(pathname);
     const isAuthRoute = /^\/(en|ar)\/(signin|set-password|forgot-password|reset-password|verify)(\/|$)/.test(
       pathname,
@@ -103,7 +117,7 @@ export default async function middleware(request: NextRequest) {
     const localeForRedirect: 'en' | 'ar' =
       firstSeg === 'ar' ? 'ar' : 'en';
 
-    if (!isAdminDashboard && !isAuthRoute && !isMaintenancePage) {
+    if (!isAdminUser && !isAdminDashboard && !isAuthRoute && !isMaintenancePage) {
       return NextResponse.redirect(
         new URL(`/${localeForRedirect}/maintenance`, request.url),
       );

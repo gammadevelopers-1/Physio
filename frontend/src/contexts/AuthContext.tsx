@@ -81,6 +81,19 @@ function setSessionCookie() {
 
 function clearSessionCookie() {
   document.cookie = 'session=; path=/; max-age=0; SameSite=Lax';
+  document.cookie = 'pg_roles=; path=/; max-age=0; SameSite=Lax';
+}
+
+/**
+ * Set a non-HTTP-only `pg_roles` cookie listing the user's roles
+ * (comma-separated). Read by the Next.js middleware to bypass
+ * maintenance redirects for admin / super-admin users so they can
+ * keep working when maintenance is on. NOT a security boundary —
+ * actual authorization happens at the backend via JWT verification.
+ */
+function setRolesCookie(roles: string[]) {
+  const value = encodeURIComponent(roles.join(','));
+  document.cookie = `pg_roles=${value}; path=/; max-age=604800; SameSite=Lax`;
 }
 
 // ===========================================
@@ -110,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const user = await authApi.me();
         setSessionCookie();
+        setRolesCookie(user.roles ?? []);
         setState({
           user,
           isLoading: false,
@@ -168,6 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         setSessionCookie();
+        setRolesCookie(user.roles ?? []);
         setState({
           user,
           isLoading: false,
@@ -219,6 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         setSessionCookie();
+        setRolesCookie(user.roles ?? []);
         setTwoFactorPending(null);
         setState({
           user,

@@ -8,6 +8,12 @@ import MaintenanceAutoRecover from "./MaintenanceAutoRecover";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
+// Render server-side every request so browsers / CDNs never cache the
+// maintenance redirect — the moment admin flips the toggle off, the
+// next request gets the real page instead of a stale "we're down" HTML.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 async function fetchMaintenanceMessage(locale: string): Promise<string> {
   try {
     const res = await fetch(`${API_URL}/public/maintenance-status`, {

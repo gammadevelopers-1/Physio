@@ -57,12 +57,30 @@ export default function EmailTemplateEditor({
 
   const onEditorReady: EmailEditorProps["onReady"] = (unlayer) => {
     setEditorReady(true);
-    // Load existing design if we have one; otherwise leave the canvas blank.
+    // Preferred: load the previously-saved Unlayer design verbatim so
+    // every block stays editable in its native form.
     if (detail.designJson && typeof detail.designJson === "object") {
       try {
-        unlayer.loadDesign(detail.designJson as unknown as Parameters<typeof unlayer.loadDesign>[0]);
+        unlayer.loadDesign(
+          detail.designJson as unknown as Parameters<typeof unlayer.loadDesign>[0],
+        );
+        return;
       } catch {
-        // ignore — fresh canvas
+        // fall through to HTML pre-fill
+      }
+    }
+
+    // Fallback: this template has no saved design yet (admin hasn't
+    // edited it before). Pre-fill the canvas with the default body
+    // HTML wrapped in a single HTML block, so the admin sees the
+    // existing content to tweak instead of a blank slate.
+    if (detail.body && detail.body.trim().length > 0) {
+      try {
+        unlayer.loadDesign(
+          designFromHtml(detail.body) as unknown as Parameters<typeof unlayer.loadDesign>[0],
+        );
+      } catch {
+        // ignore — leave the canvas blank if even the wrap fails
       }
     }
   };
@@ -182,4 +200,80 @@ export default function EmailTemplateEditor({
       />
     </div>
   );
+}
+
+/**
+ * Wrap raw template HTML in a minimal Unlayer design so the editor
+ * opens with the existing content visible and editable. The HTML
+ * content-block ("html" type) is what shows up under the "Custom HTML"
+ * tool in the right-hand panel — admins can replace it with text /
+ * image / button blocks block-by-block from there.
+ */
+function designFromHtml(html: string): Record<string, unknown> {
+  return {
+    counters: { u_column: 1, u_row: 1, u_content_html: 1 },
+    body: {
+      id: "body",
+      rows: [
+        {
+          id: "row-1",
+          cells: [1],
+          columns: [
+            {
+              id: "col-1",
+              contents: [
+                {
+                  id: "html-1",
+                  type: "html",
+                  values: {
+                    html,
+                    hideDesktop: false,
+                    hideMobile: false,
+                    containerPadding: "10px",
+                    _meta: { htmlID: "u_content_html_1", htmlClassNames: "u_content_html" },
+                  },
+                },
+              ],
+              values: {
+                _meta: { htmlID: "u_column_1", htmlClassNames: "u_column" },
+              },
+            },
+          ],
+          values: {
+            displayCondition: null,
+            columns: false,
+            backgroundColor: "",
+            columnsBackgroundColor: "",
+            backgroundImage: { url: "", fullWidth: true, repeat: false, center: true, cover: false },
+            padding: "0px",
+            hideDesktop: false,
+            hideMobile: false,
+            noStackMobile: false,
+            _meta: { htmlID: "u_row_1", htmlClassNames: "u_row" },
+            selectable: true,
+            draggable: true,
+            duplicatable: true,
+            deletable: true,
+          },
+        },
+      ],
+      values: {
+        textColor: "#000000",
+        backgroundColor: "#ffffff",
+        backgroundImage: { url: "", fullWidth: true, repeat: false, center: true, cover: false },
+        contentWidth: "600px",
+        fontFamily: { label: "Arial", value: "arial,helvetica,sans-serif" },
+        preheaderText: "",
+        linkStyle: {
+          body: true,
+          linkColor: "#0000ee",
+          linkHoverColor: "#0000ee",
+          linkUnderline: true,
+          linkHoverUnderline: true,
+        },
+        _meta: { htmlID: "u_body", htmlClassNames: "u_body" },
+      },
+    },
+    schemaVersion: 7,
+  };
 }

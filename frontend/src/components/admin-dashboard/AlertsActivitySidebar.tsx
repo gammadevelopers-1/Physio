@@ -9,12 +9,7 @@ import {
   AlertCircle,
   Info,
   ArrowRight,
-  UserPlus,
   BookOpen,
-  BarChart3,
-  HardDrive,
-  ClipboardList,
-  Settings,
   Zap,
   Users,
   Shield,
@@ -39,29 +34,20 @@ interface Activity {
   time: string;
 }
 
-interface GatewayBreakdown {
-  name: string;
-  percentage: number;
-}
-
-interface FinanceData {
-  grossRevenue: number;
-  netRevenue: number;
-  gateways: GatewayBreakdown[];
-  refundRate: number;
-  chargebackRate: number;
-}
-
 interface AlertsActivitySidebarProps {
   alerts: Alert[];
   activities: Activity[];
-  finance?: FinanceData;
+  /** Extras rendered below the Alerts + Activity stack (e.g. a
+   * compact Security snapshot). Lets the dashboard compose what
+   * lives in the right rail without this component owning every
+   * possible sub-widget. */
+  extras?: React.ReactNode;
 }
 
 const AlertsActivitySidebar = ({
   alerts,
   activities,
-  finance,
+  extras,
 }: AlertsActivitySidebarProps) => {
   const t = useTranslations("adminDashboard");
   const locale = useLocale();
@@ -133,45 +119,6 @@ const AlertsActivitySidebar = ({
         );
     }
   };
-
-  const quickActions = [
-    {
-      id: "addUser",
-      label: t("quickActions.addUser"),
-      icon: UserPlus,
-      href: `/${locale}/dashboard/admin/users`,
-    },
-    {
-      id: "newCourse",
-      label: t("quickActions.newCourse"),
-      icon: BookOpen,
-      href: `/${locale}/dashboard/admin/courses`,
-    },
-    {
-      id: "runBackup",
-      label: t("quickActions.runBackup"),
-      icon: HardDrive,
-      href: `/${locale}/dashboard/admin/settings`,
-    },
-    {
-      id: "generateReport",
-      label: t("quickActions.generateReport"),
-      icon: BarChart3,
-      href: `/${locale}/dashboard/admin/reports`,
-    },
-    {
-      id: "viewLogs",
-      label: t("quickActions.viewLogs"),
-      icon: ClipboardList,
-      href: `/${locale}/dashboard/admin/logs`,
-    },
-    {
-      id: "settings",
-      label: t("quickActions.settings"),
-      icon: Settings,
-      href: `/${locale}/dashboard/admin/settings`,
-    },
-  ];
 
   return (
     <div className="w-full lg:w-[320px] lg:flex-shrink-0 space-y-4">
@@ -273,123 +220,7 @@ const AlertsActivitySidebar = ({
         </Link>
       </div>
 
-      {/* Quick Actions Section */}
-      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Zap className="w-5 h-5 text-[var(--color-primary)]" />
-          <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
-            {t("quickActions.title")}
-          </h3>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          {quickActions.map((action) => {
-            const Icon = action.icon;
-            return (
-              <Link
-                key={action.id}
-                href={action.href}
-                className="flex items-center gap-2 p-3 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-border-subtle)] transition-colors"
-              >
-                <Icon className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                <span className="text-sm text-[var(--color-text-secondary)]">{action.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Finance Summary Section */}
-      {finance && (
-        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-[var(--color-primary)]" />
-              <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
-                {t("finance.title")}
-              </h3>
-            </div>
-            <Link
-              href={`/${locale}/dashboard/admin/finance`}
-              className="text-sm text-[#0066FF] hover:underline flex items-center gap-1"
-            >
-              {t("finance.viewReports")}
-              <ArrowRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
-            </Link>
-          </div>
-
-          {/* Revenue Cards */}
-          <div className="grid grid-cols-2 gap-4 mb-5">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
-                {finance.grossRevenue >= 1000
-                  ? `${(finance.grossRevenue / 1000).toFixed(0)}K`
-                  : finance.grossRevenue.toLocaleString()}
-              </p>
-              <p className="text-xs text-[var(--color-text-secondary)]">
-                {t("finance.gross")} ({t("finance.sar")})
-              </p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-[var(--color-text-secondary)]">
-                {finance.netRevenue >= 1000
-                  ? `${(finance.netRevenue / 1000).toFixed(0)}K`
-                  : finance.netRevenue.toLocaleString()}
-              </p>
-              <p className="text-xs text-[var(--color-text-secondary)]">
-                {t("finance.net")} ({t("finance.sar")})
-              </p>
-            </div>
-          </div>
-
-          {/* Gateway Breakdown */}
-          <div className="mb-4">
-            <h4 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase mb-2">
-              {t("finance.byGateway")}
-            </h4>
-            <div className="space-y-1.5">
-              {finance.gateways.map((gateway) => (
-                <div
-                  key={gateway.name}
-                  className="flex items-center justify-between"
-                >
-                  <span className="text-sm text-[var(--color-text-secondary)]">{gateway.name}</span>
-                  <span className="text-sm font-medium text-[var(--color-text-primary)]">
-                    {gateway.percentage}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Health Metrics */}
-          <div className="pt-3 border-t border-[var(--color-border)]">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-[var(--color-text-secondary)]">
-                  {t("finance.refundRate")}
-                </span>
-                <span
-                  className={`text-sm font-medium ${finance.refundRate <= 3 ? "text-[#16A34A]" : "text-[#D97706]"}`}
-                >
-                  {finance.refundRate}%
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-[var(--color-text-secondary)]">
-                  {t("finance.chargebackRate")}
-                </span>
-                <span
-                  className={`text-sm font-medium ${finance.chargebackRate <= 1 ? "text-[#16A34A]" : "text-[#DC2626]"}`}
-                >
-                  {finance.chargebackRate}%
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {extras}
     </div>
   );
 };

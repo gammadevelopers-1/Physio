@@ -1,47 +1,65 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { useLocale } from "next-intl";
 import {
   Users,
   UserCheck,
   DollarSign,
   FileCheck,
-  Activity,
   Award,
   TrendingUp,
   TrendingDown,
+  Inbox,
+  KeyRound,
+  Activity,
 } from "lucide-react";
 
 interface KPIData {
   activeUsers: number;
   activeUsersTrend: number;
-  totalUsers: number;
-  totalUsersNew: number;
   revenueMTD: number;
   revenueTrend: number;
+  pendingApplications: number;
   nelcCompliance: number;
   nelcClauses: string;
-  systemUptime: number;
-  uptimeStatus: "healthy" | "warning" | "critical";
+  newUsers7d: number;
   certificatesIssued: number;
-  certificatesPeriod: string;
+  twoFaAdoption: number;
+  activeSessions: number;
 }
 
 interface AdminKPICardsProps {
   data: KPIData;
 }
 
+type CardDef = {
+  id: string;
+  label: string;
+  value: string;
+  subLabel: string;
+  trend?: number;
+  icon: typeof Users;
+  iconBg: string;
+  iconColor: string;
+  /** When set, the card becomes a clickable link to this href. */
+  href?: string;
+};
+
+const formatNumber = (num: number): string => {
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+  return num.toLocaleString();
+};
+
 const AdminKPICards = ({ data }: AdminKPICardsProps) => {
   const t = useTranslations("adminDashboard");
+  const locale = useLocale();
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000) {
-      return `${(num / 1000).toFixed(0)}K`;
-    }
-    return num.toLocaleString();
-  };
-
-  const kpiCards = [
+  // Eight real cards in the order the user wants. Pending Applications
+  // sits in slot 3 (top row, third column) so it catches the admin's
+  // eye but doesn't displace the headline Active Users / Revenue cards.
+  const kpiCards: CardDef[] = [
     {
       id: "activeUsers",
       label: t("kpi.activeUsers"),
@@ -51,15 +69,6 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
       icon: UserCheck,
       iconBg: "bg-[var(--blue-blue-50)]",
       iconColor: "text-[var(--blue-blue-500)]",
-    },
-    {
-      id: "totalUsers",
-      label: t("kpi.totalUsers"),
-      value: formatNumber(data.totalUsers),
-      subLabel: `+${data.totalUsersNew} ${t("kpi.thisWeek")}`,
-      icon: Users,
-      iconBg: "bg-[var(--gold-gold-100)]",
-      iconColor: "text-[var(--color-star)]",
     },
     {
       id: "revenueMTD",
@@ -72,6 +81,16 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
       iconColor: "text-[var(--functional-green-600)]",
     },
     {
+      id: "pendingApplications",
+      label: t("kpi.pendingApplications"),
+      value: data.pendingApplications.toString(),
+      subLabel: t("kpi.awaitingReview"),
+      icon: Inbox,
+      iconBg: "bg-[#FEF3C7]",
+      iconColor: "text-[#D97706]",
+      href: `/${locale}/dashboard/admin/role-requests`,
+    },
+    {
       id: "nelcCompliance",
       label: t("kpi.nelcCompliance"),
       value: `${data.nelcCompliance}%`,
@@ -81,35 +100,49 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
       iconColor: "text-[var(--blue-blue-500)]",
     },
     {
-      id: "systemUptime",
-      label: t("kpi.systemUptime"),
-      value: `${data.systemUptime}%`,
-      subLabel: t(`kpi.${data.uptimeStatus}`),
-      status: data.uptimeStatus,
-      icon: Activity,
-      iconBg: "bg-[var(--functional-green-400)]/10",
-      iconColor: "text-[var(--functional-green-600)]",
+      id: "newUsers",
+      label: t("kpi.newUsers7d"),
+      value: `+${data.newUsers7d}`,
+      subLabel: t("kpi.thisWeek"),
+      icon: Users,
+      iconBg: "bg-[var(--gold-gold-100)]",
+      iconColor: "text-[var(--color-star)]",
     },
     {
       id: "certificates",
       label: t("kpi.certificates"),
       value: data.certificatesIssued.toString(),
-      subLabel: data.certificatesPeriod,
+      subLabel: t("kpi.thisMonth"),
       icon: Award,
       iconBg: "bg-[var(--gold-gold-100)]",
       iconColor: "text-[var(--color-star)]",
     },
+    {
+      id: "twoFaAdoption",
+      label: t("kpi.twoFaAdoption"),
+      value: `${data.twoFaAdoption}%`,
+      subLabel: data.twoFaAdoption >= 70 ? t("kpi.healthy") : t("kpi.warning"),
+      icon: KeyRound,
+      iconBg: "bg-[#DCFCE7]",
+      iconColor: "text-[#16A34A]",
+    },
+    {
+      id: "activeSessions",
+      label: t("kpi.activeSessions"),
+      value: data.activeSessions.toString(),
+      subLabel: t("kpi.last24h"),
+      icon: Activity,
+      iconBg: "bg-[#EDE9FE]",
+      iconColor: "text-[#7C3AED]",
+    },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {kpiCards.map((card) => {
         const Icon = card.icon;
-        return (
-          <div
-            key={card.id}
-            className="bg-[var(--surface-intense)] rounded-xl border border-[var(--color-border)] p-4 flex flex-col gap-3"
-          >
+        const body = (
+          <div className="bg-[var(--surface-intense)] rounded-xl border border-[var(--color-border)] p-4 flex flex-col gap-3 hover:border-[var(--color-primary)] transition-colors h-full">
             <div className="flex items-start justify-between">
               <div
                 className={`w-10 h-10 ${card.iconBg} rounded-lg flex items-center justify-center`}
@@ -118,9 +151,7 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
               </div>
             </div>
             <div>
-              <p className="text-sm text-[var(--on-surface-variant)]">
-                {card.label}
-              </p>
+              <p className="text-sm text-[var(--on-surface-variant)]">{card.label}</p>
               <p className="text-2xl font-bold text-[var(--on-surface-default)]">
                 {card.value}
               </p>
@@ -135,17 +166,6 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
                   )}
                 </>
               )}
-              {card.status && (
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    card.status === "healthy"
-                      ? "bg-[var(--functional-green-600)]"
-                      : card.status === "warning"
-                        ? "bg-[var(--functional-amber-500)]"
-                        : "bg-[var(--functional-red-600)]"
-                  }`}
-                />
-              )}
               <span
                 className={`text-xs ${
                   card.trend !== undefined
@@ -159,6 +179,14 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
               </span>
             </div>
           </div>
+        );
+
+        return card.href ? (
+          <Link key={card.id} href={card.href} className="block">
+            {body}
+          </Link>
+        ) : (
+          <div key={card.id}>{body}</div>
         );
       })}
     </div>

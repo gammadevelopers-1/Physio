@@ -10,6 +10,8 @@ import {
   certificateRequests,
   roles,
   userRoles,
+  roleRequests,
+  pointTransactions,
 } from '../../database/schema';
 import { NelcComplianceService } from '../nelc-compliance/nelc-compliance.service';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -23,6 +25,17 @@ interface KpiBlock {
   revenueTrend: number; // % vs prior month at same day
   certificatesIssued: number; // approved this month
   certificatesPeriod: 'thisMonth';
+  /** Open trainer / role applications awaiting an admin decision. */
+  pendingApplications: number;
+}
+
+interface PointHistoryRow {
+  id: string;
+  userId: string;
+  userName: string;
+  delta: number;
+  reason: string;
+  awardedAt: string; // ISO
 }
 
 interface AnalyticsBlock {
@@ -79,6 +92,7 @@ export interface AdminDashboardPayload {
   recentUsers: UserRow[];
   compliance: ComplianceBlock;
   recentActivity: ActivityRow[];
+  recentPoints: PointHistoryRow[];
 }
 
 const DELETED_EMAIL_PREFIX = 'deleted-%@deleted.local';
@@ -92,6 +106,7 @@ const ZERO_KPI: KpiBlock = {
   revenueTrend: 0,
   certificatesIssued: 0,
   certificatesPeriod: 'thisMonth',
+  pendingApplications: 0,
 };
 const ZERO_ANALYTICS: AnalyticsBlock = {
   visitorToSignup: null,
@@ -187,6 +202,12 @@ export class AdminDashboardService {
       this.safe('recentActivity', () => this.buildRecentActivity(), []),
     ]);
 
+    const recentPoints = await this.safe(
+      'recentPoints',
+      () => this.buildRecentPoints(),
+      [] as PointHistoryRow[],
+    );
+
     return {
       kpi,
       analytics,
@@ -195,6 +216,7 @@ export class AdminDashboardService {
       recentUsers,
       compliance,
       recentActivity,
+      recentPoints,
     };
   }
 
@@ -215,6 +237,7 @@ export class AdminDashboardService {
       revenueNowRow,
       revenuePrevRow,
       certIssuedRow,
+      pendingAppsRow,
     ] = await Promise.all([
       db
         .select({ value: sql<number>`cast(count(distinct ${users.id}) as int)` })
@@ -272,6 +295,12 @@ export class AdminDashboardService {
             gte(certificateRequests.approvedAt, startOfMonth),
           ),
         ),
+      // Pending instructor / role applications. The schema stores
+      // status in UPPER_CASE (see ROLE_REQUEST_STATUS).
+      db
+        .select({ value: count() })
+        .from(roleRequests)
+        .where(eq(roleRequests.status, 'PENDING')),
     ]);
 
     const activeUsers = Number(activeNow[0].value);
@@ -291,6 +320,7 @@ export class AdminDashboardService {
       revenueTrend,
       certificatesIssued: Number(certIssuedRow[0].value),
       certificatesPeriod: 'thisMonth',
+      pendingApplications: Number(pendingAppsRow[0].value),
     };
   }
 
@@ -560,6 +590,41 @@ export class AdminDashboardService {
         areas: [],
       };
     }
+  }
+
+  /**
+   * Last 8 point transactions joined to the recipient user. Surfaces
+   * gamification activity in the admin dashboard so we can spot
+   * who's earning what and whether the rules are firing as intended.
+   */
+  private async buildRecentPoints(): Promise<PointHistoryRow[]> {
+    const rows = await db
+      .select({
+        id: pointTransactions.id,
+        userId: pointTransactions.userId,
+        delta: pointTransactions.delta,
+        reason: pointTransactions.reason,
+        createdAt: pointTransactions.createdAt,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+      })
+      .from(pointTransactions)
+      .innerJoin(users, eq(users.id, pointTransactions.userId))
+      .orderBy(desc(pointTransactions.createdAt))
+      .limit(8);
+
+    return rows.map((r) => ({
+      id: r.id,
+      userId: r.userId,
+      userName:
+        [r.firstName, r.lastName].filter(Boolean).join(' ').trim() ||
+        r.email ||
+        'Unknown',
+      delta: r.delta,
+      reason: r.reason,
+      awardedAt: r.createdAt.toISOString(),
+    }));
   }
 
   private async buildRecentActivity(): Promise<ActivityRow[]> {

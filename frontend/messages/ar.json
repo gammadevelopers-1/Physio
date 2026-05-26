@@ -5105,6 +5105,7 @@
       "mau": "شهرياً",
       "totalUsers": "إجمالي المستخدمين",
       "thisWeek": "هذا الأسبوع",
+      "newUsers7d": "مستخدمون جدد (7ي)",
       "revenueMTD": "الإيرادات (الشهر)",
       "sar": "ريال",
       "nelcCompliance": "امتثال NELC",
@@ -5113,7 +5114,17 @@
       "warning": "تحذير",
       "critical": "حرج",
       "certificates": "الشهادات",
-      "thisMonth": "هذا الشهر"
+      "thisMonth": "هذا الشهر",
+      "pendingApplications": "طلبات قيد المراجعة",
+      "awaitingReview": "بانتظار المراجعة",
+      "twoFaAdoption": "اعتماد 2FA",
+      "activeSessions": "جلسات نشطة",
+      "last24h": "آخر 24س"
+    },
+    "recentPoints": {
+      "title": "نقاط حديثة",
+      "viewAll": "عرض الكل",
+      "empty": "لم تُمنح أي نقاط بعد."
     },
     "analytics": {
       "title": "تحليلات المنصة",

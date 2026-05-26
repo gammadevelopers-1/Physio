@@ -889,6 +889,7 @@ export interface AdminDashboardPayload {
     revenueTrend: number;
     certificatesIssued: number;
     certificatesPeriod: 'thisMonth';
+    pendingApplications: number;
   };
   analytics: {
     visitorToSignup: number | null;
@@ -929,6 +930,14 @@ export interface AdminDashboardPayload {
     user: string;
     action: string;
     time: string; // ISO
+  }>;
+  recentPoints: Array<{
+    id: string;
+    userId: string;
+    userName: string;
+    delta: number;
+    reason: string;
+    awardedAt: string; // ISO
   }>;
 }
 

@@ -8,10 +8,11 @@ import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
 import AdminKPICards from "./AdminKPICards";
 import PlatformAnalyticsWidget from "./PlatformAnalyticsWidget";
-import SecurityHealthWidget from "./SecurityHealthWidget";
 import UserManagementWidget from "./UserManagementWidget";
 import NELCComplianceOverviewWidget from "./NELCComplianceOverviewWidget";
 import FinanceSummaryWidget from "./FinanceSummaryWidget";
+import RecentPointsWidget from "./RecentPointsWidget";
+import SecuritySnapshotWidget from "./SecuritySnapshotWidget";
 import AlertsActivitySidebar from "./AlertsActivitySidebar";
 import {
   notificationsApi,
@@ -50,6 +51,7 @@ const EMPTY: AdminDashboardPayload = {
     revenueTrend: 0,
     certificatesIssued: 0,
     certificatesPeriod: "thisMonth",
+    pendingApplications: 0,
   },
   analytics: {
     visitorToSignup: null,
@@ -79,6 +81,7 @@ const EMPTY: AdminDashboardPayload = {
     areas: [],
   },
   recentActivity: [],
+  recentPoints: [],
 };
 
 function formatRelative(iso: string): string {
@@ -113,9 +116,6 @@ const AdminDashboardContent = () => {
       if (dashboardResult.status === "fulfilled") {
         setData(dashboardResult.value);
       } else {
-        // Surface the failure instead of silently rendering all zeros —
-        // a recurring footgun where the dashboard would look "empty"
-        // when really the backend was 500-ing on a single bad subquery.
         const err = dashboardResult.reason;
         const msg =
           err && typeof err === "object" && "message" in err
@@ -149,36 +149,30 @@ const AdminDashboardContent = () => {
     };
   }, []);
 
-  // Compute weekly/monthly trend label for KPI sub-text.
-  // The widget itself reads a string subLabel for compliance + uptime,
-  // so we synthesize a NELC-style "N passed / M sessions" hint from
-  // the real summary numbers.
+  // Build the NELC sub-label out of the real summary numbers so the
+  // KPI card shows "{passed} passed / {total} checks" rather than a
+  // hard-coded clause count.
+  const nelcTotal =
+    data.compliance.passed + data.compliance.review + data.compliance.failed;
   const nelcClauses =
-    data.compliance.passed + data.compliance.review + data.compliance.failed > 0
-      ? `${data.compliance.passed} ${t("compliance.passed")} / ${
-          data.compliance.passed + data.compliance.review + data.compliance.failed
-        } ${t("compliance.checks")}`
+    nelcTotal > 0
+      ? `${data.compliance.passed} ${t("compliance.passed")} / ${nelcTotal} ${t("compliance.checks")}`
       : t("compliance.noData");
 
   const kpiData = {
     activeUsers: data.kpi.activeUsers,
     activeUsersTrend: data.kpi.activeUsersTrend,
-    totalUsers: data.kpi.totalUsers,
-    totalUsersNew: data.kpi.totalUsersNew,
     revenueMTD: data.kpi.revenueMTD,
     revenueTrend: data.kpi.revenueTrend,
+    pendingApplications: data.kpi.pendingApplications,
     nelcCompliance: data.compliance.percentage,
     nelcClauses,
-    // Active-session count doubles as a "system is healthy" signal —
-    // there are no real uptime metrics wired in yet. Hidden via the
-    // status badge style when there's nothing meaningful to show.
-    systemUptime: 100,
-    uptimeStatus: "healthy" as const,
+    newUsers7d: data.kpi.totalUsersNew,
     certificatesIssued: data.kpi.certificatesIssued,
-    certificatesPeriod: t("kpi.thisMonth"),
+    twoFaAdoption: data.security.twoFaAdoption,
+    activeSessions: data.security.activeSessions,
   };
 
-  // Map activity ISO timestamps to relative strings for display.
   const activities: LiveActivity[] = data.recentActivity.map((a) => ({
     id: a.id,
     type: a.type,
@@ -218,8 +212,12 @@ const AdminDashboardContent = () => {
                 )}
               </div>
 
+              {/* KPI strip — 8 cards in 4 columns × 2 rows. Slot 3 is
+                  Pending Applications and links to the role-requests
+                  page so the admin can act on it in one click. */}
               <AdminKPICards data={kpiData} />
 
+              {/* Funnel — full width */}
               <div className="mb-6">
                 <PlatformAnalyticsWidget
                   data={{
@@ -231,22 +229,31 @@ const AdminDashboardContent = () => {
                 />
               </div>
 
+              {/* Finance — full width on its own row */}
               <div className="mb-6">
-                <SecurityHealthWidget security={data.security} />
+                <FinanceSummaryWidget data={data.finance} />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <UserManagementWidget users={data.recentUsers} />
+              {/* NELC Compliance — full width on its own row */}
+              <div className="mb-6">
                 <NELCComplianceOverviewWidget data={data.compliance} />
               </div>
 
-              <FinanceSummaryWidget data={data.finance} />
+              {/* Recent Users | Recent Points — paired 2-col row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <UserManagementWidget users={data.recentUsers} />
+                <RecentPointsWidget rows={data.recentPoints} />
+              </div>
             </div>
 
+            {/* Right rail: alerts + activity + a compact security
+                snapshot. Quick Actions and the duplicate Finance
+                widget were removed — sidebar nav already covers the
+                first and Finance has a dedicated row above. */}
             <AlertsActivitySidebar
               alerts={liveAlerts}
               activities={activities}
-              finance={data.finance}
+              extras={<SecuritySnapshotWidget data={data.security} />}
             />
           </div>
         </div>

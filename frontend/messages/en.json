@@ -5105,6 +5105,7 @@
       "mau": "MAU",
       "totalUsers": "Total Users",
       "thisWeek": "this week",
+      "newUsers7d": "New Users (7d)",
       "revenueMTD": "Revenue (MTD)",
       "sar": "SAR",
       "nelcCompliance": "NELC Compliance",
@@ -5113,7 +5114,17 @@
       "warning": "Warning",
       "critical": "Critical",
       "certificates": "Certificates",
-      "thisMonth": "This month"
+      "thisMonth": "This month",
+      "pendingApplications": "Pending Applications",
+      "awaitingReview": "awaiting review",
+      "twoFaAdoption": "2FA Adoption",
+      "activeSessions": "Active Sessions",
+      "last24h": "last 24h"
+    },
+    "recentPoints": {
+      "title": "Recent Points",
+      "viewAll": "View all",
+      "empty": "No points awarded yet."
     },
     "analytics": {
       "title": "Platform Analytics",

@@ -4,6 +4,7 @@ import { db } from '../../database';
 import { notificationTemplates } from '../../database/schema';
 import { findTemplateMeta, TEMPLATE_REGISTRY, type TemplateMeta } from './template-registry';
 import { TemplateResolverService } from './template-resolver.service';
+import { renderDefaultEmailBody } from './template-defaults';
 
 export interface TemplateListItem extends TemplateMeta {
   /** Has an admin-edited row in DB for either locale? */
@@ -87,13 +88,21 @@ export class TemplatesService {
       };
     }
 
+    // No admin override yet — render the default email body with
+    // `{{variable}}` placeholders so the admin opens the editor and
+    // sees the actual branded markup the platform would send, not a
+    // blank canvas. WhatsApp templates (no email renderer) stay
+    // empty here; the WhatsApp editor handles its own defaults.
+    const defaultBody =
+      meta.channel === 'email' ? renderDefaultEmailBody(meta.eventKey, locale) : '';
+
     return {
       meta,
       locale,
       subject:
         (locale === 'ar' ? meta.defaultSubjectAr : meta.defaultSubjectEn) ?? null,
       preheader: null,
-      body: '',
+      body: defaultBody,
       designJson: null,
       enabled: true,
       hasOverride: false,

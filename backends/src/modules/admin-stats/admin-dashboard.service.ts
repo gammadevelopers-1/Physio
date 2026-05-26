@@ -152,9 +152,21 @@ export class AdminDashboardService {
     try {
       return await fn();
     } catch (err) {
+      // Drizzle wraps the underlying postgres error in `cause`. Without
+      // surfacing it we'd only see the generic "Failed query: <sql>"
+      // and never the real reason (connection limit, timeout, etc).
+      const cause =
+        err instanceof Error && (err as Error & { cause?: unknown }).cause;
+      const causeMsg =
+        cause instanceof Error
+          ? `${cause.message}${cause.stack ? `\n${cause.stack}` : ''}`
+          : cause
+            ? String(cause)
+            : '';
+      const stack = err instanceof Error ? err.stack : String(err);
       this.logger.error(
-        `dashboard.${label} failed — returning zero-fallback`,
-        err instanceof Error ? err.stack : String(err),
+        `dashboard.${label} failed — returning zero-fallback${causeMsg ? `\ncaused by: ${causeMsg}` : ''}`,
+        stack,
       );
       return fallback;
     }

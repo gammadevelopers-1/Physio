@@ -47,6 +47,33 @@ export class InstructorService {
     private readonly userNotificationsService: UserNotificationsService,
   ) {}
 
+  /**
+   * Run a dashboard sub-block; on failure log and return the fallback so
+   * the rest of the dashboard still renders. Drizzle wraps its inner
+   * postgres error in `cause` — we surface that so we can see *why* a
+   * query died in Cloud Run logs (connection limit, idle drop, etc).
+   */
+  private async safe<T>(label: string, fn: () => Promise<T>, fallback: T): Promise<T> {
+    try {
+      return await fn();
+    } catch (err) {
+      const cause =
+        err instanceof Error && (err as Error & { cause?: unknown }).cause;
+      const causeMsg =
+        cause instanceof Error
+          ? `${cause.message}${cause.stack ? `\n${cause.stack}` : ''}`
+          : cause
+            ? String(cause)
+            : '';
+      const stack = err instanceof Error ? err.stack : String(err);
+      this.logger.error(
+        `instructor.${label} failed — returning fallback${causeMsg ? `\ncaused by: ${causeMsg}` : ''}`,
+        stack,
+      );
+      return fallback;
+    }
+  }
+
   // ─── Role helpers ─────────────────────────────────────────
 
   /**
@@ -69,95 +96,129 @@ export class InstructorService {
    * Uses Promise.all for concurrent fetching.
    */
   async getDashboardSummary(user: AuthenticatedUser) {
-    const [
-      coursesResult,
-      todaySessions,
-      upcomingSessions,
-      atRiskLearners,
-      certificatesResult,
-    ] = await Promise.all([
-      this.coursesService.findAll(user, { status: 'active', limit: 100 }),
-      this.sessionsService.findToday(user),
-      this.sessionsService.findUpcoming(user),
-      this.getAtRiskStudents(user),
-      this.certificatesService.findPending(user, { status: 'pending', limit: 50 }),
-    ]);
-
-    // Batch-fetch course thumbnails for all sessions (single query, no N+1)
-    const allSessionCourseIds = [
-      ...new Set([
-        ...todaySessions.map((s) => s.courseId),
-        ...upcomingSessions.map((s) => s.courseId),
-      ]),
-    ];
-    const courseThumbnails = allSessionCourseIds.length > 0
-      ? await db
-          .select({ id: courses.id, thumbnail: courses.thumbnail })
-          .from(courses)
-          .where(inArray(courses.id, allSessionCourseIds))
-      : [];
-    const thumbnailMap = new Map(courseThumbnails.map((c) => [c.id, c.thumbnail]));
-
-    // Enrich today's sessions with enrollment counts + course thumbnail
-    const enrichedTodaySessions = await Promise.all(
-      todaySessions.map(async (session) => {
-        const [result] = await db
-          .select({ count: count() })
-          .from(enrollments)
-          .where(eq(enrollments.courseId, session.courseId));
-        return {
-          ...session,
-          enrolledCount: result?.count || 0,
-          courseThumbnail: thumbnailMap.get(session.courseId) || null,
-        };
-      }),
+    // ── Block 1: critical upfront data ──
+    // If this block fails the rest of the dashboard has nothing to show
+    // but we still let downstream blocks try — they'll just render empty.
+    const initial = await this.safe(
+      'init',
+      async () => {
+        const [
+          coursesResult,
+          todaySessions,
+          upcomingSessions,
+          atRiskLearners,
+          certificatesResult,
+        ] = await Promise.all([
+          this.coursesService.findAll(user, { status: 'active', limit: 100 }),
+          this.sessionsService.findToday(user),
+          this.sessionsService.findUpcoming(user),
+          this.getAtRiskStudents(user),
+          this.certificatesService.findPending(user, { status: 'pending', limit: 50 }),
+        ]);
+        return { coursesResult, todaySessions, upcomingSessions, atRiskLearners, certificatesResult };
+      },
+      {
+        coursesResult: { data: [], total: 0, page: 1, limit: 0, totalPages: 0 } as unknown as Awaited<
+          ReturnType<typeof this.coursesService.findAll>
+        >,
+        todaySessions: [] as unknown as Awaited<ReturnType<typeof this.sessionsService.findToday>>,
+        upcomingSessions: [] as unknown as Awaited<ReturnType<typeof this.sessionsService.findUpcoming>>,
+        atRiskLearners: [] as unknown as Awaited<ReturnType<typeof this.getAtRiskStudents>>,
+        certificatesResult: { data: [], total: 0, page: 1, limit: 0, totalPages: 0 } as unknown as Awaited<
+          ReturnType<typeof this.certificatesService.findPending>
+        >,
+      },
     );
+    const { coursesResult, todaySessions, upcomingSessions, atRiskLearners, certificatesResult } = initial;
 
-    // Enrich upcoming sessions with enrollment counts + course thumbnail
-    const enrichedUpcomingSessions = await Promise.all(
-      upcomingSessions.map(async (session) => {
-        const [result] = await db
-          .select({ count: count() })
-          .from(enrollments)
-          .where(eq(enrollments.courseId, session.courseId));
+    // ── Block 2: enrich sessions in two queries instead of 2N ──
+    // Previous code fired one enrollment-count + one course-title query per
+    // session. For an instructor running 3 today + 5 upcoming sessions
+    // that's 16 round-trips for the enrichment alone. Two grouped queries
+    // here cover every session at once.
+    const enriched = await this.safe(
+      'enrichSessions',
+      async () => {
+        const allSessionCourseIds = [
+          ...new Set([
+            ...todaySessions.map((s) => s.courseId),
+            ...upcomingSessions.map((s) => s.courseId),
+          ]),
+        ];
+
+        const [thumbnailRows, enrollmentRows] = allSessionCourseIds.length > 0
+          ? await Promise.all([
+              db
+                .select({ id: courses.id, thumbnail: courses.thumbnail })
+                .from(courses)
+                .where(inArray(courses.id, allSessionCourseIds)),
+              db
+                .select({
+                  courseId: enrollments.courseId,
+                  count: count(),
+                })
+                .from(enrollments)
+                .where(inArray(enrollments.courseId, allSessionCourseIds))
+                .groupBy(enrollments.courseId),
+            ])
+          : [[], []];
+
+        const thumbnailMap = new Map(thumbnailRows.map((c) => [c.id, c.thumbnail]));
+        const enrollMap = new Map(
+          enrollmentRows.map((r) => [r.courseId, Number(r.count) || 0]),
+        );
+
         return {
-          ...session,
-          enrolledCount: result?.count || 0,
-          courseThumbnail: thumbnailMap.get(session.courseId) || null,
+          today: todaySessions.map((s) => ({
+            ...s,
+            enrolledCount: enrollMap.get(s.courseId) ?? 0,
+            courseThumbnail: thumbnailMap.get(s.courseId) || null,
+          })),
+          upcoming: upcomingSessions.map((s) => ({
+            ...s,
+            enrolledCount: enrollMap.get(s.courseId) ?? 0,
+            courseThumbnail: thumbnailMap.get(s.courseId) || null,
+          })),
         };
-      }),
+      },
+      { today: [], upcoming: [] } as { today: any[]; upcoming: any[] },
     );
+    const enrichedTodaySessions = enriched.today;
+    const enrichedUpcomingSessions = enriched.upcoming;
 
-    // Enrich pending certificates with course name
-    const enrichedCertificates = await Promise.all(
-      (certificatesResult.data || []).map(async (cert) => {
-        const [course] = await db
-          .select({ title: courses.title })
+    // ── Block 3: certificate course-name enrichment in one query ──
+    const enrichedCertificates = await this.safe(
+      'certEnrich',
+      async () => {
+        const pendingCerts = certificatesResult.data || [];
+        if (pendingCerts.length === 0) return [];
+        const certCourseIds = [...new Set(pendingCerts.map((c) => c.courseId))];
+        const titleRows = await db
+          .select({ id: courses.id, title: courses.title })
           .from(courses)
-          .where(eq(courses.id, cert.courseId))
-          .limit(1);
-        return {
+          .where(inArray(courses.id, certCourseIds));
+        const titleMap = new Map(titleRows.map((c) => [c.id, c.title]));
+        return pendingCerts.map((cert) => ({
           ...cert,
-          courseName: course?.title || 'Unknown Course',
-        };
-      }),
+          courseName: titleMap.get(cert.courseId) || 'Unknown Course',
+        }));
+      },
+      [] as Array<Record<string, unknown>>,
     );
 
     // ─── Attendance Trend (last 7 days) ──────────────────────
     const courseIds = (coursesResult.data || []).map((c) => c.id);
-    let attendanceTrend: number[] = [0, 0, 0, 0, 0, 0, 0];
+    const attendanceTrend: number[] = await this.safe(
+      'attendanceTrend',
+      async () => {
+        if (courseIds.length === 0) return [0, 0, 0, 0, 0, 0, 0];
+        const courseSessions = await db
+          .select({ id: sessions.id, scheduledAt: sessions.scheduledAt })
+          .from(sessions)
+          .where(inArray(sessions.courseId, courseIds));
+        const sessionIds = courseSessions.map((s) => s.id);
+        if (sessionIds.length === 0) return [0, 0, 0, 0, 0, 0, 0];
 
-    if (courseIds.length > 0) {
-      // Get all session IDs for instructor's courses
-      const courseSessions = await db
-        .select({ id: sessions.id, scheduledAt: sessions.scheduledAt })
-        .from(sessions)
-        .where(inArray(sessions.courseId, courseIds));
-
-      const sessionIds = courseSessions.map((s) => s.id);
-
-      if (sessionIds.length > 0) {
-        // Attendance per day for last 7 days
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         sevenDaysAgo.setHours(0, 0, 0, 0);
@@ -181,7 +242,6 @@ export class InstructorService {
           )
           .groupBy(sql`EXTRACT(DOW FROM ${sessions.scheduledAt})`);
 
-        // Map to Mon-Sun array (1=Mon ... 0=Sun → index 0-6)
         const trendMap = new Map<number, number>();
         for (const row of dailyAttendance) {
           const total = Number(row.totalRecords);
@@ -192,35 +252,34 @@ export class InstructorService {
 
         // PostgreSQL DOW: 0=Sun, 1=Mon, ..., 6=Sat
         // Frontend expects: [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
-        attendanceTrend = [1, 2, 3, 4, 5, 6, 0].map(
-          (dow) => trendMap.get(dow) ?? 0,
-        );
-      }
-    }
+        return [1, 2, 3, 4, 5, 6, 0].map((dow) => trendMap.get(dow) ?? 0);
+      },
+      [0, 0, 0, 0, 0, 0, 0],
+    );
 
     // ─── Module Progress (first active course, real materialProgress data) ──
-    let moduleProgress: { name: string; percentage: number }[] = [];
-
-    if (courseIds.length > 0) {
-      const firstCourseId = courseIds[0];
-      const modules = await db
-        .select({
-          id: courseModules.id,
-          title: courseModules.title,
-          orderIndex: courseModules.orderIndex,
-        })
-        .from(courseModules)
-        .where(eq(courseModules.courseId, firstCourseId))
-        .orderBy(asc(courseModules.orderIndex));
-
-      if (modules.length > 0) {
+    const moduleProgress = await this.safe<{ name: string; percentage: number }[]>(
+      'moduleProgress',
+      async () => {
+        if (courseIds.length === 0) return [];
+        const firstCourseId = courseIds[0];
+        const modules = await db
+          .select({
+            id: courseModules.id,
+            title: courseModules.title,
+            orderIndex: courseModules.orderIndex,
+          })
+          .from(courseModules)
+          .where(eq(courseModules.courseId, firstCourseId))
+          .orderBy(asc(courseModules.orderIndex));
+        if (modules.length === 0) return [];
         const [enrollCount] = await db
           .select({ count: count() })
           .from(enrollments)
           .where(eq(enrollments.courseId, firstCourseId));
         const totalEnrolledStudents = enrollCount?.count || 0;
 
-        moduleProgress = await Promise.all(
+        return Promise.all(
           modules.map(async (mod) => {
             // Count materials in this module
             const moduleMaterials = await db
@@ -262,12 +321,16 @@ export class InstructorService {
             return { name: mod.title, percentage };
           }),
         );
-      }
-    }
+      },
+      [],
+    );
 
     // ─── Published Assessments (shared by analysis + pass/fail) ─
-    const courseAssessments = courseIds.length > 0
-      ? await db
+    const courseAssessments = await this.safe(
+      'courseAssessments',
+      async () => {
+        if (courseIds.length === 0) return [];
+        return db
           .select({
             id: assessments.id,
             title: assessments.title,
@@ -284,8 +347,18 @@ export class InstructorService {
               eq(assessments.status, 'published'),
             ),
           )
-          .orderBy(asc(assessments.createdAt))
-      : [];
+          .orderBy(asc(assessments.createdAt));
+      },
+      [] as Array<{
+        id: string;
+        title: string;
+        courseId: string;
+        type: string;
+        totalMarks: number;
+        passingMarks: number;
+        createdAt: Date;
+      }>,
+    );
 
     // ─── Assessment Analysis (pre/post comparison) ─────────
     let assessmentScores: {
@@ -302,6 +375,7 @@ export class InstructorService {
     }[] = [];
 
     if (courseAssessments.length > 0) {
+     try {
       // Build pre/post comparison: first assessment is "pre", rest are "post" progression
       const comparisons = [];
       for (const ca of courseAssessments) {
@@ -398,6 +472,14 @@ export class InstructorService {
           };
         });
       }
+     } catch (err) {
+      this.logger.error(
+        'instructor.assessmentAnalysis failed — returning empty arrays',
+        err instanceof Error ? err.stack : String(err),
+      );
+      assessmentScores = [];
+      questionAnalysis = [];
+     }
     }
 
     // ─── Materials for Content Management tab ────────────────
@@ -412,6 +494,7 @@ export class InstructorService {
     }[] = [];
 
     if (courseIds.length > 0) {
+     try {
       const rawMaterials = await db
         .select({
           id: courseMaterials.id,
@@ -444,6 +527,13 @@ export class InstructorService {
             : `${(m.fileSize / (1024 * 1024)).toFixed(1)} MB`
           : undefined,
       }));
+     } catch (err) {
+      this.logger.error(
+        'instructor.materials failed — returning empty list',
+        err instanceof Error ? err.stack : String(err),
+      );
+      materials = [];
+     }
     }
 
     // ─── Pending Submissions (Assessments Needing Attention) ──
@@ -458,6 +548,7 @@ export class InstructorService {
     }[] = [];
 
     if (courseIds.length > 0) {
+     try {
       const rawPending = await db
         .select({
           id: submissions.id,
@@ -493,11 +584,19 @@ export class InstructorService {
           : 0,
         assessmentId: r.assessmentId,
       }));
+     } catch (err) {
+      this.logger.error(
+        'instructor.pendingSubmissions failed — returning empty list',
+        err instanceof Error ? err.stack : String(err),
+      );
+      pendingSubmissions = [];
+     }
     }
 
     // ─── Total Students across all instructor courses ────────
     let totalStudents = 0;
     if (courseIds.length > 0) {
+     try {
       const [studentCount] = await db
         .select({ count: sql<number>`COUNT(DISTINCT ${enrollments.studentId})`.as('count') })
         .from(enrollments)
@@ -508,6 +607,13 @@ export class InstructorService {
           ),
         );
       totalStudents = Number(studentCount?.count ?? 0);
+     } catch (err) {
+      this.logger.error(
+        'instructor.totalStudents failed — returning 0',
+        err instanceof Error ? err.stack : String(err),
+      );
+      totalStudents = 0;
+     }
     }
 
     // ─── Instructor Rating across reviews of this instructor ──
@@ -515,7 +621,7 @@ export class InstructorService {
     // not course_ratings — they're now tracked separately and the
     // instructor's dashboard reflects what students rated THEM specifically.
     let avgCourseRating = 0;
-    {
+    try {
       const [ratingResult] = await db
         .select({
           avg: sql<number>`ROUND(AVG(${instructorRatings.rating})::numeric, 1)`.as(
@@ -531,6 +637,12 @@ export class InstructorService {
           ),
         );
       avgCourseRating = Number(ratingResult?.avg ?? 0);
+    } catch (err) {
+      this.logger.error(
+        'instructor.avgCourseRating failed — returning 0',
+        err instanceof Error ? err.stack : String(err),
+      );
+      avgCourseRating = 0;
     }
 
     // ─── Recent Feedback (instructor ratings) ────────────────
@@ -549,7 +661,7 @@ export class InstructorService {
       }[];
     } = { overallRating: 0, totalReviews: 0, feedbackItems: [] };
 
-    {
+    try {
       const [overallStats] = await db
         .select({
           avgRating: sql<number>`COALESCE(ROUND(AVG(${instructorRatings.rating})::numeric, 1), 0)`.as(
@@ -611,6 +723,12 @@ export class InstructorService {
           };
         }),
       };
+    } catch (err) {
+      this.logger.error(
+        'instructor.recentFeedback failed — returning empty feedback',
+        err instanceof Error ? err.stack : String(err),
+      );
+      recentFeedback = { overallRating: 0, totalReviews: 0, feedbackItems: [] };
     }
 
     // ─── Pass/Fail Stats ────────────────────────────────────
@@ -622,6 +740,7 @@ export class InstructorService {
     } | null = null;
 
     if (courseAssessments.length > 0 && courseIds.length > 0) {
+     try {
       // Get all enrolled students across instructor's courses
       const allEnrolled = await db
         .select({ studentId: enrollments.studentId })
@@ -688,6 +807,13 @@ export class InstructorService {
           passRate: pfTotal > 0 ? Math.round((passed / pfTotal) * 100) : 0,
         };
       }
+     } catch (err) {
+      this.logger.error(
+        'instructor.passFailStats failed — returning null',
+        err instanceof Error ? err.stack : String(err),
+      );
+      passFailStats = null;
+     }
     }
 
     // ─── Notifications ─────────────────────────────────────

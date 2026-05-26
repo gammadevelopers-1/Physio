@@ -1445,7 +1445,19 @@ export class AuthService {
     }
 
     if (role) {
-      conditions.push(eq(users.activeRole, role));
+      // Match users who HOLD this role in the user_roles join table —
+      // not just those whose currently-active role is this one. A user
+      // can be both an instructor and a student; filtering "Instructor"
+      // must surface them either way, matching the per-role count
+      // shown in the header (which also reads from user_roles).
+      conditions.push(
+        sql`${users.id} IN (
+          SELECT ${userRoles.userId}
+          FROM ${userRoles}
+          INNER JOIN ${roles} ON ${roles.id} = ${userRoles.roleId}
+          WHERE ${roles.name} = ${role}
+        )`,
+      );
     }
 
     if (status === 'active') {
@@ -1616,7 +1628,17 @@ export class AuthService {
         ),
       );
     }
-    if (role) conditions.push(eq(users.activeRole, role));
+    if (role) {
+      // Same membership-based match as getAllUsers — see note there.
+      conditions.push(
+        sql`${users.id} IN (
+          SELECT ${userRoles.userId}
+          FROM ${userRoles}
+          INNER JOIN ${roles} ON ${roles.id} = ${userRoles.roleId}
+          WHERE ${roles.name} = ${role}
+        )`,
+      );
+    }
     if (status === 'active') {
       conditions.push(eq(users.isActive, true));
       conditions.push(eq(users.isVerified, true));

@@ -12,6 +12,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { SkipThrottle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -173,7 +174,13 @@ export class StorageController {
    * Serve local files in development (STORAGE_DRIVER=local)
    * Supports HTTP Range requests for video seeking/streaming.
    * GET /api/storage/files/:bucket/:path
+   *
+   * Throttling is disabled here — a single PDF/video preview fans out
+   * into many byte-range requests, which trips the global 120 req/min
+   * default limit and turns previews into HTTP 429s for anyone
+   * scrubbing a video or paging a PDF.
    */
+  @SkipThrottle()
   @Public()
   @Get('files/:bucket/*')
   async serveFile(

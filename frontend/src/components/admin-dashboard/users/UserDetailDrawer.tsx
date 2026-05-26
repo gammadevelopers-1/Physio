@@ -65,8 +65,8 @@ export default function UserDetailDrawer({
   onDelete,
 }: Props) {
   const t = useTranslations("adminDashboard.usersPage");
-  const tRoles = useTranslations("userManagement.roles");
-  const tStatus = useTranslations("userManagement.statuses");
+  const tRoles = useTranslations("adminDashboard.userManagement.roles");
+  const tStatus = useTranslations("adminDashboard.userManagement.statuses");
   const locale = useLocale();
   const isRTL = locale === "ar";
   const platformLocale = usePlatformLocale();

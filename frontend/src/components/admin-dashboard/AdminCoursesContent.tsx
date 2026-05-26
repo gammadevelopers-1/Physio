@@ -928,7 +928,7 @@ const AdminCoursesContent = () => {
                                 <div className="flex-1" />
                                 <Link
                                   href={`/${locale}/dashboard/admin/courses/${course.id}`}
-                                  className="inline-flex items-center gap-1.5 px-3 py-2 btn-gold text-[var(--color-button-text)] text-sm font-semibold rounded-lg transition-colors"
+                                  className="inline-flex items-center gap-1.5 px-3 py-2 btn-gold text-[var(--color-button-text)] text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
                                 >
                                   {t("coursesPage.actions.manage")}
                                   <ChevronRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />

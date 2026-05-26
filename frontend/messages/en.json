@@ -5601,77 +5601,70 @@
     },
     "securityPage": {
       "title": "Security",
-      "subtitle": "Monitor and manage platform security",
+      "subtitle": "Live view of platform sessions, failed logins, and suspicious IPs. Revoke any user's device when needed.",
+      "searchPlaceholder": "Search user, email, device or IP…",
+      "sessionCount": "{n} active devices",
+      "page": "Page {n} of {total}",
+      "noSessions": "No active sessions match your search.",
+      "noFailedLogins": "No failed logins in the last 24 hours.",
+      "noSuspicious": "No suspicious IPs in the last 24 hours.",
+      "unknownDevice": "Unknown device",
+      "failedLoginAttempts": "Failed login attempts (last 24h)",
+      "failedSubtitle": "{total} attempts recorded in the audit log",
+      "suspiciousIps": "Suspicious IPs",
+      "suspiciousSubtitle": "IP addresses with 5 or more failed login attempts in the last 24 hours.",
+      "topSuspicious": "Top suspicious IPs",
+      "alerts": "Live alerts",
       "stats": {
-        "failedLogins": "Failed Logins (24h)",
-        "ipsBlocked": "IPs Blocked",
-        "activeSessions": "Active Sessions",
-        "twoFa": "2FA Adoption",
-        "score": "Security Score"
+        "failedLogins": "Failed logins (24h)",
+        "ipsBlocked": "Suspicious IPs",
+        "activeSessions": "Active sessions",
+        "twoFa": "2FA adoption",
+        "score": "Security score"
       },
       "tabs": {
         "overview": "Overview",
-        "logins": "Failed Logins",
-        "blocked": "Blocked IPs",
-        "sessions": "Active Sessions"
+        "sessions": "User sessions",
+        "logins": "Failed logins",
+        "ips": "Suspicious IPs"
       },
-      "alerts": "Security Alerts",
-      "alertMessages": {
-        "bruteForce": "High number of failed login attempts detected from IP 103.45.67.89",
-        "lowTwoFa": "2FA adoption is below recommended threshold (80%)"
-      },
-      "owaspCompliance": "OWASP Compliance",
-      "owasp": {
-        "injection": "SQL Injection",
-        "authentication": "Authentication",
-        "xss": "XSS Protection",
-        "csrf": "CSRF Protection",
-        "encryption": "Encryption",
-        "logging": "Security Logging"
-      },
-      "failedLoginAttempts": "Failed Login Attempts",
-      "blockedIps": "Blocked IP Addresses",
-      "addToBlocklist": "Add to Blocklist",
-      "activeSessions": "Active Sessions",
-      "terminateAll": "Terminate All",
       "table": {
         "user": "User",
-        "ip": "IP Address",
+        "ip": "IP",
         "attempts": "Attempts",
         "time": "Time",
-        "reason": "Reason",
-        "type": "Type",
-        "blockedAt": "Blocked At",
         "device": "Device",
-        "lastActive": "Last Active",
+        "lastActive": "Last active",
+        "lastAttempt": "Last attempt",
+        "attemptedEmail": "Attempted email",
         "actions": "Actions"
       },
       "actions": {
-        "blockIp": "Block IP",
-        "unblock": "Unblock",
-        "terminate": "Terminate"
+        "revoke": "Revoke",
+        "refresh": "Refresh",
+        "prev": "Previous",
+        "next": "Next"
       },
-      "time": {
-        "minAgo": "{count} min ago",
-        "hourAgo": "{count} hour ago",
-        "hoursAgo": "{count} hours ago",
-        "dayAgo": "{count} day ago",
-        "now": "Now"
+      "revokeConfirm": {
+        "title": "Revoke this device?",
+        "subtitle": "{user} will be signed out of this device immediately.",
+        "body": "Revoking the trusted device forces a fresh 2FA challenge the next time they log in. Use this when you suspect the device has been compromised or borrowed.",
+        "cancel": "Cancel",
+        "confirm": "Revoke device"
       },
-      "reasons": {
-        "bruteForce": "Brute force attack",
-        "suspicious": "Suspicious activity",
-        "rateLimit": "Rate limit exceeded"
+      "toasts": {
+        "revokeSuccess": "Revoked the device for {user}.",
+        "revokeFailed": "Failed to revoke device."
       },
-      "types": {
-        "auto": "Auto",
-        "manual": "Manual"
-      },
-      "sampleUsers": {
-        "drFaisal": "Dr. Faisal Ahmed",
-        "saraMohammed": "Sara Mohammed",
-        "mohammedAlKhalid": "Mohammed Al-Khalid",
-        "admin": "Admin"
+      "overview": {
+        "elevatedFailedTitle": "Elevated failed login traffic",
+        "elevatedFailedBody": "{n} failed login attempts in the last 24 hours — review the Failed logins tab.",
+        "suspiciousIpsTitle": "Suspicious IPs detected",
+        "suspiciousIpsBody": "{n} IPs hit 5 or more failed attempts. Open the Suspicious IPs tab to review.",
+        "low2faTitle": "2FA adoption below 70%",
+        "low2faBody": "Only {pct}% of users have 2FA enabled. Consider tightening enforcement in Settings.",
+        "allClearTitle": "All clear",
+        "allClearBody": "Security score is {score}%. Nothing actionable in the last 24 hours."
       }
     },
     "compliancePage": {

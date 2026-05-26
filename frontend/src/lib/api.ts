@@ -666,6 +666,34 @@ export const adminApi = {
   getDashboard: () =>
     api.get<AdminDashboardPayload>('/admin/stats/dashboard'),
 
+  // Platform-wide trusted devices for the Security page.
+  getSecuritySessions: (params?: { search?: string; limit?: number; offset?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.search) sp.set('search', params.search);
+    if (params?.limit) sp.set('limit', String(params.limit));
+    if (params?.offset) sp.set('offset', String(params.offset));
+    const qs = sp.toString();
+    return api.get<{ rows: AdminSessionRow[]; total: number }>(
+      `/admin/stats/security/sessions${qs ? `?${qs}` : ''}`,
+    );
+  },
+
+  getFailedLogins: (params?: { limit?: number; offset?: number; hours?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.limit) sp.set('limit', String(params.limit));
+    if (params?.offset) sp.set('offset', String(params.offset));
+    if (params?.hours) sp.set('hours', String(params.hours));
+    const qs = sp.toString();
+    return api.get<{ rows: AdminFailedLoginRow[]; total: number }>(
+      `/admin/stats/security/failed-logins${qs ? `?${qs}` : ''}`,
+    );
+  },
+
+  getSuspiciousIps: (threshold?: number) => {
+    const qs = threshold ? `?threshold=${threshold}` : '';
+    return api.get<AdminSuspiciousIp[]>(`/admin/stats/security/suspicious-ips${qs}`);
+  },
+
   // Get all courses (admin sees all)
   getCourses: (params?: InstructorCoursesParams) => {
     const sp = new URLSearchParams();
@@ -902,6 +930,35 @@ export interface AdminDashboardPayload {
     action: string;
     time: string; // ISO
   }>;
+}
+
+// Platform-wide session/device row for admin Security page.
+export interface AdminSessionRow {
+  deviceId: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userRole: string;
+  deviceName: string | null;
+  ipAddress: string | null;
+  fingerprint: string;
+  lastUsedAt: string;
+  createdAt: string;
+}
+
+export interface AdminFailedLoginRow {
+  id: string;
+  attemptedEmail: string | null;
+  performedById: string;
+  ipAddress: string | null;
+  createdAt: string;
+  metadata: Record<string, unknown> | null;
+}
+
+export interface AdminSuspiciousIp {
+  ipAddress: string;
+  attempts: number;
+  lastAttemptAt: string;
 }
 
 export interface FilterPerson {

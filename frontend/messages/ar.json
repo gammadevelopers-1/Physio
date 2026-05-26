@@ -5601,77 +5601,70 @@
     },
     "securityPage": {
       "title": "الأمان",
-      "subtitle": "مراقبة وإدارة أمان المنصة",
+      "subtitle": "عرض مباشر لجلسات المستخدمين، محاولات الدخول الفاشلة والـ IPs المشبوهة. يمكنك إلغاء أي جهاز موثوق لأي عضو عند الحاجة.",
+      "searchPlaceholder": "ابحث باسم المستخدم أو البريد أو الجهاز أو الـ IP…",
+      "sessionCount": "{n} جهاز نشط",
+      "page": "الصفحة {n} من {total}",
+      "noSessions": "لا توجد جلسات تطابق بحثك.",
+      "noFailedLogins": "لا توجد محاولات فاشلة خلال آخر 24 ساعة.",
+      "noSuspicious": "لا توجد IPs مشبوهة خلال آخر 24 ساعة.",
+      "unknownDevice": "جهاز غير معروف",
+      "failedLoginAttempts": "محاولات الدخول الفاشلة (آخر 24س)",
+      "failedSubtitle": "{total} محاولة مسجَّلة في سجل التدقيق",
+      "suspiciousIps": "IPs مشبوهة",
+      "suspiciousSubtitle": "عناوين IP لها 5 محاولات فاشلة أو أكثر خلال آخر 24 ساعة.",
+      "topSuspicious": "أهم الـ IPs المشبوهة",
+      "alerts": "تنبيهات مباشرة",
       "stats": {
         "failedLogins": "محاولات فاشلة (24س)",
-        "ipsBlocked": "IPs محظورة",
+        "ipsBlocked": "IPs مشبوهة",
         "activeSessions": "الجلسات النشطة",
         "twoFa": "اعتماد 2FA",
         "score": "نقاط الأمان"
       },
       "tabs": {
         "overview": "نظرة عامة",
-        "logins": "محاولات الدخول الفاشلة",
-        "blocked": "IPs المحظورة",
-        "sessions": "الجلسات النشطة"
+        "sessions": "جلسات المستخدمين",
+        "logins": "محاولات فاشلة",
+        "ips": "IPs مشبوهة"
       },
-      "alerts": "تنبيهات الأمان",
-      "alertMessages": {
-        "bruteForce": "تم اكتشاف عدد كبير من محاولات الدخول الفاشلة من IP 103.45.67.89",
-        "lowTwoFa": "اعتماد 2FA أقل من العتبة الموصى بها (80%)"
-      },
-      "owaspCompliance": "امتثال OWASP",
-      "owasp": {
-        "injection": "SQL Injection",
-        "authentication": "المصادقة",
-        "xss": "حماية XSS",
-        "csrf": "حماية CSRF",
-        "encryption": "التشفير",
-        "logging": "تسجيل الأمان"
-      },
-      "failedLoginAttempts": "محاولات الدخول الفاشلة",
-      "blockedIps": "عناوين IP المحظورة",
-      "addToBlocklist": "إضافة للقائمة المحظورة",
-      "activeSessions": "الجلسات النشطة",
-      "terminateAll": "إنهاء الكل",
       "table": {
         "user": "المستخدم",
-        "ip": "عنوان IP",
-        "attempts": "المحاولات",
+        "ip": "IP",
+        "attempts": "محاولات",
         "time": "الوقت",
-        "reason": "السبب",
-        "type": "النوع",
-        "blockedAt": "تاريخ الحظر",
         "device": "الجهاز",
         "lastActive": "آخر نشاط",
-        "actions": "الإجراءات"
+        "lastAttempt": "آخر محاولة",
+        "attemptedEmail": "البريد المُحاول",
+        "actions": "إجراءات"
       },
       "actions": {
-        "blockIp": "حظر IP",
-        "unblock": "إلغاء الحظر",
-        "terminate": "إنهاء"
+        "revoke": "إلغاء",
+        "refresh": "تحديث",
+        "prev": "السابق",
+        "next": "التالي"
       },
-      "time": {
-        "minAgo": "منذ {count} دقيقة",
-        "hourAgo": "منذ {count} ساعة",
-        "hoursAgo": "منذ {count} ساعات",
-        "dayAgo": "منذ {count} يوم",
-        "now": "الآن"
+      "revokeConfirm": {
+        "title": "إلغاء هذا الجهاز؟",
+        "subtitle": "سيتم تسجيل خروج {user} فوراً من هذا الجهاز.",
+        "body": "إلغاء الجهاز الموثوق يفرض تحقق 2FA جديد عند تسجيل الدخول التالي. استخدم هذا عند الاشتباه باختراق الجهاز أو إعارته.",
+        "cancel": "إلغاء",
+        "confirm": "إلغاء الجهاز"
       },
-      "reasons": {
-        "bruteForce": "هجوم القوة الغاشمة",
-        "suspicious": "نشاط مشبوه",
-        "rateLimit": "تجاوز حد المعدل"
+      "toasts": {
+        "revokeSuccess": "تم إلغاء الجهاز لـ {user}.",
+        "revokeFailed": "تعذّر إلغاء الجهاز."
       },
-      "types": {
-        "auto": "تلقائي",
-        "manual": "يدوي"
-      },
-      "sampleUsers": {
-        "drFaisal": "د. فيصل أحمد",
-        "saraMohammed": "سارة محمد",
-        "mohammedAlKhalid": "محمد الخالد",
-        "admin": "المشرف"
+      "overview": {
+        "elevatedFailedTitle": "ارتفاع في محاولات الدخول الفاشلة",
+        "elevatedFailedBody": "{n} محاولة فاشلة خلال آخر 24 ساعة — راجع تبويب المحاولات الفاشلة.",
+        "suspiciousIpsTitle": "اكتُشفت IPs مشبوهة",
+        "suspiciousIpsBody": "{n} عنوان IP بلغ 5 محاولات فاشلة أو أكثر. افتح تبويب الـ IPs المشبوهة للمراجعة.",
+        "low2faTitle": "اعتماد 2FA أقل من 70٪",
+        "low2faBody": "فقط {pct}٪ من المستخدمين فعّلوا 2FA. فكّر في تشديد الإلزام من الإعدادات.",
+        "allClearTitle": "كل شيء بخير",
+        "allClearBody": "نقاط الأمان {score}٪. لا شيء يستدعي إجراءً خلال آخر 24 ساعة."
       }
     },
     "compliancePage": {

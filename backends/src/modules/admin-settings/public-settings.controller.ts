@@ -1,6 +1,7 @@
 import { Controller, Get, Param, ParseEnumPipe } from '@nestjs/common';
 import { AdminSettingsService } from './admin-settings.service';
 import { TemplatesService } from '../templates/templates.service';
+import { Public } from '../auth/decorators';
 
 enum LocaleParam {
   EN = 'en',
@@ -13,6 +14,7 @@ enum LocaleParam {
  * bootstrap. Returns only the four whitelisted fields; never reveals
  * anything else from the localization row.
  */
+@Public()
 @Controller('public')
 export class PublicSettingsController {
   constructor(

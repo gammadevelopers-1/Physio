@@ -919,7 +919,7 @@ const AdminCoursesContent = () => {
 
                               <div className="flex-1" />
 
-                              {/* Footer: price + primary Manage + Edit */}
+                              {/* Footer: price + primary Manage */}
                               <div className="h-px bg-[var(--color-border-subtle)] mt-1 mb-3" />
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-semibold text-[var(--color-text-primary)] flex-shrink-0">
@@ -932,14 +932,6 @@ const AdminCoursesContent = () => {
                                 >
                                   {t("coursesPage.actions.manage")}
                                   <ChevronRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
-                                </Link>
-                                <Link
-                                  href={`/${locale}/dashboard/admin/courses/${course.id}/edit`}
-                                  className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors"
-                                  aria-label={t("coursesPage.actions.edit")}
-                                  title={t("coursesPage.actions.edit")}
-                                >
-                                  <Edit className="w-4 h-4" />
                                 </Link>
                               </div>
                             </div>

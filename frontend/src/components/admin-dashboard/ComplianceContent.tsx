@@ -49,15 +49,6 @@ interface VirtualSessionRow {
   checks: Array<{ rule: string; status: Status; detail: string }>;
 }
 
-interface Issue {
-  key: string;
-  courseId: string;
-  courseTitle: string;
-  rule: string;
-  detail: string;
-  status: Status;
-}
-
 type SortKey = "latest" | "score" | "title" | "instructor";
 type StatusFilter = "all" | Status;
 type DeliveryFilter = "all" | "zoom" | "webinar" | "blended" | "onsite" | "self-paced";
@@ -170,28 +161,6 @@ const ComplianceContent = () => {
     [virtual, virtualPage],
   );
 
-  // ── Top issues aggregated across courses for the sidebar ──────────
-  // We don't have the per-course scorecards loaded by default, so the
-  // issue list works off the all-courses summary + virtual sessions
-  // we already have. Each course with failing/review categories
-  // contributes a single row pointing to its scorecard.
-  const issues: Issue[] = useMemo(() => {
-    const fromCourses = courses
-      .filter((c) => c.overallStatus !== "passed")
-      .map<Issue>((c) => ({
-        key: `course-${c.courseId}`,
-        courseId: c.courseId,
-        courseTitle: c.courseTitle,
-        rule: c.overallStatus === "failed" ? t("issueFailed") : t("issueReview"),
-        detail: t("issueCounts", {
-          review: c.summary.review,
-          failed: c.summary.failed,
-          total: c.summary.total,
-        }),
-        status: c.overallStatus,
-      }));
-    return fromCourses.slice(0, 30);
-  }, [courses, t]);
 
   const handleExportCsv = async () => {
     setExporting(true);
@@ -292,7 +261,7 @@ const ComplianceContent = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
+              <div>
                 {/* Main panel — tabs + table */}
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
                   {/* Tabs */}
@@ -538,69 +507,6 @@ const ComplianceContent = () => {
                     </div>
                   )}
                 </div>
-
-                {/* Issues sidebar */}
-                <aside className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 h-fit xl:sticky xl:top-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <AlertTriangle className="w-5 h-5 text-[#D97706]" />
-                    <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
-                      {t("issuesTitle")}
-                    </h3>
-                    {issues.length > 0 && (
-                      <span className="ms-auto bg-[#EF4444] text-white text-xs font-semibold px-2 py-0.5 rounded-full">
-                        {issues.length}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1 -mr-1">
-                    {loading && (
-                      <div className="flex items-center justify-center py-6">
-                        <Loader2 className="w-5 h-5 animate-spin text-[var(--color-primary)]" />
-                      </div>
-                    )}
-                    {!loading && issues.length === 0 && (
-                      <p className="text-xs text-[var(--color-text-secondary)] py-6 text-center">
-                        {t("noIssues")}
-                      </p>
-                    )}
-                    {!loading &&
-                      issues.map((issue) => (
-                        <button
-                          key={issue.key}
-                          type="button"
-                          onClick={() =>
-                            setOpenCourse({ id: issue.courseId, title: issue.courseTitle })
-                          }
-                          className={`w-full text-start p-3 rounded-lg border transition-colors ${
-                            issue.status === "failed"
-                              ? "bg-[#FEE2E2] border-[#FCA5A5] hover:bg-[#FECACA]"
-                              : "bg-[#FEF3C7] border-[#FCD34D] hover:bg-[#FDE68A]"
-                          }`}
-                        >
-                          <div className="flex items-start gap-2">
-                            {issue.status === "failed" ? (
-                              <X className="w-4 h-4 text-[#DC2626] flex-shrink-0 mt-0.5" />
-                            ) : (
-                              <AlertTriangle className="w-4 h-4 text-[#D97706] flex-shrink-0 mt-0.5" />
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p
-                                className={`text-sm font-medium ${issue.status === "failed" ? "text-[#991B1B]" : "text-[#92400E]"} line-clamp-1`}
-                              >
-                                {issue.courseTitle}
-                              </p>
-                              <p
-                                className={`text-xs mt-0.5 ${issue.status === "failed" ? "text-[#B91C1C]" : "text-[#B45309]"}`}
-                              >
-                                {issue.detail}
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                  </div>
-                </aside>
               </div>
             </div>
           </div>

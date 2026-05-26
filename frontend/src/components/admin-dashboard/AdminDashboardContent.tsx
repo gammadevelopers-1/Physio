@@ -239,21 +239,27 @@ const AdminDashboardContent = () => {
                 <NELCComplianceOverviewWidget data={data.compliance} />
               </div>
 
-              {/* Recent Users | Recent Points — paired 2-col row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <UserManagementWidget users={data.recentUsers} />
-                <RecentPointsWidget rows={data.recentPoints} />
-              </div>
+              {/* Recent Points — full width on its own row. The
+                  Recent Users mini-widget moves to the right rail so
+                  the activity feed gets the main column's breathing
+                  room (richer history per row). */}
+              <RecentPointsWidget rows={data.recentPoints} />
             </div>
 
             {/* Right rail: alerts + activity + a compact security
-                snapshot. Quick Actions and the duplicate Finance
-                widget were removed — sidebar nav already covers the
-                first and Finance has a dedicated row above. */}
+                snapshot + recent users. Quick Actions and the
+                duplicate Finance widget were removed — sidebar nav
+                already covers the first and Finance has a dedicated
+                row above. */}
             <AlertsActivitySidebar
               alerts={liveAlerts}
               activities={activities}
-              extras={<SecuritySnapshotWidget data={data.security} />}
+              extras={
+                <>
+                  <SecuritySnapshotWidget data={data.security} />
+                  <UserManagementWidget users={data.recentUsers} />
+                </>
+              }
             />
           </div>
         </div>

@@ -91,6 +91,40 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
     timeline: useRef<HTMLDivElement>(null),
   } as const;
 
+  type SectionKey = keyof typeof refs;
+  const [activeSection, setActiveSection] = useState<SectionKey>('profile');
+
+  // Track which section is currently in view to highlight the matching
+  // nav item. Uses a "next section's top is below this much from the
+  // viewport top" heuristic via IntersectionObserver root margin — so
+  // a section is considered active when its heading scrolls into the
+  // upper third of the viewport.
+  useEffect(() => {
+    const entries: { key: SectionKey; el: HTMLDivElement | null }[] = [
+      { key: 'profile', el: refs.profile.current },
+      { key: 'professional', el: refs.professional.current },
+      { key: 'documents', el: refs.documents.current },
+      { key: 'resume', el: refs.resume.current },
+      { key: 'bank', el: refs.bank.current },
+      { key: 'timeline', el: refs.timeline.current },
+    ];
+    const observer = new IntersectionObserver(
+      (obs) => {
+        for (const o of obs) {
+          if (o.isIntersecting) {
+            const match = entries.find((e) => e.el === o.target);
+            if (match) setActiveSection(match.key);
+          }
+        }
+      },
+      { rootMargin: '-100px 0px -60% 0px', threshold: 0 },
+    );
+    entries.forEach((e) => e.el && observer.observe(e.el));
+    return () => observer.disconnect();
+    // refs are stable so this runs only once on mount-after-load
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [application]);
+
   useEffect(() => {
     const fetchApplication = async () => {
       try {
@@ -243,17 +277,20 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
             {t("backToList")}
           </Link>
 
-          {/* Hero header */}
-          <div className="bg-gradient-to-br from-[var(--color-primary)] to-[#001d5a] rounded-2xl p-5 md:p-7 mb-5 text-white relative overflow-hidden">
-            <div className="absolute -bottom-12 -right-12 w-40 h-40 bg-white/5 rounded-full" />
-            <div className="absolute -top-10 -left-6 w-32 h-32 bg-white/5 rounded-full" />
+          {/* Hero header — light card matching the rest of the admin
+              page. The dark gradient used to clash with the cream
+              surface tokens; switching to a surface-card background
+              with a subtle gold accent stripe keeps the page coherent. */}
+          <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 md:p-7 mb-5 relative overflow-hidden">
+            {/* Gold accent ribbon, top edge */}
+            <div className="absolute inset-x-0 top-0 h-1 bg-[var(--gold-gold-100)]" />
 
             <div className="relative flex flex-col md:flex-row md:items-start md:justify-between gap-5">
               <div className="flex items-start gap-4 min-w-0">
                 <ApplicantAvatar request={application} size="xl" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <h1 className="text-xl md:text-2xl font-bold truncate">{name}</h1>
+                    <h1 className="text-xl md:text-2xl font-bold truncate text-[var(--color-text-primary)]">{name}</h1>
                     <span
                       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold ${cfg.badgeBg} ${cfg.badgeText}`}
                     >
@@ -262,27 +299,27 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
                     </span>
                   </div>
                   {nameAr && (
-                    <p className="text-sm text-white/80 mb-1" dir="rtl">
+                    <p className="text-sm text-[var(--color-text-secondary)] mb-1" dir="rtl">
                       {nameAr}
                     </p>
                   )}
                   {subtitle && (
-                    <p className="text-sm text-white/85 mb-2">{subtitle}</p>
+                    <p className="text-sm text-[var(--color-text-secondary)] mb-2">{subtitle}</p>
                   )}
-                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--color-text-secondary)]">
                     {profile.country && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/15 rounded-full">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-full">
                         <MapPin className="w-3 h-3" />
                         {[profile.city, profile.country].filter(Boolean).join(", ")}
                       </span>
                     )}
                     {profile.nationality && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/15 rounded-full">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-full">
                         <Globe className="w-3 h-3" />
                         {profile.nationality}
                       </span>
                     )}
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/15 rounded-full">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-full">
                       <Calendar className="w-3 h-3" />
                       {t("submittedDaysAgo", { count: daysOld })}
                     </span>
@@ -312,7 +349,7 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
                       setReviewNote("");
                       setActionError(null);
                     }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/15 hover:bg-white/25 text-white rounded-lg text-sm font-medium transition-colors"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 border border-[var(--color-border)] hover:bg-[var(--color-border-subtle)] text-[var(--color-text-primary)] rounded-lg text-sm font-medium transition-colors"
                   >
                     <HelpCircle className="w-4 h-4" />
                     {t("requestInfo")}
@@ -335,7 +372,7 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
 
             {/* Pending overdue banner */}
             {status === "PENDING" && daysOld >= 7 && (
-              <div className="relative mt-4 px-3 py-2 bg-[#DC2626]/30 border border-white/20 rounded-lg flex items-center gap-2 text-sm">
+              <div className="relative mt-4 px-3 py-2 bg-[#FEE2E2] border border-[#FCA5A5] rounded-lg flex items-center gap-2 text-sm text-[#991B1B]">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{t("overdueBanner", { count: daysOld })}</span>
               </div>
@@ -343,32 +380,65 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
 
             {/* Last admin note */}
             {application.reviewNote && (
-              <div className="relative mt-4 p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-white/70 mb-1">
+              <div className="relative mt-4 p-3 bg-[var(--color-surface-page)] rounded-lg border border-[var(--color-border)]">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-[var(--color-text-secondary)] mb-1">
                   {t("lastAdminNote")}
                 </p>
-                <p className="text-sm">{application.reviewNote}</p>
+                <p className="text-sm text-[var(--color-text-primary)]">{application.reviewNote}</p>
               </div>
             )}
           </div>
 
           {/* Section nav + content grid */}
           <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-5">
-            {/* Sticky nav */}
+            {/* Sticky nav — top offset matches the AdminNavbar height
+                so the box never tucks under the navbar. The inner
+                container caps its height to the viewport so if more
+                items are added later it scrolls instead of clipping. */}
             <nav className="hidden lg:block">
-              <div className="sticky top-6 bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-2 space-y-0.5">
-                <SectionNavItem icon={User} label={t("nav.identity")} onClick={() => scrollTo("profile")} />
-                <SectionNavItem icon={Briefcase} label={t("nav.professional")} onClick={() => scrollTo("professional")} />
+              <div className="sticky top-20 bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-2 space-y-0.5 max-h-[calc(100vh-6rem)] overflow-y-auto">
+                <SectionNavItem
+                  icon={User}
+                  label={t("nav.identity")}
+                  active={activeSection === "profile"}
+                  onClick={() => scrollTo("profile")}
+                />
+                <SectionNavItem
+                  icon={Briefcase}
+                  label={t("nav.professional")}
+                  active={activeSection === "professional"}
+                  onClick={() => scrollTo("professional")}
+                />
                 {resumeFiles.length > 0 && (
-                  <SectionNavItem icon={FileText} label={t("nav.documents")} onClick={() => scrollTo("documents")} />
+                  <SectionNavItem
+                    icon={FileText}
+                    label={t("nav.documents")}
+                    active={activeSection === "documents"}
+                    onClick={() => scrollTo("documents")}
+                  />
                 )}
                 {hasStructured && (
-                  <SectionNavItem icon={GraduationCap} label={t("nav.resume")} onClick={() => scrollTo("resume")} />
+                  <SectionNavItem
+                    icon={GraduationCap}
+                    label={t("nav.resume")}
+                    active={activeSection === "resume"}
+                    onClick={() => scrollTo("resume")}
+                  />
                 )}
                 {hasBank && (
-                  <SectionNavItem icon={CreditCard} label={t("nav.bank")} onClick={() => scrollTo("bank")} />
+                  <SectionNavItem
+                    icon={CreditCard}
+                    label={t("nav.bank")}
+                    active={activeSection === "bank"}
+                    onClick={() => scrollTo("bank")}
+                  />
                 )}
-                <SectionNavItem icon={History} label={t("nav.timeline")} onClick={() => scrollTo("timeline")} />
+                <SectionNavItem
+                  icon={History}
+                  label={t("nav.timeline")}
+                  active={activeSection === "timeline"}
+                  onClick={() => scrollTo("timeline")}
+                />
               </div>
             </nav>
 
@@ -761,17 +831,23 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
 function SectionNavItem({
   icon: Icon,
   label,
+  active = false,
   onClick,
 }: {
   icon: React.ElementType;
   label: string;
+  active?: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-start text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] hover:text-[var(--color-text-primary)] transition-colors"
+      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-start transition-colors ${
+        active
+          ? "bg-[var(--color-border-subtle)] text-[var(--color-primary)] font-medium"
+          : "text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] hover:text-[var(--color-text-primary)]"
+      }`}
     >
       <Icon className="w-4 h-4 text-[var(--color-primary)]" />
       {label}
@@ -781,7 +857,6 @@ function SectionNavItem({
 
 function InfoField({
   icon: Icon,
-  iconColor,
   label,
   value,
   className = "",
@@ -789,7 +864,10 @@ function InfoField({
   copyable,
 }: {
   icon: React.ElementType;
-  iconColor: string;
+  /** Kept for backward compatibility with existing callsites but no
+   * longer used — every field now uses the Strapi-driven brand color
+   * (`--color-primary`) to match instructor/manager/student dashboards. */
+  iconColor?: string;
   label: string;
   value?: string | null;
   className?: string;
@@ -811,11 +889,8 @@ function InfoField({
 
   return (
     <div className={`flex items-start gap-3 ${className}`}>
-      <div
-        className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-        style={{ backgroundColor: `${iconColor}1A` }}
-      >
-        <Icon className="w-4 h-4" style={{ color: iconColor }} />
+      <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 bg-[var(--color-border-subtle)]">
+        <Icon className="w-4 h-4 text-[var(--color-primary)]" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-secondary)] mb-0.5">

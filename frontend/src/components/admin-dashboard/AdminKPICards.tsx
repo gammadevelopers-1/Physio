@@ -7,13 +7,9 @@ import {
   Users,
   UserCheck,
   DollarSign,
-  FileCheck,
-  Award,
   TrendingUp,
   TrendingDown,
   Inbox,
-  KeyRound,
-  Activity,
 } from "lucide-react";
 
 interface KPIData {
@@ -56,9 +52,11 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
   const t = useTranslations("adminDashboard");
   const locale = useLocale();
 
-  // Eight real cards in the order the user wants. Pending Applications
-  // sits in slot 3 (top row, third column) so it catches the admin's
-  // eye but doesn't displace the headline Active Users / Revenue cards.
+  // Three signal-dense cards: platform engagement, commercial health,
+  // and the only actionable item — Pending Applications. Everything
+  // else (NELC %, certs MTD, 2FA, active sessions, new users 7d) lives
+  // in its own dedicated widget below the strip, so the headline row
+  // doesn't dilute attention.
   const kpiCards: CardDef[] = [
     {
       id: "activeUsers",
@@ -90,55 +88,10 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
       iconColor: "text-[#D97706]",
       href: `/${locale}/dashboard/admin/role-requests`,
     },
-    {
-      id: "nelcCompliance",
-      label: t("kpi.nelcCompliance"),
-      value: `${data.nelcCompliance}%`,
-      subLabel: data.nelcClauses,
-      icon: FileCheck,
-      iconBg: "bg-[var(--blue-blue-50)]",
-      iconColor: "text-[var(--blue-blue-500)]",
-    },
-    {
-      id: "newUsers",
-      label: t("kpi.newUsers7d"),
-      value: `+${data.newUsers7d}`,
-      subLabel: t("kpi.thisWeek"),
-      icon: Users,
-      iconBg: "bg-[var(--gold-gold-100)]",
-      iconColor: "text-[var(--color-star)]",
-    },
-    {
-      id: "certificates",
-      label: t("kpi.certificates"),
-      value: data.certificatesIssued.toString(),
-      subLabel: t("kpi.thisMonth"),
-      icon: Award,
-      iconBg: "bg-[var(--gold-gold-100)]",
-      iconColor: "text-[var(--color-star)]",
-    },
-    {
-      id: "twoFaAdoption",
-      label: t("kpi.twoFaAdoption"),
-      value: `${data.twoFaAdoption}%`,
-      subLabel: data.twoFaAdoption >= 70 ? t("kpi.healthy") : t("kpi.warning"),
-      icon: KeyRound,
-      iconBg: "bg-[#DCFCE7]",
-      iconColor: "text-[#16A34A]",
-    },
-    {
-      id: "activeSessions",
-      label: t("kpi.activeSessions"),
-      value: data.activeSessions.toString(),
-      subLabel: t("kpi.last24h"),
-      icon: Activity,
-      iconBg: "bg-[#EDE9FE]",
-      iconColor: "text-[#7C3AED]",
-    },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
       {kpiCards.map((card) => {
         const Icon = card.icon;
         const body = (

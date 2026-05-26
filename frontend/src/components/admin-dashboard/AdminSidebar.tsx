@@ -206,7 +206,7 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
         <div className="flex flex-col items-center">
           {/* Avatar with edit button */}
           <div className="relative mb-3">
-            <div className="w-20 h-20 rounded-full overflow-hidden bg-[var(--color-primary)] flex items-center justify-center relative">
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-[var(--color-border-subtle)] flex items-center justify-center relative">
               {admin.avatar ? (
                 <Image
                   src={admin.avatar}
@@ -217,7 +217,7 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
                   unoptimized
                 />
               ) : (
-                <span className="text-2xl font-bold text-white">
+                <span className="text-2xl font-bold text-[var(--color-text-primary)]">
                   {admin.name
                     .split(" ")
                     .map((n) => n[0])
@@ -225,10 +225,6 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
                     .substring(0, 2)}
                 </span>
               )}
-              {/* Admin badge */}
-              <div className={`absolute -bottom-1 ${isRTL ? "-left-1" : "-right-1"} w-6 h-6 bg-[#EF4444] rounded-full flex items-center justify-center border-2 border-white`}>
-                <Lock className="w-3 h-3 text-white" />
-              </div>
             </div>
             <input
               ref={avatarInputRef}
@@ -250,10 +246,11 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
           <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{admin.name}</h3>
           <p className="text-sm text-[var(--color-text-secondary)] mb-2">{admin.email}</p>
 
-          {/* Role Badge */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-text-primary)] rounded-full">
-            <Crown className="w-4 h-4 text-[#D4A520]" />
-            <span className="text-sm font-medium text-white">
+          {/* Role Badge — gold-tinted to match brand, same pattern as
+              manager (purple) and instructor (default avatar bg). */}
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-[var(--gold-gold-100)] rounded-full">
+            <Crown className="w-4 h-4 text-[var(--color-star)]" />
+            <span className="text-sm font-medium text-[var(--color-star)]">
               {t("sidebar.superAdmin")}
             </span>
           </div>

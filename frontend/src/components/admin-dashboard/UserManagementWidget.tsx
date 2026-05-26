@@ -84,67 +84,44 @@ const UserManagementWidget = ({ users }: UserManagementWidgetProps) => {
         </Link>
       </div>
 
-      {/* User Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-[var(--color-border)]">
-              <th
-                className={`py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
-              >
-                {t("userManagement.user")}
-              </th>
-              <th
-                className={`py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
-              >
-                {t("userManagement.role")}
-              </th>
-              <th
-                className={`py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
-              >
-                {t("userManagement.status")}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr
-                key={user.id}
-                className="border-b border-[#F3F4F6] last:border-b-0"
-              >
-                <td className="py-3">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-8 h-8 rounded-full ${getAvatarBgColor(user.role)} flex items-center justify-center`}
-                    >
-                      <span className="text-xs font-medium text-white">
-                        {user.initials}
-                      </span>
-                    </div>
-                    <span className="text-sm font-medium text-[var(--color-text-primary)]">
-                      {user.name}
-                    </span>
-                  </div>
-                </td>
-                <td className="py-3">
-                  <span
-                    className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleBadgeStyle(user.role)}`}
-                  >
-                    {t(`userManagement.roles.${user.role}`)}
-                  </span>
-                </td>
-                <td className="py-3">
-                  <span
-                    className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeStyle(user.status)}`}
-                  >
-                    {t(`userManagement.statuses.${user.status}`)}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Compact vertical list — works in narrow sidebar (320px) AND
+          in a wide main-column slot, no horizontal scroll either way. */}
+      <ul className="divide-y divide-[var(--color-border)]">
+        {users.length === 0 && (
+          <li className="text-xs text-[var(--color-text-secondary)] py-6 text-center">
+            {t("userManagement.viewAllUsers")}
+          </li>
+        )}
+        {users.map((user) => (
+          <li
+            key={user.id}
+            className="py-2.5 first:pt-0 last:pb-0 flex items-center gap-3"
+          >
+            <div
+              className={`w-8 h-8 rounded-full ${getAvatarBgColor(user.role)} flex items-center justify-center flex-shrink-0`}
+            >
+              <span className="text-xs font-medium text-white">{user.initials}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                {user.name}
+              </p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span
+                  className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${getRoleBadgeStyle(user.role)}`}
+                >
+                  {t(`userManagement.roles.${user.role}`)}
+                </span>
+                <span
+                  className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${getStatusBadgeStyle(user.status)}`}
+                >
+                  {t(`userManagement.statuses.${user.status}`)}
+                </span>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
 
       {/* View All Link */}
       <div className="mt-4 pt-4 border-t border-[var(--color-border)]">

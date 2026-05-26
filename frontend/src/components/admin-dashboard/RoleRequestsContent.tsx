@@ -172,21 +172,13 @@ const RoleRequestsContent = () => {
 
         <div className="flex-1 p-4 lg:p-8 min-w-0" dir={isRTL ? "rtl" : "ltr"}>
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
-                {t("title")}
-              </h1>
-              <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-                {t("subtitle")}
-              </p>
-            </div>
-            {stats.pending > 0 && (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#FEF3C7] text-[#92400E] rounded-full text-sm font-medium">
-                <Clock className="w-4 h-4" />
-                {t("pendingBanner", { count: stats.pending })}
-              </div>
-            )}
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
+              {t("title")}
+            </h1>
+            <p className="text-sm text-[var(--color-text-secondary)] mt-1">
+              {t("subtitle")}
+            </p>
           </div>
 
           {/* Stats — 5 cards including "More info" */}

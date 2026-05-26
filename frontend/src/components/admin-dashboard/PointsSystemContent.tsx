@@ -89,29 +89,30 @@ const PointsSystemContent = () => {
             <AdminMobileSidebar admin={adminProfile} />
 
             <div className="flex-1 min-w-0">
-              {/* Hero header — gradient card with live stats from the
-                  already-loaded rules + config data. Mirrors the
-                  premium feel of the Instructor Applications hero. */}
-              <div className="relative overflow-hidden rounded-2xl mb-5 p-5 md:p-6 bg-gradient-to-br from-[#D4A520] via-[#B88A14] to-[#7C5A0D] text-white">
-                <div className="absolute -top-8 -right-6 w-32 h-32 bg-white/10 rounded-full" />
-                <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-white/5 rounded-full" />
+              {/* Hero header — light surface card with a gold accent
+                  stripe along the top, matching the rest of the admin
+                  platform vibe. The previous saturated gold gradient
+                  clashed with the cream surface tokens used everywhere
+                  else. */}
+              <div className="relative overflow-hidden rounded-2xl mb-5 p-5 md:p-6 bg-[var(--color-surface-card)] border border-[var(--color-border)]">
+                <div className="absolute inset-x-0 top-0 h-1 bg-[var(--gold-gold-100)]" />
 
                 <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
-                      <Coins className="w-7 h-7" />
+                    <div className="w-14 h-14 rounded-2xl bg-[var(--color-border-subtle)] flex items-center justify-center flex-shrink-0">
+                      <Coins className="w-7 h-7 text-[var(--color-primary)]" />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h1 className="text-xl md:text-2xl font-bold">
+                        <h1 className="text-xl md:text-2xl font-bold text-[var(--color-text-primary)]">
                           {t("title")}
                         </h1>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/15 rounded-full text-[10px] font-semibold uppercase tracking-wider">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[var(--gold-gold-100)] text-[var(--color-star)] rounded-full text-[10px] font-semibold uppercase tracking-wider">
                           <Sparkles className="w-3 h-3" />
                           {t("hero.liveBadge")}
                         </span>
                       </div>
-                      <p className="text-sm text-white/80 max-w-xl">
+                      <p className="text-sm text-[var(--color-text-secondary)] max-w-xl">
                         {t("subtitle")}
                       </p>
                     </div>
@@ -216,14 +217,14 @@ function HeroStat({
   value: string;
 }) {
   return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/15">
+    <div className="bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-xl p-3">
       <div className="flex items-center gap-2 mb-1.5">
-        <Icon className="w-3.5 h-3.5 text-white/80" />
-        <p className="text-[10px] uppercase tracking-wider text-white/70 font-semibold truncate">
+        <Icon className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+        <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-secondary)] font-semibold truncate">
           {label}
         </p>
       </div>
-      <p className="text-lg font-bold leading-tight">{value}</p>
+      <p className="text-lg font-bold leading-tight text-[var(--color-text-primary)]">{value}</p>
     </div>
   );
 }

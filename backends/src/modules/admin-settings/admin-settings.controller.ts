@@ -10,6 +10,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { AdminSettingsService } from './admin-settings.service';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
@@ -23,6 +24,7 @@ import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
  * tiny while we iterate). Field-level validation belongs in the tab
  * components.
  */
+@SkipThrottle()
 @Controller('admin/settings')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)

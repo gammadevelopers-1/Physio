@@ -11,6 +11,14 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
 
+  // Behind GCP Cloud Run / LB, every request appears to originate from
+  // the proxy. Without trust proxy, the throttler buckets every user
+  // platform-wide into a single per-IP bucket, so a few admins doing
+  // routine page loads trip the 600/min ceiling and start seeing 429s.
+  // Trust the X-Forwarded-For chain so req.ip resolves to the real
+  // client IP and each user gets their own bucket.
+  (app.getHttpAdapter().getInstance() as any).set('trust proxy', true);
+
   // Get configuration
   const port = configService.get<number>('PORT', 8080);
   const apiPrefix = configService.get<string>('API_PREFIX', 'api');

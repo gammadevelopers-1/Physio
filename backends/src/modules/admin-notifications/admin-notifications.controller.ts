@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import {
   AdminNotificationsService,
   type AdminNotificationType,
@@ -16,6 +17,7 @@ import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
 
+@SkipThrottle()
 @Controller('admin/notifications')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)

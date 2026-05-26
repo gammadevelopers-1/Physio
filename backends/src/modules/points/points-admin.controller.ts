@@ -24,6 +24,7 @@ import {
   roles,
   ROLE_NAMES,
 } from '../../database/schema';
+import { SkipThrottle } from '@nestjs/throttler';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -44,6 +45,7 @@ import {
  * - Manual point grant (positive or negative delta)
  * - User audit (read any user's ledger)
  */
+@SkipThrottle()
 @Controller('admin/points')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)

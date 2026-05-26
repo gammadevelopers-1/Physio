@@ -10,6 +10,7 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { TemplatesService } from './templates.service';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
@@ -25,6 +26,7 @@ enum LocaleParam {
  * Admin Templates page — read + write transactional message
  * templates (email + WhatsApp). Locked to ADMIN / SUPER_ADMIN.
  */
+@SkipThrottle()
 @Controller('admin/templates')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)

@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { RoleRequestsService } from './role-requests.service';
 import { CreateRoleRequestDto } from './dto/create-role-request.dto';
 import { ReviewRoleRequestDto } from './dto/review-role-request.dto';
@@ -18,6 +19,10 @@ import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
 
+// All endpoints are gated by JwtAuthGuard; admin views fan out into
+// multiple parallel calls per page load. Per-IP throttle was tripping
+// the Instructor Applications page on the shared LB IP — skip here.
+@SkipThrottle()
 @Controller('role-requests')
 export class RoleRequestsController {
   constructor(private roleRequestsService: RoleRequestsService) {}

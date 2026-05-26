@@ -164,13 +164,15 @@ const RoleRequestsContent = () => {
   return (
     <>
       <AdminNavbar admin={admin} />
-      <div className="flex flex-1 bg-[var(--color-surface-page)] min-h-screen">
-        <div className="hidden lg:block">
-          <AdminSidebar admin={admin} />
-        </div>
-        <AdminMobileSidebar admin={admin} />
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
+        <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="hidden lg:block lg:flex-shrink-0">
+              <AdminSidebar admin={admin} />
+            </div>
+            <AdminMobileSidebar admin={admin} />
 
-        <div className="flex-1 p-4 lg:p-8 min-w-0" dir={isRTL ? "rtl" : "ltr"}>
+            <div className="flex-1 min-w-0" dir={isRTL ? "rtl" : "ltr"}>
           {/* Header */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
@@ -182,7 +184,7 @@ const RoleRequestsContent = () => {
           </div>
 
           {/* Stats — 5 cards including "More info" */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 mb-5">
             <StatCard
               icon={ListChecks}
               iconBg="bg-[var(--color-border-subtle)]"
@@ -403,6 +405,8 @@ const RoleRequestsContent = () => {
               </div>
             </div>
           )}
+            </div>
+          </div>
         </div>
       </div>
     </>

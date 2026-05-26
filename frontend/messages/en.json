@@ -6019,6 +6019,11 @@
     "templatesPage": {
       "title": "Message Templates",
       "subtitle": "Edit every transactional email and WhatsApp message the platform sends. Disabled templates fall back to the platform defaults.",
+      "previewEmail": "Preview",
+      "previewTitle": "Email preview",
+      "previewSubtitle": "How this email looks in a recipient's inbox",
+      "previewDesktop": "Desktop",
+      "previewMobile": "Mobile",
       "totalTemplates": "templates",
       "searchPlaceholder": "Search by name, key, or description…",
       "noMatches": "No templates match your search.",

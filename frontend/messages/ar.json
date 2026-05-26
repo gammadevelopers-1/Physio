@@ -6017,6 +6017,11 @@
       }
     },
     "templatesPage": {
+      "previewEmail": "معاينة",
+      "previewTitle": "معاينة البريد",
+      "previewSubtitle": "كيف يظهر هذا البريد في صندوق وارد المستلم",
+      "previewDesktop": "حاسوب",
+      "previewMobile": "هاتف",
       "title": "قوالب الرسائل",
       "subtitle": "حرّر كل رسائل البريد وواتساب التي ترسلها المنصة. القوالب المعطّلة تعود إلى الافتراضي.",
       "totalTemplates": "قوالب",

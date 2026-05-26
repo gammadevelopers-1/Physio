@@ -3,9 +3,10 @@
 import { useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { Variable, Info } from "lucide-react";
+import { Variable, Info, Eye, Loader2 } from "lucide-react";
 import type { EditorRef, EmailEditorProps } from "react-email-editor";
 import { ActionBar } from "./TemplateEditorContent";
+import EmailPreviewModal from "./EmailPreviewModal";
 import type { TemplateDetail } from "@/lib/api";
 
 // Unlayer is iframe-based and SSR-incompatible — dynamic import strips
@@ -40,6 +41,8 @@ export default function EmailTemplateEditor({
   const [subject, setSubject] = useState(detail.subject ?? "");
   const [preheader, setPreheader] = useState(detail.preheader ?? "");
   const [editorReady, setEditorReady] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
 
   // Build Unlayer merge tags from the registry variables. Tags use
   // `{{variableKey}}` so the substitution model matches what the
@@ -97,6 +100,18 @@ export default function EmailTemplateEditor({
         body: html,
         designJson: design,
       });
+    });
+  };
+
+  // Export current Unlayer HTML, then open the inbox-style preview
+  // modal. The modal does the {{var}} → sample substitution.
+  const handlePreview = () => {
+    const unlayer = editorRef.current?.editor;
+    if (!unlayer) return;
+    setPreviewing(true);
+    unlayer.exportHtml((data) => {
+      setPreviewHtml(data.html);
+      setPreviewing(false);
     });
   };
 
@@ -191,12 +206,38 @@ export default function EmailTemplateEditor({
         </div>
       )}
 
-      <ActionBar
-        saving={saving}
-        resetting={resetting}
-        hasOverride={detail.hasOverride}
-        onSave={handleSave}
-        onReset={onReset}
+      {/* Action row — Preview lives next to Save/Reset so it's
+          always visible without scrolling. */}
+      <div className="flex items-center justify-between gap-2 px-5 py-3 border-t border-[var(--color-border)] bg-[var(--color-surface-page)]">
+        <button
+          type="button"
+          onClick={handlePreview}
+          disabled={previewing || !editorReady}
+          className="inline-flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50"
+        >
+          {previewing ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Eye className="w-3.5 h-3.5" />
+          )}
+          {t("previewEmail")}
+        </button>
+        <ActionBar
+          saving={saving}
+          resetting={resetting}
+          hasOverride={detail.hasOverride}
+          onSave={handleSave}
+          onReset={onReset}
+        />
+      </div>
+
+      <EmailPreviewModal
+        open={previewHtml !== null}
+        onClose={() => setPreviewHtml(null)}
+        subject={subject}
+        preheader={preheader}
+        bodyHtml={previewHtml ?? ""}
+        variables={detail.meta.variables}
       />
     </div>
   );

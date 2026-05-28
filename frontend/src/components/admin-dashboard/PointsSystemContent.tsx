@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
+import { TableRowSkeleton } from "./AdminSkeletons";
 import { useAuth } from "@/contexts";
 import {
   pointsAdminApi,
@@ -1107,8 +1108,10 @@ function HistoryTab({ t }: TabProps) {
 
 function TabLoader() {
   return (
-    <div className="flex items-center justify-center py-16 text-[var(--color-text-secondary)]">
-      <Loader2 className="w-6 h-6 animate-spin" />
+    <div>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <TableRowSkeleton key={i} cols={5} />
+      ))}
     </div>
   );
 }

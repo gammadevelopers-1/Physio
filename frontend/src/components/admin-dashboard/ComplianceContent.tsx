@@ -18,6 +18,7 @@ import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
 import ComplianceScorecardDrawer from "./ComplianceScorecardDrawer";
+import { TableRowSkeleton } from "./AdminSkeletons";
 import { nelcComplianceApi } from "@/lib/api";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
 
@@ -333,8 +334,10 @@ const ComplianceContent = () => {
                   {tab === "courses" && (
                     <div className="overflow-x-auto">
                       {loading && (
-                        <div className="flex items-center justify-center py-16">
-                          <Loader2 className="w-6 h-6 animate-spin text-[var(--color-primary)]" />
+                        <div>
+                          {Array.from({ length: 8 }).map((_, i) => (
+                            <TableRowSkeleton key={i} cols={6} />
+                          ))}
                         </div>
                       )}
                       {!loading && visibleCourses.length === 0 && filteredCourses.length === 0 && (
@@ -423,8 +426,10 @@ const ComplianceContent = () => {
                   {tab === "virtual" && (
                     <div className="overflow-x-auto">
                       {loading && (
-                        <div className="flex items-center justify-center py-16">
-                          <Loader2 className="w-6 h-6 animate-spin text-[var(--color-primary)]" />
+                        <div>
+                          {Array.from({ length: 8 }).map((_, i) => (
+                            <TableRowSkeleton key={i} cols={6} />
+                          ))}
                         </div>
                       )}
                       {!loading && virtual.length === 0 && (

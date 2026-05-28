@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from "next-intl";
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
+import { SectionCardSkeleton } from "./AdminSkeletons";
 import { useAuth } from "@/contexts";
 import { adminApi, RoleWithCount } from "@/lib/api";
 import { toast } from "sonner";
@@ -405,9 +406,10 @@ const RolesContent = () => {
 
               {/* Loading State */}
               {isLoading && (
-                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)] mb-3" />
-                  <p className="text-sm text-[var(--color-text-secondary)]">Loading roles...</p>
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <SectionCardSkeleton key={i} lines={2} />
+                  ))}
                 </div>
               )}
 

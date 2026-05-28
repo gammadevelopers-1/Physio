@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { AdminSidebar, AdminNavbar } from "@/components/admin-dashboard";
 import AdminMobileSidebar from "./AdminMobileSidebar";
+import { HeroBandSkeleton, SectionCardSkeleton } from "./AdminSkeletons";
 import { roleRequestsApi, type RoleRequest } from "@/lib/api";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
@@ -189,13 +190,20 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
     return (
       <>
         <AdminNavbar admin={admin} />
-        <div className="flex flex-1 bg-[var(--color-surface-page)] min-h-screen">
-          <div className="hidden lg:block">
-            <AdminSidebar admin={admin} />
-          </div>
-          <AdminMobileSidebar admin={admin} />
-          <div className="flex-1 flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
+        <div className="bg-[var(--color-surface-page)] min-h-screen">
+          <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="hidden lg:block lg:flex-shrink-0">
+                <AdminSidebar admin={admin} />
+              </div>
+              <AdminMobileSidebar admin={admin} />
+              <div className="flex-1 min-w-0">
+                <HeroBandSkeleton stats={4} />
+                <SectionCardSkeleton lines={5} />
+                <SectionCardSkeleton lines={4} />
+                <SectionCardSkeleton lines={3} />
+              </div>
+            </div>
           </div>
         </div>
       </>

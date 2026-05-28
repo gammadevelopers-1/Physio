@@ -6,6 +6,7 @@ import { useTranslations, useLocale } from "next-intl";
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
+import { TableRowSkeleton } from "./AdminSkeletons";
 import { useAuth } from "@/contexts";
 import { adminApi, User, CreateUserData, UpdateUserData, PaginatedUsersResponse } from "@/lib/api";
 import { toast } from "sonner";
@@ -1213,9 +1214,10 @@ const UsersContent = () => {
 
               {/* Loading State */}
               {isLoadingUsers && (
-                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)] mb-3" />
-                  <p className="text-sm text-[var(--color-text-secondary)]">Loading users...</p>
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <TableRowSkeleton key={i} cols={5} />
+                  ))}
                 </div>
               )}
 

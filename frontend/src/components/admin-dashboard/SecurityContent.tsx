@@ -20,6 +20,7 @@ import {
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
+import { TableRowSkeleton } from "./AdminSkeletons";
 import {
   adminApi,
   ApiError,
@@ -332,8 +333,10 @@ const SecurityContent = () => {
 
                       <div className="overflow-x-auto">
                         {sessionsLoading && (
-                          <div className="flex items-center justify-center py-12">
-                            <Loader2 className="w-6 h-6 animate-spin text-[var(--color-primary)]" />
+                          <div>
+                            {Array.from({ length: 6 }).map((_, i) => (
+                              <TableRowSkeleton key={i} cols={5} />
+                            ))}
                           </div>
                         )}
 
@@ -478,8 +481,10 @@ const SecurityContent = () => {
                       </div>
 
                       {failedLoading && (
-                        <div className="flex items-center justify-center py-12">
-                          <Loader2 className="w-6 h-6 animate-spin text-[var(--color-primary)]" />
+                        <div>
+                          {Array.from({ length: 6 }).map((_, i) => (
+                            <TableRowSkeleton key={i} cols={5} />
+                          ))}
                         </div>
                       )}
 
@@ -549,8 +554,10 @@ const SecurityContent = () => {
                       </div>
 
                       {ipsLoading && (
-                        <div className="flex items-center justify-center py-12">
-                          <Loader2 className="w-6 h-6 animate-spin text-[var(--color-primary)]" />
+                        <div>
+                          {Array.from({ length: 6 }).map((_, i) => (
+                            <TableRowSkeleton key={i} cols={5} />
+                          ))}
                         </div>
                       )}
 

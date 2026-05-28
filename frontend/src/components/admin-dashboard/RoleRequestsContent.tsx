@@ -22,6 +22,7 @@ import {
 import { AdminSidebar, AdminNavbar } from "@/components/admin-dashboard";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import Select from "./Select";
+import { ListItemSkeleton } from "./AdminSkeletons";
 import {
   roleRequestsApi,
   type RoleRequest,
@@ -309,8 +310,10 @@ const RoleRequestsContent = () => {
 
           {/* Applications list — card style, not a dense table */}
           {isLoading ? (
-            <div className="flex items-center justify-center py-20 bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
-              <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
+            <div className="space-y-2.5">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <ListItemSkeleton key={i} />
+              ))}
             </div>
           ) : requests.length === 0 ? (
             <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] py-16 text-center">

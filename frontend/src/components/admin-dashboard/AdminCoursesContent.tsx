@@ -10,6 +10,7 @@ import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
 import SearchableSelect, { SearchableOption } from "./SearchableSelect";
 import Select from "./Select";
+import { CardGridItemSkeleton } from "./AdminSkeletons";
 import {
   BookOpen,
   Search,
@@ -707,8 +708,10 @@ const AdminCoursesContent = () => {
 
               {/* Loading State */}
               {loading && (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <CardGridItemSkeleton key={i} />
+                  ))}
                 </div>
               )}
 

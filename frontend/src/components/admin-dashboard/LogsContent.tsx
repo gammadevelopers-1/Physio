@@ -8,6 +8,7 @@ import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
 import Select from "./Select";
+import { TableRowSkeleton } from "./AdminSkeletons";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
 import {
   adminApi,
@@ -1195,8 +1196,10 @@ function buildPageNumbers(current: number, total: number): number[] {
 
 function LoadingPanel() {
   return (
-    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] py-16 flex items-center justify-center">
-      <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin" />
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
+      {Array.from({ length: 10 }).map((_, i) => (
+        <TableRowSkeleton key={i} cols={5} />
+      ))}
     </div>
   );
 }

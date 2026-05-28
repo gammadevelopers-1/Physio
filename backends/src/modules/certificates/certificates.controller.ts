@@ -103,7 +103,7 @@ export class CertificatesController {
    * No authentication required.
    */
   @Public()
-  @Throttle({ 'cert-verify': { limit: 30, ttl: 60_000 } }) // 30 / min / IP — defeats enumeration of short PG-XXXXXXXX IDs
+  @Throttle({ default: { limit: 30, ttl: 60_000 } }) // 30 / min / IP — defeats enumeration of short PG-XXXXXXXX IDs
   @Get('certificates/verify/:id')
   async verifyCertificate(@Param('id') id: string) {
     return this.certificatesService.verifyCertificate(id);

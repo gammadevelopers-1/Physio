@@ -73,7 +73,7 @@ export class AuthController {
   // Register
   // ===========================================
   @Public()
-  @Throttle({ auth: { limit: 5, ttl: 60_000 } }) // 5 / min / IP — abuse-prone
+  @Throttle({ default: { limit: 5, ttl: 60_000 } }) // 5 / min / IP — abuse-prone
   @Post('register')
   async register(@Body() dto: RegisterDto) {
     await this.recaptchaService.verify(dto.recaptchaToken, 'register');
@@ -84,7 +84,7 @@ export class AuthController {
   // Login (with 2FA support)
   // ===========================================
   @Public()
-  @Throttle({ auth: { limit: 10, ttl: 60_000 } }) // 10 / min / IP — distributed brute-force defense
+  @Throttle({ default: { limit: 10, ttl: 60_000 } }) // 10 / min / IP — distributed brute-force defense
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(
@@ -301,7 +301,7 @@ export class AuthController {
   // Forgot Password — send reset OTP
   // ===========================================
   @Public()
-  @Throttle({ auth: { limit: 3, ttl: 60_000 } }) // 3 / min / IP — email enumeration / OTP spam defense
+  @Throttle({ default: { limit: 3, ttl: 60_000 } }) // 3 / min / IP — email enumeration / OTP spam defense
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() body: { email: string; recaptchaToken?: string }) {
@@ -315,7 +315,7 @@ export class AuthController {
   // Reset Password — verify OTP + set new password
   // ===========================================
   @Public()
-  @Throttle({ auth: { limit: 5, ttl: 60_000 } }) // 5 / min / IP — OTP brute-force defense
+  @Throttle({ default: { limit: 5, ttl: 60_000 } }) // 5 / min / IP — OTP brute-force defense
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   async resetPassword(
@@ -339,7 +339,7 @@ export class AuthController {
   }
 
   @Public()
-  @Throttle({ auth: { limit: 5, ttl: 60_000 } })
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('password-setup/complete')
   @HttpCode(HttpStatus.OK)
   async completePasswordSetup(

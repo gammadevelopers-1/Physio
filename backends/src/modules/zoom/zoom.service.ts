@@ -1217,10 +1217,16 @@ export class ZoomService implements IZoomService, OnModuleInit {
       if (userRes.ok) {
         const user: any = await userRes.json();
         const f = user.feature || {};
+        // Log the raw feature object once so we can confirm exactly which
+        // flag Zoom uses for the webinar add-on on this account tier.
+        this.logger.log(
+          `Zoom feature for ${target}: ${JSON.stringify(f)}`,
+        );
         hasWebinarLicense =
+          f.webinar === true ||
           f.zoom_webinar === true ||
           Boolean(f.webinar_capacity) ||
-          Boolean(f.large_meeting_capacity);
+          Boolean(f.zoom_webinar_capacity);
         // Per-seat read is authoritative — refine exists/type from it.
         userExists = true;
         if (typeof user.type === 'number') {

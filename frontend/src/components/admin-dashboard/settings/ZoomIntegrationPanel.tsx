@@ -90,10 +90,10 @@ export default function ZoomIntegrationPanel() {
     }
   };
 
-  const handleSave = async () => {
+  const saveHost = async (emailToSave: string | null) => {
     setSaving(true);
     try {
-      const cfg = await zoomAdminApi.updateConfig(defaultHost.trim() || null);
+      const cfg = await zoomAdminApi.updateConfig(emailToSave?.trim() || null);
       const host = cfg.defaultHostEmail ?? "";
       setSavedHost(host);
       setDefaultHost(host);
@@ -104,6 +104,8 @@ export default function ZoomIntegrationPanel() {
       setSaving(false);
     }
   };
+
+  const handleSave = () => saveHost(defaultHost.trim() || null);
 
   if (loading) {
     return (
@@ -173,8 +175,9 @@ export default function ZoomIntegrationPanel() {
                       ) : (
                         <button
                           type="button"
-                          onClick={() => setDefaultHost(seat.email)}
-                          className="text-xs font-medium text-[var(--color-primary)] hover:underline flex-shrink-0"
+                          onClick={() => saveHost(seat.email)}
+                          disabled={saving}
+                          className="text-xs font-medium text-[var(--color-primary)] hover:underline flex-shrink-0 disabled:opacity-50"
                         >
                           {t("useAsHost")}
                         </button>

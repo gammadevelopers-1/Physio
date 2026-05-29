@@ -1655,7 +1655,8 @@ export interface ZoomAccountInfo {
 export interface ZoomLicenseCheck {
   email: string;
   userExists: boolean;
-  hasWebinarLicense: boolean;
+  /** null = couldn't determine (app missing the per-user read scope). */
+  hasWebinarLicense: boolean | null;
   userType: number | null;
   error?: string;
 }

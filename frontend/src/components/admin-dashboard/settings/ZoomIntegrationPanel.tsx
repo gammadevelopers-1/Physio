@@ -260,6 +260,7 @@ export default function ZoomIntegrationPanel() {
               <SeatCheck
                 ok={testResult.host.hasWebinarLicense}
                 label={t("seatWebinar")}
+                unknownHint={t("seatWebinarUnknown")}
               />
             </ul>
           )}
@@ -337,7 +338,28 @@ function InfoLine({
   );
 }
 
-function SeatCheck({ ok, label }: { ok: boolean; label: string }) {
+function SeatCheck({
+  ok,
+  label,
+  unknownHint,
+}: {
+  ok: boolean | null;
+  label: string;
+  unknownHint?: string;
+}) {
+  // null = couldn't determine (e.g. missing per-user scope) — show a
+  // neutral "unknown" marker, not a false red ✗.
+  if (ok === null) {
+    return (
+      <li className="flex items-center gap-1.5">
+        <AlertCircle className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
+        <span>
+          {label}
+          {unknownHint ? ` — ${unknownHint}` : ""}
+        </span>
+      </li>
+    );
+  }
   return (
     <li className="flex items-center gap-1.5">
       {ok ? (

@@ -6356,6 +6356,7 @@
         "seatExists": "Seat exists on the account",
         "seatLicensed": "Seat is Licensed (can host meetings)",
         "seatWebinar": "Seat has the Webinar add-on",
+        "seatWebinarUnknown": "couldn't verify (Zoom app missing user:read:user scope)",
         "accountErrorShort": "Account info unavailable"
       },
       "maintenance": {

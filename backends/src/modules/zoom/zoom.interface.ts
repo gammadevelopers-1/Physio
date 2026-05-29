@@ -160,7 +160,18 @@ export interface ZoomConnectionStatus {
   /** OAuth token fetch succeeded — the credentials are valid. */
   connected: boolean;
   /** Present only when an email was supplied to validate a specific seat. */
-  host?: WebinarLicenseCheckResult & { email: string };
+  host?: {
+    email: string;
+    /** Seat is present on the account (derived from the user list). */
+    userExists: boolean;
+    /** 1=Basic, 2=Licensed. null when it couldn't be determined. */
+    userType: number | null;
+    /**
+     * Webinar add-on present. `null` = couldn't determine (the app is
+     * missing the user:read:user scope needed to read per-seat features).
+     */
+    hasWebinarLicense: boolean | null;
+  };
   error?: string;
 }
 

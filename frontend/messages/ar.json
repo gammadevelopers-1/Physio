@@ -6356,6 +6356,7 @@
         "seatExists": "المقعد موجود في الحساب",
         "seatLicensed": "المقعد مرخّص (يمكنه استضافة الاجتماعات)",
         "seatWebinar": "المقعد يملك إضافة الندوات",
+        "seatWebinarUnknown": "تعذّر التحقق (تطبيق Zoom يفتقد صلاحية user:read:user)",
         "accountErrorShort": "معلومات الحساب غير متوفرة"
       },
       "maintenance": {

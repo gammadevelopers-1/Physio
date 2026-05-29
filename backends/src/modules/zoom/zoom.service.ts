@@ -1163,10 +1163,11 @@ export class ZoomService implements IZoomService, OnModuleInit {
 
   async testConnection(email?: string): Promise<ZoomConnectionStatus> {
     // 1) Credentials valid? Force a fresh token to truly exercise OAuth.
+    let token: string;
     try {
       this.cachedToken = null;
       this.tokenExpiresAt = 0;
-      await this.getAccessToken();
+      token = await this.getAccessToken();
     } catch (err) {
       return {
         connected: false,
@@ -1174,11 +1175,66 @@ export class ZoomService implements IZoomService, OnModuleInit {
       };
     }
 
-    // 2) Optionally validate a specific host seat.
-    if (email?.trim()) {
-      const host = await this.checkWebinarLicense(email.trim());
-      return { connected: true, host: { ...host, email: email.trim() } };
+    const target = email?.trim();
+    if (!target) return { connected: true };
+
+    // 2) exists + licensed from the USER LIST. This uses the
+    // user:read:list_users scope (the one that already powers the seat
+    // list), so it works even when the per-user read scope is missing.
+    let userExists = false;
+    let userType: number | null = null;
+    try {
+      const listRes = await this.zoomFetch(
+        'https://api.zoom.us/v2/users?status=active&page_size=300',
+        { method: 'GET', headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (listRes.ok) {
+        const data: any = await listRes.json();
+        const found = (data.users || []).find(
+          (u: any) =>
+            (u.email || '').toLowerCase() === target.toLowerCase(),
+        );
+        if (found) {
+          userExists = true;
+          userType = typeof found.type === 'number' ? found.type : null;
+        }
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Zoom test: user list failed: ${err instanceof Error ? err.message : err}`,
+      );
     }
-    return { connected: true };
+
+    // 3) Webinar add-on — only readable via the per-seat GET, which needs
+    // the user:read:user scope. If that's missing, leave it null
+    // ("unknown") rather than reporting a false negative.
+    let hasWebinarLicense: boolean | null = null;
+    try {
+      const userRes = await this.zoomFetch(
+        `https://api.zoom.us/v2/users/${encodeURIComponent(target)}`,
+        { method: 'GET', headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (userRes.ok) {
+        const user: any = await userRes.json();
+        const f = user.feature || {};
+        hasWebinarLicense =
+          f.zoom_webinar === true ||
+          Boolean(f.webinar_capacity) ||
+          Boolean(f.large_meeting_capacity);
+        // Per-seat read is authoritative — refine exists/type from it.
+        userExists = true;
+        if (typeof user.type === 'number') {
+          userType = user.type;
+        }
+      }
+      // non-OK (e.g. missing scope / 404) → leave hasWebinarLicense null
+    } catch {
+      /* leave null — couldn't determine */
+    }
+
+    return {
+      connected: true,
+      host: { email: target, userExists, userType, hasWebinarLicense },
+    };
   }
 }

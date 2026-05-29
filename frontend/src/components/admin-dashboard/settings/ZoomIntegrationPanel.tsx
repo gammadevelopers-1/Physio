@@ -13,6 +13,7 @@ import {
   Save,
   Plug,
   AlertCircle,
+  UserCircle,
 } from "lucide-react";
 import {
   zoomAdminApi,
@@ -134,6 +135,53 @@ export default function ZoomIntegrationPanel() {
             />
             <InfoLine label={t("accountId")} value={account.accountId} mono />
           </div>
+
+          {/* The actual licensed seats — click one to set it as default host. */}
+          {account.licensedSeats.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
+              <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)] mb-2">
+                {t("seatsListTitle")}
+              </p>
+              <div className="space-y-1.5">
+                {account.licensedSeats.map((seat) => {
+                  const isCurrent =
+                    seat.email.toLowerCase() === defaultHost.trim().toLowerCase();
+                  return (
+                    <div
+                      key={seat.email}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[var(--color-surface-card)] border border-[var(--color-border)]"
+                    >
+                      <div className="w-7 h-7 rounded-full bg-[var(--color-border-subtle)] flex items-center justify-center flex-shrink-0">
+                        <UserCircle className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-[var(--color-text-primary)] truncate">
+                          {seat.name || seat.email}
+                        </p>
+                        <p className="text-xs text-[var(--color-text-secondary)] font-mono truncate">
+                          {seat.email}
+                        </p>
+                      </div>
+                      {isCurrent ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-[#15803D] bg-[#DCFCE7] rounded-full flex-shrink-0">
+                          <CheckCircle2 className="w-3 h-3" />
+                          {t("currentHost")}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setDefaultHost(seat.email)}
+                          className="text-xs font-medium text-[var(--color-primary)] hover:underline flex-shrink-0"
+                        >
+                          {t("useAsHost")}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="bg-[var(--color-border-subtle)] border border-[var(--color-border)] rounded-lg p-3 flex items-start gap-2">

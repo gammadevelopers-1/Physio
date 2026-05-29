@@ -8,6 +8,141 @@ const intlMiddleware = createMiddleware(routing);
 const PROTECTED_PREFIX = '/dashboard';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+const IS_PROD = process.env.NODE_ENV === 'production';
+
+// ===========================================
+// Content-Security-Policy
+// ===========================================
+// Rolled out in Report-Only first: the browser reports violations to the
+// console but blocks nothing, so we can confirm every legit resource is
+// allowed before enforcing. Flip CSP_REPORT_ONLY to false to enforce.
+const CSP_REPORT_ONLY = false;
+const CSP_RESPONSE_HEADER = CSP_REPORT_ONLY
+  ? 'content-security-policy-report-only'
+  : 'content-security-policy';
+
+function apiOrigin(): string {
+  try {
+    return new URL(API_URL).origin;
+  } catch {
+    return '';
+  }
+}
+
+// Strong, app-specific CSP. script-src uses a per-request nonce +
+// 'strict-dynamic' (modern browsers ignore the host allowlist / 'unsafe-inline'
+// fallbacks, which exist only for old browsers). Everything the app actually
+// loads — GTM/GA4/Meta Pixel, reCAPTCHA, Leaflet/OSM, Strapi+GCS media,
+// admin-entered video/PDF embeds — is accounted for below.
+function buildCsp(nonce: string): string {
+  const cms = 'https://cms.physioguidance.org';
+  const connect = [
+    "'self'",
+    apiOrigin(),
+    cms,
+    'https://www.googletagmanager.com',
+    'https://www.google-analytics.com',
+    'https://*.google-analytics.com',
+    'https://analytics.google.com',
+    'https://stats.g.doubleclick.net',
+    'https://connect.facebook.net',
+    'https://www.facebook.com',
+    'https://www.google.com',
+    'https://www.gstatic.com',
+  ];
+  if (!IS_PROD) {
+    connect.push('http://localhost:8080', 'http://localhost:*', 'ws://localhost:*');
+  }
+
+  const directives = [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https: 'unsafe-inline'`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    `connect-src ${connect.filter(Boolean).join(' ')}`,
+    // Iframes we embed: reCAPTCHA, GTM noscript, admin-entered videos
+    // (YouTube/Vimeo/etc.) and PDF previews from our media hosts.
+    "frame-src 'self' https:",
+    "media-src 'self' blob: https:",
+    "worker-src 'self' blob:",
+    "form-action 'self'",
+    "manifest-src 'self'",
+  ];
+  if (IS_PROD) directives.push('upgrade-insecure-requests');
+
+  return directives.join('; ');
+}
+
+// Build a render response that (a) forwards the nonce to the React render so
+// Next can tag its own scripts, and (b) carries the CSP for the browser. Used
+// only on non-redirect paths.
+function renderWithCsp(
+  request: NextRequest,
+  nonce: string,
+  csp: string,
+): NextResponse {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nonce', nonce);
+  // Next reads the nonce from the request CSP header to tag its scripts. This
+  // header never reaches the browser; the browser only sees the response one.
+  requestHeaders.set('content-security-policy', csp);
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set(CSP_RESPONSE_HEADER, csp);
+  return response;
+}
+
+// next-intl owns the i18n rewrite. We run it, then re-issue its rewrite with
+// the nonce merged into the forwarded request headers (so the render sees it),
+// preserving next-intl's own request-header overrides + response cookies.
+function intlWithCsp(
+  request: NextRequest,
+  nonce: string,
+  csp: string,
+): NextResponse {
+  const intlResponse = intlMiddleware(request);
+
+  // next-intl redirected (e.g. added a locale prefix) — redirects don't carry
+  // a rendered body, so no nonce/CSP needed; the target gets it on its render.
+  if (intlResponse.headers.get('location')) {
+    return intlResponse;
+  }
+
+  // Merge next-intl's request-header overrides with our nonce + CSP.
+  const merged = new Headers(request.headers);
+  const overrides = intlResponse.headers.get('x-middleware-override-headers');
+  if (overrides) {
+    for (const name of overrides.split(',').map((s) => s.trim()).filter(Boolean)) {
+      const value = intlResponse.headers.get(`x-middleware-request-${name}`);
+      if (value !== null) merged.set(name, value);
+    }
+  }
+  merged.set('x-nonce', nonce);
+  merged.set('content-security-policy', csp);
+
+  const rewrite = intlResponse.headers.get('x-middleware-rewrite');
+  const response = rewrite
+    ? NextResponse.rewrite(new URL(rewrite, request.url), {
+        request: { headers: merged },
+      })
+    : NextResponse.next({ request: { headers: merged } });
+
+  // Preserve next-intl's response cookies (NEXT_LOCALE) and Vary/Link.
+  intlResponse.cookies.getAll().forEach((c) => {
+    response.cookies.set(c);
+  });
+  const vary = intlResponse.headers.get('vary');
+  if (vary) response.headers.set('vary', vary);
+  const link = intlResponse.headers.get('link');
+  if (link) response.headers.set('link', link);
+
+  response.headers.set(CSP_RESPONSE_HEADER, csp);
+  return response;
+}
 
 interface CachedLocaleSettings {
   defaultLanguage: 'en' | 'ar';
@@ -87,6 +222,10 @@ async function getMaintenance(): Promise<CachedMaintenance> {
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Per-request CSP nonce shared across every render path below.
+  const nonce = btoa(crypto.randomUUID());
+  const csp = buildCsp(nonce);
+
   // Maintenance check FIRST — runs ahead of auth so a logged-in
   // student/instructor/manager sees the maintenance page just like a
   // logged-out visitor. Admins keep their dashboard, sign-in/password
@@ -137,7 +276,7 @@ export default async function middleware(request: NextRequest) {
         new URL(`/${locale}/signin?redirect=${redirectUrl}`, request.url)
       );
     }
-    return NextResponse.next();
+    return renderWithCsp(request, nonce, csp);
   }
 
   // Locale-aware redirects honoring admin Settings.
@@ -162,7 +301,7 @@ export default async function middleware(request: NextRequest) {
     );
   }
 
-  return intlMiddleware(request);
+  return intlWithCsp(request, nonce, csp);
 }
 
 export const config = {

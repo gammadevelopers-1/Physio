@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Noto_Sans_Arabic } from "next/font/google";
 import Script from "next/script";
+import { headers } from "next/headers";
 import "./globals.css";
 import { getSiteSettings, getStrapiMediaUrl } from "@/lib/strapi";
 import JsonLd from "@/components/seo/JsonLd";
@@ -87,6 +88,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Per-request CSP nonce from middleware. Next auto-applies it to scripts it
+  // controls, but we pass it explicitly to next/script so the inline tracking
+  // bootstraps (GTM / GA4 / Meta Pixel) are accepted under the strict script-src.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   const settings = await getSiteSettings().catch(() => null);
   const theme = {
     primary: settings?.themePrimaryColor || THEME_DEFAULTS.primary,
@@ -150,21 +156,22 @@ export default async function RootLayout({
             title="gtm-noscript"
           />
         </noscript>
-        <Script id="gtm-base" strategy="afterInteractive">{`
+        <Script id="gtm-base" strategy="afterInteractive" nonce={nonce}>{`
           (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${GTM_ID}');
         `}</Script>
         <Script
           id="ga4-loader"
           strategy="afterInteractive"
+          nonce={nonce}
           src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`}
         />
-        <Script id="ga4-init" strategy="afterInteractive">{`
+        <Script id="ga4-init" strategy="afterInteractive" nonce={nonce}>{`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
           gtag('config', '${GA4_ID}');
         `}</Script>
-        <Script id="meta-pixel" strategy="afterInteractive">{`
+        <Script id="meta-pixel" strategy="afterInteractive" nonce={nonce}>{`
           !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
           fbq('init', '${META_PIXEL_ID}');
           fbq('track', 'PageView');

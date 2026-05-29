@@ -10,6 +10,8 @@
  * payload is built server-side from typed inputs, so we control the JSON.
  */
 
+import { headers } from "next/headers";
+
 interface JsonLdProps {
   /** A single JSON-LD object or an array of them. */
   data: unknown | unknown[];
@@ -17,7 +19,11 @@ interface JsonLdProps {
   id?: string;
 }
 
-export default function JsonLd({ data, id }: JsonLdProps) {
+export default async function JsonLd({ data, id }: JsonLdProps) {
+  // Per-request CSP nonce (set in middleware). Inline scripts — including
+  // `application/ld+json` — are blocked by the strict script-src unless they
+  // carry the matching nonce. All current callers are server components.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   const payload = Array.isArray(data) ? data : [data];
   // Strip `undefined` and forbid `</script>` injection (defensive).
   const json = JSON.stringify(payload.length === 1 ? payload[0] : payload).replace(
@@ -28,6 +34,7 @@ export default function JsonLd({ data, id }: JsonLdProps) {
     <script
       type="application/ld+json"
       id={id}
+      nonce={nonce}
       dangerouslySetInnerHTML={{ __html: json }}
     />
   );

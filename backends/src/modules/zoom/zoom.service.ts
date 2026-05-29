@@ -1049,11 +1049,28 @@ export class ZoomService implements IZoomService, OnModuleInit {
       }
 
       const user: any = await response.json();
-      const features = user?.feature || {};
-      const hasWebinar =
-        features.zoom_webinar === true ||
-        Boolean(features.webinar_capacity) ||
-        Boolean(features.large_meeting_capacity);
+
+      // Webinar capability lives in the user SETTINGS endpoint, not the
+      // top-level user `feature` (which is empty on Zoom Workplace).
+      let hasWebinar = false;
+      try {
+        const settingsRes = await this.zoomFetch(
+          `https://api.zoom.us/v2/users/${encodeURIComponent(email)}/settings`,
+          { method: 'GET', headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (settingsRes.ok) {
+          const settings: any = await settingsRes.json();
+          const f = settings.feature || {};
+          hasWebinar =
+            f.webinar === true ||
+            f.zoom_webinar === true ||
+            Boolean(f.webinar_capacity) ||
+            Boolean(f.zoom_webinar_capacity);
+        }
+      } catch {
+        /* leave false if settings unreadable */
+      }
+
       return {
         userExists: true,
         hasWebinarLicense: hasWebinar,
@@ -1205,33 +1222,28 @@ export class ZoomService implements IZoomService, OnModuleInit {
       );
     }
 
-    // 3) Webinar add-on — only readable via the per-seat GET, which needs
-    // the user:read:user scope. If that's missing, leave it null
-    // ("unknown") rather than reporting a false negative.
+    // 3) Webinar add-on. NOTE: GET /users/{id} returns an empty/minimal
+    // `feature` object on Zoom Workplace — the per-seat webinar flag lives
+    // in the user SETTINGS endpoint instead. Needs the user:read:user
+    // scope; if missing, leave null ("unknown") rather than a false ✗.
     let hasWebinarLicense: boolean | null = null;
     try {
-      const userRes = await this.zoomFetch(
-        `https://api.zoom.us/v2/users/${encodeURIComponent(target)}`,
+      const settingsRes = await this.zoomFetch(
+        `https://api.zoom.us/v2/users/${encodeURIComponent(target)}/settings`,
         { method: 'GET', headers: { Authorization: `Bearer ${token}` } },
       );
-      if (userRes.ok) {
-        const user: any = await userRes.json();
-        const f = user.feature || {};
-        // Log the raw feature object once so we can confirm exactly which
-        // flag Zoom uses for the webinar add-on on this account tier.
+      if (settingsRes.ok) {
+        const settings: any = await settingsRes.json();
+        const f = settings.feature || {};
         this.logger.log(
-          `Zoom feature for ${target}: ${JSON.stringify(f)}`,
+          `Zoom settings.feature for ${target}: ${JSON.stringify(f)}`,
         );
         hasWebinarLicense =
           f.webinar === true ||
           f.zoom_webinar === true ||
           Boolean(f.webinar_capacity) ||
           Boolean(f.zoom_webinar_capacity);
-        // Per-seat read is authoritative — refine exists/type from it.
         userExists = true;
-        if (typeof user.type === 'number') {
-          userType = user.type;
-        }
       }
       // non-OK (e.g. missing scope / 404) → leave hasWebinarLicense null
     } catch {

@@ -12,6 +12,7 @@ import {
   Users,
   Save,
   Plug,
+  AlertCircle,
 } from "lucide-react";
 import {
   zoomAdminApi,
@@ -113,8 +114,9 @@ export default function ZoomIntegrationPanel() {
 
   return (
     <div className="space-y-5 pt-2">
-      {/* Connected account card */}
-      {account ? (
+      {/* Connected account card — only when we could actually read the
+          owner. Otherwise show a soft note; host management still works. */}
+      {account?.ownerEmail ? (
         <div className="bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg p-4">
           <div className="flex items-center gap-2 mb-3">
             <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
@@ -134,10 +136,10 @@ export default function ZoomIntegrationPanel() {
           </div>
         </div>
       ) : (
-        <div className="bg-[#FEF2F2] border border-[#FECACA] rounded-lg p-3 flex items-start gap-2">
-          <XCircle className="w-4 h-4 text-[#DC2626] mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-[#991B1B]">
-            {accountError || t("accountError")}
+        <div className="bg-[var(--color-border-subtle)] border border-[var(--color-border)] rounded-lg p-3 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-[var(--color-text-secondary)]">
+            {accountError || t("accountUnavailable")}
           </p>
         </div>
       )}

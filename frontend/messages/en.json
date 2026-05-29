@@ -6338,6 +6338,7 @@
         "accountId": "Account ID",
         "licensedSeats": "Licensed seats",
         "accountError": "Couldn't load Zoom account info. Check the connection or try again.",
+        "accountUnavailable": "Account details couldn't be read (the Zoom app may lack the user-list scope). Host management below still works.",
         "defaultHostLabel": "Default host email",
         "defaultHostHelp": "The licensed Zoom seat used to host meetings and webinars when a session's instructor isn't a licensed user. Switch it anytime — it applies to all new meetings and webinars immediately.",
         "emptyHint": "Leave blank to fall back to the Zoom account owner.",

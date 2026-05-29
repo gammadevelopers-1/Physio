@@ -1103,50 +1103,56 @@ export class ZoomService implements IZoomService, OnModuleInit {
   async getAccountInfo(): Promise<ZoomAccountInfo> {
     const token = await this.getAccessToken();
 
-    const meRes = await this.zoomFetch('https://api.zoom.us/v2/users/me', {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!meRes.ok) {
-      const errorText = await meRes.text();
-      this.logger.error(`Zoom get account info failed: ${errorText}`);
-      throw new Error(`Failed to read Zoom account: ${meRes.status}`);
-    }
-    const me: any = await meRes.json();
+    // NOTE: avoid GET /users/me — Server-to-Server OAuth tokens carry no
+    // user context, so Zoom returns 400 for the `me` keyword on the user
+    // detail endpoint. Derive the account from the users LIST instead and
+    // pick the owner (role_id '0' / role_name 'Owner'). Same read scope
+    // that checkWebinarLicense already relies on in production.
+    const usersRes = await this.zoomFetch(
+      'https://api.zoom.us/v2/users?status=active&page_size=300',
+      { method: 'GET', headers: { Authorization: `Bearer ${token}` } },
+    );
 
-    // List active users and surface only the licensed seats (type === 2).
-    const licensedSeats: ZoomSeat[] = [];
-    try {
-      const usersRes = await this.zoomFetch(
-        'https://api.zoom.us/v2/users?status=active&page_size=300',
-        { method: 'GET', headers: { Authorization: `Bearer ${token}` } },
-      );
-      if (usersRes.ok) {
-        const data: any = await usersRes.json();
-        for (const u of data.users || []) {
-          if (u.type === 2) {
-            licensedSeats.push({
-              email: u.email || '',
-              name:
-                `${u.first_name || ''} ${u.last_name || ''}`.trim() ||
-                u.email ||
-                '',
-              type: u.type,
-            });
-          }
-        }
-      }
-    } catch (err) {
+    // Degrade gracefully — never 500 the settings panel. Host management
+    // (default host + test + save) works regardless of this read.
+    if (!usersRes.ok) {
+      const errorText = await usersRes.text();
       this.logger.warn(
-        `Zoom user list failed (account info still returned): ${err instanceof Error ? err.message : err}`,
+        `Zoom user list unavailable (${usersRes.status}): ${errorText.slice(0, 200)}`,
       );
+      return {
+        ownerEmail: '',
+        ownerName: '',
+        accountId: this.accountId || '',
+        type: 0,
+        licensedSeats: [],
+      };
     }
+
+    const data: any = await usersRes.json();
+    const allUsers: any[] = data.users || [];
+
+    const licensedSeats: ZoomSeat[] = allUsers
+      .filter((u) => u.type === 2)
+      .map((u) => ({
+        email: u.email || '',
+        name:
+          `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || '',
+        type: u.type,
+      }));
+
+    const owner =
+      allUsers.find(
+        (u) => u.role_id === '0' || u.role_name === 'Owner',
+      ) || allUsers[0];
 
     return {
-      ownerEmail: me.email || '',
-      ownerName: `${me.first_name || ''} ${me.last_name || ''}`.trim(),
-      accountId: me.account_id || this.accountId || '',
-      type: typeof me.type === 'number' ? me.type : 0,
+      ownerEmail: owner?.email || '',
+      ownerName: owner
+        ? `${owner.first_name || ''} ${owner.last_name || ''}`.trim()
+        : '',
+      accountId: owner?.account_id || this.accountId || '',
+      type: typeof owner?.type === 'number' ? owner.type : 0,
       licensedSeats,
     };
   }

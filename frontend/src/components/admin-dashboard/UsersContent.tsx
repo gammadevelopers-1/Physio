@@ -411,6 +411,7 @@ function EditUserModal({
     firstName: user.firstName || "",
     lastName: user.lastName || "",
     phone: user.phone || "",
+    zoomEmail: user.zoomEmail || "",
     isActive: user.isActive,
     isVerified: user.isVerified,
   });
@@ -430,6 +431,8 @@ function EditUserModal({
         lastName: form.lastName,
         isActive: form.isActive,
         isVerified: form.isVerified,
+        // Send trimmed value, or "" to clear. undefined would skip it.
+        zoomEmail: form.zoomEmail.trim() || "",
       };
       if (form.phone) data.phone = form.phone;
       await adminApi.updateUser(user.id, data);
@@ -496,6 +499,22 @@ function EditUserModal({
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
               className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+              Zoom Host Email
+            </label>
+            <input
+              type="email"
+              value={form.zoomEmail}
+              onChange={(e) => setForm({ ...form, zoomEmail: e.target.value })}
+              placeholder={user.email}
+              className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+            />
+            <p className="text-[11px] text-[var(--color-text-secondary)] mt-1">
+              Licensed Zoom seat this user hosts under. Leave blank to use their login email, then the platform default host.
+            </p>
           </div>
 
           <div className="flex items-center justify-between py-2">

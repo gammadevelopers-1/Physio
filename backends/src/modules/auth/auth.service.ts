@@ -1212,6 +1212,10 @@ export class AuthService {
     if (dto.firstName !== undefined) updateData.firstName = dto.firstName;
     if (dto.lastName !== undefined) updateData.lastName = dto.lastName;
     if (dto.phone !== undefined) updateData.phone = encryptPII(dto.phone);
+    // Zoom seat email — stored plaintext (not PII): host resolution reads
+    // it directly when creating meetings/webinars. Empty clears it.
+    if (dto.zoomEmail !== undefined)
+      updateData.zoomEmail = dto.zoomEmail?.trim() || null;
     if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
     if (dto.isVerified !== undefined) updateData.isVerified = dto.isVerified;
     if (dto.activeRole !== undefined) {
@@ -1255,6 +1259,7 @@ export class AuthService {
         email: users.email,
         firstName: users.firstName,
         lastName: users.lastName,
+        zoomEmail: users.zoomEmail,
         activeRole: users.activeRole,
         isActive: users.isActive,
         isVerified: users.isVerified,
@@ -1492,6 +1497,7 @@ export class AuthService {
           email: users.email,
           firstName: users.firstName,
           lastName: users.lastName,
+          zoomEmail: users.zoomEmail,
           scfhsNumber: users.scfhsNumber,
           activeRole: users.activeRole,
           isActive: users.isActive,

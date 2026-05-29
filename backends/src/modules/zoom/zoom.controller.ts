@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Put,
   Get,
   Query,
   Body,
@@ -12,6 +13,7 @@ import {
   Inject,
   UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { eq, and, or, isNotNull, isNull } from 'drizzle-orm';
 import { db } from '../../database';
 import {
@@ -26,8 +28,12 @@ import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { ZoomWebhookService } from './zoom-webhook.service';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { EmailService } from '../email/email.service';
-import { Public, Roles } from '../auth/decorators';
+import { Public, Roles, CurrentUser } from '../auth/decorators';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
+import {
+  UpdateZoomConfigDto,
+  TestZoomConnectionDto,
+} from './dto/update-zoom-config.dto';
 import * as crypto from 'crypto';
 
 /** Deduplication: track processed webhook event IDs with TTL (item #15) */
@@ -623,5 +629,50 @@ export class ZoomController {
       throw new BadRequestException('email query param is required');
     }
     return this.zoomService.checkWebinarLicense(email);
+  }
+
+  // ─── Admin: Zoom host management ─────────────────────────────────────
+  // Lets a super-admin pick the fallback host seat and inspect/test the
+  // connection without touching credentials or redeploying. Admin-gated;
+  // skip the throttle since the settings page fans out a few calls.
+
+  @SkipThrottle()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Get('config')
+  async getZoomConfig() {
+    return this.zoomService.getZoomConfig();
+  }
+
+  @SkipThrottle()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Put('config')
+  async updateZoomConfig(
+    @Body() dto: UpdateZoomConfigDto,
+    @CurrentUser('id') adminId: string,
+  ) {
+    await this.zoomService.setDefaultHostEmail(
+      dto.defaultHostEmail ?? null,
+      adminId,
+    );
+    return this.zoomService.getZoomConfig();
+  }
+
+  @SkipThrottle()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Get('account-info')
+  async getAccountInfo() {
+    return this.zoomService.getAccountInfo();
+  }
+
+  @SkipThrottle()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Post('config/test')
+  @HttpCode(HttpStatus.OK)
+  async testZoomConnection(@Body() dto: TestZoomConnectionDto) {
+    return this.zoomService.testConnection(dto.email);
   }
 }

@@ -23,6 +23,7 @@ import {
   Smartphone,
   UserX,
   Trash2,
+  Video,
 } from "lucide-react";
 import type { User } from "@/lib/api";
 import UserAvatar from "./UserAvatar";
@@ -145,6 +146,14 @@ export default function UserDetailDrawer({
             <Field icon={Mail} label={t("detail.email")} value={user.email} mono />
             {user.phone && (
               <Field icon={Phone} label={t("detail.phone")} value={user.phone} />
+            )}
+            {user.zoomEmail && (
+              <Field
+                icon={Video}
+                label={t("detail.zoomEmail")}
+                value={user.zoomEmail}
+                mono
+              />
             )}
           </Section>
 

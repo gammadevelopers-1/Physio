@@ -5,6 +5,8 @@ import {
   IsOptional,
   IsBoolean,
   IsIn,
+  IsEmail,
+  ValidateIf,
 } from 'class-validator';
 import { ROLE_NAMES } from '../../../database/schema';
 
@@ -27,6 +29,17 @@ export class UpdateUserDto {
   @IsString()
   @MaxLength(20)
   phone?: string;
+
+  /**
+   * The instructor's Zoom seat email — the licensed user under which
+   * their sessions/webinars are hosted. Empty string clears it (falls
+   * back to login email, then the default host). When set it must be a
+   * valid email.
+   */
+  @IsOptional()
+  @ValidateIf((_o, v) => v !== null && v !== '')
+  @IsEmail({}, { message: 'zoomEmail must be a valid email' })
+  zoomEmail?: string | null;
 
   @IsOptional()
   @IsBoolean()

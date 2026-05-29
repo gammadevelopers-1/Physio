@@ -397,6 +397,8 @@ export interface User {
   qualification?: string | null;
   twitter?: string | null;
   linkedin?: string | null;
+  /** Zoom seat email — the licensed user under which this person hosts. */
+  zoomEmail?: string | null;
   roles: string[];
   isActive: boolean;
   isVerified: boolean;
@@ -526,6 +528,7 @@ export interface UpdateUserData {
   firstName?: string;
   lastName?: string;
   phone?: string;
+  zoomEmail?: string | null;
   isActive?: boolean;
   isVerified?: boolean;
   activeRole?: string;
@@ -1624,6 +1627,52 @@ export const adminSettingsApi = {
         { configured: boolean; required: boolean; description: string }
       >
     >('/admin/settings/integrations/health'),
+};
+
+// ===========================================
+// Zoom host management (admin) — pick the fallback host seat,
+// inspect the connected account, test the connection. Credentials
+// stay in Secret Manager; this only manages which seat hosts.
+// ===========================================
+export interface ZoomConfig {
+  defaultHostEmail: string | null;
+}
+
+export interface ZoomSeat {
+  email: string;
+  name: string;
+  type: number;
+}
+
+export interface ZoomAccountInfo {
+  ownerEmail: string;
+  ownerName: string;
+  accountId: string;
+  type: number;
+  licensedSeats: ZoomSeat[];
+}
+
+export interface ZoomLicenseCheck {
+  email: string;
+  userExists: boolean;
+  hasWebinarLicense: boolean;
+  userType: number | null;
+  error?: string;
+}
+
+export interface ZoomConnectionStatus {
+  connected: boolean;
+  host?: ZoomLicenseCheck;
+  error?: string;
+}
+
+export const zoomAdminApi = {
+  getConfig: () => api.get<ZoomConfig>('/zoom/config'),
+  updateConfig: (defaultHostEmail: string | null) =>
+    api.put<ZoomConfig>('/zoom/config', { defaultHostEmail }),
+  getAccountInfo: () => api.get<ZoomAccountInfo>('/zoom/account-info'),
+  testConnection: (email?: string) =>
+    api.post<ZoomConnectionStatus>('/zoom/config/test', email ? { email } : {}),
 };
 
 // ===========================================

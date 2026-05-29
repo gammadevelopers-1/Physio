@@ -126,6 +126,44 @@ export interface WebinarLicenseCheckResult {
   error?: string;
 }
 
+/** Admin-editable Zoom config persisted in system_settings (category 'zoom'). */
+export interface ZoomConfig {
+  /**
+   * Fallback host used when a session's instructor isn't a licensed seat.
+   * Replaces the implicit app-owner ('me') fallback. Null → fall back to
+   * the OAuth app owner as before.
+   */
+  defaultHostEmail: string | null;
+}
+
+/** A licensed seat on the connected Zoom account. */
+export interface ZoomSeat {
+  email: string;
+  name: string;
+  /** 1=Basic, 2=Licensed, 3=On-Prem. */
+  type: number;
+}
+
+/** Summary of the connected Zoom account (from /users/me). */
+export interface ZoomAccountInfo {
+  ownerEmail: string;
+  ownerName: string;
+  accountId: string;
+  /** Owner seat type — 2=Licensed. */
+  type: number;
+  /** Licensed seats on the account (type === 2), owner included. */
+  licensedSeats: ZoomSeat[];
+}
+
+/** Result of a connection / host validation probe. */
+export interface ZoomConnectionStatus {
+  /** OAuth token fetch succeeded — the credentials are valid. */
+  connected: boolean;
+  /** Present only when an email was supplied to validate a specific seat. */
+  host?: WebinarLicenseCheckResult & { email: string };
+  error?: string;
+}
+
 export interface IZoomService {
   createMeeting(params: CreateZoomMeetingParams): Promise<CreateZoomMeetingResult>;
   getMeeting(meetingId: string): Promise<ZoomMeetingDetails>;
@@ -162,4 +200,14 @@ export interface IZoomService {
   ): Promise<WebinarRegistrantResult>;
   /** Check whether a Zoom user has a webinar add-on assigned. */
   checkWebinarLicense(email: string): Promise<WebinarLicenseCheckResult>;
+
+  // ─── Admin host management ───────────────────────────────────────────
+  /** Read the admin-editable Zoom config (default fallback host). */
+  getZoomConfig(): Promise<ZoomConfig>;
+  /** Persist the default fallback host email; clears the host cache. */
+  setDefaultHostEmail(email: string | null, actorId: string): Promise<void>;
+  /** Connected-account summary + licensed seat list (from /users/me + /users). */
+  getAccountInfo(): Promise<ZoomAccountInfo>;
+  /** Probe credentials; optionally validate a specific host seat. */
+  testConnection(email?: string): Promise<ZoomConnectionStatus>;
 }

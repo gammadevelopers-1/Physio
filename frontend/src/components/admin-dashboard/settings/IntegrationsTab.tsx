@@ -16,9 +16,12 @@ import {
   ShieldAlert,
   HardDrive,
   AlertCircle,
+  ChevronDown,
+  Settings2,
 } from "lucide-react";
 import { adminSettingsApi } from "@/lib/api";
 import { TabShell } from "./TabShell";
+import ZoomIntegrationPanel from "./ZoomIntegrationPanel";
 
 interface HealthRow {
   configured: boolean;
@@ -43,6 +46,7 @@ export default function IntegrationsTab() {
   const [health, setHealth] = useState<Record<string, HealthRow> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [zoomExpanded, setZoomExpanded] = useState(false);
 
   const fetchHealth = async () => {
     setLoading(true);
@@ -115,47 +119,68 @@ export default function IntegrationsTab() {
             const meta = ROW_META[key];
             const Icon = meta?.icon ?? AlertCircle;
             const labelKey = meta?.labelKey ?? key;
+            const isZoom = key === "zoom";
             return (
-              <div
-                key={key}
-                className="flex items-center gap-4 p-4 hover:bg-[var(--color-surface-page)] transition-colors"
-              >
-                <div className="w-10 h-10 rounded-lg bg-[var(--color-border-subtle)] flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-5 h-5 text-[var(--color-primary)]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                      {t(`integrations.providers.${labelKey}`)}
+              <div key={key}>
+                <div className="flex items-center gap-4 p-4 hover:bg-[var(--color-surface-page)] transition-colors">
+                  <div className="w-10 h-10 rounded-lg bg-[var(--color-border-subtle)] flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-5 h-5 text-[var(--color-primary)]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                        {t(`integrations.providers.${labelKey}`)}
+                      </p>
+                      {row.required && (
+                        <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] rounded">
+                          {t("integrations.required")}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                      {row.description}
                     </p>
-                    {row.required && (
-                      <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] rounded">
-                        {t("integrations.required")}
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    {row.configured ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#DCFCE7] text-[#16A34A] rounded-full text-xs font-medium">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        {t("integrations.configuredBadge")}
+                      </span>
+                    ) : row.required ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FEE2E2] text-[#DC2626] rounded-full text-xs font-medium">
+                        <XCircle className="w-3.5 h-3.5" />
+                        {t("integrations.missingBadge")}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] rounded-full text-xs font-medium">
+                        <XCircle className="w-3.5 h-3.5" />
+                        {t("integrations.notConfiguredBadge")}
                       </span>
                     )}
+                    {/* Zoom is the only manageable integration: expose a
+                        Manage toggle that opens the host-management panel. */}
+                    {isZoom && (
+                      <button
+                        type="button"
+                        onClick={() => setZoomExpanded((v) => !v)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--color-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors"
+                        aria-expanded={zoomExpanded}
+                      >
+                        <Settings2 className="w-3.5 h-3.5" />
+                        {t("zoomHost.manage")}
+                        <ChevronDown
+                          className={`w-3.5 h-3.5 transition-transform ${zoomExpanded ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                    )}
                   </div>
-                  <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-                    {row.description}
-                  </p>
                 </div>
-                <div className="flex-shrink-0">
-                  {row.configured ? (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#DCFCE7] text-[#16A34A] rounded-full text-xs font-medium">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      {t("integrations.configuredBadge")}
-                    </span>
-                  ) : row.required ? (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FEE2E2] text-[#DC2626] rounded-full text-xs font-medium">
-                      <XCircle className="w-3.5 h-3.5" />
-                      {t("integrations.missingBadge")}
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] rounded-full text-xs font-medium">
-                      <XCircle className="w-3.5 h-3.5" />
-                      {t("integrations.notConfiguredBadge")}
-                    </span>
-                  )}
-                </div>
+                {isZoom && zoomExpanded && (
+                  <div className="px-4 pb-4 border-t border-[var(--color-border)] bg-[var(--color-surface-page)]">
+                    <ZoomIntegrationPanel />
+                  </div>
+                )}
               </div>
             );
           })}

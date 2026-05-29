@@ -12,6 +12,9 @@ import {
   UpdateZoomWebinarParams,
   WebinarRegistrantInput,
   WebinarRegistrantResult,
+  ZoomConfig,
+  ZoomAccountInfo,
+  ZoomConnectionStatus,
 } from './zoom.interface';
 
 /**
@@ -229,5 +232,48 @@ export class ZoomMockService implements IZoomService {
       topic: w?.topic || '[mock webinar]',
       startTime: w?.startTime?.toISOString?.() || new Date().toISOString(),
     };
+  }
+
+  // ─── Admin host management (mock) ────────────────────────────
+  private mockDefaultHost: string | null = null;
+
+  async getZoomConfig(): Promise<ZoomConfig> {
+    return { defaultHostEmail: this.mockDefaultHost };
+  }
+
+  async setDefaultHostEmail(
+    email: string | null,
+    _actorId: string,
+  ): Promise<void> {
+    this.mockDefaultHost = email?.trim() || null;
+    this.logger.log(`[MOCK] Default host set to: ${this.mockDefaultHost ?? '(app owner)'}`);
+  }
+
+  async getAccountInfo(): Promise<ZoomAccountInfo> {
+    return {
+      ownerEmail: 'owner@mock.zoom',
+      ownerName: 'Mock Owner',
+      accountId: 'mock-account',
+      type: 2,
+      licensedSeats: [
+        { email: 'owner@mock.zoom', name: 'Mock Owner', type: 2 },
+        { email: 'host1@mock.zoom', name: 'Mock Host One', type: 2 },
+      ],
+    };
+  }
+
+  async testConnection(email?: string): Promise<ZoomConnectionStatus> {
+    if (email?.trim()) {
+      return {
+        connected: true,
+        host: {
+          email: email.trim(),
+          userExists: true,
+          hasWebinarLicense: true,
+          userType: 2,
+        },
+      };
+    }
+    return { connected: true };
   }
 }

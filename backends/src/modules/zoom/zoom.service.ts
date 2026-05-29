@@ -1,5 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { eq } from 'drizzle-orm';
+import { db } from '../../database';
+import { systemSettings } from '../../database/schema';
 import {
   IZoomService,
   CreateZoomMeetingParams,
@@ -13,7 +16,14 @@ import {
   UpdateZoomWebinarParams,
   WebinarRegistrantInput,
   WebinarRegistrantResult,
+  ZoomConfig,
+  ZoomAccountInfo,
+  ZoomSeat,
+  ZoomConnectionStatus,
 } from './zoom.interface';
+
+/** system_settings category that stores admin-editable Zoom config. */
+const ZOOM_SETTINGS_CATEGORY = 'zoom';
 
 interface ZoomTokenResponse {
   access_token: string;
@@ -42,6 +52,13 @@ export class ZoomService implements IZoomService, OnModuleInit {
   private readonly logger = new Logger(ZoomService.name);
   private cachedToken: string | null = null;
   private tokenExpiresAt = 0;
+
+  // Default-host cache. Read on every meeting/webinar creation, so we
+  // keep a short TTL rather than hitting the DB each time. Invalidated
+  // immediately when an admin saves a new default host.
+  private cachedDefaultHost: string | null = null;
+  private defaultHostExpiresAt = 0;
+  private static readonly DEFAULT_HOST_TTL_MS = 60_000;
 
   private readonly accountId: string;
   private readonly clientId: string;
@@ -159,6 +176,58 @@ export class ZoomService implements IZoomService, OnModuleInit {
     }
   }
 
+  /**
+   * Read the admin-configured default host email (system_settings →
+   * 'zoom'). Cached for a short TTL. Empty string / null means "no
+   * default configured" — callers fall back to the app owner ('me').
+   */
+  private async getDefaultHostEmail(): Promise<string | null> {
+    const now = Date.now();
+    if (now < this.defaultHostExpiresAt) {
+      return this.cachedDefaultHost;
+    }
+    try {
+      const rows = await db
+        .select({ value: systemSettings.value })
+        .from(systemSettings)
+        .where(eq(systemSettings.category, ZOOM_SETTINGS_CATEGORY))
+        .limit(1);
+      const value = (rows[0]?.value ?? {}) as { defaultHostEmail?: string };
+      const email = value.defaultHostEmail?.trim();
+      this.cachedDefaultHost = email && email.length > 0 ? email : null;
+    } catch (err) {
+      // DB hiccup — don't block meeting creation; fall back to 'me'.
+      this.logger.warn(
+        `Failed to read Zoom default host: ${err instanceof Error ? err.message : err}`,
+      );
+      this.cachedDefaultHost = null;
+    }
+    this.defaultHostExpiresAt = now + ZoomService.DEFAULT_HOST_TTL_MS;
+    return this.cachedDefaultHost;
+  }
+
+  /**
+   * Build the ordered list of Zoom userId path segments to try when
+   * creating a meeting/webinar: the requested instructor first, then the
+   * admin-configured default host, then the OAuth app owner ('me') as the
+   * ultimate safety net. Deduplicated; 'me' is always last.
+   */
+  private async resolveHostCandidates(hostEmail?: string): Promise<string[]> {
+    const defaultHost = await this.getDefaultHostEmail();
+    const emails: string[] = [];
+    const seen = new Set<string>();
+    for (const e of [hostEmail, defaultHost]) {
+      const clean = e?.trim().toLowerCase();
+      if (clean && !seen.has(clean)) {
+        seen.add(clean);
+        emails.push(e!.trim());
+      }
+    }
+    const candidates = emails.map((e) => encodeURIComponent(e));
+    candidates.push('me'); // app owner — always the final fallback
+    return candidates;
+  }
+
   async createMeeting(
     params: CreateZoomMeetingParams,
   ): Promise<CreateZoomMeetingResult> {
@@ -189,29 +258,14 @@ export class ZoomService implements IZoomService, OnModuleInit {
     };
 
     // Try creating under the instructor's Zoom account first (if licensed),
-    // fall back to app owner (users/me) if not licensed or fails
-    let response: Response;
-    const userId = params.hostEmail ? encodeURIComponent(params.hostEmail) : 'me';
+    // then the admin-configured default host, then the app owner ('me').
+    const candidates = await this.resolveHostCandidates(params.hostEmail);
+    let response: Response | null = null;
 
-    response = await this.zoomFetch(
-      `https://api.zoom.us/v2/users/${userId}/meetings`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      },
-    );
-
-    // If instructor email failed (not licensed/not found), fall back to app owner
-    if (!response.ok && userId !== 'me') {
-      this.logger.warn(
-        `Zoom: instructor ${params.hostEmail} not a licensed user, falling back to app owner`,
-      );
+    for (let i = 0; i < candidates.length; i++) {
+      const userId = candidates[i];
       response = await this.zoomFetch(
-        'https://api.zoom.us/v2/users/me/meetings',
+        `https://api.zoom.us/v2/users/${userId}/meetings`,
         {
           method: 'POST',
           headers: {
@@ -221,12 +275,20 @@ export class ZoomService implements IZoomService, OnModuleInit {
           body: JSON.stringify(body),
         },
       );
+      if (response.ok) break;
+      if (i < candidates.length - 1) {
+        this.logger.warn(
+          `Zoom: host "${decodeURIComponent(userId)}" could not create meeting (${response.status}), falling back to "${decodeURIComponent(candidates[i + 1])}"`,
+        );
+      }
     }
 
-    if (!response.ok) {
-      const errorText = await response.text();
+    if (!response || !response.ok) {
+      const errorText = response ? await response.text() : 'no response';
       this.logger.error(`Zoom create meeting failed: ${errorText}`);
-      throw new Error(`Failed to create Zoom meeting: ${response.status}`);
+      throw new Error(
+        `Failed to create Zoom meeting: ${response?.status ?? 'unknown'}`,
+      );
     }
 
     const meeting: ZoomMeetingResponse = await response.json();
@@ -684,26 +746,14 @@ export class ZoomService implements IZoomService, OnModuleInit {
       },
     };
 
-    const userId = params.hostEmail ? encodeURIComponent(params.hostEmail) : 'me';
-    let response = await this.zoomFetch(
-      `https://api.zoom.us/v2/users/${userId}/webinars`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      },
-    );
+    // Try the requested host, then the admin default host, then 'me'.
+    const candidates = await this.resolveHostCandidates(params.hostEmail);
+    let response: Response | null = null;
 
-    // Fall back to app owner if the named host isn't licensed for Webinars.
-    if (!response.ok && userId !== 'me') {
-      this.logger.warn(
-        `Zoom: host ${params.hostEmail} not webinar-licensed, falling back to app owner`,
-      );
+    for (let i = 0; i < candidates.length; i++) {
+      const userId = candidates[i];
       response = await this.zoomFetch(
-        'https://api.zoom.us/v2/users/me/webinars',
+        `https://api.zoom.us/v2/users/${userId}/webinars`,
         {
           method: 'POST',
           headers: {
@@ -713,12 +763,20 @@ export class ZoomService implements IZoomService, OnModuleInit {
           body: JSON.stringify(body),
         },
       );
+      if (response.ok) break;
+      if (i < candidates.length - 1) {
+        this.logger.warn(
+          `Zoom: host "${decodeURIComponent(userId)}" not webinar-licensed (${response.status}), falling back to "${decodeURIComponent(candidates[i + 1])}"`,
+        );
+      }
     }
 
-    if (!response.ok) {
-      const errorText = await response.text();
+    if (!response || !response.ok) {
+      const errorText = response ? await response.text() : 'no response';
       this.logger.error(`Zoom create webinar failed: ${errorText}`);
-      throw new Error(`Failed to create Zoom webinar: ${response.status}`);
+      throw new Error(
+        `Failed to create Zoom webinar: ${response?.status ?? 'unknown'}`,
+      );
     }
 
     const webinar: {
@@ -1007,5 +1065,110 @@ export class ZoomService implements IZoomService, OnModuleInit {
         error: msg,
       };
     }
+  }
+
+  // ─── Admin host management ───────────────────────────────────────────
+
+  async getZoomConfig(): Promise<ZoomConfig> {
+    return { defaultHostEmail: await this.getDefaultHostEmail() };
+  }
+
+  async setDefaultHostEmail(
+    email: string | null,
+    actorId: string,
+  ): Promise<void> {
+    const clean = email?.trim() || null;
+    const value = { defaultHostEmail: clean };
+
+    await db
+      .insert(systemSettings)
+      .values({
+        category: ZOOM_SETTINGS_CATEGORY,
+        value,
+        updatedBy: actorId,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: systemSettings.category,
+        set: { value, updatedBy: actorId, updatedAt: new Date() },
+      });
+
+    // Invalidate the cache so the change takes effect on the very next
+    // meeting/webinar without waiting for the TTL.
+    this.cachedDefaultHost = clean;
+    this.defaultHostExpiresAt = Date.now() + ZoomService.DEFAULT_HOST_TTL_MS;
+    this.logger.log(`Zoom default host set to: ${clean ?? '(app owner)'}`);
+  }
+
+  async getAccountInfo(): Promise<ZoomAccountInfo> {
+    const token = await this.getAccessToken();
+
+    const meRes = await this.zoomFetch('https://api.zoom.us/v2/users/me', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!meRes.ok) {
+      const errorText = await meRes.text();
+      this.logger.error(`Zoom get account info failed: ${errorText}`);
+      throw new Error(`Failed to read Zoom account: ${meRes.status}`);
+    }
+    const me: any = await meRes.json();
+
+    // List active users and surface only the licensed seats (type === 2).
+    const licensedSeats: ZoomSeat[] = [];
+    try {
+      const usersRes = await this.zoomFetch(
+        'https://api.zoom.us/v2/users?status=active&page_size=300',
+        { method: 'GET', headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (usersRes.ok) {
+        const data: any = await usersRes.json();
+        for (const u of data.users || []) {
+          if (u.type === 2) {
+            licensedSeats.push({
+              email: u.email || '',
+              name:
+                `${u.first_name || ''} ${u.last_name || ''}`.trim() ||
+                u.email ||
+                '',
+              type: u.type,
+            });
+          }
+        }
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Zoom user list failed (account info still returned): ${err instanceof Error ? err.message : err}`,
+      );
+    }
+
+    return {
+      ownerEmail: me.email || '',
+      ownerName: `${me.first_name || ''} ${me.last_name || ''}`.trim(),
+      accountId: me.account_id || this.accountId || '',
+      type: typeof me.type === 'number' ? me.type : 0,
+      licensedSeats,
+    };
+  }
+
+  async testConnection(email?: string): Promise<ZoomConnectionStatus> {
+    // 1) Credentials valid? Force a fresh token to truly exercise OAuth.
+    try {
+      this.cachedToken = null;
+      this.tokenExpiresAt = 0;
+      await this.getAccessToken();
+    } catch (err) {
+      return {
+        connected: false,
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
+
+    // 2) Optionally validate a specific host seat.
+    if (email?.trim()) {
+      const host = await this.checkWebinarLicense(email.trim());
+      return { connected: true, host: { ...host, email: email.trim() } };
+    }
+    return { connected: true };
   }
 }

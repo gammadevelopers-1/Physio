@@ -1018,8 +1018,12 @@ export class ZoomService implements IZoomService, OnModuleInit {
     }
     try {
       const token = await this.getAccessToken();
+      // Resolve the user by email across all login methods. Do NOT pin
+      // login_type — login_type=99 restricts to API-created users, so a
+      // normal Zoom/Google seat (e.g. a gmail login) 404s and looks
+      // unlicensed even when it's a licensed seat.
       const response = await this.zoomFetch(
-        `https://api.zoom.us/v2/users/${encodeURIComponent(email)}?login_type=99`,
+        `https://api.zoom.us/v2/users/${encodeURIComponent(email)}`,
         {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },

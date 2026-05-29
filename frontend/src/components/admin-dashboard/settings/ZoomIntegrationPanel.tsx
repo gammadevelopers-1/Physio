@@ -144,8 +144,11 @@ export default function ZoomIntegrationPanel() {
               </p>
               <div className="space-y-1.5">
                 {account.licensedSeats.map((seat) => {
+                  // "Current host" reflects the SAVED default host, not the
+                  // unsaved input — so the badge only appears once Save lands.
                   const isCurrent =
-                    seat.email.toLowerCase() === defaultHost.trim().toLowerCase();
+                    !!savedHost &&
+                    seat.email.toLowerCase() === savedHost.trim().toLowerCase();
                   return (
                     <div
                       key={seat.email}

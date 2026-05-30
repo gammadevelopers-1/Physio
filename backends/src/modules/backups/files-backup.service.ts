@@ -190,13 +190,16 @@ export class FilesBackupService {
       },
     });
 
-    // archiver is published as CommonJS (`module.exports = archiver`).
-    // Importing it via a default import compiles to `archiver_1.default(...)`
-    // which is undefined at runtime. Use the same lazy-require pattern as
-    // BackupsService uses for @google-cloud/storage.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const archiver: typeof import('archiver') = require('archiver');
-    const archive = archiver('zip', {
+    // archiver v8+ is a pure ESM package, so it can only be loaded from
+    // our CJS-compiled NestJS code via dynamic `import()`. v8 also dropped
+    // the `archiver('zip', ...)` factory function in favour of named
+    // format classes — we instantiate ZipArchive directly.
+    const archiverMod = (await import('archiver')) as unknown as {
+      ZipArchive: new (options: {
+        zlib?: { level?: number };
+      }) => import('archiver').Archiver;
+    };
+    const archive = new archiverMod.ZipArchive({
       zlib: { level: 6 },
       // Most uploads (images, PDFs) are already compressed; level 6 still
       // saves on text-y assets without much CPU cost.

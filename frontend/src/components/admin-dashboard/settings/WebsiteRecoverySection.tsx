@@ -147,7 +147,17 @@ export default function WebsiteRecoverySection({ enabled }: Props) {
       toast.success(t("rolledBackToast", { revision: target.shortName }));
       setTarget(null);
       setTyped("");
+      // Cloud Run takes several seconds to propagate the traffic flip
+      // through the LB, so an immediate refresh still returns the OLD
+      // traffic state. Refresh now and again after short delays so the
+      // Live badge moves over without the admin clicking Refresh.
       await refresh();
+      setTimeout(() => {
+        refresh();
+      }, 3000);
+      setTimeout(() => {
+        refresh();
+      }, 7000);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : t("rollbackFailedToast"),

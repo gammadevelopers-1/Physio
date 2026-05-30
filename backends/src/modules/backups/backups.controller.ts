@@ -13,6 +13,7 @@ import { Request } from 'express';
 import { BackupsService } from './backups.service';
 import { FilesBackupService } from './files-backup.service';
 import { FileRecoveryService } from './file-recovery.service';
+import { RestoreCloneService } from './restore-clone.service';
 import { MaterialsService } from '../materials/materials.service';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
@@ -23,6 +24,10 @@ interface RestoreFileBody {
   bucketLabel?: string;
   name?: string;
   generation?: string;
+}
+
+interface CreateRestoreCloneBody {
+  backupId?: string;
 }
 
 /**
@@ -40,6 +45,7 @@ export class BackupsController {
     private readonly backups: BackupsService,
     private readonly filesBackup: FilesBackupService,
     private readonly fileRecovery: FileRecoveryService,
+    private readonly restoreClones: RestoreCloneService,
     private readonly materials: MaterialsService,
   ) {}
 
@@ -138,6 +144,54 @@ export class BackupsController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.materials.restoreMaterial(id, user.id);
+  }
+
+  // ── Restore sandboxes (Phase 2D) ───────────────────────────────
+  //
+  // Restores a chosen backup export into a new database on the live
+  // Cloud SQL instance so the admin can inspect it and extract rows
+  // via Cloud SQL Studio. Sandbox auto-drops past `expiresAt`.
+
+  @Get('restore-clones')
+  listRestoreClones(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.restoreClones.list(
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
+  }
+
+  @Post('restore-clones')
+  createRestoreClone(
+    @Body() body: CreateRestoreCloneBody,
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
+  ) {
+    return this.restoreClones.createFromBackup(
+      body?.backupId || '',
+      user.id,
+      req.ip,
+    );
+  }
+
+  @Post('restore-clones/:id/extend')
+  extendRestoreClone(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
+  ) {
+    return this.restoreClones.extend(id, user.id, req.ip);
+  }
+
+  @Post('restore-clones/:id/drop')
+  dropRestoreClone(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
+  ) {
+    return this.restoreClones.drop(id, user.id, req.ip);
   }
 
   @Post(':id/download')

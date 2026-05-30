@@ -5,6 +5,7 @@ import { FilesBackupService } from './files-backup.service';
 import { FileRecoveryService } from './file-recovery.service';
 import { WebsiteRecoveryController } from './website-recovery.controller';
 import { WebsiteRecoveryService } from './website-recovery.service';
+import { RestoreCloneService } from './restore-clone.service';
 import { AuthModule } from '../auth/auth.module';
 import { MaterialsModule } from '../materials/materials.module';
 
@@ -20,6 +21,7 @@ import { MaterialsModule } from '../materials/materials.module';
     FilesBackupService,
     FileRecoveryService,
     WebsiteRecoveryService,
+    RestoreCloneService,
   ],
 })
 export class BackupsModule {}

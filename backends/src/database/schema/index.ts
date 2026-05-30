@@ -69,6 +69,7 @@ export * from './audit-logs';
 
 // Backup schemas
 export * from './backups';
+export * from './restore-clones';
 
 // Scheduled Reports schemas
 export * from './scheduled-reports';

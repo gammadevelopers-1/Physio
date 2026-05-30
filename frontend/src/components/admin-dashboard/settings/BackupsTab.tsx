@@ -30,6 +30,7 @@ import WebsiteRecoverySection from "./WebsiteRecoverySection";
 import RestoreHistorySection from "./RestoreHistorySection";
 import DeletedFilesSection from "./DeletedFilesSection";
 import DeletedMaterialsSection from "./DeletedMaterialsSection";
+import RestoreSandboxSection from "./RestoreSandboxSection";
 import {
   backupsAdminApi,
   type BackupOverview,
@@ -428,6 +429,15 @@ export default function BackupsTab() {
 
       {/* Recently deleted files — per-file recovery from the 90-day soft-delete window */}
       <DeletedFilesSection enabled={!disabled} />
+
+      {/* Restore sandboxes — Phase 2D: restore a backup into a throwaway DB
+          on the same Cloud SQL instance, inspect via Cloud SQL Studio,
+          extract rows, then manually apply the fix to live. */}
+      <RestoreSandboxSection
+        enabled={!disabled}
+        exportBackups={records}
+        onAfterMutate={refreshLists}
+      />
 
       {/* Restore history — audit feed of backups, downloads, rollbacks */}
       <RestoreHistorySection enabled={!disabled} />

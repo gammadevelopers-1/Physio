@@ -7,8 +7,10 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Clock,
   Download,
   FileX,
+  FlaskConical,
   FolderArchive,
   HardDriveDownload,
   History,
@@ -17,6 +19,7 @@ import {
   Play,
   RefreshCw,
   RotateCcw,
+  Timer,
   Trash2,
   XCircle,
 } from "lucide-react";
@@ -98,6 +101,18 @@ function actionPresentation(action: string): {
       return { icon: Trash2, cls: "text-[#D97706]", key: "actMaterialDeleted" };
     case "material.restored":
       return { icon: PackageOpen, cls: "text-[#15803D]", key: "actMaterialRestored" };
+    case "restore_clone.created":
+      return { icon: FlaskConical, cls: "text-[#0284C7]", key: "actSandboxCreated" };
+    case "restore_clone.ready":
+      return { icon: CheckCircle2, cls: "text-[#15803D]", key: "actSandboxReady" };
+    case "restore_clone.failed":
+      return { icon: XCircle, cls: "text-[#DC2626]", key: "actSandboxFailed" };
+    case "restore_clone.extended":
+      return { icon: Timer, cls: "text-[#0284C7]", key: "actSandboxExtended" };
+    case "restore_clone.dropped":
+      return { icon: Trash2, cls: "text-[var(--color-text-secondary)]", key: "actSandboxDropped" };
+    case "restore_clone.expired":
+      return { icon: Clock, cls: "text-[var(--color-text-secondary)]", key: "actSandboxExpired" };
     default:
       return { icon: RotateCcw, cls: "text-[var(--color-text-secondary)]", key: "actUnknown" };
   }

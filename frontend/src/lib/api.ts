@@ -1773,7 +1773,63 @@ export const backupsAdminApi = {
       `/admin/backups/materials/${id}/restore`,
       {},
     ),
+  listRestoreClones: (page = 1, limit = 20) =>
+    api.get<RestoreClonesResponse>(
+      `/admin/backups/restore-clones?page=${page}&limit=${limit}`,
+    ),
+  createRestoreClone: (backupId: string) =>
+    api.post<{
+      id: string;
+      dbName: string;
+      status: string;
+      expiresAt: string;
+    }>('/admin/backups/restore-clones', { backupId }),
+  extendRestoreClone: (id: string) =>
+    api.post<{ id: string; expiresAt: string }>(
+      `/admin/backups/restore-clones/${id}/extend`,
+      {},
+    ),
+  dropRestoreClone: (id: string) =>
+    api.post<{ id: string; status: string }>(
+      `/admin/backups/restore-clones/${id}/drop`,
+      {},
+    ),
 };
+
+export interface RestoreCloneEntry {
+  id: string;
+  backupId: string | null;
+  backupCreatedAt: string | null;
+  backupMode: string | null;
+  backupObject: string | null;
+  dbName: string;
+  status:
+    | 'creating'
+    | 'importing'
+    | 'ready'
+    | 'failed'
+    | 'dropped'
+    | 'expired';
+  error: string | null;
+  createdAt: string;
+  expiresAt: string;
+  droppedAt: string | null;
+  createdBy: { name: string | null; email: string | null };
+  cloudStudioUrl: string;
+}
+
+export interface RestoreClonesResponse {
+  items: RestoreCloneEntry[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  caps: {
+    maxConcurrent: number;
+    defaultLifetimeHours: number;
+    maxLifetimeHours: number;
+  };
+}
 
 export interface DeletedMaterialEntry {
   id: string;

@@ -775,8 +775,22 @@ const DeleteConfirm = ({ material, onClose, onDeleted, t }: DeleteConfirmProps) 
       toast.success(t("content.deleteSuccess"));
       onDeleted();
       onClose();
-    } catch {
-      toast.error(t("content.deleteError"));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      // Map common backend errors to translated, actionable messages.
+      // Fall through to the raw backend message (still informative) and
+      // finally to the generic toast as a last resort.
+      if (/currently being processed/i.test(msg)) {
+        toast.error(t("content.deleteErrorProcessing"));
+      } else if (/material not found/i.test(msg)) {
+        toast.error(t("content.deleteErrorNotFound"));
+      } else if (/foreign key|violates foreign|still referenced/i.test(msg)) {
+        toast.error(t("content.deleteErrorInUse"));
+      } else if (msg) {
+        toast.error(msg);
+      } else {
+        toast.error(t("content.deleteError"));
+      }
     } finally {
       setDeleting(false);
     }

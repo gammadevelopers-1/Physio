@@ -115,6 +115,18 @@ gcloud run deploy ${FRONTEND_SERVICE_NAME} \
     --set-env-vars="NODE_ENV=production,BACKEND_API_URL=${BACKEND_URL}/api" \
     --quiet
 
+# Force traffic to the just-deployed (latest) revision. Without this, if
+# traffic was previously pinned to a specific named revision (e.g. by the
+# admin "Rollback" button in the Backups tab, which calls update-traffic
+# with an explicit revision name), the next deploy would create a new
+# revision but leave traffic on the pinned old one — the new code would
+# silently never serve. --to-latest makes the deploy authoritative.
+log_step "Routing traffic to the new revision..."
+gcloud run services update-traffic ${FRONTEND_SERVICE_NAME} \
+    --to-latest \
+    --region=${GCP_REGION} \
+    --quiet
+
 # Get service URL
 SERVICE_URL=$(gcloud run services describe ${FRONTEND_SERVICE_NAME} \
     --region=${GCP_REGION} \

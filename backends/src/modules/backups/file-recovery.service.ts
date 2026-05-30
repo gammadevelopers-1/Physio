@@ -198,14 +198,23 @@ export class FileRecoveryService {
     try {
       const storage = this.getStorage();
       const file = storage.bucket(src.name).file(name);
-      // The restore() call resolves with the restored File. Its
-      // .metadata is hydrated server-side after the operation.
-      const restored = await file.restore({
-        generation: Number(generation),
-      });
-      const restoredMeta = restored.metadata as Record<string, unknown>;
-      const sizeNum =
-        restoredMeta.size != null ? Number(restoredMeta.size) : null;
+      // file.restore() resolves once GCS has re-created the live object
+      // from the soft-deleted generation. The returned File's .metadata
+      // is NOT guaranteed to be hydrated, so fetch it explicitly for the
+      // size field. Best-effort: failure to read size after restore is
+      // not a failure of the restore itself.
+      await file.restore({ generation: Number(generation) });
+      let sizeNum: number | null = null;
+      try {
+        const [meta] = await file.getMetadata();
+        if (meta && meta.size != null) sizeNum = Number(meta.size);
+      } catch (metaErr) {
+        this.logger.warn(
+          `restore ${src.name}/${name}: metadata fetch after restore failed: ${
+            metaErr instanceof Error ? metaErr.message : String(metaErr)
+          }`,
+        );
+      }
 
       await this.audit.log({
         entityType: 'backup',

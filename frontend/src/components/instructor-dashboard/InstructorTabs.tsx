@@ -295,8 +295,19 @@ const InstructorTabs = ({
     try {
       await materialsApi.delete(fileId);
       onMaterialChange?.();
-    } catch {
-      toast.error(t("content.deleteError"));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      if (/currently being processed/i.test(msg)) {
+        toast.error(t("content.deleteErrorProcessing"));
+      } else if (/material not found/i.test(msg)) {
+        toast.error(t("content.deleteErrorNotFound"));
+      } else if (/foreign key|violates foreign|still referenced/i.test(msg)) {
+        toast.error(t("content.deleteErrorInUse"));
+      } else if (msg) {
+        toast.error(msg);
+      } else {
+        toast.error(t("content.deleteError"));
+      }
     }
   };
 

@@ -259,8 +259,20 @@ export class FilesBackupService {
     await archive.finalize();
     await uploadDone;
 
+    // archive.pointer() can be unreliable depending on archiver version
+    // and the timing of the resumable upload's final ack. The uploaded
+    // object's own metadata.size is the source of truth — quick lookup
+    // after the writeStream has already finished.
+    let bytes = archive.pointer();
+    try {
+      const [meta] = await destFile.getMetadata();
+      if (meta.size) bytes = Number(meta.size);
+    } catch {
+      // best-effort: fall back to archive.pointer() if metadata fetch fails
+    }
+
     return {
-      bytes: archive.pointer(),
+      bytes,
       fileCount,
       skipped,
     };

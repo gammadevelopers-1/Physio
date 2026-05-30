@@ -388,7 +388,10 @@ export class BackupsService {
       this.logger.warn(`syncRunning: token fetch failed: ${(err as Error).message}`);
       return;
     }
-    const staleCutoff = Date.now() - 2 * 60 * 60 * 1000; // 2 hours
+    // 15-minute stale window: Files Backups typically complete in
+    // 1-3 min on this dataset; anything past 15 min is almost certainly
+    // a dead container or a connection that gave up silently.
+    const staleCutoff = Date.now() - 15 * 60 * 1000;
     for (const r of running) {
       // Rows without a Cloud SQL operation (e.g. files_export) are owned by
       // the originating process. If they've been running too long, the

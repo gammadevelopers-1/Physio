@@ -134,10 +134,23 @@ export class WebsiteRecoveryService {
           : svc.traffic) || [];
       const percentByRevision = new Map<string, number>();
       let currentRevision: string | null = null;
+      let latestAllocationActive = false;
       for (const t of trafficSplit) {
+        const pct = t.percent || 0;
+        // Cloud Run can route via a LATEST pointer ("always serve newest")
+        // without naming a specific revision. We detect that flag here and
+        // resolve to the newest revision after we have the sorted list.
+        if (
+          (t.type || '').includes('LATEST') &&
+          pct === 100 &&
+          !t.revision
+        ) {
+          latestAllocationActive = true;
+          continue;
+        }
         if (!t.revision) continue;
-        percentByRevision.set(t.revision, t.percent || 0);
-        if ((t.percent || 0) === 100) currentRevision = t.revision;
+        percentByRevision.set(t.revision, pct);
+        if (pct === 100) currentRevision = t.revision;
       }
 
       // 2) Revision list — most recent first, capped.
@@ -174,6 +187,15 @@ export class WebsiteRecoveryService {
           const bt = b.createdAt ? new Date(b.createdAt).getTime() : 0;
           return bt - at;
         });
+
+      // If the service uses a LATEST allocation (no specific revision named
+      // in traffic), the newest revision in our sorted list IS the live one.
+      // Mark it so the UI shows the badge and the rollback button is hidden.
+      if (!currentRevision && latestAllocationActive && items.length > 0) {
+        items[0].percent = 100;
+        items[0].isLive = true;
+        currentRevision = items[0].shortName;
+      }
 
       return {
         available: true,

@@ -1748,7 +1748,35 @@ export const backupsAdminApi = {
       `/admin/backups/${id}/download`,
       {},
     ),
+  listAudit: (page = 1, limit = 20) =>
+    api.get<BackupAuditResponse>(
+      `/admin/backups/audit?page=${page}&limit=${limit}`,
+    ),
 };
+
+export interface BackupAuditEntry {
+  id: string;
+  /** 'backup' (DB or files exports) or 'website_rollback'. */
+  entityType: string;
+  entityId: string;
+  /** e.g. 'backup.created', 'website.rollback_completed'. */
+  action: string;
+  performedBy: string;
+  metadata: Record<string, unknown> | null;
+  ipAddress: string | null;
+  createdAt: string;
+  performerFirstName: string | null;
+  performerLastName: string | null;
+  performerEmail: string | null;
+}
+
+export interface BackupAuditResponse {
+  data: BackupAuditEntry[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
 // ===========================================
 // Website Recovery API (Cloud Run revisions + rollback)

@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import {
   AlertTriangle,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Globe,
   Info,
   Loader2,
@@ -21,6 +23,7 @@ import {
 } from "@/lib/api";
 
 const OLD_REVISION_WARN_DAYS = 30;
+const PAGE_SIZE = 5;
 
 interface Props {
   /** Render only when the backups feature is enabled (gcp env). */
@@ -61,6 +64,7 @@ export default function WebsiteRecoverySection({ enabled }: Props) {
   const [target, setTarget] = useState<WebsiteRevision | null>(null);
   const [typed, setTyped] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [page, setPage] = useState(1);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const refresh = useCallback(async () => {
@@ -81,6 +85,7 @@ export default function WebsiteRecoverySection({ enabled }: Props) {
       ]);
       if (cfg) setConfig(cfg);
       setData(list);
+      setPage(1); // reset to first page on every refresh
     } finally {
       setLoading(false);
     }
@@ -123,6 +128,13 @@ export default function WebsiteRecoverySection({ enabled }: Props) {
   const confirmMatches =
     !!config &&
     typed.trim().toLowerCase() === config.confirmDomain.trim().toLowerCase();
+
+  const totalPages = data
+    ? Math.max(1, Math.ceil(data.items.length / PAGE_SIZE))
+    : 1;
+  const pagedItems = data
+    ? data.items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+    : [];
 
   const handleRollback = async () => {
     if (!target || !config || !confirmMatches) return;
@@ -195,43 +207,64 @@ export default function WebsiteRecoverySection({ enabled }: Props) {
           <table className="w-full">
             <thead className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
               <tr>
-                <Th isRTL={isRTL}>{t("colRevision")}</Th>
-                <Th isRTL={isRTL}>{t("colDeployed")}</Th>
+                <Th isRTL={isRTL} className="min-w-[180px]">{t("colRevision")}</Th>
+                <Th isRTL={isRTL} className="min-w-[160px]">{t("colDeployed")}</Th>
                 <Th isRTL={isRTL}>{t("colImage")}</Th>
-                <Th isRTL={isRTL}>{t("colTraffic")}</Th>
-                <th className="px-4 py-3 w-32" />
+                <Th isRTL={isRTL} className="min-w-[100px]">{t("colTraffic")}</Th>
+                <th className="px-5 py-3.5 w-32" />
               </tr>
             </thead>
             <tbody>
-              {data.items.map((r) => (
+              {pagedItems.map((r) => (
                 <tr
                   key={r.shortName}
-                  className="border-b border-[#F3F4F6] last:border-0"
+                  className={`border-b border-[#F3F4F6] last:border-0 ${
+                    r.isLive ? "bg-[#F0FDF4]" : ""
+                  }`}
                 >
-                  <td className="px-4 py-3">
-                    <span className="text-xs font-mono text-[var(--color-text-primary)]">
-                      {r.shortName}
-                    </span>
+                  <td
+                    className={`px-5 py-4 whitespace-nowrap ${
+                      r.isLive
+                        ? `${isRTL ? "border-r-4" : "border-l-4"} border-[#16A34A]`
+                        : ""
+                    }`}
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <span
+                        className={`text-xs font-mono ${
+                          r.isLive
+                            ? "text-[#15803D] font-semibold"
+                            : "text-[var(--color-text-primary)]"
+                        }`}
+                      >
+                        {r.shortName}
+                      </span>
+                      {r.isLive && (
+                        <span className="text-[10px] uppercase tracking-wider font-semibold text-[#15803D]">
+                          {t("currentlyServing")}
+                        </span>
+                      )}
+                    </div>
                   </td>
-                  <td className="px-4 py-3 text-xs text-[var(--color-text-secondary)] font-mono whitespace-nowrap">
+                  <td className="px-5 py-4 text-xs text-[var(--color-text-secondary)] font-mono whitespace-nowrap">
                     {formatTs(r.createdAt, locale)}
                   </td>
-                  <td className="px-4 py-3 text-xs text-[var(--color-text-secondary)] font-mono">
+                  <td className="px-5 py-4 text-xs text-[var(--color-text-secondary)] font-mono truncate max-w-[280px]">
                     {shortImage(r.image)}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-5 py-4">
                     {r.isLive ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#DCFCE7] text-[#15803D]">
-                        <CheckCircle2 className="w-3 h-3" />
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#16A34A] text-white">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
                         {t("liveBadge")}
                       </span>
                     ) : (
                       <span className="text-[11px] text-[var(--color-text-secondary)] font-mono">
-                        {r.percent}%
+                        —
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-5 py-4 text-right">
                     {!r.isLive && (
                       <button
                         type="button"
@@ -247,6 +280,47 @@ export default function WebsiteRecoverySection({ enabled }: Props) {
               ))}
             </tbody>
           </table>
+
+          {/* Pagination footer (only shown if more than one page) */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--color-border)] bg-[var(--color-surface-page)]">
+              <span className="text-xs text-[var(--color-text-secondary)]">
+                {t("pagination", {
+                  from: (page - 1) * PAGE_SIZE + 1,
+                  to: Math.min(page * PAGE_SIZE, data.items.length),
+                  total: data.items.length,
+                })}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  aria-label={t("paginationPrev")}
+                  className="w-8 h-8 rounded-lg border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {isRTL ? (
+                    <ChevronRight className="w-4 h-4" />
+                  ) : (
+                    <ChevronLeft className="w-4 h-4" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  aria-label={t("paginationNext")}
+                  className="w-8 h-8 rounded-lg border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {isRTL ? (
+                    <ChevronLeft className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -378,12 +452,20 @@ export default function WebsiteRecoverySection({ enabled }: Props) {
   );
 }
 
-function Th({ children, isRTL }: { children: React.ReactNode; isRTL: boolean }) {
+function Th({
+  children,
+  isRTL,
+  className = "",
+}: {
+  children: React.ReactNode;
+  isRTL: boolean;
+  className?: string;
+}) {
   return (
     <th
-      className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${
+      className={`px-5 py-3.5 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${
         isRTL ? "text-right" : "text-left"
-      }`}
+      } ${className}`}
     >
       {children}
     </th>

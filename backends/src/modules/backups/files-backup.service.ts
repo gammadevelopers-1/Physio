@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { Readable } from 'stream';
-import archiver from 'archiver';
 import { db } from '../../database';
 import { backups } from '../../database/schema';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
@@ -191,10 +190,16 @@ export class FilesBackupService {
       },
     });
 
+    // archiver is published as CommonJS (`module.exports = archiver`).
+    // Importing it via a default import compiles to `archiver_1.default(...)`
+    // which is undefined at runtime. Use the same lazy-require pattern as
+    // BackupsService uses for @google-cloud/storage.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const archiver: typeof import('archiver') = require('archiver');
     const archive = archiver('zip', {
       zlib: { level: 6 },
-      // store: false → use compression. Most uploaded files (images, PDFs)
-      // are already compressed, but level 6 still saves on text-y assets.
+      // Most uploads (images, PDFs) are already compressed; level 6 still
+      // saves on text-y assets without much CPU cost.
     });
 
     let fileCount = 0;

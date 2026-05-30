@@ -3,6 +3,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -44,6 +45,17 @@ export class BackupsController {
   @Get('restore-points')
   listRestorePoints() {
     return this.backups.listRestorePoints();
+  }
+
+  @Get('audit')
+  listAuditHistory(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.backups.listAuditHistory(
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
   }
 
   @Post('snapshot')

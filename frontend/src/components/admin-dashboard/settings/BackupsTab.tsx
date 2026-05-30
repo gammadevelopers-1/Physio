@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { TabShell } from "./TabShell";
 import WebsiteRecoverySection from "./WebsiteRecoverySection";
+import RestoreHistorySection from "./RestoreHistorySection";
 import {
   backupsAdminApi,
   type BackupOverview,
@@ -361,6 +362,9 @@ export default function BackupsTab() {
 
       {/* Website application — list Cloud Run revisions + rollback */}
       <WebsiteRecoverySection enabled={!disabled} />
+
+      {/* Restore history — audit feed of backups, downloads, rollbacks */}
+      <RestoreHistorySection enabled={!disabled} />
 
       {/* Restore policy — why there's no one-click restore */}
       <div className="bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-xl p-4 flex items-start gap-3">

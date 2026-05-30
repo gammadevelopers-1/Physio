@@ -5,9 +5,9 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { GoogleAuth } from 'google-auth-library';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, inArray, count } from 'drizzle-orm';
 import { db } from '../../database';
-import { backups, users } from '../../database/schema';
+import { backups, users, auditLogs } from '../../database/schema';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 
 const SQLADMIN = 'https://sqladmin.googleapis.com/v1';
@@ -133,6 +133,56 @@ export class BackupsService {
         error: err instanceof Error ? err.message : 'unknown error',
       };
     }
+  }
+
+  // ── Audit history ───────────────────────────────────────────────
+
+  /**
+   * Restore / backup activity feed — every backup-related and rollback-
+   * related audit event, paginated, joined to the performer's user row
+   * so the UI can show "by Jane Doe" without an extra fetch. This is
+   * what powers the "Restore History" panel; the events also live in
+   * the broader /audit-logs/admin endpoints unchanged.
+   */
+  async listAuditHistory(page = 1, limit = 20) {
+    const safeLimit = Math.min(Math.max(limit, 1), 100);
+    const offset = (page - 1) * safeLimit;
+    const entityTypes = ['backup', 'website_rollback'];
+
+    const data = await db
+      .select({
+        id: auditLogs.id,
+        entityType: auditLogs.entityType,
+        entityId: auditLogs.entityId,
+        action: auditLogs.action,
+        performedBy: auditLogs.performedBy,
+        metadata: auditLogs.metadata,
+        ipAddress: auditLogs.ipAddress,
+        createdAt: auditLogs.createdAt,
+        performerFirstName: users.firstName,
+        performerLastName: users.lastName,
+        performerEmail: users.email,
+      })
+      .from(auditLogs)
+      .innerJoin(users, eq(auditLogs.performedBy, users.id))
+      .where(inArray(auditLogs.entityType, entityTypes))
+      .orderBy(desc(auditLogs.createdAt))
+      .limit(safeLimit)
+      .offset(offset);
+
+    const [countResult] = await db
+      .select({ count: count() })
+      .from(auditLogs)
+      .where(inArray(auditLogs.entityType, entityTypes));
+
+    const total = countResult?.count || 0;
+    return {
+      data,
+      total,
+      page,
+      limit: safeLimit,
+      totalPages: Math.max(1, Math.ceil(total / safeLimit)),
+    };
   }
 
   // ── Creating ────────────────────────────────────────────────────

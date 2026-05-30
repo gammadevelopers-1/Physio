@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Param,
@@ -11,10 +12,17 @@ import { SkipThrottle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { BackupsService } from './backups.service';
 import { FilesBackupService } from './files-backup.service';
+import { FileRecoveryService } from './file-recovery.service';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+
+interface RestoreFileBody {
+  bucketLabel?: string;
+  name?: string;
+  generation?: string;
+}
 
 /**
  * Admin backup management. Read + create + download only — there is no
@@ -30,6 +38,7 @@ export class BackupsController {
   constructor(
     private readonly backups: BackupsService,
     private readonly filesBackup: FilesBackupService,
+    private readonly fileRecovery: FileRecoveryService,
   ) {}
 
   @Get('overview')
@@ -74,6 +83,32 @@ export class BackupsController {
     @Req() req: Request,
   ) {
     return this.filesBackup.createFilesExport(user.id, req.ip);
+  }
+
+  @Get('files/deleted')
+  listDeletedFiles(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.fileRecovery.listDeleted(
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
+  }
+
+  @Post('files/restore')
+  restoreFile(
+    @Body() body: RestoreFileBody,
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
+  ) {
+    return this.fileRecovery.restore(
+      body?.bucketLabel || '',
+      body?.name || '',
+      body?.generation || '',
+      user.id,
+      req.ip,
+    );
   }
 
   @Post(':id/download')

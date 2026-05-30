@@ -7,6 +7,8 @@ import {
   AlertTriangle,
   Camera,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Database,
   Download,
@@ -21,9 +23,12 @@ import {
   ShieldCheck,
   XCircle,
 } from "lucide-react";
+
+const HISTORY_PAGE_SIZE = 5;
 import { TabShell } from "./TabShell";
 import WebsiteRecoverySection from "./WebsiteRecoverySection";
 import RestoreHistorySection from "./RestoreHistorySection";
+import DeletedFilesSection from "./DeletedFilesSection";
 import {
   backupsAdminApi,
   type BackupOverview,
@@ -76,6 +81,7 @@ export default function BackupsTab() {
     null | "snapshot" | "export" | "files_export"
   >(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [historyPage, setHistoryPage] = useState(1);
 
   const refreshLists = useCallback(async () => {
     const [list, rp] = await Promise.all([
@@ -87,6 +93,7 @@ export default function BackupsTab() {
     setRecords(list);
     setRestoreAvailable(rp.available);
     setRestorePoints(rp.items);
+    setHistoryPage(1); // reset to first page on every refresh
   }, []);
 
   const load = useCallback(async () => {
@@ -137,6 +144,15 @@ export default function BackupsTab() {
   };
 
   const disabled = !overview?.enabled;
+
+  const historyTotalPages = Math.max(
+    1,
+    Math.ceil(records.length / HISTORY_PAGE_SIZE),
+  );
+  const pagedRecords = records.slice(
+    (historyPage - 1) * HISTORY_PAGE_SIZE,
+    historyPage * HISTORY_PAGE_SIZE,
+  );
 
   return (
     <TabShell
@@ -268,7 +284,7 @@ export default function BackupsTab() {
                 </tr>
               </thead>
               <tbody>
-                {records.map((r) => {
+                {pagedRecords.map((r) => {
                   const by =
                     `${r.createdByFirstName || ""} ${r.createdByLastName || ""}`.trim() ||
                     r.createdByEmail ||
@@ -326,6 +342,48 @@ export default function BackupsTab() {
                 })}
               </tbody>
             </table>
+
+            {historyTotalPages > 1 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--color-border)] bg-[var(--color-surface-page)]">
+                <span className="text-xs text-[var(--color-text-secondary)]">
+                  {t("pagination", {
+                    from: (historyPage - 1) * HISTORY_PAGE_SIZE + 1,
+                    to: Math.min(historyPage * HISTORY_PAGE_SIZE, records.length),
+                    total: records.length,
+                  })}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                    disabled={historyPage === 1}
+                    aria-label={t("paginationPrev")}
+                    className="w-8 h-8 rounded-lg border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {isRTL ? (
+                      <ChevronRight className="w-4 h-4" />
+                    ) : (
+                      <ChevronLeft className="w-4 h-4" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setHistoryPage((p) => Math.min(historyTotalPages, p + 1))
+                    }
+                    disabled={historyPage === historyTotalPages}
+                    aria-label={t("paginationNext")}
+                    className="w-8 h-8 rounded-lg border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {isRTL ? (
+                      <ChevronLeft className="w-4 h-4" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -362,6 +420,9 @@ export default function BackupsTab() {
 
       {/* Website application — list Cloud Run revisions + rollback */}
       <WebsiteRecoverySection enabled={!disabled} />
+
+      {/* Recently deleted files — per-file recovery from the 90-day soft-delete window */}
+      <DeletedFilesSection enabled={!disabled} />
 
       {/* Restore history — audit feed of backups, downloads, rollbacks */}
       <RestoreHistorySection enabled={!disabled} />

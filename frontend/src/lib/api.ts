@@ -1752,6 +1752,18 @@ export const backupsAdminApi = {
     api.get<BackupAuditResponse>(
       `/admin/backups/audit?page=${page}&limit=${limit}`,
     ),
+  listDeletedFiles: (page = 1, limit = 20) =>
+    api.get<DeletedFilesResponse>(
+      `/admin/backups/files/deleted?page=${page}&limit=${limit}`,
+    ),
+  restoreFile: (bucketLabel: string, name: string, generation: string) =>
+    api.post<{
+      ok: boolean;
+      bucket: string;
+      bucketLabel: string;
+      name: string;
+      size: number | null;
+    }>('/admin/backups/files/restore', { bucketLabel, name, generation }),
 };
 
 export interface BackupAuditEntry {
@@ -1776,6 +1788,31 @@ export interface BackupAuditResponse {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+export interface DeletedFileEntry {
+  /** Full GCS bucket name (e.g. physioguidance-private). */
+  bucket: string;
+  /** Short label: public | private | trainers | cms. */
+  bucketLabel: string;
+  /** Full object path inside the bucket. */
+  name: string;
+  /** GCS generation number; required for the restore call. */
+  generation: string;
+  size: number | null;
+  /** When the object was deleted (ISO timestamp). */
+  deletedAt: string | null;
+  contentType: string | null;
+}
+
+export interface DeletedFilesResponse {
+  available: boolean;
+  items: DeletedFileEntry[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  error?: string;
 }
 
 // ===========================================

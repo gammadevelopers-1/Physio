@@ -397,9 +397,17 @@ const AdminCoursesContent = () => {
     confirmKind === "delete" &&
     confirmCourse !== null &&
     confirmCourse.status !== "draft";
+  // Hard block: pending certificate requests would strand a student
+  // waiting on a decision. Backend enforces too — this just disables
+  // the button so the admin gets the message before submitting.
+  const deleteBlockedByPendingCerts =
+    confirmKind === "delete" &&
+    deleteImpact !== null &&
+    deleteImpact.pendingCertificates > 0;
   const deleteConfirmOk =
     confirmKind === "delete" &&
     confirmCourse !== null &&
+    !deleteBlockedByPendingCerts &&
     (!deleteNeedsTitleConfirm ||
       deleteTypedTitle.trim() === (confirmCourse.title || "").trim());
 
@@ -1253,6 +1261,10 @@ const AdminCoursesContent = () => {
                         {t("coursesPage.confirmDelete.impactSessions")}
                       </li>
                       <li>
+                        <span className="font-mono text-[var(--color-text-primary)]">{deleteImpact.upcomingSessions}</span>{" "}
+                        {t("coursesPage.confirmDelete.impactUpcomingSessions")}
+                      </li>
+                      <li>
                         <span className="font-mono text-[var(--color-text-primary)]">{deleteImpact.assessments}</span>{" "}
                         {t("coursesPage.confirmDelete.impactAssessments")}
                       </li>
@@ -1260,12 +1272,40 @@ const AdminCoursesContent = () => {
                   )}
                 </div>
 
-                {/* Soft-delete reassurance */}
-                <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-3 mb-4">
-                  <p className="text-xs text-[#1E40AF] leading-relaxed">
-                    {t("coursesPage.confirmDelete.softDeleteNote")}
-                  </p>
-                </div>
+                {/* Blocker: pending certificate requests */}
+                {deleteBlockedByPendingCerts && deleteImpact && (
+                  <div className="bg-[#FEE2E2] border border-[#FECACA] rounded-lg p-3 mb-4 flex items-start gap-2">
+                    <XCircle className="w-4 h-4 text-[#DC2626] mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-[#991B1B] leading-relaxed">
+                      {t("coursesPage.confirmDelete.pendingCertsBlocker", {
+                        count: deleteImpact.pendingCertificates,
+                      })}
+                    </p>
+                  </div>
+                )}
+
+                {/* Soft-delete reassurance — only when not blocked */}
+                {!deleteBlockedByPendingCerts && (
+                  <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-3 mb-4">
+                    <p className="text-xs text-[#1E40AF] leading-relaxed">
+                      {t("coursesPage.confirmDelete.softDeleteNote")}
+                    </p>
+                  </div>
+                )}
+
+                {/* Upcoming-sessions cascade warning */}
+                {!deleteBlockedByPendingCerts &&
+                  deleteImpact &&
+                  deleteImpact.upcomingSessions > 0 && (
+                    <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-lg p-3 mb-4 flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-[#D97706] mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-[#92400E] leading-relaxed">
+                        {t("coursesPage.confirmDelete.upcomingSessionsWarning", {
+                          count: deleteImpact.upcomingSessions,
+                        })}
+                      </p>
+                    </div>
+                  )}
 
                 {/* Reason (optional but encouraged) */}
                 <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1">

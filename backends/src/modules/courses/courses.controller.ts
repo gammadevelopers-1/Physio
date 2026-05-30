@@ -7,10 +7,12 @@ import {
   Body,
   Param,
   Query,
+  Req,
   UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto, RequestChangesDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
@@ -272,9 +274,10 @@ export class CoursesController {
   async remove(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
     @Body() body?: { reason?: string },
   ) {
-    return this.coursesService.remove(id, user, body?.reason);
+    return this.coursesService.remove(id, user, body?.reason, req.ip);
   }
 
   // ─── Module Endpoints ───────────────────────────────────────

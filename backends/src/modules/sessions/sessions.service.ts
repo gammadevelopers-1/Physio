@@ -1554,6 +1554,147 @@ export class SessionsService {
   }
 
   /**
+   * Cascade-cancel every upcoming session for a course. Called from
+   * CoursesService.remove() when an admin soft-deletes a course, so
+   * any scheduled lecture / webinar in the future stops being a
+   * commitment to enrolled students.
+   *
+   * Per session: deletes the Zoom resource (best-effort), marks the
+   * row as cancelled with the provided reason, audits to NELC + the
+   * recovery feed, and emails / pushes the enrolled students.
+   * Individual failures are logged and skipped — one Zoom hiccup
+   * doesn't stop the rest of the course from being cleaned up.
+   */
+  async cancelUpcomingForCourse(
+    courseId: string,
+    performedById: string,
+    reason: string,
+  ): Promise<{ cancelled: number; failed: number }> {
+    const upcoming = await db
+      .select()
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.courseId, courseId),
+          sql`${sessions.scheduledAt} > NOW()`,
+          sql`${sessions.status} NOT IN ('cancelled', 'missed', 'ended', 'completed', 'rescheduled')`,
+        ),
+      );
+
+    let cancelled = 0;
+    let failed = 0;
+
+    for (const session of upcoming) {
+      try {
+        // Tear down the Zoom resource if any. Best-effort — if Zoom
+        // returns a 404 the resource is already gone and we proceed.
+        if (session.isWebinar && session.zoomWebinarId) {
+          try {
+            const result = await this.zoomService.deleteWebinar(
+              session.zoomWebinarId,
+            );
+            if (!result.deleted) {
+              this.logger.warn(
+                `cancelUpcomingForCourse: webinar ${session.zoomWebinarId} delete failed: ${result.error}`,
+              );
+            }
+          } catch (err) {
+            this.logger.warn(
+              `cancelUpcomingForCourse: webinar ${session.zoomWebinarId} threw`,
+              err,
+            );
+          }
+        } else if (
+          session.meetingId &&
+          (session.type === SESSION_TYPE.ZOOM ||
+            session.type === SESSION_TYPE.HYBRID)
+        ) {
+          try {
+            const result = await this.zoomService.deleteMeeting(
+              session.meetingId,
+            );
+            if (!result.deleted) {
+              this.logger.warn(
+                `cancelUpcomingForCourse: meeting ${session.meetingId} delete failed: ${result.error}`,
+              );
+            }
+          } catch (err) {
+            this.logger.warn(
+              `cancelUpcomingForCourse: meeting ${session.meetingId} threw`,
+              err,
+            );
+          }
+        }
+
+        const [updated] = await db
+          .update(sessions)
+          .set({
+            status: SESSION_STATUS.CANCELLED,
+            cancelReason: reason,
+            updatedAt: new Date(),
+          })
+          .where(eq(sessions.id, session.id))
+          .returning();
+
+        // Audit at both layers — NELC compliance (regulatory) and the
+        // recovery feed (so the Restore History shows the cascade).
+        await this.auditService
+          .log({
+            eventType: NELC_EVENT_TYPE.SESSION_CANCELLED,
+            entityType: 'session',
+            entityId: updated.id,
+            userId: performedById,
+            metadata: {
+              sessionId: updated.id,
+              courseId: updated.courseId,
+              cancelReason: reason,
+              cascadeFromCourseDelete: true,
+            },
+          })
+          .catch(() => {});
+
+        await this.auditLogService
+          .log({
+            entityType: 'session',
+            entityId: updated.id,
+            action: 'session.cancelled',
+            performedBy: performedById,
+            metadata: {
+              courseId: updated.courseId,
+              reason,
+              cascadeFromCourseDelete: true,
+            },
+          })
+          .catch(() => {});
+
+        // Fire-and-forget notification to enrolled students. Failures
+        // here do not block the cancellation — the row is already
+        // marked cancelled, and audit logs capture the action.
+        this.sessionNotificationService
+          .notifySessionEvent(updated, 'session_cancelled', {
+            cancelReason: reason,
+          })
+          .catch((err) => {
+            this.logger.warn(
+              `cancelUpcomingForCourse: notify failed for ${updated.id}`,
+              err,
+            );
+          });
+
+        cancelled++;
+      } catch (err) {
+        failed++;
+        this.logger.error(
+          `cancelUpcomingForCourse: session ${session.id} failed`,
+          err,
+        );
+      }
+    }
+
+    return { cancelled, failed };
+  }
+
+  /**
    * Reschedule a session — marks current as 'rescheduled' and creates a new one.
    * Requires a reason. Works for scheduled, missed, or ended sessions.
    */

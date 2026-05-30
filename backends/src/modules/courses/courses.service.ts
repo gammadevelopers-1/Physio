@@ -1,10 +1,12 @@
 import {
   Injectable,
+  Inject,
   NotFoundException,
   BadRequestException,
   ForbiddenException,
   ConflictException,
   Logger,
+  forwardRef,
 } from '@nestjs/common';
 import { eq, and, ilike, or, desc, asc, count, sql, inArray, isNull } from 'drizzle-orm';
 import { db } from '../../database';
@@ -18,8 +20,10 @@ import {
   courseRatings,
   instructorRatings,
   assessments,
+  certificateRequests,
   users,
   COURSE_STATUS,
+  CERTIFICATE_STATUS,
   NELC_EVENT_TYPE,
 } from '../../database/schema';
 import { getTableColumns } from 'drizzle-orm';
@@ -38,6 +42,7 @@ import { CertificatesService } from '../certificates/certificates.service';
 import { PointsService } from '../points/points.service';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { AdminSettingsService } from '../admin-settings/admin-settings.service';
+import { SessionsService } from '../sessions/sessions.service';
 import { toArabicIndic } from '../../common/platform-locale';
 import { sanitizeRichText } from '../../common/sanitize-html';
 
@@ -53,6 +58,8 @@ export class CoursesService {
     private readonly pointsService: PointsService,
     private readonly auditLogService: AuditLogService,
     private readonly adminSettings: AdminSettingsService,
+    @Inject(forwardRef(() => SessionsService))
+    private readonly sessionsService: SessionsService,
   ) {}
 
   /**
@@ -1345,7 +1352,7 @@ export class CoursesService {
    *     including active courses with enrolled students. Audit
    *     captures the full pre-state.
    */
-  async remove(courseId: string, user: AuthenticatedUser, reason?: string) {
+  async remove(courseId: string, user: AuthenticatedUser, reason?: string, ip?: string) {
     if (!isManagerOrAbove(user)) {
       throw new ForbiddenException('Only managers and admins can delete courses');
     }
@@ -1376,6 +1383,16 @@ export class CoursesService {
 
     const impact = await this.computeCourseImpact(courseId);
 
+    // Block delete when certificate requests are pending — a student
+    // is waiting on an approve/reject decision and would be stranded
+    // if the course vanished mid-review. Force the admin/manager to
+    // clear the queue first.
+    if (impact.pendingCertificates > 0) {
+      throw new BadRequestException(
+        `Cannot delete: ${impact.pendingCertificates} certificate request(s) are pending review for this course. Approve or reject them first, then try again.`,
+      );
+    }
+
     await db
       .update(courses)
       .set({
@@ -1385,12 +1402,35 @@ export class CoursesService {
       })
       .where(eq(courses.id, courseId));
 
+    // Cascade-cancel every upcoming session for this course. Each
+    // session gets its Zoom resource torn down, status flipped to
+    // cancelled, individual session audit entry, AND a notification
+    // to the enrolled students explaining why. Failures per-session
+    // are logged but do not roll back the course soft-delete — the
+    // course is gone from every UI surface either way; missed
+    // cancellations get re-tried by the session-reminder cron's
+    // `deletedAt IS NULL` filter as defense-in-depth.
+    const cancelReason =
+      reason && reason.trim().length > 0
+        ? `Course deleted: ${reason.trim()}`
+        : 'The course was deleted by an administrator.';
+    const cascade = await this.sessionsService
+      .cancelUpcomingForCourse(courseId, user.id, cancelReason)
+      .catch((err) => {
+        this.logger.error(
+          `Cascade-cancel of upcoming sessions failed for course ${courseId}`,
+          err,
+        );
+        return { cancelled: 0, failed: impact.upcomingSessions };
+      });
+
     await this.auditLogService
       .log({
         entityType: 'course',
         entityId: courseId,
         action: 'course.soft_deleted',
         performedBy: user.id,
+        ipAddress: ip,
         metadata: {
           title: existing.title,
           status: existing.status,
@@ -1399,19 +1439,18 @@ export class CoursesService {
           managerId: existing.managerId,
           reason: reason ?? null,
           impact,
+          sessionsCancelled: cascade.cancelled,
+          sessionsCancelFailed: cascade.failed,
         },
       })
       .catch(() => {});
 
-    // Keep the older admin-action log entry for backwards compat
-    // with existing dashboard surfaces that read it.
-    await this.maybeLogAdminAction(user, courseId, 'course.delete', {
-      title: existing.title,
-      softDeleted: true,
+    return {
+      message: 'Course deleted successfully',
       impact,
-    });
-
-    return { message: 'Course deleted successfully', impact };
+      sessionsCancelled: cascade.cancelled,
+      sessionsCancelFailed: cascade.failed,
+    };
   }
 
   /**
@@ -1453,7 +1492,9 @@ export class CoursesService {
       materialRow,
       enrollmentRow,
       sessionRow,
+      upcomingSessionRow,
       assessmentRow,
+      pendingCertificateRow,
     ] = await Promise.all([
       db
         .select({ count: count() })
@@ -1476,17 +1517,43 @@ export class CoursesService {
         .select({ count: count() })
         .from(sessions)
         .where(eq(sessions.courseId, courseId)),
+      // Upcoming sessions (future, not already cancelled/missed) — these
+      // are what the cascade-cancel pass will need to handle on delete.
+      db
+        .select({ count: count() })
+        .from(sessions)
+        .where(
+          and(
+            eq(sessions.courseId, courseId),
+            sql`${sessions.scheduledAt} > NOW()`,
+            sql`${sessions.status} NOT IN ('cancelled', 'missed', 'ended')`,
+          ),
+        ),
       db
         .select({ count: count() })
         .from(assessments)
         .where(eq(assessments.courseId, courseId)),
+      // Pending certificate requests — these BLOCK the delete so a
+      // student isn't left in limbo waiting on a decision for a
+      // course that vanished.
+      db
+        .select({ count: count() })
+        .from(certificateRequests)
+        .where(
+          and(
+            eq(certificateRequests.courseId, courseId),
+            eq(certificateRequests.status, CERTIFICATE_STATUS.PENDING),
+          ),
+        ),
     ]);
     return {
       modules: Number(moduleRow[0]?.count ?? 0),
       materials: Number(materialRow[0]?.count ?? 0),
       enrollments: Number(enrollmentRow[0]?.count ?? 0),
       sessions: Number(sessionRow[0]?.count ?? 0),
+      upcomingSessions: Number(upcomingSessionRow[0]?.count ?? 0),
       assessments: Number(assessmentRow[0]?.count ?? 0),
+      pendingCertificates: Number(pendingCertificateRow[0]?.count ?? 0),
     };
   }
 
@@ -1596,7 +1663,7 @@ export class CoursesService {
    * payments, certificates) is intact because soft-delete never
    * touched it.
    */
-  async restoreCourse(courseId: string, userId: string) {
+  async restoreCourse(courseId: string, userId: string, ip?: string) {
     const [course] = await db
       .select()
       .from(courses)
@@ -1620,6 +1687,7 @@ export class CoursesService {
         entityId: courseId,
         action: 'course.restored',
         performedBy: userId,
+        ipAddress: ip,
         metadata: {
           title: course.title,
           status: course.status,

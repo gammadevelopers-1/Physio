@@ -8,6 +8,7 @@ import {
   Body,
   Param,
   Query,
+  Req,
   UseGuards,
   UseInterceptors,
   UploadedFile,
@@ -15,6 +16,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MaterialsService } from './materials.service';
 import { UploadMaterialDto } from './dto/upload-material.dto';
@@ -403,8 +405,9 @@ export class MaterialsController {
   async remove(
     @Param('id') materialId: string,
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
     @Query('reason') reason?: string,
   ) {
-    return this.materialsService.remove(materialId, user, reason);
+    return this.materialsService.remove(materialId, user, reason, req.ip);
   }
 }

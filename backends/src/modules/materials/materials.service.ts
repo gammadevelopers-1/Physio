@@ -931,7 +931,7 @@ export class MaterialsService {
    * restoreMaterial() within the 90-day GCS window, which clears
    * deleted_at and restores every GCS object atomically.
    */
-  async remove(materialId: string, user: AuthenticatedUser, reason?: string) {
+  async remove(materialId: string, user: AuthenticatedUser, reason?: string, ip?: string) {
     const existing = await this.verifyMaterialAccess(materialId, user);
 
     if (existing.status === MATERIAL_STATUS.PROCESSING) {
@@ -1017,6 +1017,7 @@ export class MaterialsService {
         entityId: materialId,
         action: 'material.soft_deleted',
         performedBy: user.id,
+        ipAddress: ip,
         metadata: {
           courseId: existing.courseId,
           moduleId: existing.moduleId,
@@ -1129,7 +1130,7 @@ export class MaterialsService {
    * Per-object failures are reported in the response so the admin
    * knows if some assets are past the 90-day window.
    */
-  async restoreMaterial(materialId: string, userId: string) {
+  async restoreMaterial(materialId: string, userId: string, ip?: string) {
     const [material] = await db
       .select()
       .from(courseMaterials)
@@ -1188,6 +1189,7 @@ export class MaterialsService {
         entityId: materialId,
         action: 'material.restored',
         performedBy: userId,
+        ipAddress: ip,
         metadata: {
           courseId: material.courseId,
           moduleId: material.moduleId,

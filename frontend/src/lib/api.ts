@@ -1823,7 +1823,9 @@ export interface CourseDeleteImpact {
   materials: number;
   enrollments: number;
   sessions: number;
+  upcomingSessions: number;
   assessments: number;
+  pendingCertificates: number;
 }
 
 export interface CourseDeleteImpactResponse {

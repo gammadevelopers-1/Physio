@@ -43,7 +43,11 @@ export class SessionReminderService {
       const windowStart = new Date(now.getTime() + 4 * 60 * 1000); // 4 min from now
       const windowEnd = new Date(now.getTime() + 6 * 60 * 1000); // 6 min from now
 
-      // Find scheduled Zoom/hybrid sessions starting in ~5 minutes with no reminder sent
+      // Find scheduled Zoom/hybrid sessions starting in ~5 minutes with no reminder sent.
+      // Skip sessions whose course has been soft-deleted — the cascade-cancel
+      // pass in CoursesService.remove() should have already marked those
+      // cancelled, but this is defense-in-depth so a slow cascade doesn't
+      // race the cron and email students about a vanishing course.
       const upcomingSessions = await db
         .select({
           id: sessions.id,
@@ -68,6 +72,7 @@ export class SessionReminderService {
               eq(sessions.type, SESSION_TYPE.ZOOM),
               eq(sessions.type, SESSION_TYPE.HYBRID),
             ),
+            isNull(courses.deletedAt),
           ),
         );
 

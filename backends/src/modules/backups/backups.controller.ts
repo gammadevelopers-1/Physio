@@ -144,8 +144,9 @@ export class BackupsController {
   restoreMaterial(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
   ) {
-    return this.materials.restoreMaterial(id, user.id);
+    return this.materials.restoreMaterial(id, user.id, req.ip);
   }
 
   // ── Course recovery ────────────────────────────────────────────
@@ -170,8 +171,9 @@ export class BackupsController {
   restoreCourse(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
   ) {
-    return this.courses.restoreCourse(id, user.id);
+    return this.courses.restoreCourse(id, user.id, req.ip);
   }
 
   // ── Restore sandboxes (Phase 2D) ───────────────────────────────

@@ -237,8 +237,9 @@ export class MaterialsService {
   ) {
     await this.verifyCourseAccess(courseId, user, { allowCompleted: true });
 
-    const conditions: ReturnType<typeof eq>[] = [
+    const conditions: SQL[] = [
       eq(courseMaterials.courseId, courseId),
+      isNull(courseMaterials.deletedAt),
     ];
 
     if (
@@ -522,7 +523,7 @@ export class MaterialsService {
     // Show all content that has been through the review pipeline (exclude processing/archived/failed)
     const statusCondition = sql`${courseMaterials.status} IN ('pending_review', 'changes_requested', 'live', 'failed')`;
 
-    const conditions: ReturnType<typeof eq>[] = [statusCondition as any];
+    const conditions: SQL[] = [statusCondition, isNull(courseMaterials.deletedAt)];
 
     if (!isManagerOrAbove(user)) {
       conditions.push(eq(courseMaterials.uploadedBy, user.id));
@@ -561,7 +562,7 @@ export class MaterialsService {
       .orderBy(desc(courseMaterials.createdAt));
 
     // Get counts by status for stats — scoped to the same courses as the data query
-    const scopeConditions: SQL[] = [];
+    const scopeConditions: SQL[] = [isNull(courseMaterials.deletedAt)];
     if (!isManagerOrAbove(user)) {
       scopeConditions.push(eq(courseMaterials.uploadedBy, user.id));
     }
@@ -621,7 +622,9 @@ export class MaterialsService {
     const [material] = await db
       .select()
       .from(courseMaterials)
-      .where(eq(courseMaterials.id, materialId))
+      .where(
+        and(eq(courseMaterials.id, materialId), isNull(courseMaterials.deletedAt)),
+      )
       .limit(1);
 
     if (!material) {
@@ -783,7 +786,7 @@ export class MaterialsService {
       .from(assessments)
       .where(eq(assessments.courseId, course.id));
 
-    // Fetch all materials for the course (non-archived)
+    // Fetch all materials for the course (non-archived, non-deleted)
     const allMaterials = await db
       .select()
       .from(courseMaterials)
@@ -791,6 +794,7 @@ export class MaterialsService {
         and(
           eq(courseMaterials.courseId, course.id),
           sql`${courseMaterials.status} != 'archived'`,
+          isNull(courseMaterials.deletedAt),
         ),
       );
 
@@ -910,11 +914,22 @@ export class MaterialsService {
     };
   }
 
-  // ─── Delete ───────────────────────────────────────────────
+  // ─── Delete (soft) ─────────────────────────────────────────
 
   /**
    * DELETE /materials/:id
-   * Remove a material record and delete the file from storage.
+   *
+   * Two-layer soft delete:
+   *   1. The DB row is soft-deleted (deleted_at, deleted_by). All
+   *      material list queries filter `deleted_at IS NULL`, so the
+   *      material disappears from every UI surface.
+   *   2. The GCS objects (main + captions + transcript + variants)
+   *      are sent to GCS soft-delete, so the storage URLs stop
+   *      serving 200s — preserving the prior security posture.
+   *
+   * Recovery: the admin "Recently deleted materials" panel calls
+   * restoreMaterial() within the 90-day GCS window, which clears
+   * deleted_at and restores every GCS object atomically.
    */
   async remove(materialId: string, user: AuthenticatedUser, reason?: string) {
     const existing = await this.verifyMaterialAccess(materialId, user);
@@ -925,11 +940,17 @@ export class MaterialsService {
       );
     }
 
+    if (existing.deletedAt) {
+      throw new BadRequestException('Material is already deleted.');
+    }
+
     // If removed by manager, notify the instructor
     const isManagerRemoval = user.roles.includes('MANAGER') && existing.uploadedBy !== user.id;
     const materialInfo = { id: existing.id, uploadedBy: existing.uploadedBy, courseId: existing.courseId, title: existing.title };
 
-    // Delete variant files from storage (before cascade deletes the rows)
+    // Soft-delete every GCS object so the URLs immediately stop
+    // serving 200s. GCS retains each generation for the 90-day
+    // soft-delete window, allowing per-object restore.
     const variants = await db
       .select()
       .from(materialVariants)
@@ -946,7 +967,6 @@ export class MaterialsService {
       }
     }
 
-    // Delete main file from storage
     if (existing.fileUrl) {
       const storagePath = this.extractStoragePath(existing.fileUrl);
       if (storagePath) {
@@ -958,7 +978,6 @@ export class MaterialsService {
       }
     }
 
-    // Delete captions file
     if (existing.captionsUrl) {
       const captionsPath = this.extractStoragePath(existing.captionsUrl);
       if (captionsPath) {
@@ -970,7 +989,6 @@ export class MaterialsService {
       }
     }
 
-    // Delete transcript file
     if (existing.transcriptUrl) {
       const transcriptPath = this.extractStoragePath(existing.transcriptUrl);
       if (transcriptPath) {
@@ -982,10 +1000,32 @@ export class MaterialsService {
       }
     }
 
-    // Delete the material record (cascades to variants)
+    // Soft-delete the row (variants intentionally kept — restore
+    // walks them by materialId, GCS holds the bytes).
     await db
-      .delete(courseMaterials)
+      .update(courseMaterials)
+      .set({
+        deletedAt: new Date(),
+        deletedBy: user.id,
+        updatedAt: new Date(),
+      })
       .where(eq(courseMaterials.id, materialId));
+
+    await this.auditLogService
+      .log({
+        entityType: 'material',
+        entityId: materialId,
+        action: 'material.soft_deleted',
+        performedBy: user.id,
+        metadata: {
+          courseId: existing.courseId,
+          moduleId: existing.moduleId,
+          title: existing.title,
+          type: existing.type,
+          reason: reason ?? null,
+        },
+      })
+      .catch(() => {});
 
     // Notify instructor if removed by manager
     if (isManagerRemoval) {
@@ -993,6 +1033,181 @@ export class MaterialsService {
     }
 
     return { message: 'Material deleted successfully' };
+  }
+
+  // ─── Recently deleted (admin) ─────────────────────────────
+
+  /**
+   * GET /admin/backups/materials/deleted
+   * Paginated list of soft-deleted materials with full context
+   * (course title, module title, uploader, deleter) so the admin
+   * can decide whether to restore.
+   */
+  async listDeleted(page = 1, limit = 20) {
+    const safeLimit = Math.min(Math.max(limit, 1), 100);
+    const safePage = Math.max(page, 1);
+    const offset = (safePage - 1) * safeLimit;
+
+    const deletedByAlias = db.$with('deleter').as(
+      db
+        .select({
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        })
+        .from(users),
+    );
+
+    const rows = await db
+      .with(deletedByAlias)
+      .select({
+        id: courseMaterials.id,
+        courseId: courseMaterials.courseId,
+        courseTitle: courses.title,
+        moduleId: courseMaterials.moduleId,
+        moduleTitle: courseModules.title,
+        title: courseMaterials.title,
+        type: courseMaterials.type,
+        fileSize: courseMaterials.fileSize,
+        mimeType: courseMaterials.mimeType,
+        deletedAt: courseMaterials.deletedAt,
+        deletedById: courseMaterials.deletedBy,
+        deletedByFirstName: deletedByAlias.firstName,
+        deletedByLastName: deletedByAlias.lastName,
+        deletedByEmail: deletedByAlias.email,
+      })
+      .from(courseMaterials)
+      .leftJoin(courses, eq(courses.id, courseMaterials.courseId))
+      .leftJoin(courseModules, eq(courseModules.id, courseMaterials.moduleId))
+      .leftJoin(deletedByAlias, eq(deletedByAlias.id, courseMaterials.deletedBy))
+      .where(sql`${courseMaterials.deletedAt} IS NOT NULL`)
+      .orderBy(desc(courseMaterials.deletedAt))
+      .limit(safeLimit)
+      .offset(offset);
+
+    const [totalRow] = await db
+      .select({ count: count() })
+      .from(courseMaterials)
+      .where(sql`${courseMaterials.deletedAt} IS NOT NULL`);
+
+    const total = Number(totalRow?.count ?? 0);
+    const totalPages = Math.max(1, Math.ceil(total / safeLimit));
+
+    return {
+      items: rows.map((r) => ({
+        id: r.id,
+        courseId: r.courseId,
+        courseTitle: r.courseTitle,
+        moduleId: r.moduleId,
+        moduleTitle: r.moduleTitle,
+        title: r.title,
+        type: r.type,
+        fileSize: r.fileSize,
+        mimeType: r.mimeType,
+        deletedAt: r.deletedAt ? r.deletedAt.toISOString() : null,
+        deletedBy: r.deletedById
+          ? {
+              id: r.deletedById,
+              name: `${r.deletedByFirstName ?? ''} ${r.deletedByLastName ?? ''}`.trim() || null,
+              email: r.deletedByEmail ?? null,
+            }
+          : null,
+      })),
+      total,
+      page: safePage,
+      limit: safeLimit,
+      totalPages,
+    };
+  }
+
+  /**
+   * POST /admin/backups/materials/:id/restore
+   *
+   * Reverses remove(): clears deleted_at on the row and restores
+   * every linked GCS object from its latest soft-deleted generation.
+   * Per-object failures are reported in the response so the admin
+   * knows if some assets are past the 90-day window.
+   */
+  async restoreMaterial(materialId: string, userId: string) {
+    const [material] = await db
+      .select()
+      .from(courseMaterials)
+      .where(eq(courseMaterials.id, materialId))
+      .limit(1);
+
+    if (!material) {
+      throw new NotFoundException('Material not found');
+    }
+    if (!material.deletedAt) {
+      throw new BadRequestException('Material is not deleted.');
+    }
+
+    const variants = await db
+      .select()
+      .from(materialVariants)
+      .where(eq(materialVariants.materialId, materialId));
+
+    const urls: Array<{ kind: string; url: string }> = [];
+    if (material.fileUrl) urls.push({ kind: 'main', url: material.fileUrl });
+    if (material.captionsUrl) urls.push({ kind: 'captions', url: material.captionsUrl });
+    if (material.transcriptUrl) urls.push({ kind: 'transcript', url: material.transcriptUrl });
+    for (const v of variants) {
+      if (v.fileUrl) urls.push({ kind: `variant:${v.resolution}`, url: v.fileUrl });
+    }
+
+    const restored: Array<{ kind: string; path: string }> = [];
+    const failed: Array<{ kind: string; path: string; reason: string }> = [];
+
+    for (const entry of urls) {
+      const path = this.extractStoragePath(entry.url);
+      if (!path) {
+        failed.push({ kind: entry.kind, path: entry.url, reason: 'Unrecognized storage URL pattern' });
+        continue;
+      }
+      try {
+        await this.storageService.restoreLatestSoftDeleted('public', path);
+        restored.push({ kind: entry.kind, path });
+      } catch (err) {
+        failed.push({
+          kind: entry.kind,
+          path,
+          reason: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    await db
+      .update(courseMaterials)
+      .set({ deletedAt: null, deletedBy: null, updatedAt: new Date() })
+      .where(eq(courseMaterials.id, materialId));
+
+    await this.auditLogService
+      .log({
+        entityType: 'material',
+        entityId: materialId,
+        action: 'material.restored',
+        performedBy: userId,
+        metadata: {
+          courseId: material.courseId,
+          moduleId: material.moduleId,
+          title: material.title,
+          restoredCount: restored.length,
+          failedCount: failed.length,
+          failed: failed.slice(0, 10),
+        },
+      })
+      .catch(() => {});
+
+    return {
+      ok: true,
+      id: material.id,
+      courseId: material.courseId,
+      moduleId: material.moduleId,
+      title: material.title,
+      restored,
+      failed,
+    };
   }
 
   // ─── Helpers ──────────────────────────────────────────────
@@ -1037,7 +1252,9 @@ export class MaterialsService {
     const [material] = await db
       .select()
       .from(courseMaterials)
-      .where(eq(courseMaterials.id, materialId))
+      .where(
+        and(eq(courseMaterials.id, materialId), isNull(courseMaterials.deletedAt)),
+      )
       .limit(1);
 
     if (!material) {

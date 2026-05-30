@@ -355,7 +355,11 @@ export class NelcComplianceService {
     const [modules, materials, courseAssessments, courseSessions] = await Promise.all([
       db.select().from(courseModules).where(eq(courseModules.courseId, courseId)),
       db.select().from(courseMaterials).where(
-        and(eq(courseMaterials.courseId, courseId), sql`${courseMaterials.status} != 'archived'`),
+        and(
+          eq(courseMaterials.courseId, courseId),
+          sql`${courseMaterials.status} != 'archived'`,
+          isNull(courseMaterials.deletedAt),
+        ),
       ),
       db.select().from(assessments).where(eq(assessments.courseId, courseId)),
       db.select().from(sessions).where(eq(sessions.courseId, courseId)),
@@ -741,7 +745,12 @@ export class NelcComplianceService {
         reviewNote: courseMaterials.reviewNote,
       })
       .from(courseMaterials)
-      .where(eq(courseMaterials.courseId, courseId));
+      .where(
+        and(
+          eq(courseMaterials.courseId, courseId),
+          isNull(courseMaterials.deletedAt),
+        ),
+      );
 
     // 6. Assessment results
     const courseAssessments = await db

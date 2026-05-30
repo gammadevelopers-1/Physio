@@ -8,13 +8,16 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  FileX,
   FolderArchive,
   HardDriveDownload,
   History,
   Loader2,
+  PackageOpen,
   Play,
   RefreshCw,
   RotateCcw,
+  Trash2,
   XCircle,
 } from "lucide-react";
 import {
@@ -87,6 +90,14 @@ function actionPresentation(action: string): {
       };
     case "website.rollback_failed":
       return { icon: XCircle, cls: "text-[#DC2626]", key: "actRollbackFailed" };
+    case "files.recovered":
+      return { icon: FileX, cls: "text-[#15803D]", key: "actFileRecovered" };
+    case "files.recover_failed":
+      return { icon: XCircle, cls: "text-[#DC2626]", key: "actFileRecoverFailed" };
+    case "material.soft_deleted":
+      return { icon: Trash2, cls: "text-[#D97706]", key: "actMaterialDeleted" };
+    case "material.restored":
+      return { icon: PackageOpen, cls: "text-[#15803D]", key: "actMaterialRestored" };
     default:
       return { icon: RotateCcw, cls: "text-[var(--color-text-secondary)]", key: "actUnknown" };
   }

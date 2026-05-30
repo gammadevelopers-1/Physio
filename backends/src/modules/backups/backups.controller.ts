@@ -13,6 +13,7 @@ import { Request } from 'express';
 import { BackupsService } from './backups.service';
 import { FilesBackupService } from './files-backup.service';
 import { FileRecoveryService } from './file-recovery.service';
+import { MaterialsService } from '../materials/materials.service';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
@@ -39,6 +40,7 @@ export class BackupsController {
     private readonly backups: BackupsService,
     private readonly filesBackup: FilesBackupService,
     private readonly fileRecovery: FileRecoveryService,
+    private readonly materials: MaterialsService,
   ) {}
 
   @Get('overview')
@@ -109,6 +111,33 @@ export class BackupsController {
       user.id,
       req.ip,
     );
+  }
+
+  // ── Course material recovery (UI-level restore) ────────────────
+  //
+  // /files/* is storage-only restore. /materials/* is the full-stack
+  // restore: clears `deleted_at` on the courseMaterials row AND
+  // restores every linked GCS object from soft-delete. After this
+  // call, the material reappears in the instructor's content list
+  // exactly where it was.
+
+  @Get('materials/deleted')
+  listDeletedMaterials(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.materials.listDeleted(
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
+  }
+
+  @Post('materials/:id/restore')
+  restoreMaterial(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.materials.restoreMaterial(id, user.id);
   }
 
   @Post(':id/download')

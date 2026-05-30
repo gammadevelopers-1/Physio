@@ -4,7 +4,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, asc, count, sql, gte, lte, inArray, or } from 'drizzle-orm';
+import { eq, and, desc, asc, count, sql, gte, lte, inArray, or, isNull } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   courses,
@@ -1916,7 +1916,10 @@ export class ReportsService {
       .innerJoin(courses, eq(courseMaterials.courseId, courses.id))
       .innerJoin(users, eq(courses.instructorId, users.id))
       .where(
-        sql`${courseMaterials.status} IN ('pending_review', 'changes_requested')`,
+        and(
+          sql`${courseMaterials.status} IN ('pending_review', 'changes_requested')`,
+          isNull(courseMaterials.deletedAt),
+        ),
       )
       .orderBy(desc(courseMaterials.createdAt));
 

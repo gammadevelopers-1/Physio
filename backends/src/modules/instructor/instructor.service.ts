@@ -3,7 +3,7 @@ import {
   NotFoundException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, sql, inArray, count, asc, desc, gte, lte, or } from 'drizzle-orm';
+import { eq, and, sql, inArray, count, asc, desc, gte, lte, or, isNull } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   enrollments,
@@ -285,7 +285,12 @@ export class InstructorService {
             const moduleMaterials = await db
               .select({ id: courseMaterials.id })
               .from(courseMaterials)
-              .where(eq(courseMaterials.moduleId, mod.id));
+              .where(
+                and(
+                  eq(courseMaterials.moduleId, mod.id),
+                  isNull(courseMaterials.deletedAt),
+                ),
+              );
 
             const totalMaterials = moduleMaterials.length;
 
@@ -506,7 +511,12 @@ export class InstructorService {
           fileSize: courseMaterials.fileSize,
         })
         .from(courseMaterials)
-        .where(inArray(courseMaterials.courseId, courseIds))
+        .where(
+          and(
+            inArray(courseMaterials.courseId, courseIds),
+            isNull(courseMaterials.deletedAt),
+          ),
+        )
         .orderBy(desc(courseMaterials.createdAt));
 
       materials = rawMaterials.map((m) => ({
@@ -962,7 +972,12 @@ export class InstructorService {
           const moduleMaterials = await db
             .select({ id: courseMaterials.id })
             .from(courseMaterials)
-            .where(eq(courseMaterials.moduleId, mod.id));
+            .where(
+              and(
+                eq(courseMaterials.moduleId, mod.id),
+                isNull(courseMaterials.deletedAt),
+              ),
+            );
 
           const totalMaterials = moduleMaterials.length;
           if (totalMaterials === 0 || totalEnrolledStudents === 0) {
@@ -2323,7 +2338,12 @@ export class InstructorService {
           cnt: count(),
         })
         .from(courseMaterials)
-        .where(inArray(courseMaterials.courseId, courseIds))
+        .where(
+          and(
+            inArray(courseMaterials.courseId, courseIds),
+            isNull(courseMaterials.deletedAt),
+          ),
+        )
         .groupBy(courseMaterials.status);
 
       for (const m of materialStats) {

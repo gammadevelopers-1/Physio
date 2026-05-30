@@ -45,6 +45,8 @@ export const courseMaterials = pgTable(
     uploadedBy: uuid('uploaded_by')
       .notNull()
       .references(() => users.id),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: uuid('deleted_by').references(() => users.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -61,6 +63,7 @@ export const courseMaterials = pgTable(
     index('course_materials_status_idx').on(table.status),
     index('course_materials_uploaded_by_idx').on(table.uploadedBy),
     index('course_materials_module_order_idx').on(table.moduleId, table.orderIndex),
+    index('course_materials_deleted_at_idx').on(table.deletedAt),
     check(
       'course_materials_type_check',
       sql`${table.type} IN ('video', 'pdf', 'document', 'image')`,

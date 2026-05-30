@@ -6,7 +6,7 @@ import {
   ConflictException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, ilike, or, desc, asc, count, sql, inArray } from 'drizzle-orm';
+import { eq, and, ilike, or, desc, asc, count, sql, inArray, isNull } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   courses,
@@ -980,6 +980,7 @@ export class CoursesService {
             and(
               inArray(courseMaterials.moduleId, previewModuleIds),
               eq(courseMaterials.status, 'live'),
+              isNull(courseMaterials.deletedAt),
             ),
           )
           .orderBy(asc(courseMaterials.orderIndex));
@@ -1417,6 +1418,7 @@ export class CoursesService {
         and(
           eq(courseMaterials.courseId, courseId),
           sql`${courseMaterials.status} NOT IN ('live', 'archived')`,
+          isNull(courseMaterials.deletedAt),
         ),
       );
 
@@ -1826,6 +1828,7 @@ export class CoursesService {
           and(
             eq(courseMaterials.courseId, courseId),
             sql`${courseMaterials.status} NOT IN ('live', 'archived')`,
+            isNull(courseMaterials.deletedAt),
           ),
         );
 
@@ -1981,6 +1984,7 @@ export class CoursesService {
         and(
           eq(courseMaterials.courseId, courseId),
           sql`${courseMaterials.status} IN ('pending_review', 'changes_requested')`,
+          isNull(courseMaterials.deletedAt),
         ),
       );
 
@@ -2164,7 +2168,12 @@ export class CoursesService {
       const [matCount] = await db
         .select({ count: sql<number>`count(*)`.mapWith(Number) })
         .from(courseMaterials)
-        .where(eq(courseMaterials.moduleId, mod.id));
+        .where(
+          and(
+            eq(courseMaterials.moduleId, mod.id),
+            isNull(courseMaterials.deletedAt),
+          ),
+        );
       if (matCount.count === 0) {
         throw new BadRequestException(
           `Module "${mod.title}" has no content. All modules must have at least one material before ${label}.`,

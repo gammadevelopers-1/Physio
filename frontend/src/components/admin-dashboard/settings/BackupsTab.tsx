@@ -29,6 +29,7 @@ import { TabShell } from "./TabShell";
 import WebsiteRecoverySection from "./WebsiteRecoverySection";
 import RestoreHistorySection from "./RestoreHistorySection";
 import DeletedFilesSection from "./DeletedFilesSection";
+import DeletedMaterialsSection from "./DeletedMaterialsSection";
 import {
   backupsAdminApi,
   type BackupOverview,
@@ -420,6 +421,10 @@ export default function BackupsTab() {
 
       {/* Website application — list Cloud Run revisions + rollback */}
       <WebsiteRecoverySection enabled={!disabled} />
+
+      {/* Recently deleted course materials — full-stack restore (DB row + GCS bytes).
+          Distinct from "Recently deleted files" below, which is storage-only. */}
+      <DeletedMaterialsSection enabled={!disabled} />
 
       {/* Recently deleted files — per-file recovery from the 90-day soft-delete window */}
       <DeletedFilesSection enabled={!disabled} />

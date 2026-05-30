@@ -5,7 +5,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { GoogleAuth } from 'google-auth-library';
-import { eq, desc, inArray, count } from 'drizzle-orm';
+import { eq, desc, inArray, count, and, or } from 'drizzle-orm';
 import { db } from '../../database';
 import { backups, users, auditLogs } from '../../database/schema';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
@@ -147,7 +147,18 @@ export class BackupsService {
   async listAuditHistory(page = 1, limit = 20) {
     const safeLimit = Math.min(Math.max(limit, 1), 100);
     const offset = (page - 1) * safeLimit;
-    const entityTypes = ['backup', 'website_rollback'];
+
+    // The "Restore History" feed shows every recovery-relevant event:
+    // backup ops, website rollbacks, and content material soft-deletes
+    // and restores. Other material actions (approve/reject/etc.) are
+    // intentionally NOT in this feed — they have their own surfaces.
+    const recoveryFilter = or(
+      inArray(auditLogs.entityType, ['backup', 'website_rollback']),
+      and(
+        eq(auditLogs.entityType, 'material'),
+        inArray(auditLogs.action, ['material.soft_deleted', 'material.restored']),
+      )!,
+    )!;
 
     const data = await db
       .select({
@@ -165,7 +176,7 @@ export class BackupsService {
       })
       .from(auditLogs)
       .innerJoin(users, eq(auditLogs.performedBy, users.id))
-      .where(inArray(auditLogs.entityType, entityTypes))
+      .where(recoveryFilter)
       .orderBy(desc(auditLogs.createdAt))
       .limit(safeLimit)
       .offset(offset);
@@ -173,7 +184,7 @@ export class BackupsService {
     const [countResult] = await db
       .select({ count: count() })
       .from(auditLogs)
-      .where(inArray(auditLogs.entityType, entityTypes));
+      .where(recoveryFilter);
 
     const total = countResult?.count || 0;
     return {

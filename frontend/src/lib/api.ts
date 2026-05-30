@@ -1764,7 +1764,52 @@ export const backupsAdminApi = {
       name: string;
       size: number | null;
     }>('/admin/backups/files/restore', { bucketLabel, name, generation }),
+  listDeletedMaterials: (page = 1, limit = 20) =>
+    api.get<DeletedMaterialsResponse>(
+      `/admin/backups/materials/deleted?page=${page}&limit=${limit}`,
+    ),
+  restoreMaterial: (id: string) =>
+    api.post<RestoreMaterialResponse>(
+      `/admin/backups/materials/${id}/restore`,
+      {},
+    ),
 };
+
+export interface DeletedMaterialEntry {
+  id: string;
+  courseId: string;
+  courseTitle: string | null;
+  moduleId: string | null;
+  moduleTitle: string | null;
+  title: string;
+  type: 'video' | 'pdf' | 'document' | 'image' | string;
+  fileSize: number | null;
+  mimeType: string | null;
+  deletedAt: string | null;
+  deletedBy: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  } | null;
+}
+
+export interface DeletedMaterialsResponse {
+  items: DeletedMaterialEntry[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface RestoreMaterialResponse {
+  ok: boolean;
+  id: string;
+  courseId: string;
+  moduleId: string | null;
+  title: string;
+  restored: Array<{ kind: string; path: string }>;
+  failed: Array<{ kind: string; path: string; reason: string }>;
+}
 
 export interface BackupAuditEntry {
   id: string;

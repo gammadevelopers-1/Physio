@@ -4,7 +4,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, asc, count, sql, ilike, or, gte, lte } from 'drizzle-orm';
+import { eq, and, desc, asc, count, sql, ilike, or, gte, lte, isNull } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   enrollments,
@@ -1256,6 +1256,7 @@ export class StudentService {
             eq(courseMaterials.moduleId, dto.moduleId),
             eq(courseMaterials.type, 'video'),
             eq(courseMaterials.status, 'live'),
+            isNull(courseMaterials.deletedAt),
           ),
         );
 
@@ -3344,6 +3345,7 @@ export class StudentService {
               eq(courseMaterials.moduleId, prevModule.id),
               eq(courseMaterials.type, 'video'),
               eq(courseMaterials.status, 'live'),
+              isNull(courseMaterials.deletedAt),
             ),
           );
 
@@ -3397,6 +3399,7 @@ export class StudentService {
         and(
           eq(courseMaterials.moduleId, moduleId),
           eq(courseMaterials.status, 'live'),
+          isNull(courseMaterials.deletedAt),
         ),
       )
       .orderBy(asc(courseMaterials.orderIndex));

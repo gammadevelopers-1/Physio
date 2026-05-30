@@ -5,7 +5,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, asc, count, sql, gte, lte, or } from 'drizzle-orm';
+import { eq, and, desc, asc, count, sql, gte, lte, or, isNull } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   sessions,
@@ -2219,6 +2219,7 @@ export class SessionsService {
         and(
           eq(courseMaterials.id, materialId),
           eq(courseMaterials.courseId, session.courseId),
+          isNull(courseMaterials.deletedAt),
         ),
       )
       .limit(1);
@@ -2278,7 +2279,12 @@ export class SessionsService {
       .from(sessionMaterials)
       .innerJoin(courseMaterials, eq(sessionMaterials.materialId, courseMaterials.id))
       .innerJoin(users, eq(sessionMaterials.sharedBy, users.id))
-      .where(eq(sessionMaterials.sessionId, sessionId))
+      .where(
+        and(
+          eq(sessionMaterials.sessionId, sessionId),
+          isNull(courseMaterials.deletedAt),
+        ),
+      )
       .orderBy(desc(sessionMaterials.sharedAt));
 
     return shared;

@@ -142,6 +142,91 @@ export class StorageService {
   }
 
   /**
+   * Restore the most recent soft-deleted generation of an object so
+   * that the object becomes live again at the same path. Used by the
+   * admin material recovery flow — when we restore the DB row, we
+   * also bring the underlying GCS bytes back from the 90-day window.
+   *
+   * No-op on local storage: there is no soft-delete concept locally,
+   * and deletes already short-circuit if the file is gone.
+   */
+  async restoreLatestSoftDeleted(
+    bucket: 'public' | 'private' | 'trainers',
+    filename: string,
+  ): Promise<{ generation: string } | null> {
+    if (this.useLocal) {
+      // No soft-delete in local mode; nothing to do.
+      return null;
+    }
+
+    const b = this.buckets![bucket];
+
+    // If the live object already exists (e.g. it was never actually
+    // deleted because of an earlier failure), there is nothing to
+    // restore — return that as a success.
+    try {
+      const [liveExists] = await b.file(filename).exists();
+      if (liveExists) {
+        const [meta] = await b.file(filename).getMetadata();
+        return { generation: String(meta.generation ?? '') };
+      }
+    } catch {
+      // fall through to soft-delete lookup
+    }
+
+    // Find the most recently soft-deleted generation for this exact
+    // object name. softDeleted=true + prefix narrows the scan.
+    const [files] = await b.getFiles({
+      softDeleted: true,
+      prefix: filename,
+      autoPaginate: true,
+      maxResults: 50,
+    });
+
+    const exact = files.filter((f) => f.name === filename);
+    if (exact.length === 0) {
+      throw new Error(
+        `No soft-deleted generations found for ${bucket}/${filename}. ` +
+          `The 90-day window may have expired.`,
+      );
+    }
+
+    // Sort by softDeleteTime/timeDeleted descending and pick newest.
+    exact.sort((a, b2) => {
+      const m1 = a.metadata as Record<string, unknown>;
+      const m2 = b2.metadata as Record<string, unknown>;
+      const t1 =
+        typeof m1.timeDeleted === 'string'
+          ? new Date(m1.timeDeleted).getTime()
+          : typeof m1.softDeleteTime === 'string'
+            ? new Date(m1.softDeleteTime).getTime()
+            : 0;
+      const t2 =
+        typeof m2.timeDeleted === 'string'
+          ? new Date(m2.timeDeleted).getTime()
+          : typeof m2.softDeleteTime === 'string'
+            ? new Date(m2.softDeleteTime).getTime()
+            : 0;
+      return t2 - t1;
+    });
+
+    const latest = exact[0];
+    const meta = latest.metadata as Record<string, unknown>;
+    const generation = String(meta.generation ?? '');
+    if (!generation) {
+      throw new Error(
+        `Soft-deleted entry for ${bucket}/${filename} is missing a generation id.`,
+      );
+    }
+
+    await b.file(filename).restore({ generation: Number(generation) });
+    this.logger.log(
+      `Restored ${bucket}/${filename} (generation ${generation})`,
+    );
+    return { generation };
+  }
+
+  /**
    * Check if storage is configured and accessible
    */
   async healthCheck(): Promise<{ status: string; buckets: Record<string, boolean> }> {

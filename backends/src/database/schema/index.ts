@@ -67,6 +67,9 @@ export * from './tickets';
 // Audit Logs schemas
 export * from './audit-logs';
 
+// Backup schemas
+export * from './backups';
+
 // Scheduled Reports schemas
 export * from './scheduled-reports';
 

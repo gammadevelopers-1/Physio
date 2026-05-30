@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   ChevronDown,
-  Settings,
   LogOut,
   GraduationCap,
   Users,
@@ -198,17 +197,8 @@ export function UserMenu() {
           </>
         )}
 
-        {/* Settings & Logout */}
+        {/* Logout */}
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link
-            href={`/${locale}/settings`}
-            className="flex items-center gap-3 px-4 py-2 text-[var(--color-text-primary)]"
-          >
-            <Settings className="w-4 h-4 flex-shrink-0" />
-            <span className="text-sm">{t('settings')}</span>
-          </Link>
-        </DropdownMenuItem>
         <DropdownMenuItem
           danger
           onClick={async () => { await logout(); }}

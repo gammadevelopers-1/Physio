@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   MessageSquare,
   Wrench,
+  DatabaseBackup,
 } from "lucide-react";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
 
@@ -32,6 +33,7 @@ import NotificationsTab from "./settings/NotificationsTab";
 import PaymentsTab from "./settings/PaymentsTab";
 import IntegrationsTab from "./settings/IntegrationsTab";
 import MaintenanceTab from "./settings/MaintenanceTab";
+import BackupsTab from "./settings/BackupsTab";
 
 type SubTabId =
   | "general"
@@ -41,6 +43,7 @@ type SubTabId =
   | "notifications"
   | "payments"
   | "integrations"
+  | "backups"
   | "maintenance";
 
 type MainTabId = "platform" | "security" | "communications" | "system";
@@ -84,6 +87,7 @@ const mainTabs: MainTab[] = [
     subTabs: [
       { id: "payments", icon: CreditCard },
       { id: "integrations", icon: Link2 },
+      { id: "backups", icon: DatabaseBackup },
       { id: "maintenance", icon: AlertTriangle },
     ],
   },
@@ -194,6 +198,7 @@ const AdminSettingsContent = () => {
                   {activeSub === "notifications" && <NotificationsTab />}
                   {activeSub === "payments" && <PaymentsTab />}
                   {activeSub === "integrations" && <IntegrationsTab />}
+                  {activeSub === "backups" && <BackupsTab />}
                   {activeSub === "maintenance" && <MaintenanceTab />}
                 </div>
               </div>

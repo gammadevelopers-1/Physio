@@ -37,6 +37,7 @@ import { AdminStatsModule } from './modules/admin-stats/admin-stats.module';
 import { AdminNotificationsModule } from './modules/admin-notifications/admin-notifications.module';
 import { AdminSettingsModule } from './modules/admin-settings/admin-settings.module';
 import { TemplatesModule } from './modules/templates/templates.module';
+import { BackupsModule } from './modules/backups/backups.module';
 import { MaintenanceMiddleware } from './common/maintenance.middleware';
 import { JwtAuthGuard } from './modules/auth/guards';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -129,6 +130,7 @@ import processingConfig from './config/processing.config';
     ProcessingModule,
     PreferencesModule,
     AuditLogModule,
+    BackupsModule,
     StudentModule,
     UserNotificationsModule,
     PointsModule,

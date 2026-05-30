@@ -1677,6 +1677,135 @@ export const zoomAdminApi = {
 };
 
 // ===========================================
+// Backups API (admin DB backups + downloadable exports)
+// ===========================================
+export interface BackupOverview {
+  /** false in non-production environments — live ops are unavailable. */
+  enabled: boolean;
+  instance: string;
+  database: string;
+  region: string;
+  bucket: string;
+  automatedDaily: boolean;
+  pitrDays: number;
+  encryptedAtRest: boolean;
+  malwareScanned: boolean;
+  signedDownloadExpiryMinutes: number;
+}
+
+export type BackupMode = 'snapshot' | 'export' | 'files_export';
+export type BackupStatus = 'pending' | 'running' | 'completed' | 'failed';
+
+export interface BackupRecord {
+  id: string;
+  type: string;
+  mode: BackupMode;
+  status: BackupStatus;
+  gcsObject: string | null;
+  fileSizeBytes: number | null;
+  error: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  createdByFirstName: string | null;
+  createdByLastName: string | null;
+  createdByEmail: string | null;
+}
+
+export interface BackupRestorePoint {
+  id: string;
+  status: string;
+  type: string; // AUTOMATED | ON_DEMAND
+  startTime: string | null;
+  endTime: string | null;
+  description: string | null;
+}
+
+export interface BackupRestorePointsResponse {
+  available: boolean;
+  items: BackupRestorePoint[];
+  error?: string;
+}
+
+export const backupsAdminApi = {
+  getOverview: () => api.get<BackupOverview>('/admin/backups/overview'),
+  list: () => api.get<BackupRecord[]>('/admin/backups'),
+  getRestorePoints: () =>
+    api.get<BackupRestorePointsResponse>('/admin/backups/restore-points'),
+  createSnapshot: () =>
+    api.post<{ id: string; status: string }>('/admin/backups/snapshot', {}),
+  createExport: () =>
+    api.post<{ id: string; status: string; object: string }>(
+      '/admin/backups/export',
+      {},
+    ),
+  createFilesExport: () =>
+    api.post<{ id: string; status: string; object: string }>(
+      '/admin/backups/files',
+      {},
+    ),
+  getDownloadUrl: (id: string) =>
+    api.post<{ url: string; expiresInMinutes: number }>(
+      `/admin/backups/${id}/download`,
+      {},
+    ),
+};
+
+// ===========================================
+// Website Recovery API (Cloud Run revisions + rollback)
+// ===========================================
+export interface WebsiteRecoveryConfig {
+  enabled: boolean;
+  service: string;
+  region: string;
+  /** The exact string the admin must type into the confirm modal. */
+  confirmDomain: string;
+}
+
+export interface WebsiteRevision {
+  /** Fully-qualified revision resource name. */
+  name: string;
+  /** Short revision id, used as the rollback target. */
+  shortName: string;
+  createdAt: string | null;
+  image: string | null;
+  /** Live traffic percentage on this revision (0 or 100 in our deploy model). */
+  percent: number;
+  isLive: boolean;
+  /** Whole days since the revision was created — used to warn on old rollbacks. */
+  ageDays: number | null;
+}
+
+export interface WebsiteRevisionsResponse {
+  available: boolean;
+  items: WebsiteRevision[];
+  currentRevision: string | null;
+  service: string;
+  region: string;
+  error?: string;
+}
+
+export interface WebsiteRollbackResult {
+  ok: boolean;
+  correlationId: string;
+  targetRevision: string;
+  previousRevision: string | null;
+  operation: string | null;
+  durationMs: number;
+}
+
+export const websiteRecoveryAdminApi = {
+  getConfig: () =>
+    api.get<WebsiteRecoveryConfig>('/admin/backups/website/config'),
+  listRevisions: () =>
+    api.get<WebsiteRevisionsResponse>('/admin/backups/website/revisions'),
+  rollback: (revisionName: string, confirmDomain: string) =>
+    api.post<WebsiteRollbackResult>('/admin/backups/website/rollback', {
+      revisionName,
+      confirmDomain,
+    }),
+};
+
+// ===========================================
 // Templates API (admin-editable email + WhatsApp messages)
 // ===========================================
 export type TemplateChannel = 'email' | 'whatsapp';

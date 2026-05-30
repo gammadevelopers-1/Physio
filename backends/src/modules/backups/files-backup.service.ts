@@ -5,7 +5,6 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import { Readable } from 'stream';
 import { db } from '../../database';
 import { backups } from '../../database/schema';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
@@ -182,8 +181,12 @@ export class FilesBackupService {
     const destBucket = storage.bucket(this.bucket);
     const destFile = destBucket.file(objectName);
 
+    // resumable: true uses GCS's resumable upload protocol — survives
+    // transient network blips by checkpointing chunks instead of failing
+    // the whole upload. Critical when the archive is large enough to take
+    // more than a few seconds (videos especially).
     const writeStream = destFile.createWriteStream({
-      resumable: false,
+      resumable: true,
       metadata: {
         contentType: 'application/zip',
         cacheControl: 'private, max-age=0',
@@ -235,26 +238,19 @@ export class FilesBackupService {
         for (const f of pageFiles) {
           // Skip "directories" (GCS placeholder objects ending with /).
           if (f.name.endsWith('/')) continue;
-          try {
-            const readStream = f.createReadStream();
-            // Defensive per-file error swallow — one missing/aborted file
-            // should not kill the whole archive.
-            readStream.on('error', (err) => {
-              this.logger.warn(
-                `read failed for ${src.label}/${f.name}: ${err.message}`,
-              );
-              skipped++;
-            });
-            archive.append(readStream as Readable, {
-              name: `${src.label}/${f.name}`,
-            });
-            fileCount++;
-          } catch (err) {
-            this.logger.warn(
-              `append failed for ${src.label}/${f.name}: ${(err as Error).message}`,
-            );
+          // Download the file to a buffer (with retries on transient
+          // network errors), then append the buffer to the archive. We
+          // intentionally avoid streaming from GCS through archiver
+          // because a stream error mid-file aborts the whole archive —
+          // buffering isolates failures per file. Memory stays bounded
+          // because archiver processes appends sequentially.
+          const buf = await this.downloadWithRetry(f, src.label);
+          if (buf === null) {
             skipped++;
+            continue;
           }
+          archive.append(buf, { name: `${src.label}/${f.name}` });
+          fileCount++;
         }
         pageToken = (apiResp as { nextPageToken?: string })?.nextPageToken;
       } while (pageToken);
@@ -268,6 +264,35 @@ export class FilesBackupService {
       fileCount,
       skipped,
     };
+  }
+
+  /**
+   * Download one GCS object to a Buffer, retrying on transient network
+   * errors (ECONNRESET, ETIMEDOUT, socket hang up). Returns null after
+   * the final retry fails so the caller can skip the file and continue.
+   */
+  private async downloadWithRetry(
+    file: import('@google-cloud/storage').File,
+    bucketLabel: string,
+    maxAttempts = 3,
+  ): Promise<Buffer | null> {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const [buf] = await file.download();
+        return buf;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (attempt === maxAttempts) {
+          this.logger.warn(
+            `download failed for ${bucketLabel}/${file.name} after ${maxAttempts} attempts: ${msg}`,
+          );
+          return null;
+        }
+        // Linear backoff is plenty for transient network blips.
+        await new Promise((r) => setTimeout(r, 1000 * attempt));
+      }
+    }
+    return null;
   }
 
   // ── Internals ───────────────────────────────────────────────────

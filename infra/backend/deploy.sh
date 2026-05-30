@@ -189,6 +189,7 @@ if gcloud sql instances describe ${DB_INSTANCE_NAME} &>/dev/null; then
         --port=${BACKEND_PORT} \
         --memory=${BACKEND_MEMORY} \
         --cpu=${BACKEND_CPU} \
+        --no-cpu-throttling \
         --min-instances=${BACKEND_MIN_INSTANCES} \
         --max-instances=${BACKEND_MAX_INSTANCES} \
         --add-cloudsql-instances=${CONNECTION_NAME} \
@@ -206,6 +207,7 @@ else
         --port=${BACKEND_PORT} \
         --memory=${BACKEND_MEMORY} \
         --cpu=${BACKEND_CPU} \
+        --no-cpu-throttling \
         --min-instances=${BACKEND_MIN_INSTANCES} \
         --max-instances=${BACKEND_MAX_INSTANCES} \
         --vpc-connector=physio-vpc-connector \

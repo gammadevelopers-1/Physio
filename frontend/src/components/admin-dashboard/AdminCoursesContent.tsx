@@ -42,7 +42,12 @@ import {
 } from "lucide-react";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
 import { useAdminCourses } from "@/hooks/useAdminCourses";
-import { adminApi, courseManagerApi, FilterPerson } from "@/lib/api";
+import {
+  adminApi,
+  courseManagerApi,
+  FilterPerson,
+  type CourseDeleteImpact,
+} from "@/lib/api";
 import type { InstructorCourse, CourseEnrollment } from "@/types/instructor-dashboard";
 
 const ITEMS_PER_PAGE = 12;
@@ -77,6 +82,13 @@ const AdminCoursesContent = () => {
   const [confirmKind, setConfirmKind] = useState<ConfirmKind>(null);
   const [confirmCourse, setConfirmCourse] = useState<InstructorCourse | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
+  // Delete-impact preview + type-to-confirm state. Only loaded
+  // when the delete modal opens; cleared on close.
+  const [deleteImpact, setDeleteImpact] = useState<CourseDeleteImpact | null>(null);
+  const [deleteImpactLoading, setDeleteImpactLoading] = useState(false);
+  const [deleteImpactError, setDeleteImpactError] = useState<string | null>(null);
+  const [deleteTypedTitle, setDeleteTypedTitle] = useState("");
+  const [deleteReason, setDeleteReason] = useState("");
   const [requestChangesCourse, setRequestChangesCourse] = useState<InstructorCourse | null>(null);
   const [requestChangesNote, setRequestChangesNote] = useState("");
   const [requestChangesBusy, setRequestChangesBusy] = useState(false);
@@ -317,11 +329,31 @@ const AdminCoursesContent = () => {
     setOpenDropdownId(null);
     setConfirmCourse(c);
     setConfirmKind(kind);
+    setDeleteImpact(null);
+    setDeleteImpactError(null);
+    setDeleteTypedTitle("");
+    setDeleteReason("");
+    if (kind === "delete") {
+      setDeleteImpactLoading(true);
+      adminApi
+        .getCourseDeleteImpact(c.id)
+        .then((res) => setDeleteImpact(res.impact))
+        .catch((err) =>
+          setDeleteImpactError(
+            err instanceof Error ? err.message : "Failed to load delete impact",
+          ),
+        )
+        .finally(() => setDeleteImpactLoading(false));
+    }
   };
   const closeConfirm = () => {
     if (confirmBusy) return;
     setConfirmKind(null);
     setConfirmCourse(null);
+    setDeleteImpact(null);
+    setDeleteImpactError(null);
+    setDeleteTypedTitle("");
+    setDeleteReason("");
   };
   const handleConfirm = async () => {
     if (!confirmCourse || !confirmKind) return;
@@ -331,11 +363,17 @@ const AdminCoursesContent = () => {
         await adminApi.deactivateCourse(confirmCourse.id);
         toast.success(t("coursesPage.toasts.archived"));
       } else {
-        await adminApi.deleteCourse(confirmCourse.id);
+        await adminApi.deleteCourse(
+          confirmCourse.id,
+          deleteReason.trim() || undefined,
+        );
         toast.success(t("coursesPage.toasts.deleted"));
       }
       setConfirmKind(null);
       setConfirmCourse(null);
+      setDeleteImpact(null);
+      setDeleteTypedTitle("");
+      setDeleteReason("");
       refetch();
     } catch (err) {
       toast.error(
@@ -351,6 +389,19 @@ const AdminCoursesContent = () => {
       setConfirmBusy(false);
     }
   };
+
+  // For non-draft courses, require the admin to type the course title
+  // exactly to enable the delete button. Draft courses are low-risk
+  // (no enrollments, no live content) and skip the gate.
+  const deleteNeedsTitleConfirm =
+    confirmKind === "delete" &&
+    confirmCourse !== null &&
+    confirmCourse.status !== "draft";
+  const deleteConfirmOk =
+    confirmKind === "delete" &&
+    confirmCourse !== null &&
+    (!deleteNeedsTitleConfirm ||
+      deleteTypedTitle.trim() === (confirmCourse.title || "").trim());
 
   // --- Enrolled students modal flow ---
 
@@ -477,7 +528,18 @@ const AdminCoursesContent = () => {
               <XCircle className="w-4 h-4" />
               {t("coursesPage.actions.requestChanges")}
             </button>
+            <button onClick={() => openConfirm("delete", course)} className={dangerCls}>
+              <Trash2 className="w-4 h-4" />
+              {t("coursesPage.actions.delete")}
+            </button>
           </>
+        )}
+
+        {course.status === "changes_requested" && (
+          <button onClick={() => openConfirm("delete", course)} className={dangerCls}>
+            <Trash2 className="w-4 h-4" />
+            {t("coursesPage.actions.delete")}
+          </button>
         )}
 
         {course.status === "active" && (
@@ -518,6 +580,10 @@ const AdminCoursesContent = () => {
               <Archive className="w-4 h-4" />
               {t("coursesPage.actions.archive")}
             </button>
+            <button onClick={() => openConfirm("delete", course)} className={dangerCls}>
+              <Trash2 className="w-4 h-4" />
+              {t("coursesPage.actions.delete")}
+            </button>
           </>
         )}
 
@@ -541,18 +607,28 @@ const AdminCoursesContent = () => {
               <Archive className="w-4 h-4" />
               {t("coursesPage.actions.archive")}
             </button>
+            <button onClick={() => openConfirm("delete", course)} className={dangerCls}>
+              <Trash2 className="w-4 h-4" />
+              {t("coursesPage.actions.delete")}
+            </button>
           </>
         )}
 
         {course.status === "archived" && (
-          <button
-            onClick={() => handleActivate(course)}
-            className={itemCls}
-            disabled={!!busyKey}
-          >
-            <ArchiveRestore className="w-4 h-4" />
-            {t("coursesPage.actions.unarchive")}
-          </button>
+          <>
+            <button
+              onClick={() => handleActivate(course)}
+              className={itemCls}
+              disabled={!!busyKey}
+            >
+              <ArchiveRestore className="w-4 h-4" />
+              {t("coursesPage.actions.unarchive")}
+            </button>
+            <button onClick={() => openConfirm("delete", course)} className={dangerCls}>
+              <Trash2 className="w-4 h-4" />
+              {t("coursesPage.actions.delete")}
+            </button>
+          </>
         )}
       </>
     );
@@ -1120,13 +1196,13 @@ const AdminCoursesContent = () => {
       {/* Confirmation Modal — Archive / Delete */}
       {confirmKind && confirmCourse && (
         <ModalBackdrop onClose={closeConfirm}>
-          <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl max-w-md w-full p-6">
+          <div className="bg-[var(--color-surface-card)] rounded-xl shadow-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
               {confirmKind === "archive"
                 ? t("coursesPage.confirmArchive.title")
                 : t("coursesPage.confirmDelete.title")}
             </h3>
-            <p className="text-sm text-[var(--color-text-secondary)] mb-5">
+            <p className="text-sm text-[var(--color-text-secondary)] mb-4">
               {confirmKind === "archive"
                 ? t("coursesPage.confirmArchive.body", {
                     title:
@@ -1141,6 +1217,90 @@ const AdminCoursesContent = () => {
                         : confirmCourse.title,
                   })}
             </p>
+
+            {confirmKind === "delete" && (
+              <>
+                {/* Impact preview — what will disappear */}
+                <div className="bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg p-3 mb-4">
+                  <p className="text-xs font-medium text-[var(--color-text-primary)] mb-2">
+                    {t("coursesPage.confirmDelete.impactTitle")}
+                  </p>
+                  {deleteImpactLoading && (
+                    <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      {t("coursesPage.confirmDelete.impactLoading")}
+                    </div>
+                  )}
+                  {deleteImpactError && (
+                    <p className="text-xs text-[#DC2626]">{deleteImpactError}</p>
+                  )}
+                  {deleteImpact && (
+                    <ul className="grid grid-cols-2 gap-1 text-xs text-[var(--color-text-secondary)]">
+                      <li>
+                        <span className="font-mono text-[var(--color-text-primary)]">{deleteImpact.modules}</span>{" "}
+                        {t("coursesPage.confirmDelete.impactModules")}
+                      </li>
+                      <li>
+                        <span className="font-mono text-[var(--color-text-primary)]">{deleteImpact.materials}</span>{" "}
+                        {t("coursesPage.confirmDelete.impactMaterials")}
+                      </li>
+                      <li>
+                        <span className="font-mono text-[var(--color-text-primary)]">{deleteImpact.enrollments}</span>{" "}
+                        {t("coursesPage.confirmDelete.impactEnrollments")}
+                      </li>
+                      <li>
+                        <span className="font-mono text-[var(--color-text-primary)]">{deleteImpact.sessions}</span>{" "}
+                        {t("coursesPage.confirmDelete.impactSessions")}
+                      </li>
+                      <li>
+                        <span className="font-mono text-[var(--color-text-primary)]">{deleteImpact.assessments}</span>{" "}
+                        {t("coursesPage.confirmDelete.impactAssessments")}
+                      </li>
+                    </ul>
+                  )}
+                </div>
+
+                {/* Soft-delete reassurance */}
+                <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-3 mb-4">
+                  <p className="text-xs text-[#1E40AF] leading-relaxed">
+                    {t("coursesPage.confirmDelete.softDeleteNote")}
+                  </p>
+                </div>
+
+                {/* Reason (optional but encouraged) */}
+                <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1">
+                  {t("coursesPage.confirmDelete.reasonLabel")}
+                </label>
+                <input
+                  type="text"
+                  value={deleteReason}
+                  onChange={(e) => setDeleteReason(e.target.value)}
+                  placeholder={t("coursesPage.confirmDelete.reasonPlaceholder")}
+                  disabled={confirmBusy}
+                  className="w-full px-3 h-10 text-sm border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] mb-4 disabled:opacity-50"
+                />
+
+                {/* Type-to-confirm gate for non-draft courses */}
+                {deleteNeedsTitleConfirm && (
+                  <>
+                    <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1">
+                      {t("coursesPage.confirmDelete.typeToConfirmLabel", {
+                        title: confirmCourse.title,
+                      })}
+                    </label>
+                    <input
+                      type="text"
+                      value={deleteTypedTitle}
+                      onChange={(e) => setDeleteTypedTitle(e.target.value)}
+                      placeholder={confirmCourse.title}
+                      disabled={confirmBusy}
+                      className="w-full px-3 h-10 text-sm font-mono border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] mb-4 disabled:opacity-50"
+                    />
+                  </>
+                )}
+              </>
+            )}
+
             <div className="flex justify-end gap-2">
               <button
                 type="button"
@@ -1153,8 +1313,11 @@ const AdminCoursesContent = () => {
               <button
                 type="button"
                 onClick={handleConfirm}
-                disabled={confirmBusy}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#DC2626] rounded-lg hover:bg-[#B91C1C] transition-colors disabled:opacity-50"
+                disabled={
+                  confirmBusy ||
+                  (confirmKind === "delete" && !deleteConfirmOk)
+                }
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#DC2626] rounded-lg hover:bg-[#B91C1C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {confirmBusy && <Loader2 className="w-4 h-4 animate-spin" />}
                 {confirmKind === "archive"

@@ -30,6 +30,7 @@ import WebsiteRecoverySection from "./WebsiteRecoverySection";
 import RestoreHistorySection from "./RestoreHistorySection";
 import DeletedFilesSection from "./DeletedFilesSection";
 import DeletedMaterialsSection from "./DeletedMaterialsSection";
+import DeletedCoursesSection from "./DeletedCoursesSection";
 import RestoreSandboxSection from "./RestoreSandboxSection";
 import {
   backupsAdminApi,
@@ -422,6 +423,11 @@ export default function BackupsTab() {
 
       {/* Website application — list Cloud Run revisions + rollback */}
       <WebsiteRecoverySection enabled={!disabled} />
+
+      {/* Recently deleted courses — soft-deleted by admin, restorable in full
+          with all dependent rows (modules, materials, enrollments, sessions,
+          payments, certificates) intact. */}
+      <DeletedCoursesSection enabled={!disabled} />
 
       {/* Recently deleted course materials — full-stack restore (DB row + GCS bytes).
           Distinct from "Recently deleted files" below, which is storage-only. */}

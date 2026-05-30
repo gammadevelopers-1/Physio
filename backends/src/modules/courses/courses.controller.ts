@@ -246,15 +246,35 @@ export class CoursesController {
   }
 
   /**
-   * DELETE /courses/:id — Delete a draft course (manager/admin only)
+   * GET /courses/:id/delete-impact — Pre-delete preview: counts of
+   * modules / materials / enrollments / sessions / assessments that
+   * will be hidden along with the course. Backs the strong-confirmation
+   * modal on the admin course-list page.
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get(':id/delete-impact')
+  async getDeleteImpact(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.getDeleteImpact(id, user);
+  }
+
+  /**
+   * DELETE /courses/:id — Soft-delete a course.
+   *
+   * Managers: only their own draft courses (back-compat).
+   * Admins: any course in any status, soft-deleted so it can be
+   * restored from the Backups tab. Reason captured in audit metadata.
    */
   @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Delete(':id')
   async remove(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
+    @Body() body?: { reason?: string },
   ) {
-    return this.coursesService.remove(id, user);
+    return this.coursesService.remove(id, user, body?.reason);
   }
 
   // ─── Module Endpoints ───────────────────────────────────────

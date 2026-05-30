@@ -8,13 +8,14 @@ import { WebsiteRecoveryService } from './website-recovery.service';
 import { RestoreCloneService } from './restore-clone.service';
 import { AuthModule } from '../auth/auth.module';
 import { MaterialsModule } from '../materials/materials.module';
+import { CoursesModule } from '../courses/courses.module';
 
 // AuditLogService is provided by the @Global AuditLogModule, so it can be
 // injected here without importing that module explicitly.
-// MaterialsModule is imported so the admin Backups tab can call into
-// MaterialsService for the "Recently deleted materials" feature.
+// MaterialsModule + CoursesModule are imported so the admin Backups tab
+// can call into them for the "Recently deleted" recovery features.
 @Module({
-  imports: [AuthModule, MaterialsModule],
+  imports: [AuthModule, MaterialsModule, CoursesModule],
   controllers: [BackupsController, WebsiteRecoveryController],
   providers: [
     BackupsService,

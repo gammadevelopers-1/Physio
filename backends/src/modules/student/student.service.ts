@@ -339,6 +339,8 @@ export class StudentService {
 
     const conditions: ReturnType<typeof eq>[] = [
       eq(enrollments.studentId, studentId),
+      // Hide enrollments whose course has been soft-deleted by an admin.
+      isNull(courses.deletedAt),
     ];
 
     // Filter by enrollment status
@@ -671,7 +673,7 @@ export class StudentService {
         )`.mapWith(Number),
       })
       .from(courses)
-      .where(eq(courses.id, courseId))
+      .where(and(eq(courses.id, courseId), isNull(courses.deletedAt)))
       .limit(1);
 
     if (!course) {

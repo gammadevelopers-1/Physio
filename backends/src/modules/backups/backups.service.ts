@@ -149,15 +149,19 @@ export class BackupsService {
     const offset = (page - 1) * safeLimit;
 
     // The "Restore History" feed shows every recovery-relevant event:
-    // backup ops, website rollbacks, sandbox lifecycle, and content
-    // material soft-deletes / restores. Other material actions
-    // (approve/reject/etc.) are intentionally NOT in this feed — they
-    // have their own surfaces.
+    // backup ops, website rollbacks, sandbox lifecycle, course
+    // soft-deletes / restores, and material soft-deletes / restores.
+    // Other course / material actions (approve / reject / etc.) are
+    // intentionally NOT in this feed — they have their own surfaces.
     const recoveryFilter = or(
       inArray(auditLogs.entityType, ['backup', 'website_rollback', 'restore_clone']),
       and(
         eq(auditLogs.entityType, 'material'),
         inArray(auditLogs.action, ['material.soft_deleted', 'material.restored']),
+      )!,
+      and(
+        eq(auditLogs.entityType, 'course'),
+        inArray(auditLogs.action, ['course.soft_deleted', 'course.restored']),
       )!,
     )!;
 

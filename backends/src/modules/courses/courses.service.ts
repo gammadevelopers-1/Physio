@@ -231,7 +231,9 @@ export class CoursesService {
     const limit = params.limit || 20;
     const offset = (page - 1) * limit;
 
-    const conditions: ReturnType<typeof eq>[] = [];
+    const conditions: ReturnType<typeof eq>[] = [
+      isNull(courses.deletedAt),
+    ];
 
     // Scope by role: admin sees all, manager sees their courses, instructor sees own
     this.addOwnershipCondition(conditions, user);
@@ -390,6 +392,7 @@ export class CoursesService {
         eq(courses.status, COURSE_STATUS.COMPLETED),
       ) as any,
       eq(courses.visibleOnPublicSite, true),
+      isNull(courses.deletedAt),
     ];
 
     if (params.delivery) {
@@ -777,6 +780,8 @@ export class CoursesService {
    * Get a single public course by ID with enriched data.
    */
   async findOnePublic(courseId: string) {
+    // Filter inside the where clause below — keep deleted courses
+    // invisible on the public site.
     const [data] = await db
       .select({
         id: courses.id,
@@ -901,6 +906,7 @@ export class CoursesService {
             eq(courses.status, COURSE_STATUS.ACTIVE),
             eq(courses.status, COURSE_STATUS.COMPLETED),
           ),
+          isNull(courses.deletedAt),
         ),
       )
       .limit(1);
@@ -1137,7 +1143,7 @@ export class CoursesService {
       }
     }
 
-    const conditions = [eq(courses.id, courseId)];
+    const conditions = [eq(courses.id, courseId), isNull(courses.deletedAt)];
     if (!isTA(user)) {
       this.addOwnershipCondition(conditions, user);
     }
@@ -1322,21 +1328,36 @@ export class CoursesService {
   }
 
   /**
-   * Delete a course — only draft courses, only MANAGER/ADMIN.
+   * Soft-delete a course.
+   *
+   * Sets `deleted_at` / `deleted_by` on the row instead of removing it,
+   * so the course can be restored later from the admin "Recently
+   * deleted courses" panel. All list / detail / catalog queries
+   * filter `deleted_at IS NULL`, so the course disappears from
+   * every UI surface immediately. Modules, materials, enrollments,
+   * sessions, payments, and certificates are NOT touched — they're
+   * inaccessible only because their parent course is hidden.
+   *
+   * Permissions:
+   *   - MANAGER: can soft-delete only DRAFT courses (or unassigned).
+   *     Matches the prior hard-delete behavior.
+   *   - ADMIN / SUPER_ADMIN: can soft-delete a course in ANY status,
+   *     including active courses with enrolled students. Audit
+   *     captures the full pre-state.
    */
-  async remove(courseId: string, user: AuthenticatedUser) {
+  async remove(courseId: string, user: AuthenticatedUser, reason?: string) {
     if (!isManagerOrAbove(user)) {
       throw new ForbiddenException('Only managers and admins can delete courses');
     }
 
     // Managers can only delete their own courses (or unassigned ones)
-    const conditions = [eq(courses.id, courseId)];
-    if (isManager(user)) {
+    const conditions = [eq(courses.id, courseId), isNull(courses.deletedAt)];
+    if (isManager(user) && !isGlobalAdmin(user)) {
       conditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
     }
 
     const [existing] = await db
-      .select({ id: courses.id, status: courses.status })
+      .select()
       .from(courses)
       .where(and(...conditions))
       .limit(1);
@@ -1345,25 +1366,278 @@ export class CoursesService {
       throw new NotFoundException('Course not found');
     }
 
-    if (existing.status !== COURSE_STATUS.DRAFT) {
+    // Managers (non-admin) are still locked to draft-only deletes — this
+    // matches the prior hard-delete behavior. Admins can delete any status.
+    if (!isGlobalAdmin(user) && existing.status !== COURSE_STATUS.DRAFT) {
       throw new BadRequestException(
         'Only draft courses can be deleted',
       );
     }
 
-    // Capture title for the audit log before the row is gone
-    const [{ title }] = await db
-      .select({ title: courses.title })
+    const impact = await this.computeCourseImpact(courseId);
+
+    await db
+      .update(courses)
+      .set({
+        deletedAt: new Date(),
+        deletedBy: user.id,
+        updatedAt: new Date(),
+      })
+      .where(eq(courses.id, courseId));
+
+    await this.auditLogService
+      .log({
+        entityType: 'course',
+        entityId: courseId,
+        action: 'course.soft_deleted',
+        performedBy: user.id,
+        metadata: {
+          title: existing.title,
+          status: existing.status,
+          deliveryType: existing.deliveryType,
+          instructorId: existing.instructorId,
+          managerId: existing.managerId,
+          reason: reason ?? null,
+          impact,
+        },
+      })
+      .catch(() => {});
+
+    // Keep the older admin-action log entry for backwards compat
+    // with existing dashboard surfaces that read it.
+    await this.maybeLogAdminAction(user, courseId, 'course.delete', {
+      title: existing.title,
+      softDeleted: true,
+      impact,
+    });
+
+    return { message: 'Course deleted successfully', impact };
+  }
+
+  /**
+   * GET /admin/courses/:id/delete-impact
+   * Pre-delete preview: counts of dependent rows that will be hidden
+   * along with the course. Surfaced in the strong-confirmation modal
+   * before the admin commits to a non-draft delete.
+   */
+  async getDeleteImpact(courseId: string, user: AuthenticatedUser) {
+    if (!isManagerOrAbove(user)) {
+      throw new ForbiddenException('Only managers and admins can preview deletes');
+    }
+    const [existing] = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        status: courses.status,
+        deletedAt: courses.deletedAt,
+      })
       .from(courses)
       .where(eq(courses.id, courseId))
-      .limit(1)
-      .catch(() => [{ title: null }] as any);
+      .limit(1);
+    if (!existing) throw new NotFoundException('Course not found');
+    if (existing.deletedAt) {
+      throw new BadRequestException('Course is already deleted.');
+    }
+    const impact = await this.computeCourseImpact(courseId);
+    return {
+      id: existing.id,
+      title: existing.title,
+      status: existing.status,
+      impact,
+    };
+  }
 
-    await db.delete(courses).where(eq(courses.id, courseId));
+  private async computeCourseImpact(courseId: string) {
+    const [
+      moduleRow,
+      materialRow,
+      enrollmentRow,
+      sessionRow,
+      assessmentRow,
+    ] = await Promise.all([
+      db
+        .select({ count: count() })
+        .from(courseModules)
+        .where(eq(courseModules.courseId, courseId)),
+      db
+        .select({ count: count() })
+        .from(courseMaterials)
+        .where(
+          and(
+            eq(courseMaterials.courseId, courseId),
+            isNull(courseMaterials.deletedAt),
+          ),
+        ),
+      db
+        .select({ count: count() })
+        .from(enrollments)
+        .where(eq(enrollments.courseId, courseId)),
+      db
+        .select({ count: count() })
+        .from(sessions)
+        .where(eq(sessions.courseId, courseId)),
+      db
+        .select({ count: count() })
+        .from(assessments)
+        .where(eq(assessments.courseId, courseId)),
+    ]);
+    return {
+      modules: Number(moduleRow[0]?.count ?? 0),
+      materials: Number(materialRow[0]?.count ?? 0),
+      enrollments: Number(enrollmentRow[0]?.count ?? 0),
+      sessions: Number(sessionRow[0]?.count ?? 0),
+      assessments: Number(assessmentRow[0]?.count ?? 0),
+    };
+  }
 
-    await this.maybeLogAdminAction(user, courseId, 'course.delete', { title });
+  // ─── Recently deleted (admin) ─────────────────────────────
 
-    return { message: 'Course deleted successfully' };
+  /**
+   * GET /admin/backups/courses/deleted
+   * Paginated list of soft-deleted courses with full context for the
+   * admin recovery panel: instructor / manager / deleter / impact.
+   */
+  async listDeleted(page = 1, limit = 20) {
+    const safeLimit = Math.min(Math.max(limit, 1), 100);
+    const safePage = Math.max(page, 1);
+    const offset = (safePage - 1) * safeLimit;
+
+    // Self-join users twice — once for instructor, once for the
+    // deleter. Drizzle has no built-in alias helper here, so we
+    // run two parallel queries and join in code.
+    const rows = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        status: courses.status,
+        deliveryType: courses.deliveryType,
+        instructorId: courses.instructorId,
+        managerId: courses.managerId,
+        deletedAt: courses.deletedAt,
+        deletedById: courses.deletedBy,
+      })
+      .from(courses)
+      .where(sql`${courses.deletedAt} IS NOT NULL`)
+      .orderBy(desc(courses.deletedAt))
+      .limit(safeLimit)
+      .offset(offset);
+
+    const userIds = Array.from(
+      new Set(
+        rows.flatMap((r) =>
+          [r.instructorId, r.managerId, r.deletedById].filter(
+            (v): v is string => !!v,
+          ),
+        ),
+      ),
+    );
+    const userMap = new Map<
+      string,
+      { firstName: string | null; lastName: string | null; email: string }
+    >();
+    if (userIds.length > 0) {
+      const found = await db
+        .select({
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        })
+        .from(users)
+        .where(inArray(users.id, userIds));
+      for (const u of found) {
+        userMap.set(u.id, {
+          firstName: u.firstName,
+          lastName: u.lastName,
+          email: u.email,
+        });
+      }
+    }
+
+    const fmtUser = (id: string | null) => {
+      if (!id) return null;
+      const u = userMap.get(id);
+      if (!u) return null;
+      return {
+        id,
+        name: `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || null,
+        email: u.email ?? null,
+      };
+    };
+
+    const [totalRow] = await db
+      .select({ count: count() })
+      .from(courses)
+      .where(sql`${courses.deletedAt} IS NOT NULL`);
+    const total = Number(totalRow?.count ?? 0);
+
+    return {
+      items: rows.map((r) => ({
+        id: r.id,
+        title: r.title,
+        status: r.status,
+        deliveryType: r.deliveryType,
+        deletedAt: r.deletedAt ? r.deletedAt.toISOString() : null,
+        instructor: fmtUser(r.instructorId),
+        manager: fmtUser(r.managerId),
+        deletedBy: fmtUser(r.deletedById),
+      })),
+      total,
+      page: safePage,
+      limit: safeLimit,
+      totalPages: Math.max(1, Math.ceil(total / safeLimit)),
+    };
+  }
+
+  /**
+   * POST /admin/backups/courses/:id/restore
+   * Reverses remove(): clears deleted_at on the course row. All
+   * dependent data (modules, materials, enrollments, sessions,
+   * payments, certificates) is intact because soft-delete never
+   * touched it.
+   */
+  async restoreCourse(courseId: string, userId: string) {
+    const [course] = await db
+      .select()
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+    if (!course) throw new NotFoundException('Course not found');
+    if (!course.deletedAt) {
+      throw new BadRequestException('Course is not deleted.');
+    }
+
+    await db
+      .update(courses)
+      .set({ deletedAt: null, deletedBy: null, updatedAt: new Date() })
+      .where(eq(courses.id, courseId));
+
+    const impact = await this.computeCourseImpact(courseId);
+
+    await this.auditLogService
+      .log({
+        entityType: 'course',
+        entityId: courseId,
+        action: 'course.restored',
+        performedBy: userId,
+        metadata: {
+          title: course.title,
+          status: course.status,
+          deliveryType: course.deliveryType,
+          instructorId: course.instructorId,
+          managerId: course.managerId,
+          impact,
+        },
+      })
+      .catch(() => {});
+
+    return {
+      ok: true,
+      id: course.id,
+      title: course.title,
+      status: course.status,
+      impact,
+    };
   }
 
   // ─── Course Review Workflow ────────────────────────────────
@@ -2261,7 +2535,7 @@ export class CoursesService {
     user: AuthenticatedUser,
     options?: { allowCompleted?: boolean },
   ) {
-    const conditions = [eq(courses.id, courseId)];
+    const conditions = [eq(courses.id, courseId), isNull(courses.deletedAt)];
     this.addOwnershipCondition(conditions, user);
 
     const [course] = await db

@@ -5,7 +5,7 @@ import {
   Inject,
   Logger,
 } from '@nestjs/common';
-import { eq, and, ne, desc, count, sql, or, inArray } from 'drizzle-orm';
+import { eq, and, ne, desc, count, sql, or, inArray, isNull } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   enrollments,
@@ -83,7 +83,7 @@ export class EnrollmentsService {
     const [course] = await db
       .select()
       .from(courses)
-      .where(eq(courses.id, courseId))
+      .where(and(eq(courses.id, courseId), isNull(courses.deletedAt)))
       .limit(1);
 
     if (!course) {

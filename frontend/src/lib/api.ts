@@ -365,8 +365,12 @@ export const api = {
       body: body ? JSON.stringify(body) : undefined,
     }),
 
-  delete: <T>(endpoint: string, options?: FetchOptions) =>
-    fetchApi<T>(endpoint, { ...options, method: 'DELETE' }),
+  delete: <T>(endpoint: string, body?: unknown, options?: FetchOptions) =>
+    fetchApi<T>(endpoint, {
+      ...options,
+      method: 'DELETE',
+      body: body ? JSON.stringify(body) : undefined,
+    }),
 };
 
 // ===========================================
@@ -744,8 +748,17 @@ export const adminApi = {
   updateCourse: (courseId: string, data: Record<string, unknown>) =>
     api.patch<unknown>(`/courses/${courseId}`, data),
 
-  deleteCourse: (courseId: string) =>
-    api.delete<{ message: string }>(`/courses/${courseId}`),
+  // Pre-delete preview: counts of dependent rows (modules, materials,
+  // enrollments, sessions, assessments) that will be hidden along
+  // with the course. Backs the strong-confirmation modal.
+  getCourseDeleteImpact: (courseId: string) =>
+    api.get<CourseDeleteImpactResponse>(`/courses/${courseId}/delete-impact`),
+
+  deleteCourse: (courseId: string, reason?: string) =>
+    api.delete<{ message: string }>(
+      `/courses/${courseId}`,
+      reason ? { reason } : undefined,
+    ),
 
   // ─── Logs page: Audit Trail tab ────────────────────────
   getAuditLogs: (params?: AdminAuditLogQuery) => {
@@ -1773,6 +1786,15 @@ export const backupsAdminApi = {
       `/admin/backups/materials/${id}/restore`,
       {},
     ),
+  listDeletedCourses: (page = 1, limit = 20) =>
+    api.get<DeletedCoursesResponse>(
+      `/admin/backups/courses/deleted?page=${page}&limit=${limit}`,
+    ),
+  restoreCourse: (id: string) =>
+    api.post<RestoreCourseResponse>(
+      `/admin/backups/courses/${id}/restore`,
+      {},
+    ),
   listRestoreClones: (page = 1, limit = 20) =>
     api.get<RestoreClonesResponse>(
       `/admin/backups/restore-clones?page=${page}&limit=${limit}`,
@@ -1795,6 +1817,48 @@ export const backupsAdminApi = {
       {},
     ),
 };
+
+export interface CourseDeleteImpact {
+  modules: number;
+  materials: number;
+  enrollments: number;
+  sessions: number;
+  assessments: number;
+}
+
+export interface CourseDeleteImpactResponse {
+  id: string;
+  title: string;
+  status: string;
+  impact: CourseDeleteImpact;
+}
+
+export interface DeletedCourseEntry {
+  id: string;
+  title: string;
+  status: string;
+  deliveryType: string;
+  deletedAt: string | null;
+  instructor: { id: string; name: string | null; email: string | null } | null;
+  manager: { id: string; name: string | null; email: string | null } | null;
+  deletedBy: { id: string; name: string | null; email: string | null } | null;
+}
+
+export interface DeletedCoursesResponse {
+  items: DeletedCourseEntry[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface RestoreCourseResponse {
+  ok: boolean;
+  id: string;
+  title: string;
+  status: string;
+  impact: CourseDeleteImpact;
+}
 
 export interface RestoreCloneEntry {
   id: string;

@@ -104,6 +104,8 @@ export const courses = pgTable(
     reviewedBy: uuid('reviewed_by').references(() => users.id),
     submittedAt: timestamp('submitted_at'),
     reviewedAt: timestamp('reviewed_at'),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: uuid('deleted_by').references(() => users.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -111,6 +113,7 @@ export const courses = pgTable(
     index('courses_instructor_id_idx').on(table.instructorId),
     index('courses_manager_id_idx').on(table.managerId),
     index('courses_status_idx').on(table.status),
+    index('courses_deleted_at_idx').on(table.deletedAt),
     check(
       'courses_delivery_type_check',
       sql`${table.deliveryType} IN ('zoom', 'onsite', 'blended', 'self-paced', 'webinar')`,

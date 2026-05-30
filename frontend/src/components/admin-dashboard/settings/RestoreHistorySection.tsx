@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
+  BookOpen,
   Camera,
   CheckCircle2,
   ChevronLeft,
@@ -101,6 +102,10 @@ function actionPresentation(action: string): {
       return { icon: Trash2, cls: "text-[#D97706]", key: "actMaterialDeleted" };
     case "material.restored":
       return { icon: PackageOpen, cls: "text-[#15803D]", key: "actMaterialRestored" };
+    case "course.soft_deleted":
+      return { icon: Trash2, cls: "text-[#D97706]", key: "actCourseDeleted" };
+    case "course.restored":
+      return { icon: BookOpen, cls: "text-[#15803D]", key: "actCourseRestored" };
     case "restore_clone.created":
       return { icon: FlaskConical, cls: "text-[#0284C7]", key: "actSandboxCreated" };
     case "restore_clone.ready":

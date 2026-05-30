@@ -15,6 +15,7 @@ import { FilesBackupService } from './files-backup.service';
 import { FileRecoveryService } from './file-recovery.service';
 import { RestoreCloneService } from './restore-clone.service';
 import { MaterialsService } from '../materials/materials.service';
+import { CoursesService } from '../courses/courses.service';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
@@ -47,6 +48,7 @@ export class BackupsController {
     private readonly fileRecovery: FileRecoveryService,
     private readonly restoreClones: RestoreCloneService,
     private readonly materials: MaterialsService,
+    private readonly courses: CoursesService,
   ) {}
 
   @Get('overview')
@@ -144,6 +146,32 @@ export class BackupsController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.materials.restoreMaterial(id, user.id);
+  }
+
+  // ── Course recovery ────────────────────────────────────────────
+  //
+  // Soft-deleted courses (deleted_at IS NOT NULL). Restore clears
+  // deleted_at; dependent rows (modules, materials, enrollments,
+  // sessions, payments, certificates) are intact because soft-delete
+  // never touched them.
+
+  @Get('courses/deleted')
+  listDeletedCourses(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.courses.listDeleted(
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
+  }
+
+  @Post('courses/:id/restore')
+  restoreCourse(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.courses.restoreCourse(id, user.id);
   }
 
   // ── Restore sandboxes (Phase 2D) ───────────────────────────────

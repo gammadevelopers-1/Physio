@@ -62,6 +62,7 @@ export const userRoles = pgTable(
     assignedBy: uuid('assigned_by').references(() => users.id, {
       onDelete: 'set null',
     }),
+    supportSubRole: varchar('support_sub_role', { length: 20 }),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.userId, table.roleId] }),
@@ -111,3 +112,11 @@ export const ROLE_NAMES = {
 } as const;
 
 export type RoleName = (typeof ROLE_NAMES)[keyof typeof ROLE_NAMES];
+
+export const SUPPORT_SUB_ROLES = {
+  SUPERVISOR: 'supervisor',
+  AGENT: 'agent',
+} as const;
+
+export type SupportSubRole =
+  (typeof SUPPORT_SUB_ROLES)[keyof typeof SUPPORT_SUB_ROLES];

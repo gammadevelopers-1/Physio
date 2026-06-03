@@ -184,7 +184,7 @@ export class AuthService {
     ipAddress?: string,
     userAgent?: string,
   ): Promise<{
-    user: Partial<User> & { roles: string[] };
+    user: Partial<User> & { roles: string[]; supportSubRole?: string | null };
     accessToken: string;
     refreshToken: string;
   }> {
@@ -266,6 +266,22 @@ export class AuthService {
     // Get user's roles
     const userRolesList = await this.getUserRoles(user.id);
 
+    // Fetch supportSubRole if user has SUPPORT role
+    let loginSupportSubRole: string | null = null;
+    if (userRolesList.includes('SUPPORT')) {
+      const supportRoleRecord = await db
+        .select({ subRole: userRoles.supportSubRole })
+        .from(userRoles)
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .where(
+          and(eq(userRoles.userId, user.id), eq(roles.name, 'SUPPORT')),
+        )
+        .limit(1);
+      if (supportRoleRecord.length > 0) {
+        loginSupportSubRole = supportRoleRecord[0].subRole;
+      }
+    }
+
     // Reset failed attempts, verify user, and update last login
     await db
       .update(users)
@@ -300,6 +316,7 @@ export class AuthService {
         activeRole: user.activeRole,
         language: user.language,
         roles: userRolesList,
+        supportSubRole: loginSupportSubRole,
       },
       accessToken,
       refreshToken,
@@ -358,6 +375,7 @@ export class AuthService {
     userId: string,
     roleName: RoleName,
     assignedBy: string,
+    supportSubRole?: string,
   ): Promise<{ message: string; roles: string[] }> {
     // Verify user exists
     const [user] = await db
@@ -411,6 +429,8 @@ export class AuthService {
       userId,
       roleId: role.id,
       assignedBy,
+      supportSubRole:
+        roleName === 'SUPPORT' ? supportSubRole || null : null,
     });
 
     // Admin-assigned roles implicitly verify the user
@@ -618,7 +638,7 @@ export class AuthService {
   // ===========================================
   // Get Current User
   // ===========================================
-  async getCurrentUser(userId: string): Promise<Partial<User> & { roles: string[] }> {
+  async getCurrentUser(userId: string): Promise<Partial<User> & { roles: string[]; supportSubRole?: string | null }> {
     const [user] = await db
       .select({
         id: users.id,
@@ -661,9 +681,26 @@ export class AuthService {
 
     const userRolesList = await this.getUserRoles(userId);
 
+    // Fetch supportSubRole if user has SUPPORT role
+    let supportSubRole: string | null = null;
+    if (userRolesList.includes('SUPPORT')) {
+      const supportRoleRecord = await db
+        .select({ subRole: userRoles.supportSubRole })
+        .from(userRoles)
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .where(
+          and(eq(userRoles.userId, userId), eq(roles.name, 'SUPPORT')),
+        )
+        .limit(1);
+      if (supportRoleRecord.length > 0) {
+        supportSubRole = supportRoleRecord[0].subRole;
+      }
+    }
+
     return {
       ...decryptUserPII(user),
       roles: userRolesList,
+      supportSubRole,
     };
   }
 
@@ -825,6 +862,8 @@ export class AuthService {
       userId: newUser.id,
       roleId: role.id,
       assignedBy: createdBy,
+      supportSubRole:
+        dto.role === 'SUPPORT' ? dto.supportSubRole || null : null,
     });
 
     await this.logSecurityEvent(
@@ -1553,21 +1592,27 @@ export class AuthService {
         .select({
           userId: userRoles.userId,
           roleName: roles.name,
+          supportSubRole: userRoles.supportSubRole,
         })
         .from(userRoles)
         .innerJoin(roles, eq(userRoles.roleId, roles.id))
         .where(inArray(userRoles.userId, userIds));
 
       const rolesByUserId = new Map<string, string[]>();
+      const subRoleByUserId = new Map<string, string | null>();
       for (const ur of allUserRoles) {
         const existing = rolesByUserId.get(ur.userId) || [];
         existing.push(ur.roleName);
         rolesByUserId.set(ur.userId, existing);
+        if (ur.roleName === 'SUPPORT' && ur.supportSubRole) {
+          subRoleByUserId.set(ur.userId, ur.supportSubRole);
+        }
       }
 
       usersWithRoles = allUsers.map((user) => ({
         ...decryptUserPII(user),
         roles: rolesByUserId.get(user.id) || [],
+        supportSubRole: subRoleByUserId.get(user.id) || null,
       }));
     } else {
       usersWithRoles = [];

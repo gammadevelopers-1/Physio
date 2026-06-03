@@ -244,6 +244,7 @@ function CreateUserModal({
     lastName: "",
     phone: "",
     role: "STUDENT",
+    supportSubRole: "agent" as string,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -269,6 +270,7 @@ function CreateUserModal({
         role: form.role,
       };
       if (form.phone) data.phone = form.phone;
+      if (form.role === "SUPPORT") data.supportSubRole = form.supportSubRole;
       await adminApi.createUser(data);
       toast.success(tToasts("userCreated"));
       onCreated();
@@ -363,6 +365,49 @@ function CreateUserModal({
               }))}
             />
           </div>
+
+          {/* Support Sub-Role Picker — shown only when SUPPORT role is selected */}
+          {form.role === "SUPPORT" && (
+            <div className="p-4 bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg">
+              <label className="block text-sm font-medium text-[#1E40AF] mb-3">
+                Support Sub-Role *
+              </label>
+              <div className="space-y-2">
+                <label className="flex items-start gap-3 p-3 bg-white rounded-lg border border-[#E5E7EB] cursor-pointer hover:border-[#93C5FD] transition-colors">
+                  <input
+                    type="radio"
+                    name="supportSubRole"
+                    value="supervisor"
+                    checked={form.supportSubRole === "supervisor"}
+                    onChange={() => setForm({ ...form, supportSubRole: "supervisor" })}
+                    className="mt-0.5 w-4 h-4 text-[#002D87]"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-[#1F2937]">Supervisor</span>
+                    <p className="text-xs text-[#6B7280] mt-0.5">
+                      Sees all tickets, KPIs, manages team, can reassign and configure settings
+                    </p>
+                  </div>
+                </label>
+                <label className="flex items-start gap-3 p-3 bg-white rounded-lg border border-[#E5E7EB] cursor-pointer hover:border-[#93C5FD] transition-colors">
+                  <input
+                    type="radio"
+                    name="supportSubRole"
+                    value="agent"
+                    checked={form.supportSubRole === "agent"}
+                    onChange={() => setForm({ ...form, supportSubRole: "agent" })}
+                    className="mt-0.5 w-4 h-4 text-[#002D87]"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-[#1F2937]">Agent</span>
+                    <p className="text-xs text-[#6B7280] mt-0.5">
+                      Sees only assigned tickets, replies to students, handles support requests
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-3 pt-2">
             <button
@@ -673,6 +718,8 @@ function ManageRolesModal({
   const [isLoading, setIsLoading] = useState(false);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [confirmingRemoveRole, setConfirmingRemoveRole] = useState<string | null>(null);
+  const [showSubRolePicker, setShowSubRolePicker] = useState(false);
+  const [selectedSubRole, setSelectedSubRole] = useState<string>("agent");
 
   // Strict role isolation: STUDENT and INSTRUCTOR are mutually exclusive.
   const hasStudent = userRoles.includes("STUDENT");
@@ -685,10 +732,18 @@ function ManageRolesModal({
   });
 
   const handleAddRole = async (role: string) => {
+    // If adding SUPPORT role, show sub-role picker first
+    if (role === "SUPPORT" && !showSubRolePicker) {
+      setShowSubRolePicker(true);
+      return;
+    }
+
     setActionInProgress(role);
     try {
-      const result = await adminApi.assignRole(user.id, role);
+      const subRole = role === "SUPPORT" ? selectedSubRole : undefined;
+      const result = await adminApi.assignRole(user.id, role, subRole);
       setUserRoles(result.roles);
+      setShowSubRolePicker(false);
       toast.success(`${t(`userManagement.roles.${role.toLowerCase()}`)} role added`);
       onUpdated();
     } catch (err) {
@@ -859,6 +914,64 @@ function ManageRolesModal({
               <p className="text-xs text-[var(--color-text-secondary)] mt-2 italic">
                 Student and Instructor roles are mutually exclusive — remove the existing one to add the other.
               </p>
+            )}
+
+            {/* Support Sub-Role Picker */}
+            {showSubRolePicker && (
+              <div className="mt-4 p-4 bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg">
+                <p className="text-sm font-medium text-[#1E40AF] mb-3">
+                  Select Support Sub-Role
+                </p>
+                <div className="flex gap-3 mb-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="supportSubRole"
+                      value="supervisor"
+                      checked={selectedSubRole === "supervisor"}
+                      onChange={() => setSelectedSubRole("supervisor")}
+                      className="w-4 h-4 text-[#002D87]"
+                    />
+                    <div>
+                      <span className="text-sm font-medium text-[var(--color-text-primary)]">Supervisor</span>
+                      <p className="text-xs text-[var(--color-text-secondary)]">
+                        Sees all tickets, KPIs, can reassign and configure
+                      </p>
+                    </div>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="supportSubRole"
+                      value="agent"
+                      checked={selectedSubRole === "agent"}
+                      onChange={() => setSelectedSubRole("agent")}
+                      className="w-4 h-4 text-[#002D87]"
+                    />
+                    <div>
+                      <span className="text-sm font-medium text-[var(--color-text-primary)]">Agent</span>
+                      <p className="text-xs text-[var(--color-text-secondary)]">
+                        Sees assigned tickets, replies to students
+                      </p>
+                    </div>
+                  </label>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleAddRole("SUPPORT")}
+                    disabled={actionInProgress === "SUPPORT"}
+                    className="px-3 py-1.5 text-xs font-medium bg-[#002D87] text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+                  >
+                    {actionInProgress === "SUPPORT" ? "Adding..." : "Confirm & Add Support Role"}
+                  </button>
+                  <button
+                    onClick={() => setShowSubRolePicker(false)}
+                    className="px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] hover:underline"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         )}
@@ -1322,8 +1435,14 @@ const UsersContent = () => {
                                 </div>
                               </td>
                               <td className="px-4 py-4">
-                                <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getRoleBadgeStyle(user.activeRole)}`}>
-                                  {t(`userManagement.roles.${roleKey}`)}
+                                <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${
+                                  user.activeRole === "SUPPORT" && user.supportSubRole === "supervisor"
+                                    ? "bg-[#EDE9FE] text-[#7C3AED]"
+                                    : getRoleBadgeStyle(user.activeRole)
+                                }`}>
+                                  {user.activeRole === "SUPPORT" && user.supportSubRole
+                                    ? `${t(`userManagement.roles.${roleKey}`)}: ${user.supportSubRole.charAt(0).toUpperCase() + user.supportSubRole.slice(1)}`
+                                    : t(`userManagement.roles.${roleKey}`)}
                                 </span>
                               </td>
                               <td className="px-4 py-4">

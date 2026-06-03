@@ -1,91 +1,194 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { BarChart3, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { BarChart3, ArrowRight, Loader2 } from "lucide-react";
+import { supportApi } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface AgentPerfRow {
+  userId: string;
+  name: string;
+  totalTickets: number;
+  openTickets: number;
+  resolvedTickets: number;
+  avgFrtMinutes: number | null;
+  csatAvgScore: number | null;
+  csatResponses: number;
+  frtBreaches: number;
+  ttrBreaches: number;
+}
 
 const SLAPerformanceWidget = () => {
   const t = useTranslations("supportDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const router = useRouter();
+  const { user } = useAuth();
+  const isSupervisor = user?.supportSubRole === "supervisor";
+  const basePath = isSupervisor
+    ? `/${locale}/dashboard/support/supervisor`
+    : `/${locale}/dashboard/support/agent`;
 
-  const slaMetrics = [
+  const [kpiData, setKpiData] = useState<Awaited<
+    ReturnType<typeof supportApi.getKPIs>
+  > | null>(null);
+  const [agentPerf, setAgentPerf] = useState<AgentPerfRow[]>([]);
+  const [agentDirectory, setAgentDirectory] = useState<
     {
-      id: "firstResponse",
-      label: t("sla.firstResponseTime"),
-      actual: "1.2h",
-      target: t("sla.targetLabel", { value: "2h" }),
-      fill: 60,
-      color: "bg-[#22C55E]",
-    },
-    {
-      id: "resolution",
-      label: t("sla.resolutionTime"),
-      actual: "4.5h",
-      target: t("sla.targetLabel", { value: "6h" }),
-      fill: 75,
-      color: "bg-[#22C55E]",
-    },
-    {
-      id: "breaches",
-      label: t("sla.slaBreaches"),
-      actual: "2",
-      target: t("sla.today"),
-      fill: 20,
-      color: "bg-[#F97316]",
-      actualColor: "text-[#F97316]",
-    },
-    {
-      id: "backlog",
-      label: t("sla.backlogAge"),
-      actual: "12h",
-      target: t("sla.oldestTicket"),
-      fill: 40,
-      color: "bg-[#F97316]",
-      actualColor: "text-[#F97316]",
-    },
-  ];
+      userId: string;
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+    }[]
+  >([]);
+  const [loading, setLoading] = useState(true);
 
-  const agents = [
-    {
-      id: "hana",
-      nameKey: "hanaAlSaud",
-      initials: "HA",
+  useEffect(() => {
+    let cancelled = false;
+    const fetchData = async () => {
+      try {
+        const [kpis, agentsRes, perfRes] = await Promise.all([
+          supportApi.getKPIs(),
+          supportApi.getAgents(),
+          supportApi.getAgentPerformance(),
+        ]);
+        if (cancelled) return;
+        setKpiData(kpis);
+        setAgentDirectory(Array.isArray(agentsRes) ? agentsRes : []);
+        setAgentPerf(Array.isArray(perfRes) ? (perfRes as AgentPerfRow[]) : []);
+      } catch (err) {
+        console.error("Failed to load SLA data:", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchData();
+    // Auto-refresh every 60s while the tab is visible
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") fetchData();
+    }, 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  const formatMinutes = (minutes: number | null): string => {
+    if (minutes === null || minutes === undefined) return "--";
+    if (minutes < 60) return `${Math.round(minutes)}m`;
+    return `${(minutes / 60).toFixed(1)}h`;
+  };
+
+  const FRT_TARGET_MINUTES = 120; // 2h
+  const TTR_TARGET_MINUTES = 360; // 6h
+
+  const slaMetrics = kpiData
+    ? [
+        {
+          id: "firstResponse",
+          label: t("sla.firstResponseTime"),
+          actual: formatMinutes(kpiData.avgFrtMinutes),
+          target: t("sla.targetLabel", { value: "2h" }),
+          fill: kpiData.avgFrtMinutes !== null
+            ? Math.min(100, Math.round((kpiData.avgFrtMinutes / FRT_TARGET_MINUTES) * 100))
+            : 0,
+          color: kpiData.avgFrtMinutes !== null && kpiData.avgFrtMinutes <= FRT_TARGET_MINUTES
+            ? "bg-[#22C55E]"
+            : "bg-[#F97316]",
+        },
+        {
+          id: "resolution",
+          label: t("sla.resolutionTime"),
+          actual: formatMinutes(kpiData.avgTtrMinutes),
+          target: t("sla.targetLabel", { value: "6h" }),
+          fill: kpiData.avgTtrMinutes !== null
+            ? Math.min(100, Math.round((kpiData.avgTtrMinutes / TTR_TARGET_MINUTES) * 100))
+            : 0,
+          color: kpiData.avgTtrMinutes !== null && kpiData.avgTtrMinutes <= TTR_TARGET_MINUTES
+            ? "bg-[#22C55E]"
+            : "bg-[#F97316]",
+        },
+        {
+          id: "breaches",
+          label: t("sla.slaBreaches"),
+          actual: String(kpiData.slaBreaches),
+          target: t("sla.today"),
+          fill: Math.min(100, kpiData.slaBreaches * 10),
+          color: kpiData.slaBreaches > 0 ? "bg-[#F97316]" : "bg-[#22C55E]",
+          actualColor: kpiData.slaBreaches > 0 ? "text-[#F97316]" : undefined,
+        },
+        {
+          id: "backlog",
+          label: t("sla.backlogAge"),
+          actual: String(kpiData.openTickets),
+          target: t("sla.oldestTicket"),
+          fill: Math.min(100, kpiData.openTickets * 5),
+          color: kpiData.openTickets > 10 ? "bg-[#F97316]" : "bg-[#22C55E]",
+          actualColor: kpiData.openTickets > 10 ? "text-[#F97316]" : undefined,
+        },
+      ]
+    : [];
+
+  // Build a perf lookup keyed by userId so we can merge against the
+  // agent directory (which has first/last name for avatar initials).
+  const perfByUser = new Map(agentPerf.map((p) => [p.userId, p]));
+  const agents = agentDirectory.map((agent) => {
+    const first = agent.firstName ?? "";
+    const last = agent.lastName ?? "";
+    const initials =
+      `${first.charAt(0)}${last.charAt(0)}`.toUpperCase() ||
+      agent.email.charAt(0).toUpperCase();
+    const displayName = first && last ? `${first} ${last}` : agent.email;
+    const perf = perfByUser.get(agent.userId);
+    return {
+      id: agent.userId,
+      displayName,
+      initials,
       status: "online" as const,
-      openTickets: 8,
-      avgResponse: "1.0h",
-      csat: 96,
-    },
-    {
-      id: "mohammed",
-      nameKey: "mohammedAli",
-      initials: "MA",
-      status: "online" as const,
-      openTickets: 6,
-      avgResponse: "1.5h",
-      csat: 92,
-    },
-    {
-      id: "layla",
-      nameKey: "laylaAhmed",
-      initials: "LA",
-      status: "away" as const,
-      openTickets: 5,
-      avgResponse: "1.3h",
-      csat: 94,
-    },
-  ];
+      openTickets: perf ? String(perf.openTickets) : "0",
+      avgResponse: formatMinutes(perf?.avgFrtMinutes ?? null),
+      csat:
+        perf && perf.csatAvgScore != null
+          ? perf.csatAvgScore.toFixed(1)
+          : "—",
+    };
+  });
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border-subtle)]">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-[#8B5CF6]" />
+            <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
+              {t("sla.title")}
+            </h3>
+          </div>
+        </div>
+        <div className="flex items-center justify-center p-10">
+          <Loader2 className="w-6 h-6 text-[#8B5CF6] animate-spin" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-[#F3F4F6]">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border-subtle)]">
         <div className="flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-[#8B5CF6]" />
           <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t("sla.title")}
           </h3>
         </div>
-        <button className="text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => router.push(`${basePath}/reports`)}
+          className="text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline flex items-center gap-1"
+        >
           {t("sla.viewDetails")}
           <ArrowRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
         </button>
@@ -126,7 +229,7 @@ const SLAPerformanceWidget = () => {
             {agents.map((agent) => (
               <div
                 key={agent.id}
-                className="flex items-center gap-3 p-2.5 bg-[var(--color-surface-page)] rounded-lg border border-[#F3F4F6]"
+                className="flex items-center gap-3 p-2.5 bg-[var(--color-surface-page)] rounded-lg border border-[var(--color-border-subtle)]"
               >
                 {/* Avatar */}
                 <div className="relative flex-shrink-0">
@@ -146,8 +249,8 @@ const SLAPerformanceWidget = () => {
 
                 {/* Agent Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-[var(--color-text-secondary)]">
-                    {t(`sla.agents.${agent.nameKey}`)}
+                  <p className="text-[13px] font-medium text-[var(--color-text-primary)]">
+                    {agent.displayName}
                   </p>
                   <p className="text-[11px] text-[var(--color-text-secondary)]">
                     {t(`sla.agentStatus.${agent.status}`)}
@@ -174,7 +277,7 @@ const SLAPerformanceWidget = () => {
                   </div>
                   <div className="text-center">
                     <p className="text-[13px] font-semibold text-[#16A34A]">
-                      {agent.csat}%
+                      {agent.csat === "—" ? "—" : `${agent.csat}/5`}
                     </p>
                     <p className="text-[10px] text-[var(--color-text-secondary)]">
                       {t("sla.csat")}

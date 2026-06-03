@@ -1,19 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   ClipboardList,
   ArrowRight,
   Search,
   MoreVertical,
+  Loader2,
 } from "lucide-react";
+import { supportApi } from "@/lib/api";
 
 interface Ticket {
   id: string;
-  subjectKey: string;
-  customerKey: string;
-  categoryKey: string;
+  displayId: string;
+  subject: string;
+  customer: string;
+  category: string;
   priority: "High" | "Medium" | "Low";
   status: "New" | "InProgress" | "Waiting" | "Resolved" | "Closed";
 }
@@ -21,62 +26,57 @@ interface Ticket {
 const TicketsBoardWidget = () => {
   const t = useTranslations("supportDashboard");
   const locale = useLocale();
+  const router = useRouter();
+  const { user } = useAuth();
   const isRTL = locale === "ar";
+
+  const basePath = user?.supportSubRole === 'supervisor'
+    ? `/${locale}/dashboard/support/supervisor`
+    : `/${locale}/dashboard/support/agent`;
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const tickets: Ticket[] = [
-    {
-      id: "#1234",
-      subjectKey: "cannotAccessCourse",
-      customerKey: "ahmedK",
-      categoryKey: "login",
-      priority: "High",
-      status: "New",
-    },
-    {
-      id: "#1233",
-      subjectKey: "certificateNotReceived",
-      customerKey: "saraM",
-      categoryKey: "certificate",
-      priority: "Medium",
-      status: "InProgress",
-    },
-    {
-      id: "#1232",
-      subjectKey: "paymentFailedTwice",
-      customerKey: "omarA",
-      categoryKey: "billing",
-      priority: "High",
-      status: "InProgress",
-    },
-    {
-      id: "#1231",
-      subjectKey: "videoNotPlaying",
-      customerKey: "fatimaN",
-      categoryKey: "content",
-      priority: "Low",
-      status: "Resolved",
-    },
-    {
-      id: "#1230",
-      subjectKey: "refundRequest",
-      customerKey: "khalidH",
-      categoryKey: "billing",
-      priority: "Medium",
-      status: "New",
-    },
-    {
-      id: "#1229",
-      subjectKey: "loginIssueAfterUpdate",
-      customerKey: "nouraS",
-      categoryKey: "technical",
-      priority: "Low",
-      status: "Waiting",
-    },
-  ];
+  useEffect(() => {
+    const fetchTickets = async () => {
+      setIsLoading(true);
+      try {
+        const data = await supportApi.getTickets({ limit: 30 });
+        const priorityMap: Record<string, Ticket["priority"]> = {
+          high: "High",
+          medium: "Medium",
+          low: "Low",
+        };
+        const statusMap: Record<string, Ticket["status"]> = {
+          new: "New",
+          in_progress: "InProgress",
+          on_hold: "Waiting",
+          resolved: "Resolved",
+          closed: "Closed",
+        };
+        const mapped: Ticket[] = (data.tickets || []).map((t: any) => ({
+          id: t.id,
+          displayId: t.id?.substring(0, 8) || t.id,
+          subject: t.subject,
+          customer: [t.studentFirstName, t.studentLastName]
+            .filter(Boolean)
+            .join(" ") || "Unknown",
+          category: t.category,
+          priority: priorityMap[t.priority] || "Medium",
+          status: statusMap[t.status] || "New",
+        }));
+        setTickets(mapped);
+      } catch {
+        setTickets([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchTickets();
+  }, []);
 
   const priorityStyles: Record<string, string> = {
     High: "bg-[#FEE2E2] text-[#EF4444]",
@@ -100,19 +100,15 @@ const TicketsBoardWidget = () => {
     const matchesSearch =
       searchQuery === "" ||
       ticket.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t(`ticketsBoard.subjects.${ticket.subjectKey}`)
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      t(`names.${ticket.customerKey}`)
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ticket.customer.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesPriority && matchesSearch;
   });
 
   return (
     <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-[#F3F4F6]">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border-subtle)]">
         <div className="flex items-center gap-2">
           <ClipboardList className="w-5 h-5 text-[var(--color-primary)]" />
           <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
@@ -122,14 +118,17 @@ const TicketsBoardWidget = () => {
             {tickets.length}
           </span>
         </div>
-        <button className="text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline flex items-center gap-1">
+        <button
+          onClick={() => router.push(`${basePath}/tickets`)}
+          className="text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline flex items-center gap-1"
+        >
           {t("ticketsBoard.viewAll")}
           <ArrowRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-[#F3F4F6] bg-[var(--color-surface-page)]">
+      <div className="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-page)]">
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -200,29 +199,42 @@ const TicketsBoardWidget = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredTickets.map((ticket) => (
+            {isLoading ? (
+              <tr>
+                <td colSpan={7} className="px-3 py-10 text-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#3B82F6] mx-auto" />
+                </td>
+              </tr>
+            ) : filteredTickets.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-3 py-10 text-center text-sm text-[var(--color-text-secondary)]">
+                  {t("ticketsBoard.noTickets")}
+                </td>
+              </tr>
+            ) : filteredTickets.map((ticket) => (
               <tr
                 key={ticket.id}
-                className="border-b border-[#F3F4F6] hover:bg-[var(--color-border-subtle)] transition-colors"
+                onClick={() => router.push(`${basePath}/tickets/${ticket.id}`)}
+                className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-border-subtle)] transition-colors cursor-pointer"
               >
                 <td className="px-3 py-3">
                   <span className="text-[13px] font-medium text-[var(--color-primary)]">
-                    {ticket.id}
+                    {ticket.displayId}
                   </span>
                 </td>
                 <td className="px-3 py-3">
                   <span className="text-[13px] text-[var(--color-text-primary)] line-clamp-1">
-                    {t(`ticketsBoard.subjects.${ticket.subjectKey}`)}
+                    {ticket.subject}
                   </span>
                 </td>
                 <td className="px-3 py-3">
                   <span className="text-[13px] text-[var(--color-text-secondary)]">
-                    {t(`names.${ticket.customerKey}`)}
+                    {ticket.customer}
                   </span>
                 </td>
                 <td className="px-3 py-3 hidden md:table-cell">
                   <span className="text-[11px] font-medium bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] px-2 py-0.5 rounded-md">
-                    {t(`ticketsBoard.categories.${ticket.categoryKey}`)}
+                    {ticket.category}
                   </span>
                 </td>
                 <td className="px-3 py-3">

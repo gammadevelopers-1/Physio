@@ -21,12 +21,15 @@ interface KPIData {
   avgResponseTrend: string;
   avgResolution: string;
   resolutionTarget: string;
-  csatScore: number;
+  csatScore: number;         // 1-5 scale average, 0 = no responses yet
+  csatResponses?: number;
   csatTrend: string;
   slaCompliance: number;
   slaBreaches: number;
   escalatedTickets: number;
   escalatedTrend: string;
+  npsScore?: number;
+  npsResponses?: number;
 }
 
 interface SupportKPICardsProps {
@@ -75,13 +78,19 @@ const SupportKPICards = ({ data }: SupportKPICardsProps) => {
     {
       id: "csatScore",
       label: t("kpi.csatScore"),
-      value: data.csatScore + "%",
-      meta: data.csatTrend,
+      // CSAT is a 1-5 star rating average, not a percentage
+      value:
+        data.csatScore > 0
+          ? `${data.csatScore.toFixed(1)}/5`
+          : "—",
+      meta:
+        (data.csatResponses ?? 0) > 0
+          ? `${data.csatResponses} responses`
+          : "No responses yet",
       icon: Smile,
       iconBg: "bg-[#FEF3C7]",
       iconColor: "text-[#D97706]",
-      metaColor: "text-[#16A34A]",
-      trendIcon: "up",
+      metaColor: "text-[#6B7280]",
     },
     {
       id: "slaCompliance",

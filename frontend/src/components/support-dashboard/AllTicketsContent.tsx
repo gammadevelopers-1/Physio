@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { useAuth } from "@/contexts/AuthContext";
+import { supportApi } from "@/lib/api";
+import { useSupportProfile } from "@/hooks/useSupportProfile";
+import { toast } from "sonner";
 import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
 import SupportMobileSidebar from "./SupportMobileSidebar";
@@ -18,18 +22,12 @@ import {
   XCircle,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
-
-const mockProfile = {
-  name: "Hana Al-Saud",
-  email: "h.alsaud@physio.edu.sa",
-  resolved: 156,
-  csat: 94,
-  avgFRT: "1.2h",
-};
 
 interface Ticket {
   id: string;
+  displayId: string;
   subject: string;
   customer: string;
   email: string;
@@ -44,7 +42,15 @@ const AllTicketsContent = () => {
   const t = useTranslations("supportDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const profile = { ...mockProfile, name: t("names.hanaAlSaud") };
+  const { user } = useAuth();
+
+  const profile = useSupportProfile();
+
+  const [apiTickets, setApiTickets] = useState<any[]>([]);
+  const [totalTickets, setTotalTickets] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadingTickets, setIsLoadingTickets] = useState(true);
+  const pageSize = 10;
 
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,135 +59,100 @@ const AllTicketsContent = () => {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [openActionId, setOpenActionId] = useState<string | null>(null);
 
+  const openCount = apiTickets.filter((t: any) =>
+    ["new", "in_progress", "on_hold"].includes(t.status)
+  ).length;
+
   const stats = [
     {
       label: t("allTicketsPage.stats.totalTickets"),
-      value: "384",
+      value: String(totalTickets),
       icon: FileText,
       iconBg: "bg-[var(--color-border-subtle)]",
       iconColor: "text-[var(--color-primary)]",
     },
     {
       label: t("allTicketsPage.stats.open"),
-      value: "23",
+      value: openCount > 0 ? String(openCount) : "--",
       icon: ClipboardList,
       iconBg: "bg-[#FFEDD5]",
       iconColor: "text-[#F97316]",
     },
     {
       label: t("allTicketsPage.stats.resolvedThisWeek"),
-      value: "45",
+      value: "--",
       icon: CheckCircle,
       iconBg: "bg-[#DCFCE7]",
       iconColor: "text-[#22C55E]",
     },
     {
       label: t("allTicketsPage.stats.avgResolution"),
-      value: "4.5h",
+      value: "--",
       icon: Clock,
       iconBg: "bg-[#F3E8FF]",
       iconColor: "text-[#8B5CF6]",
     },
   ];
 
-  const tickets: Ticket[] = [
-    {
-      id: "1234",
-      subject: t("ticketsBoard.subjects.cannotAccessCourse"),
-      customer: t("names.ahmedK"),
-      email: "ahmed.k@email.com",
-      category: "login",
-      priority: "high",
-      status: "new",
-      assignee: t("names.hanaAlSaud"),
-      date: t("mockDates.feb10_2026"),
-    },
-    {
-      id: "1233",
-      subject: t("ticketsBoard.subjects.certificateNotReceived"),
-      customer: t("names.saraM"),
-      email: "sara.m@email.com",
-      category: "certificate",
-      priority: "medium",
-      status: "inProgress",
-      assignee: t("names.mohammedAli"),
-      date: t("mockDates.feb10_2026"),
-    },
-    {
-      id: "1232",
-      subject: t("ticketsBoard.subjects.paymentFailedTwice"),
-      customer: t("names.omarA"),
-      email: "omar.a@email.com",
-      category: "billing",
-      priority: "high",
-      status: "inProgress",
-      assignee: t("names.hanaAlSaud"),
-      date: t("mockDates.feb9_2026"),
-    },
-    {
-      id: "1231",
-      subject: t("ticketsBoard.subjects.videoNotPlaying"),
-      customer: t("names.fatimaN"),
-      email: "fatima.n@email.com",
-      category: "content",
-      priority: "low",
-      status: "resolved",
-      assignee: t("names.laylaAhmed"),
-      date: t("mockDates.feb9_2026"),
-    },
-    {
-      id: "1230",
-      subject: t("ticketsBoard.subjects.refundRequest"),
-      customer: t("names.khalidH"),
-      email: "khalid.h@email.com",
-      category: "billing",
-      priority: "medium",
-      status: "new",
-      assignee: null,
-      date: t("mockDates.feb8_2026"),
-    },
-    {
-      id: "1229",
-      subject: t("ticketsBoard.subjects.loginIssue"),
-      customer: t("names.nouraS"),
-      email: "noura.s@email.com",
-      category: "technical",
-      priority: "low",
-      status: "waiting",
-      assignee: t("names.mohammedAli"),
-      date: t("mockDates.feb8_2026"),
-    },
-    {
-      id: "1228",
-      subject: t("ticketsBoard.subjects.cannotAccessCourse"),
-      customer: t("names.ahmedK"),
-      email: "ahmed.k@email.com",
-      category: "login",
-      priority: "medium",
-      status: "closed",
-      assignee: t("names.laylaAhmed"),
-      date: t("mockDates.feb7_2026"),
-    },
-    {
-      id: "1227",
-      subject: t("ticketsBoard.subjects.certificateNotReceived"),
-      customer: t("names.saraM"),
-      email: "sara.m@email.com",
-      category: "certificate",
-      priority: "high",
-      status: "new",
-      assignee: null,
-      date: t("mockDates.feb7_2026"),
-    },
-  ];
+  const fetchTickets = useCallback(async () => {
+    setIsLoadingTickets(true);
+    try {
+      const params: Record<string, any> = {
+        page: currentPage,
+        limit: pageSize,
+      };
+      if (statusFilter !== "all") {
+        // Map UI status keys to API values
+        const statusMap: Record<string, string> = {
+          new: "new",
+          inProgress: "in_progress",
+          waiting: "on_hold",
+          resolved: "resolved",
+          closed: "closed",
+        };
+        params.status = statusMap[statusFilter] || statusFilter;
+      }
+      if (priorityFilter !== "all") params.priority = priorityFilter;
+      if (categoryFilter !== "all") params.category = categoryFilter;
+      if (searchQuery) params.search = searchQuery;
+
+      const data = await supportApi.getTickets(params);
+      setApiTickets(data.tickets || []);
+      setTotalTickets(data.total || 0);
+    } catch {
+      setApiTickets([]);
+    } finally {
+      setIsLoadingTickets(false);
+    }
+  }, [currentPage, statusFilter, priorityFilter, categoryFilter, searchQuery]);
+
+  useEffect(() => {
+    fetchTickets();
+  }, [fetchTickets]);
+
+  // Map API tickets to component's Ticket interface
+  const tickets: Ticket[] = apiTickets.map((t: any) => ({
+    id: t.id,
+    displayId: t.id?.substring(0, 8) || t.id,
+    subject: t.subject,
+    customer: [t.studentFirstName, t.studentLastName].filter(Boolean).join(" ") || "Unknown",
+    email: t.studentEmail || "",
+    category: t.category,
+    priority: t.priority,
+    status: t.status === "in_progress" ? "inProgress" : t.status === "on_hold" ? "waiting" : t.status,
+    assignee: null, // Could be enriched later
+    date: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "",
+  }));
+
+  const totalPages = Math.ceil(totalTickets / pageSize);
 
   const tabs = [
-    { key: "all", label: t("allTicketsPage.tabs.all"), count: tickets.length },
-    { key: "new", label: t("allTicketsPage.tabs.new"), count: 8 },
-    { key: "inProgress", label: t("allTicketsPage.tabs.inProgress"), count: 7 },
-    { key: "waiting", label: t("allTicketsPage.tabs.waiting"), count: 3 },
-    { key: "resolved", label: t("allTicketsPage.tabs.resolved"), count: 45 },
-    { key: "closed", label: t("allTicketsPage.tabs.closed"), count: 321 },
+    { key: "all", label: t("allTicketsPage.tabs.all"), count: totalTickets },
+    { key: "new", label: t("allTicketsPage.tabs.new"), count: null },
+    { key: "inProgress", label: t("allTicketsPage.tabs.inProgress"), count: null },
+    { key: "waiting", label: t("allTicketsPage.tabs.waiting"), count: null },
+    { key: "resolved", label: t("allTicketsPage.tabs.resolved"), count: null },
+    { key: "closed", label: t("allTicketsPage.tabs.closed"), count: null },
   ];
 
   const priorityStyles: Record<string, string> = {
@@ -229,11 +200,11 @@ const AllTicketsContent = () => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <SupportSidebar profile={profile} />
+              <SupportSidebar profile={profile} supportSubRole={user?.supportSubRole} />
             </div>
 
             {/* Mobile Sidebar */}
-            <SupportMobileSidebar profile={profile} />
+            <SupportMobileSidebar profile={profile} supportSubRole={user?.supportSubRole} />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">
@@ -279,7 +250,7 @@ const AllTicketsContent = () => {
               {/* Tickets Table */}
               <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
                 {/* Tabs */}
-                <div className="px-5 py-4 border-b border-[#F3F4F6]">
+                <div className="px-5 py-4 border-b border-[var(--color-border-subtle)]">
                   <div className="flex gap-1 bg-[var(--color-border-subtle)] rounded-lg p-0.5 w-fit overflow-x-auto">
                     {tabs.map((tab) => (
                       <button
@@ -307,7 +278,7 @@ const AllTicketsContent = () => {
                 </div>
 
                 {/* Filters Row */}
-                <div className="px-5 py-3 border-b border-[#F3F4F6]">
+                <div className="px-5 py-3 border-b border-[var(--color-border-subtle)]">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                     {/* Category Filter */}
                     <select
@@ -429,12 +400,15 @@ const AllTicketsContent = () => {
                       {filteredTickets.map((ticket) => (
                         <tr
                           key={ticket.id}
-                          className="border-b border-[#F3F4F6] hover:bg-[var(--color-border-subtle)] transition-colors"
+                          className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-border-subtle)] transition-colors"
                         >
                           {/* Ticket # */}
                           <td className="py-3 px-4">
-                            <span className="text-[13px] font-medium text-[var(--color-primary)] cursor-pointer hover:underline">
-                              #{ticket.id}
+                            <span
+                              className="text-[13px] font-medium text-[var(--color-primary)] cursor-pointer hover:underline"
+                              onClick={() => window.location.assign(`/${locale}/dashboard/support/supervisor/tickets/${ticket.id}`)}
+                            >
+                              #{ticket.displayId}
                             </span>
                           </td>
                           {/* Subject */}
@@ -513,15 +487,39 @@ const AllTicketsContent = () => {
                                 <div
                                   className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[160px] z-20 ${isRTL ? "left-0" : "right-0"}`}
                                 >
-                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]">
+                                  <button
+                                    onClick={() => {
+                                      window.location.assign(`/${locale}/dashboard/support/supervisor/tickets/${ticket.id}`);
+                                      setOpenActionId(null);
+                                    }}
+                                    className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
+                                  >
                                     <Eye className="w-3.5 h-3.5" />
                                     {t("allTicketsPage.actions.view")}
                                   </button>
-                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]">
+                                  <button
+                                    onClick={() => {
+                                      toast.info("Use ticket detail view to reassign");
+                                      setOpenActionId(null);
+                                    }}
+                                    className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
+                                  >
                                     <UserPlus className="w-3.5 h-3.5" />
                                     {t("allTicketsPage.actions.assign")}
                                   </button>
-                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#DC2626] hover:bg-[#FEE2E2]">
+                                  <button
+                                    onClick={async () => {
+                                      try {
+                                        await supportApi.closeTicket(ticket.id);
+                                        fetchTickets();
+                                        toast.success("Ticket closed");
+                                      } catch {
+                                        toast.error("Failed");
+                                      }
+                                      setOpenActionId(null);
+                                    }}
+                                    className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#DC2626] hover:bg-[#FEE2E2]"
+                                  >
                                     <XCircle className="w-3.5 h-3.5" />
                                     {t("allTicketsPage.actions.close")}
                                   </button>
@@ -536,20 +534,28 @@ const AllTicketsContent = () => {
                 </div>
 
                 {/* Pagination */}
-                <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3 border-t border-[#F3F4F6] gap-3">
+                <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3 border-t border-[var(--color-border-subtle)] gap-3">
                   <p className="text-[13px] text-[var(--color-text-secondary)]">
                     {t("allTicketsPage.pagination.showing", {
-                      from: 1,
-                      to: filteredTickets.length,
-                      total: 384,
+                      from: totalTickets === 0 ? 0 : (currentPage - 1) * pageSize + 1,
+                      to: Math.min(currentPage * pageSize, totalTickets),
+                      total: totalTickets,
                     })}
                   </p>
                   <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)]">
+                    <button
+                      disabled={currentPage <= 1}
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                       <ChevronLeft className="w-4 h-4" />
                       {t("allTicketsPage.pagination.previous")}
                     </button>
-                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)]">
+                    <button
+                      disabled={currentPage >= totalPages}
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                       {t("allTicketsPage.pagination.next")}
                       <ChevronRight className="w-4 h-4" />
                     </button>

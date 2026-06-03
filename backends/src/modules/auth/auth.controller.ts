@@ -596,7 +596,7 @@ export class AuthController {
     @Body() dto: AssignRoleDto,
     @CurrentUser('id') adminId: string,
   ) {
-    return this.authService.assignRole(userId, dto.role as RoleName, adminId);
+    return this.authService.assignRole(userId, dto.role as RoleName, adminId, dto.supportSubRole);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

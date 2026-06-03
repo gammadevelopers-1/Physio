@@ -30,6 +30,7 @@ import { ProcessingModule } from './modules/processing/processing.module';
 import { PreferencesModule } from './modules/preferences/preferences.module';
 import { AuditLogModule } from './modules/audit-logs/audit-logs.module';
 import { StudentModule } from './modules/student/student.module';
+import { SupportModule } from './modules/support/support.module';
 import { UserNotificationsModule } from './modules/user-notifications/user-notifications.module';
 import { PointsModule } from './modules/points/points.module';
 import { PaymentsModule } from './modules/payments/payments.module';
@@ -132,6 +133,7 @@ import processingConfig from './config/processing.config';
     AuditLogModule,
     BackupsModule,
     StudentModule,
+    SupportModule,
     UserNotificationsModule,
     PointsModule,
     PaymentsModule,

@@ -1,9 +1,10 @@
 "use client";
 
-import Image from "next/image";
+import { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -14,69 +15,138 @@ import {
   Settings,
   Pencil,
   Headphones,
+  Upload,
+  Trash2,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { profileApi } from "@/lib/api";
 
 interface SupportProfile {
   name: string;
   email: string;
   resolved: number;
-  csat: number;
-  avgFRT: string;
+  csat: number | null;  // 1-5 star average, null when no responses yet
+  avgFRT: string;       // pre-formatted ("18m", "2h 15m", "--")
   avatar?: string;
+  totalTickets?: number;
+  hasAnyTickets?: boolean;
+  isLoading?: boolean;
 }
 
 interface SupportSidebarProps {
   profile: SupportProfile;
+  supportSubRole?: string | null;
 }
 
-const SupportSidebar = ({ profile }: SupportSidebarProps) => {
+const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
   const locale = useLocale();
   const pathname = usePathname();
   const t = useTranslations("supportDashboard");
   const isRTL = locale === "ar";
+  const { user, refreshUser } = useAuth();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const avatarMenuRef = useRef<HTMLDivElement>(null);
 
-  const navItems = [
+  const closeAvatarMenu = useCallback(() => setAvatarMenuOpen(false), []);
+
+  useEffect(() => {
+    if (!avatarMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (avatarMenuRef.current && !avatarMenuRef.current.contains(e.target as Node)) {
+        closeAvatarMenu();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [avatarMenuOpen, closeAvatarMenu]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const { url } = await profileApi.uploadAvatar(file);
+      await profileApi.update({ avatar: url });
+      await refreshUser();
+      toast.success("Profile photo updated");
+    } catch {
+      toast.error("Failed to upload photo");
+    }
+    e.target.value = "";
+  };
+
+  const handleRemoveAvatar = async () => {
+    try {
+      await profileApi.update({ avatar: null });
+      await refreshUser();
+      toast.success("Profile photo removed");
+    } catch {
+      toast.error("Failed to remove photo");
+    }
+  };
+
+  const isSupervisor = supportSubRole === "supervisor";
+
+  // Build base path based on sub-role
+  const basePath = isSupervisor
+    ? `/${locale}/dashboard/support/supervisor`
+    : `/${locale}/dashboard/support/agent`;
+
+  const allNavItems = [
     {
       label: t("sidebar.dashboard"),
-      href: `/${locale}/dashboard/support`,
+      href: basePath,
       icon: LayoutDashboard,
+      showFor: "all" as const,
     },
     {
       label: t("sidebar.allTickets"),
-      href: `/${locale}/dashboard/support/tickets`,
+      href: `${basePath}/tickets`,
       icon: ClipboardList,
-      badge: 23,
+      showFor: "supervisor" as const,
     },
     {
       label: t("sidebar.myTickets"),
-      href: `/${locale}/dashboard/support/my-tickets`,
+      href: `${basePath}/my-tickets`,
       icon: Inbox,
-      badge: 8,
+      showFor: "all" as const,
     },
     {
       label: t("sidebar.team"),
-      href: `/${locale}/dashboard/support/team`,
+      href: `${basePath}/team`,
       icon: Users,
+      showFor: "supervisor" as const,
     },
     {
       label: t("sidebar.knowledgeBase"),
-      href: `/${locale}/dashboard/support/kb`,
+      href: `${basePath}/kb`,
       icon: BookOpen,
+      showFor: "all" as const,
     },
     {
       label: t("sidebar.reports"),
-      href: `/${locale}/dashboard/support/reports`,
+      href: `${basePath}/reports`,
       icon: BarChart3,
+      showFor: "supervisor" as const,
     },
     {
       label: t("sidebar.settings"),
-      href: `/${locale}/dashboard/support/settings`,
+      href: `${basePath}/settings`,
       icon: Settings,
+      showFor: "all" as const,
     },
   ];
 
+  const navItems = allNavItems.filter(
+    (item) => item.showFor === "all" || (item.showFor === "supervisor" && isSupervisor),
+  );
+
   const isActive = (href: string) => {
-    return pathname === href;
+    if (pathname === href) return true;
+    // For dashboard root, only exact match
+    if (href === basePath) return pathname === href;
+    // For sub-pages, match prefix
+    return pathname.startsWith(href + "/");
   };
 
   return (
@@ -88,14 +158,13 @@ const SupportSidebar = ({ profile }: SupportSidebarProps) => {
           {/* Avatar with edit button */}
           <div className="relative mb-3">
             <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] flex items-center justify-center relative">
-              {profile.avatar ? (
-                <Image
-                  src={profile.avatar}
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
                   alt={profile.name}
                   width={80}
                   height={80}
                   className="object-cover w-full h-full"
-                  unoptimized
                 />
               ) : (
                 <span className="text-2xl font-bold text-white">
@@ -113,12 +182,46 @@ const SupportSidebar = ({ profile }: SupportSidebarProps) => {
                 <Headphones className="w-3 h-3 text-white" />
               </div>
             </div>
-            <button
-              className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#8B5CF6] rounded-full flex items-center justify-center border-2 border-white`}
-              aria-label={t("sidebar.editProfile")}
-            >
-              <Pencil className="w-3.5 h-3.5 text-white" />
-            </button>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleAvatarUpload}
+            />
+            <div ref={avatarMenuRef}>
+              <button
+                onClick={() => setAvatarMenuOpen((v) => !v)}
+                className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#8B5CF6] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-[#7C3AED] transition-colors`}
+                aria-label={t("sidebar.editProfile")}
+                aria-haspopup="true"
+                aria-expanded={avatarMenuOpen}
+              >
+                <Pencil className="w-3.5 h-3.5 text-white" />
+              </button>
+              {avatarMenuOpen && (
+                <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`} role="menu">
+                  <button
+                    onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors cursor-pointer"
+                    role="menuitem"
+                  >
+                    <Upload className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                    Upload Photo
+                  </button>
+                  {user?.avatar && (
+                    <button
+                      onClick={() => { handleRemoveAvatar(); setAvatarMenuOpen(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                      role="menuitem"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Remove Photo
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Name and Email */}
@@ -131,37 +234,57 @@ const SupportSidebar = ({ profile }: SupportSidebarProps) => {
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#EDE9FE] rounded-full">
             <Headphones className="w-4 h-4 text-[#8B5CF6]" />
             <span className="text-sm font-medium text-[#8B5CF6]">
-              {t("sidebar.supportLead")}
+              {supportSubRole === "supervisor" ? "Supervisor" : "Agent"}
             </span>
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div className="mt-6 flex justify-around py-4 border-t border-[var(--color-border)]">
-          <div className="text-center">
-            <p className="text-xl font-bold text-[var(--color-text-secondary)]">
-              {profile.resolved}
+        {/* Stats Row — real data from useSupportProfile.
+            For users who have never been assigned a ticket (new agents,
+            supervisors who don't own the queue), show a friendly empty
+            state instead of "0 / — / --". */}
+        {profile.hasAnyTickets === false && !profile.isLoading ? (
+          <div className="mt-6 py-4 border-t border-[var(--color-border)] text-center">
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              {isSupervisor
+                ? "You don't have assigned tickets yet. View your team's performance in Reports."
+                : "You haven't been assigned any tickets yet."}
             </p>
-            <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.resolved")}</p>
           </div>
-          <div className="text-center">
-            <p className="text-xl font-bold text-[#16A34A]">
-              {profile.csat}%
-            </p>
-            <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.csat")}</p>
+        ) : (
+          <div className="mt-6 flex justify-around py-4 border-t border-[var(--color-border)]">
+            <div className="text-center">
+              <p className="text-xl font-bold text-[var(--color-text-primary)]">
+                {profile.resolved}
+              </p>
+              <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.resolved")}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-[#16A34A]">
+                {profile.csat != null
+                  ? `${profile.csat.toFixed(1)}`
+                  : "—"}
+              </p>
+              <p className="text-xs text-[var(--color-text-secondary)]">
+                {profile.csat != null ? "CSAT /5" : t("sidebar.csat")}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-[var(--color-text-primary)]">
+                {profile.avgFRT}
+              </p>
+              <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.avgFRT")}</p>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="text-xl font-bold text-[var(--color-text-secondary)]">
-              {profile.avgFRT}
-            </p>
-            <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.avgFRT")}</p>
-          </div>
-        </div>
+        )}
 
         {/* View Profile Button */}
-        <button className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors">
+        <Link
+          href={isSupervisor ? `${basePath}/settings` : `${basePath}/my-tickets`}
+          className="block w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] transition-colors text-center"
+        >
           {t("sidebar.viewProfile")}
-        </button>
+        </Link>
       </div>
 
       {/* Navigation Card */}
@@ -189,11 +312,6 @@ const SupportSidebar = ({ profile }: SupportSidebarProps) => {
                 >
                   {item.label}
                 </span>
-                {item.badge && (
-                  <span className="bg-[#EF4444] text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                    {item.badge}
-                  </span>
-                )}
               </Link>
             );
           })}

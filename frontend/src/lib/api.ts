@@ -404,6 +404,7 @@ export interface User {
   /** Zoom seat email — the licensed user under which this person hosts. */
   zoomEmail?: string | null;
   roles: string[];
+  supportSubRole?: 'supervisor' | 'agent' | null;
   isActive: boolean;
   isVerified: boolean;
   lastLoginAt?: string;
@@ -526,6 +527,7 @@ export interface CreateUserData {
   lastName: string;
   phone?: string;
   role: string;
+  supportSubRole?: string;
 }
 
 export interface UpdateUserData {
@@ -610,8 +612,11 @@ export const adminApi = {
     api.get<{ userId: string; roles: string[] }>(`/auth/users/${userId}/roles`),
 
   // Assign a role to a user
-  assignRole: (userId: string, role: string) =>
-    api.post<{ message: string; roles: string[] }>(`/auth/users/${userId}/roles`, { role }),
+  assignRole: (userId: string, role: string, supportSubRole?: string) =>
+    api.post<{ message: string; roles: string[] }>(`/auth/users/${userId}/roles`, {
+      role,
+      ...(supportSubRole ? { supportSubRole } : {}),
+    }),
 
   // Remove a role from a user
   removeRole: (userId: string, role: string) =>
@@ -4227,6 +4232,374 @@ export const taApi = {
 
   getCourseSessions: (courseId: string) =>
     api.get<CourseSessionsResponse>(`/sessions?courseId=${courseId}&limit=50`),
+};
+
+// ─── Support Dashboard API ──────────────────────────────
+
+export const supportApi = {
+  createTicket: (data: {
+    category: string;
+    priority?: string;
+    subject: string;
+    description: string;
+    courseId?: string;
+    attachmentUrl?: string;
+  }) => api.post<{ id: string }>('/tickets', data),
+
+  getTickets: (params?: {
+    status?: string;
+    priority?: string;
+    category?: string;
+    assigneeId?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, val]) => {
+        if (val !== undefined && val !== null && val !== '') {
+          searchParams.set(key, String(val));
+        }
+      });
+    }
+    const qs = searchParams.toString();
+    return api.get<{
+      tickets: any[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(`/tickets${qs ? `?${qs}` : ''}`);
+  },
+
+  getMyTickets: (params?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, val]) => {
+        if (val !== undefined && val !== null && val !== '') {
+          searchParams.set(key, String(val));
+        }
+      });
+    }
+    const qs = searchParams.toString();
+    return api.get<{
+      tickets: any[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(`/tickets/my-tickets${qs ? `?${qs}` : ''}`);
+  },
+
+  getTicket: (id: string) => api.get<any>(`/tickets/${id}`),
+
+  updateTicket: (
+    id: string,
+    data: {
+      status?: string;
+      priority?: string;
+      assigneeId?: string;
+      onHoldReason?: string;
+    },
+  ) => api.patch<any>(`/tickets/${id}`, data),
+
+  addComment: (
+    id: string,
+    data: { message: string; isInternal?: boolean },
+  ) => api.post<any>(`/tickets/${id}/comments`, data),
+
+  resolveTicket: (id: string) => api.post<any>(`/tickets/${id}/resolve`),
+
+  closeTicket: (id: string) => api.post<any>(`/tickets/${id}/close`),
+
+  getKPIs: () =>
+    api.get<{
+      openTickets: number;
+      highPriorityOpen: number;
+      slaBreaches: number;
+      slaCompliance: number;
+      avgFrtMinutes: number | null;
+      avgTtrMinutes: number | null;
+      csatAvgScore: number;
+      csatResponses: number;
+      csatResponseRate: number;
+      npsScore: number;
+      npsResponses: number;
+      statusBreakdown: Record<string, number>;
+    }>('/tickets/kpis'),
+
+  // Per-user sidebar stats (for the logged-in agent / supervisor)
+  getMyPerformance: () =>
+    api.get<{
+      totalTickets: number;
+      resolvedCount: number;
+      avgFrtMinutes: number | null;
+      csatAvgScore: number | null;
+      csatResponses: number;
+      frtBreaches: number;
+      ttrBreaches: number;
+    }>('/tickets/my-performance'),
+
+  getAgents: () =>
+    api.get<
+      {
+        userId: string;
+        supportSubRole: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        email: string;
+      }[]
+    >('/tickets/agents'),
+
+  createAgent: (data: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    phone?: string;
+  }) => api.post<any>('/tickets/agents', data),
+
+  getSlaPolicies: () =>
+    api.get<
+      {
+        id: string;
+        priority: string;
+        frtMinutes: number;
+        ttrMinutes: number;
+        escalateAfterMinutes: number;
+        active: boolean;
+      }[]
+    >('/tickets/sla-policies'),
+
+  updateSlaPolicy: (
+    priority: string,
+    data: {
+      frtMinutes?: number;
+      ttrMinutes?: number;
+      escalateAfterMinutes?: number;
+    },
+  ) =>
+    api.put<{
+      id: string;
+      priority: string;
+      frtMinutes: number;
+      ttrMinutes: number;
+      escalateAfterMinutes: number;
+    }>(`/tickets/sla-policies/${priority}`, data),
+
+  // Instructor: create ticket on behalf of learner (IN-01)
+  createTicketOnBehalf: (data: {
+    studentId: string;
+    category: string;
+    subject: string;
+    description: string;
+    courseId?: string;
+  }) => api.post<{ id: string }>('/tickets/on-behalf', data),
+
+  // Instructor: tickets I opened for learners (IN-04)
+  getTicketsOpenedByMe: () =>
+    api.get<any[]>('/tickets/opened-by-me'),
+
+  // Course Manager: ticket count per course (CM-01)
+  getCourseTicketCount: (courseId: string) =>
+    api.get<{ courseId: string; openCount: number }>(
+      `/tickets/course/${courseId}/count`,
+    ),
+
+  // Guest ticket (login issues only — no auth)
+  createGuestTicket: (data: {
+    name: string;
+    email: string;
+    category: string;
+    subject: string;
+    description: string;
+  }) =>
+    api.post<{ ticket: { id: string }; trackingToken: string }>(
+      '/tickets/guest',
+      data,
+      { skipAuth: true },
+    ),
+
+  getGuestTicket: (trackingToken: string) =>
+    api.get<any>(`/tickets/track/${trackingToken}`, { skipAuth: true }),
+
+  addGuestReply: (trackingToken: string, message: string) =>
+    api.post<any>(
+      `/tickets/track/${trackingToken}/reply`,
+      { message },
+      { skipAuth: true },
+    ),
+
+  // CSAT/NPS Surveys (public — no auth)
+  getCsatSurvey: (surveyId: string) =>
+    api.get<any>(`/tickets/csat/${surveyId}`, { skipAuth: true }),
+
+  submitCsat: (surveyId: string, data: { score: number; comment?: string }) =>
+    api.post<any>(`/tickets/csat/${surveyId}`, data, { skipAuth: true }),
+
+  getNpsSurvey: (surveyId: string) =>
+    api.get<any>(`/tickets/nps/${surveyId}`, { skipAuth: true }),
+
+  submitNps: (surveyId: string, data: { score: number; comment?: string }) =>
+    api.post<any>(`/tickets/nps/${surveyId}`, data, { skipAuth: true }),
+
+  // CSAT/NPS Summaries (auth required)
+  getCsatSummary: () =>
+    api.get<{
+      totalSent: number;
+      totalResponded: number;
+      responseRate: number;
+      avgScore: number;
+      distribution: Record<string, number>;
+    }>('/tickets/csat/summary'),
+
+  getSlaBreaches: () =>
+    api.get<any[]>('/tickets/sla/breaches'),
+
+  getSlaBacklog: () =>
+    api.get<{ buckets: { label: string; count: number }[]; total: number }>(
+      '/tickets/sla/backlog',
+    ),
+
+  getNpsSummary: () =>
+    api.get<{
+      totalSent: number;
+      totalResponded: number;
+      responseRate: number;
+      promoters: number;
+      passives: number;
+      detractors: number;
+      npsScore: number;
+    }>('/tickets/nps/summary'),
+
+  // Reports API
+  getVolumeReport: (params?: { dateFrom?: string; dateTo?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    const qs = sp.toString();
+    return api.get<any[]>(`/tickets/reports/volume${qs ? `?${qs}` : ''}`);
+  },
+
+  getTopIssues: (params?: { dateFrom?: string; dateTo?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    const qs = sp.toString();
+    return api.get<any[]>(`/tickets/reports/issues${qs ? `?${qs}` : ''}`);
+  },
+
+  getSlaComplianceReport: (params?: { dateFrom?: string; dateTo?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    const qs = sp.toString();
+    return api.get<any>(`/tickets/reports/sla-compliance${qs ? `?${qs}` : ''}`);
+  },
+
+  getAgentPerformance: (params?: { dateFrom?: string; dateTo?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    const qs = sp.toString();
+    return api.get<any[]>(`/tickets/reports/agent-performance${qs ? `?${qs}` : ''}`);
+  },
+
+  exportReport: (type: string, params?: { dateFrom?: string; dateTo?: string }) => {
+    const sp = new URLSearchParams({ type });
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    return api.get<{ csv: string; filename: string }>(`/tickets/reports/export?${sp.toString()}`);
+  },
+
+  // PDF export — returns a direct download URL (binary response)
+  getExportPdfUrl: (type: string, params?: { dateFrom?: string; dateTo?: string }) => {
+    const sp = new URLSearchParams({ type });
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    return `/tickets/reports/export-pdf?${sp.toString()}`;
+  },
+
+  // Macros CRUD
+  getMacros: () => api.get<any[]>('/tickets/macros'),
+
+  getMacro: (id: string) => api.get<any>(`/tickets/macros/${id}`),
+
+  createMacro: (data: {
+    title: string;
+    bodyTemplate: string;
+    variables?: string[];
+    kbArticleUrls?: string[];
+    escalationPathId?: string;
+  }) => api.post<any>('/tickets/macros', data),
+
+  updateMacro: (id: string, data: any) =>
+    api.patch<any>(`/tickets/macros/${id}`, data),
+
+  deleteMacro: (id: string) =>
+    api.delete<any>(`/tickets/macros/${id}`),
+
+  applyMacro: (ticketId: string, macroId: string) =>
+    api.post<{ resolvedBody: string; macroTitle: string }>(
+      `/tickets/${ticketId}/apply-macro`,
+      { macroId },
+    ),
+
+  // Escalation Paths CRUD
+  getEscalationPaths: () =>
+    api.get<
+      {
+        id: string;
+        name: string;
+        steps: { afterMinutes: number; assignToRole: string }[];
+        active: boolean;
+        createdAt: string;
+      }[]
+    >('/tickets/escalation-paths'),
+
+  createEscalationPath: (data: {
+    name: string;
+    steps: { afterMinutes: number; assignToRole: string }[];
+  }) => api.post<any>('/tickets/escalation-paths', data),
+
+  updateEscalationPath: (id: string, data: any) =>
+    api.patch<any>(`/tickets/escalation-paths/${id}`, data),
+
+  deleteEscalationPath: (id: string) =>
+    api.delete<any>(`/tickets/escalation-paths/${id}`),
+
+  // Knowledge Base CRUD
+  getKbArticles: (params?: { category?: string; search?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.category) searchParams.set('category', params.category);
+    if (params?.search) searchParams.set('search', params.search);
+    const qs = searchParams.toString();
+    return api.get<any[]>(
+      `/tickets/kb/articles${qs ? `?${qs}` : ''}`,
+      { skipAuth: true },
+    );
+  },
+
+  getKbArticle: (id: string) =>
+    api.get<any>(`/tickets/kb/articles/${id}`, { skipAuth: true }),
+
+  createKbArticle: (data: {
+    titleEn?: string;
+    titleAr?: string;
+    bodyEn?: string;
+    bodyAr?: string;
+    category: string;
+    published?: boolean;
+  }) => api.post<any>('/tickets/kb/articles', data),
+
+  updateKbArticle: (id: string, data: any) =>
+    api.patch<any>(`/tickets/kb/articles/${id}`, data),
+
+  deleteKbArticle: (id: string) =>
+    api.delete<any>(`/tickets/kb/articles/${id}`),
 };
 
 export default api;

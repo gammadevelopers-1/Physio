@@ -117,6 +117,46 @@ import {
   getReviewPendingApprovalHtml,
   getReviewPendingApprovalText,
 } from './templates/review-pending-approval.template';
+import {
+  getCsatSurveyHtml,
+  getCsatSurveyText,
+} from './templates/csat-survey.template';
+import {
+  getCsatFollowupHtml,
+  getCsatFollowupText,
+} from './templates/csat-followup.template';
+import {
+  getNpsSurveyHtml,
+  getNpsSurveyText,
+} from './templates/nps-survey.template';
+import {
+  getTicketCreatedLearnerHtml,
+  getTicketCreatedLearnerText,
+} from './templates/ticket-created-learner.template';
+import {
+  getTicketAssignedAgentHtml,
+  getTicketAssignedAgentText,
+} from './templates/ticket-assigned-agent.template';
+import {
+  getTicketReplyHtml,
+  getTicketReplyText,
+} from './templates/ticket-reply-notification.template';
+import {
+  getSlaFrtBreachHtml,
+  getSlaFrtBreachText,
+} from './templates/sla-frt-breach.template';
+import {
+  getSlaTtrBreachHtml,
+  getSlaTtrBreachText,
+} from './templates/sla-ttr-breach.template';
+import {
+  getTicketResolvedHtml,
+  getTicketResolvedText,
+} from './templates/ticket-resolved.template';
+import {
+  getTicketEscalationHtml,
+  getTicketEscalationText,
+} from './templates/ticket-escalation.template';
 import { EmailLocale, getEmailStrings, t, htmlAttrs } from './email-i18n';
 import { TemplateResolverService } from '../templates/template-resolver.service';
 import { findTemplateMeta } from '../templates/template-registry';
@@ -1419,6 +1459,297 @@ export class EmailService {
     } catch (error) {
       this.logger.error(
         `Failed to send generic notification email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send CSAT survey email after ticket resolution
+   */
+  async sendCsatSurvey(
+    to: string,
+    learnerName: string,
+    ticketId: string,
+    surveyId: string,
+  ): Promise<void> {
+    const baseUrl =
+      this.configService.get('NEXT_PUBLIC_API_URL')?.replace('/api', '') ||
+      'http://localhost:3000';
+    const surveyBaseUrl = `${baseUrl}/en/surveys/csat/${surveyId}`;
+    const shortId = ticketId.substring(0, 8);
+
+    try {
+      await this.send({
+        to,
+        subject: `How did we do? — Ticket #${shortId}`,
+        html: getCsatSurveyHtml(learnerName, shortId, surveyBaseUrl),
+        text: getCsatSurveyText(learnerName, shortId, surveyBaseUrl),
+      });
+      this.logger.log(`CSAT survey email sent to ${to} for ticket #${shortId}`);
+    } catch (error) {
+      this.logger.error(`Failed to send CSAT survey email to ${to}`, error);
+    }
+  }
+
+  /**
+   * Send CSAT followup email for low scores
+   */
+  async sendCsatFollowup(
+    to: string,
+    learnerName: string,
+    ticketId: string,
+    score: number,
+  ): Promise<void> {
+    const shortId = ticketId.substring(0, 8);
+
+    try {
+      await this.send({
+        to,
+        subject: `We're sorry — can we help further?`,
+        html: getCsatFollowupHtml(learnerName, shortId, score),
+        text: getCsatFollowupText(learnerName, shortId, score),
+      });
+      this.logger.log(
+        `CSAT followup email sent to ${to} for ticket #${shortId}`,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to send CSAT followup email to ${to}`, error);
+    }
+  }
+
+  /**
+   * Send NPS survey email after course completion
+   */
+  async sendNpsSurvey(
+    to: string,
+    learnerName: string,
+    courseName: string,
+    surveyId: string,
+  ): Promise<void> {
+    const baseUrl =
+      this.configService.get('NEXT_PUBLIC_API_URL')?.replace('/api', '') ||
+      'http://localhost:3000';
+    const surveyBaseUrl = `${baseUrl}/en/surveys/nps/${surveyId}`;
+
+    try {
+      await this.send({
+        to,
+        subject: `How likely would you recommend ${courseName}?`,
+        html: getNpsSurveyHtml(learnerName, courseName, surveyBaseUrl),
+        text: getNpsSurveyText(learnerName, courseName, surveyBaseUrl),
+      });
+      this.logger.log(
+        `NPS survey email sent to ${to} for course "${courseName}"`,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to send NPS survey email to ${to}`, error);
+    }
+  }
+
+  /**
+   * Send ticket created confirmation email to learner
+   */
+  async sendTicketCreatedLearner(
+    to: string,
+    learnerName: string,
+    ticketId: string,
+    expectedResponse: string,
+  ): Promise<void> {
+    const shortId = ticketId.substring(0, 8);
+
+    try {
+      await this.send({
+        to,
+        subject: `Ticket #${shortId} received — PhysioGuidance Support`,
+        html: getTicketCreatedLearnerHtml(learnerName, shortId, expectedResponse),
+        text: getTicketCreatedLearnerText(learnerName, shortId, expectedResponse),
+      });
+      this.logger.log(
+        `Ticket created email sent to ${to} for ticket #${shortId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send ticket created email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send ticket assigned notification email to agent
+   */
+  async sendTicketAssignedAgent(
+    to: string,
+    agentName: string,
+    ticketId: string,
+    subject: string,
+    priority: string,
+    frtDeadline: string,
+  ): Promise<void> {
+    const shortId = ticketId.substring(0, 8);
+
+    try {
+      await this.send({
+        to,
+        subject: `New ticket assigned — #${shortId}`,
+        html: getTicketAssignedAgentHtml(agentName, shortId, subject, priority, frtDeadline),
+        text: getTicketAssignedAgentText(agentName, shortId, subject, priority, frtDeadline),
+      });
+      this.logger.log(
+        `Ticket assigned email sent to ${to} for ticket #${shortId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send ticket assigned email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send ticket reply notification email
+   */
+  async sendTicketReplyNotification(
+    to: string,
+    recipientName: string,
+    senderName: string,
+    ticketId: string,
+    messagePreview: string,
+  ): Promise<void> {
+    const shortId = ticketId.substring(0, 8);
+
+    try {
+      await this.send({
+        to,
+        subject: `New reply on ticket #${shortId}`,
+        html: getTicketReplyHtml(recipientName, senderName, shortId, messagePreview),
+        text: getTicketReplyText(recipientName, senderName, shortId, messagePreview),
+      });
+      this.logger.log(
+        `Ticket reply notification sent to ${to} for ticket #${shortId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send ticket reply notification to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send SLA FRT breach alert email
+   */
+  async sendSlaFrtBreach(
+    to: string,
+    agentName: string,
+    ticketId: string,
+    subject: string,
+    frtTarget: string,
+  ): Promise<void> {
+    const shortId = ticketId.substring(0, 8);
+
+    try {
+      await this.send({
+        to,
+        subject: `BREACH ALERT: Ticket #${shortId} — FRT exceeded`,
+        html: getSlaFrtBreachHtml(agentName, shortId, subject, frtTarget),
+        text: getSlaFrtBreachText(agentName, shortId, subject, frtTarget),
+      });
+      this.logger.log(
+        `SLA FRT breach email sent to ${to} for ticket #${shortId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send SLA FRT breach email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send SLA TTR breach alert email
+   */
+  async sendSlaTtrBreach(
+    to: string,
+    agentName: string,
+    ticketId: string,
+    subject: string,
+    ttrTarget: string,
+  ): Promise<void> {
+    const shortId = ticketId.substring(0, 8);
+
+    try {
+      await this.send({
+        to,
+        subject: `BREACH ALERT: Ticket #${shortId} — TTR exceeded`,
+        html: getSlaTtrBreachHtml(agentName, shortId, subject, ttrTarget),
+        text: getSlaTtrBreachText(agentName, shortId, subject, ttrTarget),
+      });
+      this.logger.log(
+        `SLA TTR breach email sent to ${to} for ticket #${shortId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send SLA TTR breach email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send ticket resolved notification email to learner
+   */
+  async sendTicketResolved(
+    to: string,
+    learnerName: string,
+    ticketId: string,
+  ): Promise<void> {
+    const shortId = ticketId.substring(0, 8);
+
+    try {
+      await this.send({
+        to,
+        subject: `Your ticket #${shortId} has been resolved`,
+        html: getTicketResolvedHtml(learnerName, shortId),
+        text: getTicketResolvedText(learnerName, shortId),
+      });
+      this.logger.log(
+        `Ticket resolved email sent to ${to} for ticket #${shortId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send ticket resolved email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send ticket escalation notification email to supervisor
+   */
+  async sendTicketEscalation(
+    to: string,
+    supervisorName: string,
+    ticketId: string,
+    subject: string,
+    agentChain: string,
+  ): Promise<void> {
+    const shortId = ticketId.substring(0, 8);
+
+    try {
+      await this.send({
+        to,
+        subject: `CRITICAL: Ticket #${shortId} — all agents failed`,
+        html: getTicketEscalationHtml(supervisorName, shortId, subject, agentChain),
+        text: getTicketEscalationText(supervisorName, shortId, subject, agentChain),
+      });
+      this.logger.log(
+        `Ticket escalation email sent to ${to} for ticket #${shortId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send ticket escalation email to ${to}`,
         error,
       );
     }

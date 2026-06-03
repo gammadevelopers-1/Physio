@@ -44,7 +44,7 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const isRTL = locale === "ar";
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { allowedLanguages } = usePlatformLocale();
   const showLocaleToggle = allowedLanguages.length > 1;
   const { settings: siteSettings } = useSiteSettings();
@@ -166,7 +166,6 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
                     width={40}
                     height={40}
                     className="object-cover w-full h-full"
-                    unoptimized
                   />
                 ) : (
                   <span className="text-sm font-bold text-white">
@@ -235,14 +234,13 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
             {/* User Info */}
             <div className="flex items-center gap-3 pb-4 mb-4 border-b border-[var(--outline-subtle)]">
               <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] flex items-center justify-center">
-                {profile.avatar ? (
-                  <Image
-                    src={profile.avatar}
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
                     alt={profile.name}
                     width={40}
                     height={40}
                     className="object-cover w-full h-full"
-                    unoptimized
                   />
                 ) : (
                   <span className="text-sm font-bold text-white">

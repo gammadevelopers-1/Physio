@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -22,61 +22,80 @@ interface SupportProfile {
   name: string;
   email: string;
   resolved: number;
-  csat: number;
+  csat: number | null;
   avgFRT: string;
   avatar?: string;
+  totalTickets?: number;
+  hasAnyTickets?: boolean;
+  isLoading?: boolean;
 }
 
 interface SupportMobileSidebarProps {
   profile: SupportProfile;
+  supportSubRole?: string | null;
 }
 
-const SupportMobileSidebar = ({ profile }: SupportMobileSidebarProps) => {
+const SupportMobileSidebar = ({ profile, supportSubRole }: SupportMobileSidebarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const locale = useLocale();
   const pathname = usePathname();
   const t = useTranslations("supportDashboard");
   const isRTL = locale === "ar";
+  const { user } = useAuth();
 
-  const navItems = [
+  const isSupervisor = supportSubRole === "supervisor";
+  const basePath = isSupervisor
+    ? `/${locale}/dashboard/support/supervisor`
+    : `/${locale}/dashboard/support/agent`;
+
+  const allNavItems = [
     {
       label: t("sidebar.dashboard"),
-      href: `/${locale}/dashboard/support`,
+      href: basePath,
       icon: LayoutDashboard,
+      showFor: "all" as const,
     },
     {
       label: t("sidebar.allTickets"),
-      href: `/${locale}/dashboard/support/tickets`,
+      href: `${basePath}/tickets`,
       icon: ClipboardList,
-      badge: 23,
+      showFor: "supervisor" as const,
     },
     {
       label: t("sidebar.myTickets"),
-      href: `/${locale}/dashboard/support/my-tickets`,
+      href: `${basePath}/my-tickets`,
       icon: Inbox,
-      badge: 8,
+      showFor: "all" as const,
     },
     {
       label: t("sidebar.team"),
-      href: `/${locale}/dashboard/support/team`,
+      href: `${basePath}/team`,
       icon: Users,
+      showFor: "supervisor" as const,
     },
     {
       label: t("sidebar.knowledgeBase"),
-      href: `/${locale}/dashboard/support/kb`,
+      href: `${basePath}/kb`,
       icon: BookOpen,
+      showFor: "all" as const,
     },
     {
       label: t("sidebar.reports"),
-      href: `/${locale}/dashboard/support/reports`,
+      href: `${basePath}/reports`,
       icon: BarChart3,
+      showFor: "supervisor" as const,
     },
     {
       label: t("sidebar.settings"),
-      href: `/${locale}/dashboard/support/settings`,
+      href: `${basePath}/settings`,
       icon: Settings,
+      showFor: "all" as const,
     },
   ];
+
+  const navItems = allNavItems.filter(
+    (item) => item.showFor === "all" || (item.showFor === "supervisor" && isSupervisor),
+  );
 
   const isActive = (href: string) => pathname === href;
 
@@ -116,14 +135,13 @@ const SupportMobileSidebar = ({ profile }: SupportMobileSidebarProps) => {
             <div className="flex flex-col items-center">
               <div className="relative mb-3">
                 <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] flex items-center justify-center relative">
-                  {profile.avatar ? (
-                    <Image
-                      src={profile.avatar}
+                  {user?.avatar ? (
+                    <img
+                      src={user.avatar}
                       alt={profile.name}
                       width={80}
                       height={80}
                       className="object-cover w-full h-full"
-                      unoptimized
                     />
                   ) : (
                     <span className="text-2xl font-bold text-white">
@@ -155,7 +173,7 @@ const SupportMobileSidebar = ({ profile }: SupportMobileSidebarProps) => {
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#EDE9FE] rounded-full">
                 <Headphones className="w-4 h-4 text-[#8B5CF6]" />
                 <span className="text-sm font-medium text-[#8B5CF6]">
-                  {t("sidebar.supportLead")}
+                  {supportSubRole === "supervisor" ? "Supervisor" : "Agent"}
                 </span>
               </div>
             </div>
@@ -172,10 +190,10 @@ const SupportMobileSidebar = ({ profile }: SupportMobileSidebarProps) => {
               </div>
               <div className="text-center">
                 <p className="text-xl font-bold text-[#16A34A]">
-                  {profile.csat}%
+                  {profile.csat != null ? profile.csat.toFixed(1) : "—"}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)]">
-                  {t("sidebar.csat")}
+                  {profile.csat != null ? "CSAT /5" : t("sidebar.csat")}
                 </p>
               </div>
               <div className="text-center">
@@ -220,11 +238,6 @@ const SupportMobileSidebar = ({ profile }: SupportMobileSidebarProps) => {
                     >
                       {item.label}
                     </span>
-                    {item.badge && (
-                      <span className="bg-[#EF4444] text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                        {item.badge}
-                      </span>
-                    )}
                   </Link>
                 );
               })}

@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
+import { useAuth } from "@/contexts/AuthContext";
+import { supportApi } from "@/lib/api";
+import { useSupportProfile } from "@/hooks/useSupportProfile";
+import { toast } from "sonner";
 import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
 import SupportMobileSidebar from "./SupportMobileSidebar";
@@ -17,121 +21,87 @@ import {
   BarChart3,
   MoreVertical,
   TrendingUp,
+  Loader2,
+  X,
 } from "lucide-react";
-
-// Mock Support Profile
-const mockProfile = {
-  name: "Hana Al-Saud",
-  email: "h.alsaud@physio.edu.sa",
-  resolved: 156,
-  csat: 94,
-  avgFRT: "1.2h",
-};
 
 const TeamContent = () => {
   const t = useTranslations("supportDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAddAgent, setShowAddAgent] = useState(false);
+  const [agentForm, setAgentForm] = useState({ firstName: '', lastName: '', email: '', password: '', phone: '' });
+  const [isCreating, setIsCreating] = useState(false);
 
-  const profile = { ...mockProfile, name: t("names.hanaAlSaud") };
+  const profile = useSupportProfile();
 
-  const agents = [
-    {
-      id: "1",
-      name: t("names.hanaAlSaud"),
-      initials: "HA",
-      role: t("sidebar.supportLead"),
+  const [apiAgents, setApiAgents] = useState<any[]>([]);
+  const [isLoadingAgents, setIsLoadingAgents] = useState(true);
+
+  useEffect(() => {
+    async function fetchAgents() {
+      try {
+        const data = await supportApi.getAgents();
+        setApiAgents(data || []);
+      } catch {
+        setApiAgents([]);
+      } finally {
+        setIsLoadingAgents(false);
+      }
+    }
+    fetchAgents();
+  }, []);
+
+  const agents = apiAgents.map((a: any) => {
+    const name = [a.firstName, a.lastName].filter(Boolean).join(" ") || a.email;
+    const initials = name
+      .split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
+    return {
+      id: a.userId,
+      name,
+      initials,
+      role: a.supportSubRole === "supervisor" ? "Supervisor" : "Agent",
       status: "online",
-      openTickets: 8,
-      avgResponse: "1.0h",
-      csat: 96,
-      workload: 80,
-    },
-    {
-      id: "2",
-      name: t("names.mohammedAli"),
-      initials: "MA",
-      role: t("teamPage.roles.seniorAgent"),
-      status: "online",
-      openTickets: 6,
-      avgResponse: "1.5h",
-      csat: 92,
-      workload: 60,
-    },
-    {
-      id: "3",
-      name: t("names.laylaAhmed"),
-      initials: "LA",
-      role: t("teamPage.roles.agent"),
-      status: "away",
-      openTickets: 5,
-      avgResponse: "1.3h",
-      csat: 94,
-      workload: 50,
-    },
-    {
-      id: "4",
-      name: t("teamPage.agents.saraKhan"),
-      initials: "SK",
-      role: t("teamPage.roles.agent"),
-      status: "online",
-      openTickets: 4,
-      avgResponse: "1.8h",
-      csat: 91,
-      workload: 40,
-    },
-    {
-      id: "5",
-      name: t("teamPage.agents.ahmedNasser"),
-      initials: "AN",
-      role: t("teamPage.roles.juniorAgent"),
-      status: "online",
-      openTickets: 3,
-      avgResponse: "2.1h",
-      csat: 88,
-      workload: 30,
-    },
-    {
-      id: "6",
-      name: t("teamPage.agents.fatimaOmar"),
-      initials: "FO",
-      role: t("teamPage.roles.juniorAgent"),
-      status: "offline",
       openTickets: 0,
-      avgResponse: "2.0h",
-      csat: 90,
+      avgResponse: "--",
+      csat: 0,
       workload: 0,
-    },
-  ];
+    };
+  });
 
   const stats = [
     {
       label: t("teamPage.stats.totalAgents"),
-      value: "6",
+      value: String(agents.length),
       icon: Users,
       bgColor: "bg-[var(--color-border-subtle)]",
       textColor: "text-[var(--color-primary)]",
     },
     {
       label: t("teamPage.stats.online"),
-      value: "4",
+      value: String(agents.length),
       icon: Wifi,
       bgColor: "bg-[#DCFCE7]",
       textColor: "text-[#16A34A]",
     },
     {
       label: t("teamPage.stats.avgResponse"),
-      value: "1.3h",
+      value: "--",
       icon: Clock,
       bgColor: "bg-[#FFEDD5]",
       textColor: "text-[#EA580C]",
     },
     {
       label: t("teamPage.stats.teamCSAT"),
-      value: "94%",
+      value: "--",
       icon: Smile,
       bgColor: "bg-[#EDE9FE]",
       textColor: "text-[#8B5CF6]",
@@ -140,9 +110,9 @@ const TeamContent = () => {
 
   const tabs = [
     { key: "all", label: t("teamPage.tabs.all") },
-    { key: "online", label: t("teamPage.tabs.online"), count: 4 },
-    { key: "away", label: t("teamPage.tabs.away"), count: 1 },
-    { key: "offline", label: t("teamPage.tabs.offline"), count: 1 },
+    { key: "online", label: t("teamPage.tabs.online"), count: agents.length },
+    { key: "away", label: t("teamPage.tabs.away"), count: 0 },
+    { key: "offline", label: t("teamPage.tabs.offline"), count: 0 },
   ];
 
   const filteredAgents = agents.filter((agent) => {
@@ -186,8 +156,98 @@ const TeamContent = () => {
     return "bg-[#16A34A]";
   };
 
+  const handleCreateAgent = async () => {
+    if (!agentForm.firstName || !agentForm.lastName || !agentForm.email || !agentForm.password) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+    if (agentForm.password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    setIsCreating(true);
+    try {
+      await supportApi.createAgent(agentForm);
+      toast.success("Agent created successfully");
+      setShowAddAgent(false);
+      setAgentForm({ firstName: '', lastName: '', email: '', password: '', phone: '' });
+      // Refresh agents list
+      const data = await supportApi.getAgents();
+      setApiAgents(data || []);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to create agent");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   return (
     <>
+      {/* Add Agent Modal */}
+      {showAddAgent && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setShowAddAgent(false)} />
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 pointer-events-auto max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Add New Agent</h2>
+              <button onClick={() => setShowAddAgent(false)} className="p-1 hover:bg-[var(--color-border-subtle)] rounded-lg">
+                <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">First Name *</label>
+                  <input type="text" value={agentForm.firstName}
+                    onChange={e => setAgentForm(p => ({...p, firstName: e.target.value}))}
+                    className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Last Name *</label>
+                  <input type="text" value={agentForm.lastName}
+                    onChange={e => setAgentForm(p => ({...p, lastName: e.target.value}))}
+                    className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Email *</label>
+                <input type="email" value={agentForm.email}
+                  onChange={e => setAgentForm(p => ({...p, email: e.target.value}))}
+                  className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Password *</label>
+                <input type="password" value={agentForm.password}
+                  onChange={e => setAgentForm(p => ({...p, password: e.target.value}))}
+                  placeholder="Min 8 characters"
+                  className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Phone</label>
+                <input type="tel" value={agentForm.phone}
+                  onChange={e => setAgentForm(p => ({...p, phone: e.target.value}))}
+                  className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]" />
+              </div>
+              <p className="text-xs text-[var(--color-text-secondary)]">
+                The new user will be created with the Support Agent role and can immediately access the agent dashboard.
+              </p>
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => setShowAddAgent(false)}
+                  className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
+                  Cancel
+                </button>
+                <button onClick={handleCreateAgent} disabled={isCreating}
+                  className="flex-1 h-10 bg-[#002D87] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2">
+                  {isCreating ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating...</> : 'Create Agent'}
+                </button>
+              </div>
+            </div>
+          </div>
+          </div>
+        </>
+      )}
+
       {/* Dashboard Navbar */}
       <SupportNavbar profile={profile} />
 
@@ -197,11 +257,11 @@ const TeamContent = () => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <SupportSidebar profile={profile} />
+              <SupportSidebar profile={profile} supportSubRole={user?.supportSubRole} />
             </div>
 
             {/* Mobile Sidebar */}
-            <SupportMobileSidebar profile={profile} />
+            <SupportMobileSidebar profile={profile} supportSubRole={user?.supportSubRole} />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">
@@ -259,7 +319,7 @@ const TeamContent = () => {
                 </div>
 
                 {/* Add Agent Button */}
-                <button className="btn-gold text-[var(--color-button-text)] h-10 px-4 rounded-lg text-sm font-medium flex items-center gap-2">
+                <button onClick={() => setShowAddAgent(true)} className="btn-gold text-[var(--color-button-text)] h-10 px-4 rounded-lg text-sm font-medium flex items-center gap-2">
                   <Plus className="w-4 h-4" />
                   {t("teamPage.addAgent")}
                 </button>
@@ -411,9 +471,9 @@ const TeamContent = () => {
                     <p className="text-sm text-[var(--color-text-secondary)] mb-1">
                       {t("teamPage.performanceCards.bestResponseTime")}
                     </p>
-                    <p className="text-2xl font-bold text-[var(--color-text-secondary)]">1.0h</p>
+                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">--</p>
                     <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                      {t("names.hanaAlSaud")}
+                      No data yet
                     </p>
                   </div>
 
@@ -422,9 +482,9 @@ const TeamContent = () => {
                     <p className="text-sm text-[var(--color-text-secondary)] mb-1">
                       {t("teamPage.performanceCards.highestCSAT")}
                     </p>
-                    <p className="text-2xl font-bold text-[var(--color-text-secondary)]">96%</p>
+                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">--</p>
                     <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                      {t("names.hanaAlSaud")}
+                      No data yet
                     </p>
                   </div>
 
@@ -433,9 +493,9 @@ const TeamContent = () => {
                     <p className="text-sm text-[var(--color-text-secondary)] mb-1">
                       {t("teamPage.performanceCards.mostResolved")}
                     </p>
-                    <p className="text-2xl font-bold text-[var(--color-text-secondary)]">45</p>
+                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">--</p>
                     <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                      {t("names.mohammedAli")}
+                      No data yet
                     </p>
                   </div>
                 </div>

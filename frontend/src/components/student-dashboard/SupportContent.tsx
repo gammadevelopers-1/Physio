@@ -28,7 +28,7 @@ import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentTickets } from "@/hooks/useStudentTickets";
 import { useStudentCourses } from "@/hooks/useStudentCourses";
 import { FmtDate } from "@/components/ui/Fmt";
-import { studentApi } from "@/lib/api";
+import { studentApi, supportApi } from "@/lib/api";
 import type {
   SupportTicket,
   TicketStatus,
@@ -171,6 +171,7 @@ function TicketRow({
           <StatusBadge status={ticket.status} t={t} />
           <PriorityBadge priority={ticket.priority} t={t} />
           <span className="text-[10px] text-[var(--color-text-secondary)]">
+
             {t(`supportPage.category_${ticket.category}` as Parameters<typeof t>[0])}
           </span>
         </div>
@@ -261,9 +262,8 @@ function CreateTicketForm({
         attachmentUrl = uploadResult.url;
       }
 
-      await studentApi.createTicket({
+      await supportApi.createTicket({
         category,
-        priority,
         subject: subject.trim(),
         description: description.trim(),
         ...(courseId && { courseId }),
@@ -510,7 +510,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
             onClick={() => setActiveCategory(cat)}
             className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === cat ? "bg-[var(--color-primary)] text-white" : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]"}`}
           >
-            {t(`supportPage.category_${cat}` as Parameters<typeof t>[0])}
+            {t(`supportPage.faq.${cat}` as Parameters<typeof t>[0])}
           </button>
         ))}
       </div>
@@ -531,7 +531,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] flex-shrink-0">
-                    {t(`supportPage.category_${item.category}` as Parameters<typeof t>[0])}
+                    {t(`supportPage.faq.${item.category}` as Parameters<typeof t>[0])}
                   </span>
                   <span className="text-sm font-medium text-[var(--color-text-primary)] truncate">{item.question}</span>
                 </div>
@@ -569,7 +569,7 @@ function VideoTutorials({ t, locale }: { t: ReturnType<typeof useTranslations>; 
         {TUTORIAL_ITEMS.map((tutorial) => (
           <div key={tutorial.key} className="border border-[var(--color-border)] rounded-xl overflow-hidden hover:shadow-md transition-shadow">
             {/* Thumbnail placeholder */}
-            <div className="relative h-[120px] bg-gradient-to-br from-[#002D87] to-[#0047D4] flex items-center justify-center">
+            <div className="relative h-[120px] bg-gradient-to-br from-[#a37f49] to-[#6b4e24] flex items-center justify-center">
               <PlayCircle className="w-12 h-12 text-white/80" />
               <span className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/60 text-white text-[10px] font-medium rounded">
                 {tutorial.duration}

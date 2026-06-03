@@ -22,7 +22,7 @@ import { useTicketDetail } from "@/hooks/useStudentTickets";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatPlatformDateReadable } from "@/lib/platform-locale";
 import { FmtDate } from "@/components/ui/Fmt";
-import { studentApi } from "@/lib/api";
+import { studentApi, supportApi } from "@/lib/api";
 import type { TicketReply, TicketStatus } from "@/types/student-dashboard";
 
 function StatusBadge({
@@ -204,7 +204,7 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
     if (!replyText.trim() || !ticketId) return;
     setSending(true);
     try {
-      await studentApi.replyToTicket(ticketId, replyText.trim());
+      await supportApi.addComment(ticketId, { message: replyText.trim() });
       setReplyText("");
       refetch();
     } catch {

@@ -23,6 +23,7 @@ export interface AuthenticatedUser {
   activeRole: string;
   roles: string[];
   isActive: boolean;
+  supportSubRole?: string | null;
 }
 
 @Injectable()
@@ -62,12 +63,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     // Get user's current roles from database (in case they changed)
     const userRolesList = await db
-      .select({ roleName: roles.name })
+      .select({
+        roleName: roles.name,
+        supportSubRole: userRoles.supportSubRole,
+      })
       .from(userRoles)
       .innerJoin(roles, eq(userRoles.roleId, roles.id))
       .where(eq(userRoles.userId, user.id));
 
     const roleNames = userRolesList.map((r) => r.roleName);
+
+    // Extract support sub-role if user has SUPPORT role
+    const supportEntry = userRolesList.find((r) => r.roleName === 'SUPPORT');
+    const supportSubRole = supportEntry?.supportSubRole ?? null;
 
     return {
       id: user.id,
@@ -77,6 +85,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       activeRole: user.activeRole,
       roles: roleNames,
       isActive: user.isActive,
+      supportSubRole,
     };
   }
 }

@@ -662,6 +662,19 @@ export async function getContactPageData(locale: string = 'en') {
 }
 
 /**
+ * Fetch support page layout data (no CMS content — translations only)
+ */
+export async function getSupportPageData(locale: string = 'en') {
+  const [siteSettings, navbarLinks, footerLinks] = await Promise.all([
+    getSiteSettings(locale),
+    getNavbarLinks(locale),
+    getFooterLinks(locale),
+  ]);
+
+  return { siteSettings, navbarLinks, footerLinks };
+}
+
+/**
  * Fetch feedback page content
  */
 export async function getFeedbackPage(locale: string = 'en'): Promise<FeedbackPage | null> {

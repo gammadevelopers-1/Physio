@@ -36,6 +36,7 @@ import {
   type PlatformLocaleSettings,
 } from '../../common/platform-locale';
 import { decryptPII } from '../../common/crypto';
+import { SupportService } from '../support/support.service';
 import { RejectCertificateDto } from './dto/reject-certificate.dto';
 import { HoldCertificateDto } from './dto/hold-certificate.dto';
 import { RevokeCertificateDto } from './dto/revoke-certificate.dto';
@@ -53,6 +54,7 @@ export class CertificatesService {
     private readonly auditService: NelcAuditService,
     private readonly auditLogService: AuditLogService,
     private readonly adminSettings: AdminSettingsService,
+    private readonly supportService: SupportService,
   ) {}
 
   /** Fetch admin-configured locale settings — used for certificate date rendering. */
@@ -759,6 +761,16 @@ export class CertificatesService {
       );
     } catch (error) {
       this.logger.error(`Failed to send certificate approval email for request ${id}`, error);
+    }
+
+    // Trigger NPS survey on certificate issuance
+    try {
+      await this.supportService.createNpsSurvey(
+        request.studentId,
+        request.courseId,
+      );
+    } catch {
+      // Non-blocking — NPS survey is not critical for certificate approval
     }
 
     return updated;

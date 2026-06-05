@@ -6,7 +6,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { supportApi } from "@/lib/api";
 import {
   BookOpen,
-  Eye,
   Calendar,
   ChevronLeft,
   ChevronRight,
@@ -114,14 +113,31 @@ export default function KbArticleDetail({ articleId }: Props) {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-      {/* Breadcrumb / back link */}
-      <Link
-        href={`/${locale}/support/kb`}
-        className="inline-flex items-center gap-1 text-[13px] text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] mb-6"
+      {/* Breadcrumb — full chain so users can step back to either Help
+          Center or the main Support page. The chevron between crumbs
+          flips for RTL automatically. */}
+      <nav
+        aria-label="Breadcrumb"
+        className={`flex items-center gap-1.5 text-[13px] text-[var(--color-text-secondary)] mb-6 ${isRTL ? "flex-row-reverse" : ""}`}
       >
-        {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        {t("backToHelpCenter")}
-      </Link>
+        <Link
+          href={`/${locale}/support`}
+          className="hover:text-[var(--color-primary)] transition-colors"
+        >
+          {t("backToSupport")}
+        </Link>
+        {isRTL ? (
+          <ChevronLeft className="w-3.5 h-3.5 opacity-50" />
+        ) : (
+          <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+        )}
+        <Link
+          href={`/${locale}/support/kb`}
+          className="hover:text-[var(--color-primary)] transition-colors"
+        >
+          {t("backToHelpCenter")}
+        </Link>
+      </nav>
 
       {/* Article header */}
       <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-6 sm:p-8 mb-6">
@@ -163,12 +179,8 @@ export default function KbArticleDetail({ articleId }: Props) {
           {title || "(untitled)"}
         </h1>
 
-        <div className="flex items-center gap-4 text-xs text-[var(--color-text-secondary)] border-b border-[var(--color-border)] pb-4 mb-6">
-          <span className="flex items-center gap-1">
-            <Eye className="w-3.5 h-3.5" />
-            {(article.viewCount ?? 0).toLocaleString()} {t("viewsLabel")}
-          </span>
-          {article.createdAt && (
+        {article.createdAt && (
+          <div className="flex items-center gap-4 text-xs text-[var(--color-text-secondary)] border-b border-[var(--color-border)] pb-4 mb-6">
             <span className="flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5" />
               {new Date(article.createdAt).toLocaleDateString(
@@ -176,8 +188,8 @@ export default function KbArticleDetail({ articleId }: Props) {
                 { year: "numeric", month: "long", day: "numeric" },
               )}
             </span>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Body — HTML rendered. Trust here is OK: only support/admin
             roles can author and the rich-text editor produces a fixed
@@ -204,10 +216,6 @@ export default function KbArticleDetail({ articleId }: Props) {
               >
                 <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                   {lang === "ar" && r.titleAr ? r.titleAr : r.titleEn || r.titleAr}
-                </p>
-                <p className="text-[11px] text-[var(--color-text-secondary)] mt-0.5">
-                  <Eye className="w-3 h-3 inline mr-1" />
-                  {(r.viewCount ?? 0).toLocaleString()} {t("viewsLabel")}
                 </p>
               </Link>
             ))}

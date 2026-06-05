@@ -63,12 +63,15 @@ export * from './session-recordings';
 
 // Support Tickets schemas
 export * from './tickets';
+export * from './ticket-tags';
+export * from './support-governance';
 export * from './sla';
 export * from './support-macros';
 export * from './escalation-paths';
 export * from './surveys';
 export * from './kb-articles';
 export * from './kb-categories';
+export * from './kb-search-events';
 export * from './support-config';
 export * from './support-team-members';
 export * from './support-team-requests';

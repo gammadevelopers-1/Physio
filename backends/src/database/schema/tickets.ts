@@ -19,6 +19,15 @@ export const tickets = pgTable(
   'tickets',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    // Human-readable reference (e.g. T-000123). Auto-populated by a
+    // sequence-backed DB default (migration 0050) so application code
+    // never has to assign it on insert.
+    referenceNumber: varchar('reference_number', { length: 20 })
+      .notNull()
+      .unique()
+      .default(
+        sql`'T-' || LPAD(nextval('tickets_reference_seq')::text, 6, '0')`,
+      ),
     studentId: uuid('student_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
@@ -53,12 +62,17 @@ export const tickets = pgTable(
     guestTrackingToken: varchar('guest_tracking_token', { length: 100 }).unique(),
     guestName: varchar('guest_name', { length: 100 }),
     guestEmail: varchar('guest_email', { length: 255 }),
+    // Populated when a supervisor merges this ticket into another one.
+    // The source row stays for audit; the target becomes the live
+    // ticket. See migration 0053 + SupportService.mergeTicket.
+    mergedIntoTicketId: uuid('merged_into_ticket_id'),
   },
   (table) => [
     index('tickets_student_id_idx').on(table.studentId),
     index('tickets_status_idx').on(table.status),
     index('tickets_category_idx').on(table.category),
     index('tickets_assignee_id_idx').on(table.assigneeId),
+    index('tickets_reference_number_idx').on(table.referenceNumber),
     check(
       'tickets_status_check',
       sql`${table.status} IN ('new', 'in_progress', 'on_hold', 'resolved', 'closed')`,

@@ -53,6 +53,7 @@ export class SlaMonitorService {
       const openTickets = await db
         .select({
           id: tickets.id,
+          referenceNumber: tickets.referenceNumber,
           priority: tickets.priority,
           status: tickets.status,
           assigneeId: tickets.assigneeId,
@@ -184,7 +185,7 @@ export class SlaMonitorService {
                       await this.emailService.sendSlaFrtBreach(
                         agentInfo.email,
                         agentInfo.firstName || 'Agent',
-                        ticket.id,
+                        ticket.referenceNumber,
                         '',
                         String(policy.frtMinutes),
                       );
@@ -206,7 +207,7 @@ export class SlaMonitorService {
                       await this.emailService.sendTicketEscalation(
                         supervisorInfo.email,
                         supervisorInfo.firstName || 'Supervisor',
-                        ticket.id,
+                        ticket.referenceNumber,
                         '',
                         'All agents missed FRT deadline',
                       );
@@ -347,7 +348,7 @@ export class SlaMonitorService {
                       await this.emailService.sendSlaTtrBreach(
                         agentInfo.email,
                         agentInfo.firstName || 'Agent',
-                        ticket.id,
+                        ticket.referenceNumber,
                         '',
                         String(policy.ttrMinutes),
                       );
@@ -372,7 +373,7 @@ export class SlaMonitorService {
                       await this.emailService.sendTicketEscalation(
                         newAgentInfo.email,
                         newAgentInfo.firstName || 'Agent',
-                        ticket.id,
+                        ticket.referenceNumber,
                         '',
                         `TTR breach — ticket reassigned to you`,
                       );
@@ -397,7 +398,7 @@ export class SlaMonitorService {
                       await this.emailService.sendTicketEscalation(
                         supInfo.email,
                         supInfo.firstName || 'Supervisor',
-                        ticket.id,
+                        ticket.referenceNumber,
                         '',
                         `TTR breached: ${policy.ttrMinutes}m target exceeded — reassigned`,
                       );
@@ -425,7 +426,7 @@ export class SlaMonitorService {
                         await this.emailService.sendTicketEscalation(
                           a.email,
                           a.firstName || 'Admin',
-                          ticket.id,
+                          ticket.referenceNumber,
                           '',
                           `TTR breached: ${policy.ttrMinutes}m target exceeded — reassigned`,
                         );
@@ -487,6 +488,7 @@ export class SlaMonitorService {
       const openTickets = await db
         .select({
           id: tickets.id,
+          referenceNumber: tickets.referenceNumber,
           priority: tickets.priority,
           assigneeId: tickets.assigneeId,
           onHoldTotalMinutes: tickets.onHoldTotalMinutes,
@@ -586,7 +588,7 @@ export class SlaMonitorService {
                   await this.emailService.sendTicketEscalation(
                     agInfo.email,
                     agInfo.firstName || 'Agent',
-                    ticket.id,
+                    ticket.referenceNumber,
                     '',
                     `Priority auto-escalated from ${ticket.priority} to ${newPriority}`,
                   );
@@ -738,6 +740,7 @@ export class SlaMonitorService {
         .select({
           surveyId: csatSurveys.id,
           ticketId: csatSurveys.ticketId,
+          ticketReferenceNumber: tickets.referenceNumber,
           sentAt: csatSurveys.sentAt,
           userId: csatSurveys.userId,
           ticketStatus: tickets.status,
@@ -783,7 +786,7 @@ export class SlaMonitorService {
           await this.emailService.sendCsatSurvey(
             recipientEmail,
             recipientName,
-            survey.ticketId,
+            survey.ticketReferenceNumber,
             survey.surveyId,
           );
 

@@ -11,3 +11,4 @@ export { default as TeamContent } from "./TeamContent";
 export { default as KnowledgeBaseContent } from "./KnowledgeBaseContent";
 export { default as SupportReportsContent } from "./SupportReportsContent";
 export { default as SupportSettingsContent } from "./SupportSettingsContent";
+export { default as AlertsPageContent } from "./AlertsPageContent";

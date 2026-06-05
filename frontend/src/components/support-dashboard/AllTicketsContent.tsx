@@ -217,7 +217,7 @@ const AllTicketsContent = () => {
   // Map API tickets to display rows
   const tickets: Ticket[] = apiTickets.map((tk: any) => ({
     id: tk.id,
-    displayId: tk.id?.substring(0, 8) || tk.id,
+    displayId: tk.referenceNumber || tk.id?.substring(0, 8) || tk.id,
     subject: tk.subject,
     customer:
       [tk.studentFirstName, tk.studentLastName].filter(Boolean).join(" ") ||
@@ -271,7 +271,7 @@ const AllTicketsContent = () => {
     inProgress: "bg-[#FEF9C3] text-[#EAB308]",
     waiting: "bg-[#FFEDD5] text-[#F97316]",
     resolved: "bg-[#DCFCE7] text-[#22C55E]",
-    closed: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
+    closed: "bg-[#F3F4F6] text-[#4B5563]",
   };
 
   // ── Row actions ──────────────────────────────────────────────────
@@ -295,8 +295,9 @@ try {
       toast.success(t("allTicketsPage.toasts.resolved"));
       fetchTickets();
       fetchKpis();
-    } catch {
-      toast.error(t("allTicketsPage.toasts.actionFailed"));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      toast.error(msg || t("allTicketsPage.toasts.actionFailed"));
     }
   };
 
@@ -306,8 +307,9 @@ try {
       toast.success(t("allTicketsPage.toasts.closed"));
       fetchTickets();
       fetchKpis();
-    } catch {
-      toast.error(t("allTicketsPage.toasts.actionFailed"));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      toast.error(msg || t("allTicketsPage.toasts.actionFailed"));
     }
   };
 
@@ -317,8 +319,9 @@ try {
       toast.success(t("allTicketsPage.toasts.reopened"));
       fetchTickets();
       fetchKpis();
-    } catch {
-      toast.error(t("allTicketsPage.toasts.actionFailed"));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      toast.error(msg || t("allTicketsPage.toasts.actionFailed"));
     }
   };
 
@@ -564,7 +567,7 @@ try {
                             </td>
                             {/* Category */}
                             <td className="py-3 px-4 whitespace-nowrap">
-                              <span className="bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] text-[11px] px-2 py-0.5 rounded-md font-medium">
+                              <span className="bg-[#F3F4F6] text-[#4B5563] text-[11px] px-2 py-0.5 rounded-md font-medium">
                                 {t(`allTicketsPage.filters.categories.${ticket.category}`)}
                               </span>
                             </td>

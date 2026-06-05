@@ -47,9 +47,18 @@ interface NotificationBellProps {
    * Used by the student dashboard to hide instructor/manager-oriented notifications.
    */
   typeAllowlist?: readonly string[];
+  /**
+   * `'team'` widens the feed to all SUPPORT users (supervisor/admin only).
+   * Used by the support supervisor bell so they see team-wide notifications,
+   * not just their own.
+   */
+  scope?: 'own' | 'team';
 }
 
-export default function NotificationBell({ typeAllowlist }: NotificationBellProps = {}) {
+export default function NotificationBell({
+  typeAllowlist,
+  scope,
+}: NotificationBellProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -62,7 +71,7 @@ export default function NotificationBell({ typeAllowlist }: NotificationBellProp
     markAllAsRead,
     clearAll,
     refetch,
-  } = useNotifications({ typeAllowlist });
+  } = useNotifications({ typeAllowlist, scope });
 
   // Close on outside click
   useEffect(() => {

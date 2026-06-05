@@ -3567,18 +3567,28 @@ export interface UserNotification {
 }
 
 export const userNotificationsApi = {
-  getAll: (params?: { limit?: number; unreadOnly?: boolean }) => {
+  // `scope='team'` widens to the whole SUPPORT team feed — server enforces
+  // that only supervisors/admins can actually use it (others silently
+  // fall back to own scope).
+  getAll: (params?: { limit?: number; unreadOnly?: boolean; scope?: 'own' | 'team' }) => {
     const sp = new URLSearchParams();
     if (params?.limit) sp.set('limit', String(params.limit));
     if (params?.unreadOnly) sp.set('unreadOnly', 'true');
+    if (params?.scope === 'team') sp.set('scope', 'team');
     const qs = sp.toString();
     return api.get<{ data: UserNotification[]; unreadCount: number }>(
       `/user-notifications${qs ? `?${qs}` : ''}`,
     );
   },
 
-  getUnreadCount: () =>
-    api.get<{ unreadCount: number }>('/user-notifications/unread-count'),
+  getUnreadCount: (params?: { scope?: 'own' | 'team' }) => {
+    const sp = new URLSearchParams();
+    if (params?.scope === 'team') sp.set('scope', 'team');
+    const qs = sp.toString();
+    return api.get<{ unreadCount: number }>(
+      `/user-notifications/unread-count${qs ? `?${qs}` : ''}`,
+    );
+  },
 
   markAsRead: (id: string) =>
     api.patch<UserNotification>(`/user-notifications/${id}/read`),
@@ -4331,7 +4341,24 @@ export const supportApi = {
       npsScore: number;
       npsResponses: number;
       statusBreakdown: Record<string, number>;
+      unassignedCount: number;
+      alerts: {
+        breached: { id: string; subject: string; priority: string }[];
+        unassigned: { id: string; subject: string; priority: string }[];
+        highPriority: { id: string; subject: string; priority: string }[];
+      };
     }>('/tickets/kpis'),
+
+  getActivity: (limit = 20) =>
+    api.get<
+      {
+        id: string;
+        ticketId: string;
+        type: 'created' | 'resolved' | 'closed' | 'staff_reply' | 'student_reply';
+        subject: string;
+        at: string;
+      }[]
+    >(`/tickets/activity?limit=${limit}`),
 
   // Per-user sidebar stats (for the logged-in agent / supervisor)
   getMyPerformance: () =>
@@ -4431,6 +4458,7 @@ export const supportApi = {
       } | null;
       openTickets: {
         id: string;
+        referenceNumber?: string | null;
         subject: string;
         status: string;
         priority: string;
@@ -4880,6 +4908,40 @@ export const supportApi = {
   deleteKbCategory: (id: string) =>
     api.delete<{ success: true }>(`/tickets/kb/categories/${id}`),
 
+  // ── KB search analytics ────────────────────────────────────
+  //
+  // Log fires from the public help center after a debounced search.
+  // Best-effort: failures are swallowed in the caller so a network
+  // hiccup doesn't break the UI.
+
+  logKbSearch: (data: { query: string; locale: string; resultsCount: number }) =>
+    api.post<{ success: true }>('/tickets/kb/searches', data, {
+      skipAuth: true,
+    }),
+
+  getKbSearchAnalytics: (params?: {
+    dateFrom?: string;
+    dateTo?: string;
+    limit?: number;
+  }) => {
+    const sp = new URLSearchParams();
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    if (params?.limit) sp.set('limit', String(params.limit));
+    return api.get<{
+      totalSearches: number;
+      zeroResultSearches: number;
+      zeroResultRate: number;
+      topQueries: {
+        query: string;
+        locale: string;
+        searches: number;
+        avgResults: string;
+        zeroResultCount: number;
+      }[];
+    }>(`/tickets/kb/search-analytics${sp.toString() ? `?${sp.toString()}` : ''}`);
+  },
+
   // Image upload for article bodies — reuses the trainer-doc bucket
   // since it already accepts image MIME types and is public-served.
   uploadKbImage: (file: File) => {
@@ -4890,6 +4952,109 @@ export const supportApi = {
       fd,
     );
   },
+
+  // ── Ticket tags ─────────────────────────────────────────────
+  // The registry is readable by any support user (we need to render
+  // chips); mutations are gated to supervisor/admin on the server.
+
+  listTicketTags: () =>
+    api.get<
+      {
+        id: string;
+        name: string;
+        color: string;
+        description: string | null;
+        createdAt: string;
+        usageCount: number;
+      }[]
+    >('/tickets/tags'),
+
+  createTicketTag: (data: { name: string; color?: string; description?: string }) =>
+    api.post<{ id: string; name: string; color: string }>('/tickets/tags', data),
+
+  updateTicketTag: (
+    id: string,
+    data: { name?: string; color?: string; description?: string },
+  ) => api.patch<{ id: string; name: string; color: string }>(`/tickets/tags/${id}`, data),
+
+  deleteTicketTag: (id: string) =>
+    api.delete<{ success: true }>(`/tickets/tags/${id}`),
+
+  // Replace the ticket's full tag set. Server-side accepts an empty
+  // array and clears the tags — matches the obvious UX of "deselect
+  // all then save".
+  setTicketTags: (ticketId: string, tagIds: string[]) =>
+    api.patch<{ id: string; name: string; color: string }[]>(
+      `/tickets/${ticketId}/tags`,
+      { tagIds },
+    ),
+
+  // Download the ticket's full history as a CSV. Server picks the
+  // filename and includes the human-readable reference in it.
+  exportTicketHistory: async (ticketId: string, referenceNumber?: string | null) => {
+    const blob = await fetchBlob(`/tickets/${ticketId}/export`);
+    const ts = new Date().toISOString().slice(0, 10);
+    const base = (referenceNumber || ticketId).replace(/[^a-zA-Z0-9-]/g, '_');
+    downloadBlob(blob, `ticket_${base}_${ts}.csv`);
+  },
+
+  // ── R3 governance ──────────────────────────────────────────
+
+  mergeTicket: (sourceId: string, targetTicketId: string, note?: string) =>
+    api.post<{ success: true; targetTicketId: string }>(
+      `/tickets/${sourceId}/merge`,
+      { targetTicketId, note },
+    ),
+
+  transferTicket: (
+    ticketId: string,
+    data: { category: string; reason?: string; reassign?: boolean },
+  ) =>
+    api.post<{ success: true; ticketId: string; newAssigneeId: string | null }>(
+      `/tickets/${ticketId}/transfer`,
+      data,
+    ),
+
+  getTicketAuditLog: (ticketId: string, limit?: number) =>
+    api.get<
+      {
+        id: string;
+        action: string;
+        performedBy: string;
+        metadata: Record<string, unknown> | null;
+        createdAt: string;
+        performerFirstName: string | null;
+        performerLastName: string | null;
+        performerEmail: string | null;
+      }[]
+    >(`/tickets/${ticketId}/audit${limit ? `?limit=${limit}` : ''}`),
+
+  recordAttachmentDownload: (ticketId: string, attachmentUrl: string) =>
+    api.post<{ success: true }>(`/tickets/${ticketId}/attachment-download`, {
+      attachmentUrl,
+    }),
+
+  getAttachmentDownloadLog: (ticketId: string) =>
+    api.get<
+      {
+        id: string;
+        attachmentUrl: string;
+        downloadedAt: string;
+        ipAddress: string | null;
+        downloaderFirstName: string | null;
+        downloaderLastName: string | null;
+        downloaderEmail: string | null;
+      }[]
+    >(`/tickets/${ticketId}/attachment-download-log`),
+
+  getRetentionConfig: () =>
+    api.get<{ retentionDays: number }>('/tickets/config/retention'),
+
+  setRetentionConfig: (days: number) =>
+    api.patch<{ success: true; retentionDays: number }>(
+      '/tickets/config/retention',
+      { days },
+    ),
 };
 
 export default api;

@@ -7386,20 +7386,45 @@
         "32min": "32 min ago",
         "1hour": "1 hour ago"
       },
-      "viewAll": "View All Activity"
+      "viewAll": "View All Activity",
+      "noRecent": "No recent activity yet.",
+      "events": {
+        "created": "New ticket created",
+        "resolved": "Ticket resolved",
+        "closed": "Ticket closed",
+        "staff_reply": "Staff replied",
+        "student_reply": "Customer replied"
+      }
     },
     "alerts": {
-      "noAlerts": "No active alerts",
-      "slaBreaches": "2 SLA Breaches",
-      "slaBreachTickets": "Tickets #{ids}",
-      "unassignedTickets": "3 Unassigned Tickets",
-      "assignToAgents": "Assign to agents",
-      "highPriorityWaiting": "2 High Priority Waiting",
-      "waitingOver1Hour": "Waiting > 1 hour",
+      "noAlerts": "All clear — no active alerts.",
       "title": "Alerts",
-      "slaBreachesDesc": "Tickets #1234, #1232 approaching breach",
-      "unassignedTicketsDesc": "Assign to available agents",
-      "highPriorityWaitingDesc": "Waiting over 1 hour"
+      "viewAll": "View all alerts",
+      "markAllRead": "Mark all read",
+      "dismiss": "Dismiss",
+      "moreCount": "+ {count} more",
+      "restoreDismissed": "Restore {count} dismissed",
+      "restoreDismissedTitle": "Restore previously dismissed alerts",
+      "category": {
+        "breached": "SLA Breached",
+        "unassigned": "Unassigned",
+        "highPriority": "High Priority"
+      }
+    },
+    "alertsPage": {
+      "title": "All Alerts",
+      "subtitle": "Open tickets needing attention across the support queue.",
+      "backToDashboard": "Back to dashboard",
+      "tabs": {
+        "all": "All"
+      },
+      "allClear": {
+        "title": "All clear",
+        "body": "No tickets currently match this filter."
+      },
+      "showDismissed": "Show dismissed ({count})",
+      "restoreAll": "Restore all",
+      "restoreOne": "Restore"
     },
     "allTicketsPage": {
       "title": "All Tickets",
@@ -7514,6 +7539,7 @@
       },
       "resolvedAdvisory": "This ticket is resolved. Your reply will be sent to the customer but won't reopen the ticket automatically.",
       "quickReply": "Quick Reply",
+      "replyingNow": "Replying…",
       "replyPlaceholder": "Type your reply...",
       "macros": {
         "greeting": "Greeting",
@@ -7872,6 +7898,7 @@
         "macros": "Canned Responses",
         "notifications": "Notifications",
         "categories": "Categories",
+        "tags": "Tags",
         "profile": "Profile",
         "security": "Security",
         "escalation": "Escalation Paths",

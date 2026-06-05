@@ -8,6 +8,7 @@ import { useSupportProfile } from "@/hooks/useSupportProfile";
 import { toast } from "sonner";
 import SupportSidebar from "./SupportSidebar";
 import SupportNavbar from "./SupportNavbar";
+import TagsManagerPanel from "./TagsManagerPanel";
 import { ProfileSection, PreferencesInline } from "@/components/settings";
 import { profileApi } from "@/lib/api";
 import { useSecuritySettings } from "@/components/shared/useSecuritySettings";
@@ -351,6 +352,7 @@ const SupportSettingsContent = () => {
         { id: "businessHours", icon: Clock, adminOnly: true },
         { id: "macros", icon: MessageSquare },
         { id: "categories", icon: Tag },
+        { id: "tags", icon: Tag },
       ],
     },
   ];
@@ -504,6 +506,16 @@ const SupportSettingsContent = () => {
 
                   {/* Ticket Categories */}
                   {activeSub === "categories" && <TicketCategoriesPanel />}
+
+                  {/* Ticket Tags */}
+                  {activeSub === "tags" && <TagsManagerPanel />}
+
+                  {/* Retention policy + scanner status — admin only.
+                      Renders alongside Business Hours in the workspace
+                      group; both are platform-wide policy. */}
+                  {activeSub === "businessHours" && isAdmin && (
+                    <RetentionPolicyPanel />
+                  )}
 
                   {/* SLA Targets — extracted panel; same panel admins embed. */}
                   {activeSub === "sla" && (
@@ -1057,7 +1069,7 @@ export function BusinessHoursPanel({ canEdit }: { canEdit: boolean }) {
           </p>
         </div>
         {!canEdit && (
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] font-medium whitespace-nowrap">
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#F3F4F6] text-[#4B5563] font-medium whitespace-nowrap">
             {t("settingsPage.adminOnlyBadge")}
           </span>
         )}
@@ -1519,7 +1531,7 @@ export function TicketCategoriesPanel() {
                   )}
                 </p>
                 {c.builtin && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] font-medium">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F3F4F6] text-[#4B5563] font-medium">
                     {t("settingsPage.ticketCategoriesPanel.builtin")}
                   </span>
                 )}
@@ -2071,6 +2083,75 @@ function SecPasswordInput({
 // Local alias so we don't import `Smartphone` twice in the same file
 function SmartphoneIcon() {
   return <Smartphone className="w-5 h-5" />;
+}
+
+// ─── Retention policy panel ─────────────────────────────────
+//
+// Sets `ticket_retention_days` on the support_config row. Today the
+// enforcement is conservative — getRetentionCandidates() identifies
+// closed tickets older than the threshold but doesn't delete. The
+// supervisor still gets the policy hook so compliance can sign off.
+
+function RetentionPolicyPanel() {
+  const [days, setDays] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    supportApi
+      .getRetentionConfig()
+      .then((res) => setDays(String(res.retentionDays || 0)))
+      .catch(() => setDays("0"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function save() {
+    const n = parseInt(days, 10);
+    if (!Number.isFinite(n) || n < 0) {
+      toast.error("Retention must be a non-negative number of days");
+      return;
+    }
+    setSaving(true);
+    try {
+      await supportApi.setRetentionConfig(n);
+      toast.success("Retention policy saved");
+    } catch (err: any) {
+      toast.error(err?.message || "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 mt-4">
+      <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1">
+        Ticket retention
+      </h3>
+      <p className="text-xs text-[var(--color-text-secondary)] mb-3">
+        Closed tickets older than this many days are eligible for purge.
+        Set to <code>0</code> to disable retention enforcement.
+      </p>
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          min={0}
+          value={days}
+          disabled={loading || saving}
+          onChange={(e) => setDays(e.target.value)}
+          className="w-28 h-9 px-3 text-sm border border-[var(--color-input-border)] rounded-lg"
+        />
+        <span className="text-xs text-[var(--color-text-secondary)]">days</span>
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving || loading}
+          className="ms-2 px-3 h-9 text-sm bg-[var(--color-primary)] text-white rounded-lg disabled:opacity-50"
+        >
+          {saving ? "Saving…" : "Save"}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export default SupportSettingsContent;

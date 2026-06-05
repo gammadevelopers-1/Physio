@@ -25,6 +25,7 @@ import { useAuth } from "@/contexts";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
+import NotificationBell from "@/components/shared/NotificationBell";
 
 interface SupportProfile {
   name: string;
@@ -149,6 +150,12 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
               <Search className="w-5 h-5" strokeWidth={1.67} />
             </button>
           )}
+
+          {/* In-app notifications — supervisor sees the team-wide feed,
+              agent sees only their own (server enforces; client just hints). */}
+          <NotificationBell
+            scope={user?.supportSubRole === "supervisor" ? "team" : "own"}
+          />
 
           {/* User Avatar with Dropdown - Hidden on mobile */}
           <div className="hidden lg:block relative">

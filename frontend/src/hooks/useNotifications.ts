@@ -12,10 +12,16 @@ interface UseNotificationsOptions {
    * Pass undefined (default) to show all types — used by instructor/manager dashboards.
    */
   typeAllowlist?: readonly string[];
+  /**
+   * `'team'` widens the feed to all SUPPORT users (supervisor/admin only,
+   * enforced server-side). Anything else (or unset) → only the current
+   * user's own notifications. Used by the support supervisor bell.
+   */
+  scope?: 'own' | 'team';
 }
 
 export function useNotifications(options: UseNotificationsOptions = {}) {
-  const { typeAllowlist } = options;
+  const { typeAllowlist, scope } = options;
   const [allNotifications, setAllNotifications] = useState<UserNotification[]>([]);
   const [rawUnreadCount, setRawUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -51,23 +57,23 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
   // Lightweight poll for unread count
   const pollUnreadCount = useCallback(async () => {
     try {
-      const res = await userNotificationsApi.getUnreadCount();
+      const res = await userNotificationsApi.getUnreadCount({ scope });
       setRawUnreadCount(res.unreadCount);
       // When allowlist is active, refetch the list too so we re-derive the filtered count.
       if (allowlistSet) {
-        const list = await userNotificationsApi.getAll({ limit: 50 });
+        const list = await userNotificationsApi.getAll({ limit: 50, scope });
         setAllNotifications(list.data);
       }
     } catch {
       // Silently ignore polling errors
     }
-  }, [allowlistSet]);
+  }, [allowlistSet, scope]);
 
   // Full fetch of notifications list
   const refetch = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await userNotificationsApi.getAll({ limit: 50 });
+      const res = await userNotificationsApi.getAll({ limit: 50, scope });
       setAllNotifications(res.data);
       setRawUnreadCount(res.unreadCount);
     } catch {
@@ -75,7 +81,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [scope]);
 
   // Mark single notification as read
   const markAsRead = useCallback(async (id: string) => {

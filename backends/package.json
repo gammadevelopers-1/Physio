@@ -28,6 +28,7 @@
     "db:seed": "ts-node src/database/seeds/index.ts",
     "db:seed:roles": "ts-node src/database/seed-roles.ts",
     "db:seed:scfhs": "ts-node src/database/seed-scfhs-numbers.ts",
+    "db:seed:kb": "ts-node src/database/seeds/seed-kb.ts",
     "db:reset": "npm run db:push && npm run db:seed:roles"
   },
   "dependencies": {

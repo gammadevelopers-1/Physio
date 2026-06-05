@@ -607,6 +607,18 @@ const SupportReportsContent = () => {
                   )}
                 </>
               )}
+
+              {/* Additional CSV-only reports (FRT/Resolution/Escalation/Overdue) */}
+              <AdditionalReportsPanel
+                dateFrom={dateParams.dateFrom}
+                dateTo={dateParams.dateTo}
+              />
+
+              {/* KB search analytics — most-searched + zero-result rate. */}
+              <KbSearchAnalyticsPanel
+                dateFrom={dateParams.dateFrom}
+                dateTo={dateParams.dateTo}
+              />
             </div>
           </div>
         </div>
@@ -614,6 +626,280 @@ const SupportReportsContent = () => {
     </>
   );
 };
+
+// ──────────────────────────────────────────────────────────────────
+// AdditionalReportsPanel
+//
+// CSV-only export rail for the four new reports Amna requested:
+// FRT, Resolution, Escalation, Overdue. No dashboard view — clicking
+// a button downloads the report directly. Each report respects the
+// page-level date range. Overdue is always "as of now" so it ignores
+// dates by design.
+// ──────────────────────────────────────────────────────────────────
+function AdditionalReportsPanel({
+  dateFrom,
+  dateTo,
+}: {
+  dateFrom?: string;
+  dateTo?: string;
+}) {
+  const [exportingType, setExportingType] = useState<string | null>(null);
+
+  const reports = [
+    {
+      type: "frt",
+      title: "First Response Time",
+      description: "Per-ticket FRT in minutes, vs SLA target. Filtered by reply date.",
+    },
+    {
+      type: "ttr",
+      title: "Resolution Time",
+      description: "Per-ticket TTR in business minutes (on-hold excluded). Filtered by resolution date.",
+    },
+    {
+      type: "escalation",
+      title: "Escalations",
+      description: "Every SLA breach, priority bump, and reassignment in the period.",
+    },
+    {
+      type: "overdue",
+      title: "Overdue Tickets (live)",
+      description: "Currently open tickets that have passed FRT or TTR target. Ignores date filter.",
+    },
+  ];
+
+  async function exportOne(type: string, format: "csv" | "pdf") {
+    setExportingType(`${type}-${format}`);
+    try {
+      if (format === "csv") {
+        const res = await supportApi.exportReport(type, {
+          dateFrom: dateFrom || undefined,
+          dateTo: dateTo || undefined,
+        });
+        const blob = new Blob([res.csv], {
+          type: "text/csv;charset=utf-8;",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = res.filename || `report-${type}-${Date.now()}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        const blob = await supportApi.downloadExportPdf(type, {
+          dateFrom: dateFrom || undefined,
+          dateTo: dateTo || undefined,
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `support_report_${type}_${new Date()
+          .toISOString()
+          .split("T")[0]}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+      toast.success("Report downloaded");
+    } catch {
+      toast.error("Export failed");
+    } finally {
+      setExportingType(null);
+    }
+  }
+
+  return (
+    <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 mt-6">
+      <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">
+        Additional reports
+      </h3>
+      <p className="text-xs text-[var(--color-text-secondary)] mb-4">
+        Direct-download exports. Use the period filter above to scope the date range.
+      </p>
+      <div className="space-y-2">
+        {reports.map((r) => (
+          <div
+            key={r.type}
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg border border-[var(--color-border-subtle)]"
+          >
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                {r.title}
+              </p>
+              <p className="text-[11px] text-[var(--color-text-secondary)]">
+                {r.description}
+              </p>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => exportOne(r.type, "csv")}
+                disabled={exportingType !== null}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] disabled:opacity-50"
+              >
+                {exportingType === `${r.type}-csv` ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-[#16A34A]" />
+                )}
+                CSV
+              </button>
+              <button
+                type="button"
+                onClick={() => exportOne(r.type, "pdf")}
+                disabled={exportingType !== null}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] disabled:opacity-50"
+              >
+                {exportingType === `${r.type}-pdf` ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5 text-[#DC2626]" />
+                )}
+                PDF
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// KbSearchAnalyticsPanel
+//
+// Shows what learners are searching for on the public help center,
+// and how often the search returns nothing (the actionable signal —
+// every zero-result query is a content gap). Date range comes from
+// the page filter so supervisors can scope to a release window.
+// ──────────────────────────────────────────────────────────────────
+function KbSearchAnalyticsPanel({
+  dateFrom,
+  dateTo,
+}: {
+  dateFrom?: string;
+  dateTo?: string;
+}) {
+  const [data, setData] = useState<{
+    totalSearches: number;
+    zeroResultSearches: number;
+    zeroResultRate: number;
+    topQueries: {
+      query: string;
+      locale: string;
+      searches: number;
+      avgResults: string;
+      zeroResultCount: number;
+    }[];
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    supportApi
+      .getKbSearchAnalytics({
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+        limit: 25,
+      })
+      .then((res) => setData(res))
+      .catch(() => setData(null))
+      .finally(() => setLoading(false));
+  }, [dateFrom, dateTo]);
+
+  return (
+    <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 mt-6">
+      <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">
+        Help Center search analytics
+      </h3>
+      <p className="text-xs text-[var(--color-text-secondary)] mb-4">
+        Most-asked questions and zero-result queries (content gaps).
+      </p>
+
+      {loading ? (
+        <div className="flex justify-center py-6">
+          <Loader2 className="w-5 h-5 animate-spin text-[var(--color-primary)]" />
+        </div>
+      ) : !data || data.totalSearches === 0 ? (
+        <div className="text-xs text-[var(--color-text-secondary)] py-3 text-center">
+          No search activity in this period.
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <div className="p-3 rounded-lg bg-[var(--color-border-subtle)]">
+              <p className="text-[10px] text-[var(--color-text-secondary)] uppercase">
+                Total searches
+              </p>
+              <p className="text-lg font-bold text-[var(--color-text-primary)]">
+                {data.totalSearches}
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-[var(--color-border-subtle)]">
+              <p className="text-[10px] text-[var(--color-text-secondary)] uppercase">
+                Zero-result
+              </p>
+              <p className="text-lg font-bold text-[var(--color-text-primary)]">
+                {data.zeroResultSearches}
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-[var(--color-border-subtle)]">
+              <p className="text-[10px] text-[var(--color-text-secondary)] uppercase">
+                Gap rate
+              </p>
+              <p className="text-lg font-bold text-[var(--color-text-primary)]">
+                {data.zeroResultRate}%
+              </p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-[var(--color-border-subtle)] text-[var(--color-text-secondary)]">
+                  <th className="text-left py-2 px-2 font-medium">Query</th>
+                  <th className="text-left py-2 px-2 font-medium">Lang</th>
+                  <th className="text-right py-2 px-2 font-medium">Searches</th>
+                  <th className="text-right py-2 px-2 font-medium">Avg results</th>
+                  <th className="text-right py-2 px-2 font-medium">Empty</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.topQueries.map((q, idx) => (
+                  <tr
+                    key={`${q.query}-${q.locale}-${idx}`}
+                    className="border-b border-[var(--color-border-subtle)] last:border-b-0"
+                  >
+                    <td className="py-2 px-2 text-[var(--color-text-primary)]">
+                      {q.query}
+                    </td>
+                    <td className="py-2 px-2 uppercase text-[10px] text-[var(--color-text-secondary)]">
+                      {q.locale}
+                    </td>
+                    <td className="py-2 px-2 text-right text-[var(--color-text-primary)]">
+                      {q.searches}
+                    </td>
+                    <td className="py-2 px-2 text-right text-[var(--color-text-secondary)]">
+                      {q.avgResults}
+                    </td>
+                    <td
+                      className={`py-2 px-2 text-right font-medium ${q.zeroResultCount > 0 ? "text-[#DC2626]" : "text-[var(--color-text-secondary)]"}`}
+                    >
+                      {q.zeroResultCount > 0 ? q.zeroResultCount : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 // ──────────────────────────────────────────────────────────────────
 // KPI tile

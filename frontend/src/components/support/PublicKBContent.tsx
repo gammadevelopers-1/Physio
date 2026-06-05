@@ -7,10 +7,10 @@ import { supportApi } from "@/lib/api";
 import {
   Search,
   BookOpen,
-  Eye,
   Loader2,
   ChevronRight,
   ChevronLeft,
+  ArrowLeft,
 } from "lucide-react";
 
 type Category = NonNullable<Awaited<ReturnType<typeof supportApi.listKbCategories>>>[number];
@@ -62,6 +62,26 @@ export default function PublicKBContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, searchQuery]);
 
+  // Log search queries for analytics. Debounced 700ms so we don't log
+  // every keystroke; only fires for >1-char queries to skip the noise.
+  // Failures are swallowed — analytics shouldn't break the search UX.
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) return;
+    const handle = setTimeout(() => {
+      supportApi
+        .logKbSearch({
+          query: q,
+          locale,
+          resultsCount: articles.length,
+        })
+        .catch(() => {});
+    }, 700);
+    return () => clearTimeout(handle);
+    // Tracks both query + result count so a search that returns 0
+    // gets logged with its true result count, not a stale one.
+  }, [searchQuery, articles.length, locale]);
+
   const getTitle = (a: any) =>
     lang === "ar" ? a.titleAr || a.titleEn || "" : a.titleEn || a.titleAr || "";
 
@@ -74,7 +94,16 @@ export default function PublicKBContent() {
   }, [categories, lang]);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+      {/* Back to Support breadcrumb */}
+      <Link
+        href={`/${locale}/support`}
+        className={`inline-flex items-center gap-1 text-[13px] text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] mb-6 ${isRTL ? "flex-row-reverse" : ""}`}
+      >
+        <ArrowLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
+        {t("backToSupport")}
+      </Link>
+
       {/* Header */}
       <div className="text-center mb-10">
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#EFF6FF] mb-4">
@@ -191,12 +220,8 @@ export default function PublicKBContent() {
                     )}
                   </p>
                   <div className="flex items-center gap-3 text-[10px] text-[var(--color-text-secondary)]">
-                    <span className="px-2 py-0.5 bg-[var(--color-border-subtle)] rounded-full font-medium">
+                    <span className="px-2 py-0.5 bg-[#F3F4F6] text-[#4B5563] rounded-full font-medium">
                       {categoryLabel.get(article.category) || article.category}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Eye className="w-3 h-3" /> {article.viewCount || 0}{" "}
-                      {t("viewsLabel")}
                     </span>
                   </div>
                 </div>

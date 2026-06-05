@@ -158,7 +158,7 @@ const MyTicketsContent = () => {
     () =>
       apiTickets.map((raw: any) => ({
         id: raw.id,
-        displayId: (raw.id || "").substring(0, 8),
+        displayId: raw.referenceNumber || (raw.id || "").substring(0, 8),
         subject: raw.subject,
         customer:
           [raw.studentFirstName, raw.studentLastName].filter(Boolean).join(" ") ||
@@ -357,7 +357,7 @@ const MyTicketsContent = () => {
     inProgress: "bg-[#FEF9C3] text-[#EAB308]",
     waiting: "bg-[#FFEDD5] text-[#F97316]",
     resolved: "bg-[#DCFCE7] text-[#22C55E]",
-    closed: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
+    closed: "bg-[#F3F4F6] text-[#4B5563]",
   };
 
   // SLA badge config — null when nothing meaningful to show.
@@ -557,9 +557,9 @@ const MyTicketsContent = () => {
                     </div>
                   </div>
 
-                  {/* Tickets list (internal scroll keeps reply panel reachable) */}
+                  {/* Tickets list — sized to content; scrolls only when long */}
                   <div className="bg-[var(--color-surface-card)] rounded-b-xl border border-[var(--color-border)]">
-                    <div className="max-h-[calc(100vh-380px)] min-h-[280px] overflow-y-auto p-3 space-y-2">
+                    <div className="max-h-[calc(100vh-380px)] overflow-y-auto p-3 space-y-2">
                       {isLoading && (
                         <div className="py-12 flex items-center justify-center">
                           <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />
@@ -579,40 +579,31 @@ const MyTicketsContent = () => {
                         filteredTickets.map((ticket) => {
                           const isSelected = selectedTicketId === ticket.id;
                           const sla = getSlaBadge(ticket);
+                          const ticketReplyLocked = TERMINAL_FOR_REPLY.has(ticket.rawStatus);
                           return (
                             <div
                               key={ticket.id}
-                              onClick={() => setSelectedTicketId(ticket.id)}
-                              className={`bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] p-3 cursor-pointer transition-all ${isRTL ? "border-r-[3px]" : "border-l-[3px]"} ${priorityBorderColors[ticket.priority]} hover:shadow-sm hover:border-[var(--color-text-secondary)] ${
+                              className={`bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border)] p-3 transition-all ${isRTL ? "border-r-[3px]" : "border-l-[3px]"} ${priorityBorderColors[ticket.priority]} hover:shadow-sm ${
                                 isSelected
                                   ? "ring-2 ring-[var(--color-primary)] border-[var(--color-primary)]"
                                   : ""
                               }`}
                             >
-                              {/* Top row: id + status + open link */}
-                              <div className="flex items-center justify-between gap-2 mb-1.5">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <span className="text-[12px] font-mono text-[var(--color-primary)]">
-                                    #{ticket.displayId}
-                                  </span>
-                                  <span
-                                    className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${statusStyles[ticket.status]}`}
-                                  >
-                                    {t(`allTicketsPage.statuses.${ticket.status}`)}
-                                  </span>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleOpenTicket(ticket.id);
-                                  }}
-                                  className="flex items-center gap-1 text-[11px] text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] flex-shrink-0"
-                                  title={t("myTicketsPage.openDetail")}
-                                  aria-label={t("myTicketsPage.openDetail")}
+                              {/* Top row: id + status */}
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <span className="text-[12px] font-mono text-[var(--color-primary)]">
+                                  #{ticket.displayId}
+                                </span>
+                                <span
+                                  className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium ${statusStyles[ticket.status]}`}
                                 >
-                                  <ExternalLink className="w-3.5 h-3.5" />
-                                </button>
+                                  {t(`allTicketsPage.statuses.${ticket.status}`)}
+                                </span>
+                                <span
+                                  className={`text-[11px] text-[var(--color-text-secondary)] whitespace-nowrap ${isRTL ? "mr-auto" : "ml-auto"}`}
+                                >
+                                  {ticket.date}
+                                </span>
                               </div>
 
                               {/* Subject */}
@@ -623,8 +614,8 @@ const MyTicketsContent = () => {
                                 {ticket.subject}
                               </h4>
 
-                              {/* Meta row */}
-                              <div className="flex items-center justify-between gap-2 flex-wrap">
+                              {/* Meta row — customer + category + SLA chip */}
+                              <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
                                 <div className="flex items-center gap-2 min-w-0">
                                   <span
                                     className="text-[12px] text-[var(--color-text-secondary)] truncate"
@@ -632,22 +623,52 @@ const MyTicketsContent = () => {
                                   >
                                     {ticket.customer}
                                   </span>
-                                  <span className="bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] text-[10px] px-1.5 py-0.5 rounded font-medium whitespace-nowrap">
+                                  <span className="bg-[#F3F4F6] text-[#4B5563] text-[10px] px-1.5 py-0.5 rounded font-medium whitespace-nowrap">
                                     {t(`allTicketsPage.filters.categories.${ticket.category}`)}
                                   </span>
                                 </div>
-                                {sla ? (
+                                {sla && (
                                   <span
                                     className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${sla.className}`}
                                   >
                                     <sla.Icon className="w-3 h-3" />
                                     {sla.label}
                                   </span>
-                                ) : (
-                                  <span className="text-[11px] text-[var(--color-text-secondary)] whitespace-nowrap">
-                                    {ticket.date}
-                                  </span>
                                 )}
+                              </div>
+
+                              {/* Action footer — explicit buttons so the
+                                  Quick Reply composer is discoverable */}
+                              <div className="flex items-center gap-2 pt-2 border-t border-[var(--color-border-subtle)]">
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedTicketId(ticket.id)}
+                                  disabled={ticketReplyLocked}
+                                  className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                    isSelected
+                                      ? "bg-[var(--color-primary)] text-white"
+                                      : "bg-[var(--color-border-subtle)] text-[var(--color-text-primary)] hover:bg-[var(--color-border)]"
+                                  }`}
+                                  title={
+                                    ticketReplyLocked
+                                      ? t("myTicketsPage.replyLocked.placeholder")
+                                      : t("myTicketsPage.quickReply")
+                                  }
+                                >
+                                  <Send className="w-3.5 h-3.5" />
+                                  {isSelected
+                                    ? t("myTicketsPage.replyingNow")
+                                    : t("myTicketsPage.quickReply")}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenTicket(ticket.id)}
+                                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-border-subtle)] hover:text-[var(--color-primary)] transition-colors"
+                                  title={t("myTicketsPage.openDetail")}
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                  {t("myTicketsPage.openLabel")}
+                                </button>
                               </div>
                             </div>
                           );

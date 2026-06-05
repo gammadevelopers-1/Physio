@@ -7386,20 +7386,45 @@
         "32min": "منذ 32 دقيقة",
         "1hour": "منذ ساعة"
       },
-      "viewAll": "عرض كل النشاط"
+      "viewAll": "عرض كل النشاط",
+      "noRecent": "لا يوجد نشاط حديث بعد.",
+      "events": {
+        "created": "تم إنشاء تذكرة جديدة",
+        "resolved": "تم حل التذكرة",
+        "closed": "تم إغلاق التذكرة",
+        "staff_reply": "رد فريق الدعم",
+        "student_reply": "رد العميل"
+      }
     },
     "alerts": {
-      "noAlerts": "لا توجد تنبيهات نشطة",
-      "slaBreaches": "2 انتهاكات اتفاقية الخدمة",
-      "slaBreachTickets": "التذاكر #{ids}",
-      "unassignedTickets": "3 تذاكر غير مُسندة",
-      "assignToAgents": "إسناد للوكلاء",
-      "highPriorityWaiting": "2 عالية الأولوية في الانتظار",
-      "waitingOver1Hour": "في الانتظار > ساعة واحدة",
+      "noAlerts": "كل شيء على ما يرام — لا توجد تنبيهات نشطة.",
       "title": "التنبيهات",
-      "slaBreachesDesc": "التذاكر #1234، #1232 تقترب من الانتهاك",
-      "unassignedTicketsDesc": "إسناد للوكلاء المتاحين",
-      "highPriorityWaitingDesc": "في الانتظار أكثر من ساعة"
+      "viewAll": "عرض كل التنبيهات",
+      "markAllRead": "تمييز الكل كمقروء",
+      "dismiss": "تجاهل",
+      "moreCount": "+ {count} المزيد",
+      "restoreDismissed": "استعادة {count} متجاهَل",
+      "restoreDismissedTitle": "استعادة التنبيهات المتجاهَلة سابقًا",
+      "category": {
+        "breached": "تجاوز اتفاقية الخدمة",
+        "unassigned": "غير مُسند",
+        "highPriority": "عالي الأولوية"
+      }
+    },
+    "alertsPage": {
+      "title": "كل التنبيهات",
+      "subtitle": "التذاكر المفتوحة التي تحتاج إلى اهتمام عبر طابور الدعم.",
+      "backToDashboard": "العودة إلى لوحة التحكم",
+      "tabs": {
+        "all": "الكل"
+      },
+      "allClear": {
+        "title": "كل شيء على ما يرام",
+        "body": "لا توجد تذاكر تطابق هذا الفلتر حاليًا."
+      },
+      "showDismissed": "إظهار المتجاهَلة ({count})",
+      "restoreAll": "استعادة الكل",
+      "restoreOne": "استعادة"
     },
     "allTicketsPage": {
       "title": "جميع التذاكر",
@@ -7514,6 +7539,7 @@
       },
       "resolvedAdvisory": "هذه التذكرة محلولة. سيتم إرسال ردك للعميل ولكن لن يُعاد فتح التذكرة تلقائيًا.",
       "quickReply": "رد سريع",
+      "replyingNow": "جارٍ الرد…",
       "replyPlaceholder": "اكتب ردك...",
       "macros": {
         "greeting": "ترحيب",
@@ -7872,6 +7898,7 @@
         "macros": "الردود الجاهزة",
         "notifications": "الإشعارات",
         "categories": "الفئات",
+        "tags": "الوسوم",
         "profile": "الملف الشخصي",
         "security": "الأمان",
         "escalation": "مسارات التصعيد",

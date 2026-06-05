@@ -179,7 +179,7 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
           {t("pageTitle")}
         </h1>
         <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-          {t("ticketIdLabel")} #{ticket.id.substring(0, 8)}
+          {t("ticketIdLabel")} {ticket.referenceNumber || `#${ticket.id.substring(0, 8)}`}
         </p>
       </div>
 

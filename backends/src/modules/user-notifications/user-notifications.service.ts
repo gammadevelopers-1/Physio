@@ -4,8 +4,25 @@ import { db } from '../../database';
 import {
   userNotifications,
   NewUserNotification,
+  userRoles,
+  roles,
+  ROLE_NAMES,
 } from '../../database/schema';
 import { userPreferences } from '../../database/schema/user-preferences';
+
+/**
+ * Resolve the user IDs that belong to the SUPPORT role.
+ * Used by supervisor scope expansion so a supervisor's bell shows the
+ * team-wide notification stream, not just their own.
+ */
+async function getSupportTeamUserIds(): Promise<string[]> {
+  const rows = await db
+    .select({ userId: userRoles.userId })
+    .from(userRoles)
+    .innerJoin(roles, eq(userRoles.roleId, roles.id))
+    .where(eq(roles.name, ROLE_NAMES.SUPPORT));
+  return rows.map((r) => r.userId);
+}
 
 @Injectable()
 export class UserNotificationsService {
@@ -96,15 +113,27 @@ export class UserNotificationsService {
   }
 
   /**
-   * Get all notifications for a user with unread count
+   * Get all notifications for a user with unread count.
+   *
+   * `teamScope=true` (only honored when the caller is a support supervisor
+   * or admin — enforced by the controller) widens the recipient filter to
+   * cover every member of the SUPPORT role, so a supervisor's bell shows
+   * the team-wide feed instead of just their own.
    */
   async findAllForUser(
     userId: string,
-    opts: { limit?: number; unreadOnly?: boolean } = {},
+    opts: { limit?: number; unreadOnly?: boolean; teamScope?: boolean } = {},
   ) {
     const limit = opts.limit || 50;
-    const conditions = [eq(userNotifications.recipientId, userId)];
+    const recipientIds = opts.teamScope
+      ? await getSupportTeamUserIds()
+      : [userId];
+    const recipientFilter =
+      recipientIds.length === 1
+        ? eq(userNotifications.recipientId, recipientIds[0])
+        : inArray(userNotifications.recipientId, recipientIds);
 
+    const conditions = [recipientFilter];
     if (opts.unreadOnly) {
       conditions.push(eq(userNotifications.isRead, false));
     }
@@ -120,10 +149,7 @@ export class UserNotificationsService {
         .select({ count: count() })
         .from(userNotifications)
         .where(
-          and(
-            eq(userNotifications.recipientId, userId),
-            eq(userNotifications.isRead, false),
-          ),
+          and(recipientFilter, eq(userNotifications.isRead, false)),
         ),
     ]);
 
@@ -134,18 +160,25 @@ export class UserNotificationsService {
   }
 
   /**
-   * Lightweight unread count for polling
+   * Lightweight unread count for polling. Same teamScope semantics as
+   * findAllForUser so the bell badge agrees with the dropdown contents.
    */
-  async getUnreadCount(userId: string): Promise<number> {
+  async getUnreadCount(
+    userId: string,
+    opts: { teamScope?: boolean } = {},
+  ): Promise<number> {
+    const recipientIds = opts.teamScope
+      ? await getSupportTeamUserIds()
+      : [userId];
+    const recipientFilter =
+      recipientIds.length === 1
+        ? eq(userNotifications.recipientId, recipientIds[0])
+        : inArray(userNotifications.recipientId, recipientIds);
+
     const [result] = await db
       .select({ count: count() })
       .from(userNotifications)
-      .where(
-        and(
-          eq(userNotifications.recipientId, userId),
-          eq(userNotifications.isRead, false),
-        ),
-      );
+      .where(and(recipientFilter, eq(userNotifications.isRead, false)));
     return result?.count || 0;
   }
 

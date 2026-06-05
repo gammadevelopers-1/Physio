@@ -24,6 +24,7 @@ import {
 
 interface MyTicketRow {
   id: string;
+  referenceNumber?: string | null;
   subject: string;
   studentName: string;
   category: string;
@@ -217,7 +218,7 @@ const AgentDashboardContent = () => {
     in_progress: "bg-[#FEF9C3] text-[#A16207]",
     on_hold: "bg-[#FFEDD5] text-[#C2410C]",
     resolved: "bg-[#DCFCE7] text-[#15803D]",
-    closed: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
+    closed: "bg-[#F3F4F6] text-[#4B5563]",
   };
 
   function slaBadge(ticket: MyTicketRow) {
@@ -349,7 +350,7 @@ const AgentDashboardContent = () => {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="font-mono text-[11px] text-[var(--color-primary)]">
-                              #{nextUpTicket.id.substring(0, 8)}
+                              {nextUpTicket.referenceNumber || `#${nextUpTicket.id.substring(0, 8)}`}
                             </span>
                             <span
                               className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${priorityStyles[nextUpTicket.priority]}`}
@@ -511,7 +512,7 @@ const AgentDashboardContent = () => {
                               }
                             >
                               <td className="px-4 py-3 text-[13px] font-mono text-[var(--color-primary)] font-medium">
-                                #{ticket.id?.substring(0, 8)}
+                                {ticket.referenceNumber || `#${ticket.id?.substring(0, 8)}`}
                               </td>
                               <td className="px-4 py-3 text-[13px] text-[var(--color-text-primary)] max-w-[260px] truncate">
                                 {ticket.subject}

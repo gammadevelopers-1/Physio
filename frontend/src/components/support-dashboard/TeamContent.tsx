@@ -625,7 +625,7 @@ function TeamMemberCard({
               className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                 member.isActive
                   ? "bg-[#DCFCE7] text-[#15803D]"
-                  : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
+                  : "bg-[#F3F4F6] text-[#4B5563]"
               }`}
             >
               {member.isActive ? t("teamPage.statusActive") : t("teamPage.statusInactive")}
@@ -1244,7 +1244,7 @@ function AgentDetailSheet({
                     >
                       <div className="flex items-center justify-between gap-2 mb-0.5">
                         <span className="font-mono text-[var(--color-primary)]">
-                          #{tk.id.substring(0, 8)}
+                          {tk.referenceNumber || `#${tk.id.substring(0, 8)}`}
                         </span>
                         <span className="text-[10px] text-[var(--color-text-secondary)]">
                           {new Date(tk.createdAt).toLocaleDateString()}

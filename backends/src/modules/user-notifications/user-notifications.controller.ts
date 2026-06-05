@@ -8,6 +8,23 @@ import {
   Req,
 } from '@nestjs/common';
 import { UserNotificationsService } from './user-notifications.service';
+import { ROLE_NAMES } from '../../database/schema';
+
+// `scope=team` is only honored when the caller is a SUPPORT supervisor
+// or an admin. Anyone else (incl. agents) silently falls back to "own"
+// scope — never throws so the bell never disappears for them.
+function canUseTeamScope(user: any): boolean {
+  if (!user) return false;
+  const roles: string[] = user.roles || [];
+  if (
+    roles.includes(ROLE_NAMES.ADMIN) ||
+    roles.includes(ROLE_NAMES.SUPER_ADMIN)
+  )
+    return true;
+  return (
+    roles.includes(ROLE_NAMES.SUPPORT) && user.supportSubRole === 'supervisor'
+  );
+}
 
 @Controller('user-notifications')
 export class UserNotificationsController {
@@ -16,28 +33,35 @@ export class UserNotificationsController {
   ) {}
 
   /**
-   * GET /user-notifications?limit=50&unreadOnly=false
-   * Returns notifications list + unread count
+   * GET /user-notifications?limit=50&unreadOnly=false&scope=team
+   * Returns notifications list + unread count.
+   * `scope=team` widens to all SUPPORT users (supervisor / admin only).
    */
   @Get()
   async findAll(
     @Req() req: any,
     @Query('limit') limit?: string,
     @Query('unreadOnly') unreadOnly?: string,
+    @Query('scope') scope?: string,
   ) {
+    const teamScope = scope === 'team' && canUseTeamScope(req.user);
     return this.notificationsService.findAllForUser(req.user.id, {
       limit: limit ? parseInt(limit, 10) : undefined,
       unreadOnly: unreadOnly === 'true',
+      teamScope,
     });
   }
 
   /**
-   * GET /user-notifications/unread-count
+   * GET /user-notifications/unread-count?scope=team
    * Lightweight endpoint for polling
    */
   @Get('unread-count')
-  async getUnreadCount(@Req() req: any) {
-    const count = await this.notificationsService.getUnreadCount(req.user.id);
+  async getUnreadCount(@Req() req: any, @Query('scope') scope?: string) {
+    const teamScope = scope === 'team' && canUseTeamScope(req.user);
+    const count = await this.notificationsService.getUnreadCount(req.user.id, {
+      teamScope,
+    });
     return { unreadCount: count };
   }
 

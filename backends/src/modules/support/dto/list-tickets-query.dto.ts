@@ -27,6 +27,13 @@ export class ListTicketsQueryDto {
   @IsOptional()
   search?: string;
 
+  // Comma-separated tag UUIDs. AND semantics: a ticket must carry all
+  // listed tags to match (so chips compose to narrow, not widen, the
+  // result set). Empty/missing = no filter.
+  @IsString()
+  @IsOptional()
+  tags?: string;
+
   @IsNumberString()
   @IsOptional()
   page?: string;

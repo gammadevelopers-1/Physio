@@ -157,6 +157,10 @@ import {
   getTicketEscalationHtml,
   getTicketEscalationText,
 } from './templates/ticket-escalation.template';
+import {
+  getTicketStatusChangeHtml,
+  getTicketStatusChangeText,
+} from './templates/ticket-status-change.template';
 import { EmailLocale, getEmailStrings, t, htmlAttrs } from './email-i18n';
 import { TemplateResolverService } from '../templates/template-resolver.service';
 import { findTemplateMeta } from '../templates/template-registry';
@@ -1470,23 +1474,22 @@ export class EmailService {
   async sendCsatSurvey(
     to: string,
     learnerName: string,
-    ticketId: string,
+    ticketRef: string,
     surveyId: string,
   ): Promise<void> {
     const baseUrl =
       this.configService.get('NEXT_PUBLIC_API_URL')?.replace('/api', '') ||
       'http://localhost:3000';
     const surveyBaseUrl = `${baseUrl}/en/surveys/csat/${surveyId}`;
-    const shortId = ticketId.substring(0, 8);
 
     try {
       await this.send({
         to,
-        subject: `How did we do? — Ticket #${shortId}`,
-        html: getCsatSurveyHtml(learnerName, shortId, surveyBaseUrl),
-        text: getCsatSurveyText(learnerName, shortId, surveyBaseUrl),
+        subject: `How did we do? — Ticket ${ticketRef}`,
+        html: getCsatSurveyHtml(learnerName, ticketRef, surveyBaseUrl),
+        text: getCsatSurveyText(learnerName, ticketRef, surveyBaseUrl),
       });
-      this.logger.log(`CSAT survey email sent to ${to} for ticket #${shortId}`);
+      this.logger.log(`CSAT survey email sent to ${to} for ticket ${ticketRef}`);
     } catch (error) {
       this.logger.error(`Failed to send CSAT survey email to ${to}`, error);
     }
@@ -1498,20 +1501,18 @@ export class EmailService {
   async sendCsatFollowup(
     to: string,
     learnerName: string,
-    ticketId: string,
+    ticketRef: string,
     score: number,
   ): Promise<void> {
-    const shortId = ticketId.substring(0, 8);
-
     try {
       await this.send({
         to,
         subject: `We're sorry — can we help further?`,
-        html: getCsatFollowupHtml(learnerName, shortId, score),
-        text: getCsatFollowupText(learnerName, shortId, score),
+        html: getCsatFollowupHtml(learnerName, ticketRef, score),
+        text: getCsatFollowupText(learnerName, ticketRef, score),
       });
       this.logger.log(
-        `CSAT followup email sent to ${to} for ticket #${shortId}`,
+        `CSAT followup email sent to ${to} for ticket ${ticketRef}`,
       );
     } catch (error) {
       this.logger.error(`Failed to send CSAT followup email to ${to}`, error);
@@ -1524,20 +1525,18 @@ export class EmailService {
   async sendTicketCreatedLearner(
     to: string,
     learnerName: string,
-    ticketId: string,
+    ticketRef: string,
     expectedResponse: string,
   ): Promise<void> {
-    const shortId = ticketId.substring(0, 8);
-
     try {
       await this.send({
         to,
-        subject: `Ticket #${shortId} received — PhysioGuidance Support`,
-        html: getTicketCreatedLearnerHtml(learnerName, shortId, expectedResponse),
-        text: getTicketCreatedLearnerText(learnerName, shortId, expectedResponse),
+        subject: `Ticket ${ticketRef} received — PhysioGuidance Support`,
+        html: getTicketCreatedLearnerHtml(learnerName, ticketRef, expectedResponse),
+        text: getTicketCreatedLearnerText(learnerName, ticketRef, expectedResponse),
       });
       this.logger.log(
-        `Ticket created email sent to ${to} for ticket #${shortId}`,
+        `Ticket created email sent to ${to} for ticket ${ticketRef}`,
       );
     } catch (error) {
       this.logger.error(
@@ -1553,22 +1552,20 @@ export class EmailService {
   async sendTicketAssignedAgent(
     to: string,
     agentName: string,
-    ticketId: string,
+    ticketRef: string,
     subject: string,
     priority: string,
     frtDeadline: string,
   ): Promise<void> {
-    const shortId = ticketId.substring(0, 8);
-
     try {
       await this.send({
         to,
-        subject: `New ticket assigned — #${shortId}`,
-        html: getTicketAssignedAgentHtml(agentName, shortId, subject, priority, frtDeadline),
-        text: getTicketAssignedAgentText(agentName, shortId, subject, priority, frtDeadline),
+        subject: `New ticket assigned — ${ticketRef}`,
+        html: getTicketAssignedAgentHtml(agentName, ticketRef, subject, priority, frtDeadline),
+        text: getTicketAssignedAgentText(agentName, ticketRef, subject, priority, frtDeadline),
       });
       this.logger.log(
-        `Ticket assigned email sent to ${to} for ticket #${shortId}`,
+        `Ticket assigned email sent to ${to} for ticket ${ticketRef}`,
       );
     } catch (error) {
       this.logger.error(
@@ -1585,20 +1582,18 @@ export class EmailService {
     to: string,
     recipientName: string,
     senderName: string,
-    ticketId: string,
+    ticketRef: string,
     messagePreview: string,
   ): Promise<void> {
-    const shortId = ticketId.substring(0, 8);
-
     try {
       await this.send({
         to,
-        subject: `New reply on ticket #${shortId}`,
-        html: getTicketReplyHtml(recipientName, senderName, shortId, messagePreview),
-        text: getTicketReplyText(recipientName, senderName, shortId, messagePreview),
+        subject: `New reply on ticket ${ticketRef}`,
+        html: getTicketReplyHtml(recipientName, senderName, ticketRef, messagePreview),
+        text: getTicketReplyText(recipientName, senderName, ticketRef, messagePreview),
       });
       this.logger.log(
-        `Ticket reply notification sent to ${to} for ticket #${shortId}`,
+        `Ticket reply notification sent to ${to} for ticket ${ticketRef}`,
       );
     } catch (error) {
       this.logger.error(
@@ -1614,21 +1609,19 @@ export class EmailService {
   async sendSlaFrtBreach(
     to: string,
     agentName: string,
-    ticketId: string,
+    ticketRef: string,
     subject: string,
     frtTarget: string,
   ): Promise<void> {
-    const shortId = ticketId.substring(0, 8);
-
     try {
       await this.send({
         to,
-        subject: `BREACH ALERT: Ticket #${shortId} — FRT exceeded`,
-        html: getSlaFrtBreachHtml(agentName, shortId, subject, frtTarget),
-        text: getSlaFrtBreachText(agentName, shortId, subject, frtTarget),
+        subject: `BREACH ALERT: Ticket ${ticketRef} — FRT exceeded`,
+        html: getSlaFrtBreachHtml(agentName, ticketRef, subject, frtTarget),
+        text: getSlaFrtBreachText(agentName, ticketRef, subject, frtTarget),
       });
       this.logger.log(
-        `SLA FRT breach email sent to ${to} for ticket #${shortId}`,
+        `SLA FRT breach email sent to ${to} for ticket ${ticketRef}`,
       );
     } catch (error) {
       this.logger.error(
@@ -1644,21 +1637,19 @@ export class EmailService {
   async sendSlaTtrBreach(
     to: string,
     agentName: string,
-    ticketId: string,
+    ticketRef: string,
     subject: string,
     ttrTarget: string,
   ): Promise<void> {
-    const shortId = ticketId.substring(0, 8);
-
     try {
       await this.send({
         to,
-        subject: `BREACH ALERT: Ticket #${shortId} — TTR exceeded`,
-        html: getSlaTtrBreachHtml(agentName, shortId, subject, ttrTarget),
-        text: getSlaTtrBreachText(agentName, shortId, subject, ttrTarget),
+        subject: `BREACH ALERT: Ticket ${ticketRef} — TTR exceeded`,
+        html: getSlaTtrBreachHtml(agentName, ticketRef, subject, ttrTarget),
+        text: getSlaTtrBreachText(agentName, ticketRef, subject, ttrTarget),
       });
       this.logger.log(
-        `SLA TTR breach email sent to ${to} for ticket #${shortId}`,
+        `SLA TTR breach email sent to ${to} for ticket ${ticketRef}`,
       );
     } catch (error) {
       this.logger.error(
@@ -1674,19 +1665,17 @@ export class EmailService {
   async sendTicketResolved(
     to: string,
     learnerName: string,
-    ticketId: string,
+    ticketRef: string,
   ): Promise<void> {
-    const shortId = ticketId.substring(0, 8);
-
     try {
       await this.send({
         to,
-        subject: `Your ticket #${shortId} has been resolved`,
-        html: getTicketResolvedHtml(learnerName, shortId),
-        text: getTicketResolvedText(learnerName, shortId),
+        subject: `Your ticket ${ticketRef} has been resolved`,
+        html: getTicketResolvedHtml(learnerName, ticketRef),
+        text: getTicketResolvedText(learnerName, ticketRef),
       });
       this.logger.log(
-        `Ticket resolved email sent to ${to} for ticket #${shortId}`,
+        `Ticket resolved email sent to ${to} for ticket ${ticketRef}`,
       );
     } catch (error) {
       this.logger.error(
@@ -1704,19 +1693,17 @@ export class EmailService {
   async sendTicketClosed(
     to: string,
     learnerName: string,
-    ticketId: string,
+    ticketRef: string,
   ): Promise<void> {
-    const shortId = ticketId.substring(0, 8);
-
     try {
       await this.send({
         to,
-        subject: `Your ticket #${shortId} has been closed`,
-        html: getTicketClosedHtml(learnerName, shortId),
-        text: getTicketClosedText(learnerName, shortId),
+        subject: `Your ticket ${ticketRef} has been closed`,
+        html: getTicketClosedHtml(learnerName, ticketRef),
+        text: getTicketClosedText(learnerName, ticketRef),
       });
       this.logger.log(
-        `Ticket closed email sent to ${to} for ticket #${shortId}`,
+        `Ticket closed email sent to ${to} for ticket ${ticketRef}`,
       );
     } catch (error) {
       this.logger.error(
@@ -1729,24 +1716,55 @@ export class EmailService {
   /**
    * Send ticket escalation notification email to supervisor
    */
-  async sendTicketEscalation(
+  /**
+   * Send a generic "ticket status updated" email. Used by updateTicket
+   * for intermediate transitions (on-hold, manual reopen, etc.) — the
+   * dedicated resolved/closed templates fire from their own service
+   * methods so this one explicitly skips both to avoid double-sends.
+   */
+  async sendTicketStatusChange(
     to: string,
-    supervisorName: string,
-    ticketId: string,
-    subject: string,
-    agentChain: string,
+    learnerName: string,
+    ticketRef: string,
+    newStatus: string,
+    reason?: string | null,
   ): Promise<void> {
-    const shortId = ticketId.substring(0, 8);
+    if (newStatus === 'resolved' || newStatus === 'closed') return;
 
     try {
       await this.send({
         to,
-        subject: `CRITICAL: Ticket #${shortId} — all agents failed`,
-        html: getTicketEscalationHtml(supervisorName, shortId, subject, agentChain),
-        text: getTicketEscalationText(supervisorName, shortId, subject, agentChain),
+        subject: `Ticket ${ticketRef} status updated`,
+        html: getTicketStatusChangeHtml(learnerName, ticketRef, newStatus, reason),
+        text: getTicketStatusChangeText(learnerName, ticketRef, newStatus, reason),
       });
       this.logger.log(
-        `Ticket escalation email sent to ${to} for ticket #${shortId}`,
+        `Ticket status-change email sent to ${to} for ticket ${ticketRef} (${newStatus})`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send ticket status-change email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  async sendTicketEscalation(
+    to: string,
+    supervisorName: string,
+    ticketRef: string,
+    subject: string,
+    agentChain: string,
+  ): Promise<void> {
+    try {
+      await this.send({
+        to,
+        subject: `CRITICAL: Ticket ${ticketRef} — all agents failed`,
+        html: getTicketEscalationHtml(supervisorName, ticketRef, subject, agentChain),
+        text: getTicketEscalationText(supervisorName, ticketRef, subject, agentChain),
+      });
+      this.logger.log(
+        `Ticket escalation email sent to ${to} for ticket ${ticketRef}`,
       );
     } catch (error) {
       this.logger.error(

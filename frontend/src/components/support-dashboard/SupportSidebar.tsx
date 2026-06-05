@@ -254,7 +254,7 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
                   isOnline
                     ? "bg-[#DCFCE7] text-[#16A34A]"
-                    : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
+                    : "bg-[#F3F4F6] text-[#4B5563]"
                 }`}
                 title={t("sidebar.statusDrivenByBusinessHours")}
               >

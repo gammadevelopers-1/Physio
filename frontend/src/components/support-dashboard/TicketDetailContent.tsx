@@ -9,6 +9,8 @@ import { useSupportProfile } from "@/hooks/useSupportProfile";
 import { toast } from "sonner";
 import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
+import TicketTagPanel from "./TicketTagPanel";
+import TicketGovernanceToolbar from "./TicketGovernanceToolbar";
 import {
   ArrowLeft,
   Send,
@@ -26,6 +28,7 @@ import {
   Star,
   Mail,
   BookOpen,
+  Download,
 } from "lucide-react";
 
 interface TicketDetail {
@@ -69,6 +72,8 @@ interface TicketDetail {
   ttrDeadline: string | null;
   frtRemainingMinutes: number | null;
   ttrRemainingMinutes: number | null;
+  referenceNumber?: string | null;
+  tags?: { id: string; name: string; color: string }[];
 }
 
 const TicketDetailContent = () => {
@@ -220,7 +225,7 @@ const TicketDetailContent = () => {
     in_progress: "bg-[#FEF9C3] text-[#CA8A04]",
     on_hold: "bg-[#FFEDD5] text-[#EA580C]",
     resolved: "bg-[#DCFCE7] text-[#16A34A]",
-    closed: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
+    closed: "bg-[#F3F4F6] text-[#4B5563]",
   };
 
   return (
@@ -266,7 +271,7 @@ const TicketDetailContent = () => {
                             {ticket.subject}
                           </h1>
                           <p className="text-sm text-[var(--color-text-secondary)] font-mono">
-                            #{ticket.id.substring(0, 8)}
+                            {ticket.referenceNumber || `#${ticket.id.substring(0, 8)}`}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -284,8 +289,62 @@ const TicketDetailContent = () => {
                           >
                             {ticket.status.replace("_", " ")}
                           </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              supportApi
+                                .exportTicketHistory(
+                                  ticket.id,
+                                  ticket.referenceNumber,
+                                )
+                                .catch(() =>
+                                  toast.error("Failed to download history"),
+                                )
+                            }
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]"
+                            title="Download history as CSV"
+                          >
+                            <Download className="w-3 h-3" />
+                            CSV
+                          </button>
                         </div>
                       </div>
+                      {/* Tag panel — applied chips + inline picker. Only
+                          renders for staff (students can't see tags). */}
+                      {user?.roles?.some((r) =>
+                        ["SUPPORT", "ADMIN", "SUPER_ADMIN"].includes(r),
+                      ) && (
+                        <div className="mb-3">
+                          <TicketTagPanel
+                            ticketId={ticket.id}
+                            initialTags={ticket.tags || []}
+                            disabled={ticket.status === "closed"}
+                          />
+                        </div>
+                      )}
+                      {/* Governance toolbar — supervisor-only actions
+                          (merge / transfer / audit view). Hidden for
+                          plain agents. */}
+                      <TicketGovernanceToolbar
+                        ticketId={ticket.id}
+                        ticketCategory={ticket.category}
+                        basePath={(() => {
+                          // Re-derive basePath the same way the rest of this
+                          // file does — keep behaviour identical to the
+                          // sibling links above. Defaults to the supervisor
+                          // path when in doubt.
+                          if (typeof window === "undefined") return "";
+                          const m = window.location.pathname.match(
+                            /(.*\/support(?:\/agent|\/supervisor)?)/,
+                          );
+                          return m ? m[1] : "";
+                        })()}
+                        isSupervisor={Boolean(
+                          user?.supportSubRole === "supervisor" ||
+                            user?.roles?.includes("ADMIN") ||
+                            user?.roles?.includes("SUPER_ADMIN"),
+                        )}
+                      />
                       <p className="text-sm text-[var(--color-text-primary)] leading-relaxed whitespace-pre-wrap">
                         {ticket.description}
                       </p>
@@ -294,6 +353,24 @@ const TicketDetailContent = () => {
                           href={ticket.attachmentUrl}
                           target="_blank"
                           rel="noopener noreferrer"
+                          onClick={() => {
+                            // Best-effort download log — failures don't
+                            // block opening the file. Only fires for
+                            // staff (students fetching own files are
+                            // out of scope per the schema).
+                            if (
+                              user?.roles?.some((r) =>
+                                ["SUPPORT", "ADMIN", "SUPER_ADMIN"].includes(r),
+                              )
+                            ) {
+                              supportApi
+                                .recordAttachmentDownload(
+                                  ticket.id,
+                                  ticket.attachmentUrl!,
+                                )
+                                .catch(() => {});
+                            }
+                          }}
                           className="mt-3 inline-flex items-center gap-1.5 text-xs text-[var(--color-primary)] hover:underline"
                         >
                           <Paperclip className="w-3.5 h-3.5" />

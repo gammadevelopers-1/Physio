@@ -424,7 +424,7 @@ function ArticleCard({
   return (
     <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 flex flex-col gap-3 hover:border-[var(--color-primary)] hover:shadow-sm transition-all">
       <div className="flex items-start justify-between gap-2">
-        <span className="bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] text-[11px] px-2 py-0.5 rounded-full font-medium">
+        <span className="bg-[#F3F4F6] text-[#4B5563] text-[11px] px-2 py-0.5 rounded-full font-medium">
           {categoryLabel}
         </span>
         <span
@@ -563,7 +563,7 @@ function ArticlePreviewSheet({
         </div>
         <div className="p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
           {category && (
-            <span className="inline-block mb-3 bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] text-[11px] px-2 py-0.5 rounded-full font-medium">
+            <span className="inline-block mb-3 bg-[#F3F4F6] text-[#4B5563] text-[11px] px-2 py-0.5 rounded-full font-medium">
               {lang === "ar" && category.nameAr ? category.nameAr : category.nameEn}
             </span>
           )}

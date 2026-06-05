@@ -87,6 +87,21 @@ export class SupportController {
     return this.supportService.getKPIs();
   }
 
+  // ─── Recent Activity (scoped by sub-role) ──────────────
+  // Supervisor + admin see queue-wide activity; agents see only their
+  // own assigned tickets.
+
+  @Get('activity')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getActivity(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('limit') limit?: string,
+  ) {
+    const parsed = limit ? parseInt(limit, 10) : 20;
+    const safeLimit = Number.isFinite(parsed) && parsed > 0 && parsed <= 100 ? parsed : 20;
+    return this.supportService.getActivity(user, safeLimit);
+  }
+
   // ─── Get Agents (support supervisor/admin only) ─────────
 
   @Get('agents')
@@ -696,6 +711,161 @@ export class SupportController {
     return this.supportService.deleteKbArticle(id);
   }
 
+  // ─── Retention policy (supervisor/admin) ───────────────
+
+  @Get('config/retention')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getRetentionConfig() {
+    const days = await this.supportService.getRetentionDays();
+    return { retentionDays: days };
+  }
+
+  @Patch('config/retention')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async setRetentionConfig(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { days: number },
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException(
+        'Only supervisors can change retention policy',
+      );
+    }
+    if (typeof body?.days !== 'number') {
+      throw new BadRequestException('days must be a number');
+    }
+    return this.supportService.setRetentionDays(body.days);
+  }
+
+  // ─── KB Search Analytics ───────────────────────────────
+  //
+  // Log: throttled + public so guests on the help center are counted.
+  // The current user (if any) is attached by reading it via the JWT
+  // strategy; we don't gate on @Roles because the route is @Public.
+  // Analytics read: supervisor/admin only.
+
+  @Public()
+  @Throttle({ default: { limit: 60, ttl: 60_000 } }) // generous — debounced FE call
+  @Post('kb/searches')
+  async logKbSearch(
+    @Req() req: Request,
+    @Body() body: { query: string; locale?: string; resultsCount: number },
+  ) {
+    if (!body || typeof body.query !== 'string') {
+      throw new BadRequestException('query is required');
+    }
+    // Pull the JWT user opportunistically. The guard didn't run because
+    // we're @Public; if a token was present, it would have been attached
+    // by an upstream interceptor — fall back to null.
+    const userId = (req as any).user?.id ?? null;
+    return this.supportService.logKbSearch({
+      query: body.query,
+      locale: body.locale ?? 'en',
+      resultsCount: Number(body.resultsCount || 0),
+      userId,
+    });
+  }
+
+  @Get('kb/search-analytics')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getKbSearchAnalytics(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('limit') limitStr?: string,
+  ) {
+    // Supervisors and admins only — agents don't see KB analytics
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException('Only supervisors can view KB analytics');
+    }
+    const limit = limitStr ? parseInt(limitStr, 10) : 25;
+    return this.supportService.getKbSearchAnalytics(dateFrom, dateTo, limit);
+  }
+
+  // ─── Ticket Tags ───────────────────────────────────────
+  // The registry is read by any authenticated support user (agents need
+  // it to render chips) but mutations are supervisor/admin-gated. The
+  // per-ticket setter accepts the full desired tag set so the call is
+  // idempotent — see service.setTicketTags for the diff logic.
+
+  @Get('tags')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async listTicketTags() {
+    return this.supportService.listTicketTags();
+  }
+
+  @Post('tags')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async createTicketTag(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: { name: string; color?: string; description?: string },
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException('Only supervisors can manage ticket tags');
+    }
+    return this.supportService.createTicketTag(user.id, dto);
+  }
+
+  @Patch('tags/:id')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async updateTicketTag(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: { name?: string; color?: string; description?: string },
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException('Only supervisors can manage ticket tags');
+    }
+    return this.supportService.updateTicketTag(id, dto);
+  }
+
+  @Delete('tags/:id')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async deleteTicketTag(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException('Only supervisors can manage ticket tags');
+    }
+    return this.supportService.deleteTicketTag(id);
+  }
+
+  // PATCH because we replace the full tag set on the ticket — POST
+  // would imply an append. Any agent on the ticket can change tags.
+  @Patch(':id/tags')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async setTicketTags(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: { tagIds: string[] },
+  ) {
+    if (!Array.isArray(dto?.tagIds)) {
+      throw new BadRequestException('tagIds must be an array');
+    }
+    return this.supportService.setTicketTags(user, id, dto.tagIds);
+  }
+
   // ─── CSAT Survey (Public — no auth required) ──────────
 
   @Public()
@@ -865,6 +1035,133 @@ export class SupportController {
       );
     }
     return this.supportService.deleteEscalationPath(id);
+  }
+
+  // ─── Per-ticket history export (CSV) ───────────────────
+  //
+  // Declared BEFORE @Get(':id') so the path doesn't shadow this.
+
+  @Get(':id/export')
+  async exportTicketHistory(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Res() res: Response,
+  ) {
+    const { csv, filename } = await this.supportService.exportTicketHistory(
+      user,
+      id,
+    );
+    res.set({
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Cache-Control': 'no-store',
+    });
+    res.send(csv);
+  }
+
+  // ─── Ticket merge (supervisor/admin only) ──────────────
+
+  @Post(':id/merge')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async mergeTicket(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: { targetTicketId: string; note?: string },
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException('Only supervisors can merge tickets');
+    }
+    if (!dto?.targetTicketId) {
+      throw new BadRequestException('targetTicketId is required');
+    }
+    return this.supportService.mergeTicket(
+      user,
+      id,
+      dto.targetTicketId,
+      dto.note,
+    );
+  }
+
+  // ─── Ticket transfer ───────────────────────────────────
+
+  @Post(':id/transfer')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async transferTicket(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: { category: string; reason?: string; reassign?: boolean },
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException('Only supervisors can transfer tickets');
+    }
+    if (!dto?.category) {
+      throw new BadRequestException('category is required');
+    }
+    return this.supportService.transferTicket(user, id, dto);
+  }
+
+  // ─── Audit log for a single ticket ─────────────────────
+
+  @Get(':id/audit')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getTicketAudit(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Query('limit') limitStr?: string,
+  ) {
+    const limit = limitStr ? parseInt(limitStr, 10) : 100;
+    return this.supportService.getTicketAuditLog(id, limit);
+  }
+
+  // ─── Attachment download log ───────────────────────────
+
+  @Post(':id/attachment-download')
+  async recordAttachmentDownload(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() body: { attachmentUrl: string },
+    @Req() req: Request,
+  ) {
+    if (!body?.attachmentUrl) {
+      throw new BadRequestException('attachmentUrl is required');
+    }
+    const ip =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      req.ip ||
+      null;
+    const userAgent = (req.headers['user-agent'] as string) || null;
+    return this.supportService.recordAttachmentDownload(
+      user,
+      id,
+      body.attachmentUrl,
+      ip,
+      userAgent,
+    );
+  }
+
+  @Get(':id/attachment-download-log')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getAttachmentDownloadLog(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException(
+        'Only supervisors can view attachment download logs',
+      );
+    }
+    return this.supportService.getAttachmentDownloadLog(id);
   }
 
   // ─── Get Ticket Detail ──────────────────────────────────

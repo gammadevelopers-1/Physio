@@ -9,7 +9,7 @@ import {
 import * as crypto from 'crypto';
 import * as argon2 from 'argon2';
 import PDFDocument from 'pdfkit';
-import { eq, and, or, desc, asc, sql, ilike, count, inArray, gte } from 'drizzle-orm';
+import { eq, and, or, desc, asc, sql, ilike, count, inArray, gte, isNull } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { db } from '../../database';
 import {
@@ -31,6 +31,11 @@ import {
   enrollments,
   supportTeamMembers,
   supportTeamRequests,
+  ticketTags,
+  ticketTagAssignments,
+  kbSearchEvents,
+  attachmentDownloadEvents,
+  ticketAttachmentScans,
   auditLogs,
   TICKET_STATUS,
   TICKET_PRIORITY,
@@ -83,6 +88,92 @@ const CATEGORY_PRIORITY_MAP: Record<string, string> = {
   content: TICKET_PRIORITY.LOW,
   other: TICKET_PRIORITY.LOW,
 };
+
+// ─── Attachment validation ───────────────────────────────────
+//
+// The createTicket DTO accepts an `attachmentUrl: string` that the
+// client gets back from POST /api/storage/upload. Without server-side
+// validation a malicious client could:
+//   1) Submit any external URL — turning the platform into an open
+//      redirect (and a phishing vector when staff click).
+//   2) Submit a URL pointing to a non-allowlisted file type (e.g. .exe)
+//      that survived the upload (because they didn't go through /upload
+//      at all).
+// We therefore enforce two checks at ticket creation:
+//   - The URL must point at one of OUR storage origins (local serve
+//     route, or a known GCS bucket host).
+//   - The extension must be in the allowlist below.
+// Size is enforced upstream by the upload endpoint (10MB cap in
+// storage.controller.ts); we can't re-check it here without a HEAD
+// request, which isn't worth the latency for a single chip.
+// Kept aligned with the /storage/upload MIME allowlist (PDF + JPEG/PNG/
+// WebP). If we ever broaden one we should broaden both — diverging would
+// either reject valid uploads at ticket-create time or accept files we
+// can't actually serve.
+export const TICKET_ATTACHMENT_ALLOWED_EXTENSIONS = [
+  'pdf',
+  'jpg',
+  'jpeg',
+  'png',
+  'webp',
+] as const;
+
+export const TICKET_ATTACHMENT_MAX_URL_LENGTH = 500;
+
+export function validateTicketAttachmentUrl(
+  url: string | null | undefined,
+): string | null {
+  if (url == null) return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  if (trimmed.length > TICKET_ATTACHMENT_MAX_URL_LENGTH) {
+    throw new BadRequestException('Attachment URL is too long');
+  }
+
+  // Resolve the URL so we can inspect the host + path. URLs that don't
+  // parse (e.g. a raw `../../etc/passwd`) bail with a 400 — never a 5xx.
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    throw new BadRequestException('Attachment URL is malformed');
+  }
+
+  // Allowed origins: our own storage proxy (path-prefix match) or a
+  // known GCS bucket. We don't lock to a single host name because the
+  // app runs across Cloud Run revisions + a static GCS bucket;
+  // matching on the path prefix is sufficient.
+  const pathLower = parsed.pathname.toLowerCase();
+  const host = parsed.host.toLowerCase();
+  const isLocalStoragePath = pathLower.startsWith('/api/storage/files/');
+  const isGcsHost =
+    host.endsWith('.storage.googleapis.com') ||
+    host === 'storage.googleapis.com' ||
+    host === 'storage.cloud.google.com';
+  if (!isLocalStoragePath && !isGcsHost) {
+    throw new BadRequestException(
+      'Attachments must be uploaded through our storage endpoint',
+    );
+  }
+
+  // Extension allowlist. We pull the last `.` segment of the path and
+  // lowercase it; query strings are stripped because pathname excludes
+  // them.
+  const lastDot = pathLower.lastIndexOf('.');
+  const ext =
+    lastDot >= 0 && lastDot < pathLower.length - 1
+      ? pathLower.slice(lastDot + 1)
+      : '';
+  if (
+    !(TICKET_ATTACHMENT_ALLOWED_EXTENSIONS as readonly string[]).includes(ext)
+  ) {
+    throw new BadRequestException(
+      `Attachment type ".${ext || 'unknown'}" is not allowed. Use one of: ${TICKET_ATTACHMENT_ALLOWED_EXTENSIONS.join(', ')}.`,
+    );
+  }
+
+  return trimmed;
+}
 
 @Injectable()
 export class SupportService implements OnModuleInit {
@@ -164,6 +255,10 @@ export class SupportService implements OnModuleInit {
     // Round-robin: find agent with fewest open tickets
     const assigneeId = await this.findNextAgent();
 
+    // Defensive — the DTO is just a string field. Validate origin +
+    // extension here so a malicious client can't store an external URL.
+    const safeAttachmentUrl = validateTicketAttachmentUrl(dto.attachmentUrl);
+
     const [ticket] = await db
       .insert(tickets)
       .values({
@@ -173,11 +268,18 @@ export class SupportService implements OnModuleInit {
         subject: dto.subject,
         description: dto.description,
         courseId: dto.courseId || null,
-        attachmentUrl: dto.attachmentUrl || null,
+        attachmentUrl: safeAttachmentUrl,
         status: TICKET_STATUS.NEW,
         assigneeId,
       })
       .returning();
+
+    // Record a 'pending' scan row for any attachment. Whichever scanner
+    // is wired (ClamAV side-car, Cloud Storage scanner, manual) writes
+    // back to the same row. No-op when there's no attachment.
+    if (safeAttachmentUrl) {
+      await this.recordAttachmentScanPending(ticket.id, safeAttachmentUrl);
+    }
 
     // Step 4: Calculate SLA deadline (P-04)
     const [slaPolicy] = await db
@@ -201,7 +303,7 @@ export class SupportService implements OnModuleInit {
         recipientId: userId,
         type: 'ticket_created',
         title: 'Ticket Received',
-        message: `Your ticket #${ticket.id.substring(0, 8)} has been received. Expected response within ${slaPolicy?.frtMinutes || 30} minutes.`,
+        message: `Your ticket ${ticket.referenceNumber} has been received. Expected response within ${slaPolicy?.frtMinutes || 30} minutes.`,
         link: `/dashboard/student/support`,
         entityType: 'ticket',
         entityId: ticket.id,
@@ -230,7 +332,7 @@ export class SupportService implements OnModuleInit {
         await this.emailService.sendTicketCreatedLearner(
           studentInfo.email,
           studentInfo.firstName || 'Student',
-          ticket.id,
+          ticket.referenceNumber,
           expectedResponseTime || 'within business hours',
         );
       }
@@ -244,7 +346,7 @@ export class SupportService implements OnModuleInit {
           await this.emailService.sendTicketAssignedAgent(
             agentInfo.email,
             agentInfo.firstName || 'Agent',
-            ticket.id,
+            ticket.referenceNumber,
             dto.subject,
             autoPriority,
             expectedResponseTime || '--',
@@ -296,12 +398,34 @@ export class SupportService implements OnModuleInit {
     if (query.priority) conditions.push(eq(tickets.priority, query.priority));
     if (query.category) conditions.push(eq(tickets.category, query.category));
     if (query.assigneeId) conditions.push(eq(tickets.assigneeId, query.assigneeId));
+
+    // Tag filter: AND semantics — every requested tag must be present.
+    // Implemented as a correlated EXISTS subquery per tag so additional
+    // chips compose without multiplying the join.
+    if (query.tags) {
+      const tagIds = query.tags
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      for (const tagId of tagIds) {
+        conditions.push(
+          sql`EXISTS (
+            SELECT 1 FROM ${ticketTagAssignments}
+            WHERE ${ticketTagAssignments.ticketId} = ${tickets.id}
+              AND ${ticketTagAssignments.tagId} = ${tagId}
+          )`,
+        );
+      }
+    }
     if (query.search) {
-      // Match on subject, ticket id (UUID prefix), or customer name/email.
-      // Customer columns are on the joined `users` row; the join is added
-      // below, so referencing them here is safe.
+      // Match on subject, human-readable reference (e.g. "T-000123"),
+      // or customer name/email. The reference column is the primary
+      // way staff find a ticket from an email or phone call, so it
+      // sits at the top of the OR chain. Customer columns are on the
+      // joined `users` row; the join is added below.
       conditions.push(
         or(
+          ilike(tickets.referenceNumber, `%${query.search}%`),
           ilike(tickets.subject, `%${query.search}%`),
           ilike(tickets.id, `%${query.search}%`),
           ilike(users.firstName, `%${query.search}%`),
@@ -321,6 +445,7 @@ export class SupportService implements OnModuleInit {
       db
         .select({
           id: tickets.id,
+          referenceNumber: tickets.referenceNumber,
           studentId: tickets.studentId,
           category: tickets.category,
           priority: tickets.priority,
@@ -393,8 +518,43 @@ export class SupportService implements OnModuleInit {
       return { ...t, frtRemainingMinutes, ttrRemainingMinutes };
     });
 
+    // Bulk-fetch tag assignments for the rendered page in one query, then
+    // group by ticketId in memory. Avoids the N+1 we'd get from a
+    // per-ticket call to getTicketTags().
+    const ticketIds = enriched.map((t) => t.id);
+    const tagsByTicket = new Map<
+      string,
+      { id: string; name: string; color: string }[]
+    >();
+    if (ticketIds.length > 0) {
+      const tagRows = await db
+        .select({
+          ticketId: ticketTagAssignments.ticketId,
+          id: ticketTags.id,
+          name: ticketTags.name,
+          color: ticketTags.color,
+        })
+        .from(ticketTagAssignments)
+        .innerJoin(
+          ticketTags,
+          eq(ticketTagAssignments.tagId, ticketTags.id),
+        )
+        .where(inArray(ticketTagAssignments.ticketId, ticketIds))
+        .orderBy(asc(ticketTags.name));
+      for (const row of tagRows) {
+        const list = tagsByTicket.get(row.ticketId) ?? [];
+        list.push({ id: row.id, name: row.name, color: row.color });
+        tagsByTicket.set(row.ticketId, list);
+      }
+    }
+
+    const withTags = enriched.map((t) => ({
+      ...t,
+      tags: tagsByTicket.get(t.id) ?? [],
+    }));
+
     return {
-      tickets: enriched,
+      tickets: withTags,
       total: totalResult[0]?.count ?? 0,
       page,
       limit,
@@ -412,6 +572,7 @@ export class SupportService implements OnModuleInit {
     const [ticket] = await db
       .select({
         id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
         studentId: tickets.studentId,
         category: tickets.category,
         priority: tickets.priority,
@@ -584,6 +745,9 @@ export class SupportService implements OnModuleInit {
     const [existing] = await db
       .select({
         id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        studentId: tickets.studentId,
+        subject: tickets.subject,
         status: tickets.status,
         onHoldAt: tickets.onHoldAt,
         onHoldTotalMinutes: tickets.onHoldTotalMinutes,
@@ -597,10 +761,12 @@ export class SupportService implements OnModuleInit {
 
     if (dto.status) {
       // M1: Status transition validation.
-      // RESOLVED → IN_PROGRESS allows staff to explicitly reopen a
-      // resolved ticket (e.g. customer escalated via another channel).
-      // CLOSED is terminal — past the 48h student grace window, the
-      // customer must open a new ticket so the audit trail stays clean.
+      // RESOLVED → IN_PROGRESS and CLOSED → IN_PROGRESS both allow staff
+      // to explicitly reopen a ticket (e.g. customer escalated via another
+      // channel, or a closed-too-early call). For non-staff customers the
+      // CLOSED reopen path is still gated by the 48h grace check in
+      // addComment() — only deliberate staff action takes the CLOSED →
+      // IN_PROGRESS path here.
       const validTransitions: Record<string, string[]> = {
         [TICKET_STATUS.NEW]: [TICKET_STATUS.IN_PROGRESS],
         [TICKET_STATUS.IN_PROGRESS]: [
@@ -613,7 +779,7 @@ export class SupportService implements OnModuleInit {
           TICKET_STATUS.CLOSED,
           TICKET_STATUS.IN_PROGRESS,
         ],
-        [TICKET_STATUS.CLOSED]: [],
+        [TICKET_STATUS.CLOSED]: [TICKET_STATUS.IN_PROGRESS],
       };
 
       const allowed = validTransitions[existing.status] || [];
@@ -661,13 +827,16 @@ export class SupportService implements OnModuleInit {
         updateData.closedAt = new Date();
       }
 
-      // Reopening a resolved ticket clears resolvedAt so reporting
-      // and SLA counters reflect the active in-progress state again.
+      // Reopening clears terminal timestamps so reporting and SLA
+      // counters reflect the active in-progress state again. Covers both
+      // RESOLVED → IN_PROGRESS and CLOSED → IN_PROGRESS staff reopens.
       if (
-        existing.status === TICKET_STATUS.RESOLVED &&
+        (existing.status === TICKET_STATUS.RESOLVED ||
+          existing.status === TICKET_STATUS.CLOSED) &&
         dto.status === TICKET_STATUS.IN_PROGRESS
       ) {
         updateData.resolvedAt = null;
+        updateData.closedAt = null;
       }
     }
 
@@ -699,6 +868,61 @@ export class SupportService implements OnModuleInit {
       .where(eq(tickets.id, ticketId))
       .returning();
 
+    // Status-change notification (P-04 follow-up).
+    //
+    // Notifies the student whenever the status actually changed.
+    // Intermediate transitions (IN_PROGRESS, ON_HOLD, reopen) only get
+    // surfaced here — RESOLVED and CLOSED are intentionally skipped
+    // because their dedicated email helpers already fire from
+    // resolveTicket / closeTicket with a richer payload. Best-effort —
+    // a failed notification never blocks the underlying write.
+    if (dto.status && dto.status !== existing.status) {
+      // Resolve a display reason for the email body. ON_HOLD is the
+      // only transition that comes with a user-supplied reason.
+      const reason =
+        dto.status === TICKET_STATUS.ON_HOLD ? dto.onHoldReason : null;
+
+      try {
+        await this.notificationsService.create({
+          recipientId: existing.studentId,
+          type: 'ticket_status_change',
+          title: 'Ticket status updated',
+          message: `Your ticket "${existing.subject}" is now ${dto.status.replace('_', ' ')}.`,
+          link: `/dashboard/student/support`,
+          entityType: 'ticket',
+          entityId: ticketId,
+        });
+      } catch {
+        // Non-blocking (P-07)
+      }
+
+      // Email only for the intermediate transitions — skip resolved /
+      // closed to avoid duplicate emails with the dedicated templates.
+      const SKIP_EMAIL_FOR = new Set([
+        TICKET_STATUS.RESOLVED,
+        TICKET_STATUS.CLOSED,
+      ]);
+      if (!SKIP_EMAIL_FOR.has(dto.status as any)) {
+        try {
+          const [studentInfo] = await db
+            .select({ email: users.email, firstName: users.firstName })
+            .from(users)
+            .where(eq(users.id, existing.studentId));
+          if (studentInfo?.email) {
+            await this.emailService.sendTicketStatusChange(
+              studentInfo.email,
+              studentInfo.firstName || 'Student',
+              existing.referenceNumber,
+              dto.status,
+              reason,
+            );
+          }
+        } catch {
+          // Non-blocking
+        }
+      }
+    }
+
     return updated;
   }
 
@@ -717,6 +941,7 @@ export class SupportService implements OnModuleInit {
     const [ticket] = await db
       .select({
         id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
         studentId: tickets.studentId,
         status: tickets.status,
         firstResponseAt: tickets.firstResponseAt,
@@ -851,7 +1076,7 @@ export class SupportService implements OnModuleInit {
           recipientId: ticket.assigneeId,
           type: 'ticket_reply',
           title: 'Student Replied',
-          message: `Student replied to ticket #${ticketId.substring(0, 8)}`,
+          message: `Student replied to ticket ${ticket.referenceNumber}`,
           link: `/dashboard/support/agent/tickets/${ticketId}`,
           entityType: 'ticket',
           entityId: ticketId,
@@ -871,7 +1096,7 @@ export class SupportService implements OnModuleInit {
             studentInfo.email,
             studentInfo.firstName || 'Student',
             user.firstName || 'Support Agent',
-            ticketId,
+            ticket.referenceNumber,
             dto.message.substring(0, 200),
           );
         }
@@ -887,7 +1112,7 @@ export class SupportService implements OnModuleInit {
             agentInfo.email,
             agentInfo.firstName || 'Agent',
             user.firstName || 'Student',
-            ticketId,
+            ticket.referenceNumber,
             dto.message.substring(0, 200),
           );
         }
@@ -907,6 +1132,7 @@ export class SupportService implements OnModuleInit {
     const [ticket] = await db
       .select({
         id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
         studentId: tickets.studentId,
         courseId: tickets.courseId,
         subject: tickets.subject,
@@ -1013,7 +1239,7 @@ export class SupportService implements OnModuleInit {
         await this.emailService.sendTicketResolved(
           studentInfo.email,
           studentInfo.firstName || 'Student',
-          ticketId,
+          ticket.referenceNumber,
         );
       }
     } catch { /* non-blocking */ }
@@ -1038,6 +1264,7 @@ export class SupportService implements OnModuleInit {
     // Fetch student info for close notification
     const [ticketFull] = await db
       .select({
+        referenceNumber: tickets.referenceNumber,
         studentId: tickets.studentId,
         subject: tickets.subject,
         guestEmail: tickets.guestEmail,
@@ -1080,7 +1307,7 @@ export class SupportService implements OnModuleInit {
           await this.emailService.sendTicketClosed(
             recipientEmail,
             recipientName,
-            ticketId,
+            ticketFull.referenceNumber,
           );
         }
       }
@@ -1226,6 +1453,70 @@ export class SupportService implements OnModuleInit {
           )
         : 100;
 
+    // Real alert ticket details — backs the right-rail Alerts widget so
+    // each chip can show the actual count and link to specific tickets
+    // instead of static i18n strings like "2 SLA Breaches".
+
+    const OPEN_STATUSES = [
+      TICKET_STATUS.NEW,
+      TICKET_STATUS.IN_PROGRESS,
+      TICKET_STATUS.ON_HOLD,
+    ];
+
+    const breachedRows = await db
+      .select({
+        id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        subject: tickets.subject,
+        priority: tickets.priority,
+      })
+      .from(tickets)
+      .where(
+        and(
+          inArray(tickets.status, OPEN_STATUSES),
+          or(
+            eq(tickets.slaBreachedFrt, true),
+            eq(tickets.slaBreachedTtr, true),
+          ),
+        ),
+      )
+      .orderBy(desc(tickets.createdAt))
+      .limit(20);
+
+    const unassignedRows = await db
+      .select({
+        id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        subject: tickets.subject,
+        priority: tickets.priority,
+      })
+      .from(tickets)
+      .where(
+        and(
+          inArray(tickets.status, OPEN_STATUSES),
+          isNull(tickets.assigneeId),
+        ),
+      )
+      .orderBy(desc(tickets.createdAt))
+      .limit(20);
+
+    const highPriorityRows = await db
+      .select({
+        id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        subject: tickets.subject,
+        priority: tickets.priority,
+      })
+      .from(tickets)
+      .where(
+        and(
+          inArray(tickets.status, OPEN_STATUSES),
+          eq(tickets.priority, 'high'),
+        ),
+      )
+      .orderBy(desc(tickets.createdAt))
+      .limit(20);
+
     return {
       openTickets: openCount?.count ?? 0,
       highPriorityOpen: highCount?.count ?? 0,
@@ -1248,7 +1539,139 @@ export class SupportService implements OnModuleInit {
       npsScore: npsSummary.npsScore,
       npsResponses: npsSummary.totalResponded,
       statusBreakdown: statusMap,
+      unassignedCount: unassignedRows.length,
+      alerts: {
+        breached: breachedRows,
+        unassigned: unassignedRows,
+        highPriority: highPriorityRows,
+      },
     };
+  }
+
+  // ─── Recent Activity ─────────────────────────────────
+  // Real activity feed for the right-rail "Recent Activity" widget.
+  // Surfaces what actually changed (created / replied / resolved /
+  // closed / reopened) instead of just "tickets sorted by creation".
+  //
+  // Scope:
+  //   - supervisor / admin: across the whole support queue
+  //   - agent: limited to tickets they're assigned to
+  //
+  // Pulls from two sources and merges by time:
+  //   1. ticket_replies — fresh replies (staff or student)
+  //   2. tickets        — recent creations + status changes via
+  //                       resolvedAt / closedAt / updatedAt
+  //
+  // We don't try to perfectly distinguish "reopened" vs "resumed" here
+  // because that signal lives in slaEvents — keep this query cheap and
+  // useful, not exhaustive.
+
+  async getActivity(user: AuthenticatedUser, limit = 20) {
+    const isSupervisorOrAdmin =
+      user.supportSubRole === 'supervisor' ||
+      user.roles.includes(ROLE_NAMES.ADMIN) ||
+      user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+
+    const scopeFilter = isSupervisorOrAdmin
+      ? undefined
+      : eq(tickets.assigneeId, user.id);
+
+    // Recent ticket activity (created / resolved / closed)
+    const recentTickets = await db
+      .select({
+        id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        subject: tickets.subject,
+        status: tickets.status,
+        createdAt: tickets.createdAt,
+        resolvedAt: tickets.resolvedAt,
+        closedAt: tickets.closedAt,
+        updatedAt: tickets.updatedAt,
+      })
+      .from(tickets)
+      .where(scopeFilter)
+      .orderBy(desc(tickets.updatedAt))
+      .limit(limit * 2);
+
+    // Recent replies — joined with their ticket for subject + assignee scope
+    const recentReplies = await db
+      .select({
+        id: ticketReplies.id,
+        ticketId: ticketReplies.ticketId,
+        ticketReferenceNumber: tickets.referenceNumber,
+        isStaffReply: ticketReplies.isStaffReply,
+        createdAt: ticketReplies.createdAt,
+        subject: tickets.subject,
+        assigneeId: tickets.assigneeId,
+      })
+      .from(ticketReplies)
+      .innerJoin(tickets, eq(ticketReplies.ticketId, tickets.id))
+      .where(scopeFilter)
+      .orderBy(desc(ticketReplies.createdAt))
+      .limit(limit * 2);
+
+    type ActivityItem = {
+      id: string;
+      ticketId: string;
+      ticketReferenceNumber: string;
+      type:
+        | 'created'
+        | 'resolved'
+        | 'closed'
+        | 'staff_reply'
+        | 'student_reply';
+      subject: string;
+      at: Date;
+    };
+
+    const items: ActivityItem[] = [];
+
+    for (const t of recentTickets) {
+      // Pick the most meaningful event per ticket: closed > resolved > created.
+      // The .updatedAt sort surfaces tickets that changed recently regardless.
+      if (t.closedAt) {
+        items.push({
+          id: `${t.id}:closed`,
+          ticketId: t.id,
+          ticketReferenceNumber: t.referenceNumber,
+          type: 'closed',
+          subject: t.subject,
+          at: t.closedAt,
+        });
+      } else if (t.resolvedAt) {
+        items.push({
+          id: `${t.id}:resolved`,
+          ticketId: t.id,
+          ticketReferenceNumber: t.referenceNumber,
+          type: 'resolved',
+          subject: t.subject,
+          at: t.resolvedAt,
+        });
+      } else {
+        items.push({
+          id: `${t.id}:created`,
+          ticketId: t.id,
+          ticketReferenceNumber: t.referenceNumber,
+          type: 'created',
+          subject: t.subject,
+          at: t.createdAt,
+        });
+      }
+    }
+
+    for (const r of recentReplies) {
+      items.push({
+        id: `${r.id}:reply`,
+        ticketId: r.ticketId,
+        ticketReferenceNumber: r.ticketReferenceNumber,
+        type: r.isStaffReply ? 'staff_reply' : 'student_reply',
+        subject: r.subject,
+        at: r.createdAt,
+      });
+    }
+
+    items.sort((a, b) => b.at.getTime() - a.at.getTime());
+    return items.slice(0, limit);
   }
 
   // ─── Get Agents ──────────────────────────────────────
@@ -1679,6 +2102,13 @@ export class SupportService implements OnModuleInit {
         let recipientEmail: string | null = null;
         let recipientName: string = 'Student';
 
+        // Load the ticket reference up front so both branches can pass it
+        // to the email service — we no longer slice the UUID for display.
+        const [ticketRef] = await db
+          .select({ referenceNumber: tickets.referenceNumber })
+          .from(tickets)
+          .where(eq(tickets.id, survey.ticketId));
+
         if (survey.userId === GUEST_USER_ID) {
           const [guestTicket] = await db
             .select({
@@ -1702,11 +2132,11 @@ export class SupportService implements OnModuleInit {
           }
         }
 
-        if (recipientEmail) {
+        if (recipientEmail && ticketRef) {
           await this.emailService.sendCsatFollowup(
             recipientEmail,
             recipientName,
-            survey.ticketId,
+            ticketRef.referenceNumber,
             score,
           );
         }
@@ -1934,6 +2364,7 @@ export class SupportService implements OnModuleInit {
     const [ticket] = await db
       .select({
         id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
         category: tickets.category,
         priority: tickets.priority,
         subject: tickets.subject,
@@ -2027,11 +2458,14 @@ export class SupportService implements OnModuleInit {
       }
     }
 
+    const tags = await this.getTicketTags(ticket.id);
+
     return {
       ...ticket,
       comments,
       slaPolicy: slaPolicy || null,
       csatSurvey,
+      tags,
     };
   }
 
@@ -2039,6 +2473,7 @@ export class SupportService implements OnModuleInit {
     const [ticket] = await db
       .select({
         id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
         status: tickets.status,
         assigneeId: tickets.assigneeId,
         closedAt: tickets.closedAt,
@@ -2098,7 +2533,7 @@ export class SupportService implements OnModuleInit {
           recipientId: ticket.assigneeId,
           type: 'ticket_reply',
           title: 'Guest Replied',
-          message: `Guest replied to ticket #${ticket.id.substring(0, 8)}`,
+          message: `Guest replied to ticket ${ticket.referenceNumber}`,
           link: `/dashboard/support/agent/tickets/${ticket.id}`,
           entityType: 'ticket',
           entityId: ticket.id,
@@ -2190,6 +2625,7 @@ export class SupportService implements OnModuleInit {
     return db
       .select({
         id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
         subject: tickets.subject,
         category: tickets.category,
         priority: tickets.priority,
@@ -2232,6 +2668,7 @@ export class SupportService implements OnModuleInit {
     return db
       .select({
         id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
         subject: tickets.subject,
         category: tickets.category,
         priority: tickets.priority,
@@ -2653,6 +3090,86 @@ export class SupportService implements OnModuleInit {
     return results;
   }
 
+  // ─── Per-ticket history export (CSV) ──────────────────
+  //
+  // Returns a single-ticket transcript safe to share offline (legal,
+  // audit, learner support reviews). Reuses the same access-check path
+  // as getTicketDetail so a student can export their own history but
+  // not someone else's, and an unassigned agent can't pull a ticket
+  // they couldn't otherwise read.
+  async exportTicketHistory(user: AuthenticatedUser, ticketId: string) {
+    const detail = await this.getTicketDetail(user, ticketId);
+
+    const now = new Date();
+    const csvEscape = (v: unknown): string => {
+      if (v == null) return '';
+      const s = String(v);
+      // Wrap in quotes when the value contains a comma, quote, or
+      // newline — and double-quote any embedded quotes per RFC 4180.
+      if (/[",\n\r]/.test(s)) {
+        return `"${s.replace(/"/g, '""')}"`;
+      }
+      return s;
+    };
+
+    const customerName = [
+      (detail as any).studentFirstName,
+      (detail as any).studentLastName,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    // Metadata + ticket header — comment lines (#) so spreadsheet
+    // tools can still parse the comma-separated body further down.
+    const lines: string[] = [
+      `# exported_at: ${now.toISOString()}`,
+      `# exported_by: ${user.id}`,
+      `# ticket_reference: ${detail.referenceNumber || ''}`,
+      `# ticket_id: ${detail.id}`,
+      '',
+      // Ticket-level fields
+      'field,value',
+      `reference,${csvEscape(detail.referenceNumber || '')}`,
+      `subject,${csvEscape(detail.subject)}`,
+      `customer_name,${csvEscape(customerName)}`,
+      `customer_email,${csvEscape((detail as any).studentEmail || '')}`,
+      `category,${csvEscape(detail.category)}`,
+      `priority,${csvEscape(detail.priority)}`,
+      `status,${csvEscape(detail.status)}`,
+      `created_at,${csvEscape(new Date(detail.createdAt as any).toISOString())}`,
+      `first_response_at,${csvEscape(detail.firstResponseAt ? new Date(detail.firstResponseAt as any).toISOString() : '')}`,
+      `resolved_at,${csvEscape(detail.resolvedAt ? new Date(detail.resolvedAt as any).toISOString() : '')}`,
+      `closed_at,${csvEscape(detail.closedAt ? new Date(detail.closedAt as any).toISOString() : '')}`,
+      `tags,${csvEscape(((detail as any).tags || []).map((t: any) => t.name).join('; '))}`,
+      '',
+      // Reply transcript
+      'reply_index,timestamp,author,role,is_internal,message',
+    ];
+
+    const comments = (detail.comments || []) as any[];
+    comments.forEach((c, idx) => {
+      const authorName = [c.userFirstName, c.userLastName]
+        .filter(Boolean)
+        .join(' ');
+      lines.push(
+        [
+          idx + 1,
+          csvEscape(new Date(c.createdAt).toISOString()),
+          csvEscape(authorName),
+          c.isStaffReply ? 'staff' : 'customer',
+          c.isInternal ? 'yes' : 'no',
+          csvEscape(c.message),
+        ].join(','),
+      );
+    });
+
+    const baseName = (detail.referenceNumber || detail.id).replace(/[^a-zA-Z0-9-]/g, '_');
+    return {
+      csv: lines.join('\n'),
+      filename: `ticket_${baseName}_${now.toISOString().split('T')[0]}.csv`,
+    };
+  }
+
   async exportReport(
     type: string,
     dateFrom?: string,
@@ -2739,6 +3256,52 @@ export class SupportService implements OnModuleInit {
           ['FRT Breaches', 'frtBreaches'],
           ['TTR Breaches', 'ttrBreaches'],
         ];
+      case 'frt':
+        return [
+          ['Reference', 'referenceNumber'],
+          ['Subject', 'subject'],
+          ['Priority', 'priority'],
+          ['Category', 'category'],
+          ['Assignee', 'assignee'],
+          ['Created', 'createdAt'],
+          ['First Response', 'firstResponseAt'],
+          ['FRT Minutes', 'frtMinutes'],
+          ['Target (min)', 'targetMinutes'],
+          ['Within SLA', 'withinSla'],
+        ];
+      case 'ttr':
+        return [
+          ['Reference', 'referenceNumber'],
+          ['Subject', 'subject'],
+          ['Priority', 'priority'],
+          ['Category', 'category'],
+          ['Assignee', 'assignee'],
+          ['Created', 'createdAt'],
+          ['Resolved', 'resolvedAt'],
+          ['TTR Minutes', 'ttrMinutes'],
+          ['Target (min)', 'targetMinutes'],
+          ['Within SLA', 'withinSla'],
+        ];
+      case 'escalation':
+        return [
+          ['Reference', 'referenceNumber'],
+          ['Subject', 'subject'],
+          ['Event', 'eventType'],
+          ['Triggered At', 'triggeredAt'],
+          ['Assignee', 'assignee'],
+          ['Notified', 'notifiedCount'],
+        ];
+      case 'overdue':
+        return [
+          ['Reference', 'referenceNumber'],
+          ['Subject', 'subject'],
+          ['Priority', 'priority'],
+          ['Category', 'category'],
+          ['Status', 'status'],
+          ['Assignee', 'assignee'],
+          ['Age (min)', 'ageMinutes'],
+          ['Breach', 'breachKind'],
+        ];
       default:
         throw new BadRequestException('Invalid report type');
     }
@@ -2761,9 +3324,261 @@ export class SupportService implements OnModuleInit {
       case 'agents':
       case 'agent-performance':
         return this.getAgentPerformance(dateFrom, dateTo);
+      case 'frt':
+        return this.getFrtReport(dateFrom, dateTo);
+      case 'ttr':
+        return this.getResolutionTimeReport(dateFrom, dateTo);
+      case 'escalation':
+        return this.getEscalationReport(dateFrom, dateTo);
+      case 'overdue':
+        return this.getOverdueReport();
       default:
         throw new BadRequestException('Invalid report type');
     }
+  }
+
+  // ─── Standalone reports ─────────────────────────────────
+  //
+  // Each of these is the row-per-event/row-per-ticket version Amna
+  // asked for. The existing `getKPIs` covers the *summary* numbers
+  // (avgFrtMinutes, slaCompliance, etc.); these surface the underlying
+  // tickets one row at a time so supervisors can drill in.
+
+  // First Response Time per ticket: one row per ticket that received a
+  // first staff reply (firstResponseAt set). Filtered to the requested
+  // window by firstResponseAt so the report is "what was responded to
+  // in this period", not "what was created in it".
+  async getFrtReport(dateFrom?: string, dateTo?: string) {
+    const assigneeUsers = alias(users, 'assignee_users');
+    const conditions: any[] = [sql`${tickets.firstResponseAt} IS NOT NULL`];
+    if (dateFrom)
+      conditions.push(
+        sql`${tickets.firstResponseAt} >= ${new Date(dateFrom)}`,
+      );
+    if (dateTo)
+      conditions.push(sql`${tickets.firstResponseAt} <= ${new Date(dateTo)}`);
+
+    const rows = await db
+      .select({
+        referenceNumber: tickets.referenceNumber,
+        subject: tickets.subject,
+        priority: tickets.priority,
+        category: tickets.category,
+        createdAt: tickets.createdAt,
+        firstResponseAt: tickets.firstResponseAt,
+        slaBreachedFrt: tickets.slaBreachedFrt,
+        assigneeFirstName: assigneeUsers.firstName,
+        assigneeLastName: assigneeUsers.lastName,
+      })
+      .from(tickets)
+      .leftJoin(assigneeUsers, eq(tickets.assigneeId, assigneeUsers.id))
+      .where(and(...conditions))
+      .orderBy(desc(tickets.firstResponseAt));
+
+    const policies = await db.select().from(slaPolicies);
+    const policyMap = new Map(policies.map((p) => [p.priority, p]));
+
+    return rows.map((r) => {
+      const frtMinutes = r.firstResponseAt
+        ? calculateBusinessMinutesElapsed(r.createdAt, r.firstResponseAt)
+        : null;
+      const target = policyMap.get(r.priority)?.frtMinutes ?? null;
+      return {
+        referenceNumber: r.referenceNumber,
+        subject: r.subject,
+        priority: r.priority,
+        category: r.category,
+        assignee: [r.assigneeFirstName, r.assigneeLastName]
+          .filter(Boolean)
+          .join(' ') || '—',
+        createdAt: new Date(r.createdAt).toISOString(),
+        firstResponseAt: r.firstResponseAt
+          ? new Date(r.firstResponseAt).toISOString()
+          : '',
+        frtMinutes,
+        targetMinutes: target,
+        withinSla: r.slaBreachedFrt ? 'No' : 'Yes',
+      };
+    });
+  }
+
+  // Resolution Time per ticket. Same shape as FRT but window-filters
+  // on resolvedAt and counts business-minutes from created → resolved
+  // minus accumulated on-hold time (matches the SLA counter).
+  async getResolutionTimeReport(dateFrom?: string, dateTo?: string) {
+    const assigneeUsers = alias(users, 'assignee_users');
+    const conditions: any[] = [sql`${tickets.resolvedAt} IS NOT NULL`];
+    if (dateFrom)
+      conditions.push(sql`${tickets.resolvedAt} >= ${new Date(dateFrom)}`);
+    if (dateTo)
+      conditions.push(sql`${tickets.resolvedAt} <= ${new Date(dateTo)}`);
+
+    const rows = await db
+      .select({
+        referenceNumber: tickets.referenceNumber,
+        subject: tickets.subject,
+        priority: tickets.priority,
+        category: tickets.category,
+        createdAt: tickets.createdAt,
+        resolvedAt: tickets.resolvedAt,
+        onHoldTotalMinutes: tickets.onHoldTotalMinutes,
+        slaBreachedTtr: tickets.slaBreachedTtr,
+        assigneeFirstName: assigneeUsers.firstName,
+        assigneeLastName: assigneeUsers.lastName,
+      })
+      .from(tickets)
+      .leftJoin(assigneeUsers, eq(tickets.assigneeId, assigneeUsers.id))
+      .where(and(...conditions))
+      .orderBy(desc(tickets.resolvedAt));
+
+    const policies = await db.select().from(slaPolicies);
+    const policyMap = new Map(policies.map((p) => [p.priority, p]));
+
+    return rows.map((r) => {
+      const elapsed = r.resolvedAt
+        ? calculateBusinessMinutesElapsed(r.createdAt, r.resolvedAt)
+        : 0;
+      const ttrMinutes = Math.max(
+        0,
+        elapsed - (r.onHoldTotalMinutes || 0),
+      );
+      const target = policyMap.get(r.priority)?.ttrMinutes ?? null;
+      return {
+        referenceNumber: r.referenceNumber,
+        subject: r.subject,
+        priority: r.priority,
+        category: r.category,
+        assignee: [r.assigneeFirstName, r.assigneeLastName]
+          .filter(Boolean)
+          .join(' ') || '—',
+        createdAt: new Date(r.createdAt).toISOString(),
+        resolvedAt: r.resolvedAt ? new Date(r.resolvedAt).toISOString() : '',
+        ttrMinutes,
+        targetMinutes: target,
+        withinSla: r.slaBreachedTtr ? 'No' : 'Yes',
+      };
+    });
+  }
+
+  // Escalation report: one row per sla_events entry of an escalation
+  // shape (breach, escalation triggered, priority bumped, reassigned).
+  // Joins the ticket so we get the reference + subject in the row.
+  async getEscalationReport(dateFrom?: string, dateTo?: string) {
+    const assigneeUsers = alias(users, 'assignee_users');
+    const conditions: any[] = [
+      inArray(slaEvents.eventType, [
+        SLA_EVENT_TYPES.FRT_BREACH,
+        SLA_EVENT_TYPES.TTR_BREACH,
+        SLA_EVENT_TYPES.ESCALATION_TRIGGERED,
+        SLA_EVENT_TYPES.PRIORITY_ESCALATED,
+        SLA_EVENT_TYPES.TTR_BREACH_REASSIGNED,
+      ]),
+    ];
+    if (dateFrom)
+      conditions.push(sql`${slaEvents.triggeredAt} >= ${new Date(dateFrom)}`);
+    if (dateTo)
+      conditions.push(sql`${slaEvents.triggeredAt} <= ${new Date(dateTo)}`);
+
+    const rows = await db
+      .select({
+        referenceNumber: tickets.referenceNumber,
+        subject: tickets.subject,
+        eventType: slaEvents.eventType,
+        triggeredAt: slaEvents.triggeredAt,
+        notifiedUserIds: slaEvents.notifiedUserIds,
+        assigneeFirstName: assigneeUsers.firstName,
+        assigneeLastName: assigneeUsers.lastName,
+      })
+      .from(slaEvents)
+      .innerJoin(tickets, eq(slaEvents.ticketId, tickets.id))
+      .leftJoin(assigneeUsers, eq(tickets.assigneeId, assigneeUsers.id))
+      .where(and(...conditions))
+      .orderBy(desc(slaEvents.triggeredAt));
+
+    return rows.map((r) => ({
+      referenceNumber: r.referenceNumber,
+      subject: r.subject,
+      eventType: r.eventType,
+      triggeredAt: new Date(r.triggeredAt).toISOString(),
+      assignee: [r.assigneeFirstName, r.assigneeLastName]
+        .filter(Boolean)
+        .join(' ') || '—',
+      notifiedCount: Array.isArray(r.notifiedUserIds)
+        ? (r.notifiedUserIds as unknown[]).length
+        : 0,
+    }));
+  }
+
+  // Overdue report: open tickets that are past their FRT or TTR
+  // target. Computed live (not stored) so it reflects the current
+  // policy without a backfill.
+  async getOverdueReport() {
+    const assigneeUsers = alias(users, 'assignee_users');
+    const rows = await db
+      .select({
+        referenceNumber: tickets.referenceNumber,
+        subject: tickets.subject,
+        priority: tickets.priority,
+        category: tickets.category,
+        status: tickets.status,
+        createdAt: tickets.createdAt,
+        firstResponseAt: tickets.firstResponseAt,
+        onHoldTotalMinutes: tickets.onHoldTotalMinutes,
+        slaBreachedFrt: tickets.slaBreachedFrt,
+        slaBreachedTtr: tickets.slaBreachedTtr,
+        assigneeFirstName: assigneeUsers.firstName,
+        assigneeLastName: assigneeUsers.lastName,
+      })
+      .from(tickets)
+      .leftJoin(assigneeUsers, eq(tickets.assigneeId, assigneeUsers.id))
+      .where(
+        inArray(tickets.status, [
+          TICKET_STATUS.NEW,
+          TICKET_STATUS.IN_PROGRESS,
+          TICKET_STATUS.ON_HOLD,
+        ]),
+      );
+
+    const policies = await db.select().from(slaPolicies);
+    const policyMap = new Map(policies.map((p) => [p.priority, p]));
+
+    const now = new Date();
+    const overdue: Array<Record<string, unknown>> = [];
+    for (const r of rows) {
+      const policy = policyMap.get(r.priority);
+      if (!policy) continue;
+
+      const totalElapsed = calculateBusinessMinutesElapsed(r.createdAt, now);
+      const effective = totalElapsed - (r.onHoldTotalMinutes || 0);
+
+      const frtOverdue =
+        !r.firstResponseAt && effective > policy.frtMinutes;
+      const ttrOverdue = effective > policy.ttrMinutes;
+
+      if (!frtOverdue && !ttrOverdue) continue;
+
+      overdue.push({
+        referenceNumber: r.referenceNumber,
+        subject: r.subject,
+        priority: r.priority,
+        category: r.category,
+        status: r.status,
+        assignee: [r.assigneeFirstName, r.assigneeLastName]
+          .filter(Boolean)
+          .join(' ') || '—',
+        ageMinutes: Math.round(effective),
+        breachKind: ttrOverdue
+          ? frtOverdue
+            ? 'FRT + TTR'
+            : 'TTR'
+          : 'FRT',
+      });
+    }
+
+    overdue.sort(
+      (a, b) => (b.ageMinutes as number) - (a.ageMinutes as number),
+    );
+    return overdue;
   }
 
   async exportReportPdf(
@@ -2785,6 +3600,14 @@ export class SupportService implements OnModuleInit {
         case 'agents':
         case 'agent-performance':
           return 'Agent Performance Report';
+        case 'frt':
+          return 'First Response Time Report';
+        case 'ttr':
+          return 'Resolution Time Report';
+        case 'escalation':
+          return 'Escalation Report';
+        case 'overdue':
+          return 'Overdue Tickets Report';
         default:
           throw new BadRequestException('Invalid report type');
       }
@@ -3205,6 +4028,7 @@ export class SupportService implements OnModuleInit {
     const [ticket] = await db
       .select({
         id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
         studentId: tickets.studentId,
         courseId: tickets.courseId,
         assigneeId: tickets.assigneeId,
@@ -3256,7 +4080,7 @@ export class SupportService implements OnModuleInit {
     resolvedBody = resolvedBody.replace(/\{\{learner_name\}\}/g, learnerName);
     resolvedBody = resolvedBody.replace(/\{\{learner_first_name\}\}/g, learnerFirstName);
     resolvedBody = resolvedBody.replace(/\{\{course_name\}\}/g, courseName);
-    resolvedBody = resolvedBody.replace(/\{\{ticket_id\}\}/g, ticketId.substring(0, 8));
+    resolvedBody = resolvedBody.replace(/\{\{ticket_id\}\}/g, ticket.referenceNumber);
     resolvedBody = resolvedBody.replace(/\{\{ticket_subject\}\}/g, ticket.subject || '');
     resolvedBody = resolvedBody.replace(/\{\{ticket_priority\}\}/g, ticket.priority || '');
     resolvedBody = resolvedBody.replace(/\{\{ticket_category\}\}/g, ticket.category || '');
@@ -3537,6 +4361,7 @@ export class SupportService implements OnModuleInit {
     const openTickets = await db
       .select({
         id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
         subject: tickets.subject,
         status: tickets.status,
         priority: tickets.priority,
@@ -4614,5 +5439,716 @@ export class SupportService implements OnModuleInit {
 
     await db.delete(kbCategories).where(eq(kbCategories.id, id));
     return { success: true };
+  }
+
+  // ─── Ticket Tags ───────────────────────────────────────
+  //
+  // Admin-curated taxonomy. The registry is exposed to all support
+  // users (chips need to render) but mutations + the per-ticket
+  // setTicketTags are gated in the controller. Naming is
+  // case-insensitive: "Refund" and "refund" collide.
+
+  async listTicketTags() {
+    return db
+      .select({
+        id: ticketTags.id,
+        name: ticketTags.name,
+        color: ticketTags.color,
+        description: ticketTags.description,
+        createdAt: ticketTags.createdAt,
+        usageCount: sql<number>`(
+          SELECT COUNT(*)::int FROM ${ticketTagAssignments}
+          WHERE ${ticketTagAssignments.tagId} = ${ticketTags.id}
+        )`,
+      })
+      .from(ticketTags)
+      .orderBy(asc(ticketTags.name));
+  }
+
+  async createTicketTag(
+    userId: string,
+    dto: { name: string; color?: string; description?: string },
+  ) {
+    const name = dto.name?.trim();
+    if (!name) throw new BadRequestException('Tag name is required');
+    if (name.length > 50) {
+      throw new BadRequestException('Tag name must be 50 chars or fewer');
+    }
+
+    // Validate color upfront so we can return a clean 400 instead of a
+    // Postgres CHECK violation. Accepts #RGB, #RRGGBB, or #RRGGBBAA.
+    const color = (dto.color || '#E5E7EB').trim();
+    if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(color)) {
+      throw new BadRequestException(
+        'Color must be a hex value like #6B7280',
+      );
+    }
+
+    try {
+      const [created] = await db
+        .insert(ticketTags)
+        .values({
+          name,
+          color,
+          description: dto.description?.trim() || null,
+          createdBy: userId,
+        })
+        .returning();
+      return created;
+    } catch (err: any) {
+      // 23505 = unique violation on ticket_tags_name_lower_idx
+      if (err?.code === '23505') {
+        throw new BadRequestException(
+          `A tag named "${name}" already exists.`,
+        );
+      }
+      throw err;
+    }
+  }
+
+  async updateTicketTag(
+    id: string,
+    dto: { name?: string; color?: string; description?: string },
+  ) {
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+
+    if (dto.name !== undefined) {
+      const name = dto.name.trim();
+      if (!name) throw new BadRequestException('Tag name cannot be empty');
+      if (name.length > 50) {
+        throw new BadRequestException('Tag name must be 50 chars or fewer');
+      }
+      updates.name = name;
+    }
+
+    if (dto.color !== undefined) {
+      const color = dto.color.trim();
+      if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(color)) {
+        throw new BadRequestException(
+          'Color must be a hex value like #6B7280',
+        );
+      }
+      updates.color = color;
+    }
+
+    if (dto.description !== undefined) {
+      updates.description = dto.description.trim() || null;
+    }
+
+    try {
+      const [updated] = await db
+        .update(ticketTags)
+        .set(updates)
+        .where(eq(ticketTags.id, id))
+        .returning();
+      if (!updated) throw new NotFoundException('Tag not found');
+      return updated;
+    } catch (err: any) {
+      if (err?.code === '23505') {
+        throw new BadRequestException('A tag with that name already exists.');
+      }
+      throw err;
+    }
+  }
+
+  async deleteTicketTag(id: string) {
+    // Cascade via the FK — junction rows go too. No need to count
+    // usage and bail out: an admin clicking "delete" wants the tag
+    // gone, even if some tickets carry it.
+    const [deleted] = await db
+      .delete(ticketTags)
+      .where(eq(ticketTags.id, id))
+      .returning();
+    if (!deleted) throw new NotFoundException('Tag not found');
+    return { success: true };
+  }
+
+  // setTicketTags replaces the ticket's tag set with the provided
+  // tagIds in one transaction. We don't bother computing a minimal
+  // diff — the (ticket, tag) PK gives us a clean delete-then-insert
+  // path, and tickets rarely carry more than a handful of tags.
+  async setTicketTags(
+    user: AuthenticatedUser,
+    ticketId: string,
+    tagIds: string[],
+  ) {
+    // Reuse the same access rule as addComment: agents can only modify
+    // their own assigned tickets; supervisors and admins are unrestricted.
+    await this.assertAgentOwnership(user, ticketId);
+
+    // Dedupe + validate the requested tag IDs exist before we touch
+    // the junction. Returning a 400 with the missing IDs is much
+    // friendlier than the bare FK violation Postgres would emit.
+    const uniqueIds = Array.from(new Set(tagIds.filter(Boolean)));
+    if (uniqueIds.length > 0) {
+      const found = await db
+        .select({ id: ticketTags.id })
+        .from(ticketTags)
+        .where(inArray(ticketTags.id, uniqueIds));
+      if (found.length !== uniqueIds.length) {
+        const foundSet = new Set(found.map((r) => r.id));
+        const missing = uniqueIds.filter((id) => !foundSet.has(id));
+        throw new BadRequestException(
+          `Unknown tag id(s): ${missing.join(', ')}`,
+        );
+      }
+    }
+
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(ticketTagAssignments)
+        .where(eq(ticketTagAssignments.ticketId, ticketId));
+
+      if (uniqueIds.length > 0) {
+        await tx.insert(ticketTagAssignments).values(
+          uniqueIds.map((tagId) => ({
+            ticketId,
+            tagId,
+            assignedBy: user.id,
+          })),
+        );
+      }
+    });
+
+    return this.getTicketTags(ticketId);
+  }
+
+  async getTicketTags(ticketId: string) {
+    return db
+      .select({
+        id: ticketTags.id,
+        name: ticketTags.name,
+        color: ticketTags.color,
+      })
+      .from(ticketTagAssignments)
+      .innerJoin(
+        ticketTags,
+        eq(ticketTagAssignments.tagId, ticketTags.id),
+      )
+      .where(eq(ticketTagAssignments.ticketId, ticketId))
+      .orderBy(asc(ticketTags.name));
+  }
+
+  // ─── Audit log helper ──────────────────────────────────
+  //
+  // Wraps the generic audit_logs table for ticket-scoped events. Used
+  // by the merge, transfer, and tag flows so the support audit trail
+  // is queryable from a single table regardless of which mutation
+  // touched the row.
+  async logTicketAudit(
+    action: string,
+    ticketId: string,
+    userId: string,
+    metadata?: Record<string, unknown>,
+    ipAddress?: string | null,
+  ) {
+    try {
+      await db.insert(auditLogs).values({
+        entityType: 'ticket',
+        entityId: ticketId,
+        action,
+        performedBy: userId,
+        metadata: metadata ?? null,
+        ipAddress: ipAddress ?? null,
+      });
+    } catch (err) {
+      // Audit failures should never block a primary action. They get
+      // logged so ops can spot a pattern of dropped audit writes.
+      this.logger.warn(
+        `Audit log failed for ticket ${ticketId}/${action}: ${err}`,
+      );
+    }
+  }
+
+  async getTicketAuditLog(ticketId: string, limit = 100) {
+    return db
+      .select({
+        id: auditLogs.id,
+        action: auditLogs.action,
+        performedBy: auditLogs.performedBy,
+        metadata: auditLogs.metadata,
+        createdAt: auditLogs.createdAt,
+        performerFirstName: users.firstName,
+        performerLastName: users.lastName,
+        performerEmail: users.email,
+      })
+      .from(auditLogs)
+      .leftJoin(users, eq(auditLogs.performedBy, users.id))
+      .where(
+        and(
+          eq(auditLogs.entityType, 'ticket'),
+          eq(auditLogs.entityId, ticketId),
+        ),
+      )
+      .orderBy(desc(auditLogs.createdAt))
+      .limit(Math.min(Math.max(limit, 1), 500));
+  }
+
+  // ─── Merge ────────────────────────────────────────────
+  //
+  // Combines two tickets from the same customer into one. The source
+  // becomes a closed shell that points to the target; the target
+  // inherits replies + tags. We deliberately keep the source row
+  // (rather than hard-deleting) so the audit trail covers what was
+  // merged and supervisors can refund or revert if needed.
+  async mergeTicket(
+    user: AuthenticatedUser,
+    sourceId: string,
+    targetId: string,
+    note?: string,
+  ) {
+    if (sourceId === targetId) {
+      throw new BadRequestException('Source and target must differ');
+    }
+
+    const [source] = await db
+      .select({
+        id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        studentId: tickets.studentId,
+        guestEmail: tickets.guestEmail,
+        subject: tickets.subject,
+        status: tickets.status,
+        mergedIntoTicketId: tickets.mergedIntoTicketId,
+      })
+      .from(tickets)
+      .where(eq(tickets.id, sourceId));
+    if (!source) throw new NotFoundException('Source ticket not found');
+
+    const [target] = await db
+      .select({
+        id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        studentId: tickets.studentId,
+        guestEmail: tickets.guestEmail,
+        status: tickets.status,
+      })
+      .from(tickets)
+      .where(eq(tickets.id, targetId));
+    if (!target) throw new NotFoundException('Target ticket not found');
+
+    if (source.mergedIntoTicketId) {
+      throw new BadRequestException(
+        'Source ticket is already merged into another ticket',
+      );
+    }
+
+    // Same-customer rule. Guests are matched by email (case-insensitive)
+    // because the studentId is the shared sentinel.
+    const sameCustomer =
+      source.studentId === target.studentId &&
+      (source.studentId !== GUEST_USER_ID ||
+        (source.guestEmail || '').toLowerCase() ===
+          (target.guestEmail || '').toLowerCase());
+    if (!sameCustomer) {
+      throw new BadRequestException(
+        'Cannot merge tickets from different customers',
+      );
+    }
+
+    await db.transaction(async (tx) => {
+      // Move replies. The target gets the full union sorted by
+      // createdAt at read time — no need to renumber.
+      await tx
+        .update(ticketReplies)
+        .set({ ticketId: targetId })
+        .where(eq(ticketReplies.ticketId, sourceId));
+
+      // Move tag assignments. (target, tag) is the natural key; we
+      // delete any duplicates on the source side first so we don't
+      // hit the PK on insert.
+      const existingOnTarget = await tx
+        .select({ tagId: ticketTagAssignments.tagId })
+        .from(ticketTagAssignments)
+        .where(eq(ticketTagAssignments.ticketId, targetId));
+      const targetTagSet = new Set(existingOnTarget.map((r) => r.tagId));
+
+      const sourceTags = await tx
+        .select({ tagId: ticketTagAssignments.tagId })
+        .from(ticketTagAssignments)
+        .where(eq(ticketTagAssignments.ticketId, sourceId));
+
+      await tx
+        .delete(ticketTagAssignments)
+        .where(eq(ticketTagAssignments.ticketId, sourceId));
+
+      const newTagRows = sourceTags
+        .filter((r) => !targetTagSet.has(r.tagId))
+        .map((r) => ({
+          ticketId: targetId,
+          tagId: r.tagId,
+          assignedBy: user.id,
+        }));
+      if (newTagRows.length > 0) {
+        await tx.insert(ticketTagAssignments).values(newTagRows);
+      }
+
+      // Drop a system-style internal note on the target so future
+      // viewers see what was folded in.
+      const mergeNote = [
+        `Ticket ${source.referenceNumber} ("${source.subject}") was merged into this ticket.`,
+        note ? `Note: ${note}` : null,
+      ]
+        .filter(Boolean)
+        .join('\n');
+      await tx.insert(ticketReplies).values({
+        ticketId: targetId,
+        userId: user.id,
+        message: mergeNote,
+        isStaffReply: true,
+        isInternal: true,
+      });
+
+      // Lock the source.
+      await tx
+        .update(tickets)
+        .set({
+          status: TICKET_STATUS.CLOSED,
+          closedAt: new Date(),
+          updatedAt: new Date(),
+          mergedIntoTicketId: targetId,
+        })
+        .where(eq(tickets.id, sourceId));
+
+      // Touch the target's updatedAt so it floats to the top of the
+      // queue and supervisors see the merge land.
+      await tx
+        .update(tickets)
+        .set({ updatedAt: new Date() })
+        .where(eq(tickets.id, targetId));
+    });
+
+    await this.logTicketAudit('merged', sourceId, user.id, {
+      targetTicketId: targetId,
+      targetReference: target.referenceNumber,
+      note: note || null,
+    });
+    await this.logTicketAudit('merge_received', targetId, user.id, {
+      sourceTicketId: sourceId,
+      sourceReference: source.referenceNumber,
+    });
+
+    return { success: true, targetTicketId: targetId };
+  }
+
+  // ─── Transfer ─────────────────────────────────────────
+  //
+  // "Transfer" here means changing the ticket's category (which routes
+  // it to a different work queue) and re-running auto-assignment so
+  // it lands with the right agent. We don't model "departments" as
+  // a separate entity because they don't exist in the data model;
+  // categories are the closest concept.
+  async transferTicket(
+    user: AuthenticatedUser,
+    ticketId: string,
+    dto: { category: string; reason?: string; reassign?: boolean },
+  ) {
+    // Validate category — same admin-extensible check as createTicket.
+    const { isValidSlug } = await this.resolveCategoryPriority(dto.category);
+    if (!isValidSlug) {
+      throw new BadRequestException(
+        `Unknown category "${dto.category}". Ask an admin to add it under Settings → Categories.`,
+      );
+    }
+
+    const [existing] = await db
+      .select({
+        id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        studentId: tickets.studentId,
+        category: tickets.category,
+        assigneeId: tickets.assigneeId,
+        subject: tickets.subject,
+        status: tickets.status,
+      })
+      .from(tickets)
+      .where(eq(tickets.id, ticketId));
+    if (!existing) throw new NotFoundException('Ticket not found');
+
+    if (
+      existing.status === TICKET_STATUS.RESOLVED ||
+      existing.status === TICKET_STATUS.CLOSED
+    ) {
+      throw new BadRequestException(
+        'Cannot transfer a resolved or closed ticket',
+      );
+    }
+
+    if (existing.category === dto.category) {
+      throw new BadRequestException(
+        `Ticket is already in the "${dto.category}" category`,
+      );
+    }
+
+    // Find the next agent for the new category. Default to re-running
+    // auto-assignment unless the caller opts out.
+    const shouldReassign = dto.reassign !== false;
+    const newAssigneeId = shouldReassign
+      ? await this.findNextAgent()
+      : existing.assigneeId;
+
+    await db
+      .update(tickets)
+      .set({
+        category: dto.category,
+        assigneeId: newAssigneeId,
+        updatedAt: new Date(),
+      })
+      .where(eq(tickets.id, ticketId));
+
+    // Internal note for the audit trail in the conversation view.
+    await db.insert(ticketReplies).values({
+      ticketId,
+      userId: user.id,
+      message: [
+        `Ticket transferred from "${existing.category}" to "${dto.category}".`,
+        dto.reason ? `Reason: ${dto.reason}` : null,
+      ]
+        .filter(Boolean)
+        .join('\n'),
+      isStaffReply: true,
+      isInternal: true,
+    });
+
+    await this.logTicketAudit('transferred', ticketId, user.id, {
+      fromCategory: existing.category,
+      toCategory: dto.category,
+      reassigned: shouldReassign,
+      previousAssigneeId: existing.assigneeId,
+      newAssigneeId,
+      reason: dto.reason || null,
+    });
+
+    return { success: true, ticketId, newAssigneeId };
+  }
+
+  // ─── Attachment download log ──────────────────────────
+  //
+  // Recorded by the FE when a staff member clicks the attachment chip.
+  // Best-effort — failed inserts don't block the download.
+  async recordAttachmentDownload(
+    user: AuthenticatedUser,
+    ticketId: string,
+    attachmentUrl: string,
+    ipAddress?: string | null,
+    userAgent?: string | null,
+  ) {
+    // Reuse the existing access check so an unassigned agent can't
+    // log themselves as downloading a ticket they couldn't read.
+    await this.assertAgentOwnership(user, ticketId);
+    try {
+      await db.insert(attachmentDownloadEvents).values({
+        ticketId,
+        attachmentUrl: attachmentUrl.slice(0, 500),
+        downloadedBy: user.id,
+        ipAddress: ipAddress ? ipAddress.slice(0, 45) : null,
+        userAgent: userAgent ? userAgent.slice(0, 500) : null,
+      });
+    } catch (err) {
+      this.logger.warn(`Attachment download log failed: ${err}`);
+    }
+    return { success: true };
+  }
+
+  async getAttachmentDownloadLog(ticketId: string, limit = 100) {
+    return db
+      .select({
+        id: attachmentDownloadEvents.id,
+        attachmentUrl: attachmentDownloadEvents.attachmentUrl,
+        downloadedAt: attachmentDownloadEvents.downloadedAt,
+        ipAddress: attachmentDownloadEvents.ipAddress,
+        downloaderFirstName: users.firstName,
+        downloaderLastName: users.lastName,
+        downloaderEmail: users.email,
+      })
+      .from(attachmentDownloadEvents)
+      .leftJoin(users, eq(attachmentDownloadEvents.downloadedBy, users.id))
+      .where(eq(attachmentDownloadEvents.ticketId, ticketId))
+      .orderBy(desc(attachmentDownloadEvents.downloadedAt))
+      .limit(Math.min(Math.max(limit, 1), 500));
+  }
+
+  // ─── Attachment scan ──────────────────────────────────
+  //
+  // Pluggable scanner integration. Today we just record a 'pending'
+  // row on ticket create; the actual scan is meant to run async via
+  // a real scanner (Cloud Storage scanning, ClamAV pod, third-party).
+  // Whoever wires that scanner can write back to the same row.
+  async recordAttachmentScanPending(
+    ticketId: string,
+    attachmentUrl: string,
+  ) {
+    if (!attachmentUrl) return;
+    try {
+      await db
+        .insert(ticketAttachmentScans)
+        .values({
+          ticketId,
+          attachmentUrl: attachmentUrl.slice(0, 500),
+          status: 'pending',
+          scanner: process.env.ATTACHMENT_SCANNER_NAME || 'none',
+        })
+        .onConflictDoNothing();
+    } catch (err) {
+      this.logger.warn(`Attachment scan record failed: ${err}`);
+    }
+  }
+
+  async getAttachmentScanStatus(ticketId: string, attachmentUrl: string) {
+    const [row] = await db
+      .select({
+        status: ticketAttachmentScans.status,
+        details: ticketAttachmentScans.details,
+        scanner: ticketAttachmentScans.scanner,
+        scannedAt: ticketAttachmentScans.scannedAt,
+      })
+      .from(ticketAttachmentScans)
+      .where(
+        and(
+          eq(ticketAttachmentScans.ticketId, ticketId),
+          eq(ticketAttachmentScans.attachmentUrl, attachmentUrl),
+        ),
+      );
+    return row || null;
+  }
+
+  // ─── Retention policy ─────────────────────────────────
+  //
+  // The actual purge is implemented as a stub today: when retention
+  // is enabled (days > 0) we LOG which tickets would be purged but
+  // don't delete. Hard-deleting a ticket loses learner history that
+  // legal might still need; the deferred enforcement gives Amna a
+  // policy hook to flip on after she's confirmed the rules with
+  // compliance. Wire enforcement by replacing the log with a delete
+  // / archive write inside getRetentionCandidates().
+
+  async getRetentionDays(): Promise<number> {
+    try {
+      const [row] = await db
+        .select({ value: supportConfig.value })
+        .from(supportConfig)
+        .where(eq(supportConfig.key, 'ticket_retention_days'));
+      const n = Number((row?.value as any)?.days);
+      return Number.isFinite(n) && n > 0 ? n : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  async setRetentionDays(days: number) {
+    const safeDays = Math.max(0, Math.floor(Number(days) || 0));
+    await db
+      .insert(supportConfig)
+      .values({
+        key: 'ticket_retention_days',
+        value: { days: safeDays },
+      })
+      .onConflictDoUpdate({
+        target: supportConfig.key,
+        set: { value: { days: safeDays }, updatedAt: new Date() },
+      });
+    return { success: true, retentionDays: safeDays };
+  }
+
+  async getRetentionCandidates(): Promise<
+    { id: string; referenceNumber: string; closedAt: Date | null }[]
+  > {
+    const days = await this.getRetentionDays();
+    if (days <= 0) return [];
+    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    return db
+      .select({
+        id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        closedAt: tickets.closedAt,
+      })
+      .from(tickets)
+      .where(
+        and(
+          eq(tickets.status, TICKET_STATUS.CLOSED),
+          sql`${tickets.closedAt} IS NOT NULL`,
+          sql`${tickets.closedAt} < ${cutoff}`,
+        ),
+      )
+      .limit(500);
+  }
+
+  // ─── KB Search Analytics ───────────────────────────────
+  //
+  // Public surface logs every search submitted on the help center
+  // (debounced on the FE to avoid one row per keystroke). Aggregated
+  // analytics surface for admins so they can see (a) most-asked
+  // questions, (b) zero-result queries that flag content gaps.
+
+  async logKbSearch(input: {
+    query: string;
+    locale: string;
+    resultsCount: number;
+    userId?: string | null;
+  }) {
+    const cleaned = (input.query || '').trim().toLowerCase().slice(0, 200);
+    if (!cleaned) return { success: true };
+
+    // Locale defensive — fall back to 'en' if the client sends garbage.
+    const locale = ['en', 'ar'].includes(input.locale) ? input.locale : 'en';
+
+    await db.insert(kbSearchEvents).values({
+      query: cleaned,
+      locale,
+      resultsCount: Math.max(0, Math.min(input.resultsCount || 0, 9999)),
+      userId: input.userId ?? null,
+    });
+    return { success: true };
+  }
+
+  async getKbSearchAnalytics(dateFrom?: string, dateTo?: string, limit = 25) {
+    const conditions: any[] = [];
+    if (dateFrom)
+      conditions.push(sql`${kbSearchEvents.searchedAt} >= ${new Date(dateFrom)}`);
+    if (dateTo)
+      conditions.push(sql`${kbSearchEvents.searchedAt} <= ${new Date(dateTo)}`);
+
+    const where = conditions.length ? and(...conditions) : undefined;
+
+    // Top queries — count occurrences and average results to spot
+    // zero-result queries that consistently dead-end.
+    const topQueries = await db
+      .select({
+        query: kbSearchEvents.query,
+        locale: kbSearchEvents.locale,
+        searches: count(),
+        avgResults: sql<number>`avg(${kbSearchEvents.resultsCount})::float`,
+        zeroResultCount: sql<number>`sum(case when ${kbSearchEvents.resultsCount} = 0 then 1 else 0 end)::int`,
+      })
+      .from(kbSearchEvents)
+      .where(where)
+      .groupBy(kbSearchEvents.query, kbSearchEvents.locale)
+      .orderBy(desc(count()))
+      .limit(Math.min(Math.max(limit, 1), 100));
+
+    // Totals
+    const [totals] = await db
+      .select({
+        total: count(),
+        zeroResults: sql<number>`sum(case when ${kbSearchEvents.resultsCount} = 0 then 1 else 0 end)::int`,
+      })
+      .from(kbSearchEvents)
+      .where(where);
+
+    return {
+      totalSearches: totals?.total ?? 0,
+      zeroResultSearches: totals?.zeroResults ?? 0,
+      zeroResultRate:
+        totals?.total && totals.total > 0
+          ? Math.round(((totals.zeroResults ?? 0) / totals.total) * 100)
+          : 0,
+      topQueries: topQueries.map((q) => ({
+        query: q.query,
+        locale: q.locale,
+        searches: Number(q.searches),
+        avgResults: q.avgResults ? Number(q.avgResults).toFixed(1) : '0.0',
+        zeroResultCount: Number(q.zeroResultCount || 0),
+      })),
+    };
   }
 }

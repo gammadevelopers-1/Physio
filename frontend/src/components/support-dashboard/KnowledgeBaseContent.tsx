@@ -43,7 +43,7 @@ const KnowledgeBaseContent = () => {
                   </p>
                 </div>
                 {!canEdit && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] font-medium whitespace-nowrap">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#F3F4F6] text-[#4B5563] font-medium whitespace-nowrap">
                     {t("kbPage.viewOnlyBadge")}
                   </span>
                 )}

@@ -24,9 +24,10 @@ import {
   Coins,
   Award,
   Mail,
+  Headphones,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { roleRequestsApi, profileApi, adminApi } from "@/lib/api";
+import { roleRequestsApi, profileApi, adminApi, supportApi } from "@/lib/api";
 
 interface AdminProfile {
   name: string;
@@ -48,6 +49,7 @@ interface AdminMobileSidebarProps {
 const AdminMobileSidebar = ({ admin }: AdminMobileSidebarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [pendingSupportTeamCount, setPendingSupportTeamCount] = useState(0);
   const [stats, setStats] = useState<{
     totalUsers: number;
     totalCourses: number;
@@ -86,6 +88,19 @@ const AdminMobileSidebar = ({ admin }: AdminMobileSidebarProps) => {
     fetchPendingCount();
   }, []);
 
+  // Fetch pending support-team-request count for sidebar badge
+  useEffect(() => {
+    const fetchSupportPending = async () => {
+      try {
+        const { count } = await supportApi.getPendingTeamRequestCount();
+        setPendingSupportTeamCount(count);
+      } catch {
+        // Not admin or transient — ignore
+      }
+    };
+    fetchSupportPending();
+  }, []);
+
   // Fetch sidebar profile-card stats
   useEffect(() => {
     const fetchStats = async () => {
@@ -116,6 +131,12 @@ const AdminMobileSidebar = ({ admin }: AdminMobileSidebarProps) => {
       href: `/${locale}/dashboard/admin/role-requests`,
       icon: UserCheck,
       badge: pendingCount > 0 ? pendingCount : undefined,
+    },
+    {
+      label: t("sidebar.support"),
+      href: `/${locale}/dashboard/admin/support`,
+      icon: Headphones,
+      badge: pendingSupportTeamCount > 0 ? pendingSupportTeamCount : undefined,
     },
     {
       label: t("sidebar.courses"),

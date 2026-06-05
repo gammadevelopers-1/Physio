@@ -47,7 +47,10 @@ export const tickets = pgTable(
     openedBy: uuid('opened_by').references(() => users.id, {
       onDelete: 'set null',
     }),
-    guestTrackingToken: varchar('guest_tracking_token', { length: 100 }),
+    // Migration 0040 already created a partial unique index on this
+    // column for non-null values. Mirror that uniqueness here so a
+    // future `drizzle-kit generate` doesn't drop it on diff.
+    guestTrackingToken: varchar('guest_tracking_token', { length: 100 }).unique(),
     guestName: varchar('guest_name', { length: 100 }),
     guestEmail: varchar('guest_email', { length: 255 }),
   },
@@ -60,10 +63,10 @@ export const tickets = pgTable(
       'tickets_status_check',
       sql`${table.status} IN ('new', 'in_progress', 'on_hold', 'resolved', 'closed')`,
     ),
-    check(
-      'tickets_category_check',
-      sql`${table.category} IN ('billing', 'login', 'content', 'certificate', 'technical', 'other')`,
-    ),
+    // tickets_category_check intentionally absent — categories are
+    // admin-extensible via support_config.ticket_categories (see
+    // migration 0048). Validation lives in SupportService against the
+    // live list so admins can grow the taxonomy without migrations.
     check(
       'tickets_priority_check',
       sql`${table.priority} IN ('high', 'medium', 'low')`,
@@ -149,6 +152,22 @@ export const TICKET_PRIORITY = {
   MEDIUM: 'medium',
   LOW: 'low',
 } as const;
+
+/**
+ * Whitelisted on-hold reasons. Kept as a closed enum so the auto-close
+ * cron in `sla-monitor.service.ts` can literal-match without breaking
+ * on supervisor typos (e.g. "waitng for student" no longer auto-closes).
+ * Add new reasons here AND update any cron that literal-matches them.
+ */
+export const ON_HOLD_REASONS = {
+  WAITING_FOR_STUDENT_RESPONSE: 'waiting for student response',
+  WAITING_FOR_THIRD_PARTY: 'waiting for third party',
+  WAITING_FOR_INTERNAL_TEAM: 'waiting for internal team',
+  PENDING_INVESTIGATION: 'pending investigation',
+  OTHER: 'other',
+} as const;
+export type OnHoldReason =
+  (typeof ON_HOLD_REASONS)[keyof typeof ON_HOLD_REASONS];
 
 export type Ticket = typeof tickets.$inferSelect;
 export type NewTicket = typeof tickets.$inferInsert;

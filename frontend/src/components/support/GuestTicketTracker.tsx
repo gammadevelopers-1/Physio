@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { supportApi } from "@/lib/api";
 import { toast } from "sonner";
 import {
@@ -34,14 +34,6 @@ const statusStyles: Record<string, string> = {
   closed: "bg-[#F3F4F6] text-[#6B7280]",
 };
 
-const statusLabels: Record<string, string> = {
-  new: "New",
-  in_progress: "In Progress",
-  on_hold: "On Hold",
-  resolved: "Resolved",
-  closed: "Closed",
-};
-
 function getInitials(name: string): string {
   return name
     .split(" ")
@@ -51,20 +43,10 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
 export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const t = useTranslations("surveys.guestTracker");
 
   const [ticket, setTicket] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,13 +60,24 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
   const [ratingComment, setRatingComment] = useState("");
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
 
+  function formatDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+
   const fetchTicket = useCallback(async () => {
     try {
       const data = await supportApi.getGuestTicket(token);
       setTicket(data);
       setError(null);
     } catch {
-      setError("Ticket not found");
+      setError("not_found");
       setTicket(null);
     } finally {
       setIsLoading(false);
@@ -93,7 +86,11 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
 
   useEffect(() => {
     fetchTicket();
-    const interval = setInterval(fetchTicket, 60000);
+    const interval = setInterval(() => {
+      // Only poll while the tab is visible — saves API quota when the
+      // visitor leaves the tab open in the background.
+      if (document.visibilityState === "visible") fetchTicket();
+    }, 60000);
     return () => clearInterval(interval);
   }, [fetchTicket]);
 
@@ -103,10 +100,10 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
     try {
       await supportApi.addGuestReply(token, replyMessage.trim());
       setReplyMessage("");
-      toast.success("Reply sent successfully");
+      toast.success(t("replySent"));
       await fetchTicket();
     } catch {
-      toast.error("Failed to send reply. Please try again.");
+      toast.error(t("replyError"));
     } finally {
       setIsSending(false);
     }
@@ -121,16 +118,12 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
         score: ratingSelected,
         comment: ratingComment.trim() || undefined,
       });
-      toast.success("Thank you for your feedback!");
+      toast.success(t("csat.thankYouToast"));
       await fetchTicket();
     } catch (err: any) {
-      // Surface server-side edge cases (already submitted, expired, etc.)
       const message =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Failed to submit rating. Please try again.";
-      toast.error(typeof message === "string" ? message : "Failed to submit rating");
-      // Refetch so the widget reflects any server-side state change
+        err?.response?.data?.message || err?.message || t("csat.errorToast");
+      toast.error(typeof message === "string" ? message : t("csat.fallbackError"));
       await fetchTicket();
     } finally {
       setIsSubmittingRating(false);
@@ -152,12 +145,12 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
         dir={isRTL ? "rtl" : "ltr"}
       >
         <div className="text-center py-20">
-          <AlertTriangle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-gray-800 mb-2">
-            Ticket Not Found
+          <AlertTriangle className="w-12 h-12 text-[var(--color-text-secondary)] mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
+            {t("notFoundTitle")}
           </h2>
-          <p className="text-sm text-gray-500">
-            The tracking link may be invalid or expired.
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            {t("notFoundDescription")}
           </p>
         </div>
       </div>
@@ -165,6 +158,12 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
   }
 
   const guestInitials = ticket.guestName ? getInitials(ticket.guestName) : "G";
+
+  // Translate ticket status if known; fall back to raw string.
+  const knownStatuses = ["new", "in_progress", "on_hold", "resolved", "closed"];
+  const statusLabel = knownStatuses.includes(ticket.status)
+    ? t(`status.${ticket.status}` as Parameters<typeof t>[0])
+    : ticket.status;
 
   return (
     <div
@@ -176,22 +175,19 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#FFF8E6] mb-3">
           <Headphones className="w-6 h-6 text-[#a37f49]" />
         </div>
-        <h1
-          className="text-xl font-bold text-gray-900"
-          style={{ textAlign: isRTL ? "right" : "left" }}
-        >
-          Track Your Support Ticket
+        <h1 className="text-xl font-bold text-[var(--color-text-primary)]">
+          {t("pageTitle")}
         </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Ticket #{ticket.id.substring(0, 8)}
+        <p className="text-sm text-[var(--color-text-secondary)] mt-1">
+          {t("ticketIdLabel")} #{ticket.id.substring(0, 8)}
         </p>
       </div>
 
       {/* Ticket Info Card */}
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6 mb-4">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-6 mb-4">
         <div className="flex items-start justify-between gap-3">
           <h2
-            className="text-base font-semibold text-gray-900"
+            className="text-base font-semibold text-[var(--color-text-primary)]"
             style={{ textAlign: isRTL ? "right" : "left" }}
           >
             {ticket.subject}
@@ -199,38 +195,38 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
           <span
             className={`shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyles[ticket.status] || statusStyles.new}`}
           >
-            {statusLabels[ticket.status] || ticket.status}
+            {statusLabel}
           </span>
         </div>
         <p
-          className="text-sm text-gray-500 mt-2"
+          className="text-sm text-[var(--color-text-secondary)] mt-2"
           style={{ textAlign: isRTL ? "right" : "left" }}
         >
           {ticket.description}
         </p>
-        <div className="flex gap-4 mt-3 text-xs text-gray-400">
-          <span>Category: {ticket.category}</span>
-          <span>Submitted: {formatDate(ticket.createdAt)}</span>
+        <div className="flex gap-4 mt-3 text-xs text-[var(--color-text-secondary)]">
+          <span>{t("categoryLabel")} {ticket.category}</span>
+          <span>{t("submittedLabel")} {formatDate(ticket.createdAt)}</span>
         </div>
       </div>
 
       {/* Conversation Thread */}
       <div className="space-y-3 mb-4">
         {/* Initial message from guest */}
-        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
+        <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-8 h-8 rounded-full bg-[#8B5CF6] text-white text-xs font-bold flex items-center justify-center">
               {guestInitials}
             </div>
-            <span className="text-sm font-medium text-gray-800">
+            <span className="text-sm font-medium text-[var(--color-text-primary)]">
               {ticket.guestName}
             </span>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-[var(--color-text-secondary)]">
               {formatDate(ticket.createdAt)}
             </span>
           </div>
           <p
-            className="text-sm text-gray-700"
+            className="text-sm text-[var(--color-text-primary)]"
             style={{ textAlign: isRTL ? "right" : "left" }}
           >
             {ticket.description}
@@ -252,13 +248,13 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
               .filter(Boolean)
               .join(" ");
             const avatarInitials = isStaff
-              ? getInitials(staffName || "Support")
+              ? getInitials(staffName || t("supportAgentFallback"))
               : guestInitials;
 
             return (
               <div
                 key={comment.id}
-                className="bg-white rounded-2xl border border-[#E5E7EB] p-5"
+                className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5"
               >
                 <div className="flex items-center gap-2 mb-2">
                   <div
@@ -266,22 +262,24 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
                   >
                     {avatarInitials}
                   </div>
-                  <span className="text-sm font-medium text-gray-800">
-                    {isStaff ? staffName || "Support Agent" : ticket.guestName}
+                  <span className="text-sm font-medium text-[var(--color-text-primary)]">
+                    {isStaff
+                      ? staffName || t("supportAgentFallback")
+                      : ticket.guestName}
                   </span>
                   {isStaff && (
                     <span className="text-xs bg-[#FFF8E6] text-[#6b4e24] px-1.5 py-0.5 rounded font-medium">
-                      Support
+                      {t("supportBadge")}
                     </span>
                   )}
                   <span
-                    className={`text-xs text-gray-400 ${isRTL ? "mr-auto" : "ml-auto"}`}
+                    className={`text-xs text-[var(--color-text-secondary)] ${isRTL ? "mr-auto" : "ml-auto"}`}
                   >
                     {formatDate(comment.createdAt)}
                   </span>
                 </div>
                 <p
-                  className="text-sm text-gray-700"
+                  className="text-sm text-[var(--color-text-primary)]"
                   style={{ textAlign: isRTL ? "right" : "left" }}
                 >
                   {comment.message}
@@ -294,17 +292,19 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
 
       {/* Reply Box (only if ticket not closed) */}
       {ticket.status !== "closed" && (
-        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
+        <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
           <div className="flex items-center gap-2 mb-3">
-            <MessageSquare className="w-4 h-4 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">Reply</span>
+            <MessageSquare className="w-4 h-4 text-[var(--color-text-secondary)]" />
+            <span className="text-sm font-medium text-[var(--color-text-primary)]">
+              {t("replyHeader")}
+            </span>
           </div>
           <textarea
             rows={3}
             value={replyMessage}
             onChange={(e) => setReplyMessage(e.target.value)}
-            placeholder="Type your reply..."
-            className="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-lg text-sm resize-none focus:outline-none focus:border-[#a37f49]"
+            placeholder={t("replyPlaceholder")}
+            className="w-full px-3.5 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm resize-none focus:outline-none focus:border-[var(--color-input-focus)]"
             style={{ textAlign: isRTL ? "right" : "left" }}
           />
           <div
@@ -320,7 +320,7 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
               ) : (
                 <Send className="w-4 h-4" />
               )}
-              Send Reply
+              {isSending ? t("sendingReply") : t("sendReply")}
             </button>
           </div>
         </div>
@@ -329,7 +329,7 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
       {/* CSAT Rating Widget — shown for resolved/closed tickets */}
       {(ticket.status === "resolved" || ticket.status === "closed") &&
         ticket.csatSurvey && (
-          <div className="mt-4 bg-white rounded-2xl border border-[#E5E7EB] p-5">
+          <div className="mt-4 bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
             {(() => {
               const csat = ticket.csatSurvey as CsatSurveyState;
 
@@ -340,8 +340,8 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
                     <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#FFF8E6] mb-2">
                       <Star className="w-5 h-5 text-[#a37f49] fill-[#a37f49]" />
                     </div>
-                    <h3 className="text-sm font-semibold text-gray-800 mb-1">
-                      Thank you for your feedback!
+                    <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1">
+                      {t("csat.thankYouTitle")}
                     </h3>
                     {csat.score != null && (
                       <div className="flex items-center justify-center gap-1 mt-2">
@@ -351,7 +351,7 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
                             className={`w-5 h-5 ${
                               n <= (csat.score ?? 0)
                                 ? "text-[#a37f49] fill-[#a37f49]"
-                                : "text-gray-300"
+                                : "text-[var(--color-text-secondary)] opacity-40"
                             }`}
                           />
                         ))}
@@ -361,13 +361,13 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
                 );
               }
 
-              // State 2: Rating window expired (>72h since sent)
+              // State 2: Rating window expired
               if (csat.expired) {
                 return (
                   <div className="text-center py-2">
-                    <AlertTriangle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600">
-                      The rating window for this ticket has expired.
+                    <AlertTriangle className="w-8 h-8 text-[var(--color-text-secondary)] mx-auto mb-2" />
+                    <p className="text-sm text-[var(--color-text-secondary)]">
+                      {t("csat.expiredMessage")}
                     </p>
                   </div>
                 );
@@ -377,16 +377,16 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
               return (
                 <div>
                   <h3
-                    className="text-sm font-semibold text-gray-800 mb-1"
+                    className="text-sm font-semibold text-[var(--color-text-primary)] mb-1"
                     style={{ textAlign: isRTL ? "right" : "left" }}
                   >
-                    How was your support experience?
+                    {t("csat.prompt")}
                   </h3>
                   <p
-                    className="text-xs text-gray-500 mb-3"
+                    className="text-xs text-[var(--color-text-secondary)] mb-3"
                     style={{ textAlign: isRTL ? "right" : "left" }}
                   >
-                    Your feedback helps us improve. It only takes a moment.
+                    {t("csat.subprompt")}
                   </p>
                   <div
                     className={`flex items-center gap-1 mb-3 ${isRTL ? "justify-end" : "justify-start"}`}
@@ -402,13 +402,16 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
                           onMouseEnter={() => setRatingHover(n)}
                           onMouseLeave={() => setRatingHover(0)}
                           className="p-1 disabled:cursor-default"
-                          aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
+                          aria-label={t("csat.starAriaLabel", {
+                            n,
+                            plural: n > 1 ? "s" : "",
+                          })}
                         >
                           <Star
                             className={`w-7 h-7 transition-colors ${
                               filled
                                 ? "text-[#a37f49] fill-[#a37f49]"
-                                : "text-gray-300"
+                                : "text-[var(--color-text-secondary)] opacity-40"
                             }`}
                           />
                         </button>
@@ -418,14 +421,16 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
                   <textarea
                     rows={2}
                     value={ratingComment}
-                    onChange={(e) => setRatingComment(e.target.value.slice(0, 1000))}
-                    placeholder="Optional: tell us more about your experience"
+                    onChange={(e) =>
+                      setRatingComment(e.target.value.slice(0, 1000))
+                    }
+                    placeholder={t("csat.commentPlaceholder")}
                     disabled={isSubmittingRating}
-                    className="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-lg text-sm resize-none focus:outline-none focus:border-[#a37f49] disabled:bg-gray-50"
+                    className="w-full px-3.5 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm resize-none focus:outline-none focus:border-[var(--color-input-focus)] disabled:bg-[var(--color-surface-page)]"
                     style={{ textAlign: isRTL ? "right" : "left" }}
                   />
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-[10px] text-gray-400">
+                    <span className="text-[10px] text-[var(--color-text-secondary)]">
                       {ratingComment.length}/1000
                     </span>
                   </div>
@@ -443,7 +448,7 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
                       ) : (
                         <Send className="w-4 h-4" />
                       )}
-                      Submit Rating
+                      {t("csat.submit")}
                     </button>
                   </div>
                 </div>

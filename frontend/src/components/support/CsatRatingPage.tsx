@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import { useTranslations, useLocale } from "next-intl";
 import { supportApi } from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2, CheckCircle2, AlertTriangle, Star } from "lucide-react";
@@ -36,6 +37,9 @@ export default function CsatRatingPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const surveyId = params.surveyId as string;
+  const t = useTranslations("surveys.csat");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
 
   const [survey, setSurvey] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,7 +63,9 @@ export default function CsatRatingPage() {
         const data = await supportApi.getCsatSurvey(surveyId);
         setSurvey(data);
 
-        if (data.respondedAt) {
+        // Backend returns `alreadySubmitted` (computed) + `submittedAt`.
+        // Treat either as a sign the survey is done.
+        if (data.alreadySubmitted || data.submittedAt) {
           setSubmitted(true);
         }
       } catch (err: any) {
@@ -85,9 +91,9 @@ export default function CsatRatingPage() {
         comment: comment.trim() || undefined,
       });
       setSubmitted(true);
-      toast.success("Thank you for your feedback!");
+      toast.success(t("thankYouToast"));
     } catch (err: any) {
-      toast.error(err?.message || "Failed to submit rating. Please try again.");
+      toast.error(err?.message || t("errorToast"));
     } finally {
       setIsSubmitting(false);
     }
@@ -95,10 +101,15 @@ export default function CsatRatingPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-[#E5E7EB] p-8 max-w-md w-full text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#002D87] mx-auto" />
-          <p className="text-sm text-gray-500 mt-3">Loading survey...</p>
+      <div
+        dir={isRTL ? "rtl" : "ltr"}
+        className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center p-4"
+      >
+        <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-sm border border-[var(--color-border)] p-8 max-w-md w-full text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)] mx-auto" />
+          <p className="text-sm text-[var(--color-text-secondary)] mt-3">
+            {t("loading")}
+          </p>
         </div>
       </div>
     );
@@ -106,15 +117,17 @@ export default function CsatRatingPage() {
 
   if (error === "expired") {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-[#E5E7EB] p-8 max-w-md w-full text-center">
+      <div
+        dir={isRTL ? "rtl" : "ltr"}
+        className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center p-4"
+      >
+        <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-sm border border-[var(--color-border)] p-8 max-w-md w-full text-center">
           <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-          <h1 className="text-xl font-semibold text-gray-900 mb-2">
-            Survey Expired
+          <h1 className="text-xl font-semibold text-[var(--color-text-primary)] mb-2">
+            {t("expiredTitle")}
           </h1>
-          <p className="text-sm text-gray-500">
-            This survey has expired. CSAT surveys are valid for 48 hours after
-            being sent.
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            {t("expiredDescription")}
           </p>
         </div>
       </div>
@@ -123,15 +136,17 @@ export default function CsatRatingPage() {
 
   if (error === "not_found") {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-[#E5E7EB] p-8 max-w-md w-full text-center">
+      <div
+        dir={isRTL ? "rtl" : "ltr"}
+        className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center p-4"
+      >
+        <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-sm border border-[var(--color-border)] p-8 max-w-md w-full text-center">
           <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h1 className="text-xl font-semibold text-gray-900 mb-2">
-            Survey Not Found
+          <h1 className="text-xl font-semibold text-[var(--color-text-primary)] mb-2">
+            {t("notFoundTitle")}
           </h1>
-          <p className="text-sm text-gray-500">
-            We couldn&apos;t find this survey. It may have been removed or the
-            link is invalid.
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            {t("notFoundDescription")}
           </p>
         </div>
       </div>
@@ -140,16 +155,19 @@ export default function CsatRatingPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-[#E5E7EB] p-8 max-w-md w-full text-center">
+      <div
+        dir={isRTL ? "rtl" : "ltr"}
+        className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center p-4"
+      >
+        <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-sm border border-[var(--color-border)] p-8 max-w-md w-full text-center">
           <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
-          <h1 className="text-xl font-semibold text-gray-900 mb-2">
-            Thank You for Your Feedback!
+          <h1 className="text-xl font-semibold text-[var(--color-text-primary)] mb-2">
+            {t("thankYouTitle")}
           </h1>
-          <p className="text-sm text-gray-500">
-            {survey?.respondedAt
-              ? "You've already submitted your rating. Thank you!"
-              : "Your response has been recorded. We appreciate your time."}
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            {survey?.alreadySubmitted || survey?.submittedAt
+              ? t("alreadySubmittedMessage")
+              : t("submittedMessage")}
           </p>
         </div>
       </div>
@@ -157,16 +175,23 @@ export default function CsatRatingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-sm border border-[#E5E7EB] p-8 max-w-md w-full text-center">
-        <h2 className="text-lg font-bold text-[#002D87]">PhysioGuidance</h2>
-        <p className="text-xs text-gray-400 mb-6">Support Feedback</p>
+    <div
+      dir={isRTL ? "rtl" : "ltr"}
+      className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center p-4"
+    >
+      <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-sm border border-[var(--color-border)] p-8 max-w-md w-full text-center">
+        <h2 className="text-lg font-bold text-[var(--color-primary)]">
+          PhysioGuidance
+        </h2>
+        <p className="text-xs text-[var(--color-text-secondary)] mb-6">
+          {t("subtitle")}
+        </p>
 
-        <h1 className="text-xl font-semibold text-gray-900 mb-2">
-          How was your experience?
+        <h1 className="text-xl font-semibold text-[var(--color-text-primary)] mb-2">
+          {t("ratingPrompt")}
         </h1>
-        <p className="text-sm text-gray-500 mb-8">
-          Rate your support interaction
+        <p className="text-sm text-[var(--color-text-secondary)] mb-8">
+          {t("ratingSubprompt")}
         </p>
 
         <div className="flex justify-center gap-3 mb-6">
@@ -186,31 +211,31 @@ export default function CsatRatingPage() {
           ))}
         </div>
 
-        <div className="flex justify-between text-xs text-gray-400 mb-6 px-2">
-          <span>Very Bad</span>
-          <span>Excellent</span>
+        <div className="flex justify-between text-xs text-[var(--color-text-secondary)] mb-6 px-2">
+          <span>{t("scaleLow")}</span>
+          <span>{t("scaleHigh")}</span>
         </div>
 
         <textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           rows={3}
-          placeholder="Optional: Tell us more about your experience..."
-          className="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-lg text-sm mb-4 resize-none focus:outline-none focus:border-[#002D87]"
+          placeholder={t("commentPlaceholder")}
+          className="w-full px-3.5 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm mb-4 resize-none focus:outline-none focus:border-[var(--color-input-focus)]"
         />
 
         <button
           onClick={handleSubmit}
           disabled={!selectedScore || isSubmitting}
-          className="w-full py-2.5 bg-[#002D87] text-white text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity"
+          className="w-full py-2.5 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity"
         >
           {isSubmitting ? (
             <span className="flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
-              Submitting...
+              {t("submitting")}
             </span>
           ) : (
-            "Submit Rating"
+            t("submit")
           )}
         </button>
       </div>

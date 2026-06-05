@@ -3,6 +3,7 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
+import Image from "@tiptap/extension-image";
 import {
   Bold,
   Italic,
@@ -15,8 +16,10 @@ import {
   Strikethrough,
   Undo2,
   Redo2,
+  ImageIcon,
+  Loader2,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface RichTextEditorProps {
   value: string;
@@ -24,6 +27,12 @@ interface RichTextEditorProps {
   placeholder?: string;
   dir?: "ltr" | "rtl";
   minHeight?: number;
+  /**
+   * Optional image upload handler. Receives a File the user picked and
+   * must return the public URL of the uploaded image. When provided,
+   * an Image button is added to the toolbar that opens a file picker.
+   */
+  onImageUpload?: (file: File) => Promise<string>;
 }
 
 export function RichTextEditor({
@@ -32,13 +41,26 @@ export function RichTextEditor({
   placeholder = "Start writing...",
   dir = "ltr",
   minHeight = 140,
+  onImageUpload,
 }: RichTextEditorProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
       }),
       Placeholder.configure({ placeholder }),
+      Image.configure({
+        // Tiptap's Image extension renders inline by default — switching
+        // to block so images don't disrupt prose flow on resize.
+        inline: false,
+        allowBase64: false,
+        HTMLAttributes: {
+          class: "tiptap-image",
+        },
+      }),
     ],
     content: value,
     immediatelyRender: false,
@@ -161,6 +183,44 @@ export function RichTextEditor({
         >
           <Quote className="w-4 h-4" />
         </Btn>
+        {onImageUpload && (
+          <>
+            <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
+            <Btn
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              title="Insert image"
+            >
+              {isUploading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <ImageIcon className="w-4 h-4" />
+              )}
+            </Btn>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (!file) return;
+                setIsUploading(true);
+                try {
+                  const url = await onImageUpload(file);
+                  if (url) {
+                    editor.chain().focus().setImage({ src: url, alt: file.name }).run();
+                  }
+                } catch {
+                  // Caller is expected to surface a toast — swallow here.
+                } finally {
+                  setIsUploading(false);
+                }
+              }}
+            />
+          </>
+        )}
         <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
         <Btn
           onClick={() => editor.chain().focus().undo().run()}
@@ -241,6 +301,17 @@ export function RichTextEditor({
           border-right: 3px solid var(--color-border);
           padding-left: 0;
           padding-right: 1rem;
+        }
+        .tiptap-content .ProseMirror img.tiptap-image,
+        .tiptap-content .ProseMirror img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 0.5rem;
+          margin: 0.75em 0;
+          display: block;
+        }
+        .tiptap-content .ProseMirror img.ProseMirror-selectednode {
+          outline: 2px solid var(--color-primary);
         }
       `}</style>
     </div>

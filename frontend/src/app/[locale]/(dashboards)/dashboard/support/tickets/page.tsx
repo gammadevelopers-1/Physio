@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { AllTicketsContent } from "@/components/support-dashboard";
+import { SupervisorOnlyGuard } from "@/components/SupervisorOnlyGuard";
 
 export const metadata = {
   title: "All Tickets | Support Dashboard | PhysioGuidance",
@@ -15,8 +16,10 @@ export default async function AllTicketsPage({
   setRequestLocale(locale);
 
   return (
-    <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
-      <AllTicketsContent />
-    </main>
+    <SupervisorOnlyGuard>
+      <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
+        <AllTicketsContent />
+      </main>
+    </SupervisorOnlyGuard>
   );
 }

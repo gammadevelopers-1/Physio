@@ -1,0 +1,47 @@
+{
+  "collectionName": "components_shared_support_categories",
+  "info": {
+    "displayName": "Support Category",
+    "description": "A single support-issue category card on the public support page"
+  },
+  "attributes": {
+    "backendValue": {
+      "type": "enumeration",
+      "enum": [
+        "technical",
+        "login",
+        "billing",
+        "certificate",
+        "content",
+        "other"
+      ],
+      "required": true,
+      "default": "other"
+    },
+    "label": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "string"
+    },
+    "iconName": {
+      "type": "enumeration",
+      "enum": [
+        "Video",
+        "KeyRound",
+        "CreditCard",
+        "Award",
+        "BookOpen",
+        "Wrench",
+        "HelpCircle"
+      ],
+      "required": true,
+      "default": "HelpCircle"
+    },
+    "colorClass": {
+      "type": "string",
+      "default": "bg-gray-100 text-gray-600"
+    }
+  }
+}

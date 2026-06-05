@@ -14,8 +14,10 @@ import {
   BadRequestException,
   Res,
   Header,
+  Req,
 } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Response, Request } from 'express';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser, Roles, Public } from '../auth/decorators';
@@ -93,41 +95,17 @@ export class SupportController {
     return this.supportService.getAgents();
   }
 
-  // ─── NPS Survey (Public — no auth required) ────────────
-
-  @Public()
-  @Get('nps/:surveyId')
-  async getNpsSurvey(
-    @Param('surveyId', new ParseUUIDPipe()) surveyId: string,
-  ) {
-    return this.supportService.getNpsSurvey(surveyId);
-  }
-
-  @Public()
-  @Post('nps/:surveyId')
-  async submitNpsScore(
-    @Param('surveyId', new ParseUUIDPipe()) surveyId: string,
-    @Body() body: { score: number; comment?: string },
-  ) {
-    if (body.score === undefined || body.score < 0 || body.score > 10) {
-      throw new ForbiddenException('Score must be between 0 and 10');
-    }
-    return this.supportService.submitNpsScore(
-      surveyId,
-      body.score,
-      body.comment,
-    );
-  }
-
   // ─── Guest Ticket (Login Issues Only — no auth) ────────
 
   @Public()
+  @Throttle({ default: { limit: 3, ttl: 60_000 } }) // 3 / min / IP — abuse-prone (no auth)
   @Post('guest')
   async createGuestTicket(@Body() dto: CreateGuestTicketDto) {
     return this.supportService.createGuestTicket(dto);
   }
 
   @Public()
+  @Throttle({ default: { limit: 30, ttl: 60_000 } }) // 30 / min / IP — guest polls for status
   @Get('track/:trackingToken')
   async getTicketByTrackingToken(
     @Param('trackingToken') token: string,
@@ -136,15 +114,26 @@ export class SupportController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } }) // 5 / min / IP
   @Post('track/:trackingToken/reply')
   async addGuestReply(
     @Param('trackingToken') token: string,
     @Body() body: { message: string },
   ) {
-    if (!body.message?.trim()) {
-      throw new ForbiddenException('Message is required');
+    const trimmed = body.message?.trim();
+    if (!trimmed) {
+      throw new BadRequestException('Message is required');
     }
-    return this.supportService.addGuestReply(token, body.message.trim());
+    // Cap matches the authenticated reply DTO + ticketReplies.message
+    // column. Without this, a guest could drop a 10MB payload through
+    // the unauthenticated endpoint.
+    const MAX_REPLY_LENGTH = 5000;
+    if (trimmed.length > MAX_REPLY_LENGTH) {
+      throw new BadRequestException(
+        `Message must be ${MAX_REPLY_LENGTH} characters or fewer`,
+      );
+    }
+    return this.supportService.addGuestReply(token, trimmed);
   }
 
   // ─── SLA Breaches + Backlog ────────────────────────────
@@ -187,6 +176,142 @@ export class SupportController {
     return this.supportService.createAgent(dto);
   }
 
+  // ─── Team Management (supervisor-scoped) ────────────────
+
+  @Get('team/my')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getMyTeam(@CurrentUser() user: AuthenticatedUser) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException(
+        'Only supervisors can view their team',
+      );
+    }
+    return this.supportService.listMyTeam(user.id);
+  }
+
+  @Get('team/available-agents')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getAvailableAgents(@CurrentUser() user: AuthenticatedUser) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException(
+        'Only supervisors can browse available agents',
+      );
+    }
+    return this.supportService.listAvailableAgents(user.id);
+  }
+
+  @Get('team/members/:agentId')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getTeamMemberDetail(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('agentId', ParseUUIDPipe) agentId: string,
+  ) {
+    return this.supportService.getTeamMemberDetail(user, agentId);
+  }
+
+  @Delete('team/members/:agentId')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async removeTeamMember(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('agentId', ParseUUIDPipe) agentId: string,
+    @Req() req: Request,
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException(
+        'Only supervisors can remove their own team members',
+      );
+    }
+    return this.supportService.removeMyTeamMember(
+      user,
+      agentId,
+      req.ip || '',
+    );
+  }
+
+  @Post('team/requests')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async createTeamRequest(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body()
+    dto: {
+      kind: 'add_existing' | 'add_new';
+      candidateUserId?: string;
+      candidateEmail?: string;
+      candidateFirstName?: string;
+      candidateLastName?: string;
+      candidatePhone?: string;
+      reason?: string;
+    },
+    @Req() req: Request,
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException(
+        'Only supervisors can submit team requests',
+      );
+    }
+    return this.supportService.createTeamRequest(user, dto, req.ip || '');
+  }
+
+  @Get('team/requests/mine')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async listMyTeamRequests(@CurrentUser() user: AuthenticatedUser) {
+    return this.supportService.listMyTeamRequests(user.id);
+  }
+
+  // Admin: review queue + decisions
+  @Get('team/requests')
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async listAllTeamRequests(@Query('status') status?: string) {
+    return this.supportService.listTeamRequests({ status });
+  }
+
+  @Get('team/requests/pending-count')
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getPendingTeamRequestCount() {
+    return { count: await this.supportService.countPendingTeamRequests() };
+  }
+
+  @Post('team/requests/:id/decision')
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async decideTeamRequest(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body()
+    dto: {
+      decision: 'approve' | 'reject';
+      reason?: string;
+      tempPassword?: string;
+    },
+    @Req() req: Request,
+  ) {
+    if (!dto.decision || (dto.decision !== 'approve' && dto.decision !== 'reject')) {
+      throw new BadRequestException('decision must be "approve" or "reject"');
+    }
+    return this.supportService.decideTeamRequest(
+      user,
+      id,
+      dto.decision,
+      { reason: dto.reason, tempPassword: dto.tempPassword },
+      req.ip || '',
+    );
+  }
+
   // ─── Admin Support KPIs ────────────────────────────────
 
   @Get('admin/support-kpis')
@@ -195,7 +320,145 @@ export class SupportController {
     return this.supportService.getAdminSupportKpis();
   }
 
+  // ─── Settings — Business Hours, Auto-Assignment, Categories, Notifs ──
+
+  // Public read so the public ticket form can show "online/offline" hint.
+  @Public()
+  @Get('settings/business-hours')
+  async getBusinessHours() {
+    return this.supportService.getBusinessHours();
+  }
+
+  @Patch('settings/business-hours')
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async setBusinessHours(
+    @Body()
+    dto: {
+      workingDays?: number[];
+      openTime?: string;
+      closeTime?: string;
+      timezoneOffsetHours?: number;
+    },
+  ) {
+    return this.supportService.setBusinessHours(dto);
+  }
+
+  @Get('settings/auto-assignment')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getAutoAssignment() {
+    return this.supportService.getAutoAssignment();
+  }
+
+  @Patch('settings/auto-assignment')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async setAutoAssignment(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body()
+    dto: {
+      enabled?: boolean;
+      strategy?: 'round_robin' | 'least_loaded' | 'manual';
+      respectBusinessHours?: boolean;
+      maxConcurrentPerAgent?: number;
+    },
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException(
+        'Only supervisors or admins can change auto-assignment settings',
+      );
+    }
+    return this.supportService.setAutoAssignment(dto);
+  }
+
+  // Public read so the unauthenticated PublicTicketForm dropdown can
+  // render admin-added categories. Mutations (POST/DELETE below) stay
+  // role-gated. The list only exposes slug + names + auto-priority —
+  // nothing sensitive.
+  @Public()
+  @Get('settings/ticket-categories')
+  async listTicketCategories() {
+    return this.supportService.listTicketCategories();
+  }
+
+  @Post('settings/ticket-categories')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async addTicketCategory(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body()
+    dto: {
+      slug?: string;
+      nameEn: string;
+      nameAr?: string;
+      autoPriority?: 'high' | 'medium' | 'low';
+    },
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException(
+        'Only supervisors or admins can manage ticket categories',
+      );
+    }
+    return this.supportService.addTicketCategory(dto);
+  }
+
+  @Delete('settings/ticket-categories/:slug')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async removeTicketCategory(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('slug') slug: string,
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException(
+        'Only supervisors or admins can manage ticket categories',
+      );
+    }
+    return this.supportService.removeTicketCategory(slug);
+  }
+
+  @Get('settings/notification-prefs')
+  async getMyNotificationPrefs(@CurrentUser() user: AuthenticatedUser) {
+    return this.supportService.getSupportNotificationPrefs(user.id);
+  }
+
+  @Patch('settings/notification-prefs')
+  async setMyNotificationPrefs(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: Record<string, boolean>,
+  ) {
+    return this.supportService.setSupportNotificationPrefs(user.id, dto);
+  }
+
   // ─── Reports API ───────────────────────────────────────
+
+  @Get('reports/trend')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getTicketTrend(
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('interval') interval?: string,
+  ) {
+    const i: 'day' | 'week' = interval === 'week' ? 'week' : 'day';
+    return this.supportService.getTicketTrend(dateFrom, dateTo, i);
+  }
+
+  @Get('reports/csat-comments')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getRecentCsatComments(@Query('limit') limit?: string) {
+    const n = limit ? parseInt(limit, 10) : 10;
+    return this.supportService.getRecentCsatComments(
+      Number.isFinite(n) ? n : 10,
+    );
+  }
 
   @Get('reports/volume')
   @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
@@ -345,6 +608,51 @@ export class SupportController {
 
   // ─── Knowledge Base (Public read, Admin write) ────────
 
+  // ─── Help Center Categories CRUD ───────────────────────
+
+  @Public()
+  @Get('kb/categories')
+  async listKbCategories() {
+    return this.supportService.listKbCategories();
+  }
+
+  @Post('kb/categories')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async createKbCategory(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body()
+    dto: {
+      slug?: string;
+      nameEn: string;
+      nameAr?: string;
+      icon?: string;
+      sortOrder?: number;
+    },
+  ) {
+    return this.supportService.createKbCategory(user.id, dto);
+  }
+
+  @Patch('kb/categories/:id')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async updateKbCategory(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body()
+    dto: {
+      nameEn?: string;
+      nameAr?: string;
+      icon?: string;
+      sortOrder?: number;
+    },
+  ) {
+    return this.supportService.updateKbCategory(id, dto);
+  }
+
+  @Delete('kb/categories/:id')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async deleteKbCategory(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.supportService.deleteKbCategory(id);
+  }
+
   @Public()
   @Get('kb/articles')
   async getKbArticles(
@@ -391,6 +699,7 @@ export class SupportController {
   // ─── CSAT Survey (Public — no auth required) ──────────
 
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } }) // 10 / min / IP
   @Get('csat/:surveyId')
   async getCsatSurvey(
     @Param('surveyId', new ParseUUIDPipe()) surveyId: string,
@@ -399,13 +708,14 @@ export class SupportController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } }) // 5 / min / IP — vote spam defense
   @Post('csat/:surveyId')
   async submitCsatScore(
     @Param('surveyId', new ParseUUIDPipe()) surveyId: string,
     @Body() body: { score: number; comment?: string },
   ) {
     if (!body.score || body.score < 1 || body.score > 5) {
-      throw new ForbiddenException('Score must be between 1 and 5');
+      throw new BadRequestException('Score must be between 1 and 5');
     }
     return this.supportService.submitCsatScore(
       surveyId,
@@ -621,7 +931,7 @@ export class SupportController {
     @Body() body: { macroId: string },
   ) {
     if (!body.macroId) {
-      throw new ForbiddenException('macroId is required');
+      throw new BadRequestException('macroId is required');
     }
     return this.supportService.applyMacro(body.macroId, id);
   }

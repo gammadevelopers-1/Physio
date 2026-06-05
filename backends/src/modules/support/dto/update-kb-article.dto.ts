@@ -1,7 +1,6 @@
 import {
   IsString,
   IsOptional,
-  IsIn,
   IsBoolean,
   MaxLength,
 } from 'class-validator';
@@ -25,8 +24,10 @@ export class UpdateKbArticleDto {
   @IsString()
   bodyAr?: string;
 
+  // Free-form slug — validated against kb_categories in the service.
   @IsOptional()
-  @IsIn(['billing', 'login', 'content', 'certificate', 'technical', 'other'])
+  @IsString()
+  @MaxLength(60)
   category?: string;
 
   @IsOptional()

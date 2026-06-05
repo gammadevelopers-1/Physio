@@ -1,46 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Clock } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import {
+  useSupportOnlineStatus,
+  type BusinessHoursConfig,
+} from "@/hooks/useSupportOnlineStatus";
 
-function isWithinBusinessHours(): boolean {
-  // AST = UTC+3 (Arabia Standard Time, no DST)
-  const now = new Date();
-  const utcHours = now.getUTCHours();
-  const utcMinutes = now.getUTCMinutes();
-  const astHours = (utcHours + 3) % 24;
+export type { BusinessHoursConfig } from "@/hooks/useSupportOnlineStatus";
+export { DEFAULT_BUSINESS_HOURS } from "@/hooks/useSupportOnlineStatus";
 
-  // Get AST day — if UTC time + 3 crosses midnight, day shifts forward
-  const astDate = new Date(now.getTime() + 3 * 60 * 60 * 1000);
-  const astDay = astDate.getUTCDay(); // 0=Sunday
-
-  // Business days: Sunday(0) through Thursday(4)
-  const isBusinessDay = astDay >= 0 && astDay <= 4;
-
-  // Business hours: 9:00 AM to 6:00 PM
-  const astTimeInMinutes = astHours * 60 + utcMinutes;
-  const isBusinessTime =
-    astTimeInMinutes >= 9 * 60 && astTimeInMinutes < 18 * 60;
-
-  return isBusinessDay && isBusinessTime;
-}
-
-export default function BusinessHoursIndicator() {
+export default function BusinessHoursIndicator({
+  config: overrideConfig,
+}: {
+  /** Override the fetched config — used by tests / Storybook. */
+  config?: BusinessHoursConfig;
+} = {}) {
   const t = useTranslations("supportPublicPage");
-  const [isOnline, setIsOnline] = useState<boolean | null>(null);
+  const locale = useLocale();
+  const { isOnline, config } = useSupportOnlineStatus(overrideConfig);
 
-  useEffect(() => {
-    setIsOnline(isWithinBusinessHours());
-
-    const interval = setInterval(() => {
-      setIsOnline(isWithinBusinessHours());
-    }, 60_000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Placeholder during SSR / first render to avoid hydration mismatch
   if (isOnline === null) {
     return (
       <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -68,11 +47,41 @@ export default function BusinessHoursIndicator() {
       </div>
       <div className="flex items-center gap-2 text-sm text-gray-500">
         <Clock className="w-4 h-4" />
-        <span>{t("businessHoursSchedule")}</span>
+        <span>{config ? formatSchedule(config, locale) : t("businessHoursSchedule")}</span>
       </div>
       {!isOnline && (
         <p className="text-sm text-gray-500 mt-1">{t("offlineMessage")}</p>
       )}
     </div>
   );
+}
+
+function formatSchedule(config: BusinessHoursConfig, locale: string): string {
+  const isAr = locale === "ar";
+  const dayNamesEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dayNamesAr = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+  const names = isAr ? dayNamesAr : dayNamesEn;
+  const sorted = [...config.businessDays].sort((a, b) => a - b);
+  const dayLabel = sorted.length === 0
+    ? ""
+    : isContiguous(sorted)
+      ? `${names[sorted[0]]} – ${names[sorted[sorted.length - 1]]}`
+      : sorted.map((d) => names[d]).join(", ");
+  const openLabel = format12h(config.startHour, isAr);
+  const closeLabel = format12h(config.endHour, isAr);
+  const tzLabel = isAr ? "بتوقيت الرياض" : "Saudi Riyadh time";
+  return `${dayLabel}, ${openLabel} – ${closeLabel} (${tzLabel})`;
+}
+
+function isContiguous(sorted: number[]): boolean {
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] - sorted[i - 1] !== 1) return false;
+  }
+  return sorted.length >= 1;
+}
+
+function format12h(hour24: number, isAr: boolean): string {
+  const h = hour24 % 12 || 12;
+  const suffix = hour24 < 12 ? (isAr ? "ص" : "AM") : (isAr ? "م" : "PM");
+  return `${h}:00 ${suffix}`;
 }

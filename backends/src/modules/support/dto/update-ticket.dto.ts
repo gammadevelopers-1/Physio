@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsIn, IsUUID, MaxLength } from 'class-validator';
+import { IsOptional, IsIn, IsUUID } from 'class-validator';
+import { ON_HOLD_REASONS } from '../../../database/schema';
 
 export class UpdateTicketDto {
   @IsIn(['new', 'in_progress', 'on_hold', 'resolved', 'closed'])
@@ -13,8 +14,9 @@ export class UpdateTicketDto {
   @IsOptional()
   assigneeId?: string;
 
-  @IsString()
+  // Closed enum so the auto-close cron's literal match on
+  // "waiting for student response" can't silently break on typos.
+  @IsIn(Object.values(ON_HOLD_REASONS))
   @IsOptional()
-  @MaxLength(100)
   onHoldReason?: string;
 }

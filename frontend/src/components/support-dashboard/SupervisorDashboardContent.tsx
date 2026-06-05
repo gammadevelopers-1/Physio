@@ -7,7 +7,6 @@ import { supportApi } from "@/lib/api";
 import { useSupportProfile } from "@/hooks/useSupportProfile";
 import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
-import SupportMobileSidebar from "./SupportMobileSidebar";
 import SupportKPICards from "./SupportKPICards";
 import TicketsBoardWidget from "./TicketsBoardWidget";
 import SLAPerformanceWidget from "./SLAPerformanceWidget";
@@ -86,7 +85,7 @@ const SupervisorDashboardContent = () => {
     <>
       <SupportNavbar profile={profile} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar */}
@@ -96,12 +95,6 @@ const SupervisorDashboardContent = () => {
                 supportSubRole="supervisor"
               />
             </div>
-
-            {/* Mobile Sidebar */}
-            <SupportMobileSidebar
-              profile={profile}
-              supportSubRole="supervisor"
-            />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">

@@ -68,7 +68,10 @@ export * from './support-macros';
 export * from './escalation-paths';
 export * from './surveys';
 export * from './kb-articles';
+export * from './kb-categories';
 export * from './support-config';
+export * from './support-team-members';
+export * from './support-team-requests';
 
 // Audit Logs schemas
 export * from './audit-logs';

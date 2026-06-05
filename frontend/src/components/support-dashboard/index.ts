@@ -1,5 +1,4 @@
 export { default as SupportSidebar } from "./SupportSidebar";
-export { default as SupportMobileSidebar } from "./SupportMobileSidebar";
 export { default as SupportNavbar } from "./SupportNavbar";
 export { default as SupportKPICards } from "./SupportKPICards";
 export { default as TicketsBoardWidget } from "./TicketsBoardWidget";

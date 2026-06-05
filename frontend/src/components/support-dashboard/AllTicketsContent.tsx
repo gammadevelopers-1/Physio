@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { supportApi } from "@/lib/api";
@@ -8,22 +9,30 @@ import { useSupportProfile } from "@/hooks/useSupportProfile";
 import { toast } from "sonner";
 import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
-import SupportMobileSidebar from "./SupportMobileSidebar";
+import Select from "@/components/admin-dashboard/Select";
 import {
   FileText,
   ClipboardList,
   CheckCircle,
   Clock,
   Search,
-  Plus,
-  MoreVertical,
   Eye,
-  UserPlus,
   XCircle,
+  RotateCcw,
+  Link2,
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Inbox,
+  MoreVertical,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface Ticket {
   id: string;
@@ -38,35 +47,146 @@ interface Ticket {
   date: string;
 }
 
+// API status → UI status key
+const apiToUiStatus = (s: string): Ticket["status"] => {
+  if (s === "in_progress") return "inProgress";
+  if (s === "on_hold") return "waiting";
+  return (s as Ticket["status"]) || "new";
+};
+
+// Tab key → API status value (for the listTickets filter)
+const tabToApiStatus: Record<string, string | undefined> = {
+  all: undefined,
+  new: "new",
+  inProgress: "in_progress",
+  waiting: "on_hold",
+  resolved: "resolved",
+  closed: "closed",
+};
+
 const AllTicketsContent = () => {
   const t = useTranslations("supportDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { user } = useAuth();
+  const router = useRouter();
+
+  const basePath =
+    user?.supportSubRole === "supervisor"
+      ? `/${locale}/dashboard/support/supervisor`
+      : `/${locale}/dashboard/support/agent`;
 
   const profile = useSupportProfile();
 
+  // ── Data state ───────────────────────────────────────────────────
   const [apiTickets, setApiTickets] = useState<any[]>([]);
   const [totalTickets, setTotalTickets] = useState(0);
+  const [statusBreakdown, setStatusBreakdown] = useState<Record<string, number>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingTickets, setIsLoadingTickets] = useState(true);
+  const [resolvedThisWeek, setResolvedThisWeek] = useState<number | null>(null);
+  const [avgResolutionHours, setAvgResolutionHours] = useState<number | null>(null);
   const pageSize = 10;
 
+  // ── Filter state ─────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState("all");
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [openActionId, setOpenActionId] = useState<string | null>(null);
 
-  const openCount = apiTickets.filter((t: any) =>
-    ["new", "in_progress", "on_hold"].includes(t.status)
-  ).length;
+  // Live category list for the filter dropdown — built-ins keep their
+  // localised labels; custom admin-added categories show nameAr/nameEn.
+  const [categories, setCategories] = useState<
+    { slug: string; nameEn: string; nameAr: string | null; builtin: boolean }[]
+  >([]);
+  useEffect(() => {
+    let cancelled = false;
+    supportApi
+      .listTicketCategories()
+      .then((rows) => {
+        if (cancelled) return;
+        setCategories(Array.isArray(rows) ? rows : []);
+      })
+      .catch(() => {
+        if (!cancelled) setCategories([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Debounce search input → searchQuery (server-side filter)
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setCurrentPage(1);
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchInput]);
+
+  // ── Fetch tickets ────────────────────────────────────────────────
+  const fetchTickets = useCallback(async () => {
+    setIsLoadingTickets(true);
+    try {
+      const params: Record<string, any> = {
+        page: currentPage,
+        limit: pageSize,
+      };
+      const apiStatus = tabToApiStatus[activeTab];
+      if (apiStatus) params.status = apiStatus;
+      if (priorityFilter !== "all") params.priority = priorityFilter;
+      if (categoryFilter !== "all") params.category = categoryFilter;
+      if (searchQuery) params.search = searchQuery;
+
+      const data = await supportApi.getTickets(params);
+      setApiTickets(data.tickets || []);
+      setTotalTickets(data.total || 0);
+    } catch {
+      setApiTickets([]);
+    } finally {
+      setIsLoadingTickets(false);
+    }
+  }, [currentPage, activeTab, priorityFilter, categoryFilter, searchQuery]);
+
+  useEffect(() => {
+    fetchTickets();
+  }, [fetchTickets]);
+
+  // KPIs (statusBreakdown for tabs + cards)
+  const fetchKpis = useCallback(() => {
+    supportApi
+      .getKPIs()
+      .then((k) => {
+        setResolvedThisWeek(
+          typeof k.resolvedThisWeek === "number" ? k.resolvedThisWeek : null,
+        );
+        setAvgResolutionHours(
+          typeof k.avgResolutionHours === "number" ? k.avgResolutionHours : null,
+        );
+        setStatusBreakdown(k.statusBreakdown || {});
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetchKpis();
+  }, [fetchKpis]);
+
+  const totalAll = Object.values(statusBreakdown).reduce((a, b) => a + b, 0);
+  const openCount =
+    (statusBreakdown.new || 0) +
+    (statusBreakdown.in_progress || 0) +
+    (statusBreakdown.on_hold || 0);
 
   const stats = [
     {
       label: t("allTicketsPage.stats.totalTickets"),
-      value: String(totalTickets),
+      value: totalAll > 0 ? String(totalAll) : "--",
       icon: FileText,
       iconBg: "bg-[var(--color-border-subtle)]",
       iconColor: "text-[var(--color-primary)]",
@@ -80,79 +200,64 @@ const AllTicketsContent = () => {
     },
     {
       label: t("allTicketsPage.stats.resolvedThisWeek"),
-      value: "--",
+      value: resolvedThisWeek == null ? "--" : String(resolvedThisWeek),
       icon: CheckCircle,
       iconBg: "bg-[#DCFCE7]",
       iconColor: "text-[#22C55E]",
     },
     {
       label: t("allTicketsPage.stats.avgResolution"),
-      value: "--",
+      value: avgResolutionHours == null ? "--" : `${avgResolutionHours}h`,
       icon: Clock,
       iconBg: "bg-[#F3E8FF]",
       iconColor: "text-[#8B5CF6]",
     },
   ];
 
-  const fetchTickets = useCallback(async () => {
-    setIsLoadingTickets(true);
-    try {
-      const params: Record<string, any> = {
-        page: currentPage,
-        limit: pageSize,
-      };
-      if (statusFilter !== "all") {
-        // Map UI status keys to API values
-        const statusMap: Record<string, string> = {
-          new: "new",
-          inProgress: "in_progress",
-          waiting: "on_hold",
-          resolved: "resolved",
-          closed: "closed",
-        };
-        params.status = statusMap[statusFilter] || statusFilter;
-      }
-      if (priorityFilter !== "all") params.priority = priorityFilter;
-      if (categoryFilter !== "all") params.category = categoryFilter;
-      if (searchQuery) params.search = searchQuery;
-
-      const data = await supportApi.getTickets(params);
-      setApiTickets(data.tickets || []);
-      setTotalTickets(data.total || 0);
-    } catch {
-      setApiTickets([]);
-    } finally {
-      setIsLoadingTickets(false);
-    }
-  }, [currentPage, statusFilter, priorityFilter, categoryFilter, searchQuery]);
-
-  useEffect(() => {
-    fetchTickets();
-  }, [fetchTickets]);
-
-  // Map API tickets to component's Ticket interface
-  const tickets: Ticket[] = apiTickets.map((t: any) => ({
-    id: t.id,
-    displayId: t.id?.substring(0, 8) || t.id,
-    subject: t.subject,
-    customer: [t.studentFirstName, t.studentLastName].filter(Boolean).join(" ") || "Unknown",
-    email: t.studentEmail || "",
-    category: t.category,
-    priority: t.priority,
-    status: t.status === "in_progress" ? "inProgress" : t.status === "on_hold" ? "waiting" : t.status,
-    assignee: null, // Could be enriched later
-    date: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "",
+  // Map API tickets to display rows
+  const tickets: Ticket[] = apiTickets.map((tk: any) => ({
+    id: tk.id,
+    displayId: tk.id?.substring(0, 8) || tk.id,
+    subject: tk.subject,
+    customer:
+      [tk.studentFirstName, tk.studentLastName].filter(Boolean).join(" ") ||
+      t("allTicketsPage.unknownCustomer"),
+    email: tk.studentEmail || "",
+    category: tk.category,
+    priority: tk.priority,
+    status: apiToUiStatus(tk.status),
+    assignee:
+      [tk.assigneeFirstName, tk.assigneeLastName].filter(Boolean).join(" ") ||
+      null,
+    date: tk.createdAt ? new Date(tk.createdAt).toLocaleDateString() : "",
   }));
 
-  const totalPages = Math.ceil(totalTickets / pageSize);
+  const totalPages = Math.max(1, Math.ceil(totalTickets / pageSize));
 
+  // Tab counts derived from KPIs.statusBreakdown (global, not page-scoped)
   const tabs = [
-    { key: "all", label: t("allTicketsPage.tabs.all"), count: totalTickets },
-    { key: "new", label: t("allTicketsPage.tabs.new"), count: null },
-    { key: "inProgress", label: t("allTicketsPage.tabs.inProgress"), count: null },
-    { key: "waiting", label: t("allTicketsPage.tabs.waiting"), count: null },
-    { key: "resolved", label: t("allTicketsPage.tabs.resolved"), count: null },
-    { key: "closed", label: t("allTicketsPage.tabs.closed"), count: null },
+    { key: "all", label: t("allTicketsPage.tabs.all"), count: totalAll },
+    { key: "new", label: t("allTicketsPage.tabs.new"), count: statusBreakdown.new || 0 },
+    {
+      key: "inProgress",
+      label: t("allTicketsPage.tabs.inProgress"),
+      count: statusBreakdown.in_progress || 0,
+    },
+    {
+      key: "waiting",
+      label: t("allTicketsPage.tabs.waiting"),
+      count: statusBreakdown.on_hold || 0,
+    },
+    {
+      key: "resolved",
+      label: t("allTicketsPage.tabs.resolved"),
+      count: statusBreakdown.resolved || 0,
+    },
+    {
+      key: "closed",
+      label: t("allTicketsPage.tabs.closed"),
+      count: statusBreakdown.closed || 0,
+    },
   ];
 
   const priorityStyles: Record<string, string> = {
@@ -169,27 +274,53 @@ const AllTicketsContent = () => {
     closed: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
   };
 
-  const filteredTickets = tickets.filter((ticket) => {
-    const matchesTab = activeTab === "all" || ticket.status === activeTab;
-    const matchesStatus =
-      statusFilter === "all" || ticket.status === statusFilter;
-    const matchesPriority =
-      priorityFilter === "all" || ticket.priority === priorityFilter;
-    const matchesCategory =
-      categoryFilter === "all" || ticket.category === categoryFilter;
-    const matchesSearch =
-      searchQuery === "" ||
-      ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.id.includes(searchQuery);
-    return (
-      matchesTab &&
-      matchesStatus &&
-      matchesPriority &&
-      matchesCategory &&
-      matchesSearch
-    );
-  });
+  // ── Row actions ──────────────────────────────────────────────────
+  const handleView = (id: string) => {
+router.push(`${basePath}/tickets/${id}`);
+  };
+
+  const handleCopyLink = async (id: string) => {
+try {
+      const url = `${window.location.origin}${basePath}/tickets/${id}`;
+      await navigator.clipboard.writeText(url);
+      toast.success(t("allTicketsPage.toasts.linkCopied"));
+    } catch {
+      toast.error(t("allTicketsPage.toasts.copyError"));
+    }
+  };
+
+  const handleResolve = async (id: string) => {
+try {
+      await supportApi.resolveTicket(id);
+      toast.success(t("allTicketsPage.toasts.resolved"));
+      fetchTickets();
+      fetchKpis();
+    } catch {
+      toast.error(t("allTicketsPage.toasts.actionFailed"));
+    }
+  };
+
+  const handleClose = async (id: string) => {
+try {
+      await supportApi.closeTicket(id);
+      toast.success(t("allTicketsPage.toasts.closed"));
+      fetchTickets();
+      fetchKpis();
+    } catch {
+      toast.error(t("allTicketsPage.toasts.actionFailed"));
+    }
+  };
+
+  const handleReopen = async (id: string) => {
+try {
+      await supportApi.updateTicket(id, { status: "in_progress" });
+      toast.success(t("allTicketsPage.toasts.reopened"));
+      fetchTickets();
+      fetchKpis();
+    } catch {
+      toast.error(t("allTicketsPage.toasts.actionFailed"));
+    }
+  };
 
   return (
     <>
@@ -198,15 +329,10 @@ const AllTicketsContent = () => {
       <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Left Sidebar - Hidden on mobile */}
             <div className="hidden lg:block lg:flex-shrink-0">
               <SupportSidebar profile={profile} supportSubRole={user?.supportSubRole} />
             </div>
 
-            {/* Mobile Sidebar */}
-            <SupportMobileSidebar profile={profile} supportSubRole={user?.supportSubRole} />
-
-            {/* Main Content */}
             <div className="flex-1 min-w-0">
               {/* Page Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
@@ -238,7 +364,7 @@ const AllTicketsContent = () => {
                         <p className="text-xs text-[var(--color-text-secondary)] font-medium">
                           {stat.label}
                         </p>
-                        <p className="text-xl font-bold text-[var(--color-text-secondary)]">
+                        <p className="text-xl font-bold text-[var(--color-text-primary)]">
                           {stat.value}
                         </p>
                       </div>
@@ -247,325 +373,363 @@ const AllTicketsContent = () => {
                 })}
               </div>
 
-              {/* Tickets Table */}
-              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
+              {/* Filters Card — admin-dashboard pattern */}
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 mb-6">
+                <div className="flex flex-col md:flex-row gap-3">
+                  <div className="flex-1 relative">
+                    <Search
+                      className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
+                    />
+                    <input
+                      type="text"
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      placeholder={t("allTicketsPage.searchPlaceholder")}
+                      className={`w-full h-10 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                    />
+                  </div>
+
+                  <Select
+                    value={categoryFilter}
+                    onChange={(v) => {
+                      setCategoryFilter(v);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full md:w-44"
+                    options={[
+                      { value: "all", label: t("allTicketsPage.filters.allCategories") },
+                      ...categories.map((c) => {
+                        // Built-in slugs keep their pre-translated label;
+                        // custom slugs fall back to nameAr/nameEn directly.
+                        const builtinKey = c.builtin
+                          ? `allTicketsPage.filters.categories.${c.slug}`
+                          : null;
+                        const label = builtinKey
+                          ? t(builtinKey as any)
+                          : (isRTL && c.nameAr ? c.nameAr : c.nameEn || c.slug);
+                        return { value: c.slug, label };
+                      }),
+                    ]}
+                  />
+
+                  <Select
+                    value={priorityFilter}
+                    onChange={(v) => {
+                      setPriorityFilter(v);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full md:w-40"
+                    options={[
+                      { value: "all", label: t("allTicketsPage.filters.allPriorities") },
+                      { value: "high", label: t("allTicketsPage.filters.priorities.high") },
+                      { value: "medium", label: t("allTicketsPage.filters.priorities.medium") },
+                      { value: "low", label: t("allTicketsPage.filters.priorities.low") },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              {/* Tickets Card */}
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
                 {/* Tabs */}
                 <div className="px-5 py-4 border-b border-[var(--color-border-subtle)]">
-                  <div className="flex gap-1 bg-[var(--color-border-subtle)] rounded-lg p-0.5 w-fit overflow-x-auto">
-                    {tabs.map((tab) => (
-                      <button
-                        key={tab.key}
-                        onClick={() => setActiveTab(tab.key)}
-                        className={`px-4 py-1.5 text-[13px] font-medium rounded-md transition-colors flex items-center gap-2 whitespace-nowrap ${
-                          activeTab === tab.key
-                            ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
-                            : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
-                        }`}
-                      >
-                        {tab.label}
-                        <span
-                          className={`text-[11px] px-1.5 py-0.5 rounded-full ${
-                            activeTab === tab.key
-                              ? "bg-[var(--color-primary)] text-white"
-                              : "bg-[var(--color-border)] text-[var(--color-text-secondary)]"
+                  <div className="flex gap-1 bg-[var(--color-border-subtle)] rounded-lg p-1 w-fit overflow-x-auto">
+                    {tabs.map((tab) => {
+                      const active = activeTab === tab.key;
+                      return (
+                        <button
+                          key={tab.key}
+                          type="button"
+                          onClick={() => {
+                            setActiveTab(tab.key);
+                            setCurrentPage(1);
+                          }}
+                          className={`px-3 py-1.5 text-[13px] font-medium rounded-md transition-colors flex items-center gap-2 whitespace-nowrap ${
+                            active
+                              ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
+                              : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                           }`}
                         >
-                          {tab.count}
-                        </span>
-                      </button>
-                    ))}
+                          {tab.label}
+                          {tab.count > 0 && (
+                            <span
+                              className={`min-w-[20px] h-5 inline-flex items-center justify-center rounded-full px-1.5 text-[11px] font-semibold ${
+                                active
+                                  ? "bg-[var(--color-primary)] text-white"
+                                  : "bg-[var(--color-border)] text-[var(--color-text-secondary)]"
+                              }`}
+                            >
+                              {tab.count}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Filters Row */}
-                <div className="px-5 py-3 border-b border-[var(--color-border-subtle)]">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                    {/* Category Filter */}
-                    <select
-                      value={categoryFilter}
-                      onChange={(e) => setCategoryFilter(e.target.value)}
-                      className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-input-focus)] bg-[var(--color-surface-card)]"
-                    >
-                      <option value="all">
-                        {t("allTicketsPage.filters.allCategories")}
-                      </option>
-                      <option value="login">
-                        {t("allTicketsPage.filters.categories.login")}
-                      </option>
-                      <option value="certificate">
-                        {t("allTicketsPage.filters.categories.certificate")}
-                      </option>
-                      <option value="billing">
-                        {t("allTicketsPage.filters.categories.billing")}
-                      </option>
-                      <option value="content">
-                        {t("allTicketsPage.filters.categories.content")}
-                      </option>
-                      <option value="technical">
-                        {t("allTicketsPage.filters.categories.technical")}
-                      </option>
-                    </select>
-
-                    {/* Priority Filter */}
-                    <select
-                      value={priorityFilter}
-                      onChange={(e) => setPriorityFilter(e.target.value)}
-                      className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-input-focus)] bg-[var(--color-surface-card)]"
-                    >
-                      <option value="all">
-                        {t("allTicketsPage.filters.allPriorities")}
-                      </option>
-                      <option value="high">
-                        {t("allTicketsPage.filters.priorities.high")}
-                      </option>
-                      <option value="medium">
-                        {t("allTicketsPage.filters.priorities.medium")}
-                      </option>
-                      <option value="low">
-                        {t("allTicketsPage.filters.priorities.low")}
-                      </option>
-                    </select>
-
-                    {/* Search Input */}
-                    <div className="relative flex-1 w-full sm:w-auto">
-                      <Search
-                        className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
-                      />
-                      <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder={t("allTicketsPage.searchPlaceholder")}
-                        className={`w-full py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-input-focus)] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
-                      />
-                    </div>
-
-                    {/* New Ticket Button */}
-                    <button className="flex items-center gap-1.5 px-4 py-2 btn-gold text-[var(--color-button-text)] text-sm font-medium rounded-lg transition-colors whitespace-nowrap">
-                      <Plus className="w-4 h-4" />
-                      {t("allTicketsPage.newTicket")}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Table */}
+                {/* Table — horizontal scroll only on table */}
                 <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-[var(--color-border)]">
-                        <th
-                          className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
-                        >
+                  <table className="w-full min-w-[1100px]">
+                    <thead className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
+                      <tr>
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap ${isRTL ? "text-right" : "text-left"}`}>
                           {t("allTicketsPage.columns.ticketId")}
                         </th>
-                        <th
-                          className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
-                        >
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                           {t("allTicketsPage.columns.subject")}
                         </th>
-                        <th
-                          className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
-                        >
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                           {t("allTicketsPage.columns.customer")}
                         </th>
-                        <th
-                          className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}
-                        >
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap ${isRTL ? "text-right" : "text-left"}`}>
                           {t("allTicketsPage.columns.category")}
                         </th>
-                        <th
-                          className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
-                        >
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap ${isRTL ? "text-right" : "text-left"}`}>
                           {t("allTicketsPage.columns.priority")}
                         </th>
-                        <th
-                          className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}
-                        >
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap ${isRTL ? "text-right" : "text-left"}`}>
                           {t("allTicketsPage.columns.status")}
                         </th>
-                        <th
-                          className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden lg:table-cell ${isRTL ? "text-right" : "text-left"}`}
-                        >
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap ${isRTL ? "text-right" : "text-left"}`}>
                           {t("allTicketsPage.columns.assignedTo")}
                         </th>
-                        <th
-                          className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}
-                        >
+                        <th className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase whitespace-nowrap ${isRTL ? "text-right" : "text-left"}`}>
                           {t("allTicketsPage.columns.date")}
                         </th>
-                        <th className="py-3 px-4 w-10"></th>
+                        <th className="py-3 px-4 w-12"></th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredTickets.map((ticket) => (
-                        <tr
-                          key={ticket.id}
-                          className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-border-subtle)] transition-colors"
-                        >
-                          {/* Ticket # */}
-                          <td className="py-3 px-4">
-                            <span
-                              className="text-[13px] font-medium text-[var(--color-primary)] cursor-pointer hover:underline"
-                              onClick={() => window.location.assign(`/${locale}/dashboard/support/supervisor/tickets/${ticket.id}`)}
-                            >
-                              #{ticket.displayId}
-                            </span>
+                      {isLoadingTickets && (
+                        <tr>
+                          <td colSpan={9} className="py-12 text-center">
+                            <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)] mx-auto" />
                           </td>
-                          {/* Subject */}
-                          <td className="py-3 px-4">
-                            <span className="text-[13px] font-medium text-[var(--color-text-primary)]">
-                              {ticket.subject}
-                            </span>
-                          </td>
-                          {/* Customer */}
-                          <td className="py-3 px-4">
-                            <div>
-                              <p className="text-[13px] text-[var(--color-text-secondary)] font-medium">
-                                {ticket.customer}
+                        </tr>
+                      )}
+
+                      {!isLoadingTickets && tickets.length === 0 && (
+                        <tr>
+                          <td colSpan={9} className="py-12 text-center">
+                            <div className="flex flex-col items-center gap-2 text-[var(--color-text-secondary)]">
+                              <Inbox className="w-8 h-8" />
+                              <p className="text-sm">
+                                {t("allTicketsPage.empty")}
                               </p>
-                              <p className="text-[11px] text-[var(--color-text-secondary)]">
-                                {ticket.email}
-                              </p>
-                            </div>
-                          </td>
-                          {/* Category */}
-                          <td className="py-3 px-4 hidden md:table-cell">
-                            <span className="bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] text-[10px] px-2 py-0.5 rounded-md font-medium">
-                              {t(
-                                `allTicketsPage.filters.categories.${ticket.category}`
-                              )}
-                            </span>
-                          </td>
-                          {/* Priority */}
-                          <td className="py-3 px-4">
-                            <span
-                              className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${priorityStyles[ticket.priority]}`}
-                            >
-                              {t(
-                                `allTicketsPage.filters.priorities.${ticket.priority}`
-                              )}
-                            </span>
-                          </td>
-                          {/* Status */}
-                          <td className="py-3 px-4">
-                            <span
-                              className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${statusStyles[ticket.status]}`}
-                            >
-                              {t(
-                                `allTicketsPage.statuses.${ticket.status}`
-                              )}
-                            </span>
-                          </td>
-                          {/* Assigned To */}
-                          <td className="py-3 px-4 hidden lg:table-cell">
-                            <span className="text-[13px] text-[var(--color-text-secondary)]">
-                              {ticket.assignee || "--"}
-                            </span>
-                          </td>
-                          {/* Date */}
-                          <td className="py-3 px-4 hidden md:table-cell">
-                            <span className="text-[13px] text-[var(--color-text-secondary)]">
-                              {ticket.date}
-                            </span>
-                          </td>
-                          {/* Actions */}
-                          <td className="py-3 px-4">
-                            <div className="relative">
-                              <button
-                                onClick={() =>
-                                  setOpenActionId(
-                                    openActionId === ticket.id
-                                      ? null
-                                      : ticket.id
-                                  )
-                                }
-                                className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
-                              >
-                                <MoreVertical className="w-3.5 h-3.5" />
-                              </button>
-                              {openActionId === ticket.id && (
-                                <div
-                                  className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[160px] z-20 ${isRTL ? "left-0" : "right-0"}`}
-                                >
-                                  <button
-                                    onClick={() => {
-                                      window.location.assign(`/${locale}/dashboard/support/supervisor/tickets/${ticket.id}`);
-                                      setOpenActionId(null);
-                                    }}
-                                    className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
-                                  >
-                                    <Eye className="w-3.5 h-3.5" />
-                                    {t("allTicketsPage.actions.view")}
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      toast.info("Use ticket detail view to reassign");
-                                      setOpenActionId(null);
-                                    }}
-                                    className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
-                                  >
-                                    <UserPlus className="w-3.5 h-3.5" />
-                                    {t("allTicketsPage.actions.assign")}
-                                  </button>
-                                  <button
-                                    onClick={async () => {
-                                      try {
-                                        await supportApi.closeTicket(ticket.id);
-                                        fetchTickets();
-                                        toast.success("Ticket closed");
-                                      } catch {
-                                        toast.error("Failed");
-                                      }
-                                      setOpenActionId(null);
-                                    }}
-                                    className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#DC2626] hover:bg-[#FEE2E2]"
-                                  >
-                                    <XCircle className="w-3.5 h-3.5" />
-                                    {t("allTicketsPage.actions.close")}
-                                  </button>
-                                </div>
-                              )}
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      )}
+
+                      {!isLoadingTickets &&
+                        tickets.map((ticket) => (
+                          <tr
+                            key={ticket.id}
+                            className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-border-subtle)] transition-colors"
+                          >
+                            {/* Ticket # */}
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <button
+                                type="button"
+                                className="text-[13px] font-medium text-[var(--color-primary)] hover:underline"
+                                onClick={() => router.push(`${basePath}/tickets/${ticket.id}`)}
+                              >
+                                #{ticket.displayId}
+                              </button>
+                            </td>
+                            {/* Subject — truncated to a single line, full text in title */}
+                            <td className="py-3 px-4 max-w-[260px]">
+                              <span
+                                className="block truncate text-[13px] font-medium text-[var(--color-text-primary)]"
+                                title={ticket.subject}
+                              >
+                                {ticket.subject}
+                              </span>
+                            </td>
+                            {/* Customer */}
+                            <td className="py-3 px-4 max-w-[220px]">
+                              <p
+                                className="truncate text-[13px] text-[var(--color-text-primary)] font-medium"
+                                title={ticket.customer}
+                              >
+                                {ticket.customer}
+                              </p>
+                              <p
+                                className="truncate text-[11px] text-[var(--color-text-secondary)]"
+                                title={ticket.email}
+                              >
+                                {ticket.email}
+                              </p>
+                            </td>
+                            {/* Category */}
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <span className="bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] text-[11px] px-2 py-0.5 rounded-md font-medium">
+                                {t(`allTicketsPage.filters.categories.${ticket.category}`)}
+                              </span>
+                            </td>
+                            {/* Priority */}
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <span
+                                className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${priorityStyles[ticket.priority]}`}
+                              >
+                                {t(`allTicketsPage.filters.priorities.${ticket.priority}`)}
+                              </span>
+                            </td>
+                            {/* Status */}
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <span
+                                className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${statusStyles[ticket.status]}`}
+                              >
+                                {t(`allTicketsPage.statuses.${ticket.status}`)}
+                              </span>
+                            </td>
+                            {/* Assigned To */}
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <span className="text-[13px] text-[var(--color-text-secondary)]">
+                                {ticket.assignee || "--"}
+                              </span>
+                            </td>
+                            {/* Date */}
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <span className="text-[13px] text-[var(--color-text-secondary)]">
+                                {ticket.date}
+                              </span>
+                            </td>
+                            {/* Actions — shadcn DropdownMenu, anchors to trigger */}
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <DropdownMenu dir={isRTL ? "rtl" : "ltr"}>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    type="button"
+                                    aria-label={t("a11y.ticketActions")}
+                                    className="w-8 h-8 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)] data-[state=open]:bg-[var(--color-border-subtle)] data-[state=open]:text-[var(--color-primary)] transition-colors"
+                                  >
+                                    <MoreVertical className="w-4 h-4" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" sideOffset={4}>
+                                  <DropdownMenuItem onSelect={() => handleView(ticket.id)}>
+                                    <Eye className="w-4 h-4 flex-shrink-0" />
+                                    <span>{t("allTicketsPage.actions.view")}</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onSelect={() => handleCopyLink(ticket.id)}>
+                                    <Link2 className="w-4 h-4 flex-shrink-0" />
+                                    <span>{t("allTicketsPage.actions.copyLink")}</span>
+                                  </DropdownMenuItem>
+
+                                  {ticket.status !== "resolved" && ticket.status !== "closed" && (
+                                    <>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        onSelect={() => handleResolve(ticket.id)}
+                                        className="text-[#15803D] hover:bg-[#DCFCE7] focus:bg-[#DCFCE7]"
+                                      >
+                                        <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                                        <span>{t("allTicketsPage.actions.markResolved")}</span>
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+
+                                  {ticket.status === "resolved" && (
+                                    <>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        danger
+                                        onSelect={() => handleClose(ticket.id)}
+                                      >
+                                        <XCircle className="w-4 h-4 flex-shrink-0" />
+                                        <span>{t("allTicketsPage.actions.close")}</span>
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+
+                                  {ticket.status === "closed" && (
+                                    <>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        onSelect={() => handleReopen(ticket.id)}
+                                        className="text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] focus:bg-[var(--color-border-subtle)]"
+                                      >
+                                        <RotateCcw className="w-4 h-4 flex-shrink-0" />
+                                        <span>{t("allTicketsPage.actions.reopen")}</span>
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </div>
 
-                {/* Pagination */}
-                <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3 border-t border-[var(--color-border-subtle)] gap-3">
-                  <p className="text-[13px] text-[var(--color-text-secondary)]">
-                    {t("allTicketsPage.pagination.showing", {
-                      from: totalTickets === 0 ? 0 : (currentPage - 1) * pageSize + 1,
-                      to: Math.min(currentPage * pageSize, totalTickets),
-                      total: totalTickets,
-                    })}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      disabled={currentPage <= 1}
-                      onClick={() => setCurrentPage(currentPage - 1)}
-                      className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                      {t("allTicketsPage.pagination.previous")}
-                    </button>
-                    <button
-                      disabled={currentPage >= totalPages}
-                      onClick={() => setCurrentPage(currentPage + 1)}
-                      className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {t("allTicketsPage.pagination.next")}
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
+                {/* Pagination — admin style with numbered pages */}
+                {totalTickets > 0 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3 border-t border-[var(--color-border-subtle)] gap-3">
+                    <p className="text-[13px] text-[var(--color-text-secondary)]">
+                      {t("allTicketsPage.pagination.showing", {
+                        from: totalTickets === 0 ? 0 : (currentPage - 1) * pageSize + 1,
+                        to: Math.min(currentPage * pageSize, totalTickets),
+                        total: totalTickets,
+                      })}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={currentPage <= 1}
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        {t("allTicketsPage.pagination.previous")}
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1)
+                        .filter(
+                          (p) =>
+                            p === 1 ||
+                            p === totalPages ||
+                            Math.abs(p - currentPage) <= 1,
+                        )
+                        .map((p, idx, arr) => (
+                          <span key={p} className="flex items-center">
+                            {idx > 0 && arr[idx - 1] !== p - 1 && (
+                              <span className="px-1 text-[var(--color-text-secondary)]">
+                                …
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setCurrentPage(p)}
+                              className={`w-8 h-8 text-[13px] rounded-lg ${
+                                p === currentPage
+                                  ? "bg-[var(--color-primary)] text-white"
+                                  : "border border-[var(--color-border)] hover:bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
+                              }`}
+                            >
+                              {p}
+                            </button>
+                          </span>
+                        ))}
+                      <button
+                        type="button"
+                        disabled={currentPage >= totalPages}
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {t("allTicketsPage.pagination.next")}
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
+
     </>
   );
 };

@@ -53,7 +53,11 @@ export const slaEvents = pgTable(
     index('sla_events_event_type_idx').on(table.eventType),
     check(
       'sla_event_type_check',
-      sql`${table.eventType} IN ('frt_breach', 'ttr_breach', 'escalation_triggered', 'resolved_within_sla')`,
+      sql`${table.eventType} IN (
+        'frt_breach', 'ttr_breach', 'escalation_triggered', 'resolved_within_sla',
+        'frt_warning_75', 'priority_escalated',
+        'frt_breach_reassigned', 'ttr_breach_reassigned'
+      )`,
     ),
   ],
 );

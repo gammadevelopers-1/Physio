@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { profileApi } from "@/lib/api";
+import { useSupportOnlineStatus } from "@/hooks/useSupportOnlineStatus";
 
 interface SupportProfile {
   name: string;
@@ -44,6 +45,7 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
   const t = useTranslations("supportDashboard");
   const isRTL = locale === "ar";
   const { user, refreshUser } = useAuth();
+  const { isOnline } = useSupportOnlineStatus();
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef<HTMLDivElement>(null);
@@ -157,7 +159,7 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
         <div className="flex flex-col items-center">
           {/* Avatar with edit button */}
           <div className="relative mb-3">
-            <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] flex items-center justify-center relative">
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-[var(--color-border-subtle)] flex items-center justify-center relative">
               {user?.avatar ? (
                 <img
                   src={user.avatar}
@@ -167,17 +169,26 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
                   className="object-cover w-full h-full"
                 />
               ) : (
-                <span className="text-2xl font-bold text-white">
-                  {profile.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .substring(0, 2)}
-                </span>
+                <img
+                  src="/images/default-avatar.png"
+                  alt={profile.name}
+                  width={80}
+                  height={80}
+                  className="object-cover w-full h-full"
+                />
               )}
-              {/* Online badge */}
+              {/* Online/offline badge — driven by real business hours */}
               <div
-                className={`absolute -bottom-1 ${isRTL ? "-left-1" : "-right-1"} w-6 h-6 bg-[#22C55E] rounded-full flex items-center justify-center border-2 border-white`}
+                className={`absolute -bottom-1 ${isRTL ? "-left-1" : "-right-1"} w-6 h-6 rounded-full flex items-center justify-center border-2 border-white ${
+                  isOnline === false ? "bg-[var(--color-text-secondary)]" : "bg-[#22C55E]"
+                }`}
+                title={
+                  isOnline === null
+                    ? ""
+                    : isOnline
+                      ? t("sidebar.online")
+                      : t("sidebar.offline")
+                }
               >
                 <Headphones className="w-3 h-3 text-white" />
               </div>
@@ -192,7 +203,7 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
             <div ref={avatarMenuRef}>
               <button
                 onClick={() => setAvatarMenuOpen((v) => !v)}
-                className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#8B5CF6] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-[#7C3AED] transition-colors`}
+                className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[var(--color-primary)] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-[#001d5e] transition-colors`}
                 aria-label={t("sidebar.editProfile")}
                 aria-haspopup="true"
                 aria-expanded={avatarMenuOpen}
@@ -230,12 +241,33 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
           </h3>
           <p className="text-sm text-[var(--color-text-secondary)] mb-2">{profile.email}</p>
 
-          {/* Role Badge */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#EDE9FE] rounded-full">
-            <Headphones className="w-4 h-4 text-[#8B5CF6]" />
-            <span className="text-sm font-medium text-[#8B5CF6]">
-              {supportSubRole === "supervisor" ? "Supervisor" : "Agent"}
-            </span>
+          {/* Role + Live Status Pills */}
+          <div className="flex items-center flex-wrap justify-center gap-2">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#EDE9FE] rounded-full">
+              <Headphones className="w-4 h-4 text-[#8B5CF6]" />
+              <span className="text-sm font-medium text-[#8B5CF6]">
+                {supportSubRole === "supervisor" ? "Supervisor" : "Agent"}
+              </span>
+            </div>
+            {isOnline !== null && (
+              <div
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
+                  isOnline
+                    ? "bg-[#DCFCE7] text-[#16A34A]"
+                    : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
+                }`}
+                title={t("sidebar.statusDrivenByBusinessHours")}
+              >
+                <span
+                  className={`inline-block w-2 h-2 rounded-full ${
+                    isOnline ? "bg-[#22C55E] animate-pulse" : "bg-[var(--color-text-secondary)]"
+                  }`}
+                />
+                <span className="text-xs font-medium">
+                  {isOnline ? t("sidebar.online") : t("sidebar.offline")}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -318,14 +350,6 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
         </nav>
       </div>
 
-      {/* Online Status Bar */}
-      <div className="bg-[#DCFCE7] rounded-2xl border border-[var(--color-border)] px-4 py-3 flex items-center gap-2">
-        <div className="w-2.5 h-2.5 bg-[#22C55E] rounded-full" />
-        <Headphones className="w-4 h-4 text-[#16A34A]" />
-        <span className="text-sm font-medium text-[#16A34A]">
-          {t("sidebar.onlineAvailable")}
-        </span>
-      </div>
     </aside>
   );
 };

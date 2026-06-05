@@ -2,7 +2,6 @@ import {
   IsString,
   IsNotEmpty,
   IsOptional,
-  IsIn,
   IsBoolean,
   MaxLength,
 } from 'class-validator';
@@ -26,8 +25,12 @@ export class CreateKbArticleDto {
   @IsString()
   bodyAr?: string;
 
-  @IsIn(['billing', 'login', 'content', 'certificate', 'technical', 'other'])
+  // Free-form slug — must reference a row in kb_categories. The service
+  // layer validates that the slug actually exists; we no longer pin the
+  // list of allowed values in the DTO because admins can add categories.
+  @IsString()
   @IsNotEmpty()
+  @MaxLength(60)
   category: string;
 
   @IsOptional()

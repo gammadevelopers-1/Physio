@@ -21,6 +21,7 @@ import type {
   PartnersPage,
   InstructorsPage,
   FAQPage,
+  SupportPage,
   SearchPage,
   BlogsPage,
   CoursesPage,
@@ -665,13 +666,50 @@ export async function getContactPageData(locale: string = 'en') {
  * Fetch support page layout data (no CMS content — translations only)
  */
 export async function getSupportPageData(locale: string = 'en') {
-  const [siteSettings, navbarLinks, footerLinks] = await Promise.all([
-    getSiteSettings(locale),
-    getNavbarLinks(locale),
-    getFooterLinks(locale),
-  ]);
+  // Each sub-fetch is independently resilient. If Strapi is down the
+  // support page must still render — comparable to layout.tsx which
+  // already swallows site-settings failures with `.catch(() => null)`.
+  // A 500 here would block the whole support tree (track + CSAT pages).
+  // Fallback shapes match the consumer types so Navbar/Footer can render
+  // an empty chrome instead of crashing.
+  const [supportPage, siteSettings, navbarLinks, footerLinks] =
+    await Promise.all([
+      getSupportPage(locale).catch(() => null),
+      getSiteSettings(locale).catch(() => null),
+      getNavbarLinks(locale).catch(() => [] as NavigationLink[]),
+      getFooterLinks(locale).catch(() => ({
+        platform: [] as NavigationLink[],
+        organization: [] as NavigationLink[],
+        support: [] as NavigationLink[],
+      })),
+    ]);
 
-  return { siteSettings, navbarLinks, footerLinks };
+  return { supportPage, siteSettings, navbarLinks, footerLinks };
+}
+
+/**
+ * Fetch the Strapi single-type that drives the public /support page.
+ *
+ * Returns null when the entity is missing or Strapi is unreachable — the
+ * page component falls back to next-intl message catalogues so the page
+ * renders even on a fresh environment with no Strapi seed yet.
+ */
+export async function getSupportPage(
+  locale: string = 'en',
+): Promise<SupportPage | null> {
+  const response = await fetchStrapi<StrapiSingleResponse<SupportPage>>(
+    '/support-page',
+    {
+      params: {
+        locale,
+        ...BLOCKS_POPULATE_PARAMS,
+        ...OG_IMAGE_POPULATE,
+        'populate[items]': 'true',
+        'populate[categories]': 'true',
+      },
+    },
+  );
+  return response?.data || null;
 }
 
 /**

@@ -63,13 +63,11 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
       label: tDashboard("sidebar.allTickets"),
       href: `/${locale}/dashboard/support/tickets`,
       icon: ClipboardList,
-      badge: 23,
     },
     {
       label: tDashboard("sidebar.myTickets"),
       href: `/${locale}/dashboard/support/my-tickets`,
       icon: Inbox,
-      badge: 8,
     },
     {
       label: tDashboard("sidebar.team"),
@@ -158,24 +156,15 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
               className="flex items-center gap-2 cursor-pointer"
             >
-              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[var(--color-border)] bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] flex items-center justify-center">
-                {profile.avatar ? (
-                  <Image
-                    src={profile.avatar}
-                    alt={profile.name}
-                    width={40}
-                    height={40}
-                    className="object-cover w-full h-full"
-                  />
-                ) : (
-                  <span className="text-sm font-bold text-white">
-                    {profile.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .substring(0, 2)}
-                  </span>
-                )}
+              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[var(--color-border)]">
+                <Image
+                  src={profile.avatar || "/images/default-avatar.png"}
+                  alt={profile.name}
+                  width={40}
+                  height={40}
+                  className="object-cover w-full h-full"
+                  unoptimized={!!profile.avatar}
+                />
               </div>
               <ChevronDown
                 className={`w-5 h-5 text-[var(--on-surface-variant)] transition-transform duration-200 ${isUserMenuOpen ? "rotate-180" : ""}`}
@@ -233,24 +222,14 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
           <div className="flex flex-col px-4 py-4">
             {/* User Info */}
             <div className="flex items-center gap-3 pb-4 mb-4 border-b border-[var(--outline-subtle)]">
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] flex items-center justify-center">
-                {user?.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt={profile.name}
-                    width={40}
-                    height={40}
-                    className="object-cover w-full h-full"
-                  />
-                ) : (
-                  <span className="text-sm font-bold text-white">
-                    {profile.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .substring(0, 2)}
-                  </span>
-                )}
+              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[var(--color-border)]">
+                <img
+                  src={user?.avatar || "/images/default-avatar.png"}
+                  alt={profile.name}
+                  width={40}
+                  height={40}
+                  className="object-cover w-full h-full"
+                />
               </div>
               <div>
                 <p className="text-sm font-medium text-[var(--color-text-secondary)]">
@@ -287,11 +266,6 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
                     >
                       {item.label}
                     </span>
-                    {item.badge && (
-                      <span className="bg-[#EF4444] text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                        {item.badge}
-                      </span>
-                    )}
                   </Link>
                 );
               })}

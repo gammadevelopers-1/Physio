@@ -34,6 +34,10 @@ const SLAPerformanceWidget = () => {
   const [kpiData, setKpiData] = useState<Awaited<
     ReturnType<typeof supportApi.getKPIs>
   > | null>(null);
+  const [slaTargets, setSlaTargets] = useState<{
+    frtMinutes: number;
+    ttrMinutes: number;
+  } | null>(null);
   const [agentPerf, setAgentPerf] = useState<AgentPerfRow[]>([]);
   const [agentDirectory, setAgentDirectory] = useState<
     {
@@ -49,15 +53,28 @@ const SLAPerformanceWidget = () => {
     let cancelled = false;
     const fetchData = async () => {
       try {
-        const [kpis, agentsRes, perfRes] = await Promise.all([
+        const [kpis, agentsRes, perfRes, policiesRes] = await Promise.all([
           supportApi.getKPIs(),
           supportApi.getAgents(),
           supportApi.getAgentPerformance(),
+          supportApi.getSlaPolicies().catch(() => []),
         ]);
         if (cancelled) return;
         setKpiData(kpis);
         setAgentDirectory(Array.isArray(agentsRes) ? agentsRes : []);
         setAgentPerf(Array.isArray(perfRes) ? (perfRes as AgentPerfRow[]) : []);
+        // Use the medium-priority policy as the baseline target — it's
+        // the default for most tickets. If absent, fall back to the
+        // first available policy.
+        const policies = Array.isArray(policiesRes) ? policiesRes : [];
+        const medium = policies.find((p: any) => p.priority === "medium");
+        const baseline = medium || policies[0];
+        if (baseline) {
+          setSlaTargets({
+            frtMinutes: baseline.frtMinutes,
+            ttrMinutes: baseline.ttrMinutes,
+          });
+        }
       } catch (err) {
         console.error("Failed to load SLA data:", err);
       } finally {
@@ -81,8 +98,10 @@ const SLAPerformanceWidget = () => {
     return `${(minutes / 60).toFixed(1)}h`;
   };
 
-  const FRT_TARGET_MINUTES = 120; // 2h
-  const TTR_TARGET_MINUTES = 360; // 6h
+  // Pull targets from the admin-configured SLA policies (baseline = medium
+  // priority). Fall back to 2h / 6h only if the API hasn't returned yet.
+  const FRT_TARGET_MINUTES = slaTargets?.frtMinutes ?? 120;
+  const TTR_TARGET_MINUTES = slaTargets?.ttrMinutes ?? 360;
 
   const slaMetrics = kpiData
     ? [
@@ -90,7 +109,9 @@ const SLAPerformanceWidget = () => {
           id: "firstResponse",
           label: t("sla.firstResponseTime"),
           actual: formatMinutes(kpiData.avgFrtMinutes),
-          target: t("sla.targetLabel", { value: "2h" }),
+          target: t("sla.targetLabel", {
+            value: formatMinutes(FRT_TARGET_MINUTES),
+          }),
           fill: kpiData.avgFrtMinutes !== null
             ? Math.min(100, Math.round((kpiData.avgFrtMinutes / FRT_TARGET_MINUTES) * 100))
             : 0,
@@ -102,7 +123,9 @@ const SLAPerformanceWidget = () => {
           id: "resolution",
           label: t("sla.resolutionTime"),
           actual: formatMinutes(kpiData.avgTtrMinutes),
-          target: t("sla.targetLabel", { value: "6h" }),
+          target: t("sla.targetLabel", {
+            value: formatMinutes(TTR_TARGET_MINUTES),
+          }),
           fill: kpiData.avgTtrMinutes !== null
             ? Math.min(100, Math.round((kpiData.avgTtrMinutes / TTR_TARGET_MINUTES) * 100))
             : 0,
@@ -158,7 +181,7 @@ const SLAPerformanceWidget = () => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border-subtle)]">
           <div className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-[#8B5CF6]" />
@@ -260,7 +283,7 @@ const SLAPerformanceWidget = () => {
                 {/* Stats */}
                 <div className="flex items-center gap-4 flex-shrink-0">
                   <div className="text-center">
-                    <p className="text-[13px] font-semibold text-[var(--color-text-secondary)]">
+                    <p className="text-[13px] font-semibold text-[var(--color-text-primary)]">
                       {agent.openTickets}
                     </p>
                     <p className="text-[10px] text-[var(--color-text-secondary)]">
@@ -268,7 +291,7 @@ const SLAPerformanceWidget = () => {
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-[13px] font-semibold text-[var(--color-text-secondary)]">
+                    <p className="text-[13px] font-semibold text-[var(--color-text-primary)]">
                       {agent.avgResponse}
                     </p>
                     <p className="text-[10px] text-[var(--color-text-secondary)]">

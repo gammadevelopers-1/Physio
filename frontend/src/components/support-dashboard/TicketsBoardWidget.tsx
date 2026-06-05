@@ -260,7 +260,11 @@ const TicketsBoardWidget = () => {
                   </span>
                 </td>
                 <td className="px-3 py-3">
-                  <button className="w-7 h-7 flex items-center justify-center rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-border-subtle)] transition-colors">
+                  <button
+                    type="button"
+                    aria-label={t("a11y.ticketActions")}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-border-subtle)] transition-colors"
+                  >
                     <MoreVertical className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
                   </button>
                 </td>

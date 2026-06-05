@@ -1,24 +1,34 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useTranslations } from "next-intl";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
-import { supportApi, getAccessToken } from "@/lib/api";
+import { supportApi } from "@/lib/api";
 import { useSupportProfile } from "@/hooks/useSupportProfile";
 import { toast } from "sonner";
 import SupportSidebar from "./SupportSidebar";
-import SupportMobileSidebar from "./SupportMobileSidebar";
 import SupportNavbar from "./SupportNavbar";
+import PanelErrorState from "./PanelErrorState";
+import Select from "@/components/admin-dashboard/Select";
+import DatePicker from "@/components/ui/DatePicker";
 import {
   BarChart3,
   ShieldCheck,
   Users,
   Smile,
-  Filter,
   FileSpreadsheet,
   Download,
   Loader2,
   AlertTriangle,
+  TrendingUp,
+  Clock,
+  CheckCircle2,
+  Inbox,
+  Activity,
+  Star,
+  RefreshCw,
+  MessageSquare,
+  Calendar,
 } from "lucide-react";
 
 // ─── Date range helpers ───────────────────────────────────
@@ -28,7 +38,7 @@ function getDateRange(period: string): { dateFrom: string; dateTo: string } {
   switch (period) {
     case "thisWeek": {
       const d = new Date(now);
-      d.setDate(d.getDate() - d.getDay()); // start of week (Sunday)
+      d.setDate(d.getDate() - d.getDay());
       d.setHours(0, 0, 0, 0);
       return { dateFrom: d.toISOString(), dateTo: to };
     }
@@ -49,75 +59,115 @@ function getDateRange(period: string): { dateFrom: string; dateTo: string } {
       const end = new Date(now.getFullYear(), now.getMonth(), 1);
       return { dateFrom: start.toISOString(), dateTo: end.toISOString() };
     }
+    case "last30Days": {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 30);
+      return { dateFrom: start.toISOString(), dateTo: to };
+    }
+    case "last90Days": {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 90);
+      return { dateFrom: start.toISOString(), dateTo: to };
+    }
     default:
       return { dateFrom: "", dateTo: "" };
   }
 }
 
-function formatMinutes(m: number | null): string {
-  if (m == null) return "--";
+function formatMinutes(m: number | null | undefined): string {
+  if (m == null) return "—";
   if (m < 60) return `${Math.round(m)}m`;
   if (m < 60 * 24) return `${(m / 60).toFixed(1)}h`;
   return `${(m / (60 * 24)).toFixed(1)}d`;
 }
 
-// ─── Component ────────────────────────────────────────────
+const REPORT_KEYS = ["overview", "topIssues", "slaCompliance", "agentPerformance", "csatNps"] as const;
+type ReportKey = (typeof REPORT_KEYS)[number];
+
 const SupportReportsContent = () => {
   const t = useTranslations("supportDashboard");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
   const { user } = useAuth();
   const profile = useSupportProfile();
 
-  const [selectedReport, setSelectedReport] = useState("ticketVolume");
-  const [period, setPeriod] = useState("thisMonth");
+  // ── Filters ──────────────────────────────────────────────────
+  const [selectedReport, setSelectedReport] = useState<ReportKey>("overview");
+  const [period, setPeriod] = useState("last30Days");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
 
-  // Report data states
-  const [volumeData, setVolumeData] = useState<any[]>([]);
-  const [issuesData, setIssuesData] = useState<any[]>([]);
-  const [slaData, setSlaData] = useState<any>(null);
-  const [agentData, setAgentData] = useState<any[]>([]);
-  const [reportLoading, setReportLoading] = useState(false);
-
-  // CSAT/NPS (existing, works)
-  const [csatData, setCsatData] = useState<any>(null);
-  const [npsData, setNpsData] = useState<any>(null);
-  const [surveyLoading, setSurveyLoading] = useState(false);
-
-  // Export
-  const [isExporting, setIsExporting] = useState(false);
-  const [showExportMenu, setShowExportMenu] = useState(false);
-
-  const reportTypes = [
-    { key: "ticketVolume", title: t("reportsPage.reportTypes.ticketVolume"), description: t("reportsPage.reportTypes.ticketVolumeDesc"), icon: BarChart3, iconBg: "bg-[#EFF6FF]", iconColor: "text-[#3B82F6]" },
-    { key: "topIssues", title: "Top Issues", description: "Recurring issue categories by frequency", icon: AlertTriangle, iconBg: "bg-[#FFEDD5]", iconColor: "text-[#F97316]" },
-    { key: "slaCompliance", title: t("reportsPage.reportTypes.slaCompliance"), description: t("reportsPage.reportTypes.slaComplianceDesc"), icon: ShieldCheck, iconBg: "bg-[#DCFCE7]", iconColor: "text-[#16A34A]" },
-    { key: "agentPerformance", title: t("reportsPage.reportTypes.agentPerformance"), description: t("reportsPage.reportTypes.agentPerformanceDesc"), icon: Users, iconBg: "bg-[#EDE9FE]", iconColor: "text-[#8B5CF6]" },
-    { key: "csatNps", title: t("reportsPage.reportTypes.csatNps"), description: t("reportsPage.reportTypes.csatNpsDesc"), icon: Smile, iconBg: "bg-[#FEF3C7]", iconColor: "text-[#D97706]" },
-  ];
-
-  // ─── Compute date params ──────────────────────────────
   const dateParams = useMemo(
     () =>
       period === "custom"
-        ? { dateFrom: customFrom, dateTo: customTo }
+        ? {
+            dateFrom: customFrom ? new Date(customFrom).toISOString() : "",
+            dateTo: customTo ? new Date(customTo).toISOString() : "",
+          }
         : getDateRange(period),
     [period, customFrom, customTo],
   );
 
-  // ─── Fetch report data ────────────────────────────────
+  // ── KPI strip — always-visible snapshot ──────────────────────
+  const [kpis, setKpis] = useState<any>(null);
+
+  // ── Report data state ────────────────────────────────────────
+  const [trendData, setTrendData] = useState<
+    { bucket: string; created: number; resolved: number }[]
+  >([]);
+  const [volumeData, setVolumeData] = useState<any[]>([]);
+  const [issuesData, setIssuesData] = useState<any[]>([]);
+  const [slaData, setSlaData] = useState<any>(null);
+  const [agentData, setAgentData] = useState<any[]>([]);
+  const [csatData, setCsatData] = useState<any>(null);
+  const [npsData, setNpsData] = useState<any>(null);
+  const [csatComments, setCsatComments] = useState<any[]>([]);
+
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+
+  // ── Export ───────────────────────────────────────────────────
+  const [isExporting, setIsExporting] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showExportMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showExportMenu]);
+
+  // ── KPI fetch (once + on date change for the period subset) ──
+  useEffect(() => {
+    supportApi
+      .getKPIs()
+      .then((k) => setKpis(k))
+      .catch(() => setKpis(null));
+  }, []);
+
+  // ── Report fetch ─────────────────────────────────────────────
   const fetchReport = useCallback(async () => {
-    if (selectedReport === "csatNps") return; // handled separately
     setReportLoading(true);
+    setReportError(null);
+    const params = {
+      dateFrom: dateParams.dateFrom || undefined,
+      dateTo: dateParams.dateTo || undefined,
+    };
     try {
-      const params = {
-        dateFrom: dateParams.dateFrom || undefined,
-        dateTo: dateParams.dateTo || undefined,
-      };
       switch (selectedReport) {
-        case "ticketVolume": {
-          const res = await supportApi.getVolumeReport(params);
-          setVolumeData(Array.isArray(res) ? res : []);
+        case "overview": {
+          // Trend + categories side-by-side
+          const [trend, volume] = await Promise.all([
+            supportApi.getTicketTrend({ ...params, interval: "day" }).catch(() => []),
+            supportApi.getVolumeReport(params).catch(() => []),
+          ]);
+          setTrendData(Array.isArray(trend) ? trend : []);
+          setVolumeData(Array.isArray(volume) ? volume : []);
           break;
         }
         case "topIssues": {
@@ -135,44 +185,64 @@ const SupportReportsContent = () => {
           setAgentData(Array.isArray(res) ? res : []);
           break;
         }
+        case "csatNps": {
+          const [csat, nps, comments] = await Promise.all([
+            supportApi.getCsatSummary().catch(() => null),
+            supportApi.getNpsSummary().catch(() => null),
+            supportApi.getRecentCsatComments(8).catch(() => []),
+          ]);
+          setCsatData(csat);
+          setNpsData(nps);
+          setCsatComments(Array.isArray(comments) ? comments : []);
+          break;
+        }
       }
-    } catch (err) {
-      console.error("Report fetch error:", err);
-      toast.error("Failed to load report data");
+    } catch (err: any) {
+      setReportError(err?.message || t("reportsPage.toasts.loadFailed"));
     } finally {
       setReportLoading(false);
     }
-  }, [selectedReport, dateParams]);
+  }, [selectedReport, dateParams, t]);
 
   useEffect(() => {
     fetchReport();
   }, [fetchReport]);
 
-  useEffect(() => {
-    if (selectedReport === "csatNps") {
-      setSurveyLoading(true);
-      Promise.all([supportApi.getCsatSummary(), supportApi.getNpsSummary()])
-        .then(([csat, nps]) => { setCsatData(csat); setNpsData(nps); })
-        .catch((err) => { console.error("CSAT/NPS fetch error:", err); })
-        .finally(() => setSurveyLoading(false));
-    }
-  }, [selectedReport]);
+  // ── Derived: volume aggregation by category ──────────────────
+  const volumeByCategory = useMemo(() => {
+    const acc: Record<string, number> = {};
+    volumeData.forEach((row) => {
+      acc[row.category] = (acc[row.category] || 0) + Number(row.count);
+    });
+    return Object.entries(acc).sort((a, b) => b[1] - a[1]);
+  }, [volumeData]);
 
-  // ─── Export handler ───────────────────────────────────
-  async function handleExport() {
+  const totalCreatedInRange = useMemo(
+    () => trendData.reduce((s, b) => s + b.created, 0),
+    [trendData],
+  );
+  const totalResolvedInRange = useMemo(
+    () => trendData.reduce((s, b) => s + b.resolved, 0),
+    [trendData],
+  );
+
+  // ── Export handlers ──────────────────────────────────────────
+  const exportTypeFor: Record<ReportKey, string> = {
+    overview: "volume",
+    topIssues: "issues",
+    slaCompliance: "sla",
+    agentPerformance: "agent-performance",
+    csatNps: "volume",
+  };
+
+  async function handleExportCsv() {
+    setShowExportMenu(false);
     setIsExporting(true);
     try {
-      const typeMap: Record<string, string> = {
-        ticketVolume: "volume",
-        topIssues: "issues",
-        slaCompliance: "sla",
-        agentPerformance: "agent-performance",
-        csatNps: "volume", // fallback
-      };
-      const res = await supportApi.exportReport(
-        typeMap[selectedReport] || "volume",
-        { dateFrom: dateParams.dateFrom, dateTo: dateParams.dateTo },
-      );
+      const res = await supportApi.exportReport(exportTypeFor[selectedReport], {
+        dateFrom: dateParams.dateFrom,
+        dateTo: dateParams.dateTo,
+      });
       const blob = new Blob([res.csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -182,68 +252,91 @@ const SupportReportsContent = () => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast.success("Report downloaded");
-    } catch (err) {
-      console.error("Export error:", err);
-      toast.error("Failed to export report");
+      toast.success(t("reportsPage.toasts.downloadedCsv"));
+    } catch {
+      toast.error(t("reportsPage.toasts.exportFailed"));
     } finally {
       setIsExporting(false);
     }
   }
 
   async function handleExportPdf() {
+    setShowExportMenu(false);
     setIsExporting(true);
     try {
-      const typeMap: Record<string, string> = {
-        ticketVolume: "volume",
-        topIssues: "issues",
-        slaCompliance: "sla",
-        agentPerformance: "agent-performance",
-        csatNps: "volume",
-      };
-      const endpoint = supportApi.getExportPdfUrl(
-        typeMap[selectedReport] || "volume",
-        { dateFrom: dateParams.dateFrom, dateTo: dateParams.dateTo },
-      );
-      // Binary fetch with auth token
-      const token = getAccessToken();
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
-      const response = await fetch(`${apiUrl}${endpoint}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        credentials: "include",
+      const blob = await supportApi.downloadExportPdf(exportTypeFor[selectedReport], {
+        dateFrom: dateParams.dateFrom,
+        dateTo: dateParams.dateTo,
       });
-      if (!response.ok) throw new Error(`Export failed: ${response.status}`);
-      const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `support_report_${typeMap[selectedReport]}_${new Date().toISOString().split("T")[0]}.pdf`;
+      a.download = `support_report_${exportTypeFor[selectedReport]}_${new Date()
+        .toISOString()
+        .split("T")[0]}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast.success("PDF downloaded");
-    } catch (err) {
-      console.error("PDF export error:", err);
-      toast.error("Failed to export PDF");
+      toast.success(t("reportsPage.toasts.downloadedPdf"));
+    } catch {
+      toast.error(t("reportsPage.toasts.exportPdfFailed"));
     } finally {
       setIsExporting(false);
     }
   }
 
-  // ─── Volume: aggregate by category ────────────────────
-  const volumeByCategory = volumeData.reduce<Record<string, number>>(
-    (acc, row) => {
-      acc[row.category] = (acc[row.category] || 0) + Number(row.count);
-      return acc;
+  // ── Report type tabs (icon, color, label) ────────────────────
+  const reportTypes: {
+    key: ReportKey;
+    title: string;
+    description: string;
+    icon: typeof BarChart3;
+    iconBg: string;
+    iconColor: string;
+  }[] = [
+    {
+      key: "overview",
+      title: t("reportsPage.reportTypes.ticketVolume"),
+      description: t("reportsPage.reportTypes.ticketVolumeDesc"),
+      icon: BarChart3,
+      iconBg: "bg-[#EFF6FF]",
+      iconColor: "text-[#3B82F6]",
     },
-    {},
-  );
-  const volumeCategories = Object.entries(volumeByCategory)
-    .sort((a, b) => b[1] - a[1]);
-  const volumeTotal = volumeCategories.reduce((s, [, c]) => s + c, 0);
+    {
+      key: "topIssues",
+      title: t("reportsPage.reportTypes.topIssues"),
+      description: t("reportsPage.reportTypes.topIssuesDesc"),
+      icon: AlertTriangle,
+      iconBg: "bg-[#FFEDD5]",
+      iconColor: "text-[#F97316]",
+    },
+    {
+      key: "slaCompliance",
+      title: t("reportsPage.reportTypes.slaCompliance"),
+      description: t("reportsPage.reportTypes.slaComplianceDesc"),
+      icon: ShieldCheck,
+      iconBg: "bg-[#DCFCE7]",
+      iconColor: "text-[#16A34A]",
+    },
+    {
+      key: "agentPerformance",
+      title: t("reportsPage.reportTypes.agentPerformance"),
+      description: t("reportsPage.reportTypes.agentPerformanceDesc"),
+      icon: Users,
+      iconBg: "bg-[#EDE9FE]",
+      iconColor: "text-[#8B5CF6]",
+    },
+    {
+      key: "csatNps",
+      title: t("reportsPage.reportTypes.csatNps"),
+      description: t("reportsPage.reportTypes.csatNpsDesc"),
+      icon: Smile,
+      iconBg: "bg-[#FEF3C7]",
+      iconColor: "text-[#D97706]",
+    },
+  ];
 
-  // ─── Render ───────────────────────────────────────────
   return (
     <>
       <SupportNavbar profile={profile} />
@@ -254,11 +347,10 @@ const SupportReportsContent = () => {
             <div className="hidden lg:block lg:flex-shrink-0">
               <SupportSidebar profile={profile} supportSubRole={user?.supportSubRole} />
             </div>
-            <SupportMobileSidebar profile={profile} supportSubRole={user?.supportSubRole} />
 
             <div className="flex-1 min-w-0">
               {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-[var(--on-surface-default)]">
                     {t("reportsPage.title")}
@@ -267,383 +359,254 @@ const SupportReportsContent = () => {
                     {t("reportsPage.subtitle")}
                   </p>
                 </div>
-                <div className="relative">
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setShowExportMenu(!showExportMenu)}
-                    disabled={isExporting}
-                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-50"
+                    onClick={() => fetchReport()}
+                    disabled={reportLoading}
+                    className="flex items-center gap-1.5 h-10 px-3 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] disabled:opacity-50"
                   >
-                    {isExporting ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Download className="w-4 h-4" />
-                    )}
-                    Export
+                    <RefreshCw className={`w-4 h-4 ${reportLoading ? "animate-spin" : ""}`} />
+                    <span className="hidden sm:inline">{t("reportsPage.refresh")}</span>
                   </button>
-                  {showExportMenu && (
-                    <div className="absolute right-0 top-full mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-20 min-w-[180px] py-1">
-                      <button
-                        type="button"
-                        onClick={() => { setShowExportMenu(false); handleExport(); }}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] text-left"
+                  <div className="relative" ref={exportMenuRef}>
+                    <button
+                      type="button"
+                      onClick={() => setShowExportMenu((v) => !v)}
+                      disabled={isExporting}
+                      className="flex items-center gap-1.5 h-10 px-4 bg-[var(--color-primary)] hover:bg-[#001d5e] text-white text-sm font-medium rounded-lg disabled:opacity-50"
+                    >
+                      {isExporting ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Download className="w-4 h-4" />
+                      )}
+                      {t("reportsPage.export")}
+                    </button>
+                    {showExportMenu && (
+                      <div
+                        className={`absolute top-full mt-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg z-20 min-w-[200px] py-1 ${isRTL ? "left-0" : "right-0"}`}
                       >
-                        <FileSpreadsheet className="w-4 h-4 text-[#16A34A]" />
-                        Download CSV
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setShowExportMenu(false); handleExportPdf(); }}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] text-left"
-                      >
-                        <Download className="w-4 h-4 text-[#DC2626]" />
-                        Download PDF
-                      </button>
-                    </div>
-                  )}
+                        <button
+                          type="button"
+                          onClick={handleExportCsv}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] text-start"
+                        >
+                          <FileSpreadsheet className="w-4 h-4 text-[#16A34A]" />
+                          {t("reportsPage.downloadCsv")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleExportPdf}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] text-start"
+                        >
+                          <Download className="w-4 h-4 text-[#DC2626]" />
+                          {t("reportsPage.downloadPdf")}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
+              {/* KPI Strip — global snapshot, not date-scoped */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3 mb-6">
+                <KpiTile
+                  label={t("reportsPage.kpis.open")}
+                  value={kpis ? String(kpis.openTickets ?? 0) : "—"}
+                  icon={Inbox}
+                  iconBg="bg-[#EFF6FF]"
+                  iconColor="text-[#3B82F6]"
+                />
+                <KpiTile
+                  label={t("reportsPage.kpis.highPriority")}
+                  value={kpis ? String(kpis.highPriorityOpen ?? 0) : "—"}
+                  icon={AlertTriangle}
+                  iconBg="bg-[#FEE2E2]"
+                  iconColor="text-[#DC2626]"
+                />
+                <KpiTile
+                  label={t("reportsPage.kpis.slaCompliance")}
+                  value={kpis ? `${kpis.slaCompliance ?? 0}%` : "—"}
+                  icon={ShieldCheck}
+                  iconBg="bg-[#DCFCE7]"
+                  iconColor="text-[#16A34A]"
+                />
+                <KpiTile
+                  label={t("reportsPage.kpis.avgFrt")}
+                  value={formatMinutes(kpis?.avgFrtMinutes ?? null)}
+                  icon={Clock}
+                  iconBg="bg-[#FFEDD5]"
+                  iconColor="text-[#EA580C]"
+                />
+                <KpiTile
+                  label={t("reportsPage.kpis.avgTtr")}
+                  value={formatMinutes(kpis?.avgTtrMinutes ?? null)}
+                  icon={CheckCircle2}
+                  iconBg="bg-[#F3E8FF]"
+                  iconColor="text-[#8B5CF6]"
+                />
+                <KpiTile
+                  label={t("reportsPage.kpis.csat")}
+                  value={
+                    kpis?.csatAvgScore != null
+                      ? `${kpis.csatAvgScore}/5`
+                      : "—"
+                  }
+                  icon={Smile}
+                  iconBg="bg-[#FEF3C7]"
+                  iconColor="text-[#D97706]"
+                />
+              </div>
+
               {/* Report Type Tabs */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
-                {reportTypes.map((report) => {
-                  const Icon = report.icon;
-                  const isSelected = selectedReport === report.key;
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
+                {reportTypes.map((rt) => {
+                  const Icon = rt.icon;
+                  const active = selectedReport === rt.key;
                   return (
                     <button
-                      key={report.key}
-                      onClick={() => setSelectedReport(report.key)}
-                      className={`p-3 rounded-xl border text-left transition-all ${
-                        isSelected
-                          ? "bg-[#FDF6EC] border-[var(--color-primary)] ring-1 ring-[var(--color-primary)]"
-                          : "bg-[var(--color-surface-card)] border-[var(--color-border)] hover:border-[var(--color-border)]"
+                      key={rt.key}
+                      type="button"
+                      onClick={() => setSelectedReport(rt.key)}
+                      className={`p-3 rounded-xl border text-start transition-all ${
+                        active
+                          ? "bg-[var(--color-surface-card)] border-[var(--color-primary)] ring-1 ring-[var(--color-primary)] shadow-sm"
+                          : "bg-[var(--color-surface-card)] border-[var(--color-border)] hover:border-[var(--color-text-secondary)]"
                       }`}
                     >
-                      <div className={`w-8 h-8 ${report.iconBg} rounded-lg flex items-center justify-center mb-2`}>
-                        <Icon className={`w-4 h-4 ${report.iconColor}`} />
+                      <div className={`w-8 h-8 ${rt.iconBg} rounded-lg flex items-center justify-center mb-2`}>
+                        <Icon className={`w-4 h-4 ${rt.iconColor}`} />
                       </div>
-                      <p className={`text-xs font-semibold ${isSelected ? "text-[#a37f49]" : "text-[var(--color-text-primary)]"}`}>
-                        {report.title}
+                      <p
+                        className={`text-xs font-semibold ${
+                          active ? "text-[var(--color-primary)]" : "text-[var(--color-text-primary)]"
+                        }`}
+                      >
+                        {rt.title}
+                      </p>
+                      <p className="text-[10px] text-[var(--color-text-secondary)] mt-0.5 line-clamp-1">
+                        {rt.description}
                       </p>
                     </button>
                   );
                 })}
               </div>
 
-              {/* Filters */}
-              <div className="bg-white rounded-2xl border border-[var(--color-border)] p-4 mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <Filter className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                  <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{t("reportsPage.filters.title")}</h3>
-                </div>
-                <div className="flex flex-wrap items-end gap-3">
-                  <div>
-                    <label className="block text-[11px] text-[var(--color-text-secondary)] mb-1">{t("reportsPage.filters.period")}</label>
-                    <select
+              {/* Filters card */}
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 mb-5">
+                <div className="flex flex-col md:flex-row md:items-end gap-3">
+                  <div className="flex-1">
+                    <label className="block text-[11px] text-[var(--color-text-secondary)] font-medium mb-1">
+                      {t("reportsPage.filters.period")}
+                    </label>
+                    <Select
                       value={period}
-                      onChange={(e) => setPeriod(e.target.value)}
-                      className="px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-input-focus)]"
-                    >
-                      <option value="thisWeek">{t("reportsPage.filters.thisWeek")}</option>
-                      <option value="lastWeek">{t("reportsPage.filters.lastWeek")}</option>
-                      <option value="thisMonth">{t("reportsPage.filters.thisMonth")}</option>
-                      <option value="lastMonth">{t("reportsPage.filters.lastMonth")}</option>
-                      <option value="custom">{t("reportsPage.filters.custom")}</option>
-                    </select>
+                      onChange={setPeriod}
+                      className="w-full"
+                      options={[
+                        { value: "thisWeek", label: t("reportsPage.filters.thisWeek") },
+                        { value: "lastWeek", label: t("reportsPage.filters.lastWeek") },
+                        { value: "thisMonth", label: t("reportsPage.filters.thisMonth") },
+                        { value: "lastMonth", label: t("reportsPage.filters.lastMonth") },
+                        { value: "last30Days", label: t("reportsPage.filters.last30Days") },
+                        { value: "last90Days", label: t("reportsPage.filters.last90Days") },
+                        { value: "custom", label: t("reportsPage.filters.custom") },
+                      ]}
+                    />
                   </div>
+
                   {period === "custom" && (
                     <>
-                      <div>
-                        <label className="block text-[11px] text-[var(--color-text-secondary)] mb-1">From</label>
-                        <input
-                          type="date"
-                          value={customFrom}
-                          onChange={(e) => setCustomFrom(e.target.value)}
-                          className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-white focus:outline-none focus:border-[#a37f49]"
-                        />
+                      <div className="flex-1">
+                        <label className="block text-[11px] text-[var(--color-text-secondary)] font-medium mb-1">
+                          {t("reportsPage.filters.from")}
+                        </label>
+                        <DatePicker value={customFrom} onChange={setCustomFrom} />
                       </div>
-                      <div>
-                        <label className="block text-[11px] text-[var(--color-text-secondary)] mb-1">To</label>
-                        <input
-                          type="date"
-                          value={customTo}
-                          onChange={(e) => setCustomTo(e.target.value)}
-                          className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-secondary)] bg-white focus:outline-none focus:border-[#a37f49]"
-                        />
+                      <div className="flex-1">
+                        <label className="block text-[11px] text-[var(--color-text-secondary)] font-medium mb-1">
+                          {t("reportsPage.filters.to")}
+                        </label>
+                        <DatePicker value={customTo} onChange={setCustomTo} />
                       </div>
                     </>
                   )}
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await fetchReport();
-                      toast.success("Report refreshed");
-                    }}
-                    disabled={reportLoading}
-                    className="flex items-center gap-1.5 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-50"
-                  >
-                    {reportLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <BarChart3 className="w-4 h-4" />
-                    )}
-                    {t("reportsPage.generateReport")}
-                  </button>
+
+                  {/* Inline range summary so the user knows exactly what
+                      window the panels below are scoped to. */}
+                  {dateParams.dateFrom && dateParams.dateTo && (
+                    <div className="text-[11px] text-[var(--color-text-secondary)] flex items-center gap-1.5 px-3 py-2 bg-[var(--color-border-subtle)] rounded-lg">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>
+                        {new Date(dateParams.dateFrom).toLocaleDateString()} —{" "}
+                        {new Date(dateParams.dateTo).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Report Content */}
-              <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
-                <div className="px-5 py-4 border-b border-[var(--color-border-subtle)]">
-                  <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
-                    {reportTypes.find((r) => r.key === selectedReport)?.title}
-                  </h3>
+              {/* Report Body */}
+              {reportLoading ? (
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-16 flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />
                 </div>
-
-                {reportLoading && selectedReport !== "csatNps" ? (
-                  <div className="flex items-center justify-center py-16">
-                    <Loader2 className="w-6 h-6 animate-spin text-[#002D87]" />
-                  </div>
-                ) : (
-                  <>
-                    {/* ─── Ticket Volume ─────────────────────── */}
-                    {selectedReport === "ticketVolume" && (
-                      <div className="p-5">
-                        {volumeCategories.length === 0 ? (
-                          <div className="text-center py-12 text-sm text-[var(--color-text-secondary)]">
-                            No tickets found in this date range.
-                          </div>
-                        ) : (
-                          <>
-                            <p className="text-xs text-[var(--color-text-secondary)] mb-4">
-                              Total tickets: <span className="font-semibold text-[var(--color-text-primary)]">{volumeTotal}</span>
-                            </p>
-                            <div className="space-y-2">
-                              {volumeCategories.map(([cat, cnt]) => {
-                                const pct = volumeTotal > 0 ? Math.round((cnt / volumeTotal) * 100) : 0;
-                                return (
-                                  <div key={cat} className="flex items-center gap-3">
-                                    <span className="text-xs font-medium text-[var(--color-text-secondary)] w-24 capitalize">{cat}</span>
-                                    <div className="flex-1 bg-[var(--color-border-subtle)] rounded-full h-3">
-                                      <div className="h-3 rounded-full bg-[#3B82F6] transition-all" style={{ width: `${pct}%` }} />
-                                    </div>
-                                    <span className="text-xs font-semibold text-[var(--color-text-primary)] w-12 text-right">{cnt}</span>
-                                    <span className="text-[10px] text-[var(--color-text-secondary)] w-10 text-right">{pct}%</span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </>
-                        )}
+              ) : reportError ? (
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)]">
+                  <PanelErrorState
+                    onRetry={fetchReport}
+                    isRetrying={reportLoading}
+                    message={reportError}
+                  />
+                </div>
+              ) : (
+                <>
+                  {/* Overview = trend + category breakdown */}
+                  {selectedReport === "overview" && (
+                    <div className="space-y-5">
+                      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+                        <div className="xl:col-span-2">
+                          <TrendChart
+                            data={trendData}
+                            createdTotal={totalCreatedInRange}
+                            resolvedTotal={totalResolvedInRange}
+                            t={t}
+                          />
+                        </div>
+                        <div>
+                          <CategoryBreakdown rows={volumeByCategory} t={t} />
+                        </div>
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    {/* ─── Top Issues ─────────────────────────── */}
-                    {selectedReport === "topIssues" && (
-                      <div className="p-5">
-                        {issuesData.length === 0 ? (
-                          <div className="text-center py-12 text-sm text-[var(--color-text-secondary)]">
-                            No issues found in this date range.
-                          </div>
-                        ) : (
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
-                                  <th className="py-3 px-4 text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">Rank</th>
-                                  <th className="py-3 px-4 text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">Category</th>
-                                  <th className="py-3 px-4 text-right text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">Tickets</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {issuesData.map((item, i) => (
-                                  <tr key={item.category} className="border-b border-[var(--color-border-subtle)]">
-                                    <td className="py-3 px-4 text-[13px] text-[var(--color-text-secondary)]">#{i + 1}</td>
-                                    <td className="py-3 px-4 text-[13px] font-medium text-[var(--color-text-primary)] capitalize">{item.category}</td>
-                                    <td className="py-3 px-4 text-[13px] font-semibold text-[var(--color-text-primary)] text-right">{Number(item.count)}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                  {/* Top Issues */}
+                  {selectedReport === "topIssues" && (
+                    <TopIssuesPanel issues={issuesData} t={t} />
+                  )}
 
-                    {/* ─── SLA Compliance ─────────────────────── */}
-                    {selectedReport === "slaCompliance" && (
-                      <div className="p-5">
-                        {!slaData || slaData.totalResolved === 0 ? (
-                          <div className="text-center py-12 text-sm text-[var(--color-text-secondary)]">
-                            No resolved tickets in this date range.
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                            <div className="text-center p-6 bg-[var(--color-surface-page)] rounded-xl">
-                              <p className={`text-4xl font-bold ${slaData.complianceRate >= 80 ? "text-[#16A34A]" : slaData.complianceRate >= 50 ? "text-[#F59E0B]" : "text-[#EF4444]"}`}>
-                                {slaData.complianceRate}%
-                              </p>
-                              <p className="text-xs text-[var(--color-text-secondary)] mt-1">Overall SLA Compliance</p>
-                              <p className="text-[10px] text-[var(--color-text-secondary)] mt-0.5">{slaData.resolvedWithinSla} / {slaData.totalResolved} tickets met SLA</p>
-                            </div>
-                            <div className="text-center p-6 bg-[var(--color-surface-page)] rounded-xl">
-                              <p className={`text-4xl font-bold ${slaData.frtCompliance >= 80 ? "text-[#16A34A]" : "text-[#F59E0B]"}`}>
-                                {slaData.frtCompliance}%
-                              </p>
-                              <p className="text-xs text-[var(--color-text-secondary)] mt-1">FRT Compliance</p>
-                              <p className="text-[10px] text-[var(--color-text-secondary)] mt-0.5">First Response Time met</p>
-                            </div>
-                            <div className="text-center p-6 bg-[var(--color-surface-page)] rounded-xl">
-                              <p className={`text-4xl font-bold ${slaData.ttrCompliance >= 80 ? "text-[#16A34A]" : "text-[#F59E0B]"}`}>
-                                {slaData.ttrCompliance}%
-                              </p>
-                              <p className="text-xs text-[var(--color-text-secondary)] mt-1">TTR Compliance</p>
-                              <p className="text-[10px] text-[var(--color-text-secondary)] mt-0.5">Time to Resolution met</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                  {/* SLA Compliance */}
+                  {selectedReport === "slaCompliance" && (
+                    <SlaCompliancePanel data={slaData} t={t} />
+                  )}
 
-                    {/* ─── Agent Performance ──────────────────── */}
-                    {selectedReport === "agentPerformance" && (
-                      <div className="p-5">
-                        {agentData.length === 0 ? (
-                          <div className="text-center py-12 text-sm text-[var(--color-text-secondary)]">
-                            No agent data available.
-                          </div>
-                        ) : (
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
-                                  <th className="py-3 px-4 text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">Agent</th>
-                                  <th className="py-3 px-4 text-right text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">Total</th>
-                                  <th className="py-3 px-4 text-right text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">Open</th>
-                                  <th className="py-3 px-4 text-right text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">Resolved</th>
-                                  <th className="py-3 px-4 text-right text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">Avg FRT</th>
-                                  <th className="py-3 px-4 text-right text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">CSAT</th>
-                                  <th className="py-3 px-4 text-right text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">FRT Breaches</th>
-                                  <th className="py-3 px-4 text-right text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">TTR Breaches</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {agentData.map((agent) => (
-                                  <tr key={agent.userId} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)]">
-                                    <td className="py-3 px-4 text-[13px] font-medium text-[var(--color-text-primary)]">{agent.name || "Unknown"}</td>
-                                    <td className="py-3 px-4 text-[13px] text-[var(--color-text-primary)] text-right">{agent.totalTickets}</td>
-                                    <td className="py-3 px-4 text-[13px] text-[var(--color-text-primary)] text-right">{agent.openTickets ?? "--"}</td>
-                                    <td className="py-3 px-4 text-[13px] text-[var(--color-text-primary)] text-right">{agent.resolvedTickets}</td>
-                                    <td className="py-3 px-4 text-[13px] text-[var(--color-text-secondary)] text-right">{formatMinutes(agent.avgFrtMinutes)}</td>
-                                    <td className="py-3 px-4 text-[13px] font-semibold text-right">
-                                      <span className={agent.csatAvgScore ? "text-[#16A34A]" : "text-[var(--color-text-secondary)]"}>
-                                        {agent.csatAvgScore != null ? `${agent.csatAvgScore}/5` : "--"}
-                                      </span>
-                                    </td>
-                                    <td className="py-3 px-4 text-[13px] text-right">
-                                      <span className={agent.frtBreaches > 0 ? "text-[#EF4444] font-semibold" : "text-[#16A34A]"}>
-                                        {agent.frtBreaches}
-                                      </span>
-                                    </td>
-                                    <td className="py-3 px-4 text-[13px] text-right">
-                                      <span className={agent.ttrBreaches > 0 ? "text-[#EF4444] font-semibold" : "text-[#16A34A]"}>
-                                        {agent.ttrBreaches}
-                                      </span>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                  {/* Agent Performance */}
+                  {selectedReport === "agentPerformance" && (
+                    <AgentPerformancePanel agents={agentData} t={t} />
+                  )}
 
-                    {/* ─── CSAT / NPS (existing, preserved) ──── */}
-                    {selectedReport === "csatNps" && (
-                      <div className="p-5 space-y-6">
-                        {surveyLoading ? (
-                          <div className="flex justify-center py-12">
-                            <Loader2 className="w-6 h-6 animate-spin text-[#002D87]" />
-                          </div>
-                        ) : (
-                          <>
-                            {/* CSAT */}
-                            <div className="bg-white rounded-2xl border border-[var(--color-border)] p-6">
-                              <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">CSAT Score</h3>
-                              <div className="flex items-center gap-8 mb-4">
-                                <div className="text-center">
-                                  <p className="text-4xl font-bold text-[#002D87]">{csatData?.avgScore || "--"}</p>
-                                  <p className="text-xs text-[var(--color-text-secondary)]">Avg Score (out of 5)</p>
-                                </div>
-                                <div className="text-center">
-                                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">{csatData?.totalResponded || 0}</p>
-                                  <p className="text-xs text-[var(--color-text-secondary)]">Responses</p>
-                                </div>
-                                <div className="text-center">
-                                  <p className="text-2xl font-bold text-[#16A34A]">{csatData?.responseRate || 0}%</p>
-                                  <p className="text-xs text-[var(--color-text-secondary)]">Response Rate</p>
-                                </div>
-                              </div>
-                              <div className="space-y-2">
-                                {[5, 4, 3, 2, 1].map((score) => {
-                                  const cnt = csatData?.distribution?.[score] || 0;
-                                  const total = csatData?.totalResponded || 1;
-                                  const pct = Math.round((cnt / total) * 100) || 0;
-                                  const colors: Record<number, string> = { 5: "bg-[#22C55E]", 4: "bg-[#3B82F6]", 3: "bg-[#EAB308]", 2: "bg-[#F97316]", 1: "bg-[#EF4444]" };
-                                  return (
-                                    <div key={score} className="flex items-center gap-3">
-                                      <span className="text-xs font-medium text-[var(--color-text-secondary)] w-12">{score} star</span>
-                                      <div className="flex-1 bg-[var(--color-border-subtle)] rounded-full h-2.5">
-                                        <div className={`h-2.5 rounded-full ${colors[score]}`} style={{ width: `${pct}%` }} />
-                                      </div>
-                                      <span className="text-xs text-[var(--color-text-secondary)] w-8">{cnt}</span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-
-                            {/* NPS */}
-                            <div className="bg-white rounded-2xl border border-[var(--color-border)] p-6">
-                              <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">Net Promoter Score</h3>
-                              <div className="flex items-center gap-8 mb-4">
-                                <div className="text-center">
-                                  <p className={`text-4xl font-bold ${(npsData?.npsScore || 0) >= 0 ? "text-[#22C55E]" : "text-[#EF4444]"}`}>{npsData?.npsScore || 0}</p>
-                                  <p className="text-xs text-[var(--color-text-secondary)]">NPS Score</p>
-                                </div>
-                                <div className="text-center">
-                                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">{npsData?.totalResponded || 0}</p>
-                                  <p className="text-xs text-[var(--color-text-secondary)]">Responses</p>
-                                </div>
-                                <div className="text-center">
-                                  <p className="text-2xl font-bold text-[#16A34A]">{npsData?.responseRate || 0}%</p>
-                                  <p className="text-xs text-[var(--color-text-secondary)]">Response Rate</p>
-                                </div>
-                              </div>
-                              <div className="space-y-2">
-                                {[
-                                  { label: "Promoters", count: npsData?.promoters || 0, color: "bg-[#22C55E]" },
-                                  { label: "Passives", count: npsData?.passives || 0, color: "bg-[#EAB308]" },
-                                  { label: "Detractors", count: npsData?.detractors || 0, color: "bg-[#EF4444]" },
-                                ].map((seg) => (
-                                  <div key={seg.label} className="flex items-center gap-3">
-                                    <span className="text-xs font-medium text-[var(--color-text-secondary)] w-20">{seg.label}</span>
-                                    <div className="flex-1 bg-[var(--color-border-subtle)] rounded-full h-2.5">
-                                      <div className={`h-2.5 rounded-full ${seg.color}`} style={{ width: `${npsData?.totalResponded ? Math.round((seg.count / npsData.totalResponded) * 100) : 0}%` }} />
-                                    </div>
-                                    <span className="text-xs text-[var(--color-text-secondary)] w-8">{seg.count}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
+                  {/* CSAT / NPS */}
+                  {selectedReport === "csatNps" && (
+                    <CsatNpsPanel
+                      csat={csatData}
+                      nps={npsData}
+                      comments={csatComments}
+                      t={t}
+                    />
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -651,5 +614,706 @@ const SupportReportsContent = () => {
     </>
   );
 };
+
+// ──────────────────────────────────────────────────────────────────
+// KPI tile
+// ──────────────────────────────────────────────────────────────────
+
+function KpiTile({
+  label,
+  value,
+  icon: Icon,
+  iconBg,
+  iconColor,
+}: {
+  label: string;
+  value: string;
+  icon: React.ElementType;
+  iconBg: string;
+  iconColor: string;
+}) {
+  return (
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-3 flex items-start gap-2.5">
+      <div className={`w-9 h-9 ${iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
+        <Icon className={`w-4 h-4 ${iconColor}`} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] text-[var(--color-text-secondary)] font-medium uppercase truncate">
+          {label}
+        </p>
+        <p className="text-lg font-bold text-[var(--color-text-primary)] leading-tight">
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Trend chart — CSS bars (created vs resolved per day/week)
+// ──────────────────────────────────────────────────────────────────
+
+function TrendChart({
+  data,
+  createdTotal,
+  resolvedTotal,
+  t,
+}: {
+  data: { bucket: string; created: number; resolved: number }[];
+  createdTotal: number;
+  resolvedTotal: number;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  const max = useMemo(
+    () => Math.max(1, ...data.map((d) => Math.max(d.created, d.resolved))),
+    [data],
+  );
+
+  // Show at most ~30 buckets — beyond that bars become too thin.
+  // For longer ranges, sample evenly so users still get a sense of the curve.
+  const display = useMemo(() => {
+    if (data.length <= 30) return data;
+    const step = Math.ceil(data.length / 30);
+    return data.filter((_, i) => i % step === 0);
+  }, [data]);
+
+  if (data.length === 0) {
+    return (
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 h-full flex flex-col items-center justify-center text-center">
+        <Activity className="w-8 h-8 text-[var(--color-text-secondary)] mb-2" />
+        <p className="text-sm text-[var(--color-text-secondary)]">
+          {t("reportsPage.volume.noTickets")}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-[var(--color-primary)]" />
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+            {t("reportsPage.trend.title")}
+          </h3>
+        </div>
+        <div className="flex items-center gap-3 text-[11px]">
+          <span className="inline-flex items-center gap-1 text-[var(--color-text-secondary)]">
+            <span className="w-2 h-2 rounded-sm bg-[#3B82F6]" />
+            {t("reportsPage.trend.created")} ({createdTotal})
+          </span>
+          <span className="inline-flex items-center gap-1 text-[var(--color-text-secondary)]">
+            <span className="w-2 h-2 rounded-sm bg-[#22C55E]" />
+            {t("reportsPage.trend.resolved")} ({resolvedTotal})
+          </span>
+        </div>
+      </div>
+
+      <div className="flex items-end gap-[2px] h-44 mt-4">
+        {display.map((d) => {
+          const ch = max > 0 ? (d.created / max) * 100 : 0;
+          const rh = max > 0 ? (d.resolved / max) * 100 : 0;
+          return (
+            <div
+              key={d.bucket}
+              className="flex-1 flex flex-col items-center justify-end gap-[1px]"
+              title={`${d.bucket}: ${d.created} created · ${d.resolved} resolved`}
+            >
+              <div className="w-full flex items-end gap-[1px] h-full">
+                <div
+                  className="flex-1 bg-[#3B82F6]/80 rounded-t-sm transition-all"
+                  style={{ height: `${Math.max(ch, d.created > 0 ? 4 : 0)}%` }}
+                />
+                <div
+                  className="flex-1 bg-[#22C55E]/80 rounded-t-sm transition-all"
+                  style={{ height: `${Math.max(rh, d.resolved > 0 ? 4 : 0)}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* x-axis labels — show first / middle / last */}
+      <div className="flex justify-between mt-2 text-[10px] text-[var(--color-text-secondary)]">
+        <span>{display[0]?.bucket}</span>
+        {display.length > 2 && (
+          <span>{display[Math.floor(display.length / 2)]?.bucket}</span>
+        )}
+        <span>{display[display.length - 1]?.bucket}</span>
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Category breakdown — vertical list with horizontal bars
+// ──────────────────────────────────────────────────────────────────
+
+function CategoryBreakdown({
+  rows,
+  t,
+}: {
+  rows: [string, number][];
+  t: ReturnType<typeof useTranslations>;
+}) {
+  const total = rows.reduce((s, [, c]) => s + c, 0);
+
+  return (
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 h-full">
+      <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1">
+        {t("reportsPage.volume.byCategory")}
+      </h3>
+      <p className="text-[11px] text-[var(--color-text-secondary)] mb-4">
+        {t("reportsPage.volume.totalTickets", { count: total })}
+      </p>
+
+      {rows.length === 0 ? (
+        <p className="text-sm text-[var(--color-text-secondary)] py-6 text-center">
+          {t("reportsPage.volume.noTickets")}
+        </p>
+      ) : (
+        <div className="space-y-2.5">
+          {rows.map(([cat, cnt]) => {
+            const pct = total > 0 ? Math.round((cnt / total) * 100) : 0;
+            return (
+              <div key={cat}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-[var(--color-text-primary)] capitalize">
+                    {cat}
+                  </span>
+                  <span className="text-[11px] text-[var(--color-text-secondary)]">
+                    {cnt} · {pct}%
+                  </span>
+                </div>
+                <div className="bg-[var(--color-border-subtle)] rounded-full h-2 overflow-hidden">
+                  <div
+                    className="h-2 bg-[var(--color-primary)] transition-all"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Top Issues — clean ranked list with badges
+// ──────────────────────────────────────────────────────────────────
+
+function TopIssuesPanel({
+  issues,
+  t,
+}: {
+  issues: any[];
+  t: ReturnType<typeof useTranslations>;
+}) {
+  if (issues.length === 0) {
+    return (
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
+        <AlertTriangle className="w-8 h-8 text-[var(--color-text-secondary)] mx-auto mb-2" />
+        <p className="text-sm text-[var(--color-text-secondary)]">
+          {t("reportsPage.issues.noIssues")}
+        </p>
+      </div>
+    );
+  }
+  const max = Math.max(...issues.map((i) => Number(i.count)));
+  return (
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
+      <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">
+        {t("reportsPage.reportTypes.topIssues")}
+      </h3>
+      <div className="space-y-3">
+        {issues.map((item, idx) => {
+          const cnt = Number(item.count);
+          const pct = max > 0 ? Math.round((cnt / max) * 100) : 0;
+          return (
+            <div
+              key={item.category}
+              className="flex items-center gap-3 p-3 border border-[var(--color-border)] rounded-lg"
+            >
+              <div className="w-8 h-8 rounded-full bg-[var(--color-border-subtle)] flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-bold text-[var(--color-primary)]">
+                  {idx + 1}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-[var(--color-text-primary)] capitalize mb-1">
+                  {item.category}
+                </p>
+                <div className="bg-[var(--color-border-subtle)] rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="h-1.5 bg-[#F97316]"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </div>
+              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                {cnt}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// SLA Compliance — 3 gauge-style cards
+// ──────────────────────────────────────────────────────────────────
+
+function SlaCompliancePanel({
+  data,
+  t,
+}: {
+  data: any;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  if (!data || data.totalResolved === 0) {
+    return (
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
+        <ShieldCheck className="w-8 h-8 text-[var(--color-text-secondary)] mx-auto mb-2" />
+        <p className="text-sm text-[var(--color-text-secondary)]">
+          {t("reportsPage.slaPanel.noResolved")}
+        </p>
+      </div>
+    );
+  }
+
+  const tiles = [
+    {
+      label: t("reportsPage.slaPanel.overallCompliance"),
+      value: data.complianceRate,
+      sub: t("reportsPage.slaPanel.metSla", {
+        met: data.resolvedWithinSla,
+        total: data.totalResolved,
+      }),
+    },
+    {
+      label: t("reportsPage.slaPanel.frtCompliance"),
+      value: data.frtCompliance,
+      sub: t("reportsPage.slaPanel.frtSubtitle"),
+    },
+    {
+      label: t("reportsPage.slaPanel.ttrCompliance"),
+      value: data.ttrCompliance,
+      sub: t("reportsPage.slaPanel.ttrSubtitle"),
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {tiles.map((tile) => (
+        <Gauge key={tile.label} {...tile} />
+      ))}
+    </div>
+  );
+}
+
+function Gauge({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: number;
+  sub: string;
+}) {
+  const color = value >= 80 ? "#22C55E" : value >= 50 ? "#F59E0B" : "#EF4444";
+  // SVG ring math — 70 radius, ~440 circumference, draw the arc to value%.
+  const r = 56;
+  const c = 2 * Math.PI * r;
+  const dash = (value / 100) * c;
+
+  return (
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5 flex flex-col items-center">
+      <div className="relative w-36 h-36">
+        <svg viewBox="0 0 140 140" className="w-full h-full -rotate-90">
+          <circle
+            cx="70"
+            cy="70"
+            r={r}
+            stroke="var(--color-border-subtle)"
+            strokeWidth="10"
+            fill="none"
+          />
+          <circle
+            cx="70"
+            cy="70"
+            r={r}
+            stroke={color}
+            strokeWidth="10"
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={`${dash} ${c}`}
+            className="transition-all duration-500"
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-3xl font-bold" style={{ color }}>
+            {value}%
+          </span>
+        </div>
+      </div>
+      <p className="text-sm font-medium text-[var(--color-text-primary)] mt-3 text-center">
+        {label}
+      </p>
+      <p className="text-[11px] text-[var(--color-text-secondary)] mt-1 text-center">
+        {sub}
+      </p>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Agent Performance — table with conditional formatting
+// ──────────────────────────────────────────────────────────────────
+
+function AgentPerformancePanel({
+  agents,
+  t,
+}: {
+  agents: any[];
+  t: ReturnType<typeof useTranslations>;
+}) {
+  if (agents.length === 0) {
+    return (
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-12 text-center">
+        <Users className="w-8 h-8 text-[var(--color-text-secondary)] mx-auto mb-2" />
+        <p className="text-sm text-[var(--color-text-secondary)]">
+          {t("reportsPage.agentsPanel.noData")}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[800px]">
+          <thead className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
+            <tr>
+              <th className="py-3 px-4 text-start text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">
+                {t("reportsPage.agentsPanel.columns.agent")}
+              </th>
+              <th className="py-3 px-4 text-end text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">
+                {t("reportsPage.agentsPanel.columns.total")}
+              </th>
+              <th className="py-3 px-4 text-end text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">
+                {t("reportsPage.agentsPanel.columns.open")}
+              </th>
+              <th className="py-3 px-4 text-end text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">
+                {t("reportsPage.agentsPanel.columns.resolved")}
+              </th>
+              <th className="py-3 px-4 text-end text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">
+                {t("reportsPage.agentsPanel.columns.avgFrt")}
+              </th>
+              <th className="py-3 px-4 text-end text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">
+                {t("reportsPage.agentsPanel.columns.csat")}
+              </th>
+              <th className="py-3 px-4 text-end text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">
+                {t("reportsPage.agentsPanel.columns.frtBreaches")}
+              </th>
+              <th className="py-3 px-4 text-end text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase">
+                {t("reportsPage.agentsPanel.columns.ttrBreaches")}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {agents.map((agent) => (
+              <tr
+                key={agent.userId}
+                className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-border-subtle)]"
+              >
+                <td className="py-3 px-4 text-[13px] font-medium text-[var(--color-text-primary)]">
+                  {agent.name || t("reportsPage.agentsPanel.unknown")}
+                </td>
+                <td className="py-3 px-4 text-[13px] text-[var(--color-text-primary)] text-end">
+                  {agent.totalTickets}
+                </td>
+                <td className="py-3 px-4 text-[13px] text-[var(--color-text-primary)] text-end">
+                  {agent.openTickets ?? "—"}
+                </td>
+                <td className="py-3 px-4 text-[13px] text-[var(--color-text-primary)] text-end">
+                  {agent.resolvedTickets}
+                </td>
+                <td className="py-3 px-4 text-[13px] text-[var(--color-text-secondary)] text-end">
+                  {formatMinutes(agent.avgFrtMinutes)}
+                </td>
+                <td className="py-3 px-4 text-[13px] font-semibold text-end">
+                  <span
+                    className={
+                      agent.csatAvgScore != null
+                        ? agent.csatAvgScore >= 4
+                          ? "text-[#16A34A]"
+                          : agent.csatAvgScore >= 3
+                            ? "text-[#EA580C]"
+                            : "text-[#DC2626]"
+                        : "text-[var(--color-text-secondary)]"
+                    }
+                  >
+                    {agent.csatAvgScore != null ? `${agent.csatAvgScore}/5` : "—"}
+                  </span>
+                </td>
+                <td className="py-3 px-4 text-[13px] text-end">
+                  <span
+                    className={
+                      agent.frtBreaches > 0
+                        ? "text-[#DC2626] font-semibold"
+                        : "text-[#16A34A]"
+                    }
+                  >
+                    {agent.frtBreaches}
+                  </span>
+                </td>
+                <td className="py-3 px-4 text-[13px] text-end">
+                  <span
+                    className={
+                      agent.ttrBreaches > 0
+                        ? "text-[#DC2626] font-semibold"
+                        : "text-[#16A34A]"
+                    }
+                  >
+                    {agent.ttrBreaches}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// CSAT / NPS — distribution panels + recent comments strip
+// ──────────────────────────────────────────────────────────────────
+
+function CsatNpsPanel({
+  csat,
+  nps,
+  comments,
+  t,
+}: {
+  csat: any;
+  nps: any;
+  comments: any[];
+  t: ReturnType<typeof useTranslations>;
+}) {
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* CSAT */}
+        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
+            <Smile className="w-4 h-4 text-[#D97706]" />
+            {t("reportsPage.csatPanel.title")}
+          </h3>
+          <div className="flex items-center gap-6 mb-5 flex-wrap">
+            <div>
+              <p className="text-3xl font-bold text-[var(--color-primary)]">
+                {csat?.avgScore ?? "—"}
+              </p>
+              <p className="text-[11px] text-[var(--color-text-secondary)]">
+                {t("reportsPage.csatPanel.avgScore")}
+              </p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-[var(--color-text-primary)]">
+                {csat?.totalResponded ?? 0}
+              </p>
+              <p className="text-[11px] text-[var(--color-text-secondary)]">
+                {t("reportsPage.csatPanel.responses")}
+              </p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-[#16A34A]">
+                {csat?.responseRate ?? 0}%
+              </p>
+              <p className="text-[11px] text-[var(--color-text-secondary)]">
+                {t("reportsPage.csatPanel.responseRate")}
+              </p>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            {[5, 4, 3, 2, 1].map((score) => {
+              const cnt = csat?.distribution?.[score] || 0;
+              const total = csat?.totalResponded || 1;
+              const pct = Math.round((cnt / total) * 100) || 0;
+              const colors: Record<number, string> = {
+                5: "bg-[#22C55E]",
+                4: "bg-[#3B82F6]",
+                3: "bg-[#EAB308]",
+                2: "bg-[#F97316]",
+                1: "bg-[#EF4444]",
+              };
+              return (
+                <div key={score} className="flex items-center gap-2">
+                  <div className="flex items-center gap-0.5 w-14">
+                    {Array.from({ length: score }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className="w-2.5 h-2.5 text-[#F59E0B] fill-[#F59E0B]"
+                      />
+                    ))}
+                  </div>
+                  <div className="flex-1 bg-[var(--color-border-subtle)] rounded-full h-2 overflow-hidden">
+                    <div
+                      className={`h-2 rounded-full ${colors[score]}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="text-[11px] text-[var(--color-text-secondary)] w-10 text-end">
+                    {cnt}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* NPS */}
+        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-[#16A34A]" />
+            {t("reportsPage.npsPanel.title")}
+          </h3>
+          <div className="flex items-center gap-6 mb-5 flex-wrap">
+            <div>
+              <p
+                className={`text-3xl font-bold ${
+                  (nps?.npsScore || 0) >= 0 ? "text-[#22C55E]" : "text-[#EF4444]"
+                }`}
+              >
+                {nps?.npsScore ?? 0}
+              </p>
+              <p className="text-[11px] text-[var(--color-text-secondary)]">
+                {t("reportsPage.npsPanel.score")}
+              </p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-[var(--color-text-primary)]">
+                {nps?.totalResponded ?? 0}
+              </p>
+              <p className="text-[11px] text-[var(--color-text-secondary)]">
+                {t("reportsPage.npsPanel.responses")}
+              </p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-[#16A34A]">
+                {nps?.responseRate ?? 0}%
+              </p>
+              <p className="text-[11px] text-[var(--color-text-secondary)]">
+                {t("reportsPage.npsPanel.responseRate")}
+              </p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {[
+              {
+                label: t("reportsPage.npsPanel.promoters"),
+                count: nps?.promoters || 0,
+                color: "bg-[#22C55E]",
+              },
+              {
+                label: t("reportsPage.npsPanel.passives"),
+                count: nps?.passives || 0,
+                color: "bg-[#EAB308]",
+              },
+              {
+                label: t("reportsPage.npsPanel.detractors"),
+                count: nps?.detractors || 0,
+                color: "bg-[#EF4444]",
+              },
+            ].map((seg) => {
+              const total = nps?.totalResponded || 1;
+              const pct = Math.round((seg.count / total) * 100) || 0;
+              return (
+                <div key={seg.label} className="flex items-center gap-3">
+                  <span className="text-xs font-medium text-[var(--color-text-secondary)] w-20">
+                    {seg.label}
+                  </span>
+                  <div className="flex-1 bg-[var(--color-border-subtle)] rounded-full h-2 overflow-hidden">
+                    <div
+                      className={`h-2 rounded-full ${seg.color}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-[var(--color-text-secondary)] w-10 text-end">
+                    {seg.count}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Recent CSAT comments */}
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
+        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
+          <MessageSquare className="w-4 h-4 text-[var(--color-primary)]" />
+          {t("reportsPage.csatPanel.recentComments")}
+        </h3>
+        {comments.length === 0 ? (
+          <p className="text-sm text-[var(--color-text-secondary)] py-6 text-center">
+            {t("reportsPage.csatPanel.noComments")}
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {comments.map((c) => (
+              <div
+                key={c.id}
+                className="border border-[var(--color-border)] rounded-lg p-3"
+              >
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-3 h-3 ${
+                          c.score && i < c.score
+                            ? "text-[#F59E0B] fill-[#F59E0B]"
+                            : "text-[var(--color-border)]"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-[10px] text-[var(--color-text-secondary)]">
+                    {c.submittedAt
+                      ? new Date(c.submittedAt).toLocaleDateString()
+                      : ""}
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--color-text-primary)] line-clamp-3 mb-1.5">
+                  {c.comment}
+                </p>
+                <div className="flex items-center justify-between text-[10px] text-[var(--color-text-secondary)]">
+                  <span className="truncate">
+                    {c.ticketSubject || "—"}
+                  </span>
+                  {(c.assigneeFirstName || c.assigneeLastName) && (
+                    <span className="flex-shrink-0 ms-2">
+                      {[c.assigneeFirstName, c.assigneeLastName]
+                        .filter(Boolean)
+                        .join(" ")}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default SupportReportsContent;

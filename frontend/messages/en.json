@@ -1775,6 +1775,23 @@
       "createdOn": "Created on {date}",
       "rateExperience": "How was your experience?",
       "thankYou": "Thank you for your feedback!",
+      "refresh": "Refresh",
+      "sendReply": "Send reply",
+      "replyHint": "Press Enter to send, Shift + Enter for new line",
+      "reopenPlaceholder": "Type a message to reopen this ticket…",
+      "reopenHint": "Sending a message will reopen this ticket and notify support.",
+      "resolvedBanner": {
+        "title": "This ticket was marked resolved.",
+        "body": "If you're satisfied, leave it as is. Otherwise reply below to reopen it."
+      },
+      "graceBanner": {
+        "title": "Ticket closed — reopen window: {time} left",
+        "body": "You can still reply within 48 hours of closure. After that, please open a new ticket."
+      },
+      "closedBanner": {
+        "title": "This ticket is closed",
+        "body": "The 48-hour reopen window has passed. Please create a new ticket to continue."
+      },
       "expectedResponse": "Expected response within {hours}h",
       "slaOverdue": "Response overdue",
       "selectCourse": "Select related course (optional)",
@@ -1785,8 +1802,13 @@
       "fileTooLarge": "File size exceeds 5MB limit",
       "invalidFileType": "Only PDF, JPG, PNG, and WebP files are allowed",
       "tabTickets": "My Tickets",
+      "tabArticles": "Help Articles",
       "tabFaq": "FAQ",
       "tabTutorials": "Video Tutorials",
+      "articlesSearchPlaceholder": "Search articles…",
+      "articlesAll": "All",
+      "articlesEmpty": "No published articles match this filter.",
+      "openHelpCenter": "Open Help Center",
       "searchFaq": "Search frequently asked questions...",
       "faq": {
         "allCategories": "All",
@@ -5097,6 +5119,7 @@
       "users": "Users",
       "roles": "Roles & Permissions",
       "roleRequests": "Instructor Applications",
+      "support": "Support",
       "courses": "All Courses",
       "finance": "Finance",
       "points": "Points System",
@@ -5165,6 +5188,28 @@
       "lastBackup": "Last Backup",
       "dbHealth": "DB Health",
       "good": "Good"
+    },
+    "supportSnapshot": {
+      "title": "Support",
+      "loadFailed": "Could not load support data.",
+      "openTickets": "Open Tickets",
+      "highPriorityOpen": "{count} high priority",
+      "sla": "SLA",
+      "csat": "CSAT",
+      "frt": "FRT",
+      "ttr": "TTR",
+      "breachesToday": "{count} {count, plural, one {breach} other {breaches}} today",
+      "csatResponses": "{count} {count, plural, one {response} other {responses}}",
+      "noResponses": "No responses yet",
+      "avgFirstReply": "Avg first reply",
+      "avgResolution": "Avg resolution",
+      "openSupport": "Open Support Dashboard",
+      "health": {
+        "healthy": "Healthy",
+        "warning": "Warning",
+        "critical": "Critical",
+        "neutral": "—"
+      }
     },
     "userManagement": {
       "title": "Users",
@@ -6599,6 +6644,68 @@
         "confirmEnable": "Yes, enable maintenance"
       }
     },
+    "supportPage": {
+      "title": "Support",
+      "subtitle": "Review supervisor requests and manage the Help Center.",
+      "unknown": "Unknown",
+      "tabs": {
+        "teamRequests": "Team Requests",
+        "helpCenter": "Help Center",
+        "settings": "Settings"
+      },
+      "settings": {
+        "adminHeadingTitle": "Platform-wide support settings",
+        "adminHeadingBody": "Changes here apply across all teams. Business hours feed SLA calculations and the public availability indicator."
+      },
+      "teamRequests": {
+        "title": "Team requests",
+        "subtitle": "Requests from supervisors to add or onboard agents.",
+        "empty": "No requests match this filter.",
+        "statusFilters": {
+          "pending": "Pending",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "all": "All"
+        },
+        "kind": {
+          "add_existing": "Add existing",
+          "add_new": "Create new"
+        },
+        "status": {
+          "pending": "Pending",
+          "approved": "Approved",
+          "rejected": "Rejected"
+        }
+      },
+      "decision": {
+        "title": "Review request",
+        "supervisor": "Supervisor",
+        "candidate": "Candidate",
+        "email": "Email",
+        "phone": "Phone",
+        "kind": "Type",
+        "submitted": "Submitted",
+        "supervisorReason": "Supervisor's reason",
+        "approve": "Approve",
+        "reject": "Reject",
+        "tempPassword": "Starter password (≥ 8 chars)",
+        "tempPasswordPlaceholder": "e.g. ChangeMe123!",
+        "tempPasswordHint": "Share this with the supervisor — the new agent will sign in with it.",
+        "passwordTooShort": "Starter password must be at least 8 characters",
+        "rejectReason": "Reason (sent to the supervisor)",
+        "rejectReasonPlaceholder": "Why is this request being rejected?",
+        "approveNote": "Note (optional)",
+        "approveNotePlaceholder": "Any context to attach to the approval…",
+        "cancel": "Cancel",
+        "submit": "Submit decision",
+        "approveSuccess": "Request approved",
+        "rejectSuccess": "Request rejected",
+        "failed": "Failed to submit decision",
+        "alreadyReviewed": "This request has already been {status}.",
+        "decisionReasonLabel": "Reason",
+        "reviewedBy": "Reviewed by"
+      }
+    },
     "roleRequestsPage": {
       "title": "Instructor Applications",
       "subtitle": "Review candidates applying to become instructors. Each application includes profile, qualifications, supporting documents, and bank details.",
@@ -7133,14 +7240,16 @@
       "allTickets": "All Tickets",
       "myTickets": "My Tickets",
       "team": "Team",
-      "knowledgeBase": "Knowledge Base",
+      "knowledgeBase": "Help Center",
       "reports": "Reports",
       "settings": "Settings",
       "supportLead": "Support Lead",
       "resolved": "Resolved",
       "csat": "CSAT",
       "avgFRT": "Avg FRT",
-      "onlineAvailable": "Online - Available",
+      "online": "Online",
+      "offline": "Offline",
+      "statusDrivenByBusinessHours": "Status follows business hours",
       "editProfile": "Edit Profile",
       "viewProfile": "View Profile",
       "logout": "Logout"
@@ -7321,10 +7430,23 @@
       "actions": {
         "view": "View",
         "assign": "Assign",
-        "close": "Close"
+        "close": "Close",
+        "markResolved": "Mark Resolved",
+        "reopen": "Reopen",
+        "copyLink": "Copy link"
       },
+      "toasts": {
+        "resolved": "Ticket marked as resolved",
+        "closed": "Ticket closed",
+        "reopened": "Ticket reopened",
+        "linkCopied": "Link copied to clipboard",
+        "copyError": "Failed to copy link",
+        "actionFailed": "Action failed. Please try again."
+      },
+      "empty": "No tickets match your filters.",
+      "unknownCustomer": "Unknown",
       "newTicket": "New Ticket",
-      "searchPlaceholder": "Search tickets...",
+      "searchPlaceholder": "Search by ticket #, subject, customer name or email…",
       "filters": {
         "allCategories": "All Categories",
         "allPriorities": "All Priorities",
@@ -7370,11 +7492,27 @@
       "stats": {
         "assigned": "Assigned",
         "inProgress": "In Progress",
+        "resolved": "Resolved",
         "dueToday": "Due Today",
         "overdue": "Overdue"
       },
       "slaRemaining": "remaining",
+      "slaLeft": "left",
+      "slaOverBy": "over",
       "slaWarning": "SLA Warning",
+      "refresh": "Refresh",
+      "sort": {
+        "slaUrgency": "Sort: SLA urgency",
+        "newest": "Sort: Newest",
+        "priority": "Sort: Priority"
+      },
+      "replyLocked": {
+        "title": "Replies are disabled",
+        "bodyClosed": "This ticket is closed. The customer needs to open a new ticket to continue the conversation.",
+        "openTicket": "Open ticket details",
+        "placeholder": "Replies are disabled on closed tickets."
+      },
+      "resolvedAdvisory": "This ticket is resolved. Your reply will be sent to the customer but won't reopen the ticket automatically.",
       "quickReply": "Quick Reply",
       "replyPlaceholder": "Type your reply...",
       "macros": {
@@ -7390,81 +7528,147 @@
         "all": "All",
         "new": "New",
         "inProgress": "In Progress",
-        "waiting": "Waiting"
+        "waiting": "Waiting",
+        "resolved": "Resolved",
+        "overdue": "Overdue"
       },
-      "searchPlaceholder": "Search my tickets...",
+      "searchPlaceholder": "Search by ticket #, subject or customer…",
       "noTickets": "No tickets found matching your filters.",
       "quickReplyPlaceholder": "Type your reply...",
-      "send": "Send"
+      "send": "Send",
+      "unknownCustomer": "Unknown",
+      "openDetail": "Open full detail",
+      "openLabel": "Open",
+      "slaBreached": "Breached",
+      "replyingTo": "Replying to",
+      "clearSelection": "Clear selection",
+      "selectTicketHint": "Select a ticket above to reply",
+      "composer": {
+        "minimize": "Minimize",
+        "expand": "Expand",
+        "close": "Close composer"
+      },
+      "macroPreviewLabel": "Macro Preview",
+      "insertMacro": "Insert",
+      "cancelMacro": "Cancel",
+      "applyMacroButton": "Apply Macro",
+      "toasts": {
+        "replySent": "Reply sent",
+        "replyError": "Failed to send reply",
+        "selectTicketFirst": "Select a ticket first",
+        "applyMacroError": "Failed to apply macro"
+      }
     },
     "teamPage": {
-      "title": "Team",
-      "subtitle": "Team management and performance monitoring",
+      "title": "My Team",
+      "subtitle": "Your team of agents, their performance, and pending requests",
       "addAgent": "Add Agent",
-      "stats": {
-        "totalAgents": "Total Agents",
-        "online": "Online",
-        "avgResponseTime": "Avg Response",
-        "teamCSAT": "Team CSAT",
-        "avgResponse": "Avg Response"
-      },
-      "tabs": {
-        "all": "All",
-        "online": "Online",
-        "away": "Away",
-        "offline": "Offline"
-      },
-      "roles": {
-        "seniorAgent": "Senior Agent",
-        "agent": "Agent",
-        "juniorAgent": "Junior Agent"
-      },
-      "agents": {
-        "saraKhan": "Sara Khan",
-        "ahmedNasser": "Ahmed Nasser",
-        "fatimaOmar": "Fatima Omar"
-      },
-      "openTickets": "Open Tickets",
-      "avgResponse": "Avg Response",
-      "csatLabel": "CSAT",
-      "workload": "Workload",
-      "statuses": {
-        "online": "Online",
-        "away": "Away",
-        "offline": "Offline"
-      },
+      "myRequests": "My Requests",
+      "fetchError": "Failed to load team",
+      "emptyTitle": "You don't have any team members yet",
+      "emptyHint": "Request agents to join your team — they'll appear here once an admin approves.",
+      "noMatches": "No team members match your filters",
+      "noMatchesHint": "Try clearing the search or status filter.",
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "breaches": "breaches",
+      "noData": "No data yet",
+      "searchPlaceholder": "Search by name or email…",
       "performance": "Performance Overview",
-      "bestResponseTime": "Best Response Time",
-      "highestCSAT": "Highest CSAT",
-      "mostResolved": "Most Resolved",
-      "schedule": "Schedule",
-      "status": {
-        "online": "Online",
-        "away": "Away",
-        "offline": "Offline"
-      },
-      "agentCard": {
+      "kpis": {
+        "totalAgents": "Team Size",
         "openTickets": "Open Tickets",
-        "avgResponse": "Avg Response",
-        "csat": "CSAT",
-        "workload": "Workload"
+        "resolvedTotal": "Resolved (total)",
+        "teamFrt": "Team Avg FRT",
+        "teamCsat": "Team CSAT"
+      },
+      "filters": {
+        "allStatus": "All status",
+        "active": "Active only",
+        "inactive": "Inactive only",
+        "sortName": "Sort: Name",
+        "sortCsat": "Sort: Highest CSAT",
+        "sortFrt": "Sort: Fastest FRT",
+        "sortOpen": "Sort: Most open tickets"
       },
       "performanceCards": {
-        "bestResponseTime": "Best Response Time",
+        "bestResponseTime": "Fastest Response",
         "highestCSAT": "Highest CSAT",
         "mostResolved": "Most Resolved"
       },
-      "searchPlaceholder": "Search agents...",
-      "actions": {
-        "message": "Message",
-        "stats": "Statistics",
-        "more": "More"
+      "agentCard": {
+        "openTickets": "Open",
+        "avgResponse": "Avg FRT",
+        "csat": "CSAT"
+      },
+      "modal": {
+        "title": "Request to add an agent",
+        "helpText": "Supervisors propose team additions — the admin reviews and approves.",
+        "tabExisting": "Existing user",
+        "tabNew": "New user",
+        "searchAvailable": "Search available agents…",
+        "noAvailable": "No unassigned support agents available. Use \"New user\" instead.",
+        "noMatches": "No matches",
+        "selectAgentError": "Please select an agent first",
+        "fillAll": "First name, last name and email are required",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "email": "Email",
+        "phone": "Phone",
+        "adminWillSetPassword": "The admin will set a starter password when approving — they'll share it with the new agent.",
+        "reasonLabel": "Reason (optional)",
+        "reasonPlaceholder": "Why is this agent needed on your team?",
+        "cancel": "Cancel",
+        "sendRequest": "Send request",
+        "requestSent": "Request sent to admin",
+        "requestFailed": "Failed to send request"
+      },
+      "requestsEmpty": "You haven't submitted any requests yet.",
+      "requestUnknownCandidate": "Unknown candidate",
+      "requestKindLabel": "Type",
+      "requestKind": {
+        "add_existing": "Add existing user",
+        "add_new": "Create new user"
+      },
+      "requestStatus": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "adminDecision": "Admin decision",
+      "detail": {
+        "title": "Team member",
+        "joinedTeam": "Joined team",
+        "performance": "Performance",
+        "totalTickets": "Total tickets",
+        "resolved": "Resolved",
+        "avgFrt": "Avg FRT",
+        "csat": "CSAT",
+        "frtBreaches": "FRT breaches",
+        "ttrBreaches": "TTR breaches",
+        "openTickets": "Open tickets",
+        "noOpenTickets": "No open tickets right now.",
+        "recentCsat": "Recent customer feedback",
+        "removeButton": "Remove from team",
+        "confirmRemoveTitle": "Remove this agent from your team?",
+        "confirmRemoveBody": "They'll be available for other supervisors to request. Their tickets stay assigned until reassigned.",
+        "confirmRemoveButton": "Yes, remove",
+        "removeSuccess": "Agent removed from team",
+        "removeFailed": "Failed to remove agent"
       }
     },
     "kbPage": {
-      "title": "Knowledge Base",
-      "subtitle": "Internal and public knowledge base management",
-      "createArticle": "New Article",
+      "title": "Help Center",
+      "subtitle": "Curate articles your team and customers can self-serve from",
+      "agentSubtitle": "Browse articles to help customers — preview and copy answers right into your replies.",
+      "viewOnlyBadge": "View only",
+      "newArticle": "New Article",
+      "manageCategories": "Manage categories",
+      "searchPlaceholder": "Search articles by title or content…",
+      "emptyTitle": "No articles yet",
+      "emptyHint": "Create your first article to start building the Help Center.",
+      "noMatches": "No articles match your filters",
+      "noMatchesHint": "Try clearing the search, category, or status filter.",
       "stats": {
         "totalArticles": "Total Articles",
         "published": "Published",
@@ -7472,62 +7676,112 @@
         "totalViews": "Total Views"
       },
       "tabs": {
-        "all": "All",
-        "billing": "Billing",
-        "login": "Login",
-        "content": "Content",
-        "technical": "Technical"
+        "all": "All"
       },
-      "visibility": {
-        "public": "Public",
-        "internal": "Internal"
-      },
-      "statusLabels": {
+      "filters": {
+        "allStatus": "All status",
         "published": "Published",
-        "draft": "Draft"
-      },
-      "views": "views",
-      "helpful": "helpful",
-      "articles": {
-        "howToResetPassword": "How to Reset Your Password",
-        "paymentMethods": "Payment Methods & Billing FAQ",
-        "certificateDownload": "How to Download Your Certificate",
-        "refundPolicy": "Refund Policy & Process",
-        "troubleshootVideo": "Troubleshooting Video Playback",
-        "escalationProcess": "Internal Escalation Process"
-      },
-      "actions": {
-        "view": "View",
-        "edit": "Edit",
-        "delete": "Delete"
-      },
-      "searchPlaceholder": "Search articles...",
-      "newArticle": "New Article",
-      "categories": {
-        "billing": "Billing",
-        "login": "Login",
-        "content": "Content",
-        "technical": "Technical"
+        "draft": "Draft",
+        "sortNewest": "Sort: Newest",
+        "sortOldest": "Sort: Oldest",
+        "sortViews": "Sort: Most viewed"
       },
       "status": {
         "published": "Published",
         "draft": "Draft"
+      },
+      "actions": {
+        "preview": "Preview",
+        "edit": "Edit",
+        "delete": "Delete",
+        "viewPublic": "View public"
+      },
+      "toasts": {
+        "titleRequired": "Provide a title in English or Arabic.",
+        "categoryRequired": "Please choose a category.",
+        "updated": "Article updated",
+        "created": "Article created",
+        "saveFailed": "Failed to save article",
+        "confirmDelete": "Delete this article? This cannot be undone.",
+        "deleted": "Article deleted",
+        "deleteFailed": "Failed to delete article",
+        "imageUploadFailed": "Image upload failed."
+      },
+      "form": {
+        "editTitle": "Edit Article",
+        "createTitle": "Create New Article",
+        "bilingualHint": "Write in either language — the other is optional.",
+        "selectCategory": "Select a category",
+        "langEnglish": "English",
+        "langArabic": "Arabic",
+        "titleEn": "Title (English)",
+        "titleAr": "Title (Arabic)",
+        "titleEnPlaceholder": "Article title in English",
+        "titleArPlaceholder": "Article title in Arabic",
+        "bodyEn": "Body (English)",
+        "bodyAr": "Body (Arabic)",
+        "bodyEnPlaceholder": "Write the article — use the toolbar to format and insert images…",
+        "bodyArPlaceholder": "اكتب المقال — استخدم شريط الأدوات للتنسيق وإدراج الصور…",
+        "notSet": "(not set)",
+        "publishedToggle": "Published",
+        "draftToggle": "Draft",
+        "update": "Update",
+        "create": "Create",
+        "cancel": "Cancel"
+      },
+      "preview": {
+        "title": "Article preview",
+        "empty": "No content for this language yet."
+      },
+      "categoryManager": {
+        "title": "Manage Categories",
+        "addCategory": "Add category",
+        "editTitle": "Edit category",
+        "newTitle": "New category",
+        "nameEn": "English name *",
+        "nameAr": "Arabic name",
+        "nameEnRequired": "English name is required.",
+        "icon": "Icon",
+        "sortOrder": "Sort order",
+        "sortHint": "Lower numbers appear first.",
+        "articles": "articles",
+        "empty": "No categories yet — add one to get started.",
+        "done": "Done",
+        "updated": "Category updated",
+        "created": "Category created",
+        "saveFailed": "Failed to save category",
+        "deleted": "Category deleted",
+        "deleteFailed": "Failed to delete category",
+        "confirmDelete": "Delete the “{name}” category?",
+        "cannotDeleteWithArticles": "Cannot delete — {count} article(s) still use this category."
       }
     },
     "reportsPage": {
       "title": "Reports",
-      "subtitle": "Support analytics and performance reports",
-      "exportExcel": "Export Excel",
-      "exportPdf": "Export PDF",
+      "subtitle": "Real-time support analytics and performance insights.",
+      "refresh": "Refresh",
+      "export": "Export",
+      "downloadCsv": "Download CSV",
+      "downloadPdf": "Download PDF",
       "reportTypes": {
-        "ticketVolume": "Ticket Volume",
-        "ticketVolumeDesc": "Daily/weekly ticket trends",
+        "ticketVolume": "Overview",
+        "ticketVolumeDesc": "Daily trend and category split",
         "slaCompliance": "SLA Compliance",
-        "slaComplianceDesc": "SLA target vs actual performance",
+        "slaComplianceDesc": "SLA target vs actual",
         "agentPerformance": "Agent Performance",
-        "agentPerformanceDesc": "Individual agent metrics",
+        "agentPerformanceDesc": "Per-agent metrics and breaches",
         "csatNps": "CSAT & NPS",
-        "csatNpsDesc": "Customer satisfaction trends"
+        "csatNpsDesc": "Customer satisfaction and feedback",
+        "topIssues": "Top Issues",
+        "topIssuesDesc": "Recurring categories ranked"
+      },
+      "kpis": {
+        "open": "Open Tickets",
+        "highPriority": "High Priority Open",
+        "slaCompliance": "SLA Compliance",
+        "avgFrt": "Avg First Response",
+        "avgTtr": "Avg Resolution",
+        "csat": "CSAT"
       },
       "filters": {
         "period": "Period",
@@ -7535,32 +7789,192 @@
         "lastWeek": "Last Week",
         "thisMonth": "This Month",
         "lastMonth": "Last Month",
-        "custom": "Custom",
-        "groupBy": "Group By",
-        "byCategory": "By Category",
-        "byAgent": "By Agent",
-        "byPriority": "By Priority",
-        "byChannel": "By Channel",
-        "title": "Filters"
+        "last30Days": "Last 30 Days",
+        "last90Days": "Last 90 Days",
+        "custom": "Custom Range",
+        "title": "Filters",
+        "from": "From",
+        "to": "To"
       },
-      "generateReport": "Generate Report",
-      "columns": {
-        "category": "Category",
-        "tickets": "Tickets",
-        "avgResponse": "Avg Response",
-        "avgResolution": "Avg Resolution",
-        "satisfaction": "Satisfaction"
+      "trend": {
+        "title": "Ticket Trend",
+        "created": "Created",
+        "resolved": "Resolved"
+      },
+      "volume": {
+        "byCategory": "By Category",
+        "totalTickets": "{count} tickets total",
+        "noTickets": "No tickets in this range."
+      },
+      "issues": {
+        "noIssues": "No issues found in this date range."
+      },
+      "slaPanel": {
+        "noResolved": "No resolved tickets in this date range.",
+        "overallCompliance": "Overall SLA Compliance",
+        "metSla": "{met} / {total} met SLA",
+        "frtCompliance": "FRT Compliance",
+        "frtSubtitle": "First Response Time met",
+        "ttrCompliance": "TTR Compliance",
+        "ttrSubtitle": "Time to Resolution met"
+      },
+      "agentsPanel": {
+        "noData": "No agent data available.",
+        "unknown": "Unknown",
+        "columns": {
+          "agent": "Agent",
+          "total": "Total",
+          "open": "Open",
+          "resolved": "Resolved",
+          "avgFrt": "Avg FRT",
+          "csat": "CSAT",
+          "frtBreaches": "FRT Breaches",
+          "ttrBreaches": "TTR Breaches"
+        }
+      },
+      "csatPanel": {
+        "title": "CSAT Score",
+        "avgScore": "Avg Score (out of 5)",
+        "responses": "Responses",
+        "responseRate": "Response Rate",
+        "recentComments": "Recent feedback",
+        "noComments": "No customer comments yet — they'll appear here as CSAT surveys come back."
+      },
+      "npsPanel": {
+        "title": "Net Promoter Score",
+        "score": "NPS Score",
+        "responses": "Responses",
+        "responseRate": "Response Rate",
+        "promoters": "Promoters",
+        "passives": "Passives",
+        "detractors": "Detractors"
+      },
+      "toasts": {
+        "loadFailed": "Failed to load report data",
+        "downloadedCsv": "Report downloaded",
+        "exportFailed": "Failed to export report",
+        "downloadedPdf": "PDF downloaded",
+        "exportPdfFailed": "Failed to export PDF",
+        "refreshed": "Report refreshed"
       }
     },
     "settingsPage": {
       "title": "Settings",
       "subtitle": "Configure support workflows and automation",
+      "mainTabs": {
+        "personal": "Personal",
+        "routing": "SLA & Routing",
+        "workspace": "Workspace"
+      },
       "tabs": {
         "sla": "SLA Targets",
         "assignment": "Auto-Assignment",
         "macros": "Canned Responses",
         "notifications": "Notifications",
-        "categories": "Categories"
+        "categories": "Categories",
+        "profile": "Profile",
+        "security": "Security",
+        "escalation": "Escalation Paths",
+        "businessHours": "Business Hours"
+      },
+      "saveChanges": "Save changes",
+      "cancelChanges": "Cancel",
+      "adminOnlyBadge": "Admin only",
+      "assignmentPanel": {
+        "title": "Auto-Assignment",
+        "description": "Choose how new tickets are routed to agents and apply guardrails.",
+        "loadFailed": "Failed to load auto-assignment settings",
+        "saved": "Auto-assignment updated",
+        "saveFailed": "Failed to save auto-assignment",
+        "enabledLabel": "Enable auto-assignment",
+        "enabledHint": "When off, new tickets land unassigned and require manual pickup.",
+        "strategyLabel": "Routing strategy",
+        "strategy": {
+          "roundRobin": "Round Robin",
+          "roundRobinDesc": "Distribute tickets evenly across all eligible agents in rotation.",
+          "leastLoaded": "Least Loaded",
+          "leastLoadedDesc": "Assign to the agent with the fewest open tickets right now.",
+          "manual": "Manual only",
+          "manualDesc": "Disable automatic assignment — supervisors triage everything manually."
+        },
+        "respectBusinessHoursLabel": "Respect business hours",
+        "respectBusinessHoursHint": "Outside business hours, new tickets queue until the next open window.",
+        "maxConcurrentLabel": "Max concurrent tickets per agent",
+        "maxConcurrentHint": "Skip agents who are already at capacity (0 = no cap).",
+        "maxConcurrentNote": "Only applied to round-robin and least-loaded strategies."
+      },
+      "businessHours": {
+        "title": "Business Hours",
+        "description": "Defines the working window used for SLA calculations and the live online/offline indicator on the public support page.",
+        "loadFailed": "Failed to load business hours",
+        "saved": "Business hours updated",
+        "saveFailed": "Failed to save business hours",
+        "workingDays": "Working days",
+        "openTime": "Open time",
+        "closeTime": "Close time",
+        "timezone": "Timezone offset (hours from UTC)",
+        "timezoneHint": "Saudi Arabia is +3",
+        "riyadhTimeNote": "Times are interpreted in Saudi Riyadh time (Asia/Riyadh, AST = UTC+3).",
+        "riyadhLabel": "Saudi Riyadh time (AST, UTC+3)",
+        "atLeastOneDay": "Select at least one working day.",
+        "summaryTitle": "Current schedule",
+        "appliesTo": "Applies to first-response and resolution SLA calculations and the live ticket form availability indicator.",
+        "days": {
+          "sun": "Sun",
+          "mon": "Mon",
+          "tue": "Tue",
+          "wed": "Wed",
+          "thu": "Thu",
+          "fri": "Fri",
+          "sat": "Sat"
+        }
+      },
+      "notificationsPanel": {
+        "title": "Notification preferences",
+        "description": "Turn email or in-app notifications on or off. Changes apply immediately.",
+        "loadFailed": "Failed to load preferences",
+        "saved": "Preferences updated",
+        "saveFailed": "Failed to save preferences",
+        "emailMasterTitle": "Email notifications",
+        "emailMasterHint": "New ticket assignments, SLA warnings, reassignments, mentions, and CSAT responses.",
+        "inAppMasterTitle": "In-app notifications",
+        "inAppMasterHint": "Same events delivered to your in-app inbox while you're signed in.",
+        "event": "Event",
+        "email": "Email",
+        "inapp": "In-app",
+        "events": {
+          "newTicket": "New ticket assigned to me",
+          "newTicketHint": "Fires when a ticket is auto-assigned or supervisors reassign one to me.",
+          "reassigned": "Ticket reassigned to me",
+          "reassignedHint": "Sent when a teammate or supervisor moves a ticket to my queue.",
+          "slaWarning": "SLA at risk",
+          "slaWarningHint": "Heads-up when a ticket is within 30 minutes of its FRT or TTR deadline.",
+          "mention": "I'm @mentioned in a comment",
+          "mentionHint": "Internal-note mentions in the ticket thread.",
+          "csatResponse": "Customer leaves CSAT feedback",
+          "csatResponseHint": "Notify me when the customer submits the CSAT survey on my tickets."
+        }
+      },
+      "ticketCategoriesPanel": {
+        "title": "Ticket Categories",
+        "description": "Built-in categories ship with the platform. Add custom categories to track unique workflows.",
+        "addCategory": "Add category",
+        "removeCategory": "Remove",
+        "nameEn": "English name *",
+        "nameAr": "Arabic name",
+        "nameEnRequired": "English name is required.",
+        "autoPriority": "Default priority",
+        "priorities": {
+          "high": "High",
+          "medium": "Medium",
+          "low": "Low"
+        },
+        "builtin": "Built-in",
+        "added": "Category added",
+        "addFailed": "Failed to add category",
+        "removed": "Category removed",
+        "removeFailed": "Failed to remove category",
+        "confirmDelete": "Remove the \"{slug}\" category?"
       },
       "sla": {
         "title": "SLA Target Configuration",
@@ -7636,7 +8050,188 @@
         "actions": "Actions",
         "tickets": "Tickets"
       },
-      "save": "Save Changes"
+      "save": "Save Changes",
+      "comingSoonBadge": "Soon",
+      "comingSoon": {
+        "title": "Coming Soon",
+        "description": "This feature is currently under development and will be available in an upcoming sprint. Stay tuned!"
+      },
+      "profileExtras": {
+        "heading": "Role Information",
+        "jobTitle": "Job Title",
+        "jobTitlePlaceholder": "e.g. Senior Support Specialist",
+        "department": "Department",
+        "departmentPlaceholder": "e.g. Customer Care",
+        "specialty": "Areas of Expertise",
+        "specialtyPlaceholder": "e.g. Zoom troubleshooting, certificates, billing",
+        "specialtyHint": "What kinds of tickets you handle best. Supervisors use this when reassigning escalations.",
+        "bio": "Short Intro",
+        "bioPlaceholder": "A one-line summary that may appear alongside your replies."
+      },
+      "mySecurity": {
+        "overview": {
+          "twoFactorLabel": "Two-Factor Auth",
+          "enabled": "Enabled",
+          "notEnabled": "Not Enabled",
+          "twoFactorOnHint": "Your account is protected with 2FA.",
+          "twoFactorOffHint": "Turn on 2FA to protect this account.",
+          "devicesLabel": "Trusted Devices",
+          "deviceSingular": "device",
+          "devicePlural": "devices",
+          "devicesHint": "Devices currently signed in to your account.",
+          "lastSignInLabel": "Last Sign-In",
+          "never": "Never",
+          "ipUnknown": "IP unknown"
+        },
+        "changePassword": "Change Password",
+        "changePasswordHint": "Use a strong unique password. You'll stay signed in after changing.",
+        "currentPassword": "Current password",
+        "newPassword": "New password",
+        "confirmPassword": "Confirm new password",
+        "updatePassword": "Update Password",
+        "passwordMismatch": "New password and confirmation don't match.",
+        "passwordChanged": "Password updated.",
+        "passwordChangeFailed": "Couldn't update password. Try again.",
+        "twoFactorCardTitle": "Two-Factor Authentication",
+        "twoFactorCardHint": "Add a second step to sign-in. We recommend it for every support team member.",
+        "devicesCardTitle": "Trusted Devices",
+        "devicesCardHint": "Review the devices signed in to your account. Revoke any you don't recognise."
+      },
+      "profile": {
+        "title": "Profile Information",
+        "photoLabel": "Profile Photo",
+        "photoHelp": "JPG, PNG or GIF. Max 2MB.",
+        "uploadPhoto": "Upload Photo",
+        "removePhoto": "Remove Photo",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "firstNamePlaceholder": "Enter first name",
+        "lastNamePlaceholder": "Enter last name",
+        "email": "Email",
+        "phone": "Phone",
+        "phonePlaceholder": "Enter phone number",
+        "saveChanges": "Save Changes",
+        "saving": "Saving...",
+        "toasts": {
+          "photoUpdated": "Profile photo updated",
+          "photoUploadFailed": "Failed to upload photo",
+          "photoRemoved": "Profile photo removed",
+          "photoRemoveFailed": "Failed to remove photo",
+          "profileUpdated": "Profile updated successfully",
+          "profileUpdateFailed": "Failed to update profile"
+        }
+      },
+      "slaPanel": {
+        "title": "SLA Targets",
+        "description": "First Response Time (FRT), Time to Resolution (TTR), and priority-escalation thresholds per ticket priority. Values are in business minutes — non-working hours pause the SLA clock. Set your business window in the Business Hours tab. Changes apply to future tickets only.",
+        "loadFailedTitle": "Failed to load SLA policies",
+        "retry": "Retry",
+        "noPolicies": "No SLA policies configured. Contact an administrator.",
+        "columns": {
+          "priority": "Priority",
+          "frt": "FRT (minutes)",
+          "ttr": "TTR (minutes)",
+          "escalate": "Escalate After (min)"
+        },
+        "saving": "Saving...",
+        "save": "Save",
+        "hintHours": "≈ {n}h",
+        "hintDays": "≈ {n}d",
+        "hintHoursMinutes": "≈ {h}h {m}m",
+        "validation": {
+          "frtPositive": "FRT must be a positive integer",
+          "ttrPositive": "TTR must be a positive integer",
+          "escalatePositive": "Escalate After must be a positive integer",
+          "ttrGreaterThanFrt": "TTR must be greater than FRT",
+          "escalateLessThanTtr": "Escalate After must be ≤ TTR"
+        },
+        "toasts": {
+          "updated": "SLA policy updated",
+          "loadFailed": "Failed to load SLA policies",
+          "updateFailed": "Failed to update"
+        }
+      },
+      "macrosPanel": {
+        "title": "Reply Macros",
+        "newMacro": "+ New Macro",
+        "description": "Pre-built reply templates with variable substitution. Variables: {variables}",
+        "editTitle": "Edit Macro",
+        "createTitle": "Create New Macro",
+        "formTitle": "Title *",
+        "formTitlePlaceholder": "e.g., Zoom Session Fix",
+        "bodyTemplate": "Body Template *",
+        "insertVariablesHint": "Click a variable to insert it at the cursor:",
+        "bodyTemplatePlaceholder": "Hi {learnerVar}, thank you for reaching out...",
+        "kbUrls": "KB Article URLs (one per line)",
+        "saving": "Saving...",
+        "update": "Update",
+        "create": "Create",
+        "cancel": "Cancel",
+        "noMacros": "No macros created yet.",
+        "edit": "Edit",
+        "delete": "Delete",
+        "variables": {
+          "learnerName": "Learner Name",
+          "learnerFirstName": "First Name",
+          "courseName": "Course Name",
+          "ticketId": "Ticket ID",
+          "ticketSubject": "Subject",
+          "ticketPriority": "Priority",
+          "ticketCategory": "Category",
+          "ticketStatus": "Status",
+          "agentName": "Agent Name"
+        },
+        "toasts": {
+          "titleBodyRequired": "Title and body are required",
+          "updated": "Macro updated",
+          "created": "Macro created",
+          "saveFailed": "Failed to save macro",
+          "confirmDelete": "Delete this macro?",
+          "deleted": "Macro deleted"
+        }
+      },
+      "escalationPanel": {
+        "title": "Escalation Paths",
+        "description": "Define automatic ticket reassignment chains based on elapsed time.",
+        "newPath": "+ New Path",
+        "editTitle": "Edit Escalation Path",
+        "createTitle": "Create Escalation Path",
+        "nameLabel": "Name *",
+        "namePlaceholder": "e.g., Standard Escalation",
+        "stepsLabel": "Steps (in ascending order of minutes)",
+        "stepLabel": "Step {n}:",
+        "after": "After",
+        "minutesArrow": "min →",
+        "remove": "Remove",
+        "addStep": "+ Add Step",
+        "saving": "Saving...",
+        "update": "Update",
+        "create": "Create",
+        "cancel": "Cancel",
+        "noPathsConfigured": "No escalation paths configured.",
+        "edit": "Edit",
+        "delete": "Delete",
+        "loading": "Loading...",
+        "roles": {
+          "SUPPORT": "Support Agent",
+          "ADMIN": "Admin",
+          "SUPER_ADMIN": "Super Admin"
+        },
+        "stepChip": "After {minutes}m → {role}",
+        "toasts": {
+          "nameRequired": "Name is required",
+          "atLeastOneStep": "At least one step is required",
+          "stepMinutesInvalid": "Step {n}: minutes must be >= 1",
+          "stepMinutesAscending": "Step {n} must have higher minutes than step {prev}",
+          "updated": "Escalation path updated",
+          "created": "Escalation path created",
+          "saveFailed": "Failed to save",
+          "loadFailed": "Failed to load escalation paths",
+          "confirmDelete": "Delete this escalation path?",
+          "deleted": "Escalation path deleted",
+          "deleteFailed": "Failed to delete"
+        }
+      }
     },
     "names": {
       "hanaAlSaud": "Hana Al-Saud",
@@ -7683,6 +8278,132 @@
       "knowledgeBase": "Knowledge Base",
       "exportReport": "Export Report",
       "teamChat": "Team Chat"
+    },
+    "agentDashboard": {
+      "title": "My Dashboard",
+      "welcome": "Welcome back, {name}! Here are your assigned tickets.",
+      "fallbackName": "Agent",
+      "assignedTickets": "My Assigned Tickets",
+      "viewAll": "View All",
+      "noTickets": "No tickets assigned to you yet.",
+      "myCsat": "My CSAT",
+      "csatResponses": "{count, plural, one {# response} other {# responses}}",
+      "noCsatYet": "No ratings yet",
+      "myPerformance": "My Performance",
+      "openKb": "Browse Help Center",
+      "awaitingFirstReply": "{count, plural, one {# new ticket awaiting first reply} other {# new tickets awaiting first reply}}",
+      "nextUp": {
+        "title": "Next Up",
+        "cleared": "All caught up!",
+        "clearedHint": "No urgent tickets need your attention right now."
+      },
+      "perf": {
+        "resolved": "Resolved",
+        "avgFrt": "Avg First Response",
+        "breaches": "SLA Breaches",
+        "noData": "Performance data not available yet."
+      },
+      "priorities": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "sla": {
+        "left": "{value} left",
+        "overBy": "Over by {value}"
+      },
+      "columns": {
+        "id": "ID",
+        "subject": "Subject",
+        "student": "Student",
+        "priority": "Priority",
+        "sla": "SLA",
+        "status": "Status"
+      }
+    },
+    "ticketDetail": {
+      "backToTickets": "Back to Tickets",
+      "notFound": "Ticket not found",
+      "staffBadge": "Staff",
+      "internalBadge": "Internal",
+      "unknownAuthor": "Unknown",
+      "reply": "Reply",
+      "applyMacro": "Apply Macro",
+      "macroPreview": "Macro Preview",
+      "insertMacro": "Insert",
+      "cancelMacro": "Cancel",
+      "internalNote": "Internal Note",
+      "internalNotePlaceholder": "Add an internal note (not visible to student)...",
+      "replyPlaceholder": "Type your reply...",
+      "addNote": "Add Note",
+      "sendReply": "Send Reply",
+      "details": "Details",
+      "detailsLabels": {
+        "category": "Category",
+        "assignee": "Assignee",
+        "unassigned": "Unassigned",
+        "course": "Course",
+        "created": "Created",
+        "resolved": "Resolved"
+      },
+      "sla": {
+        "title": "SLA",
+        "firstResponse": "First Response",
+        "resolution": "Resolution",
+        "breached": "BREACHED",
+        "met": "MET",
+        "target": "Target: {value}",
+        "remaining": "{value} remaining",
+        "overdueBy": "Overdue by {value}",
+        "pausedOnHold": "SLA paused (on hold)"
+      },
+      "actions": {
+        "title": "Actions",
+        "reassign": "Reassign Ticket",
+        "resolve": "Resolve Ticket",
+        "close": "Close Ticket",
+        "reopen": "Reopen Ticket",
+        "onHold": "Put On Hold",
+        "resume": "Resume Ticket",
+        "supervisorBadge": "(Supervisor)"
+      },
+      "customer": "Customer",
+      "customerRating": "Customer Rating",
+      "openAttachment": "View attachment",
+      "toasts": {
+        "loadFailed": "Failed to load ticket",
+        "internalAdded": "Internal note added",
+        "replySent": "Reply sent",
+        "replyFailed": "Failed to send reply",
+        "statusChanged": "Status changed to {status}",
+        "statusFailed": "Failed to update status",
+        "applyMacroFailed": "Failed to apply macro",
+        "reassigned": "Reassigned to {name}",
+        "reassignFailed": "Failed to reassign"
+      },
+      "onHold": {
+        "selectReason": "Select a reason to put this ticket on hold:",
+        "reasons": {
+          "waiting for student response": "Waiting for student response",
+          "waiting for third party": "Waiting for third party",
+          "waiting for internal team": "Waiting for internal team",
+          "pending investigation": "Pending investigation",
+          "other": "Other"
+        },
+        "confirm": "Confirm Hold",
+        "cancel": "Cancel"
+      }
+    },
+    "a11y": {
+      "moreActions": "More actions",
+      "ticketActions": "Ticket actions",
+      "articleActions": "Article actions",
+      "editPhoto": "Edit profile photo"
+    },
+    "errorState": {
+      "title": "Failed to load data",
+      "description": "Something went wrong while fetching this information. Please try again.",
+      "retry": "Retry"
     }
   },
   "dashboardSearch": {
@@ -8138,8 +8859,12 @@
     "statusOnline": "We're Online",
     "statusOffline": "Currently Offline",
     "offlineMessage": "Our support team is available Sunday – Thursday, 9:00 AM – 6:00 PM AST. Your ticket will be reviewed when business hours resume.",
-    "categoriesTitle": "How Can We Help?",
-    "categoriesSubtitle": "Select a category to get started or scroll down to submit a ticket.",
+    "categoriesTitle": "Browse Help Articles",
+    "categoriesSubtitle": "Quick answers to common questions.",
+    "browseAllArticles": "Browse all articles",
+    "readArticle": "Read article",
+    "noArticlesYet": "No published articles yet",
+    "noArticlesYetHint": "Check back soon, or open a ticket below.",
     "category_technical": "Zoom / Session Access",
     "category_technical_desc": "Issues joining Zoom lectures or accessing live sessions",
     "category_login": "Login Issues",
@@ -8188,6 +8913,104 @@
     "subjectMinLength": "Subject must be at least 5 characters",
     "descriptionMinLength": "Description must be at least 20 characters",
     "errorSubmitting": "Failed to submit ticket. Please try again.",
-    "expectedResponse": "Expected first response"
+    "expectedResponse": "Expected first response",
+    "invalidEmail": "Please enter a valid email address",
+    "trackingPromptGuest": "Your ticket has been submitted! Save this link to track your ticket and see replies:",
+    "trackingBookmarkNote": "Bookmark this link to check replies from our support team",
+    "copied": "Copied",
+    "copyLink": "Copy Link"
+  },
+  "surveys": {
+    "csat": {
+      "loading": "Loading survey...",
+      "expiredTitle": "Survey Expired",
+      "expiredDescription": "This survey has expired. CSAT surveys are valid for 48 hours after being sent.",
+      "notFoundTitle": "Survey Not Found",
+      "notFoundDescription": "We couldn't find this survey. It may have been removed or the link is invalid.",
+      "thankYouTitle": "Thank You for Your Feedback!",
+      "alreadySubmittedMessage": "You've already submitted your rating. Thank you!",
+      "submittedMessage": "Your response has been recorded. We appreciate your time.",
+      "subtitle": "Support Feedback",
+      "ratingPrompt": "How was your experience?",
+      "ratingSubprompt": "Rate your support interaction",
+      "scaleLow": "Very Bad",
+      "scaleHigh": "Excellent",
+      "commentPlaceholder": "Optional: Tell us more about your experience...",
+      "submit": "Submit Rating",
+      "submitting": "Submitting...",
+      "thankYouToast": "Thank you for your feedback!",
+      "errorToast": "Failed to submit rating. Please try again."
+    },
+    "guestTracker": {
+      "loading": "Loading ticket...",
+      "notFoundTitle": "Ticket Not Found",
+      "notFoundDescription": "The tracking link may be invalid or expired.",
+      "backToSupport": "Back to Support",
+      "pageTitle": "Track Your Support Ticket",
+      "ticketIdLabel": "Ticket",
+      "categoryLabel": "Category:",
+      "submittedLabel": "Submitted:",
+      "statusLabel": "Status",
+      "submittedOn": "Submitted on",
+      "lastReply": "Last reply",
+      "noReplies": "No replies yet. We'll respond as soon as possible.",
+      "replyHeader": "Reply",
+      "replyPlaceholder": "Type your reply...",
+      "sendReply": "Send Reply",
+      "sendingReply": "Sending...",
+      "replyRequired": "Reply cannot be empty",
+      "replySent": "Reply sent successfully",
+      "replyError": "Failed to send reply. Please try again.",
+      "supportAgentFallback": "Support Agent",
+      "supportBadge": "Support",
+      "status": {
+        "new": "New",
+        "in_progress": "In Progress",
+        "on_hold": "On Hold",
+        "resolved": "Resolved",
+        "closed": "Closed"
+      },
+      "csat": {
+        "thankYouTitle": "Thank you for your feedback!",
+        "expiredMessage": "The rating window for this ticket has expired.",
+        "prompt": "How was your support experience?",
+        "subprompt": "Your feedback helps us improve. It only takes a moment.",
+        "starAriaLabel": "Rate {n} star{plural}",
+        "commentPlaceholder": "Optional: tell us more about your experience",
+        "submit": "Submit Rating",
+        "thankYouToast": "Thank you for your feedback!",
+        "errorToast": "Failed to submit rating. Please try again.",
+        "fallbackError": "Failed to submit rating"
+      }
+    },
+    "businessHours": {
+      "online": "We're online",
+      "offline": "Currently offline",
+      "scheduleSummary": "Support hours: {schedule}"
+    },
+    "kb": {
+      "pageTitle": "Help Center",
+      "pageSubtitle": "Find answers to your common questions",
+      "searchPlaceholder": "Search articles...",
+      "noArticles": "No articles found",
+      "viewsLabel": "views",
+      "languageEn": "English",
+      "languageAr": "العربية",
+      "categories": {
+        "all": "All",
+        "billing": "Billing",
+        "login": "Login",
+        "certificate": "Certificate",
+        "content": "Content",
+        "technical": "Technical"
+      },
+      "notFoundTitle": "Article not found",
+      "notFoundBody": "This article may have been moved or deleted.",
+      "unpublishedTitle": "Article not available",
+      "unpublishedBody": "This article isn't published yet. Please check back later.",
+      "backToHelpCenter": "Back to Help Center",
+      "noContent": "This article has no content yet.",
+      "relatedArticles": "Related articles"
+    }
   }
 }

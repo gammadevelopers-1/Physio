@@ -33,6 +33,7 @@ import {
   toArabicIndic,
   type PlatformLocaleSettings,
 } from '../../common/platform-locale';
+import PDFDocument from 'pdfkit';
 
 type ReportFormat = 'csv' | 'pdf' | 'xlsx';
 
@@ -2084,9 +2085,6 @@ export class ReportsService {
     rows: string[][],
     metadata?: ReportMetadata,
   ): Promise<Buffer> {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const PDFDocument = require('pdfkit');
-
     // Load Arabic font for PDF reports (embedded base64 — same as certificates)
     let arabicFontBuf: Buffer | null = null;
     try {

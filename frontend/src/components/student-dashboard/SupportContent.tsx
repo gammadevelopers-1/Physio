@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   AlertCircle,
+  BookOpen,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
   Clock,
+  Eye,
   HelpCircle,
   Loader2,
   MessageSquarePlus,
@@ -19,6 +21,7 @@ import {
   Tag,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
@@ -457,7 +460,7 @@ function CreateTicketForm({
   );
 }
 
-type MainTab = "tickets" | "faq" | "tutorials";
+type MainTab = "tickets" | "faq" | "tutorials" | "articles";
 
 const FAQ_CATEGORIES = ["enrollment", "sessions", "assessments", "certificates", "technical"] as const;
 
@@ -664,10 +667,11 @@ const SupportContent = () => {
 
               <OfflineBanner />
 
-              {/* Main Tabs: Tickets / FAQ / Tutorials */}
-              <div className="flex gap-1 mb-4 border-b border-[var(--color-border)]">
+              {/* Main Tabs: Tickets / Help Articles / FAQ / Tutorials */}
+              <div className="flex gap-1 mb-4 border-b border-[var(--color-border)] overflow-x-auto">
                 {([
                   { key: "tickets" as MainTab, label: t("supportPage.tabTickets"), icon: MessageSquarePlus },
+                  { key: "articles" as MainTab, label: t("supportPage.tabArticles"), icon: BookOpen },
                   { key: "faq" as MainTab, label: t("supportPage.tabFaq"), icon: HelpCircle },
                   { key: "tutorials" as MainTab, label: t("supportPage.tabTutorials"), icon: PlayCircle },
                 ]).map((tab) => {
@@ -690,7 +694,11 @@ const SupportContent = () => {
               </div>
 
               {/* Tab Content */}
-              {mainTab === "faq" ? (
+              {mainTab === "articles" ? (
+                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
+                  <HelpArticlesSection t={t} locale={locale} />
+                </div>
+              ) : mainTab === "faq" ? (
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                   <FAQSection t={t} locale={locale} />
                 </div>
@@ -776,5 +784,159 @@ const SupportContent = () => {
     </>
   );
 };
+
+// ──────────────────────────────────────────────────────────────────
+// Help Articles — student-dashboard view of the public Help Center.
+// Lightweight inline list with search, category chips, and links to
+// the full article-detail page at /[locale]/support/kb/[id].
+// ──────────────────────────────────────────────────────────────────
+function HelpArticlesSection({
+  t,
+  locale,
+}: {
+  t: ReturnType<typeof useTranslations>;
+  locale: string;
+}) {
+  const isRTL = locale === "ar";
+  const [articles, setArticles] = useState<any[]>([]);
+  const [categories, setCategories] = useState<
+    { id: string; slug: string; nameEn: string; nameAr: string | null }[]
+  >([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    Promise.all([
+      supportApi
+        .getKbArticles({
+          category: activeCategory === "all" ? undefined : activeCategory,
+          search: search || undefined,
+        })
+        .then((d) => (d || []).filter((a: any) => a.published)),
+      categories.length === 0
+        ? supportApi.listKbCategories().catch(() => [])
+        : Promise.resolve(categories),
+    ])
+      .then(([articlesRes, categoriesRes]) => {
+        if (cancelled) return;
+        setArticles(articlesRes);
+        if (categoriesRes && categoriesRes.length) {
+          setCategories(categoriesRes);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // categories.length intentionally left out — only one fetch is needed
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCategory, search]);
+
+  return (
+    <div>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-4">
+        <div className="relative flex-1">
+          <Search
+            className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
+          />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("supportPage.articlesSearchPlaceholder")}
+            className={`w-full h-9 ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"} border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]`}
+          />
+        </div>
+        <Link
+          href={`/${locale}/support/kb`}
+          className="inline-flex items-center justify-center gap-1.5 h-9 px-3 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)]"
+        >
+          {t("supportPage.openHelpCenter")}
+          <ChevronRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
+        </Link>
+      </div>
+
+      <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
+        <button
+          type="button"
+          onClick={() => setActiveCategory("all")}
+          className={`px-3 py-1 text-[12px] font-medium rounded-full whitespace-nowrap ${
+            activeCategory === "all"
+              ? "bg-[var(--color-primary)] text-white"
+              : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
+          }`}
+        >
+          {t("supportPage.articlesAll")}
+        </button>
+        {categories.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => setActiveCategory(c.slug)}
+            className={`px-3 py-1 text-[12px] font-medium rounded-full whitespace-nowrap ${
+              activeCategory === c.slug
+                ? "bg-[var(--color-primary)] text-white"
+                : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
+            }`}
+          >
+            {isRTL && c.nameAr ? c.nameAr : c.nameEn}
+          </button>
+        ))}
+      </div>
+
+      {isLoading ? (
+        <div className="py-10 flex justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />
+        </div>
+      ) : articles.length === 0 ? (
+        <div className="py-10 text-center text-sm text-[var(--color-text-secondary)]">
+          <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          {t("supportPage.articlesEmpty")}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {articles.map((article) => {
+            const title = isRTL
+              ? article.titleAr || article.titleEn
+              : article.titleEn || article.titleAr;
+            return (
+              <Link
+                key={article.id}
+                href={`/${locale}/support/kb/${article.id}`}
+                className="block border border-[var(--color-border)] rounded-lg p-3 hover:border-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] transition-colors"
+                dir={isRTL ? "rtl" : "ltr"}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-[var(--color-text-primary)] mb-1 line-clamp-1">
+                      {title}
+                    </p>
+                    <div className="flex items-center gap-2 text-[10px] text-[var(--color-text-secondary)]">
+                      <span className="px-1.5 py-0.5 bg-[var(--color-border-subtle)] rounded-full">
+                        {article.category}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="w-3 h-3" />
+                        {article.viewCount ?? 0}
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight
+                    className={`w-4 h-4 text-[var(--color-text-secondary)] opacity-50 flex-shrink-0 mt-1 ${isRTL ? "rotate-180" : ""}`}
+                  />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default SupportContent;

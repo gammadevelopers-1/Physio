@@ -1775,6 +1775,23 @@
       "createdOn": "تم الإنشاء في {date}",
       "rateExperience": "كيف كانت تجربتك؟",
       "thankYou": "شكراً لملاحظاتك!",
+      "refresh": "تحديث",
+      "sendReply": "إرسال الرد",
+      "replyHint": "اضغط Enter للإرسال، Shift + Enter لسطر جديد",
+      "reopenPlaceholder": "اكتب رسالة لإعادة فتح هذه التذكرة…",
+      "reopenHint": "سيؤدي إرسال رسالة إلى إعادة فتح التذكرة وإشعار الدعم.",
+      "resolvedBanner": {
+        "title": "تم تحديد هذه التذكرة كمحلولة.",
+        "body": "إذا كنت راضياً، اتركها كما هي. وإلا فقم بالرد أدناه لإعادة فتحها."
+      },
+      "graceBanner": {
+        "title": "تم إغلاق التذكرة — متبقي على نافذة إعادة الفتح: {time}",
+        "body": "يمكنك الرد خلال 48 ساعة من الإغلاق. بعد ذلك، يرجى فتح تذكرة جديدة."
+      },
+      "closedBanner": {
+        "title": "هذه التذكرة مغلقة",
+        "body": "انتهت نافذة إعادة الفتح (48 ساعة). يرجى إنشاء تذكرة جديدة للمتابعة."
+      },
       "expectedResponse": "الرد المتوقع خلال {hours} ساعة",
       "slaOverdue": "تأخر الرد",
       "selectCourse": "اختر الدورة المتعلقة (اختياري)",
@@ -1785,8 +1802,13 @@
       "fileTooLarge": "حجم الملف يتجاوز الحد الأقصى 5 ميجابايت",
       "invalidFileType": "يُسمح فقط بملفات PDF و JPG و PNG و WebP",
       "tabTickets": "تذاكري",
+      "tabArticles": "مقالات المساعدة",
       "tabFaq": "الأسئلة الشائعة",
       "tabTutorials": "دروس فيديو",
+      "articlesSearchPlaceholder": "ابحث في المقالات…",
+      "articlesAll": "الكل",
+      "articlesEmpty": "لا توجد مقالات منشورة تطابق هذا الفلتر.",
+      "openHelpCenter": "فتح مركز المساعدة",
       "searchFaq": "ابحث في الأسئلة الشائعة...",
       "faq": {
         "allCategories": "الكل",
@@ -5097,6 +5119,7 @@
       "users": "المستخدمون",
       "roles": "الأدوار والصلاحيات",
       "roleRequests": "طلبات المدربين",
+      "support": "الدعم",
       "courses": "جميع الدورات",
       "finance": "المالية",
       "points": "نظام النقاط",
@@ -5165,6 +5188,28 @@
       "lastBackup": "آخر نسخة احتياطية",
       "dbHealth": "صحة قاعدة البيانات",
       "good": "جيد"
+    },
+    "supportSnapshot": {
+      "title": "الدعم",
+      "loadFailed": "تعذّر تحميل بيانات الدعم.",
+      "openTickets": "التذاكر المفتوحة",
+      "highPriorityOpen": "{count} عالي الأولوية",
+      "sla": "SLA",
+      "csat": "تقييم العملاء",
+      "frt": "أول رد",
+      "ttr": "الحل",
+      "breachesToday": "{count} {count, plural, one {تجاوز} two {تجاوزان} few {تجاوزات} many {تجاوزًا} other {تجاوز}} اليوم",
+      "csatResponses": "{count} {count, plural, one {رد} two {ردّان} few {ردود} many {ردًا} other {رد}}",
+      "noResponses": "لا توجد ردود بعد",
+      "avgFirstReply": "متوسط أول رد",
+      "avgResolution": "متوسط الحل",
+      "openSupport": "فتح لوحة الدعم",
+      "health": {
+        "healthy": "سليم",
+        "warning": "تحذير",
+        "critical": "حرج",
+        "neutral": "—"
+      }
     },
     "userManagement": {
       "title": "المستخدمون",
@@ -6599,6 +6644,68 @@
         "confirmEnable": "نعم، فعّل الصيانة"
       }
     },
+    "supportPage": {
+      "title": "الدعم",
+      "subtitle": "مراجعة طلبات المشرفين وإدارة مركز المساعدة.",
+      "unknown": "غير معروف",
+      "tabs": {
+        "teamRequests": "طلبات الفريق",
+        "helpCenter": "مركز المساعدة",
+        "settings": "الإعدادات"
+      },
+      "settings": {
+        "adminHeadingTitle": "إعدادات الدعم على مستوى المنصة",
+        "adminHeadingBody": "تنطبق هذه التغييرات على جميع الفرق. تتغذى منها حسابات SLA ومؤشر التوفر العام."
+      },
+      "teamRequests": {
+        "title": "طلبات الفريق",
+        "subtitle": "طلبات من المشرفين لإضافة أو إنشاء وكلاء.",
+        "empty": "لا توجد طلبات تطابق هذا الفلتر.",
+        "statusFilters": {
+          "pending": "قيد المراجعة",
+          "approved": "تمت الموافقة",
+          "rejected": "مرفوض",
+          "all": "الكل"
+        },
+        "kind": {
+          "add_existing": "إضافة موجود",
+          "add_new": "إنشاء جديد"
+        },
+        "status": {
+          "pending": "قيد المراجعة",
+          "approved": "تمت الموافقة",
+          "rejected": "مرفوض"
+        }
+      },
+      "decision": {
+        "title": "مراجعة الطلب",
+        "supervisor": "المشرف",
+        "candidate": "المرشّح",
+        "email": "البريد الإلكتروني",
+        "phone": "الهاتف",
+        "kind": "النوع",
+        "submitted": "تاريخ التقديم",
+        "supervisorReason": "سبب المشرف",
+        "approve": "موافقة",
+        "reject": "رفض",
+        "tempPassword": "كلمة مرور مبدئية (≥ 8 أحرف)",
+        "tempPasswordPlaceholder": "مثال: ChangeMe123!",
+        "tempPasswordHint": "شارك هذه مع المشرف — سيستخدمها الوكيل الجديد لتسجيل الدخول.",
+        "passwordTooShort": "يجب ألا تقل كلمة المرور المبدئية عن 8 أحرف",
+        "rejectReason": "السبب (يُرسل إلى المشرف)",
+        "rejectReasonPlaceholder": "لماذا يتم رفض هذا الطلب؟",
+        "approveNote": "ملاحظة (اختيارية)",
+        "approveNotePlaceholder": "أي ملاحظة يتم إرفاقها بالموافقة…",
+        "cancel": "إلغاء",
+        "submit": "إرسال القرار",
+        "approveSuccess": "تمت الموافقة على الطلب",
+        "rejectSuccess": "تم رفض الطلب",
+        "failed": "تعذّر إرسال القرار",
+        "alreadyReviewed": "تمت مراجعة هذا الطلب بالفعل: {status}.",
+        "decisionReasonLabel": "السبب",
+        "reviewedBy": "تمت المراجعة بواسطة"
+      }
+    },
     "roleRequestsPage": {
       "title": "طلبات المدربين",
       "subtitle": "مراجعة المتقدمين للانضمام كمدربين. كل طلب يتضمّن الملف الشخصي والمؤهلات والمستندات الداعمة وبيانات البنك.",
@@ -7133,14 +7240,16 @@
       "allTickets": "جميع التذاكر",
       "myTickets": "تذاكري",
       "team": "الفريق",
-      "knowledgeBase": "قاعدة المعرفة",
+      "knowledgeBase": "مركز المساعدة",
       "reports": "التقارير",
       "settings": "الإعدادات",
       "supportLead": "قائد الدعم",
       "resolved": "تم الحل",
       "csat": "رضا العملاء",
       "avgFRT": "متوسط الاستجابة",
-      "onlineAvailable": "متصل - متاح",
+      "online": "متصل",
+      "offline": "غير متصل",
+      "statusDrivenByBusinessHours": "الحالة تتبع ساعات العمل",
       "editProfile": "تعديل الملف",
       "viewProfile": "عرض الملف الشخصي",
       "logout": "تسجيل الخروج"
@@ -7321,10 +7430,23 @@
       "actions": {
         "view": "عرض",
         "assign": "إسناد",
-        "close": "إغلاق"
+        "close": "إغلاق",
+        "markResolved": "وضع كمحلولة",
+        "reopen": "إعادة فتح",
+        "copyLink": "نسخ الرابط"
       },
+      "toasts": {
+        "resolved": "تم وضع التذكرة كمحلولة",
+        "closed": "تم إغلاق التذكرة",
+        "reopened": "تم إعادة فتح التذكرة",
+        "linkCopied": "تم نسخ الرابط",
+        "copyError": "فشل نسخ الرابط",
+        "actionFailed": "فشل الإجراء. يرجى المحاولة مرة أخرى."
+      },
+      "empty": "لا توجد تذاكر مطابقة للفلاتر.",
+      "unknownCustomer": "غير معروف",
       "newTicket": "تذكرة جديدة",
-      "searchPlaceholder": "البحث في التذاكر...",
+      "searchPlaceholder": "البحث برقم التذكرة، الموضوع، اسم العميل أو البريد…",
       "filters": {
         "allCategories": "جميع الفئات",
         "allPriorities": "جميع الأولويات",
@@ -7370,11 +7492,27 @@
       "stats": {
         "assigned": "مُسندة",
         "inProgress": "قيد التنفيذ",
+        "resolved": "تم الحل",
         "dueToday": "مستحقة اليوم",
         "overdue": "متأخرة"
       },
       "slaRemaining": "متبقي",
+      "slaLeft": "متبقي",
+      "slaOverBy": "متأخر",
       "slaWarning": "تحذير اتفاقية الخدمة",
+      "refresh": "تحديث",
+      "sort": {
+        "slaUrgency": "ترتيب: أولوية SLA",
+        "newest": "ترتيب: الأحدث",
+        "priority": "ترتيب: الأولوية"
+      },
+      "replyLocked": {
+        "title": "الردود غير مُمكَّنة",
+        "bodyClosed": "هذه التذكرة مغلقة. على العميل فتح تذكرة جديدة لمتابعة المحادثة.",
+        "openTicket": "فتح تفاصيل التذكرة",
+        "placeholder": "الردود غير مُمكَّنة على التذاكر المغلقة."
+      },
+      "resolvedAdvisory": "هذه التذكرة محلولة. سيتم إرسال ردك للعميل ولكن لن يُعاد فتح التذكرة تلقائيًا.",
       "quickReply": "رد سريع",
       "replyPlaceholder": "اكتب ردك...",
       "macros": {
@@ -7390,81 +7528,147 @@
         "all": "الكل",
         "new": "جديد",
         "inProgress": "قيد التنفيذ",
-        "waiting": "في الانتظار"
+        "waiting": "في الانتظار",
+        "resolved": "تم الحل",
+        "overdue": "متأخرة"
       },
-      "searchPlaceholder": "البحث في تذاكري...",
+      "searchPlaceholder": "البحث برقم التذكرة، الموضوع أو العميل…",
       "noTickets": "لم يتم العثور على تذاكر تطابق الفلاتر.",
       "quickReplyPlaceholder": "اكتب ردك...",
-      "send": "إرسال"
+      "send": "إرسال",
+      "unknownCustomer": "غير معروف",
+      "openDetail": "فتح التفاصيل الكاملة",
+      "openLabel": "فتح",
+      "slaBreached": "تم التجاوز",
+      "replyingTo": "الرد على",
+      "clearSelection": "إلغاء التحديد",
+      "selectTicketHint": "اختر تذكرة أعلاه للرد",
+      "composer": {
+        "minimize": "تصغير",
+        "expand": "توسيع",
+        "close": "إغلاق المحرّر"
+      },
+      "macroPreviewLabel": "معاينة الماكرو",
+      "insertMacro": "إدراج",
+      "cancelMacro": "إلغاء",
+      "applyMacroButton": "تطبيق ماكرو",
+      "toasts": {
+        "replySent": "تم إرسال الرد",
+        "replyError": "فشل إرسال الرد",
+        "selectTicketFirst": "اختر تذكرة أولاً",
+        "applyMacroError": "فشل تطبيق الماكرو"
+      }
     },
     "teamPage": {
-      "title": "الفريق",
-      "subtitle": "إدارة الفريق ومراقبة الأداء",
+      "title": "فريقي",
+      "subtitle": "فريقك من الوكلاء، أداؤهم، والطلبات المعلّقة",
       "addAgent": "إضافة وكيل",
-      "stats": {
-        "totalAgents": "إجمالي الوكلاء",
-        "online": "متصل",
-        "avgResponseTime": "متوسط الاستجابة",
-        "teamCSAT": "رضا العملاء للفريق",
-        "avgResponse": "متوسط الاستجابة"
-      },
-      "tabs": {
-        "all": "الكل",
-        "online": "متصل",
-        "away": "بعيد",
-        "offline": "غير متصل"
-      },
-      "roles": {
-        "seniorAgent": "وكيل أول",
-        "agent": "وكيل",
-        "juniorAgent": "وكيل مبتدئ"
-      },
-      "agents": {
-        "saraKhan": "سارة خان",
-        "ahmedNasser": "أحمد ناصر",
-        "fatimaOmar": "فاطمة عمر"
-      },
-      "openTickets": "التذاكر المفتوحة",
-      "avgResponse": "متوسط الاستجابة",
-      "csatLabel": "رضا العملاء",
-      "workload": "حجم العمل",
-      "statuses": {
-        "online": "متصل",
-        "away": "بعيد",
-        "offline": "غير متصل"
-      },
+      "myRequests": "طلباتي",
+      "fetchError": "تعذّر تحميل الفريق",
+      "emptyTitle": "لا يوجد أعضاء في فريقك بعد",
+      "emptyHint": "اطلب من المسؤول إضافة وكلاء — سيظهرون هنا بعد الموافقة.",
+      "noMatches": "لا يوجد أعضاء يطابقون الفلاتر",
+      "noMatchesHint": "حاول مسح البحث أو الفلتر.",
+      "statusActive": "نشط",
+      "statusInactive": "غير نشط",
+      "breaches": "تجاوزات",
+      "noData": "لا توجد بيانات بعد",
+      "searchPlaceholder": "البحث بالاسم أو البريد…",
       "performance": "نظرة عامة على الأداء",
-      "bestResponseTime": "أفضل وقت استجابة",
-      "highestCSAT": "أعلى رضا عملاء",
-      "mostResolved": "الأكثر حلاً",
-      "schedule": "الجدول",
-      "status": {
-        "online": "متصل",
-        "away": "بعيد",
-        "offline": "غير متصل"
-      },
-      "agentCard": {
+      "kpis": {
+        "totalAgents": "حجم الفريق",
         "openTickets": "التذاكر المفتوحة",
-        "avgResponse": "متوسط الاستجابة",
-        "csat": "رضا العملاء",
-        "workload": "حجم العمل"
+        "resolvedTotal": "تم حلها (إجمالي)",
+        "teamFrt": "متوسط FRT للفريق",
+        "teamCsat": "رضا العملاء للفريق"
+      },
+      "filters": {
+        "allStatus": "كل الحالات",
+        "active": "النشطون فقط",
+        "inactive": "غير النشطين",
+        "sortName": "ترتيب: الاسم",
+        "sortCsat": "ترتيب: الأعلى رضا",
+        "sortFrt": "ترتيب: الأسرع FRT",
+        "sortOpen": "ترتيب: الأكثر تذاكر مفتوحة"
       },
       "performanceCards": {
-        "bestResponseTime": "أفضل وقت استجابة",
+        "bestResponseTime": "الأسرع استجابة",
         "highestCSAT": "أعلى رضا عملاء",
         "mostResolved": "الأكثر حلاً"
       },
-      "searchPlaceholder": "البحث عن الوكلاء...",
-      "actions": {
-        "message": "رسالة",
-        "stats": "الإحصائيات",
-        "more": "المزيد"
+      "agentCard": {
+        "openTickets": "مفتوحة",
+        "avgResponse": "متوسط FRT",
+        "csat": "رضا العملاء"
+      },
+      "modal": {
+        "title": "طلب إضافة وكيل",
+        "helpText": "يقترح المشرفون إضافة الأعضاء — يراجعها المسؤول ويوافق عليها.",
+        "tabExisting": "مستخدم موجود",
+        "tabNew": "مستخدم جديد",
+        "searchAvailable": "ابحث عن وكلاء متاحين…",
+        "noAvailable": "لا يوجد وكلاء دعم غير مُعيّنين. استخدم \"مستخدم جديد\" بدلاً من ذلك.",
+        "noMatches": "لا توجد نتائج",
+        "selectAgentError": "يرجى اختيار وكيل أولاً",
+        "fillAll": "الاسم الأول والأخير والبريد الإلكتروني مطلوبة",
+        "firstName": "الاسم الأول",
+        "lastName": "اسم العائلة",
+        "email": "البريد الإلكتروني",
+        "phone": "الهاتف",
+        "adminWillSetPassword": "سيقوم المسؤول بتعيين كلمة مرور مبدئية عند الموافقة — سيشاركها مع الوكيل الجديد.",
+        "reasonLabel": "السبب (اختياري)",
+        "reasonPlaceholder": "لماذا تحتاج هذا الوكيل في فريقك؟",
+        "cancel": "إلغاء",
+        "sendRequest": "إرسال الطلب",
+        "requestSent": "تم إرسال الطلب إلى المسؤول",
+        "requestFailed": "تعذّر إرسال الطلب"
+      },
+      "requestsEmpty": "لم تقدّم أي طلبات بعد.",
+      "requestUnknownCandidate": "مرشّح غير معروف",
+      "requestKindLabel": "النوع",
+      "requestKind": {
+        "add_existing": "إضافة مستخدم موجود",
+        "add_new": "إنشاء مستخدم جديد"
+      },
+      "requestStatus": {
+        "pending": "قيد المراجعة",
+        "approved": "تمت الموافقة",
+        "rejected": "مرفوض"
+      },
+      "adminDecision": "قرار المسؤول",
+      "detail": {
+        "title": "عضو الفريق",
+        "joinedTeam": "انضم للفريق",
+        "performance": "الأداء",
+        "totalTickets": "إجمالي التذاكر",
+        "resolved": "تم حلّها",
+        "avgFrt": "متوسط FRT",
+        "csat": "رضا العملاء",
+        "frtBreaches": "تجاوزات FRT",
+        "ttrBreaches": "تجاوزات TTR",
+        "openTickets": "التذاكر المفتوحة",
+        "noOpenTickets": "لا توجد تذاكر مفتوحة حاليًا.",
+        "recentCsat": "أحدث تقييمات العملاء",
+        "removeButton": "إزالة من الفريق",
+        "confirmRemoveTitle": "هل تريد إزالة هذا الوكيل من فريقك؟",
+        "confirmRemoveBody": "سيصبح متاحًا لمشرفين آخرين. تذاكره تبقى مُسندة حتى يُعاد توزيعها.",
+        "confirmRemoveButton": "نعم، إزالة",
+        "removeSuccess": "تمت إزالة الوكيل من الفريق",
+        "removeFailed": "تعذّر إزالة الوكيل"
       }
     },
     "kbPage": {
-      "title": "قاعدة المعرفة",
-      "subtitle": "إدارة قاعدة المعرفة الداخلية والعامة",
-      "createArticle": "مقال جديد",
+      "title": "مركز المساعدة",
+      "subtitle": "أنشئ مقالات يستفيد منها فريقك وعملاؤك بأنفسهم",
+      "agentSubtitle": "تصفّح المقالات لمساعدة العملاء — استعرض الإجابات وانسخها مباشرةً إلى ردودك.",
+      "viewOnlyBadge": "عرض فقط",
+      "newArticle": "مقال جديد",
+      "manageCategories": "إدارة الفئات",
+      "searchPlaceholder": "ابحث في المقالات بالعنوان أو المحتوى…",
+      "emptyTitle": "لا توجد مقالات بعد",
+      "emptyHint": "أنشئ أول مقال لتبدأ مركز المساعدة.",
+      "noMatches": "لا توجد مقالات تطابق الفلاتر",
+      "noMatchesHint": "حاول مسح البحث أو الفئة أو الحالة.",
       "stats": {
         "totalArticles": "إجمالي المقالات",
         "published": "منشورة",
@@ -7472,62 +7676,112 @@
         "totalViews": "إجمالي المشاهدات"
       },
       "tabs": {
-        "all": "الكل",
-        "billing": "الفواتير",
-        "login": "تسجيل الدخول",
-        "content": "المحتوى",
-        "technical": "تقني"
+        "all": "الكل"
       },
-      "visibility": {
-        "public": "عام",
-        "internal": "داخلي"
-      },
-      "statusLabels": {
+      "filters": {
+        "allStatus": "كل الحالات",
         "published": "منشور",
-        "draft": "مسودة"
-      },
-      "views": "مشاهدات",
-      "helpful": "مفيد",
-      "articles": {
-        "howToResetPassword": "كيفية إعادة تعيين كلمة المرور",
-        "paymentMethods": "طرق الدفع والأسئلة الشائعة عن الفواتير",
-        "certificateDownload": "كيفية تحميل شهادتك",
-        "refundPolicy": "سياسة وعملية الاسترداد",
-        "troubleshootVideo": "استكشاف أخطاء تشغيل الفيديو",
-        "escalationProcess": "عملية التصعيد الداخلية"
-      },
-      "actions": {
-        "view": "عرض",
-        "edit": "تعديل",
-        "delete": "حذف"
-      },
-      "searchPlaceholder": "البحث في المقالات...",
-      "newArticle": "مقال جديد",
-      "categories": {
-        "billing": "الفواتير",
-        "login": "تسجيل الدخول",
-        "content": "المحتوى",
-        "technical": "تقني"
+        "draft": "مسودة",
+        "sortNewest": "ترتيب: الأحدث",
+        "sortOldest": "ترتيب: الأقدم",
+        "sortViews": "ترتيب: الأكثر مشاهدة"
       },
       "status": {
         "published": "منشور",
         "draft": "مسودة"
+      },
+      "actions": {
+        "preview": "معاينة",
+        "edit": "تعديل",
+        "delete": "حذف",
+        "viewPublic": "عرض عام"
+      },
+      "toasts": {
+        "titleRequired": "أدخل عنوانًا بالإنجليزية أو العربية.",
+        "categoryRequired": "يرجى اختيار فئة.",
+        "updated": "تم تحديث المقال",
+        "created": "تم إنشاء المقال",
+        "saveFailed": "تعذّر حفظ المقال",
+        "confirmDelete": "هل تريد حذف هذا المقال؟ لا يمكن التراجع.",
+        "deleted": "تم حذف المقال",
+        "deleteFailed": "تعذّر حذف المقال",
+        "imageUploadFailed": "تعذّر رفع الصورة."
+      },
+      "form": {
+        "editTitle": "تعديل المقال",
+        "createTitle": "إنشاء مقال جديد",
+        "bilingualHint": "اكتب بإحدى اللغتين — الأخرى اختيارية.",
+        "selectCategory": "اختر فئة",
+        "langEnglish": "الإنجليزية",
+        "langArabic": "العربية",
+        "titleEn": "العنوان (الإنجليزية)",
+        "titleAr": "العنوان (العربية)",
+        "titleEnPlaceholder": "عنوان المقال بالإنجليزية",
+        "titleArPlaceholder": "عنوان المقال بالعربية",
+        "bodyEn": "المحتوى (الإنجليزية)",
+        "bodyAr": "المحتوى (العربية)",
+        "bodyEnPlaceholder": "Write the article — use the toolbar to format and insert images…",
+        "bodyArPlaceholder": "اكتب المقال — استخدم شريط الأدوات للتنسيق وإدراج الصور…",
+        "notSet": "(غير محدد)",
+        "publishedToggle": "منشور",
+        "draftToggle": "مسودة",
+        "update": "تحديث",
+        "create": "إنشاء",
+        "cancel": "إلغاء"
+      },
+      "preview": {
+        "title": "معاينة المقال",
+        "empty": "لا يوجد محتوى لهذه اللغة بعد."
+      },
+      "categoryManager": {
+        "title": "إدارة الفئات",
+        "addCategory": "إضافة فئة",
+        "editTitle": "تعديل الفئة",
+        "newTitle": "فئة جديدة",
+        "nameEn": "الاسم بالإنجليزية *",
+        "nameAr": "الاسم بالعربية",
+        "nameEnRequired": "الاسم بالإنجليزية مطلوب.",
+        "icon": "الأيقونة",
+        "sortOrder": "ترتيب العرض",
+        "sortHint": "الأرقام الأقل تظهر أولاً.",
+        "articles": "مقالات",
+        "empty": "لا توجد فئات بعد — أضف فئة للبدء.",
+        "done": "تم",
+        "updated": "تم تحديث الفئة",
+        "created": "تم إنشاء الفئة",
+        "saveFailed": "تعذّر حفظ الفئة",
+        "deleted": "تم حذف الفئة",
+        "deleteFailed": "تعذّر حذف الفئة",
+        "confirmDelete": "حذف الفئة “{name}”؟",
+        "cannotDeleteWithArticles": "لا يمكن الحذف — {count} مقال(ات) لا تزال تستخدم هذه الفئة."
       }
     },
     "reportsPage": {
       "title": "التقارير",
-      "subtitle": "تحليلات الدعم وتقارير الأداء",
-      "exportExcel": "تصدير إكسل",
-      "exportPdf": "تصدير PDF",
+      "subtitle": "تحليلات الدعم وأداء الفريق بشكل لحظي.",
+      "refresh": "تحديث",
+      "export": "تصدير",
+      "downloadCsv": "تنزيل CSV",
+      "downloadPdf": "تنزيل PDF",
       "reportTypes": {
-        "ticketVolume": "حجم التذاكر",
-        "ticketVolumeDesc": "اتجاهات التذاكر اليومية/الأسبوعية",
+        "ticketVolume": "نظرة عامة",
+        "ticketVolumeDesc": "الاتجاه اليومي وتقسيم الفئات",
         "slaCompliance": "الامتثال لاتفاقية الخدمة",
-        "slaComplianceDesc": "هدف اتفاقية الخدمة مقابل الأداء الفعلي",
+        "slaComplianceDesc": "هدف SLA مقابل الفعلي",
         "agentPerformance": "أداء الوكلاء",
-        "agentPerformanceDesc": "مقاييس الوكلاء الفردية",
+        "agentPerformanceDesc": "مقاييس وكل وكيل والإخلالات",
         "csatNps": "رضا العملاء وصافي الترويج",
-        "csatNpsDesc": "اتجاهات رضا العملاء"
+        "csatNpsDesc": "رضا العملاء والتعليقات",
+        "topIssues": "أبرز المشكلات",
+        "topIssuesDesc": "الفئات المتكررة مرتبة"
+      },
+      "kpis": {
+        "open": "التذاكر المفتوحة",
+        "highPriority": "مفتوحة عالية الأولوية",
+        "slaCompliance": "الامتثال لـ SLA",
+        "avgFrt": "متوسط الاستجابة الأولى",
+        "avgTtr": "متوسط الحل",
+        "csat": "رضا العملاء"
       },
       "filters": {
         "period": "الفترة",
@@ -7535,32 +7789,192 @@
         "lastWeek": "الأسبوع الماضي",
         "thisMonth": "هذا الشهر",
         "lastMonth": "الشهر الماضي",
-        "custom": "مخصص",
-        "groupBy": "تجميع حسب",
-        "byCategory": "حسب الفئة",
-        "byAgent": "حسب الوكيل",
-        "byPriority": "حسب الأولوية",
-        "byChannel": "حسب القناة",
-        "title": "الفلاتر"
+        "last30Days": "آخر 30 يومًا",
+        "last90Days": "آخر 90 يومًا",
+        "custom": "نطاق مخصص",
+        "title": "الفلاتر",
+        "from": "من",
+        "to": "إلى"
       },
-      "generateReport": "إنشاء التقرير",
-      "columns": {
-        "category": "الفئة",
-        "tickets": "التذاكر",
-        "avgResponse": "متوسط الاستجابة",
-        "avgResolution": "متوسط الحل",
-        "satisfaction": "الرضا"
+      "trend": {
+        "title": "اتجاه التذاكر",
+        "created": "تم إنشاؤها",
+        "resolved": "تم حلّها"
+      },
+      "volume": {
+        "byCategory": "حسب الفئة",
+        "totalTickets": "{count} تذكرة إجمالاً",
+        "noTickets": "لا توجد تذاكر في هذا النطاق."
+      },
+      "issues": {
+        "noIssues": "لا توجد مشكلات في هذا النطاق الزمني."
+      },
+      "slaPanel": {
+        "noResolved": "لا توجد تذاكر محلولة في هذا النطاق الزمني.",
+        "overallCompliance": "الالتزام العام بـ SLA",
+        "metSla": "{met} من {total} استوفت SLA",
+        "frtCompliance": "الالتزام بـ FRT",
+        "frtSubtitle": "تم الالتزام بزمن الاستجابة الأولى",
+        "ttrCompliance": "الالتزام بـ TTR",
+        "ttrSubtitle": "تم الالتزام بزمن الحل"
+      },
+      "agentsPanel": {
+        "noData": "لا توجد بيانات للموظفين.",
+        "unknown": "غير معروف",
+        "columns": {
+          "agent": "الموظف",
+          "total": "الإجمالي",
+          "open": "مفتوحة",
+          "resolved": "محلولة",
+          "avgFrt": "متوسط FRT",
+          "csat": "CSAT",
+          "frtBreaches": "إخلالات FRT",
+          "ttrBreaches": "إخلالات TTR"
+        }
+      },
+      "csatPanel": {
+        "title": "درجة CSAT",
+        "avgScore": "متوسط الدرجة (من 5)",
+        "responses": "الردود",
+        "responseRate": "معدل الاستجابة",
+        "recentComments": "أحدث الملاحظات",
+        "noComments": "لا توجد تعليقات بعد — ستظهر هنا مع وصول استبيانات CSAT."
+      },
+      "npsPanel": {
+        "title": "صافي نقاط المروّجين",
+        "score": "درجة NPS",
+        "responses": "الردود",
+        "responseRate": "معدل الاستجابة",
+        "promoters": "المروّجون",
+        "passives": "المحايدون",
+        "detractors": "المنتقدون"
+      },
+      "toasts": {
+        "loadFailed": "تعذّر تحميل بيانات التقرير",
+        "downloadedCsv": "تم تنزيل التقرير",
+        "exportFailed": "تعذّر تصدير التقرير",
+        "downloadedPdf": "تم تنزيل PDF",
+        "exportPdfFailed": "تعذّر تصدير PDF",
+        "refreshed": "تم تحديث التقرير"
       }
     },
     "settingsPage": {
       "title": "الإعدادات",
       "subtitle": "تكوين سير عمل الدعم والأتمتة",
+      "mainTabs": {
+        "personal": "الإعدادات الشخصية",
+        "routing": "اتفاقية الخدمة والتوجيه",
+        "workspace": "مساحة العمل"
+      },
       "tabs": {
         "sla": "أهداف اتفاقية الخدمة",
         "assignment": "الإسناد التلقائي",
         "macros": "الردود الجاهزة",
         "notifications": "الإشعارات",
-        "categories": "الفئات"
+        "categories": "الفئات",
+        "profile": "الملف الشخصي",
+        "security": "الأمان",
+        "escalation": "مسارات التصعيد",
+        "businessHours": "ساعات العمل"
+      },
+      "saveChanges": "حفظ التغييرات",
+      "cancelChanges": "إلغاء",
+      "adminOnlyBadge": "للمسؤول فقط",
+      "assignmentPanel": {
+        "title": "التعيين التلقائي",
+        "description": "اختر كيفية توجيه التذاكر إلى الوكلاء وأضف القيود.",
+        "loadFailed": "تعذّر تحميل إعدادات التعيين",
+        "saved": "تم تحديث إعدادات التعيين",
+        "saveFailed": "تعذّر حفظ الإعدادات",
+        "enabledLabel": "تفعيل التعيين التلقائي",
+        "enabledHint": "عند الإيقاف، تصل التذاكر الجديدة دون تعيين وتحتاج إلى الاستلام يدويًا.",
+        "strategyLabel": "استراتيجية التوزيع",
+        "strategy": {
+          "roundRobin": "بالتناوب",
+          "roundRobinDesc": "توزيع التذاكر بالتساوي على جميع الوكلاء المؤهلين بالتناوب.",
+          "leastLoaded": "الأقل تحميلًا",
+          "leastLoadedDesc": "إسناد إلى الوكيل صاحب أقل عدد تذاكر مفتوحة.",
+          "manual": "يدوي فقط",
+          "manualDesc": "إيقاف التعيين التلقائي — يقوم المشرفون بالتوزيع يدويًا."
+        },
+        "respectBusinessHoursLabel": "احترام ساعات العمل",
+        "respectBusinessHoursHint": "خارج ساعات العمل، تنتظر التذاكر الجديدة حتى الفتح التالي.",
+        "maxConcurrentLabel": "الحد الأقصى للتذاكر المتزامنة لكل وكيل",
+        "maxConcurrentHint": "يتم تجاوز الوكلاء الذين بلغوا الحد (0 = بدون حد).",
+        "maxConcurrentNote": "يُطبَّق فقط على استراتيجيتي التناوب والأقل تحميلًا."
+      },
+      "businessHours": {
+        "title": "ساعات العمل",
+        "description": "تحدد نافذة العمل المستخدمة لحساب SLA ومؤشر التوفر العام في صفحة الدعم.",
+        "loadFailed": "تعذّر تحميل ساعات العمل",
+        "saved": "تم تحديث ساعات العمل",
+        "saveFailed": "تعذّر حفظ ساعات العمل",
+        "workingDays": "أيام العمل",
+        "openTime": "وقت الفتح",
+        "closeTime": "وقت الإغلاق",
+        "timezone": "فرق المنطقة الزمنية عن UTC (بالساعات)",
+        "timezoneHint": "السعودية = +3",
+        "riyadhTimeNote": "تُفسَّر الأوقات بتوقيت الرياض (Asia/Riyadh، AST = UTC+3).",
+        "riyadhLabel": "بتوقيت الرياض (AST، UTC+3)",
+        "atLeastOneDay": "اختر يوم عمل واحدًا على الأقل.",
+        "summaryTitle": "الجدول الحالي",
+        "appliesTo": "تُطبَّق على حسابات SLA لزمن الاستجابة والحل وعلى مؤشر توفر نموذج التذاكر العام.",
+        "days": {
+          "sun": "أحد",
+          "mon": "اثنين",
+          "tue": "ثلاثاء",
+          "wed": "أربعاء",
+          "thu": "خميس",
+          "fri": "جمعة",
+          "sat": "سبت"
+        }
+      },
+      "notificationsPanel": {
+        "title": "تفضيلات الإشعارات",
+        "description": "فعّل أو عطّل إشعارات البريد أو داخل التطبيق. تُطبّق التغييرات فورًا.",
+        "loadFailed": "تعذّر تحميل التفضيلات",
+        "saved": "تم تحديث التفضيلات",
+        "saveFailed": "تعذّر حفظ التفضيلات",
+        "emailMasterTitle": "إشعارات البريد",
+        "emailMasterHint": "تنبيهات تذاكر جديدة، تحذيرات اتفاقية الخدمة، إعادة الإسناد، الإشارات، وردود تقييم العملاء.",
+        "inAppMasterTitle": "إشعارات داخل التطبيق",
+        "inAppMasterHint": "نفس الأحداث تصل صندوقك داخل التطبيق أثناء تسجيل دخولك.",
+        "event": "الحدث",
+        "email": "البريد",
+        "inapp": "داخل التطبيق",
+        "events": {
+          "newTicket": "تذكرة جديدة مُسندة إليّ",
+          "newTicketHint": "عند التعيين التلقائي أو إعادة الإسناد من المشرف.",
+          "reassigned": "تم إعادة إسناد التذكرة إليّ",
+          "reassignedHint": "عند نقل تذكرة إلى قائمتي من زميل أو مشرف.",
+          "slaWarning": "SLA في خطر",
+          "slaWarningHint": "تنبيه قبل 30 دقيقة من حد الاستجابة أو الحل.",
+          "mention": "تم ذكري @ في تعليق",
+          "mentionHint": "الإشارات في الملاحظات الداخلية للتذكرة.",
+          "csatResponse": "العميل ترك تقييم CSAT",
+          "csatResponseHint": "إشعاري عند إرسال العميل استبيان CSAT على تذاكري."
+        }
+      },
+      "ticketCategoriesPanel": {
+        "title": "فئات التذاكر",
+        "description": "تأتي الفئات الافتراضية مع المنصة. أضف فئات مخصصة لتتبّع تدفقات فريدة.",
+        "addCategory": "إضافة فئة",
+        "removeCategory": "إزالة",
+        "nameEn": "الاسم بالإنجليزية *",
+        "nameAr": "الاسم بالعربية",
+        "nameEnRequired": "الاسم بالإنجليزية مطلوب.",
+        "autoPriority": "الأولوية الافتراضية",
+        "priorities": {
+          "high": "مرتفعة",
+          "medium": "متوسطة",
+          "low": "منخفضة"
+        },
+        "builtin": "افتراضي",
+        "added": "تمت إضافة الفئة",
+        "addFailed": "تعذّرت إضافة الفئة",
+        "removed": "تمت إزالة الفئة",
+        "removeFailed": "تعذّرت إزالة الفئة",
+        "confirmDelete": "هل تريد إزالة فئة \"{slug}\"؟"
       },
       "sla": {
         "title": "تكوين أهداف اتفاقية مستوى الخدمة",
@@ -7636,7 +8050,188 @@
         "actions": "الإجراءات",
         "tickets": "التذاكر"
       },
-      "save": "حفظ التغييرات"
+      "save": "حفظ التغييرات",
+      "comingSoonBadge": "قريبًا",
+      "comingSoon": {
+        "title": "قريبًا",
+        "description": "هذه الميزة قيد التطوير وستتوفّر في تحديث قادم. ترقّبوا الجديد!"
+      },
+      "profileExtras": {
+        "heading": "معلومات الدور",
+        "jobTitle": "المسمّى الوظيفي",
+        "jobTitlePlaceholder": "مثال: أخصائي دعم أول",
+        "department": "القسم",
+        "departmentPlaceholder": "مثال: خدمة العملاء",
+        "specialty": "مجالات الخبرة",
+        "specialtyPlaceholder": "مثال: مشكلات Zoom، الشهادات، الفوترة",
+        "specialtyHint": "أنواع التذاكر التي تجيدها أكثر. يستخدمها المشرفون عند إعادة إسناد التصعيدات.",
+        "bio": "نبذة مختصرة",
+        "bioPlaceholder": "سطر واحد قد يظهر بجوار ردودك على العملاء."
+      },
+      "mySecurity": {
+        "overview": {
+          "twoFactorLabel": "التحقّق بخطوتين",
+          "enabled": "مفعّل",
+          "notEnabled": "غير مفعّل",
+          "twoFactorOnHint": "حسابك محميّ بالتحقّق بخطوتين.",
+          "twoFactorOffHint": "فعّل التحقّق بخطوتين لحماية حسابك.",
+          "devicesLabel": "الأجهزة الموثوقة",
+          "deviceSingular": "جهاز",
+          "devicePlural": "أجهزة",
+          "devicesHint": "الأجهزة المسجّلة دخولها على حسابك حاليًا.",
+          "lastSignInLabel": "آخر تسجيل دخول",
+          "never": "لا يوجد",
+          "ipUnknown": "عنوان IP غير معروف"
+        },
+        "changePassword": "تغيير كلمة المرور",
+        "changePasswordHint": "استخدم كلمة مرور قوية وفريدة. ستبقى مسجّل الدخول بعد التغيير.",
+        "currentPassword": "كلمة المرور الحالية",
+        "newPassword": "كلمة المرور الجديدة",
+        "confirmPassword": "تأكيد كلمة المرور الجديدة",
+        "updatePassword": "تحديث كلمة المرور",
+        "passwordMismatch": "كلمتا المرور غير متطابقتين.",
+        "passwordChanged": "تم تحديث كلمة المرور.",
+        "passwordChangeFailed": "تعذّر تحديث كلمة المرور. حاول مرة أخرى.",
+        "twoFactorCardTitle": "التحقّق بخطوتين",
+        "twoFactorCardHint": "أضف خطوة ثانية لتسجيل الدخول. ننصح بها لكل أعضاء فريق الدعم.",
+        "devicesCardTitle": "الأجهزة الموثوقة",
+        "devicesCardHint": "راجع الأجهزة المسجّلة دخولها إلى حسابك واسحب صلاحية أي جهاز لا تعرفه."
+      },
+      "profile": {
+        "title": "بيانات الملف الشخصي",
+        "photoLabel": "صورة الملف الشخصي",
+        "photoHelp": "JPG أو PNG أو GIF. حد أقصى 2 ميجابايت.",
+        "uploadPhoto": "رفع صورة",
+        "removePhoto": "إزالة الصورة",
+        "firstName": "الاسم الأول",
+        "lastName": "اسم العائلة",
+        "firstNamePlaceholder": "أدخل الاسم الأول",
+        "lastNamePlaceholder": "أدخل اسم العائلة",
+        "email": "البريد الإلكتروني",
+        "phone": "الهاتف",
+        "phonePlaceholder": "أدخل رقم الهاتف",
+        "saveChanges": "حفظ التغييرات",
+        "saving": "جارٍ الحفظ...",
+        "toasts": {
+          "photoUpdated": "تم تحديث صورة الملف الشخصي",
+          "photoUploadFailed": "تعذّر رفع الصورة",
+          "photoRemoved": "تمت إزالة صورة الملف الشخصي",
+          "photoRemoveFailed": "تعذّر إزالة الصورة",
+          "profileUpdated": "تم تحديث الملف الشخصي بنجاح",
+          "profileUpdateFailed": "تعذّر تحديث الملف الشخصي"
+        }
+      },
+      "slaPanel": {
+        "title": "أهداف اتفاقية الخدمة",
+        "description": "زمن الاستجابة الأولى (FRT)، زمن الحل (TTR)، وعتبات تصعيد الأولوية لكل مستوى. القيم بالدقائق ضمن ساعات العمل — الساعات خارج العمل تُوقف عدّاد SLA. اضبط نافذة العمل من تبويب ساعات العمل. تنطبق التغييرات على التذاكر المستقبلية فقط.",
+        "loadFailedTitle": "تعذّر تحميل سياسات اتفاقية الخدمة",
+        "retry": "إعادة المحاولة",
+        "noPolicies": "لم يتم إعداد أي سياسات اتفاقية خدمة. تواصل مع المسؤول.",
+        "columns": {
+          "priority": "الأولوية",
+          "frt": "FRT (دقائق)",
+          "ttr": "TTR (دقائق)",
+          "escalate": "التصعيد بعد (دقائق)"
+        },
+        "saving": "جارٍ الحفظ...",
+        "save": "حفظ",
+        "hintHours": "≈ {n} س",
+        "hintDays": "≈ {n} يوم",
+        "hintHoursMinutes": "≈ {h} س {m} د",
+        "validation": {
+          "frtPositive": "يجب أن يكون FRT عددًا صحيحًا موجبًا",
+          "ttrPositive": "يجب أن يكون TTR عددًا صحيحًا موجبًا",
+          "escalatePositive": "يجب أن يكون التصعيد عددًا صحيحًا موجبًا",
+          "ttrGreaterThanFrt": "يجب أن يكون TTR أكبر من FRT",
+          "escalateLessThanTtr": "يجب أن يكون التصعيد ≤ TTR"
+        },
+        "toasts": {
+          "updated": "تم تحديث سياسة اتفاقية الخدمة",
+          "loadFailed": "تعذّر تحميل سياسات اتفاقية الخدمة",
+          "updateFailed": "تعذّر التحديث"
+        }
+      },
+      "macrosPanel": {
+        "title": "قوالب الردود",
+        "newMacro": "+ قالب جديد",
+        "description": "قوالب ردود جاهزة مع استبدال متغيرات. المتغيرات: {variables}",
+        "editTitle": "تعديل القالب",
+        "createTitle": "إنشاء قالب جديد",
+        "formTitle": "العنوان *",
+        "formTitlePlaceholder": "مثال: حل مشكلة جلسة زووم",
+        "bodyTemplate": "نص القالب *",
+        "insertVariablesHint": "اضغط على متغير لإدراجه في موضع المؤشر:",
+        "bodyTemplatePlaceholder": "مرحبًا {learnerVar}، شكرًا لتواصلك معنا...",
+        "kbUrls": "روابط مقالات قاعدة المعرفة (رابط في كل سطر)",
+        "saving": "جارٍ الحفظ...",
+        "update": "تحديث",
+        "create": "إنشاء",
+        "cancel": "إلغاء",
+        "noMacros": "لم يتم إنشاء أي قوالب بعد.",
+        "edit": "تعديل",
+        "delete": "حذف",
+        "variables": {
+          "learnerName": "اسم المتعلم",
+          "learnerFirstName": "الاسم الأول",
+          "courseName": "اسم الدورة",
+          "ticketId": "معرّف التذكرة",
+          "ticketSubject": "الموضوع",
+          "ticketPriority": "الأولوية",
+          "ticketCategory": "الفئة",
+          "ticketStatus": "الحالة",
+          "agentName": "اسم الموظف"
+        },
+        "toasts": {
+          "titleBodyRequired": "العنوان والمحتوى مطلوبان",
+          "updated": "تم تحديث القالب",
+          "created": "تم إنشاء القالب",
+          "saveFailed": "تعذّر حفظ القالب",
+          "confirmDelete": "حذف هذا القالب؟",
+          "deleted": "تم حذف القالب"
+        }
+      },
+      "escalationPanel": {
+        "title": "مسارات التصعيد",
+        "description": "حدّد سلاسل إعادة إسناد التذاكر تلقائيًا بناءً على الوقت المنقضي.",
+        "newPath": "+ مسار جديد",
+        "editTitle": "تعديل مسار التصعيد",
+        "createTitle": "إنشاء مسار تصعيد",
+        "nameLabel": "الاسم *",
+        "namePlaceholder": "مثال: تصعيد قياسي",
+        "stepsLabel": "الخطوات (مرتّبة تصاعديًا بالدقائق)",
+        "stepLabel": "الخطوة {n}:",
+        "after": "بعد",
+        "minutesArrow": "دقيقة ←",
+        "remove": "إزالة",
+        "addStep": "+ إضافة خطوة",
+        "saving": "جارٍ الحفظ...",
+        "update": "تحديث",
+        "create": "إنشاء",
+        "cancel": "إلغاء",
+        "noPathsConfigured": "لم يتم إعداد أي مسارات تصعيد.",
+        "edit": "تعديل",
+        "delete": "حذف",
+        "loading": "جارٍ التحميل...",
+        "roles": {
+          "SUPPORT": "موظف دعم",
+          "ADMIN": "مسؤول",
+          "SUPER_ADMIN": "مسؤول رئيسي"
+        },
+        "stepChip": "بعد {minutes} د ← {role}",
+        "toasts": {
+          "nameRequired": "الاسم مطلوب",
+          "atLeastOneStep": "يجب إضافة خطوة واحدة على الأقل",
+          "stepMinutesInvalid": "الخطوة {n}: يجب أن تكون الدقائق ≥ 1",
+          "stepMinutesAscending": "يجب أن تحتوي الخطوة {n} على دقائق أعلى من الخطوة {prev}",
+          "updated": "تم تحديث مسار التصعيد",
+          "created": "تم إنشاء مسار التصعيد",
+          "saveFailed": "تعذّر الحفظ",
+          "loadFailed": "تعذّر تحميل مسارات التصعيد",
+          "confirmDelete": "حذف مسار التصعيد هذا؟",
+          "deleted": "تم حذف مسار التصعيد",
+          "deleteFailed": "تعذّر الحذف"
+        }
+      }
     },
     "names": {
       "hanaAlSaud": "هنا السعود",
@@ -7683,6 +8278,132 @@
       "knowledgeBase": "قاعدة المعرفة",
       "exportReport": "تصدير التقرير",
       "teamChat": "محادثة الفريق"
+    },
+    "agentDashboard": {
+      "title": "لوحتي",
+      "welcome": "مرحبًا بعودتك يا {name}! هذه التذاكر المسندة إليك.",
+      "fallbackName": "موظف الدعم",
+      "assignedTickets": "التذاكر المسندة إليّ",
+      "viewAll": "عرض الكل",
+      "noTickets": "لا توجد تذاكر مسندة إليك حتى الآن.",
+      "myCsat": "تقييمي",
+      "csatResponses": "{count, plural, one {رد واحد} two {ردّان} few {# ردود} many {# ردًا} other {# رد}}",
+      "noCsatYet": "لا توجد تقييمات بعد",
+      "myPerformance": "أدائي",
+      "openKb": "تصفح مركز المساعدة",
+      "awaitingFirstReply": "{count, plural, one {تذكرة جديدة بانتظار أول رد} two {تذكرتان جديدتان بانتظار أول رد} few {# تذاكر جديدة بانتظار أول رد} many {# تذكرة جديدة بانتظار أول رد} other {# تذكرة جديدة بانتظار أول رد}}",
+      "nextUp": {
+        "title": "التالي",
+        "cleared": "أنجزت كل شيء!",
+        "clearedHint": "لا توجد تذاكر عاجلة تحتاج اهتمامك الآن."
+      },
+      "perf": {
+        "resolved": "تم الحل",
+        "avgFrt": "متوسط أول رد",
+        "breaches": "تجاوزات SLA",
+        "noData": "بيانات الأداء غير متوفرة بعد."
+      },
+      "priorities": {
+        "high": "عالية",
+        "medium": "متوسطة",
+        "low": "منخفضة"
+      },
+      "sla": {
+        "left": "متبقي {value}",
+        "overBy": "متأخر {value}"
+      },
+      "columns": {
+        "id": "المعرف",
+        "subject": "الموضوع",
+        "student": "الطالب",
+        "priority": "الأولوية",
+        "sla": "SLA",
+        "status": "الحالة"
+      }
+    },
+    "ticketDetail": {
+      "backToTickets": "العودة إلى التذاكر",
+      "notFound": "لم يتم العثور على التذكرة",
+      "staffBadge": "موظف",
+      "internalBadge": "ملاحظة داخلية",
+      "unknownAuthor": "غير معروف",
+      "reply": "رد",
+      "applyMacro": "تطبيق قالب",
+      "macroPreview": "معاينة القالب",
+      "insertMacro": "إدراج",
+      "cancelMacro": "إلغاء",
+      "internalNote": "ملاحظة داخلية",
+      "internalNotePlaceholder": "أضف ملاحظة داخلية (غير ظاهرة للطالب)...",
+      "replyPlaceholder": "اكتب ردك...",
+      "addNote": "إضافة ملاحظة",
+      "sendReply": "إرسال الرد",
+      "details": "التفاصيل",
+      "detailsLabels": {
+        "category": "الفئة",
+        "assignee": "المسؤول",
+        "unassigned": "غير مُسند",
+        "course": "الدورة",
+        "created": "تاريخ الإنشاء",
+        "resolved": "تاريخ الحل"
+      },
+      "sla": {
+        "title": "اتفاقية الخدمة",
+        "firstResponse": "أول استجابة",
+        "resolution": "الحل",
+        "breached": "تم الإخلال",
+        "met": "تم الإنجاز",
+        "target": "المستهدف: {value}",
+        "remaining": "متبقي {value}",
+        "overdueBy": "متأخر بمقدار {value}",
+        "pausedOnHold": "اتفاقية الخدمة متوقفة (قيد الانتظار)"
+      },
+      "actions": {
+        "title": "الإجراءات",
+        "reassign": "إعادة إسناد التذكرة",
+        "resolve": "حل التذكرة",
+        "close": "إغلاق التذكرة",
+        "reopen": "إعادة فتح التذكرة",
+        "onHold": "تعليق التذكرة",
+        "resume": "استئناف التذكرة",
+        "supervisorBadge": "(مشرف)"
+      },
+      "customer": "العميل",
+      "customerRating": "تقييم العميل",
+      "openAttachment": "عرض المرفق",
+      "toasts": {
+        "loadFailed": "تعذّر تحميل التذكرة",
+        "internalAdded": "تمت إضافة الملاحظة الداخلية",
+        "replySent": "تم إرسال الرد",
+        "replyFailed": "تعذّر إرسال الرد",
+        "statusChanged": "تم تغيير الحالة إلى {status}",
+        "statusFailed": "تعذّر تحديث الحالة",
+        "applyMacroFailed": "تعذّر تطبيق القالب",
+        "reassigned": "تمت إعادة الإسناد إلى {name}",
+        "reassignFailed": "تعذّر إعادة الإسناد"
+      },
+      "onHold": {
+        "selectReason": "اختر سببًا لتعليق هذه التذكرة:",
+        "reasons": {
+          "waiting for student response": "بانتظار رد الطالب",
+          "waiting for third party": "بانتظار طرف ثالث",
+          "waiting for internal team": "بانتظار الفريق الداخلي",
+          "pending investigation": "قيد التحقيق",
+          "other": "سبب آخر"
+        },
+        "confirm": "تأكيد التعليق",
+        "cancel": "إلغاء"
+      }
+    },
+    "a11y": {
+      "moreActions": "إجراءات إضافية",
+      "ticketActions": "إجراءات التذكرة",
+      "articleActions": "إجراءات المقال",
+      "editPhoto": "تعديل صورة الملف الشخصي"
+    },
+    "errorState": {
+      "title": "تعذّر تحميل البيانات",
+      "description": "حدث خطأ أثناء جلب هذه البيانات. يرجى المحاولة مرة أخرى.",
+      "retry": "إعادة المحاولة"
     }
   },
   "dashboardSearch": {
@@ -8138,8 +8859,12 @@
     "statusOnline": "نحن متصلون",
     "statusOffline": "غير متصل حالياً",
     "offlineMessage": "فريق الدعم متاح من الأحد إلى الخميس، 9:00 صباحاً – 6:00 مساءً بتوقيت السعودية. سيتم مراجعة تذكرتك عند استئناف ساعات العمل.",
-    "categoriesTitle": "كيف يمكننا مساعدتك؟",
-    "categoriesSubtitle": "اختر فئة للبدء أو مرر لأسفل لإرسال تذكرة.",
+    "categoriesTitle": "تصفح مقالات المساعدة",
+    "categoriesSubtitle": "إجابات سريعة على الأسئلة الشائعة.",
+    "browseAllArticles": "تصفح جميع المقالات",
+    "readArticle": "اقرأ المقال",
+    "noArticlesYet": "لا توجد مقالات منشورة بعد",
+    "noArticlesYetHint": "عاود الزيارة لاحقًا، أو افتح تذكرة أدناه.",
     "category_technical": "الوصول إلى Zoom / الجلسات",
     "category_technical_desc": "مشاكل في الانضمام إلى محاضرات Zoom أو الوصول إلى الجلسات المباشرة",
     "category_login": "مشاكل تسجيل الدخول",
@@ -8188,6 +8913,104 @@
     "subjectMinLength": "يجب أن يكون الموضوع 5 أحرف على الأقل",
     "descriptionMinLength": "يجب أن يكون الوصف 20 حرفاً على الأقل",
     "errorSubmitting": "فشل إرسال التذكرة. يرجى المحاولة مرة أخرى.",
-    "expectedResponse": "وقت الاستجابة المتوقع"
+    "expectedResponse": "وقت الاستجابة المتوقع",
+    "invalidEmail": "يرجى إدخال عنوان بريد إلكتروني صالح",
+    "trackingPromptGuest": "تم إرسال تذكرتك! احفظ هذا الرابط لتتبع تذكرتك ومشاهدة الردود:",
+    "trackingBookmarkNote": "احفظ هذا الرابط في المفضلة للاطلاع على ردود فريق الدعم",
+    "copied": "تم النسخ",
+    "copyLink": "نسخ الرابط"
+  },
+  "surveys": {
+    "csat": {
+      "loading": "جاري تحميل الاستطلاع...",
+      "expiredTitle": "انتهت صلاحية الاستطلاع",
+      "expiredDescription": "انتهت صلاحية هذا الاستطلاع. تكون استطلاعات رضا العملاء صالحة لمدة 48 ساعة بعد إرسالها.",
+      "notFoundTitle": "الاستطلاع غير موجود",
+      "notFoundDescription": "تعذر العثور على هذا الاستطلاع. ربما تمت إزالته أو أن الرابط غير صحيح.",
+      "thankYouTitle": "شكراً لك على ملاحظاتك!",
+      "alreadySubmittedMessage": "لقد قدمت تقييمك بالفعل. شكراً لك!",
+      "submittedMessage": "تم تسجيل ردك. نحن نقدر وقتك.",
+      "subtitle": "تقييم الدعم",
+      "ratingPrompt": "كيف كانت تجربتك؟",
+      "ratingSubprompt": "قيّم تفاعلك مع الدعم",
+      "scaleLow": "سيئة جداً",
+      "scaleHigh": "ممتازة",
+      "commentPlaceholder": "اختياري: أخبرنا المزيد عن تجربتك...",
+      "submit": "إرسال التقييم",
+      "submitting": "جاري الإرسال...",
+      "thankYouToast": "شكراً لك على ملاحظاتك!",
+      "errorToast": "فشل في إرسال التقييم. يرجى المحاولة مرة أخرى."
+    },
+    "guestTracker": {
+      "loading": "جاري تحميل التذكرة...",
+      "notFoundTitle": "التذكرة غير موجودة",
+      "notFoundDescription": "قد يكون رابط التتبع غير صالح أو منتهي الصلاحية.",
+      "backToSupport": "العودة إلى الدعم",
+      "pageTitle": "تتبع تذكرة الدعم الخاصة بك",
+      "ticketIdLabel": "التذكرة",
+      "categoryLabel": "الفئة:",
+      "submittedLabel": "تاريخ الإرسال:",
+      "statusLabel": "الحالة",
+      "submittedOn": "أُرسلت في",
+      "lastReply": "آخر رد",
+      "noReplies": "لا توجد ردود بعد. سنرد عليك في أقرب وقت ممكن.",
+      "replyHeader": "رد",
+      "replyPlaceholder": "اكتب ردك...",
+      "sendReply": "إرسال الرد",
+      "sendingReply": "جاري الإرسال...",
+      "replyRequired": "لا يمكن أن يكون الرد فارغاً",
+      "replySent": "تم إرسال الرد بنجاح",
+      "replyError": "فشل في إرسال الرد. يرجى المحاولة مرة أخرى.",
+      "supportAgentFallback": "موظف الدعم",
+      "supportBadge": "الدعم",
+      "status": {
+        "new": "جديدة",
+        "in_progress": "قيد التنفيذ",
+        "on_hold": "في انتظار ردك",
+        "resolved": "تم الحل",
+        "closed": "مغلقة"
+      },
+      "csat": {
+        "thankYouTitle": "شكراً لك على ملاحظاتك!",
+        "expiredMessage": "انتهت نافذة التقييم لهذه التذكرة.",
+        "prompt": "كيف كانت تجربتك مع الدعم؟",
+        "subprompt": "تساعدنا ملاحظاتك على التحسين. الأمر لا يستغرق سوى لحظة.",
+        "starAriaLabel": "قيّم بـ {n} نجم{plural}",
+        "commentPlaceholder": "اختياري: أخبرنا المزيد عن تجربتك",
+        "submit": "إرسال التقييم",
+        "thankYouToast": "شكراً لك على ملاحظاتك!",
+        "errorToast": "فشل إرسال التقييم. يرجى المحاولة مرة أخرى.",
+        "fallbackError": "فشل إرسال التقييم"
+      }
+    },
+    "businessHours": {
+      "online": "نحن متاحون الآن",
+      "offline": "غير متاحون حالياً",
+      "scheduleSummary": "ساعات الدعم: {schedule}"
+    },
+    "kb": {
+      "pageTitle": "مركز المساعدة",
+      "pageSubtitle": "ابحث عن إجابات لأسئلتك الشائعة",
+      "searchPlaceholder": "ابحث في المقالات...",
+      "noArticles": "لا توجد مقالات",
+      "viewsLabel": "مشاهدة",
+      "languageEn": "English",
+      "languageAr": "العربية",
+      "notFoundTitle": "المقال غير موجود",
+      "notFoundBody": "ربما تم نقل هذا المقال أو حذفه.",
+      "unpublishedTitle": "المقال غير متاح",
+      "unpublishedBody": "هذا المقال غير منشور بعد. يرجى المحاولة لاحقًا.",
+      "backToHelpCenter": "العودة إلى مركز المساعدة",
+      "noContent": "هذا المقال ليس له محتوى بعد.",
+      "relatedArticles": "مقالات ذات صلة",
+      "categories": {
+        "all": "الكل",
+        "billing": "الفواتير",
+        "login": "تسجيل الدخول",
+        "certificate": "الشهادات",
+        "content": "المحتوى",
+        "technical": "تقني"
+      }
+    }
   }
 }

@@ -18,6 +18,7 @@ import {
   Coins,
   Upload,
   Trash2,
+  Headphones,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { profileApi } from "@/lib/api";
@@ -102,6 +103,11 @@ const DashboardSidebar = ({ user }: DashboardSidebarProps) => {
       label: t("sidebar.inviteFriends"),
       href: `/${locale}/dashboard/student/invite-friends`,
       icon: Users,
+    },
+    {
+      label: t("sidebar.support"),
+      href: `/${locale}/dashboard/student/support`,
+      icon: Headphones,
     },
     {
       label: t("sidebar.settings"),

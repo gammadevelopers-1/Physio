@@ -126,10 +126,6 @@ import {
   getCsatFollowupText,
 } from './templates/csat-followup.template';
 import {
-  getNpsSurveyHtml,
-  getNpsSurveyText,
-} from './templates/nps-survey.template';
-import {
   getTicketCreatedLearnerHtml,
   getTicketCreatedLearnerText,
 } from './templates/ticket-created-learner.template';
@@ -153,6 +149,10 @@ import {
   getTicketResolvedHtml,
   getTicketResolvedText,
 } from './templates/ticket-resolved.template';
+import {
+  getTicketClosedHtml,
+  getTicketClosedText,
+} from './templates/ticket-closed.template';
 import {
   getTicketEscalationHtml,
   getTicketEscalationText,
@@ -1519,35 +1519,6 @@ export class EmailService {
   }
 
   /**
-   * Send NPS survey email after course completion
-   */
-  async sendNpsSurvey(
-    to: string,
-    learnerName: string,
-    courseName: string,
-    surveyId: string,
-  ): Promise<void> {
-    const baseUrl =
-      this.configService.get('NEXT_PUBLIC_API_URL')?.replace('/api', '') ||
-      'http://localhost:3000';
-    const surveyBaseUrl = `${baseUrl}/en/surveys/nps/${surveyId}`;
-
-    try {
-      await this.send({
-        to,
-        subject: `How likely would you recommend ${courseName}?`,
-        html: getNpsSurveyHtml(learnerName, courseName, surveyBaseUrl),
-        text: getNpsSurveyText(learnerName, courseName, surveyBaseUrl),
-      });
-      this.logger.log(
-        `NPS survey email sent to ${to} for course "${courseName}"`,
-      );
-    } catch (error) {
-      this.logger.error(`Failed to send NPS survey email to ${to}`, error);
-    }
-  }
-
-  /**
    * Send ticket created confirmation email to learner
    */
   async sendTicketCreatedLearner(
@@ -1720,6 +1691,36 @@ export class EmailService {
     } catch (error) {
       this.logger.error(
         `Failed to send ticket resolved email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send ticket closed notification email to learner.
+   * Distinct from "resolved" — closed tickets cannot be reopened by the
+   * student, so the CTA invites them to open a new ticket instead.
+   */
+  async sendTicketClosed(
+    to: string,
+    learnerName: string,
+    ticketId: string,
+  ): Promise<void> {
+    const shortId = ticketId.substring(0, 8);
+
+    try {
+      await this.send({
+        to,
+        subject: `Your ticket #${shortId} has been closed`,
+        html: getTicketClosedHtml(learnerName, shortId),
+        text: getTicketClosedText(learnerName, shortId),
+      });
+      this.logger.log(
+        `Ticket closed email sent to ${to} for ticket #${shortId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send ticket closed email to ${to}`,
         error,
       );
     }

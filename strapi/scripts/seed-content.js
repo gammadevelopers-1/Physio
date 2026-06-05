@@ -480,6 +480,35 @@ const enContent = {
         answer: "Yes, we are a fully accredited provider. All our CME courses are recognized by the Saudi Commission for Health Specialties."
       }
     ]
+  },
+  supportPage: {
+    title: "How can we help?",
+    subtitle: "Search our knowledge base or submit a ticket — we typically respond within minutes during business hours.",
+    categoriesTitle: "Browse by Category",
+    categoriesSubtitle: "Pick the area you need help with.",
+    faqTitle: "Frequently Asked Questions",
+    faqViewAllLabel: "View all FAQs",
+    submitTicketTitle: "Submit a Ticket",
+    submitTicketSubtitle: "Tell us what's going on and we'll get back to you.",
+    signInRequiredLabel: "Sign in required",
+    signInRequiredDescription: "Sign in to submit a ticket about your account, courses, certificates, or billing.",
+    signInLabel: "Sign In",
+    categories: [
+      { backendValue: "technical", label: "Technical Issue", description: "Video playback, audio glitches, or session join problems.", iconName: "Video", colorClass: "bg-red-50 text-red-600" },
+      { backendValue: "login", label: "Login or Access", description: "Forgot password, locked account, or two-factor reset.", iconName: "KeyRound", colorClass: "bg-amber-50 text-amber-600" },
+      { backendValue: "billing", label: "Billing or Payment", description: "Receipts, refunds, failed payments, or VAT questions.", iconName: "CreditCard", colorClass: "bg-emerald-50 text-emerald-600" },
+      { backendValue: "certificate", label: "Certificates", description: "Download, name corrections, or Mumaris Plus reporting.", iconName: "Award", colorClass: "bg-purple-50 text-purple-600" },
+      { backendValue: "content", label: "Course Content", description: "Quiz issues, missing materials, or learning-content questions.", iconName: "BookOpen", colorClass: "bg-blue-50 text-blue-600" },
+      { backendValue: "other", label: "Other Technical", description: "Anything else that doesn't fit the categories above.", iconName: "Wrench", colorClass: "bg-orange-50 text-orange-600" },
+      { backendValue: "other", label: "General Inquiry", description: "Partnerships, careers, or anything else.", iconName: "HelpCircle", colorClass: "bg-gray-100 text-gray-600" }
+    ],
+    items: [
+      { question: "How quickly will I get a response?", answer: "During business hours (Sun-Thu, 9 AM - 6 PM Saudi time) most tickets get a first reply within 30 minutes. Outside business hours we respond first thing the next business day." },
+      { question: "Can I submit a ticket without signing in?", answer: "Yes — for login or access issues only, you can submit a guest ticket. For everything else you'll need to sign in so we can look up your account." },
+      { question: "How do I track an open ticket?", answer: "If you're signed in, head to Dashboard → Support to see all your tickets. Guest tickets come with a tracking link in your confirmation email." },
+      { question: "What if I need to add information after I submit?", answer: "You can reply to your ticket from the support dashboard at any time. Each new reply pings the assigned agent." },
+      { question: "Are my conversations private?", answer: "Yes. Only you, the assigned agent, and senior support staff can see your ticket. Internal notes between agents are never shared with you." }
+    ]
   }
 };
 
@@ -947,6 +976,35 @@ const arContent = {
         answer: "\u0646\u0639\u0645\u060c \u0646\u062d\u0646 \u0645\u0632\u0648\u062f \u0645\u0639\u062a\u0645\u062f \u0628\u0627\u0644\u0643\u0627\u0645\u0644. \u062c\u0645\u064a\u0639 \u062f\u0648\u0631\u0627\u062a \u0627\u0644\u062a\u0639\u0644\u064a\u0645 \u0627\u0644\u0637\u0628\u064a \u0627\u0644\u0645\u0633\u062a\u0645\u0631 \u0644\u062f\u064a\u0646\u0627 \u0645\u0639\u062a\u0631\u0641 \u0628\u0647\u0627 \u0645\u0646 \u0642\u0628\u0644 \u0627\u0644\u0647\u064a\u0626\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 \u0644\u0644\u062a\u062e\u0635\u0635\u0627\u062a \u0627\u0644\u0635\u062d\u064a\u0629."
       }
     ]
+  },
+  supportPage: {
+    title: "\u0643\u064a\u0641 \u064a\u0645\u0643\u0646\u0646\u0627 \u0645\u0633\u0627\u0639\u062f\u062a\u0643\u061f",
+    subtitle: "\u0627\u0628\u062d\u062b \u0641\u064a \u0642\u0627\u0639\u062f\u0629 \u0627\u0644\u0645\u0639\u0631\u0641\u0629 \u0623\u0648 \u0623\u0631\u0633\u0644 \u062a\u0630\u0643\u0631\u0629 \u062f\u0639\u0645 \u2014 \u0639\u0627\u062f\u0629\u064b \u0645\u0627 \u0646\u0631\u062f \u062e\u0644\u0627\u0644 \u062f\u0642\u0627\u0626\u0642 \u062e\u0644\u0627\u0644 \u0633\u0627\u0639\u0627\u062a \u0627\u0644\u0639\u0645\u0644.",
+    categoriesTitle: "\u062a\u0635\u0641\u0651\u062d \u062d\u0633\u0628 \u0627\u0644\u0641\u0626\u0629",
+    categoriesSubtitle: "\u0627\u062e\u062a\u0631 \u0627\u0644\u0645\u062c\u0627\u0644 \u0627\u0644\u0630\u064a \u062a\u062d\u062a\u0627\u062c \u0627\u0644\u0645\u0633\u0627\u0639\u062f\u0629 \u0641\u064a\u0647.",
+    faqTitle: "\u0627\u0644\u0623\u0633\u0626\u0644\u0629 \u0627\u0644\u0634\u0627\u0626\u0639\u0629",
+    faqViewAllLabel: "\u0639\u0631\u0636 \u0643\u0644 \u0627\u0644\u0623\u0633\u0626\u0644\u0629",
+    submitTicketTitle: "\u0625\u0631\u0633\u0627\u0644 \u062a\u0630\u0643\u0631\u0629",
+    submitTicketSubtitle: "\u0623\u062e\u0628\u0631\u0646\u0627 \u0628\u0645\u0627 \u064a\u062d\u062f\u062b \u0648\u0633\u0646\u0639\u0627\u0648\u062f \u0625\u0644\u064a\u0643.",
+    signInRequiredLabel: "\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062f\u062e\u0648\u0644 \u0645\u0637\u0644\u0648\u0628",
+    signInRequiredDescription: "\u0633\u062c\u0651\u0644 \u0627\u0644\u062f\u062e\u0648\u0644 \u0644\u0625\u0631\u0633\u0627\u0644 \u062a\u0630\u0643\u0631\u0629 \u062a\u062e\u0635 \u062d\u0633\u0627\u0628\u0643 \u0623\u0648 \u062f\u0648\u0631\u0627\u062a\u0643 \u0623\u0648 \u0634\u0647\u0627\u062f\u0627\u062a\u0643 \u0623\u0648 \u0641\u0648\u062a\u0631\u062a\u0643.",
+    signInLabel: "\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062f\u062e\u0648\u0644",
+    categories: [
+      { backendValue: "technical", label: "\u0645\u0634\u0643\u0644\u0629 \u062a\u0642\u0646\u064a\u0629", description: "\u0645\u0634\u0627\u0643\u0644 \u0627\u0644\u0641\u064a\u062f\u064a\u0648 \u0623\u0648 \u0627\u0644\u0635\u0648\u062a \u0623\u0648 \u0627\u0644\u0627\u0646\u0636\u0645\u0627\u0645 \u0644\u0644\u062c\u0644\u0633\u0627\u062a.", iconName: "Video", colorClass: "bg-red-50 text-red-600" },
+      { backendValue: "login", label: "\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062f\u062e\u0648\u0644 \u0623\u0648 \u0627\u0644\u0648\u0635\u0648\u0644", description: "\u0646\u0633\u064a\u062a \u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631 \u0623\u0648 \u062d\u0633\u0627\u0628 \u0645\u0642\u0641\u0644 \u0623\u0648 \u0625\u0639\u0627\u062f\u0629 \u0627\u0644\u062a\u062d\u0642\u0642 \u0627\u0644\u062b\u0646\u0627\u0626\u064a.", iconName: "KeyRound", colorClass: "bg-amber-50 text-amber-600" },
+      { backendValue: "billing", label: "\u0627\u0644\u0641\u0648\u062a\u0631\u0629 \u0623\u0648 \u0627\u0644\u062f\u0641\u0639", description: "\u0627\u0644\u0641\u0648\u0627\u062a\u064a\u0631 \u0623\u0648 \u0627\u0644\u0627\u0633\u062a\u0631\u062f\u0627\u062f \u0623\u0648 \u0627\u0644\u062f\u0641\u0639\u0627\u062a \u0627\u0644\u0641\u0627\u0634\u0644\u0629 \u0623\u0648 \u0623\u0633\u0626\u0644\u0629 \u0636\u0631\u064a\u0628\u0629 \u0627\u0644\u0642\u064a\u0645\u0629 \u0627\u0644\u0645\u0636\u0627\u0641\u0629.", iconName: "CreditCard", colorClass: "bg-emerald-50 text-emerald-600" },
+      { backendValue: "certificate", label: "\u0627\u0644\u0634\u0647\u0627\u062f\u0627\u062a", description: "\u062a\u0646\u0632\u064a\u0644 \u0623\u0648 \u062a\u0635\u062d\u064a\u062d \u0627\u0644\u0627\u0633\u0645 \u0623\u0648 \u0627\u0644\u0625\u0628\u0644\u0627\u063a \u0625\u0644\u0649 Mumaris Plus.", iconName: "Award", colorClass: "bg-purple-50 text-purple-600" },
+      { backendValue: "content", label: "\u0645\u062d\u062a\u0648\u0649 \u0627\u0644\u062f\u0648\u0631\u0629", description: "\u0645\u0634\u0627\u0643\u0644 \u0627\u0644\u0627\u062e\u062a\u0628\u0627\u0631\u0627\u062a \u0623\u0648 \u063a\u064a\u0627\u0628 \u0627\u0644\u0645\u0648\u0627\u062f \u0623\u0648 \u0623\u0633\u0626\u0644\u0629 \u062d\u0648\u0644 \u0627\u0644\u0645\u062d\u062a\u0648\u0649 \u0627\u0644\u062a\u0639\u0644\u064a\u0645\u064a.", iconName: "BookOpen", colorClass: "bg-blue-50 text-blue-600" },
+      { backendValue: "other", label: "\u0645\u0634\u0643\u0644\u0629 \u062a\u0642\u0646\u064a\u0629 \u0623\u062e\u0631\u0649", description: "\u0623\u064a \u0634\u064a\u0621 \u0622\u062e\u0631 \u0644\u0627 \u064a\u0646\u062f\u0631\u062c \u0641\u064a \u0627\u0644\u0641\u0626\u0627\u062a \u0623\u0639\u0644\u0627\u0647.", iconName: "Wrench", colorClass: "bg-orange-50 text-orange-600" },
+      { backendValue: "other", label: "\u0627\u0633\u062a\u0641\u0633\u0627\u0631 \u0639\u0627\u0645", description: "\u0627\u0644\u0634\u0631\u0627\u0643\u0627\u062a \u0623\u0648 \u0627\u0644\u0648\u0638\u0627\u0626\u0641 \u0623\u0648 \u0623\u064a \u0634\u064a\u0621 \u0622\u062e\u0631.", iconName: "HelpCircle", colorClass: "bg-gray-100 text-gray-600" }
+    ],
+    items: [
+      { question: "\u0643\u0645 \u0633\u064a\u0633\u062a\u063a\u0631\u0642 \u0627\u0644\u0631\u062f\u061f", answer: "\u062e\u0644\u0627\u0644 \u0633\u0627\u0639\u0627\u062a \u0627\u0644\u0639\u0645\u0644 (\u0627\u0644\u0623\u062d\u062f-\u0627\u0644\u062e\u0645\u064a\u0633\u060c 9 \u0635\u0628\u0627\u062d\u064b\u0627 - 6 \u0645\u0633\u0627\u0621\u064b \u0628\u062a\u0648\u0642\u064a\u062a \u0627\u0644\u0645\u0645\u0644\u0643\u0629)\u060c \u062a\u062d\u0635\u0644 \u0645\u0639\u0638\u0645 \u0627\u0644\u062a\u0630\u0627\u0643\u0631 \u0639\u0644\u0649 \u0623\u0648\u0644 \u0631\u062f \u062e\u0644\u0627\u0644 30 \u062f\u0642\u064a\u0642\u0629. \u062e\u0627\u0631\u062c \u0633\u0627\u0639\u0627\u062a \u0627\u0644\u0639\u0645\u0644\u060c \u0646\u0631\u062f \u0641\u064a \u0628\u062f\u0627\u064a\u0629 \u064a\u0648\u0645 \u0627\u0644\u0639\u0645\u0644 \u0627\u0644\u062a\u0627\u0644\u064a." },
+      { question: "\u0647\u0644 \u064a\u0645\u0643\u0646\u0646\u064a \u0625\u0631\u0633\u0627\u0644 \u062a\u0630\u0643\u0631\u0629 \u062f\u0648\u0646 \u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062f\u062e\u0648\u0644\u061f", answer: "\u0646\u0639\u0645 \u2014 \u0641\u0642\u0637 \u0644\u0645\u0634\u0627\u0643\u0644 \u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062f\u062e\u0648\u0644 \u0623\u0648 \u0627\u0644\u0648\u0635\u0648\u0644\u060c \u064a\u0645\u0643\u0646\u0643 \u0625\u0631\u0633\u0627\u0644 \u062a\u0630\u0643\u0631\u0629 \u0643\u0636\u064a\u0641. \u0644\u063a\u064a\u0631 \u0630\u0644\u0643 \u0633\u062a\u062d\u062a\u0627\u062c \u0625\u0644\u0649 \u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062f\u062e\u0648\u0644 \u062d\u062a\u0649 \u0646\u062a\u0645\u0643\u0646 \u0645\u0646 \u0627\u0644\u0648\u0635\u0648\u0644 \u0625\u0644\u0649 \u062d\u0633\u0627\u0628\u0643." },
+      { question: "\u0643\u064a\u0641 \u064a\u0645\u0643\u0646\u0646\u064a \u062a\u062a\u0628\u0639 \u062a\u0630\u0643\u0631\u0629 \u0645\u0641\u062a\u0648\u062d\u0629\u061f", answer: "\u0625\u0630\u0627 \u0643\u0646\u062a \u0645\u0633\u062c\u0644 \u0627\u0644\u062f\u062e\u0648\u0644\u060c \u0627\u0646\u062a\u0642\u0644 \u0625\u0644\u0649 \u0644\u0648\u062d\u0629 \u0627\u0644\u062a\u062d\u0643\u0645 \u2192 \u0627\u0644\u062f\u0639\u0645 \u0644\u0639\u0631\u0636 \u0643\u0644 \u062a\u0630\u0627\u0643\u0631\u0643. \u062a\u0630\u0627\u0643\u0631 \u0627\u0644\u0636\u064a\u0641 \u062a\u0623\u062a\u064a \u0645\u0639 \u0631\u0627\u0628\u0637 \u062a\u062a\u0628\u0639 \u0641\u064a \u0628\u0631\u064a\u062f \u0627\u0644\u062a\u0623\u0643\u064a\u062f." },
+      { question: "\u0645\u0627\u0630\u0627 \u0644\u0648 \u0627\u062d\u062a\u062c\u062a \u0625\u0636\u0627\u0641\u0629 \u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0628\u0639\u062f \u0627\u0644\u0625\u0631\u0633\u0627\u0644\u061f", answer: "\u064a\u0645\u0643\u0646\u0643 \u0627\u0644\u0631\u062f \u0639\u0644\u0649 \u062a\u0630\u0643\u0631\u062a\u0643 \u0645\u0646 \u0644\u0648\u062d\u0629 \u0627\u0644\u062f\u0639\u0645 \u0641\u064a \u0623\u064a \u0648\u0642\u062a. \u0643\u0644 \u0631\u062f \u062c\u062f\u064a\u062f \u064a\u0635\u0644 \u0625\u0644\u0649 \u0627\u0644\u0645\u0648\u0638\u0641 \u0627\u0644\u0645\u0633\u0624\u0648\u0644." },
+      { question: "\u0647\u0644 \u0645\u062d\u0627\u062f\u062b\u0627\u062a\u064a \u062e\u0627\u0635\u0629\u061f", answer: "\u0646\u0639\u0645. \u0641\u0642\u0637 \u0623\u0646\u062a \u0648\u0627\u0644\u0645\u0648\u0638\u0641 \u0627\u0644\u0645\u0633\u0624\u0648\u0644 \u0648\u0641\u0631\u064a\u0642 \u0627\u0644\u062f\u0639\u0645 \u0627\u0644\u0623\u0639\u0644\u0649 \u0631\u062a\u0628\u0629 \u064a\u0645\u0643\u0646\u0647\u0645 \u0631\u0624\u064a\u0629 \u062a\u0630\u0643\u0631\u062a\u0643. \u0627\u0644\u0645\u0644\u0627\u062d\u0638\u0627\u062a \u0627\u0644\u062f\u0627\u062e\u0644\u064a\u0629 \u0628\u064a\u0646 \u0627\u0644\u0645\u0648\u0638\u0641\u064a\u0646 \u0644\u0627 \u062a\u0638\u0647\u0631 \u0644\u0643 \u0623\u0628\u062f\u064b\u0627." }
+    ]
   }
 };
 
@@ -1302,6 +1360,30 @@ async function seedFAQPage(locale, content) {
     items: content.faqPage.items,
   };
   await seedSingleType('/faq-page', locale, data, 'FAQ page');
+}
+
+async function seedSupportPage(locale, content) {
+  const sp = content.supportPage;
+  if (!sp) {
+    console.log(`  ⚠ No supportPage content for locale=${locale}, skipping.`);
+    return;
+  }
+  const data = {
+    title: sp.title,
+    subtitle: sp.subtitle,
+    categoriesTitle: sp.categoriesTitle,
+    categoriesSubtitle: sp.categoriesSubtitle,
+    categories: sp.categories,
+    faqTitle: sp.faqTitle,
+    faqViewAllLabel: sp.faqViewAllLabel,
+    items: sp.items,
+    submitTicketTitle: sp.submitTicketTitle,
+    submitTicketSubtitle: sp.submitTicketSubtitle,
+    signInRequiredLabel: sp.signInRequiredLabel,
+    signInRequiredDescription: sp.signInRequiredDescription,
+    signInLabel: sp.signInLabel,
+  };
+  await seedSingleType('/support-page', locale, data, 'support page');
 }
 
 async function seedSiteSettings(locale, content) {
@@ -1780,6 +1862,7 @@ async function main() {
     await seedPartnersPage('en', enContent);
     await seedInstructorsPage('en', enContent);
     await seedFAQPage('en', enContent);
+    await seedSupportPage('en', enContent);
     await seedSiteSettings('en', enContent);
     await seedFeaturedCourses('en', enContent.courses, {
       cmeHours: 'CME Hours',
@@ -1809,6 +1892,7 @@ async function main() {
     await seedPartnersPage('ar', arContent);
     await seedInstructorsPage('ar', arContent);
     await seedFAQPage('ar', arContent);
+    await seedSupportPage('ar', arContent);
     await seedSiteSettings('ar', arContent);
     await seedFeaturedCourses('ar', arContent.courses, {
       cmeHours: '\u0633\u0627\u0639\u0627\u062a \u0627\u0644\u062a\u0639\u0644\u064a\u0645 \u0627\u0644\u0637\u0628\u064a \u0627\u0644\u0645\u0633\u062a\u0645\u0631',

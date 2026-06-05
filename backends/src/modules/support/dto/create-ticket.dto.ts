@@ -5,10 +5,16 @@ import {
   IsIn,
   IsUUID,
   MaxLength,
+  Matches,
 } from 'class-validator';
 
 export class CreateTicketDto {
-  @IsIn(['billing', 'login', 'content', 'certificate', 'technical', 'other'])
+  // Slug-shape only — the actual allowed list is validated at the service
+  // layer against listTicketCategories() because admins can add custom
+  // categories without a schema migration. See SupportService.createTicket.
+  @Matches(/^[a-z][a-z0-9_-]{0,29}$/, {
+    message: 'category must be a lowercase slug (a-z, 0-9, -, _)',
+  })
   @IsNotEmpty()
   category: string;
 

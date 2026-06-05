@@ -3,6 +3,7 @@ import {
   IsNotEmpty,
   IsEmail,
   IsIn,
+  IsOptional,
   MaxLength,
 } from 'class-validator';
 
@@ -35,4 +36,15 @@ export class CreateGuestTicketDto {
   @IsNotEmpty()
   @MaxLength(2000)
   description: string;
+
+  /**
+   * Google reCAPTCHA v2 token captured by the public form. The server
+   * verifies this against Google's siteverify endpoint before creating
+   * the ticket. Required when reCAPTCHA is configured for the site; if
+   * `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` / server secret are unset the
+   * server skips verification (mirrors the signin/signup pattern).
+   */
+  @IsOptional()
+  @IsString()
+  recaptchaToken?: string;
 }

@@ -1550,7 +1550,7 @@ export const instructorApi = {
 // Profile API (self-service)
 // ===========================================
 export const profileApi = {
-  update: (data: { firstName?: string; lastName?: string; firstNameAr?: string; lastNameAr?: string; phone?: string; avatar?: string | null; bio?: string; location?: string; language?: string; department?: string; scfhsNumber?: string; nationalId?: string; nationality?: string; gender?: string; dateOfBirth?: string }) =>
+  update: (data: { firstName?: string; lastName?: string; firstNameAr?: string; lastNameAr?: string; phone?: string; avatar?: string | null; bio?: string; location?: string; language?: string; department?: string; scfhsNumber?: string; nationalId?: string; nationality?: string; gender?: string; dateOfBirth?: string; specialty?: string; profession?: string; qualification?: string; twitter?: string; linkedin?: string }) =>
     api.patch<User>('/auth/profile', data),
 
   changePassword: (currentPassword: string, newPassword: string) =>
@@ -4323,6 +4323,8 @@ export const supportApi = {
       slaCompliance: number;
       avgFrtMinutes: number | null;
       avgTtrMinutes: number | null;
+      avgResolutionHours: number | null;
+      resolvedThisWeek: number;
       csatAvgScore: number;
       csatResponses: number;
       csatResponseRate: number;
@@ -4361,6 +4363,155 @@ export const supportApi = {
     lastName: string;
     phone?: string;
   }) => api.post<any>('/tickets/agents', data),
+
+  // ─── Team Management ───────────────────────────────
+  getMyTeam: () =>
+    api.get<
+      {
+        membershipId: string;
+        userId: string;
+        firstName: string | null;
+        lastName: string | null;
+        email: string;
+        avatar: string | null;
+        phone: string | null;
+        isActive: boolean;
+        lastLoginAt: string | null;
+        assignedAt: string;
+        supportSubRole: string | null;
+        performance: {
+          totalTickets: number;
+          openTickets: number;
+          resolvedTickets: number;
+          avgFrtMinutes: number | null;
+          csatAvgScore: number | null;
+          csatResponses: number;
+          frtBreaches: number;
+          ttrBreaches: number;
+        } | null;
+      }[]
+    >('/tickets/team/my'),
+
+  getAvailableAgents: () =>
+    api.get<
+      {
+        userId: string;
+        firstName: string | null;
+        lastName: string | null;
+        email: string;
+        avatar: string | null;
+        supportSubRole: string | null;
+      }[]
+    >('/tickets/team/available-agents'),
+
+  getTeamMemberDetail: (agentId: string) =>
+    api.get<{
+      agent: {
+        id: string;
+        firstName: string | null;
+        lastName: string | null;
+        email: string;
+        avatar: string | null;
+        phone: string | null;
+        isActive: boolean;
+        createdAt: string;
+        lastLoginAt: string | null;
+        assignedAt: string;
+        supervisorId: string;
+      };
+      performance: {
+        totalTickets: number;
+        openTickets: number;
+        resolvedTickets: number;
+        avgFrtMinutes: number | null;
+        csatAvgScore: number | null;
+        csatResponses: number;
+        frtBreaches: number;
+        ttrBreaches: number;
+      } | null;
+      openTickets: {
+        id: string;
+        subject: string;
+        status: string;
+        priority: string;
+        createdAt: string;
+      }[];
+      recentCsat: {
+        score: number | null;
+        comment: string | null;
+        submittedAt: string | null;
+        ticketId: string;
+      }[];
+    }>(`/tickets/team/members/${agentId}`),
+
+  removeTeamMember: (agentId: string) =>
+    api.delete<{ success: true }>(`/tickets/team/members/${agentId}`),
+
+  createTeamRequest: (data: {
+    kind: 'add_existing' | 'add_new';
+    candidateUserId?: string;
+    candidateEmail?: string;
+    candidateFirstName?: string;
+    candidateLastName?: string;
+    candidatePhone?: string;
+    reason?: string;
+  }) => api.post<{ id: string; status: string }>('/tickets/team/requests', data),
+
+  getMyTeamRequests: () =>
+    api.get<
+      {
+        id: string;
+        kind: string;
+        candidateUserId: string | null;
+        candidateEmail: string | null;
+        candidateFirstName: string | null;
+        candidateLastName: string | null;
+        reason: string | null;
+        status: string;
+        decisionReason: string | null;
+        createdAt: string;
+        reviewedAt: string | null;
+      }[]
+    >('/tickets/team/requests/mine'),
+
+  // Admin only
+  listTeamRequests: (status?: string) => {
+    const qs = status ? `?status=${encodeURIComponent(status)}` : '';
+    return api.get<
+      {
+        id: string;
+        supervisorId: string;
+        kind: string;
+        candidateUserId: string | null;
+        candidateEmail: string | null;
+        candidateFirstName: string | null;
+        candidateLastName: string | null;
+        candidatePhone: string | null;
+        reason: string | null;
+        status: string;
+        reviewedBy: string | null;
+        reviewedAt: string | null;
+        decisionReason: string | null;
+        createdAt: string;
+        supervisorFirstName: string | null;
+        supervisorLastName: string | null;
+        supervisorEmail: string | null;
+        candidateExistingFirstName: string | null;
+        candidateExistingLastName: string | null;
+        candidateExistingEmail: string | null;
+        reviewerFirstName: string | null;
+        reviewerLastName: string | null;
+      }[]
+    >(`/tickets/team/requests${qs}`);
+  },
+
+  getPendingTeamRequestCount: () =>
+    api.get<{ count: number }>('/tickets/team/requests/pending-count'),
+
+  decideTeamRequest: (
+    id: string,
+    data: { decision: 'approve' | 'reject'; reason?: string; tempPassword?: string },
+  ) => api.post<any>(`/tickets/team/requests/${id}/decision`, data),
 
   getSlaPolicies: () =>
     api.get<
@@ -4416,6 +4567,7 @@ export const supportApi = {
     category: string;
     subject: string;
     description: string;
+    recaptchaToken?: string;
   }) =>
     api.post<{ ticket: { id: string }; trackingToken: string }>(
       '/tickets/guest',
@@ -4433,18 +4585,14 @@ export const supportApi = {
       { skipAuth: true },
     ),
 
-  // CSAT/NPS Surveys (public — no auth)
+  // CSAT Surveys (public — no auth). NPS surveys removed; supervisor
+  // KPI still exposes an NPS-equivalent via getNpsSummary below, but
+  // it's derived from course_ratings (see backend support.service.ts).
   getCsatSurvey: (surveyId: string) =>
     api.get<any>(`/tickets/csat/${surveyId}`, { skipAuth: true }),
 
   submitCsat: (surveyId: string, data: { score: number; comment?: string }) =>
     api.post<any>(`/tickets/csat/${surveyId}`, data, { skipAuth: true }),
-
-  getNpsSurvey: (surveyId: string) =>
-    api.get<any>(`/tickets/nps/${surveyId}`, { skipAuth: true }),
-
-  submitNps: (surveyId: string, data: { score: number; comment?: string }) =>
-    api.post<any>(`/tickets/nps/${surveyId}`, data, { skipAuth: true }),
 
   // CSAT/NPS Summaries (auth required)
   getCsatSummary: () =>
@@ -4508,6 +4656,35 @@ export const supportApi = {
     return api.get<any[]>(`/tickets/reports/agent-performance${qs ? `?${qs}` : ''}`);
   },
 
+  getTicketTrend: (params?: {
+    dateFrom?: string;
+    dateTo?: string;
+    interval?: 'day' | 'week';
+  }) => {
+    const sp = new URLSearchParams();
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    if (params?.interval) sp.set('interval', params.interval);
+    const qs = sp.toString();
+    return api.get<{ bucket: string; created: number; resolved: number }[]>(
+      `/tickets/reports/trend${qs ? `?${qs}` : ''}`,
+    );
+  },
+
+  getRecentCsatComments: (limit: number = 10) =>
+    api.get<
+      {
+        id: string;
+        score: number | null;
+        comment: string | null;
+        submittedAt: string | null;
+        ticketId: string;
+        ticketSubject: string;
+        assigneeFirstName: string | null;
+        assigneeLastName: string | null;
+      }[]
+    >(`/tickets/reports/csat-comments?limit=${limit}`),
+
   exportReport: (type: string, params?: { dateFrom?: string; dateTo?: string }) => {
     const sp = new URLSearchParams({ type });
     if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
@@ -4521,6 +4698,17 @@ export const supportApi = {
     if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
     if (params?.dateTo) sp.set('dateTo', params.dateTo);
     return `/tickets/reports/export-pdf?${sp.toString()}`;
+  },
+
+  // PDF export — fetches the binary, builds a download Blob, returns it.
+  // Centralised here so report UIs don't poke at process.env directly or
+  // re-implement the auth-header dance every call site.
+  downloadExportPdf: async (
+    type: string,
+    params?: { dateFrom?: string; dateTo?: string },
+  ): Promise<Blob> => {
+    const endpoint = supportApi.getExportPdfUrl(type, params);
+    return fetchBlob(endpoint);
   },
 
   // Macros CRUD
@@ -4600,6 +4788,108 @@ export const supportApi = {
 
   deleteKbArticle: (id: string) =>
     api.delete<any>(`/tickets/kb/articles/${id}`),
+
+  // ─── Settings ─────────────────────────────────────
+  getBusinessHours: () =>
+    api.get<{
+      workingDays: number[];
+      openTime: string;
+      closeTime: string;
+      timezoneOffsetHours: number;
+    }>('/tickets/settings/business-hours', { skipAuth: true }),
+
+  setBusinessHours: (data: {
+    workingDays?: number[];
+    openTime?: string;
+    closeTime?: string;
+    timezoneOffsetHours?: number;
+  }) => api.patch<any>('/tickets/settings/business-hours', data),
+
+  getAutoAssignment: () =>
+    api.get<{
+      enabled: boolean;
+      strategy: 'round_robin' | 'least_loaded' | 'manual';
+      respectBusinessHours: boolean;
+      maxConcurrentPerAgent: number;
+    }>('/tickets/settings/auto-assignment'),
+
+  setAutoAssignment: (data: {
+    enabled?: boolean;
+    strategy?: 'round_robin' | 'least_loaded' | 'manual';
+    respectBusinessHours?: boolean;
+    maxConcurrentPerAgent?: number;
+  }) => api.patch<any>('/tickets/settings/auto-assignment', data),
+
+  listTicketCategories: () =>
+    api.get<
+      {
+        slug: string;
+        nameEn: string;
+        nameAr: string | null;
+        autoPriority: 'high' | 'medium' | 'low' | null;
+        builtin: boolean;
+      }[]
+    >('/tickets/settings/ticket-categories', { skipAuth: true }),
+
+  addTicketCategory: (data: {
+    slug?: string;
+    nameEn: string;
+    nameAr?: string;
+    autoPriority?: 'high' | 'medium' | 'low';
+  }) => api.post<{ slug: string }>('/tickets/settings/ticket-categories', data),
+
+  removeTicketCategory: (slug: string) =>
+    api.delete<{ success: true }>(
+      `/tickets/settings/ticket-categories/${encodeURIComponent(slug)}`,
+    ),
+
+  getSupportNotificationPrefs: () =>
+    api.get<Record<string, boolean>>('/tickets/settings/notification-prefs'),
+
+  setSupportNotificationPrefs: (data: Record<string, boolean>) =>
+    api.patch<Record<string, boolean>>('/tickets/settings/notification-prefs', data),
+
+  // Help Center categories
+  listKbCategories: () =>
+    api.get<
+      {
+        id: string;
+        slug: string;
+        nameEn: string;
+        nameAr: string | null;
+        icon: string;
+        sortOrder: number;
+        articleCount: number;
+        createdAt: string;
+      }[]
+    >('/tickets/kb/categories', { skipAuth: true }),
+
+  createKbCategory: (data: {
+    slug?: string;
+    nameEn: string;
+    nameAr?: string;
+    icon?: string;
+    sortOrder?: number;
+  }) => api.post<any>('/tickets/kb/categories', data),
+
+  updateKbCategory: (
+    id: string,
+    data: { nameEn?: string; nameAr?: string; icon?: string; sortOrder?: number },
+  ) => api.patch<any>(`/tickets/kb/categories/${id}`, data),
+
+  deleteKbCategory: (id: string) =>
+    api.delete<{ success: true }>(`/tickets/kb/categories/${id}`),
+
+  // Image upload for article bodies — reuses the trainer-doc bucket
+  // since it already accepts image MIME types and is public-served.
+  uploadKbImage: (file: File) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return uploadFormData<{ url: string; filename: string }>(
+      '/storage/upload',
+      fd,
+    );
+  },
 };
 
 export default api;

@@ -1,24 +1,107 @@
 /**
  * Business Hours Utility for SLA calculations
  *
- * Business Hours: Sunday–Thursday, 9:00 AM – 6:00 PM AST (UTC+3)
- * Saudi Arabia does NOT observe DST — UTC+3 is constant year-round.
+ * Default (Saudi Arabia): Sunday–Thursday, 9:00 AM – 6:00 PM AST (UTC+3).
+ * Admins can change the working days / open / close time / timezone via
+ * the support_config table — the SupportService bootstraps the cache on
+ * startup and refreshes it whenever the config is updated.
  *
  * Rules:
- * - 9:00 AM is inclusive (start of business)
- * - 6:00 PM is exclusive (end of business)
- * - Friday (5) and Saturday (6) are weekends
- * - All calculations use business minutes only
+ * - openTime is inclusive (start of business)
+ * - closeTime is exclusive (end of business)
+ * - All calculations operate in business minutes only
  */
 
-const AST_OFFSET_HOURS = 3; // UTC+3
-const BIZ_START_HOUR = 9; // 9 AM
-const BIZ_END_HOUR = 18; // 6 PM
-const BIZ_MINUTES_PER_DAY = (BIZ_END_HOUR - BIZ_START_HOUR) * 60; // 540
+export interface BusinessHoursConfig {
+  /** Day-of-week indices that count as business days (0=Sun … 6=Sat). */
+  workingDays: number[];
+  /** "HH:MM" 24-hour format, inclusive. */
+  openTime: string;
+  /** "HH:MM" 24-hour format, exclusive. */
+  closeTime: string;
+  /** Offset in hours from UTC. Saudi Arabia = 3 (UTC+3, no DST). */
+  timezoneOffsetHours: number;
+}
 
-// Business days: Sunday(0), Monday(1), Tuesday(2), Wednesday(3), Thursday(4)
+export const DEFAULT_BUSINESS_HOURS: BusinessHoursConfig = {
+  workingDays: [0, 1, 2, 3, 4],
+  openTime: '09:00',
+  closeTime: '18:00',
+  timezoneOffsetHours: 3,
+};
+
+// Module-level mutable cache. Defaults are seeded immediately so any
+// callsite that fires before the DB-backed value is loaded still gets
+// reasonable behaviour. The SupportService refreshes this on boot and
+// whenever an admin saves a new config.
+let currentConfig: BusinessHoursConfig = { ...DEFAULT_BUSINESS_HOURS };
+
+// Last time the cache was refreshed from DB. Used by
+// refreshBusinessHoursConfigIfStale() to bound how stale the in-memory
+// value can get on instances that didn't handle the admin PATCH —
+// critical for multi-instance Cloud Run deployments where the SLA cron
+// may fire on a process that never saw the save.
+let lastRefreshAt = 0;
+const REFRESH_TTL_MS = 60_000;
+
+export function getBusinessHoursConfig(): BusinessHoursConfig {
+  return { ...currentConfig, workingDays: [...currentConfig.workingDays] };
+}
+
+/**
+ * Replace the in-memory business-hours config. The SupportService
+ * calls this on boot and after every admin save so SLA math reflects
+ * the latest settings without requiring a process restart.
+ */
+export function setBusinessHoursConfig(next: Partial<BusinessHoursConfig>) {
+  currentConfig = {
+    workingDays:
+      next.workingDays && next.workingDays.length > 0
+        ? [...next.workingDays].sort((a, b) => a - b)
+        : currentConfig.workingDays,
+    openTime: next.openTime || currentConfig.openTime,
+    closeTime: next.closeTime || currentConfig.closeTime,
+    timezoneOffsetHours:
+      typeof next.timezoneOffsetHours === 'number'
+        ? next.timezoneOffsetHours
+        : currentConfig.timezoneOffsetHours,
+  };
+  lastRefreshAt = Date.now();
+}
+
+/**
+ * Reload the cache from the supplied loader if it hasn't been refreshed
+ * in the last REFRESH_TTL_MS. Pass the SupportService's getBusinessHours
+ * method as the loader. Safe to call frequently — bounded by the TTL and
+ * by the loader's own caching. Use at the top of cron ticks and hot
+ * paths that must respect admin edits made on other instances.
+ */
+export async function refreshBusinessHoursConfigIfStale(
+  loader: () => Promise<BusinessHoursConfig>,
+): Promise<void> {
+  if (Date.now() - lastRefreshAt < REFRESH_TTL_MS) return;
+  try {
+    const next = await loader();
+    setBusinessHoursConfig(next);
+  } catch {
+    // Best-effort. Leave the cache as-is on transient DB hiccups.
+  }
+}
+
+function parseHMToMinutes(hm: string): number {
+  const [h, m] = hm.split(':').map((s) => parseInt(s, 10));
+  return (h || 0) * 60 + (m || 0);
+}
+
 function isBusinessDay(dayOfWeek: number): boolean {
-  return dayOfWeek >= 0 && dayOfWeek <= 4;
+  return currentConfig.workingDays.includes(dayOfWeek);
+}
+
+function bizStartHour(): number {
+  return Math.floor(parseHMToMinutes(currentConfig.openTime) / 60);
+}
+function bizEndHour(): number {
+  return Math.floor(parseHMToMinutes(currentConfig.closeTime) / 60);
 }
 
 /**
@@ -32,7 +115,7 @@ function toAST(date: Date): {
   minute: number;
   dayOfWeek: number;
 } {
-  const astMs = date.getTime() + AST_OFFSET_HOURS * 60 * 60 * 1000;
+  const astMs = date.getTime() + currentConfig.timezoneOffsetHours * 60 * 60 * 1000;
   const ast = new Date(astMs);
   return {
     year: ast.getUTCFullYear(),
@@ -54,7 +137,7 @@ function fromAST(
   hour: number,
   minute: number,
 ): Date {
-  const utc = Date.UTC(year, month, day, hour - AST_OFFSET_HOURS, minute);
+  const utc = Date.UTC(year, month, day, hour - currentConfig.timezoneOffsetHours, minute);
   return new Date(utc);
 }
 
@@ -66,7 +149,7 @@ export function isWithinBusinessHours(date: Date): boolean {
   const ast = toAST(date);
   if (!isBusinessDay(ast.dayOfWeek)) return false;
   const timeMinutes = ast.hour * 60 + ast.minute;
-  return timeMinutes >= BIZ_START_HOUR * 60 && timeMinutes < BIZ_END_HOUR * 60;
+  return timeMinutes >= bizStartHour() * 60 && timeMinutes < bizEndHour() * 60;
 }
 
 /**
@@ -81,15 +164,15 @@ export function getNextBusinessOpen(date: Date): Date {
   // If within business hours, return as-is
   if (
     isBusinessDay(ast.dayOfWeek) &&
-    timeMinutes >= BIZ_START_HOUR * 60 &&
-    timeMinutes < BIZ_END_HOUR * 60
+    timeMinutes >= bizStartHour() * 60 &&
+    timeMinutes < bizEndHour() * 60
   ) {
     return date;
   }
 
   // If before business hours on a business day
-  if (isBusinessDay(ast.dayOfWeek) && timeMinutes < BIZ_START_HOUR * 60) {
-    return fromAST(ast.year, ast.month, ast.day, BIZ_START_HOUR, 0);
+  if (isBusinessDay(ast.dayOfWeek) && timeMinutes < bizStartHour() * 60) {
+    return fromAST(ast.year, ast.month, ast.day, bizStartHour(), 0);
   }
 
   // After business hours or on a weekend — find next business day
@@ -98,7 +181,7 @@ export function getNextBusinessOpen(date: Date): Date {
       ast.year,
       ast.month,
       ast.day,
-      BIZ_START_HOUR - AST_OFFSET_HOURS,
+      bizStartHour() - currentConfig.timezoneOffsetHours,
       0,
     ),
   );
@@ -113,7 +196,7 @@ export function getNextBusinessOpen(date: Date): Date {
         nextAst.year,
         nextAst.month,
         nextAst.day,
-        BIZ_START_HOUR,
+        bizStartHour(),
         0,
       );
     }
@@ -149,10 +232,10 @@ export function calculateBusinessMinutesElapsed(
         ast.year,
         ast.month,
         ast.day,
-        BIZ_START_HOUR,
+        bizStartHour(),
         0,
       );
-      const dayEnd = fromAST(ast.year, ast.month, ast.day, BIZ_END_HOUR, 0);
+      const dayEnd = fromAST(ast.year, ast.month, ast.day, bizEndHour(), 0);
 
       // Clamp current and end to this day's business window
       const windowStart = Math.max(current.getTime(), dayStart.getTime());
@@ -169,7 +252,7 @@ export function calculateBusinessMinutesElapsed(
       nextDayAst.year,
       nextDayAst.month,
       nextDayAst.day + 1,
-      BIZ_START_HOUR,
+      bizStartHour(),
       0,
     );
     current = nextDayStart;
@@ -204,7 +287,7 @@ export function calculateBusinessDeadline(
 
     // Calculate remaining business minutes in this day
     const currentMinuteOfDay = ast.hour * 60 + ast.minute;
-    const endOfBizMinute = BIZ_END_HOUR * 60;
+    const endOfBizMinute = bizEndHour() * 60;
     const availableMinutes = Math.max(0, endOfBizMinute - currentMinuteOfDay);
 
     if (remaining <= availableMinutes) {
@@ -228,7 +311,7 @@ export function calculateBusinessDeadline(
       nextAst.year,
       nextAst.month,
       nextAst.day,
-      BIZ_START_HOUR,
+      bizStartHour(),
       0,
     );
     current = getNextBusinessOpen(current); // skip weekends

@@ -20,6 +20,7 @@ import {
   Award,
   Calendar,
   Users,
+  Headphones,
 } from "lucide-react";
 import { useAuth } from "@/contexts";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
@@ -88,6 +89,11 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
       label: tDashboard("sidebar.inviteFriends"),
       href: `/${locale}/dashboard/student/invite-friends`,
       icon: Users,
+    },
+    {
+      label: tDashboard("sidebar.support"),
+      href: `/${locale}/dashboard/student/support`,
+      icon: Headphones,
     },
     {
       label: tDashboard("sidebar.settings"),

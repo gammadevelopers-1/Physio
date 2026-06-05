@@ -619,6 +619,59 @@ export interface FAQPage {
   publishedAt: string;
 }
 
+// Strapi component `shared.support-category` — one card on the public
+// support page categories grid. `iconName` is a lucide-react export
+// name; the frontend maps it via a small registry to an actual icon.
+export type SupportCategoryIcon =
+  | "Video"
+  | "KeyRound"
+  | "CreditCard"
+  | "Award"
+  | "BookOpen"
+  | "Wrench"
+  | "HelpCircle";
+
+export type SupportCategoryBackendValue =
+  | "technical"
+  | "login"
+  | "billing"
+  | "certificate"
+  | "content"
+  | "other";
+
+export interface SupportCategory {
+  id: number;
+  backendValue: SupportCategoryBackendValue;
+  label: string;
+  description: string | null;
+  iconName: SupportCategoryIcon;
+  colorClass: string | null;
+}
+
+export interface SupportPage {
+  id: number;
+  documentId: string;
+  blocks: DynamicZoneBlock[] | null;
+  seo?: SeoComponent | null;
+  title: string | null;
+  subtitle: string | null;
+  categoriesTitle: string | null;
+  categoriesSubtitle: string | null;
+  categories: SupportCategory[];
+  faqTitle: string | null;
+  faqViewAllLabel: string | null;
+  items: FAQItem[];
+  submitTicketTitle: string | null;
+  submitTicketSubtitle: string | null;
+  signInRequiredLabel: string | null;
+  signInRequiredDescription: string | null;
+  signInLabel: string | null;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
 export interface BlogsPage {
   id: number;
   documentId: string;

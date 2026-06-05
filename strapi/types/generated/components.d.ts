@@ -3803,6 +3803,38 @@ export interface SharedSeo extends Struct.ComponentSchema {
   };
 }
 
+export interface SharedSupportCategory extends Struct.ComponentSchema {
+  collectionName: 'components_shared_support_categories';
+  info: {
+    description: 'A single support-issue category card on the public support page';
+    displayName: 'Support Category';
+  };
+  attributes: {
+    backendValue: Schema.Attribute.Enumeration<
+      ['technical', 'login', 'billing', 'certificate', 'content', 'other']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'other'>;
+    colorClass: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'bg-gray-100 text-gray-600'>;
+    description: Schema.Attribute.String;
+    iconName: Schema.Attribute.Enumeration<
+      [
+        'Video',
+        'KeyRound',
+        'CreditCard',
+        'Award',
+        'BookOpen',
+        'Wrench',
+        'HelpCircle',
+      ]
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'HelpCircle'>;
+    label: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
@@ -3892,6 +3924,7 @@ declare module '@strapi/strapi' {
       'shared.policy-section': SharedPolicySection;
       'shared.search-term': SharedSearchTerm;
       'shared.seo': SharedSeo;
+      'shared.support-category': SharedSupportCategory;
     }
   }
 }

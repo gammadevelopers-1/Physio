@@ -1,37 +1,20 @@
 /**
- * NPS survey email template for PhysioGuidance
+ * Ticket closed notification email template for learners.
+ *
+ * Sent when a supervisor or agent finalizes a previously-resolved ticket.
+ * Distinct from "resolved" — closed tickets cannot be reopened by the
+ * student, so the CTA points at "open a new ticket" instead of "reopen".
  */
-
-const NPS_COLORS = [
-  '#dc2626', // 0
-  '#e03b20', // 1
-  '#e4501a', // 2
-  '#e86514', // 3
-  '#ea780e', // 4
-  '#ca8a04', // 5
-  '#a3950a', // 6
-  '#7ca010', // 7
-  '#54ab16', // 8
-  '#2db61c', // 9
-  '#16a34a', // 10
-];
-
-export function getNpsSurveyHtml(
+export function getTicketClosedHtml(
   learnerName: string,
-  courseName: string,
-  surveyBaseUrl: string,
+  ticketId: string,
 ): string {
-  const scoreButtons = NPS_COLORS.map(
-    (color, i) =>
-      `<td style="padding:0 2px;"><a href="${surveyBaseUrl}?score=${i}" style="display:block;width:36px;height:36px;line-height:36px;background-color:${color};color:#ffffff;font-size:13px;font-weight:600;text-decoration:none;border-radius:6px;font-family:'DM Sans',Arial,sans-serif;text-align:center;">${i}</a></td>`,
-  ).join('\n                  ');
-
   return `<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>How likely would you recommend PhysioGuidance?</title>
+  <title>Ticket Closed - PhysioGuidance</title>
 </head>
 <body style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EEF3F7;">
@@ -62,12 +45,12 @@ export function getNpsSurveyHtml(
             <td style="padding:32px 32px 0;text-align:center;">
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
                 <tr>
-                  <td style="width:56px;height:56px;background-color:#f0fdf4;border-radius:50%;text-align:center;vertical-align:middle;">
-                    <span style="font-size:28px;line-height:56px;">&#127891;</span>
+                  <td style="width:56px;height:56px;background-color:#f3f4f6;border-radius:50%;text-align:center;vertical-align:middle;">
+                    <span style="font-size:28px;line-height:56px;color:#6b7280;">&#128274;</span>
                   </td>
                 </tr>
               </table>
-              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">We'd Love Your Feedback</h1>
+              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">Ticket Closed</h1>
             </td>
           </tr>
 
@@ -77,45 +60,32 @@ export function getNpsSurveyHtml(
               <p style="margin:0 0 16px;font-size:14px;color:#4b5563;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:center;">
                 Hi ${learnerName},
               </p>
-              <p style="margin:0 0 16px;font-size:14px;color:#4b5563;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:center;">
-                Congratulations on completing <strong>${courseName}</strong>! How likely are you to recommend PhysioGuidance to a colleague?
+              <p style="margin:0 0 24px;font-size:14px;color:#4b5563;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:center;">
+                Your support ticket is now closed. Thank you for working with our team. If you need further help, please open a new ticket.
               </p>
             </td>
           </tr>
 
-          <!-- NPS score buttons (0-10) -->
-          <tr>
-            <td style="padding:0 16px 8px;text-align:center;">
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
-                <tr>
-                  ${scoreButtons}
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Scale labels -->
+          <!-- Gray closed-status box -->
           <tr>
             <td style="padding:0 32px 24px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;">
                 <tr>
-                  <td style="text-align:left;font-size:11px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">
-                    0 = Not at all likely
-                  </td>
-                  <td style="text-align:right;font-size:11px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">
-                    10 = Definitely would recommend
+                  <td style="padding:16px 20px;text-align:center;">
+                    <span style="font-size:20px;color:#6b7280;">&#128274;</span>
+                    <p style="margin:8px 0 0;font-size:14px;color:#374151;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">Ticket #${ticketId} has been closed</p>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- Expiry note -->
+          <!-- Button -->
           <tr>
             <td style="padding:0 32px 24px;text-align:center;">
-              <p style="margin:0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                This survey expires in 7 days. No login required.
-              </p>
+              <a href="https://physioguidance.org/en/support" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#a37f49,#6b4e24);color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;font-family:'DM Sans',Arial,sans-serif;">
+                Open a New Ticket
+              </a>
             </td>
           </tr>
 
@@ -146,25 +116,20 @@ export function getNpsSurveyHtml(
 </html>`;
 }
 
-export function getNpsSurveyText(
+export function getTicketClosedText(
   learnerName: string,
-  courseName: string,
-  surveyBaseUrl: string,
+  ticketId: string,
 ): string {
-  const scoreLinks = Array.from({ length: 11 }, (_, i) => `${i}: ${surveyBaseUrl}?score=${i}`).join('\n');
-
-  return `PhysioGuidance - How likely would you recommend PhysioGuidance?
+  return `PhysioGuidance - Ticket Closed
 
 Hi ${learnerName},
 
-Congratulations on completing "${courseName}"! How likely are you to recommend PhysioGuidance to a colleague?
+Your support ticket is now closed. Thank you for working with our team. If you need further help, please open a new ticket.
 
-Rate from 0 (Not at all likely) to 10 (Definitely would recommend):
+Ticket #${ticketId} has been closed.
 
-${scoreLinks}
+Open a New Ticket: https://physioguidance.org/en/support
 
-This survey expires in 7 days. No login required.
-
-\u00a9 ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
-NELC Accredited \u00b7 Saudi Arabia`;
+© ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
+NELC Accredited · Saudi Arabia`;
 }

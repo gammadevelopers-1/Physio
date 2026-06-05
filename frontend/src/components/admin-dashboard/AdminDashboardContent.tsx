@@ -13,6 +13,7 @@ import NELCComplianceOverviewWidget from "./NELCComplianceOverviewWidget";
 import FinanceSummaryWidget from "./FinanceSummaryWidget";
 import RecentPointsWidget from "./RecentPointsWidget";
 import SecuritySnapshotWidget from "./SecuritySnapshotWidget";
+import SupportSnapshotWidget from "./SupportSnapshotWidget";
 import AlertsActivitySidebar from "./AlertsActivitySidebar";
 import {
   notificationsApi,
@@ -256,6 +257,7 @@ const AdminDashboardContent = () => {
               activities={activities}
               extras={
                 <>
+                  <SupportSnapshotWidget />
                   <SecuritySnapshotWidget data={data.security} />
                   <UserManagementWidget users={data.recentUsers} />
                 </>

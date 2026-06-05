@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import GuestTicketTracker from "@/components/support/GuestTicketTracker";
 import { setRequestLocale } from "next-intl/server";
 import { getSupportPageData } from "@/lib/strapi";
+
+// Tokenized guest tracking URLs must not be indexed.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function TrackTicketPage({
   params,

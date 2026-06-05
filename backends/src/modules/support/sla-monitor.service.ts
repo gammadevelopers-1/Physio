@@ -11,9 +11,11 @@ import {
   TICKET_STATUS,
   TICKET_PRIORITY,
   SLA_EVENT_TYPES,
+  ON_HOLD_REASONS,
 } from '../../database/schema';
 import {
   calculateBusinessMinutesElapsed,
+  refreshBusinessHoursConfigIfStale,
 } from './business-hours.util';
 import { SupportService } from './support.service';
 import { EmailService } from '../email/email.service';
@@ -40,6 +42,13 @@ export class SlaMonitorService {
   @Cron('*/5 * * * *')
   async checkSlaBreaches() {
     try {
+      // Refresh business-hours cache if stale — protects against another
+      // Cloud Run instance having handled the admin PATCH while this one
+      // still holds an old config.
+      await refreshBusinessHoursConfigIfStale(() =>
+        this.supportService.getBusinessHours(),
+      );
+
       // Get all open tickets
       const openTickets = await db
         .select({
@@ -161,10 +170,15 @@ export class SlaMonitorService {
                   `FRT breach on ticket ${ticket.id} — reassigned to ${newAssignee || 'supervisor'}`,
                 );
 
-                // Send FRT breach emails
+                // Send FRT breach emails (gated by recipient's email master)
                 try {
-                  // Email to breaching agent
-                  if (ticket.assigneeId) {
+                  if (
+                    ticket.assigneeId &&
+                    (await this.supportService.shouldNotifySupport(
+                      ticket.assigneeId,
+                      'email',
+                    ))
+                  ) {
                     const [agentInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, ticket.assigneeId));
                     if (agentInfo?.email) {
                       await this.emailService.sendSlaFrtBreach(
@@ -178,9 +192,15 @@ export class SlaMonitorService {
                   }
                 } catch { /* non-blocking */ }
 
-                // Send escalation email to supervisor
+                // Send escalation email to supervisor (gated)
                 try {
-                  if (newAssignee) {
+                  if (
+                    newAssignee &&
+                    (await this.supportService.shouldNotifySupport(
+                      newAssignee,
+                      'email',
+                    ))
+                  ) {
                     const [supervisorInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, newAssignee));
                     if (supervisorInfo?.email) {
                       await this.emailService.sendTicketEscalation(
@@ -304,7 +324,7 @@ export class SlaMonitorService {
 
                   await db.insert(slaEvents).values({
                     ticketId: ticket.id,
-                    eventType: 'ttr_breach_reassigned',
+                    eventType: SLA_EVENT_TYPES.TTR_BREACH_REASSIGNED,
                     notifiedUserIds: [newTtrAssignee],
                   });
                 }
@@ -313,9 +333,15 @@ export class SlaMonitorService {
                   `TTR breach on ticket ${ticket.id} — reassigned to ${newTtrAssignee || 'supervisor'}`,
                 );
 
-                // Send TTR breach email to the breaching agent
+                // Send TTR breach email to the breaching agent (gated)
                 try {
-                  if (ticket.assigneeId) {
+                  if (
+                    ticket.assigneeId &&
+                    (await this.supportService.shouldNotifySupport(
+                      ticket.assigneeId,
+                      'email',
+                    ))
+                  ) {
                     const [agentInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, ticket.assigneeId));
                     if (agentInfo?.email) {
                       await this.emailService.sendSlaTtrBreach(
@@ -329,9 +355,15 @@ export class SlaMonitorService {
                   }
                 } catch { /* non-blocking */ }
 
-                // Send assignment email to the new agent
+                // Send assignment email to the new agent (gated)
                 try {
-                  if (newTtrAssignee) {
+                  if (
+                    newTtrAssignee &&
+                    (await this.supportService.shouldNotifySupport(
+                      newTtrAssignee,
+                      'email',
+                    ))
+                  ) {
                     const [newAgentInfo] = await db
                       .select({ email: users.email, firstName: users.firstName })
                       .from(users)
@@ -348,9 +380,15 @@ export class SlaMonitorService {
                   }
                 } catch { /* non-blocking */ }
 
-                // Send escalation email to the supervisor
+                // Send escalation email to the supervisor (gated)
                 try {
-                  if (supervisorId) {
+                  if (
+                    supervisorId &&
+                    (await this.supportService.shouldNotifySupport(
+                      supervisorId,
+                      'email',
+                    ))
+                  ) {
                     const [supInfo] = await db
                       .select({ email: users.email, firstName: users.firstName })
                       .from(users)
@@ -364,6 +402,35 @@ export class SlaMonitorService {
                         `TTR breached: ${policy.ttrMinutes}m target exceeded — reassigned`,
                       );
                     }
+                  }
+                } catch { /* non-blocking */ }
+
+                // Fan the same escalation email out to all admins. They
+                // own platform-wide health and should see SLA breaches
+                // even though they're not in the support rotation.
+                try {
+                  const adminIds = await this.supportService.findAdminUserIds();
+                  const adminRecipients = adminIds.filter(
+                    (id) => id !== supervisorId && id !== ticket.assigneeId,
+                  );
+                  if (adminRecipients.length) {
+                    const adminInfo = await db
+                      .select({ id: users.id, email: users.email, firstName: users.firstName })
+                      .from(users)
+                      .where(inArray(users.id, adminRecipients));
+                    await Promise.all(
+                      adminInfo.map(async (a) => {
+                        if (!a.email) return;
+                        if (!(await this.supportService.shouldNotifySupport(a.id, 'email'))) return;
+                        await this.emailService.sendTicketEscalation(
+                          a.email,
+                          a.firstName || 'Admin',
+                          ticket.id,
+                          '',
+                          `TTR breached: ${policy.ttrMinutes}m target exceeded — reassigned`,
+                        );
+                      }),
+                    );
                   }
                 } catch { /* non-blocking */ }
               }
@@ -382,13 +449,41 @@ export class SlaMonitorService {
 
   /**
    * Priority Age Escalation — runs every hour
-   * PR-03: LOW → MEDIUM after 48 business hours (2880 min)
-   * PR-04: MEDIUM → HIGH after 72 business hours (4320 min)
+   * PR-03: LOW → MEDIUM after `escalateAfterMinutes` of the LOW policy
+   * PR-04: MEDIUM → HIGH after `escalateAfterMinutes` of the MEDIUM policy
    * PR-05: HIGH never escalates further
+   *
+   * Thresholds are read live from `sla_policies.escalate_after_minutes`,
+   * which supervisors edit via the SLA Targets settings panel. If a
+   * policy row is missing for either priority, that priority is silently
+   * skipped this cycle — supervisors are expected to seed all three
+   * priority rows (seed migration `0037_support_system.sql:140` does so).
    */
   @Cron('0 * * * *')
   async checkPriorityEscalations() {
     try {
+      // Same anti-stale guard as checkSlaBreaches — see that method.
+      await refreshBusinessHoursConfigIfStale(() =>
+        this.supportService.getBusinessHours(),
+      );
+
+      // Fetch live policies once per cron tick so supervisor edits take
+      // effect on the next run without restart. A Map<priority, threshold>
+      // keeps the per-ticket lookup constant-time.
+      const policyRows = await db
+        .select({
+          priority: slaPolicies.priority,
+          escalateAfterMinutes: slaPolicies.escalateAfterMinutes,
+        })
+        .from(slaPolicies);
+      const escalateAfterByPriority = new Map<string, number>(
+        policyRows.map((p) => [p.priority, p.escalateAfterMinutes]),
+      );
+      const lowThreshold = escalateAfterByPriority.get(TICKET_PRIORITY.LOW);
+      const mediumThreshold = escalateAfterByPriority.get(
+        TICKET_PRIORITY.MEDIUM,
+      );
+
       const openTickets = await db
         .select({
           id: tickets.id,
@@ -419,18 +514,18 @@ export class SlaMonitorService {
 
           let newPriority: string | null = null;
 
-          // LOW → MEDIUM after 48 business hours
           if (
             ticket.priority === TICKET_PRIORITY.LOW &&
-            effectiveBizMinutes > 2880
+            lowThreshold != null &&
+            effectiveBizMinutes > lowThreshold
           ) {
             newPriority = TICKET_PRIORITY.MEDIUM;
           }
 
-          // MEDIUM → HIGH after 72 business hours
           if (
             ticket.priority === TICKET_PRIORITY.MEDIUM &&
-            effectiveBizMinutes > 4320
+            mediumThreshold != null &&
+            effectiveBizMinutes > mediumThreshold
           ) {
             newPriority = TICKET_PRIORITY.HIGH;
           }
@@ -474,9 +569,15 @@ export class SlaMonitorService {
               `Priority escalated: ticket ${ticket.id} from ${ticket.priority} to ${newPriority}`,
             );
 
-            // M5: Notify assigned agent about priority escalation
+            // M5: Notify assigned agent about priority escalation (gated)
             try {
-              if (ticket.assigneeId) {
+              if (
+                ticket.assigneeId &&
+                (await this.supportService.shouldNotifySupport(
+                  ticket.assigneeId,
+                  'email',
+                ))
+              ) {
                 const [agInfo] = await db
                   .select({ email: users.email, firstName: users.firstName })
                   .from(users)
@@ -566,7 +667,9 @@ export class SlaMonitorService {
       const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
       const cutoff = new Date(Date.now() - FORTY_EIGHT_HOURS_MS);
 
-      // Find on-hold tickets with "waiting for student" reason older than 48h
+      // Find on-hold tickets with "waiting for student" reason older than 48h.
+      // The DTO enforces the same literal via ON_HOLD_REASONS whitelist, so
+      // the exact match here is now safe from supervisor typos.
       const waitingTickets = await db
         .select({
           id: tickets.id,
@@ -577,7 +680,10 @@ export class SlaMonitorService {
         .where(
           and(
             eq(tickets.status, TICKET_STATUS.ON_HOLD),
-            sql`LOWER(${tickets.onHoldReason}) = 'waiting for student response'`,
+            eq(
+              tickets.onHoldReason,
+              ON_HOLD_REASONS.WAITING_FOR_STUDENT_RESPONSE,
+            ),
             sql`${tickets.onHoldAt} IS NOT NULL AND ${tickets.onHoldAt} < ${cutoff}`,
           ),
         );

@@ -64,6 +64,7 @@ export * from './session-recordings';
 // Support Tickets schemas
 export * from './tickets';
 export * from './ticket-tags';
+export * from './ticket-attachments';
 export * from './support-governance';
 export * from './sla';
 export * from './support-macros';

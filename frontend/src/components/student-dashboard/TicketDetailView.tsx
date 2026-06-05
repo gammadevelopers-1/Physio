@@ -343,18 +343,6 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
                         <Tag className="w-3 h-3" />
                         {t(`supportPage.category_${ticket.category}` as Parameters<typeof t>[0])}
                       </span>
-                      <span className="text-xs text-[var(--color-text-secondary)] inline-flex items-center gap-1">
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            ticket.priority === "high"
-                              ? "bg-[#EF4444]"
-                              : ticket.priority === "medium"
-                                ? "bg-[#F97316]"
-                                : "bg-[#22C55E]"
-                          }`}
-                        />
-                        {t(`supportPage.priority_${ticket.priority}` as Parameters<typeof t>[0])}
-                      </span>
                     </div>
                     <h1 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-1">
                       {ticket.subject}
@@ -381,17 +369,49 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
                     <p className="text-sm text-[var(--color-text-primary)] whitespace-pre-wrap leading-relaxed">
                       {ticket.description}
                     </p>
-                    {ticket.attachmentUrl && (
-                      <a
-                        href={ticket.attachmentUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-3 inline-flex items-center gap-1.5 text-xs text-[var(--color-primary)] hover:underline"
-                      >
-                        <Paperclip className="w-3.5 h-3.5" />
-                        {t("supportPage.attachment")}
-                      </a>
-                    )}
+                    {/* Attachments — prefer the multi-attachment list when
+                        the API surfaces it (post-0054); otherwise fall back
+                        to the legacy single-URL field so older tickets
+                        still render their chip. */}
+                    {(() => {
+                      const multi =
+                        (ticket as any).attachments as
+                          | { id: string; url: string; filename: string | null }[]
+                          | undefined;
+                      const chips =
+                        multi && multi.length > 0
+                          ? multi.map((a) => ({
+                              key: a.id,
+                              url: a.url,
+                              label: a.filename || t("supportPage.attachment"),
+                            }))
+                          : ticket.attachmentUrl
+                            ? [
+                                {
+                                  key: "legacy",
+                                  url: ticket.attachmentUrl,
+                                  label: t("supportPage.attachment"),
+                                },
+                              ]
+                            : [];
+                      if (chips.length === 0) return null;
+                      return (
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          {chips.map((c) => (
+                            <a
+                              key={c.key}
+                              href={c.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs text-[var(--color-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] hover:border-[var(--color-primary)]"
+                            >
+                              <Paperclip className="w-3.5 h-3.5" />
+                              <span className="truncate max-w-[200px]">{c.label}</span>
+                            </a>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Status banners — resolved encouragement / grace countdown / past-grace */}

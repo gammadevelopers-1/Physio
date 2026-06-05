@@ -6,6 +6,8 @@ import {
   IsUUID,
   MaxLength,
   Matches,
+  IsArray,
+  ArrayMaxSize,
 } from 'class-validator';
 
 export class CreateTicketDto {
@@ -36,7 +38,18 @@ export class CreateTicketDto {
   @IsOptional()
   courseId?: string;
 
+  // Legacy single attachment. Still accepted so older clients keep
+  // working. New clients should use `attachmentUrls` below.
   @IsString()
   @IsOptional()
   attachmentUrl?: string;
+
+  // Multi-file: array of pre-uploaded storage URLs. Each URL is
+  // re-validated by the service (origin + extension allowlist). Capped
+  // at 10 to keep the chip row readable and the scan workload bounded.
+  @IsArray()
+  @IsString({ each: true })
+  @ArrayMaxSize(10)
+  @IsOptional()
+  attachmentUrls?: string[];
 }

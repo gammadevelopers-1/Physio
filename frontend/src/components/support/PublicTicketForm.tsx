@@ -2,10 +2,51 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { Loader2, CheckCircle2, Send, ChevronDown, Mail, User, Copy, Check } from "lucide-react";
+import {
+  Loader2,
+  CheckCircle2,
+  Send,
+  ChevronDown,
+  Mail,
+  User,
+  Copy,
+  Check,
+  Upload,
+  Paperclip,
+  X,
+  AlertCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import ReCAPTCHA from "react-google-recaptcha";
-import { supportApi } from "@/lib/api";
+import { supportApi, studentApi } from "@/lib/api";
+
+// Mirror the limits the student form uses so the public form behaves
+// identically. The server caps per-file at 10MB; we use 5MB here so
+// the chip-row stays small and users get fast client-side feedback.
+const PUBLIC_MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024;
+const PUBLIC_MAX_ATTACHMENT_COUNT = 10;
+const PUBLIC_ALLOWED_ATTACHMENT_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+];
+const PUBLIC_ATTACHMENT_ACCEPT = ".pdf,.jpg,.jpeg,.png,.webp";
+
+type PublicPendingAttachment = {
+  id: string;
+  file: File;
+  status: "queued" | "uploading" | "done" | "error";
+  url?: string;
+  errorMessage?: string;
+};
+
+function publicFormatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
 
@@ -48,6 +89,9 @@ export default function PublicTicketForm({
   const [subject, setSubject] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
+  const [attachments, setAttachments] = useState<PublicPendingAttachment[]>([]);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -56,6 +100,75 @@ export default function PublicTicketForm({
   const [copied, setCopied] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
+
+  // Attachment handlers — same lifecycle as the student form. Each
+  // file uploads in parallel and surfaces status independently so a
+  // single bad file doesn't block the others.
+  async function uploadOne(item: PublicPendingAttachment) {
+    setAttachments((prev) =>
+      prev.map((a) => (a.id === item.id ? { ...a, status: "uploading" } : a)),
+    );
+    try {
+      const res = await studentApi.uploadFile(item.file);
+      setAttachments((prev) =>
+        prev.map((a) =>
+          a.id === item.id ? { ...a, status: "done", url: res.url } : a,
+        ),
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      setAttachments((prev) =>
+        prev.map((a) =>
+          a.id === item.id ? { ...a, status: "error", errorMessage: msg } : a,
+        ),
+      );
+    }
+  }
+
+  function handleFilesAdded(fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return;
+    setAttachmentError(null);
+    const newPending: PublicPendingAttachment[] = [];
+    for (const file of Array.from(fileList)) {
+      if (
+        attachments.length + newPending.length >=
+        PUBLIC_MAX_ATTACHMENT_COUNT
+      ) {
+        setAttachmentError(
+          isRTL
+            ? `الحد الأقصى ${PUBLIC_MAX_ATTACHMENT_COUNT} مرفقات`
+            : `Max ${PUBLIC_MAX_ATTACHMENT_COUNT} attachments`,
+        );
+        break;
+      }
+      if (file.size > PUBLIC_MAX_ATTACHMENT_SIZE) {
+        setAttachmentError(
+          isRTL ? "الملف يتجاوز 5 ميجابايت" : "File exceeds 5MB",
+        );
+        continue;
+      }
+      if (!PUBLIC_ALLOWED_ATTACHMENT_TYPES.includes(file.type)) {
+        setAttachmentError(
+          isRTL ? "نوع الملف غير مسموح" : "File type not allowed",
+        );
+        continue;
+      }
+      newPending.push({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        file,
+        status: "queued",
+      });
+    }
+    if (newPending.length === 0) return;
+    setAttachments((prev) => [...prev, ...newPending]);
+    for (const item of newPending) uploadOne(item);
+  }
+
+  function removeAttachment(id: string) {
+    setAttachments((prev) => prev.filter((a) => a.id !== id));
+  }
+
+  const anyUploading = attachments.some((a) => a.status === "uploading");
 
   // Live category list — admins can add/remove these without a deploy
   // (see Categories tab in support settings). Falls back to the 6
@@ -148,6 +261,19 @@ export default function PublicTicketForm({
       return;
     }
 
+    if (anyUploading) {
+      toast.error(
+        isRTL
+          ? "انتظر اكتمال رفع المرفقات"
+          : "Wait for uploads to finish",
+      );
+      return;
+    }
+
+    const attachmentUrls = attachments
+      .filter((a) => a.status === "done" && a.url)
+      .map((a) => a.url!) as string[];
+
     setIsSubmitting(true);
     try {
       if (guestLoginMode) {
@@ -158,6 +284,7 @@ export default function PublicTicketForm({
           subject: subject.trim(),
           description: description.trim(),
           recaptchaToken: recaptchaToken || undefined,
+          ...(attachmentUrls.length > 0 && { attachmentUrls }),
         });
         setTrackingToken(result.trackingToken);
         setIsSubmitted(true);
@@ -166,6 +293,7 @@ export default function PublicTicketForm({
           subject: subject.trim(),
           category,
           description: description.trim(),
+          ...(attachmentUrls.length > 0 && { attachmentUrls }),
         });
         setIsSubmitted(true);
       }
@@ -187,6 +315,8 @@ export default function PublicTicketForm({
     setSubject("");
     setCategory("");
     setDescription("");
+    setAttachments([]);
+    setAttachmentError(null);
     setErrors({});
     setIsSubmitted(false);
     setTrackingToken("");
@@ -489,6 +619,112 @@ export default function PublicTicketForm({
         )}
       </div>
 
+      {/* Attachments — multi-file with parallel upload + per-file status.
+          Same shape as the student form so users feel one product. */}
+      <div>
+        <label
+          className="block text-sm font-medium text-gray-700 mb-1.5"
+          style={{ textAlign: isRTL ? "right" : "left" }}
+        >
+          {isRTL ? "المرفقات" : "Attachments"}{" "}
+          <span className="text-xs text-gray-400 font-normal">
+            ({isRTL ? "اختياري" : "optional"})
+          </span>
+        </label>
+
+        <label
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragOver(true);
+          }}
+          onDragLeave={() => setIsDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDragOver(false);
+            handleFilesAdded(e.dataTransfer.files);
+          }}
+          className={`flex flex-col items-center justify-center gap-1 p-4 border border-dashed rounded-[10px] cursor-pointer transition-colors ${
+            isDragOver
+              ? "border-[#a37f49] bg-[#FFF8E6]"
+              : "border-[#C8D5E1] bg-white hover:bg-gray-50"
+          }`}
+        >
+          <Upload className="w-5 h-5 text-gray-400" />
+          <span className="text-sm text-gray-700">
+            {isRTL
+              ? "أسقط الملفات هنا أو انقر للتحميل"
+              : "Drop files here or click to upload"}
+          </span>
+          <span className="text-xs text-gray-400">
+            {isRTL
+              ? "PDF, JPG, PNG, WebP · حتى 5 ميجا لكل ملف · حتى 10 ملفات"
+              : "PDF, JPG, PNG, WebP · up to 5MB each · up to 10 files"}
+          </span>
+          <input
+            type="file"
+            multiple
+            accept={PUBLIC_ATTACHMENT_ACCEPT}
+            onChange={(e) => {
+              handleFilesAdded(e.target.files);
+              e.target.value = "";
+            }}
+            className="hidden"
+          />
+        </label>
+
+        {attachmentError && (
+          <p className="text-xs text-[#DC2626] mt-1.5">{attachmentError}</p>
+        )}
+
+        {attachments.length > 0 && (
+          <ul className="mt-2 space-y-1.5">
+            {attachments.map((a) => (
+              <li
+                key={a.id}
+                className={`flex items-center gap-2 p-2.5 border rounded-[10px] ${
+                  a.status === "error"
+                    ? "border-red-200 bg-red-50"
+                    : "border-[#C8D5E1] bg-white"
+                }`}
+              >
+                <Paperclip className="w-4 h-4 text-gray-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-900 truncate">
+                    {a.file.name}
+                  </p>
+                  <p
+                    className={`text-xs ${a.status === "error" ? "text-red-600" : "text-gray-500"}`}
+                  >
+                    {a.status === "uploading"
+                      ? isRTL ? "جارٍ الرفع…" : "Uploading…"
+                      : a.status === "error"
+                        ? a.errorMessage || (isRTL ? "فشل الرفع" : "Upload failed")
+                        : a.status === "done"
+                          ? `${isRTL ? "تم الرفع" : "Uploaded"} · ${publicFormatBytes(a.file.size)}`
+                          : publicFormatBytes(a.file.size)}
+                  </p>
+                </div>
+                {a.status === "uploading" ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-[#a37f49] shrink-0" />
+                ) : a.status === "done" ? (
+                  <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                ) : a.status === "error" ? (
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => removeAttachment(a.id)}
+                  className="p-0.5 hover:bg-gray-100 rounded shrink-0"
+                  aria-label={isRTL ? "إزالة" : "Remove"}
+                >
+                  <X className="w-3.5 h-3.5 text-gray-500" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       {/* reCAPTCHA — guest mode only (authenticated users already have a session) */}
       {guestLoginMode && RECAPTCHA_SITE_KEY && (
         <div className="flex justify-center" dir="ltr">
@@ -508,6 +744,7 @@ export default function PublicTicketForm({
         type="submit"
         disabled={
           isSubmitting ||
+          anyUploading ||
           (guestLoginMode && RECAPTCHA_SITE_KEY ? !recaptchaToken : false)
         }
         className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 btn-gold text-white rounded-[10px] text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"

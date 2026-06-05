@@ -9,16 +9,14 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
-  Eye,
   HelpCircle,
   Loader2,
   MessageSquarePlus,
   Paperclip,
-  PlayCircle,
   Plus,
   Search,
   Send,
-  Tag,
+  Upload,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -36,10 +34,10 @@ import type {
   SupportTicket,
   TicketStatus,
   TicketCategory,
-  TicketPriority,
 } from "@/types/student-dashboard";
 import TicketDetailView from "./TicketDetailView";
 import EmptyStateIllustration from "./EmptyStateIllustration";
+import Select from "@/components/admin-dashboard/Select";
 
 const STATUS_TABS: { key: string; label: string }[] = [
   { key: "all", label: "supportPage.filterAll" },
@@ -57,8 +55,6 @@ const CATEGORIES: TicketCategory[] = [
   "technical",
   "other",
 ];
-
-const PRIORITIES: TicketPriority[] = ["high", "medium", "low"];
 
 function StatusBadge({
   status,
@@ -87,28 +83,6 @@ function StatusBadge({
     >
       {icons[status]}
       {t(`supportPage.status_${status}` as Parameters<typeof t>[0])}
-    </span>
-  );
-}
-
-function PriorityBadge({
-  priority,
-  t,
-}: {
-  priority: string;
-  t: ReturnType<typeof useTranslations>;
-}) {
-  const styles: Record<string, string> = {
-    high: "bg-red-50 text-red-700",
-    medium: "bg-orange-50 text-orange-700",
-    low: "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]",
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ${styles[priority] ?? ""}`}
-    >
-      {t(`supportPage.priority_${priority}` as Parameters<typeof t>[0])}
     </span>
   );
 }
@@ -172,9 +146,7 @@ function TicketRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1 flex-wrap">
           <StatusBadge status={ticket.status} t={t} />
-          <PriorityBadge priority={ticket.priority} t={t} />
           <span className="text-[10px] text-[var(--color-text-secondary)]">
-
             {t(`supportPage.category_${ticket.category}` as Parameters<typeof t>[0])}
           </span>
         </div>
@@ -203,7 +175,11 @@ function TicketRow({
   );
 }
 
-const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024; // 5MB
+// Per-file: 5MB. Server upload endpoint caps at 10MB but we mirror the
+// stricter limit on the client so the user gets fast feedback. Total
+// attachment count capped to match the DTO (ArrayMaxSize(10)).
+const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024;
+const MAX_ATTACHMENT_COUNT = 10;
 const ALLOWED_ATTACHMENT_TYPES = [
   "application/pdf",
   "image/jpeg",
@@ -211,6 +187,25 @@ const ALLOWED_ATTACHMENT_TYPES = [
   "image/png",
   "image/webp",
 ];
+const ATTACHMENT_ACCEPT = ".pdf,.jpg,.jpeg,.png,.webp";
+
+type PendingAttachment = {
+  // Stable local id so we can re-render rows without keying on filename
+  // (two files with the same name break a name-based key).
+  id: string;
+  file: File;
+  /** "queued" before upload, "uploading" during, "done" with the URL,
+   *  "error" with a message. */
+  status: "queued" | "uploading" | "done" | "error";
+  url?: string;
+  errorMessage?: string;
+};
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 function CreateTicketForm({
   t,
@@ -225,52 +220,120 @@ function CreateTicketForm({
 }) {
   const isRTL = locale === "ar";
   const [category, setCategory] = useState<TicketCategory>("technical");
-  const [priority, setPriority] = useState<TicketPriority>("medium");
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [courseId, setCourseId] = useState("");
-  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const { data: enrolledCourses } = useStudentCourses({ limit: 100 });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > MAX_ATTACHMENT_SIZE) {
-      setFormError(t("supportPage.fileTooLarge"));
-      return;
-    }
-    if (!ALLOWED_ATTACHMENT_TYPES.includes(file.type)) {
-      setFormError(t("supportPage.invalidFileType"));
-      return;
-    }
+  // Build options for the custom Select components.
+  const categoryOptions = CATEGORIES.map((cat) => ({
+    value: cat,
+    label: t(`supportPage.category_${cat}` as Parameters<typeof t>[0]),
+  }));
+  const courseOptions = [
+    { value: "", label: t("supportPage.selectCourse") },
+    ...enrolledCourses.map((c) => ({
+      value: c.id,
+      label: isRTL && c.titleAr ? c.titleAr : c.title,
+    })),
+  ];
+
+  // Accept a FileList and start uploading the valid ones in parallel.
+  // Each upload's lifecycle is reflected in its own row — failed uploads
+  // surface their error and can be removed without blocking the others.
+  function handleFilesAdded(fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return;
     setFormError(null);
-    setAttachmentFile(file);
-  };
+
+    const newPending: PendingAttachment[] = [];
+    for (const file of Array.from(fileList)) {
+      if (attachments.length + newPending.length >= MAX_ATTACHMENT_COUNT) {
+        setFormError(
+          t("supportPage.maxAttachmentsReached", {
+            max: MAX_ATTACHMENT_COUNT,
+          }),
+        );
+        break;
+      }
+      if (file.size > MAX_ATTACHMENT_SIZE) {
+        setFormError(t("supportPage.fileTooLarge"));
+        continue;
+      }
+      if (!ALLOWED_ATTACHMENT_TYPES.includes(file.type)) {
+        setFormError(t("supportPage.invalidFileType"));
+        continue;
+      }
+      newPending.push({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        file,
+        status: "queued",
+      });
+    }
+
+    if (newPending.length === 0) return;
+    setAttachments((prev) => [...prev, ...newPending]);
+
+    // Kick off uploads. We use the per-id helper instead of mutating
+    // state inside the loop so React always sees the latest copy.
+    for (const item of newPending) uploadOne(item);
+  }
+
+  async function uploadOne(item: PendingAttachment) {
+    setAttachments((prev) =>
+      prev.map((a) => (a.id === item.id ? { ...a, status: "uploading" } : a)),
+    );
+    try {
+      const res = await studentApi.uploadFile(item.file);
+      setAttachments((prev) =>
+        prev.map((a) =>
+          a.id === item.id ? { ...a, status: "done", url: res.url } : a,
+        ),
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      setAttachments((prev) =>
+        prev.map((a) =>
+          a.id === item.id ? { ...a, status: "error", errorMessage: msg } : a,
+        ),
+      );
+    }
+  }
+
+  function removeAttachment(id: string) {
+    setAttachments((prev) => prev.filter((a) => a.id !== id));
+  }
+
+  const anyUploading = attachments.some((a) => a.status === "uploading");
+  const hasErrors = attachments.some((a) => a.status === "error");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!subject.trim() || !description.trim()) return;
+    if (anyUploading) {
+      setFormError(t("supportPage.waitForUploads"));
+      return;
+    }
 
     setSubmitting(true);
     setFormError(null);
     try {
-      let attachmentUrl: string | undefined;
-
-      // Upload attachment first if present
-      if (attachmentFile) {
-        const uploadResult = await studentApi.uploadFile(attachmentFile);
-        attachmentUrl = uploadResult.url;
-      }
+      // Only attachments that finished uploading get sent. Errored
+      // rows are skipped silently — the user can see them and choose
+      // to remove or retry by re-adding the file.
+      const attachmentUrls = attachments
+        .filter((a) => a.status === "done" && a.url)
+        .map((a) => a.url!) as string[];
 
       await supportApi.createTicket({
         category,
         subject: subject.trim(),
         description: description.trim(),
         ...(courseId && { courseId }),
-        ...(attachmentUrl && { attachmentUrl }),
+        ...(attachmentUrls.length > 0 && { attachmentUrls }),
       });
       onCreated();
     } catch (err) {
@@ -304,67 +367,33 @@ function CreateTicketForm({
       )}
 
       <div className="space-y-4">
-        {/* Category */}
+        {/* Category — custom dropdown */}
         <div>
           <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
             {t("supportPage.category")}
           </label>
-          <select
+          <Select
+            options={categoryOptions}
             value={category}
-            onChange={(e) => setCategory(e.target.value as TicketCategory)}
-            className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
-          >
-            {CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {t(`supportPage.category_${cat}` as Parameters<typeof t>[0])}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setCategory(v as TicketCategory)}
+            placeholder={t("supportPage.category")}
+          />
         </div>
 
-        {/* Related Course */}
+        {/* Related Course — custom dropdown */}
         {enrolledCourses.length > 0 && (
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
               {t("supportPage.relatedCourse")}
             </label>
-            <select
+            <Select
+              options={courseOptions}
               value={courseId}
-              onChange={(e) => setCourseId(e.target.value)}
-              className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
-            >
-              <option value="">{t("supportPage.selectCourse")}</option>
-              {enrolledCourses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {isRTL && c.titleAr ? c.titleAr : c.title}
-                </option>
-              ))}
-            </select>
+              onChange={setCourseId}
+              placeholder={t("supportPage.selectCourse")}
+            />
           </div>
         )}
-
-        {/* Priority */}
-        <div>
-          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
-            {t("supportPage.priority")}
-          </label>
-          <div className="flex gap-2">
-            {PRIORITIES.map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPriority(p)}
-                className={`flex-1 py-2 text-xs sm:text-sm font-medium rounded-lg border transition-colors ${
-                  priority === p
-                    ? "border-[#002D87] bg-[var(--color-primary)] text-white"
-                    : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
-                }`}
-              >
-                {t(`supportPage.priority_${p}` as Parameters<typeof t>[0])}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Subject */}
         <div>
@@ -377,7 +406,7 @@ function CreateTicketForm({
             onChange={(e) => setSubject(e.target.value)}
             maxLength={200}
             placeholder={t("supportPage.subjectPlaceholder")}
-            className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
+            className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
             required
           />
         </div>
@@ -393,7 +422,7 @@ function CreateTicketForm({
             maxLength={2000}
             rows={5}
             placeholder={t("supportPage.descriptionPlaceholder")}
-            className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent resize-none"
+            className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)] resize-none"
             required
           />
           <p className="text-xs text-[var(--color-text-secondary)] mt-1 text-right">
@@ -401,66 +430,161 @@ function CreateTicketForm({
           </p>
         </div>
 
-        {/* File Attachment */}
-        <div>
-          <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
-            {t("supportPage.attachment")}
-          </label>
-          {attachmentFile ? (
-            <div className="flex items-center gap-2 p-2.5 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-page)]">
-              <Paperclip className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
-              <span className="text-sm text-[var(--color-text-secondary)] truncate flex-1">
-                {attachmentFile.name}
-              </span>
-              <span className="text-xs text-[var(--color-text-secondary)] flex-shrink-0">
-                {(attachmentFile.size / 1024).toFixed(0)} KB
-              </span>
-              <button
-                type="button"
-                onClick={() => setAttachmentFile(null)}
-                className="p-0.5 hover:bg-[var(--color-border)] rounded flex-shrink-0"
-              >
-                <X className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
-              </button>
-            </div>
-          ) : (
-            <label className="flex items-center gap-2 p-2.5 border border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:bg-[var(--color-border-subtle)] transition-colors">
-              <Paperclip className="w-4 h-4 text-[var(--color-text-secondary)]" />
-              <span className="text-sm text-[var(--color-text-secondary)]">
-                {t("supportPage.attachFile")}
-              </span>
-              <span className="text-xs text-[var(--color-border)] ml-auto">
-                PDF, JPG, PNG (max 5MB)
-              </span>
-              <input
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png,.webp"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </label>
-          )}
-        </div>
+        {/* Multi-file attachments */}
+        <MultiAttachmentInput
+          t={t}
+          attachments={attachments}
+          onFilesAdded={handleFilesAdded}
+          onRemove={removeAttachment}
+        />
 
         {/* Submit */}
         <button
           type="submit"
-          disabled={submitting || !subject.trim() || !description.trim()}
+          disabled={
+            submitting ||
+            anyUploading ||
+            !subject.trim() ||
+            !description.trim()
+          }
           className="w-full flex items-center justify-center gap-2 py-2.5 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:bg-[#001f5c] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title={hasErrors ? t("supportPage.attachmentErrorsTip") : undefined}
         >
           {submitting ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <Send className="w-4 h-4" />
           )}
-          {t("supportPage.submitTicket")}
+          {submitting
+            ? t("supportPage.submitting")
+            : t("supportPage.submitTicket")}
         </button>
       </div>
     </form>
   );
 }
 
-type MainTab = "tickets" | "faq" | "tutorials" | "articles";
+// ──────────────────────────────────────────────────────────────────
+// MultiAttachmentInput
+//
+// Drag-and-drop + click-to-pick file picker. Each picked file uploads
+// in parallel and surfaces its own row with status (uploading / done /
+// error). The submit button is gated on `anyUploading` in the parent
+// so users can't fire createTicket with an attachment URL that hasn't
+// landed yet.
+// ──────────────────────────────────────────────────────────────────
+function MultiAttachmentInput({
+  t,
+  attachments,
+  onFilesAdded,
+  onRemove,
+}: {
+  t: ReturnType<typeof useTranslations>;
+  attachments: PendingAttachment[];
+  onFilesAdded: (files: FileList | null) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
+        {t("supportPage.attachments")}
+      </label>
+
+      <label
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragOver(true);
+        }}
+        onDragLeave={() => setIsDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragOver(false);
+          onFilesAdded(e.dataTransfer.files);
+        }}
+        className={`flex flex-col items-center justify-center gap-1 p-4 border border-dashed rounded-lg cursor-pointer transition-colors ${
+          isDragOver
+            ? "border-[var(--color-primary)] bg-[var(--color-border-subtle)]"
+            : "border-[var(--color-border)] hover:bg-[var(--color-border-subtle)]"
+        }`}
+      >
+        <Upload className="w-5 h-5 text-[var(--color-text-secondary)]" />
+        <span className="text-sm text-[var(--color-text-primary)]">
+          {t("supportPage.dropFilesHere")}
+        </span>
+        <span className="text-xs text-[var(--color-text-secondary)]">
+          {t("supportPage.fileHint")}
+        </span>
+        <input
+          type="file"
+          multiple
+          accept={ATTACHMENT_ACCEPT}
+          onChange={(e) => {
+            onFilesAdded(e.target.files);
+            // Reset so re-picking the same file fires onChange again.
+            e.target.value = "";
+          }}
+          className="hidden"
+        />
+      </label>
+
+      {attachments.length > 0 && (
+        <ul className="mt-2 space-y-1.5">
+          {attachments.map((a) => (
+            <li
+              key={a.id}
+              className={`flex items-center gap-2 p-2.5 border rounded-lg ${
+                a.status === "error"
+                  ? "border-red-200 bg-red-50"
+                  : "border-[var(--color-border)] bg-[var(--color-surface-page)]"
+              }`}
+            >
+              <Paperclip className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-[var(--color-text-primary)] truncate">
+                  {a.file.name}
+                </p>
+                <p
+                  className={`text-xs ${a.status === "error" ? "text-red-600" : "text-[var(--color-text-secondary)]"}`}
+                >
+                  {a.status === "uploading"
+                    ? t("supportPage.uploading")
+                    : a.status === "error"
+                      ? a.errorMessage || t("supportPage.uploadFailed")
+                      : a.status === "done"
+                        ? t("supportPage.uploaded")
+                        : formatBytes(a.file.size)}
+                  {a.status !== "error" &&
+                    a.status !== "uploading" &&
+                    a.status === "done" &&
+                    ` · ${formatBytes(a.file.size)}`}
+                </p>
+              </div>
+              {a.status === "uploading" ? (
+                <Loader2 className="w-4 h-4 animate-spin text-[var(--color-primary)] flex-shrink-0" />
+              ) : a.status === "done" ? (
+                <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+              ) : a.status === "error" ? (
+                <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+              ) : null}
+              <button
+                type="button"
+                onClick={() => onRemove(a.id)}
+                className="p-0.5 hover:bg-[var(--color-border)] rounded flex-shrink-0"
+                aria-label={t("supportPage.removeAttachment")}
+              >
+                <X className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+type MainTab = "tickets" | "faq" | "articles";
 
 const FAQ_CATEGORIES = ["enrollment", "sessions", "assessments", "certificates", "technical"] as const;
 
@@ -553,50 +677,6 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
   );
 }
 
-const TUTORIAL_ITEMS = [
-  { key: "enroll", icon: "BookOpen", duration: "2:30" },
-  { key: "joinZoom", icon: "Video", duration: "1:45" },
-  { key: "takeAssessment", icon: "ClipboardCheck", duration: "3:15" },
-  { key: "downloadCertificate", icon: "Award", duration: "1:30" },
-  { key: "useCalendar", icon: "Calendar", duration: "2:00" },
-  { key: "navigateDashboard", icon: "LayoutDashboard", duration: "2:45" },
-] as const;
-
-function VideoTutorials({ t, locale }: { t: ReturnType<typeof useTranslations>; locale: string }) {
-  const isRTL = locale === "ar";
-
-  return (
-    <div dir={isRTL ? "rtl" : "ltr"}>
-      <p className="text-sm text-[var(--color-text-secondary)] mb-4">{t("supportPage.tutorials.description")}</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {TUTORIAL_ITEMS.map((tutorial) => (
-          <div key={tutorial.key} className="border border-[var(--color-border)] rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-            {/* Thumbnail placeholder */}
-            <div className="relative h-[120px] bg-gradient-to-br from-[#a37f49] to-[#6b4e24] flex items-center justify-center">
-              <PlayCircle className="w-12 h-12 text-white/80" />
-              <span className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/60 text-white text-[10px] font-medium rounded">
-                {tutorial.duration}
-              </span>
-              <span className="absolute top-2 left-2 px-2 py-0.5 bg-amber-400 text-[var(--color-text-primary)] text-[10px] font-semibold rounded">
-                {t("supportPage.tutorials.comingSoon")}
-              </span>
-            </div>
-            {/* Info */}
-            <div className="p-3">
-              <h3 className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
-                {t(`supportPage.tutorials.${tutorial.key}_title` as Parameters<typeof t>[0])}
-              </h3>
-              <p className="text-xs text-[var(--color-text-secondary)] line-clamp-2">
-                {t(`supportPage.tutorials.${tutorial.key}_desc` as Parameters<typeof t>[0])}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 const SupportContent = () => {
   const locale = useLocale();
   const t = useTranslations("studentDashboard");
@@ -667,13 +747,12 @@ const SupportContent = () => {
 
               <OfflineBanner />
 
-              {/* Main Tabs: Tickets / Help Articles / FAQ / Tutorials */}
+              {/* Main Tabs: Tickets / Help Articles / FAQ */}
               <div className="flex gap-1 mb-4 border-b border-[var(--color-border)] overflow-x-auto">
                 {([
                   { key: "tickets" as MainTab, label: t("supportPage.tabTickets"), icon: MessageSquarePlus },
                   { key: "articles" as MainTab, label: t("supportPage.tabArticles"), icon: BookOpen },
                   { key: "faq" as MainTab, label: t("supportPage.tabFaq"), icon: HelpCircle },
-                  { key: "tutorials" as MainTab, label: t("supportPage.tabTutorials"), icon: PlayCircle },
                 ]).map((tab) => {
                   const Icon = tab.icon;
                   return (
@@ -701,10 +780,6 @@ const SupportContent = () => {
               ) : mainTab === "faq" ? (
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                   <FAQSection t={t} locale={locale} />
-                </div>
-              ) : mainTab === "tutorials" ? (
-                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
-                  <VideoTutorials t={t} locale={locale} />
                 </div>
               ) : (
               <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
@@ -919,10 +994,6 @@ function HelpArticlesSection({
                     <div className="flex items-center gap-2 text-[10px] text-[var(--color-text-secondary)]">
                       <span className="px-1.5 py-0.5 bg-[var(--color-border-subtle)] rounded-full">
                         {article.category}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" />
-                        {article.viewCount ?? 0}
                       </span>
                     </div>
                   </div>

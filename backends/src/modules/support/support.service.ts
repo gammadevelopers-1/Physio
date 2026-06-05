@@ -33,6 +33,7 @@ import {
   supportTeamRequests,
   ticketTags,
   ticketTagAssignments,
+  ticketAttachments,
   kbSearchEvents,
   attachmentDownloadEvents,
   ticketAttachmentScans,
@@ -255,9 +256,33 @@ export class SupportService implements OnModuleInit {
     // Round-robin: find agent with fewest open tickets
     const assigneeId = await this.findNextAgent();
 
-    // Defensive — the DTO is just a string field. Validate origin +
-    // extension here so a malicious client can't store an external URL.
-    const safeAttachmentUrl = validateTicketAttachmentUrl(dto.attachmentUrl);
+    // Build the full attachment list. We accept both `attachmentUrl`
+    // (legacy single) and `attachmentUrls` (new multi). Each URL is
+    // validated for origin + extension before storage.
+    const multi = Array.isArray(dto.attachmentUrls) ? dto.attachmentUrls : [];
+    const combinedRaw = [
+      ...(dto.attachmentUrl ? [dto.attachmentUrl] : []),
+      ...multi,
+    ]
+      .map((u) => (typeof u === 'string' ? u.trim() : ''))
+      .filter(Boolean);
+
+    // Dedupe — the FE might re-submit the same URL via both fields,
+    // and the junction table has a (ticket, url) unique index that
+    // would reject the duplicate insert.
+    const seen = new Set<string>();
+    const safeAttachmentUrls: string[] = [];
+    for (const raw of combinedRaw) {
+      const safe = validateTicketAttachmentUrl(raw);
+      if (safe && !seen.has(safe)) {
+        seen.add(safe);
+        safeAttachmentUrls.push(safe);
+      }
+    }
+    // Single-column legacy slot still holds the first attachment so
+    // pre-junction code paths (older email templates, exports) keep
+    // working without reading the new table.
+    const firstAttachmentUrl = safeAttachmentUrls[0] ?? null;
 
     const [ticket] = await db
       .insert(tickets)
@@ -268,17 +293,40 @@ export class SupportService implements OnModuleInit {
         subject: dto.subject,
         description: dto.description,
         courseId: dto.courseId || null,
-        attachmentUrl: safeAttachmentUrl,
+        attachmentUrl: firstAttachmentUrl,
         status: TICKET_STATUS.NEW,
         assigneeId,
       })
       .returning();
 
-    // Record a 'pending' scan row for any attachment. Whichever scanner
-    // is wired (ClamAV side-car, Cloud Storage scanner, manual) writes
-    // back to the same row. No-op when there's no attachment.
-    if (safeAttachmentUrl) {
-      await this.recordAttachmentScanPending(ticket.id, safeAttachmentUrl);
+    // Junction rows — one per URL. The (ticket_id, url) unique index
+    // means onConflictDoNothing absorbs accidental double-submits.
+    if (safeAttachmentUrls.length > 0) {
+      try {
+        await db
+          .insert(ticketAttachments)
+          .values(
+            safeAttachmentUrls.map((url) => ({
+              ticketId: ticket.id,
+              url,
+              uploadedBy: userId,
+            })),
+          )
+          .onConflictDoNothing();
+      } catch (err) {
+        // Don't fail the ticket create over a junction insert hiccup —
+        // log so ops can spot a pattern of dropped attachment rows.
+        this.logger.warn(
+          `Failed to insert ticket_attachments for ticket ${ticket.id}: ${err}`,
+        );
+      }
+
+      // Record a 'pending' scan row per attachment. The pluggable scanner
+      // (ClamAV side-car, Cloud Storage scanner, manual) writes back to
+      // the same row.
+      for (const url of safeAttachmentUrls) {
+        await this.recordAttachmentScanPending(ticket.id, url);
+      }
     }
 
     // Step 4: Calculate SLA deadline (P-04)
@@ -722,6 +770,12 @@ export class SupportService implements OnModuleInit {
       }
     }
 
+    // Bundle tags + attachments for the detail view. Both are bulk
+    // fetches by ticketId — no N+1 worry because we're already on a
+    // single-ticket path.
+    const tags = await this.getTicketTags(ticket.id);
+    const attachments = await this.getTicketAttachments(ticket.id);
+
     return {
       ...ticket,
       assigneeName,
@@ -732,6 +786,8 @@ export class SupportService implements OnModuleInit {
       ttrDeadline,
       frtRemainingMinutes,
       ttrRemainingMinutes,
+      tags,
+      attachments,
     };
   }
 
@@ -2324,6 +2380,28 @@ export class SupportService implements OnModuleInit {
     const assigneeId = await this.findNextAgent();
     const trackingToken = crypto.randomUUID();
 
+    // Same multi-attachment handling as createTicket — validate each URL,
+    // dedupe, persist the first one to the legacy column for backward
+    // compat and the rest into the junction. Guest uploads land with
+    // uploadedBy = null because the sentinel guest user doesn't own
+    // the file individually.
+    const multiGuest = Array.isArray(dto.attachmentUrls)
+      ? dto.attachmentUrls
+      : [];
+    const combinedRawGuest = multiGuest
+      .map((u) => (typeof u === 'string' ? u.trim() : ''))
+      .filter(Boolean);
+    const seenGuest = new Set<string>();
+    const safeGuestAttachmentUrls: string[] = [];
+    for (const raw of combinedRawGuest) {
+      const safe = validateTicketAttachmentUrl(raw);
+      if (safe && !seenGuest.has(safe)) {
+        seenGuest.add(safe);
+        safeGuestAttachmentUrls.push(safe);
+      }
+    }
+    const firstGuestAttachmentUrl = safeGuestAttachmentUrls[0] ?? null;
+
     const [ticket] = await db
       .insert(tickets)
       .values({
@@ -2332,6 +2410,7 @@ export class SupportService implements OnModuleInit {
         priority: autoPriority,
         subject: dto.subject,
         description: dto.description,
+        attachmentUrl: firstGuestAttachmentUrl,
         status: TICKET_STATUS.NEW,
         assigneeId,
         guestTrackingToken: trackingToken,
@@ -2339,6 +2418,28 @@ export class SupportService implements OnModuleInit {
         guestEmail: dto.email,
       })
       .returning();
+
+    if (safeGuestAttachmentUrls.length > 0) {
+      try {
+        await db
+          .insert(ticketAttachments)
+          .values(
+            safeGuestAttachmentUrls.map((url) => ({
+              ticketId: ticket.id,
+              url,
+              uploadedBy: null,
+            })),
+          )
+          .onConflictDoNothing();
+      } catch (err) {
+        this.logger.warn(
+          `Failed to insert guest ticket_attachments for ticket ${ticket.id}: ${err}`,
+        );
+      }
+      for (const url of safeGuestAttachmentUrls) {
+        await this.recordAttachmentScanPending(ticket.id, url);
+      }
+    }
 
     // Notify assigned agent (respects support staff in-app master)
     if (assigneeId && (await this.shouldNotifySupport(assigneeId, 'inApp'))) {
@@ -2459,6 +2560,7 @@ export class SupportService implements OnModuleInit {
     }
 
     const tags = await this.getTicketTags(ticket.id);
+    const attachments = await this.getTicketAttachments(ticket.id);
 
     return {
       ...ticket,
@@ -2466,7 +2568,27 @@ export class SupportService implements OnModuleInit {
       slaPolicy: slaPolicy || null,
       csatSurvey,
       tags,
+      attachments,
     };
+  }
+
+  // Bulk attachment fetch for a single ticket. The legacy
+  // `attachmentUrl` column is folded in too so old tickets created
+  // before migration 0054 still surface as one chip in the UI.
+  async getTicketAttachments(ticketId: string) {
+    const rows = await db
+      .select({
+        id: ticketAttachments.id,
+        url: ticketAttachments.url,
+        filename: ticketAttachments.filename,
+        sizeBytes: ticketAttachments.sizeBytes,
+        mimeType: ticketAttachments.mimeType,
+        uploadedAt: ticketAttachments.uploadedAt,
+      })
+      .from(ticketAttachments)
+      .where(eq(ticketAttachments.ticketId, ticketId))
+      .orderBy(asc(ticketAttachments.uploadedAt));
+    return rows;
   }
 
   async addGuestReply(token: string, message: string) {

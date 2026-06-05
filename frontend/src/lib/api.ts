@@ -3800,6 +3800,7 @@ export const studentApi = {
     description: string;
     courseId?: string;
     attachmentUrl?: string;
+    attachmentUrls?: string[];
   }) => api.post<{ id: string }>('/student/tickets', data),
 
   replyToTicket: (ticketId: string, message: string) =>
@@ -4254,6 +4255,7 @@ export const supportApi = {
     description: string;
     courseId?: string;
     attachmentUrl?: string;
+    attachmentUrls?: string[];
   }) => api.post<{ id: string }>('/tickets', data),
 
   getTickets: (params?: {
@@ -4596,6 +4598,7 @@ export const supportApi = {
     subject: string;
     description: string;
     recaptchaToken?: string;
+    attachmentUrls?: string[];
   }) =>
     api.post<{ ticket: { id: string }; trackingToken: string }>(
       '/tickets/guest',

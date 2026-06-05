@@ -5,6 +5,8 @@ import {
   IsIn,
   IsOptional,
   MaxLength,
+  IsArray,
+  ArrayMaxSize,
 } from 'class-validator';
 
 /**
@@ -47,4 +49,13 @@ export class CreateGuestTicketDto {
   @IsOptional()
   @IsString()
   recaptchaToken?: string;
+
+  // Optional multi-attachment for the public form. Same validator path
+  // as the authenticated DTO — capped at 10 files, each URL must come
+  // from our storage origin.
+  @IsArray()
+  @IsString({ each: true })
+  @ArrayMaxSize(10)
+  @IsOptional()
+  attachmentUrls?: string[];
 }

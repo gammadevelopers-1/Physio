@@ -42,8 +42,6 @@ const SupervisorDashboardContent = () => {
     slaBreaches: 0,
     escalatedTickets: 0,
     escalatedTrend: "",
-    npsScore: 0,
-    npsResponses: 0,
   });
 
   const profile = useSupportProfile();
@@ -61,8 +59,6 @@ const SupervisorDashboardContent = () => {
         avgResolution: formatMinutes(data.avgTtrMinutes),
         csatScore: Number(data.csatAvgScore) || 0,
         csatResponses: Number(data.csatResponses) || 0,
-        npsScore: Number(data.npsScore) || 0,
-        npsResponses: Number(data.npsResponses) || 0,
       }));
     } catch {
       // Leave previous state intact on failure so the UI doesn't flicker to zeros

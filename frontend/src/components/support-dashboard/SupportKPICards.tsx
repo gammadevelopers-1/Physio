@@ -28,8 +28,6 @@ interface KPIData {
   slaBreaches: number;
   escalatedTickets: number;
   escalatedTrend: string;
-  npsScore?: number;
-  npsResponses?: number;
 }
 
 interface SupportKPICardsProps {

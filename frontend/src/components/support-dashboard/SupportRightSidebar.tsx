@@ -68,13 +68,12 @@ const SupportRightSidebar = () => {
   >([]);
   const [loading, setLoading] = useState(true);
 
-  // CSAT/NPS summary state sourced from the extended getKPIs() response.
+  // CSAT summary state sourced from the extended getKPIs() response.
+  // NPS was course-rating-derived and irrelevant here, so it's not surfaced.
   const [csatStats, setCsatStats] = useState<{
     avgScore: number;
     responses: number;
-    npsScore: number;
-    npsResponses: number;
-  }>({ avgScore: 0, responses: 0, npsScore: 0, npsResponses: 0 });
+  }>({ avgScore: 0, responses: 0 });
 
   useEffect(() => {
     let cancelled = false;
@@ -103,12 +102,10 @@ const SupportRightSidebar = () => {
         });
         setActivityItems(mapped);
 
-        // CSAT + NPS summary (already computed inside getKPIs)
+        // CSAT summary (already computed inside getKPIs)
         setCsatStats({
           avgScore: Number(kpisRes?.csatAvgScore) || 0,
           responses: Number(kpisRes?.csatResponses) || 0,
-          npsScore: Number(kpisRes?.npsScore) || 0,
-          npsResponses: Number(kpisRes?.npsResponses) || 0,
         });
 
         // Derive alerts from KPIs
@@ -256,21 +253,13 @@ const SupportRightSidebar = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <div className="text-center p-2 bg-[var(--color-surface-page)] rounded-lg">
             <p className="text-sm font-semibold text-[var(--color-text-primary)]">
               {csatStats.responses}
             </p>
             <p className="text-[10px] text-[var(--color-text-secondary)]">
               {t("csatSection.responses")}
-            </p>
-          </div>
-          <div className="text-center p-2 bg-[var(--color-surface-page)] rounded-lg">
-            <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-              {csatStats.npsResponses > 0 ? csatStats.npsScore : "—"}
-            </p>
-            <p className="text-[10px] text-[var(--color-text-secondary)]">
-              {t("csatSection.nps")}
             </p>
           </div>
           <div className="text-center p-2 bg-[var(--color-surface-page)] rounded-lg">

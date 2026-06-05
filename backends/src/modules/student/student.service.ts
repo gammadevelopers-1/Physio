@@ -31,6 +31,7 @@ import {
   webinarRegistrations,
   moduleCompletions,
 } from '../../database/schema';
+import { csatSurveys } from '../../database/schema/surveys';
 import { recomputeEnrollmentProgress } from '../enrollments/progress.helper';
 import { decryptPII } from '../../common/crypto';
 import type { SubmissionAnswer } from '../../database/schema/submissions';
@@ -3672,7 +3673,11 @@ export class StudentService {
    */
   async rateTicket(studentId: string, ticketId: string, dto: RateTicketDto) {
     const [ticket] = await db
-      .select({ id: tickets.id, status: tickets.status })
+      .select({
+        id: tickets.id,
+        status: tickets.status,
+        courseId: tickets.courseId,
+      })
       .from(tickets)
       .where(and(eq(tickets.id, ticketId), eq(tickets.studentId, studentId)));
 
@@ -3686,10 +3691,36 @@ export class StudentService {
       );
     }
 
-    await db
-      .update(tickets)
-      .set({ satisfactionRating: dto.rating })
-      .where(eq(tickets.id, ticketId));
+    // Write to both stores in one transaction so the rating button display
+    // (tickets.satisfactionRating) and the dashboard analytics
+    // (csat_surveys) never disagree. resolveTicket() inserts a csat_surveys
+    // row with score=NULL when the ticket is resolved; we upsert on the
+    // (ticket_id, user_id) unique index so the in-app rating fills it in
+    // even if the email-survey hadn't been opened yet.
+    await db.transaction(async (tx) => {
+      await tx
+        .update(tickets)
+        .set({ satisfactionRating: dto.rating })
+        .where(eq(tickets.id, ticketId));
+
+      await tx
+        .insert(csatSurveys)
+        .values({
+          ticketId,
+          userId: studentId,
+          courseId: ticket.courseId || null,
+          score: dto.rating,
+          channel: 'email',
+          submittedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [csatSurveys.ticketId, csatSurveys.userId],
+          set: {
+            score: dto.rating,
+            submittedAt: new Date(),
+          },
+        });
+    });
 
     return { success: true };
   }

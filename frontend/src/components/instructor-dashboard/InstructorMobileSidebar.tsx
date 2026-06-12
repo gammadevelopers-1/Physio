@@ -20,6 +20,7 @@ import {
   Pencil,
   Star,
   Trash2,
+  Headphones,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { profileApi } from "@/lib/api";
@@ -116,6 +117,11 @@ const InstructorMobileSidebar = ({
       label: t("sidebar.content"),
       href: `/${locale}/dashboard/instructor/content`,
       icon: Upload,
+    },
+    {
+      label: t("sidebar.support"),
+      href: `/${locale}/dashboard/instructor/support`,
+      icon: Headphones,
     },
     {
       label: t("sidebar.settings"),

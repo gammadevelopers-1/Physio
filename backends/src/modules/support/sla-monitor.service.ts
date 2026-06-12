@@ -7,18 +7,34 @@ import {
   slaPolicies,
   slaEvents,
   csatSurveys,
+  cronRuns,
   users,
   TICKET_STATUS,
   TICKET_PRIORITY,
   SLA_EVENT_TYPES,
   ON_HOLD_REASONS,
 } from '../../database/schema';
+
+// Stable identifiers for the per-cron rows in `cron_runs`. The admin
+// Support Overview UI maps these to translated display names.
+export const CRON_NAMES = {
+  SLA_BREACH_CHECK: 'SLA_BREACH_CHECK',
+  PRIORITY_ESCALATION: 'PRIORITY_ESCALATION',
+  AUTO_CLOSE_RESOLVED: 'AUTO_CLOSE_RESOLVED',
+  AUTO_CLOSE_WAITING_STUDENT: 'AUTO_CLOSE_WAITING_STUDENT',
+  CSAT_EMAIL_SEND: 'CSAT_EMAIL_SEND',
+  BUSINESS_RESUME_SWEEP: 'BUSINESS_RESUME_SWEEP',
+} as const;
+export type CronName = (typeof CRON_NAMES)[keyof typeof CRON_NAMES];
 import {
   calculateBusinessMinutesElapsed,
+  effectiveBusinessMinutesElapsed,
+  isWithinBusinessHours,
   refreshBusinessHoursConfigIfStale,
 } from './business-hours.util';
 import { SupportService } from './support.service';
 import { EmailService } from '../email/email.service';
+import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 
 @Injectable()
 export class SlaMonitorService {
@@ -27,7 +43,65 @@ export class SlaMonitorService {
   constructor(
     private readonly supportService: SupportService,
     private readonly emailService: EmailService,
+    private readonly notificationsService: UserNotificationsService,
   ) {}
+
+  /**
+   * Wrap a cron tick so each run records a row in `cron_runs`. The
+   * admin Support Overview reads the most-recent row per cron_name to
+   * surface "last run X seconds ago / status". Best-effort — a tracking
+   * failure never blocks the underlying work.
+   *
+   * Pattern: INSERT row with status='running' → run body → UPDATE row
+   * with finished_at + duration + status. If the body throws, we still
+   * UPDATE with status='error' and a truncated message so the strip
+   * shows a red state instead of going silent.
+   */
+  private async trackCronRun(
+    name: CronName,
+    body: () => Promise<void>,
+  ): Promise<void> {
+    let runId: string | null = null;
+    const startedAt = new Date();
+    try {
+      const [row] = await db
+        .insert(cronRuns)
+        .values({ cronName: name, startedAt, status: 'running' })
+        .returning({ id: cronRuns.id });
+      runId = row?.id ?? null;
+    } catch {
+      // Tracking shouldn't shadow the work — proceed without a row.
+    }
+
+    try {
+      await body();
+      if (runId) {
+        const finishedAt = new Date();
+        await db
+          .update(cronRuns)
+          .set({
+            status: 'success',
+            finishedAt,
+            durationMs: finishedAt.getTime() - startedAt.getTime(),
+          })
+          .where(eq(cronRuns.id, runId));
+      }
+    } catch (err) {
+      if (runId) {
+        const finishedAt = new Date();
+        await db
+          .update(cronRuns)
+          .set({
+            status: 'error',
+            finishedAt,
+            durationMs: finishedAt.getTime() - startedAt.getTime(),
+            errorMessage: String(err).slice(0, 500),
+          })
+          .where(eq(cronRuns.id, runId));
+      }
+      throw err;
+    }
+  }
 
   /**
    * SLA Breach Detection — runs every 5 minutes
@@ -41,6 +115,7 @@ export class SlaMonitorService {
    */
   @Cron('*/5 * * * *')
   async checkSlaBreaches() {
+    await this.trackCronRun(CRON_NAMES.SLA_BREACH_CHECK, async () => {
     try {
       // Refresh business-hours cache if stale — protects against another
       // Cloud Run instance having handled the admin PATCH while this one
@@ -60,6 +135,7 @@ export class SlaMonitorService {
           firstResponseAt: tickets.firstResponseAt,
           slaBreachedFrt: tickets.slaBreachedFrt,
           slaBreachedTtr: tickets.slaBreachedTtr,
+          onHoldAt: tickets.onHoldAt,
           onHoldTotalMinutes: tickets.onHoldTotalMinutes,
           createdAt: tickets.createdAt,
         })
@@ -85,13 +161,15 @@ export class SlaMonitorService {
           const policy = policyMap.get(ticket.priority);
           if (!policy) continue;
 
-          // Calculate effective business minutes elapsed
-          const totalBizMinutes = calculateBusinessMinutesElapsed(
-            ticket.createdAt,
+          // Effective math — accounts for completed AND in-flight hold
+          // minutes. Without this, a ticket parked on hold mid-clock
+          // would breach FRT/TTR even though the timer was supposed
+          // to be paused. This is the back-end half of the
+          // "ticket was on hold but timer never stopped" fix.
+          const effectiveBizMinutes = effectiveBusinessMinutesElapsed(
+            ticket,
             now,
           );
-          const effectiveBizMinutes =
-            totalBizMinutes - (ticket.onHoldTotalMinutes || 0);
 
           // ─── FRT Check (only if no first response yet) ────────
           if (!ticket.firstResponseAt) {
@@ -100,28 +178,32 @@ export class SlaMonitorService {
               effectiveBizMinutes >= policy.frtMinutes &&
               !ticket.slaBreachedFrt
             ) {
-              // Dedup check (SLA-10)
-              const [existingBreach] = await db
-                .select({ id: slaEvents.id })
-                .from(slaEvents)
+              // Atomic compare-and-swap: flip slaBreachedFrt from false
+              // → true in a single statement. Combines the SELECT-then-
+              // flag-set into one operation so two Cloud Run instances
+              // can't both win the dedup check and both reassign the
+              // ticket to (potentially different) agents. Loser sees
+              // zero affected rows and skips ALL side-effects below.
+              const claimed = await db
+                .update(tickets)
+                .set({
+                  slaBreachedFrt: true,
+                  // Stamp escalated_at so the FE chip + admin filter
+                  // light up on FRT breach. Only set on first breach;
+                  // re-running the cron is a no-op because we just
+                  // claimed the row from breached=false → breached=true.
+                  escalatedAt: sql`COALESCE(${tickets.escalatedAt}, ${now})`,
+                  updatedAt: now,
+                })
                 .where(
                   and(
-                    eq(slaEvents.ticketId, ticket.id),
-                    eq(slaEvents.eventType, SLA_EVENT_TYPES.FRT_BREACH),
+                    eq(tickets.id, ticket.id),
+                    eq(tickets.slaBreachedFrt, false),
                   ),
                 )
-                .limit(1);
+                .returning({ id: tickets.id });
 
-              if (!existingBreach) {
-                // Set breach flag
-                await db
-                  .update(tickets)
-                  .set({
-                    slaBreachedFrt: true,
-                    updatedAt: now,
-                  })
-                  .where(eq(tickets.id, ticket.id));
-
+              if (claimed.length > 0) {
                 // Log breach event
                 await db.insert(slaEvents).values({
                   ticketId: ticket.id,
@@ -214,6 +296,37 @@ export class SlaMonitorService {
                     }
                   }
                 } catch { /* non-blocking */ }
+
+                // Fan the FRT-breach escalation email out to all admins.
+                // Mirrors the TTR-breach fan-out below; admins own
+                // platform-wide support health and need to see FRT
+                // breaches without having to dig into the supervisor
+                // alerts page.
+                try {
+                  const adminIds = await this.supportService.findAdminUserIds();
+                  const adminRecipients = adminIds.filter(
+                    (id) => id !== newAssignee && id !== ticket.assigneeId,
+                  );
+                  if (adminRecipients.length) {
+                    const adminInfo = await db
+                      .select({ id: users.id, email: users.email, firstName: users.firstName })
+                      .from(users)
+                      .where(inArray(users.id, adminRecipients));
+                    await Promise.all(
+                      adminInfo.map(async (a) => {
+                        if (!a.email) return;
+                        if (!(await this.supportService.shouldNotifySupport(a.id, 'email'))) return;
+                        await this.emailService.sendTicketEscalation(
+                          a.email,
+                          a.firstName || 'Admin',
+                          ticket.referenceNumber,
+                          '',
+                          `FRT breached: ${policy.frtMinutes}m target exceeded — reassigned`,
+                        );
+                      }),
+                    );
+                  }
+                } catch { /* non-blocking */ }
               }
             }
 
@@ -255,26 +368,30 @@ export class SlaMonitorService {
               effectiveBizMinutes >= policy.ttrMinutes &&
               !ticket.slaBreachedTtr
             ) {
-              // Dedup check
-              const [existingBreach] = await db
-                .select({ id: slaEvents.id })
-                .from(slaEvents)
+              // Same atomic compare-and-swap as the FRT branch above.
+              // Combines the dedup check and the flag set so concurrent
+              // cron ticks across Cloud Run instances can't both
+              // reassign the same ticket. Loser sees zero rows
+              // returned and skips all side-effects (events insert,
+              // reassignment, breach emails, supervisor escalation).
+              const claimedTtr = await db
+                .update(tickets)
+                .set({
+                  slaBreachedTtr: true,
+                  // Same escalated_at stamp as the FRT branch — TTR
+                  // breach also lights up the chip + admin filter.
+                  escalatedAt: sql`COALESCE(${tickets.escalatedAt}, ${now})`,
+                  updatedAt: now,
+                })
                 .where(
                   and(
-                    eq(slaEvents.ticketId, ticket.id),
-                    eq(slaEvents.eventType, SLA_EVENT_TYPES.TTR_BREACH),
+                    eq(tickets.id, ticket.id),
+                    eq(tickets.slaBreachedTtr, false),
                   ),
                 )
-                .limit(1);
+                .returning({ id: tickets.id });
 
-              if (!existingBreach) {
-                await db
-                  .update(tickets)
-                  .set({
-                    slaBreachedTtr: true,
-                    updatedAt: now,
-                  })
-                  .where(eq(tickets.id, ticket.id));
+              if (claimedTtr.length > 0) {
 
                 // Look up the supervisor once so we can (a) record them in
                 // the sla_events audit row and (b) email them below. Spec:
@@ -446,6 +563,7 @@ export class SlaMonitorService {
     } catch (err) {
       this.logger.error(`SLA breach check failed: ${err}`);
     }
+    });
   }
 
   /**
@@ -462,6 +580,7 @@ export class SlaMonitorService {
    */
   @Cron('0 * * * *')
   async checkPriorityEscalations() {
+    await this.trackCronRun(CRON_NAMES.PRIORITY_ESCALATION, async () => {
     try {
       // Same anti-stale guard as checkSlaBreaches — see that method.
       await refreshBusinessHoursConfigIfStale(() =>
@@ -490,7 +609,9 @@ export class SlaMonitorService {
           id: tickets.id,
           referenceNumber: tickets.referenceNumber,
           priority: tickets.priority,
+          status: tickets.status,
           assigneeId: tickets.assigneeId,
+          onHoldAt: tickets.onHoldAt,
           onHoldTotalMinutes: tickets.onHoldTotalMinutes,
           createdAt: tickets.createdAt,
         })
@@ -507,12 +628,11 @@ export class SlaMonitorService {
 
       for (const ticket of openTickets) {
         try {
-          const totalBizMinutes = calculateBusinessMinutesElapsed(
-            ticket.createdAt,
+          // Same hold-aware math as the FRT/TTR breach loop above.
+          const effectiveBizMinutes = effectiveBusinessMinutesElapsed(
+            ticket,
             now,
           );
-          const effectiveBizMinutes =
-            totalBizMinutes - (ticket.onHoldTotalMinutes || 0);
 
           let newPriority: string | null = null;
 
@@ -595,6 +715,40 @@ export class SlaMonitorService {
                 }
               }
             } catch { /* non-blocking */ }
+
+            // Fan the priority-escalation email out to the supervisor
+            // and all admins so they can keep visibility on aging
+            // tickets without having to poll the queue.
+            try {
+              const supervisorId = await this.supportService.findSupervisorId();
+              const adminIds = await this.supportService.findAdminUserIds();
+              const extraIds = new Set<string>();
+              if (supervisorId && supervisorId !== ticket.assigneeId) {
+                extraIds.add(supervisorId);
+              }
+              for (const a of adminIds) {
+                if (a !== ticket.assigneeId) extraIds.add(a);
+              }
+              if (extraIds.size > 0) {
+                const recipientRows = await db
+                  .select({ id: users.id, email: users.email, firstName: users.firstName })
+                  .from(users)
+                  .where(inArray(users.id, Array.from(extraIds)));
+                await Promise.all(
+                  recipientRows.map(async (r) => {
+                    if (!r.email) return;
+                    if (!(await this.supportService.shouldNotifySupport(r.id, 'email'))) return;
+                    await this.emailService.sendTicketEscalation(
+                      r.email,
+                      r.firstName || 'Team',
+                      ticket.referenceNumber,
+                      '',
+                      `Priority auto-escalated from ${ticket.priority} to ${newPriority}`,
+                    );
+                  }),
+                );
+              }
+            } catch { /* non-blocking */ }
           }
         } catch (err) {
           this.logger.error(
@@ -605,6 +759,7 @@ export class SlaMonitorService {
     } catch (err) {
       this.logger.error(`Priority escalation check failed: ${err}`);
     }
+    });
   }
 
   /**
@@ -613,6 +768,7 @@ export class SlaMonitorService {
    */
   @Cron('*/30 * * * *')
   async autoCloseResolvedTickets() {
+    await this.trackCronRun(CRON_NAMES.AUTO_CLOSE_RESOLVED, async () => {
     try {
       const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
       const cutoff = new Date(Date.now() - FORTY_EIGHT_HOURS_MS);
@@ -657,6 +813,7 @@ export class SlaMonitorService {
     } catch (err) {
       this.logger.error(`Auto-close check failed: ${err}`);
     }
+    });
   }
 
   /**
@@ -665,6 +822,7 @@ export class SlaMonitorService {
    */
   @Cron('30 * * * *')
   async autoCloseWaitingForStudent() {
+    await this.trackCronRun(CRON_NAMES.AUTO_CLOSE_WAITING_STUDENT, async () => {
     try {
       const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
       const cutoff = new Date(Date.now() - FORTY_EIGHT_HOURS_MS);
@@ -714,6 +872,7 @@ export class SlaMonitorService {
     } catch (err) {
       this.logger.error(`Waiting-for-student check failed: ${err}`);
     }
+    });
   }
 
   /**
@@ -722,6 +881,7 @@ export class SlaMonitorService {
    */
   @Cron('*/5 * * * *')
   async sendCsatEmails() {
+    await this.trackCronRun(CRON_NAMES.CSAT_EMAIL_SEND, async () => {
     try {
       // Find CSAT surveys that need email sending:
       // - No score submitted yet
@@ -783,18 +943,36 @@ export class SlaMonitorService {
             continue;
           }
 
+          // Compare-and-swap claim before sending. Two Cloud Run
+          // instances can otherwise both win the SELECT above and each
+          // call sendCsatSurvey once — duplicate emails in the user's
+          // inbox. Guarding with the originally-fetched sentAt means
+          // only the first instance flips it to now() and proceeds;
+          // the loser sees zero affected rows and skips the send.
+          const claimed = await db
+            .update(csatSurveys)
+            .set({ sentAt: new Date() })
+            .where(
+              and(
+                eq(csatSurveys.id, survey.surveyId),
+                eq(csatSurveys.sentAt, survey.sentAt),
+              ),
+            )
+            .returning({ id: csatSurveys.id });
+
+          if (claimed.length === 0) {
+            this.logger.log(
+              `CSAT survey ${survey.surveyId}: another instance already sent — skipping`,
+            );
+            continue;
+          }
+
           await this.emailService.sendCsatSurvey(
             recipientEmail,
             recipientName,
             survey.ticketReferenceNumber,
             survey.surveyId,
           );
-
-          // Update sentAt to now (marks as email-sent, resets 72h timer)
-          await db
-            .update(csatSurveys)
-            .set({ sentAt: new Date() })
-            .where(eq(csatSurveys.id, survey.surveyId));
 
           this.logger.log(`CSAT email sent for ticket ${survey.ticketId} → ${recipientEmail}`);
         } catch (err) {
@@ -810,5 +988,192 @@ export class SlaMonitorService {
     } catch (err) {
       this.logger.error(`CSAT email send failed: ${err}`);
     }
+    });
+  }
+
+  /**
+   * Business-hours resume sweep — runs every minute.
+   *
+   * Tickets created during off-hours (and any other ticket that's
+   * unassigned for whatever reason) get auto-routed to an agent as soon
+   * as the support team is back online. We fire three notifications per
+   * resumed ticket:
+   *   - Learner: "We're back online — your ticket is now with {agent}"
+   *   - Agent:   "New ticket assigned"
+   *   - Supervisor: "Auto-assigned T-000X to {agent} on business resume"
+   *
+   * Multi-instance safety: the UPDATE ... WHERE assignee_id IS NULL
+   * RETURNING pattern means only ONE Cloud Run instance wins each
+   * ticket — concurrent ticks on other instances see the row already
+   * has an assignee and skip. So notifications fire exactly once even
+   * though the cron runs on every instance.
+   */
+  @Cron('*/1 * * * *')
+  async sweepBusinessResumeAssignments() {
+    await this.trackCronRun(CRON_NAMES.BUSINESS_RESUME_SWEEP, async () => {
+    try {
+      await refreshBusinessHoursConfigIfStale(() =>
+        this.supportService.getBusinessHours(),
+      );
+
+      // Outside business hours? Nothing to do — queued tickets keep waiting.
+      if (!isWithinBusinessHours(new Date())) return;
+
+      // Candidate set: still-open, still-unassigned. Includes any ticket
+      // that was created during the most recent offline window (the
+      // common case) plus any that were unassigned for other reasons.
+      const unassigned = await db
+        .select({
+          id: tickets.id,
+          referenceNumber: tickets.referenceNumber,
+          subject: tickets.subject,
+          priority: tickets.priority,
+          studentId: tickets.studentId,
+          guestEmail: tickets.guestEmail,
+          guestName: tickets.guestName,
+        })
+        .from(tickets)
+        .where(
+          and(
+            inArray(tickets.status, [
+              TICKET_STATUS.NEW,
+              TICKET_STATUS.IN_PROGRESS,
+            ]),
+            sql`${tickets.assigneeId} IS NULL`,
+          ),
+        );
+
+      if (!unassigned.length) return;
+
+      const supervisorId = await this.supportService.findSupervisorId();
+
+      for (const ticket of unassigned) {
+        try {
+          const assigneeId = await this.supportService.findNextAgent();
+          if (!assigneeId) {
+            // No agent available — leave unassigned, try again next tick.
+            continue;
+          }
+
+          // Atomic claim: only update if still unassigned. If another
+          // instance won the race, this UPDATE affects zero rows and we
+          // skip notifications.
+          const claimed = await db
+            .update(tickets)
+            .set({ assigneeId, updatedAt: new Date() })
+            .where(
+              and(
+                eq(tickets.id, ticket.id),
+                sql`${tickets.assigneeId} IS NULL`,
+              ),
+            )
+            .returning({ id: tickets.id });
+
+          if (claimed.length === 0) continue;
+
+          const [agent] = await db
+            .select({
+              email: users.email,
+              firstName: users.firstName,
+              lastName: users.lastName,
+            })
+            .from(users)
+            .where(eq(users.id, assigneeId));
+          const agentName =
+            [agent?.firstName, agent?.lastName].filter(Boolean).join(' ') ||
+            'an agent';
+
+          // Notify learner (skip guests for in-app, but email them)
+          try {
+            if (ticket.studentId) {
+              await this.notificationsService.create({
+                recipientId: ticket.studentId,
+                type: 'ticket_assigned',
+                title: 'Support team is back online',
+                message: `We're back online — your ticket ${ticket.referenceNumber} is now with ${agentName}.`,
+                link: `/dashboard/student/support`,
+                entityType: 'ticket',
+                entityId: ticket.id,
+              });
+            }
+          } catch {
+            /* non-blocking */
+          }
+
+          // Notify agent
+          try {
+            if (
+              await this.supportService.shouldNotifySupport(
+                assigneeId,
+                'inApp',
+              )
+            ) {
+              await this.notificationsService.create({
+                recipientId: assigneeId,
+                type: 'ticket_assigned',
+                title: 'New Ticket Assigned',
+                message: `${ticket.referenceNumber} — ${ticket.subject} (${(ticket.priority || '').toUpperCase()} priority)`,
+                link: `/dashboard/support/agent/tickets/${ticket.id}`,
+                entityType: 'ticket',
+                entityId: ticket.id,
+              });
+            }
+          } catch {
+            /* non-blocking */
+          }
+
+          // Notify supervisor
+          try {
+            if (supervisorId && supervisorId !== assigneeId) {
+              await this.notificationsService.create({
+                recipientId: supervisorId,
+                type: 'ticket_assigned',
+                title: 'Ticket auto-assigned on business resume',
+                message: `${ticket.referenceNumber} routed to ${agentName} after business hours resumed.`,
+                link: `/dashboard/support/agent/tickets/${ticket.id}`,
+                entityType: 'ticket',
+                entityId: ticket.id,
+              });
+            }
+          } catch {
+            /* non-blocking */
+          }
+
+          // Mirror the in-app notifications to email (gated by prefs).
+          try {
+            if (
+              await this.supportService.shouldNotifySupport(
+                assigneeId,
+                'email',
+              )
+            ) {
+              if (agent?.email) {
+                await this.emailService.sendTicketAssignedAgent(
+                  agent.email,
+                  agent.firstName || 'Agent',
+                  ticket.referenceNumber,
+                  ticket.subject,
+                  ticket.priority,
+                  'resumed business hours',
+                );
+              }
+            }
+          } catch {
+            /* non-blocking */
+          }
+
+          this.logger.log(
+            `Business resume: auto-assigned ${ticket.referenceNumber} → ${agentName}`,
+          );
+        } catch (err) {
+          this.logger.error(
+            `Business-resume sweep failed for ticket ${ticket.id}: ${err}`,
+          );
+        }
+      }
+    } catch (err) {
+      this.logger.error(`Business-resume sweep failed: ${err}`);
+    }
+    });
   }
 }

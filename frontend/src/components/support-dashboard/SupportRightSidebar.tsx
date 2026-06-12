@@ -316,8 +316,14 @@ const SupportRightSidebar = () => {
 
         <div className="max-h-[280px] overflow-y-auto -mx-1 px-1">
           {loading ? (
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="w-5 h-5 text-[#3B82F6] animate-spin" />
+            <div className="space-y-2 py-1">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-2 py-1.5">
+                  <div className="w-4 h-4 bg-[var(--color-border)] rounded animate-pulse flex-shrink-0" />
+                  <div className="h-3 flex-1 bg-[var(--color-border)] rounded animate-pulse" />
+                  <div className="h-2.5 w-10 bg-[var(--color-border)] rounded animate-pulse" />
+                </div>
+              ))}
             </div>
           ) : activityItems.length === 0 ? (
             <p className="text-[13px] text-[var(--color-text-secondary)] text-center py-4">
@@ -393,8 +399,16 @@ const SupportRightSidebar = () => {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-4">
-            <Loader2 className="w-5 h-5 text-[#EA580C] animate-spin" />
+          <div className="space-y-2 py-1">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-start gap-2 py-1.5">
+                <div className="w-3 h-3 bg-[var(--color-border)] rounded-full animate-pulse mt-0.5 flex-shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3 w-32 bg-[var(--color-border)] rounded animate-pulse" />
+                  <div className="h-2.5 w-48 bg-[var(--color-border)] rounded animate-pulse" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : visibleAlerts.length === 0 ? (
           <div className="text-center py-4">

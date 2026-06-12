@@ -9,6 +9,7 @@ export function getApplicationApprovedSetPasswordHtml(
   applicantName: string,
   setupUrl: string,
   locale: EmailLocale = 'en',
+  frontendUrl: string = 'https://app.physioguidance.com',
 ): string {
   const s = getEmailStrings(locale);
   const heading = locale === 'ar'
@@ -89,6 +90,16 @@ export function getApplicationApprovedSetPasswordHtml(
             </td>
           </tr>
 
+          <!-- Contact support -->
+          <tr>
+            <td style="padding:8px 32px 16px;text-align:center;">
+              <a href="${frontendUrl.replace(/\/$/, '')}/${locale}/support"
+                 style="display:inline-block;padding:10px 24px;background:#ffffff;color:#525252;text-decoration:none;border:1.5px solid #e5e7eb;border-radius:999px;font-size:13px;font-weight:600;font-family:'DM Sans',Arial,sans-serif;">
+                ${s.appContactSupportCta}
+              </a>
+            </td>
+          </tr>
+
           <!-- Divider -->
           <tr><td style="padding:0 32px;"><div style="height:1px;background:#e5e7eb;"></div></td></tr>
 
@@ -113,8 +124,10 @@ export function getApplicationApprovedSetPasswordText(
   applicantName: string,
   setupUrl: string,
   locale: EmailLocale = 'en',
+  frontendUrl: string = 'https://app.physioguidance.com',
 ): string {
   const s = getEmailStrings(locale);
+  const fe = frontendUrl.replace(/\/$/, '');
   const heading = locale === 'ar' ? 'تمت الموافقة على طلبك!' : 'Your application has been approved!';
   const intro = locale === 'ar'
     ? `مرحبًا ${applicantName}، تم قبولك كمدرب. لإكمال حسابك، يرجى تعيين كلمة المرور الخاصة بك.`
@@ -129,6 +142,8 @@ ${intro}
 ${locale === 'ar' ? 'تعيين كلمة المرور' : 'Set Password'}: ${setupUrl}
 
 ${expiryNote}
+
+${s.appContactSupportCta}: ${fe}/${locale}/support
 
 © ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
 ${s.nelcFooter}`;

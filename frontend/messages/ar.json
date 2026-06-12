@@ -4,6 +4,54 @@
     "subtitle": "تخضع المنصة لأعمال صيانة مجدولة.",
     "autoRecoverHint": "ستُحدَّث هذه الصفحة تلقائياً عند عودة الخدمة."
   },
+  "statusPage": {
+    "loadError": {
+      "title": "تعذّر تحميل حالة الخدمات",
+      "body": "نواجه مشكلة في الوصول إلى نظام الحالة. الرجاء المحاولة بعد قليل."
+    },
+    "componentsHeading": "المكوّنات",
+    "activeIncidentsHeading": "حوادث جارية",
+    "recentResolvedHeading": "حوادث محلولة مؤخرًا (آخر ٧ أيام)",
+    "generatedAt": "آخر تحديث {time}",
+    "incidentStartedAt": "بدأ في {time}",
+    "incidentResolvedAt": "حُلّ في {time}",
+    "overall": {
+      "operational": {
+        "title": "جميع الأنظمة تعمل بشكل طبيعي",
+        "body": "كل شيء يعمل بشكل اعتيادي الآن."
+      },
+      "degraded": {
+        "title": "بعض الأنظمة تواجه مشاكل",
+        "body": "قد تكون الخدمة أبطأ من المعتاد أو متأثرة جزئيًا. التفاصيل أدناه."
+      },
+      "down": {
+        "title": "انقطاع رئيسي جارٍ",
+        "body": "نحن على علم بانقطاع كبير ونعمل على معالجته. التفاصيل أدناه."
+      },
+      "maintenance": {
+        "title": "صيانة مجدولة",
+        "body": "بعض الخدمات متوقّفة مؤقّتًا لإجراء صيانة مجدولة."
+      }
+    },
+    "componentStatus": {
+      "operational": "تعمل",
+      "degraded": "أداء منخفض",
+      "partial_outage": "انقطاع جزئي",
+      "major_outage": "انقطاع كامل",
+      "maintenance": "صيانة"
+    },
+    "incidentStatus": {
+      "investigating": "قيد التحقّق",
+      "identified": "تم تحديد المشكلة",
+      "monitoring": "قيد المراقبة",
+      "resolved": "تم الحل"
+    },
+    "lastChecked": "آخر فحص: {time}",
+    "notYetChecked": "الفحص التلقائي قيد الانتظار — لم تُجرَ المحاولة الأولى بعد",
+    "justNow": "الآن",
+    "minutesAgo": "{count, plural, zero {أقل من دقيقة} one {قبل دقيقة} two {قبل دقيقتين} few {قبل # دقائق} many {قبل # دقيقة} other {قبل # دقيقة}}",
+    "hoursAgo": "{count, plural, zero {أقل من ساعة} one {قبل ساعة} two {قبل ساعتين} few {قبل # ساعات} many {قبل # ساعة} other {قبل # ساعة}}"
+  },
   "navbar": {
     "home": "الرئيسية",
     "courses": "الدورات",
@@ -1265,6 +1313,104 @@
     "submitError": "فشل في تقديم طلبك. يرجى المحاولة مرة أخرى.",
     "submitting": "جارٍ التقديم..."
   },
+  "trainerPortal": {
+    "banner": {
+      "alreadyApplied": "هل قدّمت طلباً سابقاً؟",
+      "checkStatus": "تحقق من حالة طلبك"
+    },
+    "modal": {
+      "title": "تحقق من طلبك"
+    },
+    "emailStep": {
+      "intro": "أدخل البريد الإلكتروني الذي استخدمته عند التقديم. سنرسل لك رمز تحقق مكوّناً من 6 أرقام.",
+      "label": "البريد الإلكتروني",
+      "placeholder": "you@example.com",
+      "submit": "إرسال رمز التحقق"
+    },
+    "otpStep": {
+      "intro": "أرسلنا رمزاً مكوّناً من 6 أرقام إلى {email}. أدخله أدناه لعرض حالة طلبك.",
+      "label": "رمز التحقق",
+      "verify": "تحقق",
+      "resend": "استخدم بريداً مختلفاً أو أعد إرسال الرمز"
+    },
+    "toasts": {
+      "otpSent": "تم إرسال رمز التحقق. راجع بريدك الإلكتروني."
+    },
+    "errors": {
+      "emailRequired": "الرجاء إدخال البريد الإلكتروني.",
+      "captchaRequired": "الرجاء إكمال التحقق البشري.",
+      "otpSendFailed": "تعذّر إرسال رمز التحقق. حاول مرة أخرى.",
+      "otpInvalid": "أدخل الرمز كاملاً (6 أرقام).",
+      "otpVerifyFailed": "فشل التحقق. الرجاء طلب رمز جديد.",
+      "sessionExpired": "انتهت صلاحية الجلسة. الرجاء التحقق من البريد مرة أخرى.",
+      "uploadFailed": "فشل رفع الملف. حاول مرة أخرى.",
+      "resubmitFailed": "تعذّر إرسال التعديلات. حاول مرة أخرى."
+    },
+    "status": {
+      "notFound": {
+        "title": "لم نجد طلباً",
+        "body": "لم نعثر على طلب بهذا البريد الإلكتروني. إذا لم تتقدم بعد، انتقل للأسفل لبدء طلب جديد."
+      },
+      "PENDING": {
+        "title": "قيد المراجعة",
+        "body": "طلبك لدى فريق المراجعة. سنرسل لك بريداً فور توفر أي تحديث."
+      },
+      "APPROVED": {
+        "title": "تمت الموافقة",
+        "body": "أهلاً بك معنا! تمت الموافقة على طلب المدرب الخاص بك.",
+        "checkEmail": "راجع بريدك الإلكتروني للحصول على تعليمات تعيين كلمة المرور وإكمال إعداد حسابك.",
+        "loginCta": "تسجيل الدخول إلى لوحة التحكم"
+      },
+      "REJECTED": {
+        "title": "غير مقبول",
+        "body": "للأسف لم نتمكن من الموافقة على طلبك في الوقت الحالي. ملاحظة المراجع موضحة أدناه — تواصل مع الدعم إذا كان لديك استفسار."
+      },
+      "MORE_INFO": {
+        "title": "مطلوب تعديلات",
+        "body": "يحتاج فريقنا إلى بعض التعديلات قبل اعتماد طلبك. حدّث ما هو ناقص أدناه وأعد التقديم."
+      },
+      "submittedOn": "تاريخ التقديم",
+      "reviewerNote": "ملاحظة المراجع",
+      "missingReqsTitle": "ما يجب إكماله",
+      "missingReqs": {
+        "CV_MISSING": "السيرة الذاتية",
+        "SCFHS_VERIFICATION": "إثبات التسجيل في الهيئة السعودية للتخصصات الصحية",
+        "QUALIFICATION_DOC": "وثيقة المؤهلات",
+        "PHOTO": "الصورة الشخصية",
+        "BANK_DETAILS": "تفاصيل الحساب البنكي",
+        "NATIONAL_ID": "الهوية الوطنية / الإقامة"
+      },
+      "activity": "النشاط",
+      "contactSupport": "لديك سؤال؟ تواصل مع الدعم."
+    },
+    "events": {
+      "submitted": "تم تقديم الطلب",
+      "approved": "تمت الموافقة",
+      "rejected": "غير مقبول",
+      "requested_info": "طُلبت تعديلات",
+      "resubmitted": "أعدت تقديم طلبك"
+    },
+    "resubmit": {
+      "title": "أرسل طلبك المُحدَّث",
+      "intro": "عدّل بياناتك وحمّل المستندات التي طلبها المراجع. كل ما لدينا من بيانات يبقى كما هو ما لم تغيّره.",
+      "documents": "المستندات",
+      "documentsHint": "حمّل ملفات PDF أو JPG أو PNG أو WebP — حتى 10 ميجابايت لكل ملف. الملفات الجديدة تُضاف إلى الموجودة.",
+      "removeFile": "إزالة",
+      "uploadCta": "تحميل المستندات",
+      "submit": "إرسال الطلب المُحدَّث",
+      "success": "شكراً — طلبك المُحدَّث وصل إلى فريقنا.",
+      "fileUploaded": "تم تحميل الملف.",
+      "fields": {
+        "fullNameEnglish": "الاسم الكامل (بالإنجليزية)",
+        "fullNameArabic": "الاسم الكامل (بالعربية)",
+        "mobileNumber": "رقم الجوال",
+        "specialty": "التخصص",
+        "qualification": "المؤهل",
+        "scfhsNumber": "رقم الهيئة السعودية",
+        "nationalId": "الهوية الوطنية / الإقامة"
+      }
+    }
+  },
   "studentDashboard": {
     "title": "لوحة تحكم الطالب",
     "continueLearning": {
@@ -1747,6 +1893,7 @@
       "filterClosed": "مغلق",
       "status_new": "جديد",
       "status_in_progress": "قيد المعالجة",
+      "status_on_hold": "قيد الانتظار",
       "status_resolved": "تم الحل",
       "status_closed": "مغلق",
       "priority_high": "عالية",
@@ -1793,11 +1940,15 @@
         "body": "انتهت نافذة إعادة الفتح (48 ساعة). يرجى إنشاء تذكرة جديدة للمتابعة."
       },
       "expectedResponse": "الرد المتوقع خلال {hours} ساعة",
+      "queuedUntilResume": "في الانتظار — حتى عودة ساعات العمل",
       "slaOverdue": "تأخر الرد",
       "selectCourse": "اختر الدورة المتعلقة (اختياري)",
       "relatedCourse": "الدورة المتعلقة",
       "attachment": "مرفق",
       "attachments": "المرفقات",
+      "scanClean": "تم الفحص · آمن",
+      "scanPending": "جارٍ الفحص…",
+      "scanBlocked": "محظور — تم اكتشاف برمجيات خبيثة",
       "attachFile": "إرفاق ملف (PDF, JPG, PNG, حد أقصى 5 ميجا)",
       "removeFile": "إزالة الملف",
       "removeAttachment": "إزالة المرفق",
@@ -2308,6 +2459,135 @@
       "error": "فشل التسجيل. يرجى المحاولة مرة أخرى."
     }
   },
+  "aboutThisStudent": {
+    "title": "عن هذا الطالب",
+    "progress": "التقدم",
+    "lastAccessed": "آخر دخول",
+    "enrolled": "تاريخ التسجيل",
+    "attendance": "الحضور",
+    "sessions": "جلسات",
+    "assessmentAvg": "متوسط التقييمات",
+    "lastN": "آخر {count}",
+    "footnote": "تم إرفاق السياق تلقائياً — للقراءة فقط."
+  },
+  "userSupport": {
+    "title": "الدعم الفني",
+    "newTicket": "تذكرة جديدة",
+    "backToTickets": "العودة إلى التذاكر",
+    "refresh": "تحديث",
+    "createFirst": "أنشئ أول تذكرة لك",
+    "noTicketsTitle": "لا توجد تذاكر بعد",
+    "noTicketsDescription": "عند إرسال تذكرة دعم ستظهر هنا لمتابعة حالتها والردود عليها.",
+    "loadFailed": "تعذر تحميل تذاكرك.",
+    "retry": "إعادة المحاولة",
+    "filter": {
+      "all": "الكل",
+      "new": "جديدة",
+      "in_progress": "قيد المعالجة",
+      "on_hold": "معلقة",
+      "resolved": "تم الحل",
+      "closed": "مغلقة"
+    },
+    "status": {
+      "new": "جديدة",
+      "in_progress": "قيد المعالجة",
+      "on_hold": "معلقة",
+      "resolved": "تم الحل",
+      "closed": "مغلقة"
+    },
+    "category": {
+      "billing": "الفواتير",
+      "login": "تسجيل الدخول",
+      "content": "المحتوى",
+      "certificate": "الشهادة",
+      "technical": "تقني",
+      "webinar": "الندوة الإلكترونية",
+      "cme": "الساعات المعتمدة",
+      "trainer": "طلب التدريب",
+      "courses": "الدورات",
+      "sessions": "الجلسات والمواعيد",
+      "payments": "المدفوعات",
+      "invoices": "الفواتير الضريبية",
+      "refunds": "المبالغ المستردة",
+      "integrations": "تكاملات الطرف الثالث",
+      "course_approvals": "اعتماد الدورات",
+      "system_issues": "مشاكل النظام",
+      "other": "أخرى"
+    },
+    "sla": {
+      "queuedUntilResume": "في الانتظار — سيستأنف الدعم خلال ساعات العمل",
+      "overdue": "تأخر الرد",
+      "expectedIn": "الرد خلال ~{hours} ساعة"
+    },
+    "form": {
+      "category": "الفئة",
+      "categoryPlaceholder": "اختر فئة…",
+      "relatedCourse": "الدورة المرتبطة (اختياري)",
+      "selectCourse": "اختر دورة…",
+      "subject": "الموضوع",
+      "subjectPlaceholder": "ملخص قصير للمشكلة",
+      "description": "الوصف",
+      "descriptionPlaceholder": "اشرح التفاصيل — ماذا حدث، متى، وماذا كنت تتوقع.",
+      "attachments": "المرفقات",
+      "dropFilesHere": "اسحب الملفات هنا أو انقر للرفع",
+      "fileHint": "PDF, JPG, PNG, WebP — بحد أقصى 5 ميغابايت لكل ملف و10 ملفات كحد أقصى.",
+      "uploading": "جارٍ الرفع…",
+      "uploaded": "تم الرفع",
+      "uploadFailed": "فشل الرفع",
+      "retryUpload": "إعادة المحاولة",
+      "removeAttachment": "إزالة المرفق",
+      "maxAttachmentsReached": "يمكنك إرفاق {max} ملف كحد أقصى.",
+      "fileTooLarge": "يجب أن يكون كل ملف بحجم 5 ميغابايت أو أقل.",
+      "invalidFileType": "يُسمح فقط بملفات PDF و JPG و PNG و WebP.",
+      "waitForUploads": "يرجى انتظار اكتمال الرفع.",
+      "submit": "إرسال التذكرة",
+      "submitting": "جارٍ الإرسال…",
+      "cancel": "إلغاء",
+      "attachmentErrorsTip": "فشلت بعض المرفقات — قم بإزالتها للمتابعة.",
+      "submitFailed": "تعذر إرسال التذكرة. يرجى المحاولة مرة أخرى.",
+      "submitted": "تم إرسال التذكرة."
+    },
+    "detail": {
+      "createdOn": "تم الإنشاء في {date}",
+      "description": "الوصف",
+      "attachment": "مرفق",
+      "concerns": {
+        "attendance": "الحضور",
+        "progress": "التقدم",
+        "assessment": "التقييم",
+        "engagement": "التفاعل",
+        "technical": "تقني",
+        "other": "أخرى"
+      },
+      "replies": "الردود",
+      "noRepliesYet": "لا توجد ردود بعد. سيقوم فريق الدعم بالرد في أقرب وقت.",
+      "replyPlaceholder": "اكتب ردك…",
+      "reopenPlaceholder": "أرسل رداً لإعادة فتح هذه التذكرة…",
+      "attachFile": "إرفاق ملف",
+      "sendReply": "إرسال الرد",
+      "replyHint": "اضغط Enter للإرسال · Shift+Enter لسطر جديد",
+      "reopenHint": "الرد خلال 48 ساعة سيعيد فتح هذه التذكرة.",
+      "uploading": "جارٍ الرفع…",
+      "uploaded": "تم الرفع",
+      "uploadFailed": "فشل",
+      "retryUpload": "إعادة",
+      "removeAttachment": "إزالة",
+      "resolvedBanner": {
+        "title": "تم حل هذه التذكرة.",
+        "body": "إذا كان كل شيء على ما يرام، فلا داعي لأي إجراء. وإذا كانت لديك مشاكل، يرجى الرد أدناه وسيقوم الوكيل بإعادة فتح المحادثة."
+      },
+      "graceBanner": {
+        "title": "مغلقة — لا يزال بإمكانك الرد خلال {time}.",
+        "body": "الرد سيعيد فتح هذه التذكرة ليتمكن الفريق من متابعتها."
+      },
+      "closedBanner": {
+        "title": "هذه التذكرة مغلقة.",
+        "body": "يرجى إنشاء تذكرة جديدة إذا كنت بحاجة إلى مساعدة إضافية."
+      },
+      "rateExperience": "كيف كانت تجربتك؟",
+      "thankYou": "شكراً على ملاحظاتك!"
+    }
+  },
   "instructorDashboard": {
     "title": "لوحة تحكم المدرب",
     "courses": {
@@ -2380,6 +2660,7 @@
       "certificates": "الشهادات",
       "content": "المحتوى",
       "reports": "التقارير",
+      "support": "الدعم الفني",
       "settings": "الإعدادات",
       "rating": "التقييم",
       "profileCompletion": "اكتمال الملف الشخصي",
@@ -3130,12 +3411,24 @@
       "interventionAnyCourse": "أي دورة",
       "interventionNote": "ملاحظة",
       "interventionNotePlaceholder": "أضف ملاحظة حول هذا التدخل...",
+      "interventionConcernLabel": "نوع المشكلة *",
+      "interventionConcernRequired": "اختر نوع المشكلة قبل إرسال تذكرة الدعم.",
+      "interventionConcerns": {
+        "attendance": "الحضور",
+        "progress": "التقدم",
+        "assessment": "التقييم",
+        "engagement": "التفاعل",
+        "technical": "تقني",
+        "other": "أخرى"
+      },
       "interventionCancel": "إلغاء",
       "submitIntervention": "إرسال",
       "interventionCreated": "تم تسجيل التدخل بنجاح",
       "interventionFailed": "فشل في إنشاء التدخل",
       "noInterventions": "لم يتم تسجيل أي تدخلات بعد.",
       "interventionBy": "بواسطة {name}",
+      "interventionTicketLink": "فتح التذكرة",
+      "interventionResolved": "تم الحل",
       "atRisk": "معرض للخطر",
       "enrollmentCompleted": "مكتمل",
       "enrollmentInProgress": "قيد التقدم",
@@ -3883,6 +4176,7 @@
       "reviews": "المراجعات",
       "nelcCompliance": "امتثال NELC",
       "reports": "التقارير",
+      "support": "الدعم الفني",
       "settings": "الإعدادات",
       "courseManager": "مدير الدورات",
       "nelc": "NELC",
@@ -5242,7 +5536,7 @@
       "statuses": {
         "active": "نشط",
         "suspended": "موقوف",
-        "pending": "قيد الانتظار",
+        "pending": "تم إرسال الدعوة",
         "inactive": "غير نشط"
       },
       "sampleUsers": {
@@ -5366,7 +5660,32 @@
         "suspend": "إيقاف",
         "activate": "تفعيل",
         "trustedDevices": "الأجهزة الموثوقة",
-        "delete": "حذف"
+        "delete": "حذف",
+        "resendInvite": "إعادة إرسال الدعوة"
+      },
+      "inviteFlowTitle": "سنرسل رابط الإعداد بالبريد الإلكتروني",
+      "inviteFlowDescription": "بدلاً من اختيار كلمة مرور، يتلقى المستخدم رابطاً لمرة واحدة لتعيين كلمة المرور الخاصة به. ينتهي الرابط خلال 24 ساعة — يمكنك إعادة إرساله من قائمة المستخدمين.",
+      "inviteResent": "تمت إعادة إرسال الدعوة إلى {email}.",
+      "inviteResendFailed": "تعذر إعادة إرسال الدعوة. يرجى المحاولة مرة أخرى.",
+      "createUser": {
+        "supervisorLabel": "المشرف *",
+        "supervisorHint": "يجب أن ينتمي كل موظف دعم إلى فريق مشرف. اختر المشرف الذي سيعمل تحت إدارته.",
+        "supervisorPlaceholder": "اختر مشرفاً",
+        "supervisorLoading": "جاري تحميل المشرفين…",
+        "supervisorRequired": "اختر مشرفاً قبل إنشاء موظف الدعم.",
+        "noSupervisorsTitle": "لا يوجد مشرفو دعم حالياً",
+        "noSupervisorsHint": "أنشئ مشرف دعم أولاً ثم أضف موظفي الدعم إلى فريقه.",
+        "teamCount": "{count} في الفريق"
+      },
+      "manageRoles": {
+        "reassignTitle": "أعد توزيع الفريق قبل إزالة الدور",
+        "reassignDescription": "لا يزال لدى {name} عدد {count} من موظفي الدعم. انقل الفريق إلى مشرف آخر قبل إزالة دور الدعم.",
+        "reassignTargetLabel": "نقل الموظفين إلى",
+        "reassignTargetPlaceholder": "اختر مشرفاً آخر",
+        "reassignPickTarget": "اختر المشرف المستهدف.",
+        "reassignSuccess": "تم نقل {count} من الموظفين إلى المشرف الجديد.",
+        "reassignCancel": "إلغاء",
+        "reassignConfirm": "نقل الفريق وإزالة الدور"
       },
       "detail": {
         "close": "إغلاق",
@@ -6197,6 +6516,7 @@
         "payments": "المدفوعات",
         "integrations": "التكاملات",
         "backups": "النسخ الاحتياطية",
+        "service-status": "حالة الخدمات",
         "maintenance": "الصيانة"
       },
       "general": {
@@ -6631,6 +6951,99 @@
         "rolledBackToast": "تخدم حركة المرور المباشرة الآن الإصدار {revision}",
         "rollbackFailedToast": "فشل الإرجاع. يرجى المحاولة مجددًا أو مراجعة سجل التدقيق."
       },
+      "serviceStatusTab": {
+        "intro": {
+          "title": "حالة الخدمات العامة",
+          "body": "غيّر حالة أيّ مكوّن أو انشر تحديثات الحوادث — كل ما هنا يظهر على صفحة الحالة العامة في"
+        },
+        "components": {
+          "title": "المكوّنات",
+          "statusLabel": "الحالة",
+          "messageEnLabel": "الرسالة (إنجليزي)",
+          "messageArLabel": "الرسالة (عربي)",
+          "messagePlaceholder": "ملاحظة عامة اختيارية (مثلاً: 'نتحقّق من البطء')",
+          "save": "حفظ",
+          "saving": "جارٍ الحفظ…",
+          "cancel": "إلغاء",
+          "pinned": "مثبّت",
+          "autoSays": "الكشف التلقائي",
+          "lastChecked": "آخر فحص",
+          "lastCheckError": "فشل آخر فحص",
+          "notYetChecked": "لم يُفحص بعد",
+          "clearOverride": "إلغاء التثبيت",
+          "manualOnly": "تحكّم يدوي فقط — سيُربط الفحص التلقائي عند دمج بوّابة دفع حقيقية.",
+          "justNow": "الآن",
+          "minutesAgo": "{count, plural, zero {أقل من دقيقة} one {قبل دقيقة} two {قبل دقيقتين} few {قبل # دقائق} many {قبل # دقيقة} other {قبل # دقيقة}}",
+          "hoursAgo": "{count, plural, zero {أقل من ساعة} one {قبل ساعة} two {قبل ساعتين} few {قبل # ساعات} many {قبل # ساعة} other {قبل # ساعة}}",
+          "daysAgo": "{count, plural, zero {أقل من يوم} one {قبل يوم} two {قبل يومين} few {قبل # أيام} many {قبل # يومًا} other {قبل # يوم}}"
+        },
+        "componentStatus": {
+          "operational": "تعمل",
+          "degraded": "أداء منخفض",
+          "partial_outage": "انقطاع جزئي",
+          "major_outage": "انقطاع كامل",
+          "maintenance": "صيانة"
+        },
+        "incidentStatus": {
+          "investigating": "قيد التحقّق",
+          "identified": "تم تحديد المشكلة",
+          "monitoring": "قيد المراقبة",
+          "resolved": "تم الحل"
+        },
+        "severity": {
+          "minor": "بسيطة",
+          "major": "كبيرة",
+          "critical": "حرجة"
+        },
+        "incidents": {
+          "title": "الحوادث",
+          "create": "إنشاء حادث",
+          "creating": "جارٍ الإنشاء…",
+          "post": "نشر تحديث",
+          "posting": "جارٍ النشر…",
+          "postUpdate": "نشر تحديث",
+          "cancel": "إلغاء",
+          "delete": "حذف",
+          "empty": "لا توجد حوادث في هذا النطاق.",
+          "emptyActive": "لا توجد حوادث جارية — كل شيء هادئ.",
+          "noComponents": "بدون مكوّن محدّد",
+          "createTitle": "إنشاء حادث",
+          "postUpdateTitle": "نشر تحديث على الحادث",
+          "filter": {
+            "active": "جارٍ",
+            "resolved": "محلول",
+            "all": "الكل"
+          },
+          "fields": {
+            "titleEn": "العنوان (إنجليزي)",
+            "titleAr": "العنوان (عربي)",
+            "affected": "المكوّنات المتأثّرة",
+            "severity": "الخطورة",
+            "initialStatus": "الحالة الابتدائية",
+            "status": "الحالة",
+            "messageEn": "الرسالة (إنجليزي)",
+            "messageAr": "الرسالة (عربي)"
+          },
+          "errors": {
+            "required": "العنوان والرسالة الإنجليزية حقول مطلوبة."
+          },
+          "toasts": {
+            "created": "تم إنشاء الحادث",
+            "createFailed": "تعذّر إنشاء الحادث",
+            "updatePosted": "تم نشر التحديث",
+            "updateFailed": "تعذّر نشر التحديث"
+          }
+        },
+        "toasts": {
+          "loadFailed": "تعذّر تحميل حالة الخدمات",
+          "componentSaved": "تم تحديث المكوّن",
+          "saveFailed": "تعذّر الحفظ",
+          "confirmDelete": "هل تريد حذف هذا الحادث وجدوله الزمني بالكامل؟",
+          "incidentDeleted": "تم حذف الحادث",
+          "deleteFailed": "تعذّر حذف الحادث",
+          "overrideCleared": "تم إلغاء التثبيت — استأنف الكشف التلقائي"
+        }
+      },
       "maintenance": {
         "title": "وضع الصيانة",
         "subtitle": "أوقف الموقع العام للأعمال المجدولة. يحتفظ المدراء بالوصول لإعادة تفعيل الموقع.",
@@ -6660,9 +7073,320 @@
       "subtitle": "مراجعة طلبات المشرفين وإدارة مركز المساعدة.",
       "unknown": "غير معروف",
       "tabs": {
+        "overview": "نظرة عامة",
+        "tickets": "التذاكر",
+        "supervisors": "المشرفون",
         "teamRequests": "طلبات الفريق",
         "helpCenter": "مركز المساعدة",
         "settings": "الإعدادات"
+      },
+      "tickets": {
+        "searchPlaceholder": "ابحث برقم التذكرة أو الموضوع…",
+        "noTickets": "لا توجد تذاكر تطابق هذه الفلاتر.",
+        "unassigned": "غير مُسند",
+        "slaBreached": "تم تجاوز SLA",
+        "slaFulfilled": "تم الإيفاء",
+        "clearAllFilters": "مسح كل الفلاتر",
+        "clearFilter": "مسح",
+        "pageOf": "الصفحة {page} من {totalPages}",
+        "prev": "السابق",
+        "next": "التالي",
+        "computedFilter": {
+          "overdue": "عرض التذاكر المتأخرة فقط",
+          "awaiting": "عرض التذاكر في انتظار رد الفريق"
+        },
+        "columns": {
+          "ref": "المرجع",
+          "subject": "الموضوع",
+          "customer": "العميل",
+          "priority": "الأولوية",
+          "status": "الحالة",
+          "assignee": "المُسند",
+          "sla": "SLA"
+        },
+        "filters": {
+          "status": {
+            "all": "كل الحالات",
+            "new": "جديدة",
+            "in_progress": "قيد المعالجة",
+            "on_hold": "معلّقة",
+            "resolved": "محلولة",
+            "closed": "مغلقة"
+          },
+          "priority": {
+            "all": "كل الأولويات",
+            "high": "عالية",
+            "medium": "متوسطة",
+            "low": "منخفضة"
+          },
+          "category": {
+            "all": "كل الفئات",
+            "billing": "الفواتير",
+            "login": "تسجيل الدخول",
+            "content": "المحتوى",
+            "certificate": "الشهادة",
+            "technical": "تقني",
+            "other": "أخرى"
+          }
+        }
+      },
+      "ticketDetail": {
+        "backToList": "العودة إلى التذاكر",
+        "notFound": "التذكرة غير موجودة.",
+        "attachmentRemovedToast": "تمت إزالة المرفق",
+        "attachmentRemoveFailed": "تعذّر إزالة المرفق",
+        "unknownCustomer": "عميل غير معروف",
+        "unknownAuthor": "غير معروف",
+        "description": "الوصف",
+        "thread": "المحادثة ({count})",
+        "noComments": "لا توجد ردود بعد.",
+        "internalNoteTitle": "ملاحظة داخلية",
+        "internalNoteHint": "مرئية لفريق الدعم فقط. العميل لن يراها أبداً.",
+        "internalNotePlaceholder": "أضف ملاحظة للفريق…",
+        "attachFiles": "إرفاق ملفات",
+        "attachmentUploading": "جارٍ الرفع…",
+        "attachmentUploaded": "تم الرفع",
+        "attachmentFailed": "فشل",
+        "attachmentQueued": "في الانتظار",
+        "addNote": "إضافة ملاحظة",
+        "sla": "SLA",
+        "firstResponse": "أول رد",
+        "resolution": "الحل",
+        "minutesLeft": "{count} د متبقية",
+        "breached": "تم التجاوز",
+        "assignee": "المُسند",
+        "unassigned": "غير مُسند",
+        "pickAgent": "اختر وكيلاً…",
+        "supervisorBadge": "مشرف",
+        "reassign": "إعادة الإسناد",
+        "changeStatus": "تغيير الحالة",
+        "changePriority": "تغيير الأولوية",
+        "customer": "العميل",
+        "categoryLabel": "الفئة",
+        "created": "تم الإنشاء",
+        "slaBreached": "تم تجاوز SLA",
+        "slaFulfilled": "تم الإيفاء",
+        "slaWaiting": "قيد الانتظار",
+        "slaPaused": "متوقف",
+        "staffBadge": "الفريق",
+        "internalBadge": "داخلي",
+        "roleBadge": {
+          "super_admin": "المدير الأعلى",
+          "admin": "مدير",
+          "supervisor": "مشرف",
+          "agent": "وكيل",
+          "student": "طالب"
+        },
+        "attachment": "مرفق",
+        "filters": {
+          "priority": {
+            "high": "عالية",
+            "medium": "متوسطة",
+            "low": "منخفضة"
+          },
+          "status": {
+            "new": "جديدة",
+            "in_progress": "قيد المعالجة",
+            "on_hold": "معلّقة",
+            "resolved": "محلولة",
+            "closed": "مغلقة"
+          }
+        },
+        "statusActions": {
+          "in_progress": "وضع قيد المعالجة",
+          "on_hold": "وضع في الانتظار",
+          "resolved": "وضع علامة محلولة",
+          "closed": "إغلاق التذكرة"
+        },
+        "category": {
+          "billing": "الفواتير",
+          "login": "تسجيل الدخول",
+          "content": "المحتوى",
+          "certificate": "الشهادة",
+          "technical": "تقني",
+          "webinar": "الندوة الإلكترونية",
+          "cme": "الساعات المعتمدة",
+          "trainer": "طلب التدريب",
+          "courses": "الدورات",
+          "sessions": "الجلسات والمواعيد",
+          "payments": "المدفوعات",
+          "invoices": "الفواتير الضريبية",
+          "refunds": "المبالغ المستردة",
+          "integrations": "تكاملات الطرف الثالث",
+          "course_approvals": "اعتماد الدورات",
+          "system_issues": "مشاكل النظام",
+          "other": "أخرى"
+        },
+        "toasts": {
+          "loadFailed": "تعذّر تحميل التذكرة",
+          "internalAdded": "تمت إضافة الملاحظة الداخلية",
+          "replyFailed": "تعذّر الإرسال",
+          "reassigned": "تم إعادة إسناد التذكرة",
+          "statusChanged": "تم تحديث الحالة",
+          "priorityChanged": "تم تحديث الأولوية",
+          "actionFailed": "فشل التنفيذ",
+          "waitForUploads": "انتظر اكتمال رفع الملفات"
+        }
+      },
+      "supervisors": {
+        "empty": "لا يوجد مشرفون معدّون بعد.",
+        "range": "النطاق:",
+        "ranges": {
+          "7d": "آخر 7 أيام",
+          "30d": "آخر 30 يوماً",
+          "custom": "مخصّص"
+        },
+        "teamSize": "{count} فريق",
+        "activeTickets": "{count} نشطة",
+        "slaBreaches": "{count} تجاوزات",
+        "orphans": {
+          "title": "{count} موظف دعم بدون مشرف",
+          "description": "هؤلاء الموظفون يعالجون التذاكر لكنهم ليسوا ضمن أي فريق — لا يظهرون في تقارير الفرق ولا يمكن توجيه طلبات الإيقاف الخاصة بهم إلى مشرف. عيّنهم لإصلاح ذلك.",
+          "assignButton": "تعيين إلى مشرف",
+          "modalTitle": "تعيين الموظفين بدون مشرف",
+          "targetSupervisor": "المشرف المستهدف",
+          "pickSupervisor": "اختر مشرفاً",
+          "pickAgent": "اختر موظفاً واحداً على الأقل",
+          "noSupervisors": "لا يوجد مشرفون نشطون — أنشئ مشرفاً أولاً.",
+          "teamCount": "{count} في الفريق",
+          "agentList": "الموظفون ({count})",
+          "suspended": "موقوف",
+          "cancel": "إلغاء",
+          "confirm": "تعيين {count} موظف",
+          "assigned": "تم تعيين {count} موظف."
+        }
+      },
+      "supervisorDetail": {
+        "backToList": "العودة إلى المشرفين",
+        "notFound": "المشرف غير موجود.",
+        "lastLogin": "آخر تسجيل دخول",
+        "range": "النطاق:",
+        "ranges": {
+          "7d": "آخر 7 أيام",
+          "30d": "آخر 30 يوماً",
+          "custom": "مخصّص"
+        },
+        "teamSize": "حجم الفريق",
+        "ticketsHandled": "تمت معالجتها",
+        "avgFrt": "متوسط FRT",
+        "avgTtr": "متوسط TTR",
+        "csat": "رضا العملاء",
+        "slaBreaches": "تجاوزات SLA",
+        "teamMembers": "أعضاء الفريق ({count})",
+        "noTeamMembers": "لا يوجد وكلاء في هذا الفريق بعد.",
+        "handled": "{count} تمت معالجتها",
+        "breaches": "{count} تجاوزات",
+        "supervisorTickets": "تذاكر المشرف الخاصة ({count})",
+        "noSupervisorTickets": "هذا المشرف غير مُسند إليه أي تذاكر حالياً.",
+        "breached": "تم التجاوز"
+      },
+      "overview": {
+        "loadFailed": "تعذّر تحميل النظرة العامة للدعم.",
+        "openTickets": "التذاكر المفتوحة",
+        "awaitingResponse": "في انتظار الرد",
+        "overdueTickets": "متأخرة",
+        "csatScore": "رضا العملاء",
+        "csatResponses": "{count} استجابة",
+        "vsLastWeek": "مقارنة بالأسبوع الماضي",
+        "pendingTeamRequests": "{count} طلب من المشرفين بانتظار قرارك",
+        "pendingTeamRequestsHint": "افتح تبويب طلبات الفريق للمراجعة والموافقة.",
+        "ticketsByPriority": "التذاكر حسب الأولوية",
+        "ticketsByCategory": "التذاكر حسب الفئة",
+        "agentWorkload": "حمل العمل للوكلاء",
+        "atRiskTitle": "معرّضة للخطر خلال 30 دقيقة",
+        "atRiskSubtitle": "تذاكر على وشك تجاوز SLA",
+        "recentActivity": "النشاط الأخير",
+        "cronHealth": "المهام التلقائية",
+        "noTicketsByPriority": "لا توجد تذاكر مفتوحة.",
+        "noTicketsByCategory": "لا توجد تذاكر مفتوحة.",
+        "noActiveAgents": "لا يوجد وكلاء لديهم تذاكر نشطة حالياً.",
+        "noAtRisk": "لا توجد تذاكر معرّضة للخطر خلال 30 دقيقة.",
+        "noActivity": "لا يوجد نشاط حديث.",
+        "assignedTo": "مُسند إلى {name}",
+        "unassigned": "غير مُسند",
+        "minutesLeft": "{count} د متبقية",
+        "activeTickets": "{count} نشطة",
+        "priority_high": "عالية",
+        "priority_medium": "متوسطة",
+        "priority_low": "منخفضة",
+        "updatedAgo": "تم التحديث قبل {seconds} ث",
+        "agoSeconds": "قبل {count} ث",
+        "agoMinutes": "قبل {count} د",
+        "agoHours": "قبل {count} س",
+        "cron_SLA_BREACH_CHECK": "مراقب SLA",
+        "cron_PRIORITY_ESCALATION": "تصعيد الأولوية",
+        "cron_AUTO_CLOSE_RESOLVED": "إغلاق المحلولة تلقائياً",
+        "cron_AUTO_CLOSE_WAITING_STUDENT": "إغلاق المنتظرة تلقائياً",
+        "cron_CSAT_EMAIL_SEND": "إرسال CSAT",
+        "cron_BUSINESS_RESUME_SWEEP": "تشغيل عند استئناف العمل",
+        "cron_service_status_check": "فحص حالة الخدمة",
+        "cronHealthSummary": "{ok} من {total} سليم",
+        "cronNeverRan": "لم يعمل بعد",
+        "cronError": "خطأ",
+        "auditTrail": "سجل التدقيق",
+        "refresh": "تحديث",
+        "noAuditTrail": "لا توجد أحداث تدقيق بعد.",
+        "auditUnknownActor": "النظام",
+        "paginationShowing": "{from}–{to} من {total}",
+        "auditDetailAssignee": "تم إعادة الإسناد",
+        "auditDetailPriority": "{from} ← {to}",
+        "auditDetailStatus": "{from} ← {to}",
+        "auditAction": {
+          "ticket_created": "تم إنشاء التذكرة",
+          "ticket_replied": "تم الرد",
+          "internal_note_added": "ملاحظة داخلية",
+          "assignee_changed": "تغيير المسؤول",
+          "priority_changed": "تغيير الأولوية",
+          "status_changed": "تغيير الحالة",
+          "ticket_resolved": "تم الحل",
+          "ticket_closed": "تم الإغلاق",
+          "ticket_reopened": "إعادة الفتح",
+          "merged": "تم الدمج في تذكرة أخرى",
+          "merge_received": "تم دمج تذكرة أخرى هنا",
+          "transferred": "تم تحويلها إلى فئة جديدة",
+          "tag_added": "تمت إضافة وسم",
+          "tag_removed": "تمت إزالة وسم",
+          "tag_auto_applied": "تم تطبيق وسم تلقائيًا",
+          "sla_frt_breach": "تجاوز FRT",
+          "sla_ttr_breach": "تجاوز TTR",
+          "sla_frt_warning_75": "تحذير FRT 75%",
+          "sla_priority_escalated": "تم تصعيد الأولوية",
+          "sla_escalation_triggered": "تم تفعيل التصعيد",
+          "sla_frt_breach_reassigned": "تجاوز FRT — أعيد الإسناد",
+          "sla_ttr_breach_reassigned": "تجاوز TTR — أعيد الإسناد",
+          "sla_resolved_within_sla": "تم الحل ضمن SLA"
+        },
+        "auditRole": {
+          "super_admin": "مدير أعلى",
+          "admin": "مدير",
+          "supervisor": "مشرف",
+          "agent": "وكيل",
+          "student": "طالب"
+        },
+        "workloadSubtitle": "جميع موظفي الدعم — بما في ذلك غير المشغولين",
+        "supervisorBadge": "مشرف",
+        "idleBadge": "غير مشغول",
+        "overloadedBadge": "مثقل",
+        "health": {
+          "title": "مؤشرات الصحة",
+          "sampleSize": "{count, plural, =0 {لا توجد تذاكر في النطاق} one {تذكرة واحدة في النطاق} two {تذكرتان في النطاق} few {# تذاكر في النطاق} many {# تذكرة في النطاق} other {# تذكرة في النطاق}}",
+          "avgFrt": "متوسط أول رد",
+          "avgTtr": "متوسط زمن الحل",
+          "slaCompliance": "الالتزام بـ SLA",
+          "escalations": "التصعيدات",
+          "escalationsHint": "تصعيد تلقائي أو رفع أولوية",
+          "businessHoursAware": "مراعٍ لساعات العمل",
+          "slaTone": {
+            "success": "ضمن الهدف",
+            "warning": "متابعة دقيقة",
+            "danger": "دون الحد المقبول"
+          },
+          "range7d": "7 أيام",
+          "range30d": "30 يوم",
+          "rangeCustom": "مخصص",
+          "rangeFromLabel": "من تاريخ",
+          "rangeToLabel": "إلى تاريخ"
+        }
       },
       "settings": {
         "adminHeadingTitle": "إعدادات الدعم على مستوى المنصة",
@@ -6672,6 +7396,7 @@
         "title": "طلبات الفريق",
         "subtitle": "طلبات من المشرفين لإضافة أو إنشاء وكلاء.",
         "empty": "لا توجد طلبات تطابق هذا الفلتر.",
+        "notFoundFallback": "هذا الطلب لم يعد موجوداً أو تمت إزالته.",
         "statusFilters": {
           "pending": "قيد المراجعة",
           "approved": "تمت الموافقة",
@@ -6816,7 +7541,31 @@
         "approved": "تمت الموافقة على الطلب",
         "rejected": "تم رفض الطلب",
         "more_info": "طُلبت معلومات إضافية",
-        "pending": "الحالة قيد الانتظار"
+        "pending": "الحالة قيد الانتظار",
+        "by": "بواسطة {name}",
+        "byApplicant": "بواسطة مقدّم الطلب",
+        "events": {
+          "submitted": "تم تقديم الطلب",
+          "approved": "تمت الموافقة على الطلب",
+          "rejected": "تم رفض الطلب",
+          "requested_info": "طُلبت معلومات إضافية",
+          "resubmitted": "أعاد المتقدّم تقديم الطلب بتحديثات"
+        }
+      },
+      "reviewerHint": "إذا كانت المستندات ناقصة، استخدم \"طلب مزيد من المعلومات\" — يمكن للمتقدم إصلاحها وإعادة التقديم دون البدء من جديد. استخدم الرفض فقط عندما لا يمكن معالجة المشكلة بإعادة التقديم.",
+      "missingReqs": {
+        "title": "ما هو الناقص (اختياري)",
+        "hint": "اختر ما يحتاج المتقدّم لتقديمه. سنعرض هذه القائمة في صفحة الحالة وفي البريد الإلكتروني.",
+        "otherPlaceholder": "وصف الناقص الآخر…",
+        "codes": {
+          "CV_MISSING": "السيرة الذاتية",
+          "SCFHS_VERIFICATION": "إثبات التسجيل في الهيئة السعودية للتخصصات الصحية",
+          "QUALIFICATION_DOC": "وثيقة المؤهلات",
+          "PHOTO": "الصورة الشخصية",
+          "BANK_DETAILS": "تفاصيل الحساب البنكي",
+          "NATIONAL_ID": "الهوية الوطنية / الإقامة",
+          "OTHER": "أخرى (حدّد)"
+        }
       },
       "noteOptional": "أضف ملاحظة اختيارية للسجلّ (لن يراها المتقدّم)…",
       "noteRequired": "اكتب الرسالة التي سيتلقّاها المتقدّم…",
@@ -6842,7 +7591,8 @@
         "request-info": {
           "title": "طلب معلومات إضافية",
           "body": "سيتلقّى {name} رسالتك ويمكنه إعادة إرسال المعلومات الإضافية. يبقى الطلب قيد الانتظار حتى يردّ.",
-          "confirm": "إرسال الطلب"
+          "confirm": "إرسال الطلب",
+          "messageLabel": "الرسالة إلى المتقدم"
         }
       }
     }
@@ -6857,6 +7607,7 @@
       "refunds": "المبالغ المستردة",
       "discounts": "الخصومات",
       "reports": "التقارير",
+      "support": "الدعم الفني",
       "settings": "الإعدادات",
       "financeManager": "مدير المالية",
       "revenue": "الإيرادات",
@@ -7246,12 +7997,36 @@
     }
   },
   "supportDashboard": {
+    "csatPrompt": {
+      "title": "كيف كانت تجربتك؟",
+      "body": "تم حلّ تذكرتك. خصّص لحظة لتقييم تجربتك مع الدعم.",
+      "bodyWithAgent": "تم حلّ تذكرتك. كيف كانت تجربتك مع {agent}؟",
+      "commentLabel": "تعليق (اختياري)",
+      "commentPlaceholder": "أخبرنا بما أعجبك، أو بما يمكننا تحسينه…",
+      "submit": "إرسال التقييم",
+      "notNow": "ليس الآن",
+      "submittedToast": "شكراً على ملاحظاتك!",
+      "errorToast": "تعذّر إرسال التقييم. يرجى المحاولة مرة أخرى.",
+      "dismissAria": "إغلاق نافذة التقييم",
+      "starAria": "تقييم {n} من 5",
+      "thanksTitle": "شكراً على تقييمك!",
+      "thanksBody": "ملاحظاتك تساعدنا على التحسين المستمر.",
+      "scoreLabel": {
+        "1": "سيئ جداً",
+        "2": "سيئ",
+        "3": "محايد",
+        "4": "جيد",
+        "5": "ممتاز"
+      }
+    },
     "sidebar": {
       "dashboard": "لوحة التحكم",
       "allTickets": "جميع التذاكر",
       "myTickets": "تذاكري",
       "team": "الفريق",
+      "alerts": "التنبيهات",
       "knowledgeBase": "مركز المساعدة",
+      "trainerApplications": "طلبات المدربين",
       "reports": "التقارير",
       "settings": "الإعدادات",
       "supportLead": "قائد الدعم",
@@ -7264,6 +8039,104 @@
       "editProfile": "تعديل الملف",
       "viewProfile": "عرض الملف الشخصي",
       "logout": "تسجيل الخروج"
+    },
+    "attachmentPreview": {
+      "untitled": "مرفق",
+      "close": "إغلاق المعاينة",
+      "download": "تنزيل",
+      "openInNewTab": "فتح في تبويب جديد",
+      "uploadedBy": "تم الرفع بواسطة {name}",
+      "blockedTitle": "تم حظر هذا الملف",
+      "blockedBody": "تم اكتشاف برمجيات خبيثة خلال الفحص. المعاينة معطّلة.",
+      "unsupportedTitle": "المعاينة غير متاحة",
+      "unsupportedBody": "لا يمكن معاينة هذا النوع من الملفات في المتصفح. قم بتنزيله لعرضه محلياً."
+    },
+    "attachmentChip": {
+      "untitled": "مرفق",
+      "remove": "إزالة",
+      "removeConfirm": "هل تريد إزالة هذا المرفق؟ سيظل في سجل النسخ ولكن لن يظهر في القائمة النشطة."
+    },
+    "attachmentAudit": {
+      "title": "المرفقات — السجل والوصول",
+      "loading": "جاري التحميل…",
+      "loadError": "تعذّر تحميل سجل المرفقات.",
+      "historyHeading": "سجل النسخ",
+      "historyEmpty": "لا توجد مرفقات على هذه التذكرة بعد.",
+      "downloadsHeading": "سجل التنزيلات",
+      "downloadsEmpty": "لم يُسجَّل أي تنزيل من قِبَل الفريق.",
+      "untitled": "مرفق",
+      "anonymous": "مستخدم غير معروف",
+      "removed": "تمت الإزالة",
+      "uploadedByUnknown": "تم الرفع بواسطة مستخدم غير معروف",
+      "removedByUnknown": "تمت الإزالة بواسطة مستخدم غير معروف"
+    },
+    "trainerApplication": {
+      "title": "طلب المدرب",
+      "loadError": "تعذّر تحميل بيانات الطلب.",
+      "viewFull": "عرض الطلب كاملاً",
+      "activity": "النشاط",
+      "submittedOn": "تاريخ التقديم",
+      "latestReviewer": "آخر مراجِع",
+      "latestNote": "آخر ملاحظة من المراجع",
+      "eventByApplicant": "مقدم الطلب",
+      "missingReqsTitle": "ما يحتاجه الإدارة منك",
+      "status": {
+        "PENDING": "قيد المراجعة",
+        "APPROVED": "تمت الموافقة",
+        "REJECTED": "غير مقبول",
+        "MORE_INFO": "مطلوب تعديلات"
+      },
+      "events": {
+        "submitted": "تم تقديم الطلب",
+        "approved": "تمت الموافقة",
+        "rejected": "غير مقبول",
+        "requested_info": "طُلبت تعديلات",
+        "resubmitted": "تم تقديم طلب مُحدَّث"
+      },
+      "missingReqs": {
+        "CV_MISSING": "السيرة الذاتية",
+        "SCFHS_VERIFICATION": "إثبات التسجيل في الهيئة السعودية للتخصصات الصحية",
+        "QUALIFICATION_DOC": "وثيقة المؤهلات",
+        "PHOTO": "الصورة الشخصية",
+        "BANK_DETAILS": "تفاصيل الحساب البنكي",
+        "NATIONAL_ID": "الهوية الوطنية / الإقامة"
+      },
+      "list": {
+        "title": "طلبات المدربين",
+        "subtitle": "ابحث عن طلب مقدّم وراجع سجل القرارات (للعرض فقط).",
+        "tabAll": "الكل",
+        "searchPlaceholder": "ابحث بالاسم أو البريد الإلكتروني",
+        "loading": "جاري تحميل الطلبات…",
+        "loadError": "تعذّر تحميل الطلبات. حاول مرة أخرى.",
+        "emptyTitle": "لا توجد طلبات مطابقة",
+        "emptyHint": "جرّب بحثاً مختلفاً أو فلتراً آخر للحالة.",
+        "submittedOn": "تاريخ التقديم",
+        "pageOf": "صفحة {page} من {totalPages}"
+      },
+      "detail": {
+        "back": "العودة إلى الطلبات",
+        "loading": "جاري تحميل الطلب…",
+        "loadError": "تعذّر تحميل هذا الطلب.",
+        "submittedOn": "تاريخ التقديم",
+        "lastUpdated": "آخر تحديث",
+        "requestedRole": "الدور المطلوب",
+        "latestReviewerNote": "آخر ملاحظة من المراجع",
+        "documents": "المستندات",
+        "open": "فتح",
+        "profile": "ملف مقدم الطلب",
+        "activity": "سجل المراجعة",
+        "noActivity": "لا يوجد سجل بعد."
+      },
+      "profile": {
+        "specialty": "التخصص",
+        "profession": "المهنة",
+        "qualification": "المؤهل",
+        "scfhsNumber": "رقم الهيئة السعودية",
+        "nationalId": "الهوية الوطنية / الإقامة",
+        "phone": "الهاتف",
+        "city": "المدينة",
+        "country": "الدولة"
+      }
     },
     "navbar": {
       "toggleMenu": "تبديل القائمة",
@@ -7425,6 +8298,7 @@
     "alertsPage": {
       "title": "كل التنبيهات",
       "subtitle": "التذاكر المفتوحة التي تحتاج إلى اهتمام عبر طابور الدعم.",
+      "subtitleSupervisor": "التجاوزات والتصعيدات وكل إجراء مهم عبر طابور الدعم.",
       "backToDashboard": "العودة إلى لوحة التحكم",
       "tabs": {
         "all": "الكل"
@@ -7435,12 +8309,57 @@
       },
       "showDismissed": "إظهار المتجاهَلة ({count})",
       "restoreAll": "استعادة الكل",
-      "restoreOne": "استعادة"
+      "restoreOne": "استعادة",
+      "kpiAlertsTitle": "تذاكر تحتاج إلى اهتمام",
+      "auditTrailTitle": "النشاط الأخير",
+      "noAuditTrail": "لا يوجد نشاط في آخر 24 ساعة.",
+      "refresh": "تحديث",
+      "auditUnknownActor": "النظام",
+      "paginationShowing": "{from}–{to} من {total}",
+      "auditDetailAssignee": "تم إعادة الإسناد",
+      "auditDetailPriority": "{from} ← {to}",
+      "auditDetailStatus": "{from} ← {to}",
+      "agoSeconds": "قبل {count} ث",
+      "agoMinutes": "قبل {count} د",
+      "agoHours": "قبل {count} س",
+      "auditAction": {
+        "ticket_created": "تم إنشاء التذكرة",
+        "ticket_replied": "تم الرد",
+        "internal_note_added": "ملاحظة داخلية",
+        "assignee_changed": "تغيير المسؤول",
+        "priority_changed": "تغيير الأولوية",
+        "status_changed": "تغيير الحالة",
+        "ticket_resolved": "تم الحل",
+        "ticket_closed": "تم الإغلاق",
+        "ticket_reopened": "إعادة الفتح",
+        "merged": "تم الدمج في تذكرة أخرى",
+        "merge_received": "تم دمج تذكرة أخرى هنا",
+        "transferred": "تم تحويلها إلى فئة جديدة",
+        "tag_added": "تمت إضافة وسم",
+        "tag_removed": "تمت إزالة وسم",
+        "tag_auto_applied": "تم تطبيق وسم تلقائيًا",
+        "sla_frt_breach": "تجاوز FRT",
+        "sla_ttr_breach": "تجاوز TTR",
+        "sla_frt_warning_75": "تحذير FRT 75%",
+        "sla_priority_escalated": "تم تصعيد الأولوية",
+        "sla_escalation_triggered": "تم تفعيل التصعيد",
+        "sla_frt_breach_reassigned": "تجاوز FRT — أعيد الإسناد",
+        "sla_ttr_breach_reassigned": "تجاوز TTR — أعيد الإسناد",
+        "sla_resolved_within_sla": "تم الحل ضمن SLA"
+      },
+      "auditRole": {
+        "super_admin": "مدير أعلى",
+        "admin": "مدير",
+        "supervisor": "مشرف",
+        "agent": "وكيل",
+        "student": "طالب"
+      }
     },
     "allTicketsPage": {
       "title": "جميع التذاكر",
       "subtitle": "إدارة وتتبع جميع تذاكر الدعم",
       "createTicket": "تذكرة جديدة",
+      "escalated": "مُصعَّدة",
       "stats": {
         "totalTickets": "إجمالي التذاكر",
         "open": "مفتوحة",
@@ -7491,13 +8410,26 @@
           "login": "تسجيل الدخول",
           "certificate": "الشهادات",
           "content": "المحتوى",
-          "technical": "تقني"
+          "technical": "تقني",
+          "webinar": "الندوة الإلكترونية",
+          "cme": "الساعات المعتمدة",
+          "trainer": "طلب التدريب",
+          "courses": "الدورات",
+          "sessions": "الجلسات والمواعيد",
+          "payments": "المدفوعات",
+          "invoices": "الفواتير الضريبية",
+          "refunds": "المبالغ المستردة",
+          "integrations": "تكاملات الطرف الثالث",
+          "course_approvals": "اعتماد الدورات",
+          "system_issues": "مشاكل النظام",
+          "other": "أخرى"
         },
         "priorities": {
           "high": "عالية",
           "medium": "متوسطة",
           "low": "منخفضة"
-        }
+        },
+        "escalatedOnly": "المُصعَّدة فقط"
       },
       "columns": {
         "ticketId": "رقم التذكرة",
@@ -7535,6 +8467,7 @@
       "slaRemaining": "متبقي",
       "slaLeft": "متبقي",
       "slaOverBy": "متأخر",
+      "slaPaused": "متوقف",
       "slaWarning": "تحذير اتفاقية الخدمة",
       "refresh": "تحديث",
       "sort": {
@@ -7875,7 +8808,46 @@
         "responses": "الردود",
         "responseRate": "معدل الاستجابة",
         "recentComments": "أحدث الملاحظات",
-        "noComments": "لا توجد تعليقات بعد — ستظهر هنا مع وصول استبيانات CSAT."
+        "noComments": "لا توجد تعليقات بعد — ستظهر هنا مع وصول استبيانات CSAT.",
+        "byCategory": {
+          "title": "متوسط الدرجة حسب الفئة",
+          "empty": "لا توجد بيانات للفئات في هذا النطاق الزمني بعد.",
+          "category": "الفئة",
+          "responses": "الردود",
+          "avg": "المتوسط",
+          "split": "المروّجون / المعارضون"
+        },
+        "byAgent": {
+          "title": "متوسط الدرجة حسب الموظف",
+          "empty": "لا توجد بيانات للموظفين في هذا النطاق الزمني بعد.",
+          "agent": "الموظف",
+          "responses": "الردود",
+          "avg": "المتوسط",
+          "split": "المروّجون / المعارضون",
+          "unassigned": "غير مُسنَد"
+        },
+        "monthly": {
+          "title": "الاتجاه الشهري",
+          "empty": "لا توجد بيانات شهرية بعد."
+        },
+        "lowRatings": {
+          "title": "تقييمات منخفضة — بحاجة إلى متابعة",
+          "pending": "قيد المتابعة",
+          "completed": "تمّت المتابعة",
+          "all": "الكل",
+          "empty": "لا توجد تقييمات منخفضة في هذا النطاق.",
+          "allHandled": "تمّت متابعة جميع التقييمات المنخفضة — أحسنت.",
+          "noComment": "(بدون تعليق مكتوب)",
+          "agentLabel": "الموظف",
+          "openTicket": "فتح التذكرة",
+          "markFollowedUp": "تأكيد المتابعة",
+          "marking": "جارٍ الحفظ…",
+          "markedFollowedUp": "تمّ تأكيد المتابعة",
+          "markFailed": "تعذّر تأكيد المتابعة",
+          "completedBy": "تمّت المتابعة من قِبل {name} في {date}",
+          "supervisor": "المشرف",
+          "supervisorOnly": "إجراء للمشرف"
+        }
       },
       "npsPanel": {
         "title": "صافي نقاط المروّجين",
@@ -7995,7 +8967,7 @@
       },
       "ticketCategoriesPanel": {
         "title": "فئات التذاكر",
-        "description": "تأتي الفئات الافتراضية مع المنصة. أضف فئات مخصصة لتتبّع تدفقات فريدة.",
+        "description": "تأتي الفئات الافتراضية مع المنصة. أضف فئات مخصصة لتتبّع تدفقات فريدة. يمكن إتاحة كل فئة للوحات تحكم محددة.",
         "addCategory": "إضافة فئة",
         "removeCategory": "إزالة",
         "nameEn": "الاسم بالإنجليزية *",
@@ -8012,7 +8984,21 @@
         "addFailed": "تعذّرت إضافة الفئة",
         "removed": "تمت إزالة الفئة",
         "removeFailed": "تعذّرت إزالة الفئة",
-        "confirmDelete": "هل تريد إزالة فئة \"{slug}\"؟"
+        "updated": "تم تحديث الفئة",
+        "updateFailed": "تعذّر تحديث الفئة",
+        "confirmDelete": "هل تريد إزالة فئة \"{slug}\"؟",
+        "editRoles": "تعديل الأدوار",
+        "applicableRolesLabel": "متاحة للوحات التحكم *",
+        "applicableRolesHint": "اختر لوحات التحكم التي ستظهر فيها هذه الفئة عند إنشاء التذاكر. يرى المشرفون والمسؤولون جميع الفئات في قائمة الانتظار دائمًا.",
+        "applicableRolesRequired": "اختر لوحة تحكم واحدة على الأقل.",
+        "noApplicableRoles": "لم يتم تعيينها لأي لوحة تحكم",
+        "applicableRoles": {
+          "student": "الطالب",
+          "instructor": "المدرّب",
+          "course_manager": "مدير الدورات",
+          "finance": "المالية",
+          "ta": "المساعد التعليمي"
+        }
       },
       "sla": {
         "title": "تكوين أهداف اتفاقية مستوى الخدمة",
@@ -8161,21 +9147,25 @@
       },
       "slaPanel": {
         "title": "أهداف اتفاقية الخدمة",
-        "description": "زمن الاستجابة الأولى (FRT)، زمن الحل (TTR)، وعتبات تصعيد الأولوية لكل مستوى. القيم بالدقائق ضمن ساعات العمل — الساعات خارج العمل تُوقف عدّاد SLA. اضبط نافذة العمل من تبويب ساعات العمل. تنطبق التغييرات على التذاكر المستقبلية فقط.",
+        "description": "زمن الاستجابة الأولى (FRT)، زمن الحل (TTR)، وعتبات تصعيد الأولوية لكل مستوى. القيم ضمن ساعات العمل فقط — الساعات خارج العمل تُوقف عدّاد SLA. اضبط نافذة العمل من تبويب ساعات العمل. تنطبق التغييرات على التذاكر المستقبلية فقط.",
         "loadFailedTitle": "تعذّر تحميل سياسات اتفاقية الخدمة",
         "retry": "إعادة المحاولة",
         "noPolicies": "لم يتم إعداد أي سياسات اتفاقية خدمة. تواصل مع المسؤول.",
         "columns": {
           "priority": "الأولوية",
-          "frt": "FRT (دقائق)",
-          "ttr": "TTR (دقائق)",
-          "escalate": "التصعيد بعد (دقائق)"
+          "frt": "الاستجابة الأولى",
+          "ttr": "الحل",
+          "escalate": "التصعيد بعد"
         },
         "saving": "جارٍ الحفظ...",
         "save": "حفظ",
         "hintHours": "≈ {n} س",
         "hintDays": "≈ {n} يوم",
         "hintHoursMinutes": "≈ {h} س {m} د",
+        "unitDays": "يوم",
+        "unitHours": "س",
+        "unitMinutes": "د",
+        "totalMinutes": "إجمالي {count} د",
         "validation": {
           "frtPositive": "يجب أن يكون FRT عددًا صحيحًا موجبًا",
           "ttrPositive": "يجب أن يكون TTR عددًا صحيحًا موجبًا",
@@ -8197,15 +9187,32 @@
         "createTitle": "إنشاء قالب جديد",
         "formTitle": "العنوان *",
         "formTitlePlaceholder": "مثال: حل مشكلة جلسة زووم",
-        "bodyTemplate": "نص القالب *",
+        "formCategory": "الفئة",
+        "categoryGeneral": "عام (كل التذاكر)",
+        "bodyTemplate": "نص القالب (إنجليزي) *",
+        "bodyTemplateAr": "نص القالب (عربي)",
+        "optional": "اختياري",
+        "bodyArPlaceholder": "النسخة العربية من القالب…",
         "insertVariablesHint": "اضغط على متغير لإدراجه في موضع المؤشر:",
         "bodyTemplatePlaceholder": "مرحبًا {learnerVar}، شكرًا لتواصلك معنا...",
         "kbUrls": "روابط مقالات قاعدة المعرفة (رابط في كل سطر)",
+        "kbPickerLabel": "المقالات المرتبطة من قاعدة المعرفة",
+        "kbPickerEmpty": "لا توجد مقالات منشورة بعد.",
+        "kbPickerHint": "تُضاف المقالات المختارة إلى نهاية الرد.",
+        "searchPlaceholder": "ابحث بالعنوان…",
+        "filterAllCategories": "كل الفئات",
+        "showInactive": "إظهار غير النشطة",
+        "inactiveBadge": "غير نشط",
+        "deactivate": "تعطيل",
+        "reactivate": "إعادة تفعيل",
+        "usedTimes": "{count, plural, zero {لم يُستخدم} one {استُخدم مرة} two {استُخدم مرّتين} few {استُخدم # مرّات} many {استُخدم # مرّة} other {استُخدم # مرّة}}",
+        "tabLibrary": "المكتبة",
+        "tabAnalytics": "الاستخدام",
         "saving": "جارٍ الحفظ...",
         "update": "تحديث",
         "create": "إنشاء",
         "cancel": "إلغاء",
-        "noMacros": "لم يتم إنشاء أي قوالب بعد.",
+        "noMacros": "لا توجد قوالب تطابق المرشحات الحالية.",
         "edit": "تعديل",
         "delete": "حذف",
         "variables": {
@@ -8217,7 +9224,21 @@
           "ticketPriority": "الأولوية",
           "ticketCategory": "الفئة",
           "ticketStatus": "الحالة",
-          "agentName": "اسم الموظف"
+          "agentName": "اسم الموظف",
+          "certificateStatus": "حالة الشهادة",
+          "webinarJoinUrl": "رابط الانضمام للندوة",
+          "paymentAmount": "آخر مبلغ مدفوع"
+        },
+        "analytics": {
+          "noData": "لا تتوفّر بيانات استخدام.",
+          "totalUses": "إجمالي الاستخدام",
+          "totalMacros": "عدد القوالب",
+          "unused": "غير مستخدمة",
+          "topUsed": "أكثر القوالب استخدامًا",
+          "byCategory": "الاستخدام حسب الفئة",
+          "monthlyTrend": "آخر ٦ أشهر",
+          "macrosShort": "{count} قوالب",
+          "noUsesYet": "لم يُطبَّق أيّ قالب بعد."
         },
         "toasts": {
           "titleBodyRequired": "العنوان والمحتوى مطلوبان",
@@ -8225,7 +9246,9 @@
           "created": "تم إنشاء القالب",
           "saveFailed": "تعذّر حفظ القالب",
           "confirmDelete": "حذف هذا القالب؟",
-          "deleted": "تم حذف القالب"
+          "deleted": "تم حذف القالب",
+          "deactivated": "تم تعطيل القالب",
+          "reactivated": "تمت إعادة تفعيل القالب"
         }
       },
       "escalationPanel": {
@@ -8348,7 +9371,8 @@
       },
       "sla": {
         "left": "متبقي {value}",
-        "overBy": "متأخر {value}"
+        "overBy": "متأخر {value}",
+        "paused": "متوقف مؤقتاً — {value}"
       },
       "columns": {
         "id": "المعرف",
@@ -8360,16 +9384,50 @@
       }
     },
     "ticketDetail": {
+      "csatReview": {
+        "title": "تقييم العميل",
+        "toneSatisfied": "راضٍ",
+        "toneNeutral": "محايد",
+        "toneDissatisfied": "غير راضٍ",
+        "noComment": "لم يُترك أي تعليق.",
+        "submittedAt": "تم الإرسال {date}"
+      },
       "backToTickets": "العودة إلى التذاكر",
       "notFound": "لم يتم العثور على التذكرة",
+      "mergedIntoTitle": "تم دمج هذه التذكرة",
+      "mergedIntoDescription": "تستمر المحادثة في التذكرة الهدف. تم الإبقاء على هذه التذكرة كمرجع مغلق.",
+      "openTarget": "فتح {ref}",
+      "mergedFromTitle": "{count, plural, zero {تم دمج # تذكرة في هذه التذكرة} one {تم دمج # تذكرة في هذه التذكرة} two {تم دمج # تذكرتين في هذه التذكرة} few {تم دمج # تذاكر في هذه التذكرة} many {تم دمج # تذكرة في هذه التذكرة} other {تم دمج # تذكرة في هذه التذكرة}}",
       "staffBadge": "موظف",
       "internalBadge": "ملاحظة داخلية",
+      "roleBadge": {
+        "super_admin": "المدير الأعلى",
+        "admin": "مدير",
+        "supervisor": "مشرف",
+        "agent": "وكيل",
+        "student": "طالب"
+      },
       "unknownAuthor": "غير معروف",
       "reply": "رد",
+      "export": {
+        "title": "تصدير هذه التذكرة",
+        "button": "تصدير",
+        "csvLabel": "تحميل CSV",
+        "csvHint": "بيانات التذكرة وسجل الردود. سريع للاطّلاع.",
+        "csvFailed": "تعذّر تحميل ملف CSV",
+        "archiveLabel": "تحميل الأرشيف الكامل (ZIP)",
+        "archiveHint": "المحادثة والمرفقات وسجل التدقيق وأحداث SLA — للامتثال والتدقيق.",
+        "archiveReady": "تم تحميل الأرشيف",
+        "archiveFailed": "تعذّر تحميل الأرشيف"
+      },
       "applyMacro": "تطبيق قالب",
       "macroPreview": "معاينة القالب",
       "insertMacro": "إدراج",
       "cancelMacro": "إلغاء",
+      "macroSearchPlaceholder": "ابحث في القوالب…",
+      "macroSearchEmpty": "لا توجد قوالب مطابقة.",
+      "macroRecommended": "موصى به لهذه التذكرة",
+      "macroOthers": "قوالب أخرى",
       "internalNote": "ملاحظة داخلية",
       "internalNotePlaceholder": "أضف ملاحظة داخلية (غير ظاهرة للطالب)...",
       "replyPlaceholder": "اكتب ردك...",
@@ -8393,7 +9451,9 @@
         "target": "المستهدف: {value}",
         "remaining": "متبقي {value}",
         "overdueBy": "متأخر بمقدار {value}",
-        "pausedOnHold": "اتفاقية الخدمة متوقفة (قيد الانتظار)"
+        "pausedOnHold": "اتفاقية الخدمة متوقفة (قيد الانتظار)",
+        "pausedOffHours": "اتفاقية الخدمة متوقفة (خارج ساعات العمل)",
+        "pausedAt": "متوقف عند {value}"
       },
       "actions": {
         "title": "الإجراءات",
@@ -8402,22 +9462,84 @@
         "close": "إغلاق التذكرة",
         "reopen": "إعادة فتح التذكرة",
         "onHold": "تعليق التذكرة",
+        "requestOnHold": "طلب تعليق",
         "resume": "استئناف التذكرة",
-        "supervisorBadge": "(مشرف)"
+        "supervisorBadge": "(مشرف)",
+        "escalate": "تصعيد التذكرة",
+        "updateEscalation": "تحديث التصعيد",
+        "escalated": "مُصعَّدة"
+      },
+      "escalate": {
+        "title": "تصعيد هذه التذكرة",
+        "titleUpdate": "تحديث التصعيد",
+        "body": "أخبر الفريق بما تغيّر. سيتم إعلام المُستلِم والمشرف وجميع المشرفين العامين.",
+        "bodyUpdate": "حدّث السبب أو ارفع الأولوية. لن نُعلِم الفريق مرة أخرى — التصعيد الأول قام بذلك.",
+        "reasonLabel": "السبب",
+        "reasonPlaceholder": "ما الذي يعطّل هذه التذكرة؟ لماذا تحتاج إلى اهتمام الآن؟",
+        "bumpLabel": "الأولوية",
+        "bumpKeep": "إبقاء {current}",
+        "bumpMedium": "رفع إلى متوسطة",
+        "bumpHigh": "رفع إلى عالية",
+        "submit": "تصعيد",
+        "submitUpdate": "تحديث",
+        "cancel": "إلغاء",
+        "dismissAria": "إغلاق نافذة التصعيد",
+        "validation": {
+          "reasonTooShort": "يجب أن يحتوي السبب على 3 أحرف على الأقل."
+        },
+        "toasts": {
+          "escalated": "تم تصعيد التذكرة.",
+          "updated": "تم تحديث التصعيد.",
+          "failed": "تعذّر تصعيد التذكرة. يرجى المحاولة مرة أخرى."
+        }
       },
       "customer": "العميل",
       "customerRating": "تقييم العميل",
+      "guestBadge": "زائر",
+      "guestTicketHint": "تم الإرسال عبر النموذج العام (بدون حساب).",
+      "requesterRole": {
+        "student": "طالب",
+        "instructor": "مدرّب",
+        "manager": "مدير",
+        "ta": "مساعد تدريس",
+        "finance": "مالية"
+      },
+      "requesterRoleHint": {
+        "student": "تم الإرسال من لوحة الطالب.",
+        "instructor": "تم الإرسال من لوحة المدرّب.",
+        "manager": "تم الإرسال من لوحة مدير الدورة.",
+        "ta": "تم الإرسال من لوحة مساعد التدريس.",
+        "finance": "تم الإرسال من لوحة المالية."
+      },
       "openAttachment": "عرض المرفق",
+      "attachFiles": "إرفاق ملفات (PDF, JPG, PNG, WebP — حتى 10 × 5 ميجابايت)",
+      "attachmentUploading": "جارٍ الرفع…",
+      "attachmentUploaded": "تم الرفع",
+      "attachmentFailed": "فشل الرفع",
+      "attachmentQueued": "في الانتظار",
+      "removeAttachment": "إزالة المرفق",
+      "attachmentRemovedToast": "تمت إزالة المرفق",
+      "attachmentRemoveFailed": "تعذّر إزالة المرفق",
+      "scanClean": "تم الفحص · آمن",
+      "scanPending": "جارٍ الفحص…",
+      "scanBlocked": "محظور — تم اكتشاف برمجيات خبيثة",
       "toasts": {
         "loadFailed": "تعذّر تحميل التذكرة",
         "internalAdded": "تمت إضافة الملاحظة الداخلية",
         "replySent": "تم إرسال الرد",
         "replyFailed": "تعذّر إرسال الرد",
+        "waitForUploads": "انتظر اكتمال رفع الملفات",
         "statusChanged": "تم تغيير الحالة إلى {status}",
         "statusFailed": "تعذّر تحديث الحالة",
         "applyMacroFailed": "تعذّر تطبيق القالب",
         "reassigned": "تمت إعادة الإسناد إلى {name}",
-        "reassignFailed": "تعذّر إعادة الإسناد"
+        "reassignFailed": "تعذّر إعادة الإسناد",
+        "holdRequested": "تم تقديم طلب التعليق — بانتظار الموافقة",
+        "holdApplied": "تم تعليق التذكرة",
+        "holdFailed": "تعذّر إرسال طلب التعليق",
+        "holdApprovedToast": "تمت الموافقة على طلب التعليق — التذكرة الآن معلّقة",
+        "holdRejectedToast": "تم رفض طلب التعليق",
+        "holdDecisionFailed": "تعذّر تسجيل القرار"
       },
       "onHold": {
         "selectReason": "اختر سببًا لتعليق هذه التذكرة:",
@@ -8430,13 +9552,213 @@
         },
         "confirm": "تأكيد التعليق",
         "cancel": "إلغاء"
+      },
+      "holdModal": {
+        "title": "تعليق التذكرة",
+        "intro": "سيراجع المشرف أو المدير طلبك قبل أن يتم تعليق التذكرة.",
+        "reasonLabel": "السبب",
+        "descriptionLabel": "الوصف",
+        "descriptionPlaceholder": "اشرح سبب الحاجة إلى تعليق التذكرة…",
+        "descriptionHelp": "مطلوب عند اختيار السبب 'سبب آخر'. يظهر للمشرف عند مراجعة الطلب.",
+        "submit": "إرسال الطلب",
+        "cancel": "إلغاء",
+        "close": "إغلاق"
+      },
+      "timeline": {
+        "title": "النشاط الأخير",
+        "loadError": "تعذّر تحميل النشاط",
+        "empty": "لا يوجد نشاط لهذا الطالب بعد.",
+        "emptyFilter": "لا توجد أحداث مطابقة لهذا المرشّح.",
+        "eventsCount": "{count, plural, zero {لا أحداث} one {حدث واحد} two {حدثان} few {# أحداث} many {# حدثًا} other {# حدث}}",
+        "filters": {
+          "all": "الكل",
+          "tickets": "التذاكر",
+          "courses": "الدورات",
+          "webinars": "الندوات",
+          "payments": "المدفوعات",
+          "sessions": "الجلسات",
+          "interventions": "التدخلات",
+          "coursesManaged": "الدورات المُدارة",
+          "taAssignments": "تكليفات المساعد"
+        },
+        "status": {
+          "ticket": {
+            "new": "جديدة",
+            "in_progress": "مفتوحة",
+            "on_hold": "معلّقة",
+            "resolved": "محلولة",
+            "closed": "مغلقة"
+          },
+          "enrollment": {
+            "active": "نشطة",
+            "completed": "مكتملة",
+            "dropped": "متروكة",
+            "suspended": "موقوفة"
+          },
+          "webinar": {
+            "registered": "مسجَّل",
+            "attended": "حضر",
+            "upcoming": "قادمة",
+            "missed": "فاتت"
+          },
+          "payment": {
+            "completed": "مدفوع",
+            "pending": "معلّق",
+            "failed": "فشل",
+            "refunded": "مُسترد"
+          },
+          "certificate": {
+            "issued": "صادرة"
+          }
+        }
+      },
+      "snapshot": {
+        "title": "ملخص الطالب",
+        "titleInstructor": "ملخص المدرّب",
+        "titleManager": "ملخص المدير",
+        "titleTa": "ملخص مساعد التدريس",
+        "titleFinance": "ملخص المالية",
+        "loadError": "تعذّر تحميل الملخص",
+        "none": "لا يوجد",
+        "courses": "الدورات",
+        "coursesEnrolled": "{count, plural, zero {لم يُسجَّل في أي دورة} one {مُسجَّل في دورة واحدة} two {مُسجَّل في دورتين} few {مُسجَّل في # دورات} many {مُسجَّل في # دورة} other {مُسجَّل في # دورة}}",
+        "activeShort": "{count} نشطة",
+        "completedShort": "{count} مكتملة",
+        "webinars": "الندوات",
+        "webinarsRegistered": "{count, plural, zero {لا تسجيلات} one {تسجيل واحد} two {تسجيلان} few {# تسجيلات} many {# تسجيلًا} other {# تسجيل}}",
+        "attendedShort": "{count} حضر",
+        "upcomingShort": "{count} قادمة",
+        "attendance": "الحضور",
+        "noSessions": "لا توجد جلسات بعد",
+        "sessions": "{count, plural, zero {لا جلسات} one {جلسة واحدة} two {جلستان} few {# جلسات} many {# جلسة} other {# جلسة}}",
+        "certificates": "الشهادات",
+        "certIssued": "{count, plural, zero {لم تُصدر} one {شهادة واحدة صادرة} two {شهادتان صادرتان} few {# شهادات صادرة} many {# شهادة صادرة} other {# شهادة صادرة}}",
+        "certPending": "{count} قيد المراجعة",
+        "certRevoked": "{count} مُلغاة",
+        "cme": "الساعات المعتمدة",
+        "noCredits": "لا توجد ساعات بعد",
+        "cmeEarned": "{count, plural, zero {لا ساعات} one {ساعة معتمدة واحدة} two {ساعتان معتمدتان} few {# ساعات معتمدة} many {# ساعة معتمدة} other {# ساعة معتمدة}}",
+        "cmePending": "{count} قيد الاعتماد",
+        "payments": "المدفوعات",
+        "noPayments": "لا توجد مدفوعات",
+        "paid": "مدفوع · {amount} ريال",
+        "paymentPending": "{count} معلّقة",
+        "paymentFailed": "{count} فاشلة",
+        "coursesTeaching": "يُدرّس",
+        "coursesTeachingValue": "{count, plural, =0 {لا توجد دورات} one {دورة واحدة} two {دورتان} few {# دورات} many {# دورة} other {# دورة}}",
+        "studentsTotal": "الطلاب",
+        "studentsAcross": "الطلاب (كل الدورات)",
+        "studentsValue": "{count, plural, =0 {لا يوجد} one {طالب واحد} two {طالبان} few {# طلاب} many {# طالبًا} other {# طالب}}",
+        "sessionsConducted": "الجلسات المُنفَّذة",
+        "sessionsScope": "الجلسات في نطاقه",
+        "sessionsValue": "{count, plural, =0 {لا يوجد} one {جلسة واحدة} two {جلستان} few {# جلسات} many {# جلسة} other {# جلسة}}",
+        "thisMonth": "{count} هذا الشهر",
+        "interventionsFiled": "التدخلات المُسجَّلة",
+        "interventionsValue": "{count, plural, =0 {لا يوجد} one {تدخل واحد} two {تدخلان} few {# تدخلات} many {# تدخلًا} other {# تدخل}}",
+        "coursesManaged": "الدورات المُدارة",
+        "coursesManagedValue": "{count, plural, =0 {لا يوجد} one {دورة واحدة} two {دورتان} few {# دورات} many {# دورة} other {# دورة}}",
+        "instructorsUnder": "المدرّبون",
+        "instructorsValue": "{count, plural, =0 {لا يوجد} one {مدرّب واحد} two {مدرّبان} few {# مدرّبين} many {# مدرّبًا} other {# مدرّب}}",
+        "coursesAssisting": "يساعد في",
+        "coursesAssistingValue": "{count, plural, =0 {لا يوجد} one {دورة واحدة} two {دورتان} few {# دورات} many {# دورة} other {# دورة}}",
+        "ticketsRaised": "التذاكر المُرسلة",
+        "ticketsValue": "{count, plural, =0 {لا يوجد} one {تذكرة واحدة} two {تذكرتان} few {# تذاكر} many {# تذكرة} other {# تذكرة}}"
+      },
+      "certDetails": {
+        "title": "تفاصيل الشهادة والساعات المعتمدة",
+        "loadError": "تعذّر تحميل تفاصيل الشهادة",
+        "noCourses": "الطالب ليس مسجَّلاً في أي دورة بعد.",
+        "attendance": "الحضور",
+        "attendanceNA": "لا ينطبق (ذاتي السرعة)",
+        "attendanceNoData": "لا توجد بيانات بعد",
+        "assessment": "التقييم",
+        "assessmentStatus": {
+          "passed": "ناجح",
+          "failed": "راسب",
+          "not_attempted": "لم يُؤدَّ بعد"
+        },
+        "cmeHours": "الساعات المعتمدة",
+        "cmeEarnedHours": "{hours} مكتسبة",
+        "cmePendingHours": "{hours} قيد الاعتماد",
+        "notCmeAccredited": "غير معتمدة",
+        "certStatus": "الشهادة",
+        "certStatusValue": {
+          "pending": "قيد المراجعة",
+          "approved": "صادرة",
+          "rejected": "مرفوضة",
+          "held": "معلّقة",
+          "revoked": "ملغاة"
+        },
+        "certNotRequested": "لم تُطلب بعد",
+        "issuedAt": "تاريخ الإصدار",
+        "revokedAt": "تاريخ الإلغاء",
+        "verificationCode": "رمز التحقق",
+        "copyCode": "نسخ",
+        "copied": "تم النسخ",
+        "openVerify": "تحقق",
+        "openPdf": "فتح الملف",
+        "eligibility": {
+          "eligible": "مؤهَّل",
+          "partial": "جزئي",
+          "ineligible": "غير مؤهَّل",
+          "revoked": "ملغاة",
+          "notRequested": "لم تُطلب"
+        }
+      },
+      "governance": {
+        "mergeButton": "دمج",
+        "transferButton": "تحويل",
+        "cancel": "إلغاء",
+        "close": "إغلاق",
+        "merge": {
+          "title": "دمج هذه التذكرة في تذكرة أخرى",
+          "intro": "ستنتقل الردود والوسوم إلى التذكرة الهدف. تبقى هذه التذكرة مغلقة كمرجع.",
+          "targetLabel": "التذكرة الهدف (نفس العميل، نفس الفئة)",
+          "targetPlaceholder": "اختر تذكرة…",
+          "loading": "جارٍ تحميل التذاكر…",
+          "empty": "لا توجد تذاكر مفتوحة لهذا العميل في هذه الفئة.",
+          "noteLabel": "ملاحظة (اختياري)",
+          "notePlaceholder": "تظهر في المحادثة المدموجة",
+          "submit": "دمج",
+          "success": "تم دمج التذكرة",
+          "errorPickTarget": "اختر التذكرة الهدف",
+          "errorGeneric": "فشل الدمج"
+        },
+        "transfer": {
+          "title": "تحويل التذكرة",
+          "intro": "انقل التذكرة إلى فئة أخرى. سيُعاد تشغيل الإسناد التلقائي افتراضيًا ويُفضِّل وكلاء يعملون فعلًا في تلك الفئة.",
+          "categoryLabel": "الفئة الجديدة",
+          "categoryPlaceholder": "اختر فئة…",
+          "loading": "جارٍ تحميل الفئات…",
+          "noOtherCategories": "لا توجد فئات أخرى متاحة.",
+          "reasonLabel": "السبب (اختياري)",
+          "reasonPlaceholder": "يظهر في المحادثة",
+          "reassignLabel": "إعادة تشغيل الإسناد التلقائي للفئة الجديدة",
+          "submit": "تحويل",
+          "success": "تم تحويل التذكرة",
+          "errorPickCategory": "اختر الفئة الهدف",
+          "errorGeneric": "فشل التحويل"
+        }
+      },
+      "holdBanner": {
+        "pendingTitle": "طلب تعليق قيد المراجعة",
+        "requestedBy": "تم الطلب بواسطة {name}",
+        "reasonLabel": "السبب",
+        "descriptionLabel": "الوصف",
+        "unknownRequester": "وكيل",
+        "notePlaceholder": "ملاحظة اختيارية للوكيل…",
+        "approve": "موافقة",
+        "reject": "رفض",
+        "waitingForApproval": "بانتظار موافقة المشرف."
       }
     },
     "a11y": {
       "moreActions": "إجراءات إضافية",
       "ticketActions": "إجراءات التذكرة",
       "articleActions": "إجراءات المقال",
-      "editPhoto": "تعديل صورة الملف الشخصي"
+      "editPhoto": "تعديل صورة الملف الشخصي",
+      "previousPage": "الصفحة السابقة",
+      "nextPage": "الصفحة التالية"
     },
     "errorState": {
       "title": "تعذّر تحميل البيانات",
@@ -8642,6 +9964,7 @@
       "dashboard": "لوحة التحكم",
       "courses": "الدورات",
       "sessions": "المحاضرات",
+      "support": "الدعم الفني",
       "settings": "الإعدادات",
       "viewProfile": "عرض الملف الشخصي",
       "editProfile": "تعديل الملف الشخصي",
@@ -8866,6 +10189,8 @@
     "passwordMinLength8": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
     "passwordComplexity": "يجب أن تحتوي كلمة المرور على حرف كبير وصغير ورقم",
     "userCreated": "تم إنشاء المستخدم بنجاح",
+    "userCreatedInviteSent": "تم إنشاء المستخدم. أُرسل رابط الإعداد إلى {email}.",
+    "userCreatedInviteFailed": "تم إنشاء المستخدم، لكن تعذر إرسال البريد الإلكتروني. استخدم \"إعادة إرسال الدعوة\" للمحاولة مرة أخرى.",
     "firstLastNameRequired": "الاسم الأول واسم العائلة مطلوبان",
     "userUpdated": "تم تحديث المستخدم بنجاح",
     "userMustHaveRole": "يجب أن يكون للمستخدم دور واحد على الأقل",
@@ -8913,6 +10238,8 @@
     "category_certificate_desc": "لم تستلم الشهادة، مشاكل التحقق، أو قرب انتهاء الصلاحية",
     "category_content": "المحتوى",
     "category_content_desc": "الفيديوهات لا تعمل، مواد الدورة مفقودة، أو روابط معطلة",
+    "category_trainer": "طلب المدرب",
+    "category_trainer_desc": "أسئلة حول حالة طلب الانضمام كمدرب، أو المستندات الناقصة، أو إعادة التقديم",
     "category_other_technical": "تقني",
     "category_other_technical_desc": "أخطاء في المنصة، توافق المتصفح، أو مشاكل تقنية عامة",
     "category_other": "استفسار عام",

@@ -6,15 +6,20 @@ import {
   ForbiddenException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, sql, ilike, or, desc, count } from 'drizzle-orm';
+import { eq, and, sql, ilike, or, desc, asc, count } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { db } from '../../database';
 import {
   roleRequests,
+  roleRequestEvents,
   users,
   userRoles,
   roles,
   blockedNationalIds,
   ROLE_REQUEST_STATUS,
+  ROLE_REQUEST_EVENT_ACTIONS,
+  type RoleRequestEventAction,
+  type MissingRequirement,
   RoleName,
 } from '../../database/schema';
 import { AuthService } from '../auth/auth.service';
@@ -34,6 +39,62 @@ export class RoleRequestsService {
     private emailService: EmailService,
     private notificationsService: NotificationsService,
   ) {}
+
+  // ===========================================
+  // Internal — write one row to role_request_events.
+  // Always best-effort: if event recording fails for whatever reason
+  // (DB hiccup, schema drift), the main action still succeeds — the
+  // single-slot review fields keep the admin UI functional. Surface
+  // the failure as a warning so it shows up in logs.
+  // ===========================================
+  private async recordEvent(input: {
+    roleRequestId: string;
+    action: RoleRequestEventAction;
+    performedBy: string | null;
+    note?: string | null;
+    missingRequirements?: MissingRequirement[] | null;
+    metadata?: Record<string, unknown> | null;
+  }): Promise<void> {
+    try {
+      await db.insert(roleRequestEvents).values({
+        roleRequestId: input.roleRequestId,
+        action: input.action,
+        performedBy: input.performedBy,
+        note: input.note ?? null,
+        missingRequirements: input.missingRequirements ?? null,
+        metadata: input.metadata ?? null,
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Failed to record role_request_event (${input.action}) for ${input.roleRequestId}: ${(err as Error).message}`,
+      );
+    }
+  }
+
+  // ===========================================
+  // Internal — fetch the full event timeline for a request, oldest
+  // first. Used by both admin detail view and support read endpoints.
+  // ===========================================
+  async getEvents(roleRequestId: string) {
+    const performer = alias(users, 'event_performer');
+    return db
+      .select({
+        id: roleRequestEvents.id,
+        action: roleRequestEvents.action,
+        note: roleRequestEvents.note,
+        missingRequirements: roleRequestEvents.missingRequirements,
+        metadata: roleRequestEvents.metadata,
+        createdAt: roleRequestEvents.createdAt,
+        performedById: roleRequestEvents.performedBy,
+        performedByFirstName: performer.firstName,
+        performedByLastName: performer.lastName,
+        performedByEmail: performer.email,
+      })
+      .from(roleRequestEvents)
+      .leftJoin(performer, eq(performer.id, roleRequestEvents.performedBy))
+      .where(eq(roleRequestEvents.roleRequestId, roleRequestId))
+      .orderBy(asc(roleRequestEvents.createdAt));
+  }
 
   // ===========================================
   // Create - Submit a new role request
@@ -454,7 +515,9 @@ export class RoleRequestsService {
       .where(eq(userRoles.userId, request.userId));
     const isPlaceholder = priorRoles.length === 0;
 
-    // Update request status
+    // Update request status. Clearing missing_requirements — once
+    // approved, the checklist is no longer actionable. The event row
+    // below preserves whatever was last requested.
     await db
       .update(roleRequests)
       .set({
@@ -462,9 +525,19 @@ export class RoleRequestsService {
         reviewedBy: adminId,
         reviewNote: dto.reviewNote || null,
         reviewedAt: new Date(),
+        missingRequirements: null,
         updatedAt: new Date(),
       })
       .where(eq(roleRequests.id, id));
+
+    // Append to event history — captures who approved, when, with what
+    // note. Resubmits never overwrite this row going forward.
+    await this.recordEvent({
+      roleRequestId: id,
+      action: ROLE_REQUEST_EVENT_ACTIONS.APPROVED,
+      performedBy: adminId,
+      note: dto.reviewNote || null,
+    });
 
     // Mirror trainer-application profile fields onto the user row so the
     // instructor's settings page is pre-filled after first login. Only sets
@@ -590,9 +663,18 @@ export class RoleRequestsService {
         reviewedBy: adminId,
         reviewNote: dto.reviewNote,
         reviewedAt: new Date(),
+        missingRequirements: null,
         updatedAt: new Date(),
       })
       .where(eq(roleRequests.id, id));
+
+    // Append to event history.
+    await this.recordEvent({
+      roleRequestId: id,
+      action: ROLE_REQUEST_EVENT_ACTIONS.REJECTED,
+      performedBy: adminId,
+      note: dto.reviewNote,
+    });
 
     // Optionally block the National ID
     if (dto.blockNationalId) {
@@ -644,11 +726,29 @@ export class RoleRequestsService {
 
     const request = await this.findOne(id);
 
-    if (request.status !== ROLE_REQUEST_STATUS.PENDING) {
+    // Allow from PENDING (first time admin asks for more info) and
+    // from MORE_INFO (admin updated the checklist after a resubmit
+    // wasn't quite enough). Terminal states (APPROVED/REJECTED) can't
+    // be reopened to MORE_INFO — that would be confusing for the
+    // applicant.
+    if (
+      request.status !== ROLE_REQUEST_STATUS.PENDING &&
+      request.status !== ROLE_REQUEST_STATUS.MORE_INFO
+    ) {
       throw new BadRequestException(
-        'Only PENDING requests can be moved to MORE_INFO',
+        'Only PENDING or MORE_INFO requests can have more info requested',
       );
     }
+
+    // Normalise the missing-reqs list: drop empty OTHER entries (label
+    // must be present per the DTO validator, but defensively skip
+    // anything bad here too).
+    const missing =
+      dto.missingRequirements && dto.missingRequirements.length > 0
+        ? dto.missingRequirements.filter(
+            (m) => m.code !== 'OTHER' || (m.label && m.label.trim().length > 0),
+          )
+        : null;
 
     await db
       .update(roleRequests)
@@ -657,11 +757,25 @@ export class RoleRequestsService {
         reviewedBy: adminId,
         reviewNote: dto.reviewNote,
         reviewedAt: new Date(),
+        missingRequirements: missing,
         updatedAt: new Date(),
       })
       .where(eq(roleRequests.id, id));
 
-    // Send more-info email
+    // Append to event history. Snapshot the missing-reqs list at this
+    // moment so the timeline shows what was asked each time admin
+    // raised the question (in case the list changes round-to-round).
+    await this.recordEvent({
+      roleRequestId: id,
+      action: ROLE_REQUEST_EVENT_ACTIONS.REQUESTED_INFO,
+      performedBy: adminId,
+      note: dto.reviewNote,
+      missingRequirements: missing,
+    });
+
+    // Send more-info email. The email body now includes a structured
+    // missing-reqs list (when present) + CTAs to the status page and
+    // public support page.
     try {
       const profileData = request.profileData as Record<string, string>;
       const applicantName =
@@ -675,6 +789,7 @@ export class RoleRequestsService {
         applicantName,
         dto.reviewNote,
         locale,
+        missing ?? undefined,
       );
     } catch (error) {
       this.logger.error('Failed to send more-info email', error);
@@ -684,7 +799,11 @@ export class RoleRequestsService {
   }
 
   // ===========================================
-  // Resubmit - Student updates after MORE_INFO
+  // Resubmit (logged-in STUDENT) — original entry. A student who
+  // applied to become an instructor (so they already have a STUDENT
+  // role + can log in) updates their application after MORE_INFO.
+  // Delegates to executeResubmit which is shared with the public
+  // (placeholder-user, OTP-protected) path below.
   // ===========================================
   async resubmit(id: string, userId: string, dto: CreateRoleRequestDto) {
     const [request] = await db
@@ -703,6 +822,69 @@ export class RoleRequestsService {
       );
     }
 
+    return this.executeResubmit(request, dto, {
+      ipAddress: null,
+      userAgent: null,
+    });
+  }
+
+  // ===========================================
+  // Resubmit (public — placeholder user via OTP). Called by the
+  // trainer-applications module after the applicant verifies their
+  // email via OTP. The OTP'd email IS the gate — we trust that the
+  // role_request belongs to the verified email.
+  // ===========================================
+  async publicResubmit(
+    roleRequestId: string,
+    verifiedEmail: string,
+    dto: CreateRoleRequestDto,
+    meta: { ipAddress?: string | null; userAgent?: string | null } = {},
+  ) {
+    const [request] = await db
+      .select()
+      .from(roleRequests)
+      .where(eq(roleRequests.id, roleRequestId))
+      .limit(1);
+
+    if (!request) {
+      throw new NotFoundException('Application not found');
+    }
+
+    // Verify ownership via the OTP'd email matching the applicant's
+    // user row. Cheap join here protects against someone guessing a
+    // role_request id.
+    const [applicant] = await db
+      .select({ email: users.email })
+      .from(users)
+      .where(eq(users.id, request.userId))
+      .limit(1);
+
+    if (
+      !applicant ||
+      applicant.email.toLowerCase().trim() !==
+        verifiedEmail.toLowerCase().trim()
+    ) {
+      throw new ForbiddenException(
+        'Verified email does not match this application',
+      );
+    }
+
+    return this.executeResubmit(request, dto, {
+      ipAddress: meta.ipAddress ?? null,
+      userAgent: meta.userAgent ?? null,
+    });
+  }
+
+  // ===========================================
+  // Internal — shared resubmit work. Both authenticated and public
+  // paths converge here. Performs the row update, writes a
+  // `resubmitted` event, fires admin notifications (email + in-app).
+  // ===========================================
+  private async executeResubmit(
+    request: typeof roleRequests.$inferSelect,
+    dto: CreateRoleRequestDto,
+    meta: { ipAddress?: string | null; userAgent?: string | null },
+  ) {
     if (request.status !== ROLE_REQUEST_STATUS.MORE_INFO) {
       throw new BadRequestException(
         'Only applications with MORE_INFO status can be resubmitted',
@@ -716,27 +898,59 @@ export class RoleRequestsService {
         profileData: dto.profileData,
         bankData: dto.bankData || request.bankData,
         resumeFiles: dto.resumeFiles || request.resumeFiles,
+        structuredResume: dto.structuredResume || request.structuredResume,
+        // Clear the single-slot review fields so the admin UI shows
+        // "awaiting review" on the resubmitted version. The event row
+        // below preserves the previous reviewer/note for posterity.
         reviewNote: null,
         reviewedBy: null,
         reviewedAt: null,
+        // Clear the active missing-reqs checklist — the applicant
+        // claims to have addressed them. Admin can re-raise via a
+        // fresh requestInfo() if anything is still missing.
+        missingRequirements: null,
         updatedAt: new Date(),
       })
-      .where(eq(roleRequests.id, id));
+      .where(eq(roleRequests.id, request.id));
 
-    // Notify admins about resubmission
+    // Audit — `performed_by` is NULL because applicants are not staff
+    // users. IP + user-agent in metadata tells support "from where"
+    // the resubmit happened, useful if there's ever a fraud question.
+    await this.recordEvent({
+      roleRequestId: request.id,
+      action: ROLE_REQUEST_EVENT_ACTIONS.RESUBMITTED,
+      performedBy: null,
+      metadata: meta.ipAddress || meta.userAgent ? meta : null,
+    });
+
+    // Notify admins — email + in-app. Best-effort: failures are
+    // logged but don't bubble up to the applicant (the resubmit
+    // still succeeded).
     try {
       const profileData = dto.profileData as Record<string, string>;
       const applicantName =
         profileData.fullNameEnglish ||
         profileData.fullNameArabic ||
-        'Unknown';
+        'Unknown applicant';
 
       const [user] = await db
         .select({ email: users.email })
         .from(users)
-        .where(eq(users.id, userId))
+        .where(eq(users.id, request.userId))
         .limit(1);
 
+      // In-app — visible immediately in the admin notifications panel,
+      // clickable straight to the review page.
+      await this.notificationsService.create({
+        type: 'info',
+        title: 'Trainer application updated',
+        description: `${applicantName} submitted updated information for review.`,
+        link: `/dashboard/admin/role-requests/${request.id}`,
+      });
+
+      // Email — uses the existing new-application admin template; it
+      // tells admins someone needs attention without making them log
+      // in to check.
       const adminRoleRecords = await db
         .select({ userId: userRoles.userId })
         .from(userRoles)
@@ -769,6 +983,218 @@ export class RoleRequestsService {
     }
 
     return { message: 'Application resubmitted successfully' };
+  }
+
+  // ===========================================
+  // Support — paginated list (read-only). Mirrors findAll() but
+  // returns a slim shape suited to a quick lookup table. Used by the
+  // /dashboard/support/trainer-applications page.
+  // ===========================================
+  async listForSupport(params: {
+    status?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const page = Math.max(1, params.page ?? 1);
+    const limit = Math.min(50, Math.max(5, params.limit ?? 20));
+    const offset = (page - 1) * limit;
+
+    const conditions = [
+      eq(roleRequests.requestedRole, 'INSTRUCTOR') as ReturnType<typeof eq>,
+    ];
+
+    if (params.status && params.status !== 'ALL') {
+      conditions.push(eq(roleRequests.status, params.status));
+    }
+
+    if (params.search && params.search.trim().length > 0) {
+      const term = `%${params.search.trim()}%`;
+      conditions.push(
+        or(
+          ilike(users.email, term),
+          ilike(users.firstName, term),
+          ilike(users.lastName, term),
+          // Profile-data JSON search — covers full name fields that
+          // aren't on the users row for placeholder applicants who
+          // never set up their account.
+          sql`${roleRequests.profileData}->>'fullNameEnglish' ILIKE ${term}`,
+          sql`${roleRequests.profileData}->>'fullNameArabic'  ILIKE ${term}`,
+        )!,
+      );
+    }
+
+    const whereExpr = and(...conditions);
+
+    const items = await db
+      .select({
+        id: roleRequests.id,
+        status: roleRequests.status,
+        submittedAt: roleRequests.createdAt,
+        reviewedAt: roleRequests.reviewedAt,
+        applicantEmail: users.email,
+        applicantFirstName: users.firstName,
+        applicantLastName: users.lastName,
+        profileData: roleRequests.profileData,
+        missingRequirements: roleRequests.missingRequirements,
+      })
+      .from(roleRequests)
+      .innerJoin(users, eq(roleRequests.userId, users.id))
+      .where(whereExpr)
+      .orderBy(desc(roleRequests.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const [totalRow] = await db
+      .select({ value: count() })
+      .from(roleRequests)
+      .innerJoin(users, eq(roleRequests.userId, users.id))
+      .where(whereExpr);
+
+    return {
+      items,
+      total: Number(totalRow?.value ?? 0),
+      page,
+      limit,
+    };
+  }
+
+  // ===========================================
+  // Support — detail with event timeline. Read-only mirror of the
+  // admin detail page; no review actions exposed.
+  // ===========================================
+  async getForSupport(id: string) {
+    const request = await this.findOne(id);
+    const events = await this.getEvents(id);
+    return {
+      request,
+      events,
+    };
+  }
+
+  // ===========================================
+  // Support — find the most-recent role_request matching a given
+  // email. Used by both the ticket-detail card lookup and the guest-
+  // ticket auto-tagger. Returns null if there's no applicant for the
+  // email. Skips REJECTED applications older than 90 days to keep
+  // the timeline relevant — agents usually care about live work,
+  // not ancient rejections.
+  // ===========================================
+  async findMostRecentByEmail(email: string) {
+    const normalized = email.toLowerCase().trim();
+    if (!normalized) return null;
+
+    const [applicant] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, normalized))
+      .limit(1);
+
+    if (!applicant) return null;
+
+    const [request] = await db
+      .select({
+        id: roleRequests.id,
+        status: roleRequests.status,
+        requestedRole: roleRequests.requestedRole,
+        submittedAt: roleRequests.createdAt,
+        reviewedAt: roleRequests.reviewedAt,
+        reviewNote: roleRequests.reviewNote,
+        missingRequirements: roleRequests.missingRequirements,
+        applicantId: roleRequests.userId,
+      })
+      .from(roleRequests)
+      .where(
+        and(
+          eq(roleRequests.userId, applicant.id),
+          eq(roleRequests.requestedRole, 'INSTRUCTOR'),
+        ),
+      )
+      .orderBy(desc(roleRequests.createdAt))
+      .limit(1);
+
+    return request ?? null;
+  }
+
+  // ===========================================
+  // Public — look up the application status for an OTP-verified
+  // email. Returns the most recent role_request for that email along
+  // with its full event timeline + missing-reqs checklist. Powers the
+  // /become-trainer status page so applicants can self-serve.
+  //
+  // Caller must enforce the OTP gate before calling — this method
+  // trusts the email it's handed.
+  // ===========================================
+  async getPublicStatusByEmail(verifiedEmail: string) {
+    const email = verifiedEmail.toLowerCase().trim();
+
+    const [applicant] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+
+    if (!applicant) {
+      return { found: false as const };
+    }
+
+    // Most-recent first so we pick the live application if there are
+    // multiple historic rows. In practice one applicant has one row
+    // (PENDING/MORE_INFO/APPROVED/REJECTED) — but a placeholder user
+    // might have an APPROVED instructor app and an unrelated test
+    // row, in which case the latest is what they're asking about.
+    const [request] = await db
+      .select()
+      .from(roleRequests)
+      .where(eq(roleRequests.userId, applicant.id))
+      .orderBy(desc(roleRequests.createdAt))
+      .limit(1);
+
+    if (!request) {
+      return { found: false as const };
+    }
+
+    const events = await this.getEvents(request.id);
+
+    // Detect whether the applicant has any role assignments — if so
+    // they're not a placeholder, so on APPROVED we can send them
+    // straight to login instead of "check your email".
+    const priorRoles = await db
+      .select({ roleId: userRoles.roleId })
+      .from(userRoles)
+      .where(eq(userRoles.userId, applicant.id));
+    const isPlaceholder = priorRoles.length === 0;
+
+    return {
+      found: true as const,
+      isPlaceholder,
+      request: {
+        id: request.id,
+        status: request.status,
+        requestedRole: request.requestedRole,
+        submittedAt: request.createdAt,
+        updatedAt: request.updatedAt,
+        reviewedAt: request.reviewedAt,
+        reviewNote: request.reviewNote,
+        missingRequirements: request.missingRequirements as
+          | MissingRequirement[]
+          | null,
+        // Pre-fill data for the resubmit form. Only returned when the
+        // application is in MORE_INFO state — otherwise we don't want
+        // to leak it back through the public API. APPROVED/REJECTED
+        // applicants don't need it.
+        prefill:
+          request.status === ROLE_REQUEST_STATUS.MORE_INFO
+            ? {
+                profileData: request.profileData,
+                bankData: request.bankData,
+                resumeFiles: request.resumeFiles,
+                structuredResume: request.structuredResume,
+              }
+            : null,
+      },
+      events,
+    };
   }
 
   // ===========================================

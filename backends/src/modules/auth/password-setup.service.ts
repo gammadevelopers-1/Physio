@@ -255,6 +255,32 @@ export class PasswordSetupService {
   }
 
   /**
+   * Admin-created-account variant — issues the token and sends the
+   * neutral "your account is ready" email so the user can pick their
+   * own password. Used by AuthService.createUser when the invite flow
+   * is selected (admin omits password). Admin never sees or knows the
+   * user's password.
+   */
+  async sendAdminAccountInviteEmail(params: {
+    email: string;
+    recipientName: string;
+    locale: 'en' | 'ar';
+  }): Promise<void> {
+    const token = await this.issueToken(params.email);
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') ||
+      'https://physioguidance.org';
+    const url = `${frontendUrl}/${params.locale}/set-password?token=${token}`;
+
+    await this.emailService.sendAdminAccountInvite(
+      params.email,
+      params.recipientName,
+      url,
+      params.locale,
+    );
+  }
+
+  /**
    * Webinar Course auto-enrollment variant. Issues the token and sends the
    * webinar-themed set-password email referencing the linked course title.
    */

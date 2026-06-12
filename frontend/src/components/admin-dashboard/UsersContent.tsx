@@ -8,7 +8,7 @@ import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
 import { TableRowSkeleton } from "./AdminSkeletons";
 import { useAuth } from "@/contexts";
-import { adminApi, User, CreateUserData, UpdateUserData, PaginatedUsersResponse } from "@/lib/api";
+import { adminApi, supportApi, User, CreateUserData, UpdateUserData, PaginatedUsersResponse } from "@/lib/api";
 import { toast } from "sonner";
 import UserDevicesModal from "./UserDevicesModal";
 import Select from "./Select";
@@ -18,8 +18,13 @@ import { ROLE_ORDER } from "./users/userHelpers";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatPlatformDateReadable, type PlatformLocaleSettings } from "@/lib/platform-locale";
 import { FmtDate } from "@/components/ui/Fmt";
-import PasswordPolicyHint from "@/components/shared/PasswordPolicyHint";
-import { usePasswordPolicy, checkPasswordAgainstPolicy } from "@/hooks/usePasswordPolicy";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import {
   Search,
   Plus,
@@ -45,6 +50,8 @@ import {
   Banknote,
   ShieldCheck,
   Clock,
+  Mail,
+  Send,
 } from "lucide-react";
 
 // ============================================
@@ -236,43 +243,89 @@ function CreateUserModal({
 }) {
   const t = useTranslations("adminDashboard");
   const tToasts = useTranslations("toasts");
-  const { policy: passwordPolicy } = usePasswordPolicy();
   const [form, setForm] = useState({
     email: "",
-    password: "",
     firstName: "",
     lastName: "",
     phone: "",
     role: "STUDENT",
     supportSubRole: "agent" as string,
+    supervisorId: "" as string,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Active supervisors for the picker shown only when creating a
+  // Support Agent. Fetched once on mount because the list is small,
+  // changes rarely, and the modal lifetime is short.
+  const [supervisors, setSupervisors] = useState<
+    Awaited<ReturnType<typeof supportApi.listActiveSupervisors>>
+  >([]);
+  const [supervisorsLoading, setSupervisorsLoading] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    setSupervisorsLoading(true);
+    supportApi
+      .listActiveSupervisors()
+      .then((rows) => {
+        if (!cancelled) setSupervisors(rows || []);
+      })
+      .catch(() => {
+        if (!cancelled) setSupervisors([]);
+      })
+      .finally(() => {
+        if (!cancelled) setSupervisorsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.email || !form.password || !form.firstName || !form.lastName) {
+    if (!form.email || !form.firstName || !form.lastName) {
       toast.error(tToasts("fillRequiredFields"));
       return;
     }
-    const policyErrors = checkPasswordAgainstPolicy(form.password, passwordPolicy);
-    if (policyErrors.length) {
-      toast.error(policyErrors[0]);
+
+    // No-orphan-agent invariant: a new Support Agent must be tied to
+    // a supervisor at creation time. Catch this on the client so we
+    // surface a clear error before round-tripping.
+    if (
+      form.role === "SUPPORT" &&
+      form.supportSubRole === "agent" &&
+      !form.supervisorId
+    ) {
+      toast.error(t("usersPage.createUser.supervisorRequired"));
       return;
     }
 
     setIsSubmitting(true);
     try {
+      // Admin no longer chooses the user's password. The BE sends a
+      // magic-link invite to the new user's email so they set their
+      // own — privacy + compliance win.
       const data: CreateUserData = {
         email: form.email,
-        password: form.password,
         firstName: form.firstName,
         lastName: form.lastName,
         role: form.role,
       };
       if (form.phone) data.phone = form.phone;
-      if (form.role === "SUPPORT") data.supportSubRole = form.supportSubRole;
-      await adminApi.createUser(data);
-      toast.success(tToasts("userCreated"));
+      if (form.role === "SUPPORT") {
+        data.supportSubRole = form.supportSubRole;
+        if (form.supportSubRole === "agent") {
+          data.supervisorId = form.supervisorId;
+        }
+      }
+      const result = await adminApi.createUser(data);
+      if (result.inviteSent) {
+        toast.success(tToasts("userCreatedInviteSent", { email: form.email }));
+      } else {
+        // User row was created but the email send failed — admin can
+        // resend from the user list. Surface this as a warning toast
+        // so the admin knows to follow up.
+        toast.warning(tToasts("userCreatedInviteFailed", { email: form.email }));
+      }
       onCreated();
       onClose();
     } catch (err) {
@@ -332,16 +385,17 @@ function CreateUserModal({
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Password *</label>
-            <input
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
-              required
-            />
-            <PasswordPolicyHint password={form.password} />
+          {/* Invite-flow notice — replaces the legacy admin-typed password.
+              The user gets a magic-link email to set their own password,
+              so the admin never sees or chooses it. */}
+          <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-border-subtle)] p-3 flex items-start gap-2">
+            <Mail className="w-4 h-4 text-[var(--color-primary)] flex-shrink-0 mt-0.5" />
+            <div className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
+              <p className="font-medium text-[var(--color-text-primary)] mb-0.5">
+                {t("usersPage.inviteFlowTitle")}
+              </p>
+              <p>{t("usersPage.inviteFlowDescription")}</p>
+            </div>
           </div>
 
           <div>
@@ -406,6 +460,62 @@ function CreateUserModal({
                   </div>
                 </label>
               </div>
+
+              {/* Supervisor picker — required for agents so no agent
+                  exists without a team supervisor. Hidden for the
+                  supervisor sub-role (supervisors lead, they don't
+                  belong to another team). */}
+              {form.supportSubRole === "agent" && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-[#1E40AF] mb-1.5">
+                    {t("usersPage.createUser.supervisorLabel")}
+                  </label>
+                  <p className="text-xs text-[#6B7280] mb-2">
+                    {t("usersPage.createUser.supervisorHint")}
+                  </p>
+                  {supervisorsLoading ? (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-[#E5E7EB]">
+                      <Loader2 className="w-4 h-4 animate-spin text-[var(--color-text-secondary)]" />
+                      <span className="text-xs text-[var(--color-text-secondary)]">
+                        {t("usersPage.createUser.supervisorLoading")}
+                      </span>
+                    </div>
+                  ) : supervisors.length === 0 ? (
+                    <div className="px-3 py-2 bg-[#FEF3C7] border border-[#FDE68A] rounded-lg">
+                      <p className="text-xs text-[#92400E] font-medium">
+                        {t("usersPage.createUser.noSupervisorsTitle")}
+                      </p>
+                      <p className="text-xs text-[#92400E] mt-0.5">
+                        {t("usersPage.createUser.noSupervisorsHint")}
+                      </p>
+                    </div>
+                  ) : (
+                    <Select
+                      value={form.supervisorId}
+                      onChange={(val) =>
+                        setForm({ ...form, supervisorId: val })
+                      }
+                      options={[
+                        {
+                          value: "",
+                          label: t(
+                            "usersPage.createUser.supervisorPlaceholder",
+                          ),
+                        },
+                        ...supervisors.map((s) => ({
+                          value: s.userId,
+                          label: `${
+                            [s.firstName, s.lastName].filter(Boolean).join(" ") ||
+                            s.email
+                          } · ${t("usersPage.createUser.teamCount", {
+                            count: s.teamSize,
+                          })}`,
+                        })),
+                      ]}
+                    />
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -720,6 +830,38 @@ function ManageRolesModal({
   const [confirmingRemoveRole, setConfirmingRemoveRole] = useState<string | null>(null);
   const [showSubRolePicker, setShowSubRolePicker] = useState(false);
   const [selectedSubRole, setSelectedSubRole] = useState<string>("agent");
+  const [selectedSupervisorId, setSelectedSupervisorId] = useState<string>("");
+
+  // Supervisor picker — same data source as Create User. Loaded on
+  // mount so the option is ready when the admin flips to SUPPORT.
+  const [supervisors, setSupervisors] = useState<
+    Awaited<ReturnType<typeof supportApi.listActiveSupervisors>>
+  >([]);
+  useEffect(() => {
+    let cancelled = false;
+    supportApi
+      .listActiveSupervisors()
+      .then((rows) => {
+        if (!cancelled) setSupervisors(rows || []);
+      })
+      .catch(() => {
+        if (!cancelled) setSupervisors([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Reassign-team modal state — opens when the admin tries to remove
+  // SUPPORT from a supervisor whose team isn't empty. Reassigning is
+  // the only way to unblock removal (server enforces the same rule).
+  const [reassignFrom, setReassignFrom] = useState<{
+    fromSupervisorId: string;
+    teamSize: number;
+    thenRemoveSupport: boolean;
+  } | null>(null);
+  const [reassignTargetId, setReassignTargetId] = useState<string>("");
+  const [reassigning, setReassigning] = useState(false);
 
   // Strict role isolation: STUDENT and INSTRUCTOR are mutually exclusive.
   const hasStudent = userRoles.includes("STUDENT");
@@ -738,12 +880,34 @@ function ManageRolesModal({
       return;
     }
 
+    // Adding SUPPORT/agent must include a supervisor — same invariant
+    // as Create User. The BE rejects without one; catch on the client
+    // for a clean error path.
+    if (
+      role === "SUPPORT" &&
+      selectedSubRole === "agent" &&
+      !selectedSupervisorId
+    ) {
+      toast.error(t("usersPage.createUser.supervisorRequired"));
+      return;
+    }
+
     setActionInProgress(role);
     try {
       const subRole = role === "SUPPORT" ? selectedSubRole : undefined;
-      const result = await adminApi.assignRole(user.id, role, subRole);
+      const supervisorId =
+        role === "SUPPORT" && selectedSubRole === "agent"
+          ? selectedSupervisorId
+          : undefined;
+      const result = await adminApi.assignRole(
+        user.id,
+        role,
+        subRole,
+        supervisorId,
+      );
       setUserRoles(result.roles);
       setShowSubRolePicker(false);
+      setSelectedSupervisorId("");
       toast.success(`${t(`userManagement.roles.${role.toLowerCase()}`)} role added`);
       onUpdated();
     } catch (err) {
@@ -768,9 +932,71 @@ function ManageRolesModal({
       toast.success(`${t(`userManagement.roles.${role.toLowerCase()}`)} role removed`);
       onUpdated();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to remove role");
+      // The BE blocks SUPPORT removal when this user is a supervisor
+      // with active team members. Detect that error message and pop
+      // the reassign-team modal so the admin can move agents to
+      // another supervisor and retry in one continuous flow.
+      const msg = err instanceof Error ? err.message : String(err);
+      const supervisorTeamBlock = /supervisor still has (\d+) agent/i.exec(msg);
+      if (role === "SUPPORT" && supervisorTeamBlock) {
+        setReassignFrom({
+          fromSupervisorId: user.id,
+          teamSize: Number(supervisorTeamBlock[1]) || 1,
+          thenRemoveSupport: true,
+        });
+      } else {
+        toast.error(msg || "Failed to remove role");
+      }
     } finally {
       setActionInProgress(null);
+    }
+  };
+
+  const handleReassignAndContinue = async () => {
+    if (!reassignFrom || !reassignTargetId) {
+      toast.error(t("usersPage.manageRoles.reassignPickTarget"));
+      return;
+    }
+    setReassigning(true);
+    try {
+      const res = await supportApi.reassignSupervisorTeam({
+        fromSupervisorId: reassignFrom.fromSupervisorId,
+        toSupervisorId: reassignTargetId,
+      });
+      toast.success(
+        t("usersPage.manageRoles.reassignSuccess", { count: res.moved }),
+      );
+      const followUp = reassignFrom.thenRemoveSupport;
+      setReassignFrom(null);
+      setReassignTargetId("");
+      if (followUp) {
+        // Retry the SUPPORT removal now that the team is empty.
+        try {
+          const result = await adminApi.removeRole(user.id, "SUPPORT");
+          setUserRoles(result.roles);
+          if (activeRole === "SUPPORT" && result.roles.length > 0) {
+            setActiveRole(result.roles[0]);
+          }
+          toast.success(
+            `${t("userManagement.roles.support")} role removed`,
+          );
+          onUpdated();
+        } catch (retryErr) {
+          toast.error(
+            retryErr instanceof Error
+              ? retryErr.message
+              : "Failed to remove role",
+          );
+        }
+      } else {
+        onUpdated();
+      }
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to reassign team",
+      );
+    } finally {
+      setReassigning(false);
     }
   };
 
@@ -956,6 +1182,41 @@ function ManageRolesModal({
                     </div>
                   </label>
                 </div>
+
+                {/* Supervisor picker — required for the agent sub-role. */}
+                {selectedSubRole === "agent" && (
+                  <div className="mb-3">
+                    <label className="block text-xs font-medium text-[#1E40AF] mb-1">
+                      {t("usersPage.createUser.supervisorLabel")}
+                    </label>
+                    {supervisors.length === 0 ? (
+                      <div className="px-3 py-2 bg-[#FEF3C7] border border-[#FDE68A] rounded-lg text-xs text-[#92400E]">
+                        {t("usersPage.createUser.noSupervisorsHint")}
+                      </div>
+                    ) : (
+                      <Select
+                        value={selectedSupervisorId}
+                        onChange={(val) => setSelectedSupervisorId(val)}
+                        options={[
+                          {
+                            value: "",
+                            label: t(
+                              "usersPage.createUser.supervisorPlaceholder",
+                            ),
+                          },
+                          ...supervisors.map((s) => ({
+                            value: s.userId,
+                            label:
+                              [s.firstName, s.lastName]
+                                .filter(Boolean)
+                                .join(" ") || s.email,
+                          })),
+                        ]}
+                      />
+                    )}
+                  </div>
+                )}
+
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleAddRole("SUPPORT")}
@@ -984,6 +1245,67 @@ function ManageRolesModal({
             Close
           </button>
         </div>
+
+        {/* Reassign-team modal — appears when admin tries to remove
+            SUPPORT from a supervisor whose team isn't empty. The team
+            must move before the role can be dropped. */}
+        {reassignFrom && (
+          <ModalBackdrop onClose={() => setReassignFrom(null)}>
+            <div className="p-6">
+              <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-2">
+                {t("usersPage.manageRoles.reassignTitle")}
+              </h3>
+              <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+                {t("usersPage.manageRoles.reassignDescription", {
+                  count: reassignFrom.teamSize,
+                  name: getUserName(user),
+                })}
+              </p>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                {t("usersPage.manageRoles.reassignTargetLabel")}
+              </label>
+              <Select
+                value={reassignTargetId}
+                onChange={(val) => setReassignTargetId(val)}
+                options={[
+                  {
+                    value: "",
+                    label: t("usersPage.manageRoles.reassignTargetPlaceholder"),
+                  },
+                  ...supervisors
+                    .filter((s) => s.userId !== reassignFrom.fromSupervisorId)
+                    .map((s) => ({
+                      value: s.userId,
+                      label:
+                        [s.firstName, s.lastName].filter(Boolean).join(" ") ||
+                        s.email,
+                    })),
+                ]}
+              />
+              <div className="flex gap-3 mt-5">
+                <button
+                  type="button"
+                  onClick={() => setReassignFrom(null)}
+                  disabled={reassigning}
+                  className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] disabled:opacity-50"
+                >
+                  {t("usersPage.manageRoles.reassignCancel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReassignAndContinue}
+                  disabled={reassigning || !reassignTargetId}
+                  className="flex-1 h-10 bg-[#002D87] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {reassigning ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : null}
+                  {t("usersPage.manageRoles.reassignConfirm")}
+                </button>
+              </div>
+            </div>
+          </ModalBackdrop>
+        )}
       </div>
     </ModalBackdrop>
   );
@@ -1022,7 +1344,6 @@ const UsersContent = () => {
   const [searchQuery, setSearchQuery] = useState(initialQ);
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -1077,14 +1398,6 @@ const UsersContent = () => {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    if (!openDropdownId) return;
-    const handleClick = () => setOpenDropdownId(null);
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
-  }, [openDropdownId]);
 
   const adminProfile = {
     name: currentUser ? getUserName(currentUser) : "",
@@ -1162,7 +1475,17 @@ const UsersContent = () => {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to update user");
     }
-    setOpenDropdownId(null);
+  };
+
+  const handleResendInvite = async (user: User) => {
+    try {
+      await adminApi.resendUserInvite(user.id);
+      toast.success(t("usersPage.inviteResent", { email: user.email }));
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t("usersPage.inviteResendFailed"),
+      );
+    }
   };
 
   const handleExport = async () => {
@@ -1434,19 +1757,19 @@ const UsersContent = () => {
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-4 py-4">
-                                <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <span className={`inline-block px-2.5 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
                                   user.activeRole === "SUPPORT" && user.supportSubRole === "supervisor"
                                     ? "bg-[#EDE9FE] text-[#7C3AED]"
                                     : getRoleBadgeStyle(user.activeRole)
                                 }`}>
                                   {user.activeRole === "SUPPORT" && user.supportSubRole
-                                    ? `${t(`userManagement.roles.${roleKey}`)}: ${user.supportSubRole.charAt(0).toUpperCase() + user.supportSubRole.slice(1)}`
+                                    ? `${t(`userManagement.roles.${roleKey}`)} · ${user.supportSubRole.charAt(0).toUpperCase() + user.supportSubRole.slice(1)}`
                                     : t(`userManagement.roles.${roleKey}`)}
                                 </span>
                               </td>
-                              <td className="px-4 py-4">
-                                <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusBadgeStyle(status)}`}>
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <span className={`inline-block px-2.5 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getStatusBadgeStyle(status)}`}>
                                   {t(`userManagement.statuses.${status}`)}
                                 </span>
                               </td>
@@ -1460,111 +1783,87 @@ const UsersContent = () => {
                                 <FmtDate value={user.createdAt} variant="readable" locale={locale === "ar" ? "ar" : "en"} />
                               </td>
                               <td className="px-4 py-3.5" data-row-action>
-                                <div className="relative inline-block">
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setOpenDropdownId(openDropdownId === user.id ? null : user.id);
-                                    }}
-                                    className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
-                                    aria-haspopup="true"
-                                    aria-expanded={openDropdownId === user.id}
-                                  >
-                                    <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                                  </button>
-
-                                  {openDropdownId === user.id && (
-                                    <div
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button
+                                      type="button"
                                       onClick={(e) => e.stopPropagation()}
-                                      className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[200px] z-20 ${
-                                        isRTL ? "left-0" : "right-0"
-                                      }`}
-                                      role="menu"
+                                      className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors"
+                                      aria-label={t("usersPage.table.actions")}
                                     >
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setDetailUser(user);
-                                          setOpenDropdownId(null);
-                                        }}
-                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-start text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] whitespace-nowrap"
-                                        role="menuitem"
+                                      <MoreVertical className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent
+                                    align={isRTL ? "start" : "end"}
+                                    sideOffset={4}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <DropdownMenuItem
+                                      onSelect={() => setDetailUser(user)}
+                                    >
+                                      <Eye className="w-4 h-4 flex-shrink-0" />
+                                      <span>{t("usersPage.actions.viewProfile")}</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onSelect={() => setEditingUser(user)}
+                                    >
+                                      <Edit className="w-4 h-4 flex-shrink-0" />
+                                      <span>{t("usersPage.actions.edit")}</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onSelect={() => setManagingRolesUser(user)}
+                                    >
+                                      <Shield className="w-4 h-4 flex-shrink-0" />
+                                      <span>{t("usersPage.actions.manageRoles")}</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onSelect={() => setViewingDevicesUser(user)}
+                                    >
+                                      <Smartphone className="w-4 h-4 flex-shrink-0" />
+                                      <span>{t("usersPage.actions.devices")}</span>
+                                    </DropdownMenuItem>
+                                    {/* Resend invite — only meaningful for
+                                        admin-created users who haven't yet
+                                        completed password setup. The 24h
+                                        magic-link token may have expired;
+                                        this issues a fresh one and re-mails. */}
+                                    {!user.isVerified && (
+                                      <DropdownMenuItem
+                                        onSelect={() => handleResendInvite(user)}
+                                        className="text-[var(--color-primary)] hover:bg-[var(--color-border-subtle)] focus:bg-[var(--color-border-subtle)]"
                                       >
-                                        <Eye className="w-4 h-4 flex-shrink-0" />
-                                        <span>{t("usersPage.actions.viewProfile")}</span>
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setEditingUser(user);
-                                          setOpenDropdownId(null);
-                                        }}
-                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-start text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] whitespace-nowrap"
-                                        role="menuitem"
+                                        <Send className="w-4 h-4 flex-shrink-0" />
+                                        <span>{t("usersPage.actions.resendInvite")}</span>
+                                      </DropdownMenuItem>
+                                    )}
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onSelect={() => handleSuspendToggle(user)}
+                                      className={
+                                        user.isActive
+                                          ? "text-[#B45309] hover:bg-[#FEF3C7] focus:bg-[#FEF3C7]"
+                                          : "text-[#15803D] hover:bg-[#DCFCE7] focus:bg-[#DCFCE7]"
+                                      }
+                                    >
+                                      <UserX className="w-4 h-4 flex-shrink-0" />
+                                      <span>
+                                        {user.isActive
+                                          ? t("usersPage.actions.suspend")
+                                          : t("usersPage.actions.activate")}
+                                      </span>
+                                    </DropdownMenuItem>
+                                    {user.id !== currentUser?.id && (
+                                      <DropdownMenuItem
+                                        danger
+                                        onSelect={() => setDeletingUser(user)}
                                       >
-                                        <Edit className="w-4 h-4 flex-shrink-0" />
-                                        <span>{t("usersPage.actions.edit")}</span>
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setManagingRolesUser(user);
-                                          setOpenDropdownId(null);
-                                        }}
-                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-start text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] whitespace-nowrap"
-                                        role="menuitem"
-                                      >
-                                        <Shield className="w-4 h-4 flex-shrink-0" />
-                                        <span>{t("usersPage.actions.manageRoles")}</span>
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setViewingDevicesUser(user);
-                                          setOpenDropdownId(null);
-                                        }}
-                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-start text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] whitespace-nowrap"
-                                        role="menuitem"
-                                      >
-                                        <Smartphone className="w-4 h-4 flex-shrink-0" />
-                                        <span>{t("usersPage.actions.devices")}</span>
-                                      </button>
-                                      <div className="border-t border-[var(--color-border)] my-1" />
-                                      <button
-                                        type="button"
-                                        onClick={() => handleSuspendToggle(user)}
-                                        className={`flex items-center gap-2 w-full px-4 py-2 text-sm text-start whitespace-nowrap ${
-                                          user.isActive
-                                            ? "text-[#B45309] hover:bg-[#FEF3C7]"
-                                            : "text-[#15803D] hover:bg-[#DCFCE7]"
-                                        }`}
-                                        role="menuitem"
-                                      >
-                                        <UserX className="w-4 h-4 flex-shrink-0" />
-                                        <span>
-                                          {user.isActive
-                                            ? t("usersPage.actions.suspend")
-                                            : t("usersPage.actions.activate")}
-                                        </span>
-                                      </button>
-                                      {user.id !== currentUser?.id && (
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setDeletingUser(user);
-                                            setOpenDropdownId(null);
-                                          }}
-                                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-start text-[#DC2626] hover:bg-[#FEE2E2] whitespace-nowrap"
-                                          role="menuitem"
-                                        >
-                                          <Trash2 className="w-4 h-4 flex-shrink-0" />
-                                          <span>{t("usersPage.actions.delete")}</span>
-                                        </button>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
+                                        <Trash2 className="w-4 h-4 flex-shrink-0" />
+                                        <span>{t("usersPage.actions.delete")}</span>
+                                      </DropdownMenuItem>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </td>
                             </tr>
                           );

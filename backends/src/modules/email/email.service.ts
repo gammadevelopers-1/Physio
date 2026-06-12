@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../../database';
 import { users } from '../../database/schema';
 import { userPreferences } from '../../database/schema/user-preferences';
+import type { MissingRequirement } from '../../database/schema';
 import { Resend } from 'resend';
 import * as nodemailer from 'nodemailer';
 import { getOtpEmailHtml, getOtpEmailText } from './templates/otp.template';
@@ -15,6 +16,10 @@ import {
   getApplicationApprovedSetPasswordHtml,
   getApplicationApprovedSetPasswordText,
 } from './templates/application-approved-set-password.template';
+import {
+  getAdminAccountInviteHtml,
+  getAdminAccountInviteText,
+} from './templates/admin-account-invite.template';
 import {
   getWebinarRegistrationSetupHtml,
   getWebinarRegistrationSetupText,
@@ -436,10 +441,60 @@ export class EmailService {
   }
 
   /**
+   * Resolve the configured frontend URL. Falls back to the production
+   * domain so an unset FRONTEND_URL in a misconfigured environment
+   * still produces a clickable email (better than a localhost link).
+   */
+  private getFrontendBaseUrl(): string {
+    return (
+      this.configService.get<string>('FRONTEND_URL') ||
+      'https://app.physioguidance.com'
+    );
+  }
+
+  /**
    * Approval email with magic-link "Set Password" button — used for
    * placeholder users who applied via the public Become-Trainer flow
    * and never set a password.
    */
+  /**
+   * Invite email for an admin-created account. Neutral copy (no role
+   * mention) — companion to sendApplicationApprovedSetPassword but
+   * used when an administrator creates a user from the admin Users
+   * page rather than approving a public trainer application.
+   */
+  async sendAdminAccountInvite(
+    to: string,
+    recipientName: string,
+    setupUrl: string,
+    locale: EmailLocale = 'en',
+  ): Promise<void> {
+    try {
+      const s = getEmailStrings(locale);
+      const frontendUrl = this.getFrontendBaseUrl();
+      await this.send({
+        to,
+        subject:
+          locale === 'ar'
+            ? 'تم إنشاء حسابك في PhysioGuidance'
+            : 'Your PhysioGuidance account is ready',
+        html: getAdminAccountInviteHtml(recipientName, setupUrl, locale, frontendUrl),
+        text: getAdminAccountInviteText(recipientName, setupUrl, locale, frontendUrl),
+        template: {
+          eventKey: 'admin_account_invite',
+          locale,
+          params: { recipientName, setupUrl, expiresInHours: 24 },
+        },
+      });
+      this.logger.log(`Admin-created account invite sent to ${to}`);
+      // The `s` reference keeps lint quiet — i18n strings reserved
+      // for future header/footer customizations.
+      void s;
+    } catch (error) {
+      this.logger.error(`Failed to send admin invite email to ${to}`, error);
+    }
+  }
+
   async sendApplicationApprovedSetPassword(
     to: string,
     applicantName: string,
@@ -448,11 +503,12 @@ export class EmailService {
   ): Promise<void> {
     try {
       const s = getEmailStrings(locale);
+      const frontendUrl = this.getFrontendBaseUrl();
       await this.send({
         to,
         subject: s.appApprovedSubject,
-        html: getApplicationApprovedSetPasswordHtml(applicantName, setupUrl, locale),
-        text: getApplicationApprovedSetPasswordText(applicantName, setupUrl, locale),
+        html: getApplicationApprovedSetPasswordHtml(applicantName, setupUrl, locale, frontendUrl),
+        text: getApplicationApprovedSetPasswordText(applicantName, setupUrl, locale, frontendUrl),
         template: {
           eventKey: 'application_approved_set_password',
           locale,
@@ -531,11 +587,12 @@ export class EmailService {
   async sendApplicationRejected(to: string, applicantName: string, reviewNote: string, locale: EmailLocale = 'en'): Promise<void> {
     try {
       const s = getEmailStrings(locale);
+      const frontendUrl = this.getFrontendBaseUrl();
       await this.send({
         to,
         subject: s.appRejectedSubject,
-        html: getApplicationRejectedHtml(applicantName, reviewNote, locale),
-        text: getApplicationRejectedText(applicantName, reviewNote, locale),
+        html: getApplicationRejectedHtml(applicantName, reviewNote, locale, frontendUrl),
+        text: getApplicationRejectedText(applicantName, reviewNote, locale, frontendUrl),
         template: {
           eventKey: 'application_rejected',
           locale,
@@ -548,14 +605,21 @@ export class EmailService {
     }
   }
 
-  async sendApplicationMoreInfo(to: string, applicantName: string, reviewNote: string, locale: EmailLocale = 'en'): Promise<void> {
+  async sendApplicationMoreInfo(
+    to: string,
+    applicantName: string,
+    reviewNote: string,
+    locale: EmailLocale = 'en',
+    missing?: MissingRequirement[],
+  ): Promise<void> {
     try {
       const s = getEmailStrings(locale);
+      const frontendUrl = this.getFrontendBaseUrl();
       await this.send({
         to,
         subject: s.appMoreInfoSubject,
-        html: getApplicationMoreInfoHtml(applicantName, reviewNote, locale),
-        text: getApplicationMoreInfoText(applicantName, reviewNote, locale),
+        html: getApplicationMoreInfoHtml(applicantName, reviewNote, locale, missing, frontendUrl),
+        text: getApplicationMoreInfoText(applicantName, reviewNote, locale, missing, frontendUrl),
         template: {
           eventKey: 'application_more_info',
           locale,
@@ -1527,13 +1591,17 @@ export class EmailService {
     learnerName: string,
     ticketRef: string,
     expectedResponse: string,
+    mode?: 'in_hours' | 'queued_until_resume',
+    // Optional. When provided (guest tickets), the email's CTA points
+    // to the public tracking URL instead of the learner dashboard.
+    trackingUrl?: string,
   ): Promise<void> {
     try {
       await this.send({
         to,
         subject: `Ticket ${ticketRef} received — PhysioGuidance Support`,
-        html: getTicketCreatedLearnerHtml(learnerName, ticketRef, expectedResponse),
-        text: getTicketCreatedLearnerText(learnerName, ticketRef, expectedResponse),
+        html: getTicketCreatedLearnerHtml(learnerName, ticketRef, expectedResponse, mode, trackingUrl),
+        text: getTicketCreatedLearnerText(learnerName, ticketRef, expectedResponse, mode, trackingUrl),
       });
       this.logger.log(
         `Ticket created email sent to ${to} for ticket ${ticketRef}`,
@@ -1584,13 +1652,17 @@ export class EmailService {
     senderName: string,
     ticketRef: string,
     messagePreview: string,
+    // Optional. When provided (guest tickets), the email's CTA points
+    // to the public tracking URL so the guest can reply without a
+    // dashboard login.
+    trackingUrl?: string,
   ): Promise<void> {
     try {
       await this.send({
         to,
         subject: `New reply on ticket ${ticketRef}`,
-        html: getTicketReplyHtml(recipientName, senderName, ticketRef, messagePreview),
-        text: getTicketReplyText(recipientName, senderName, ticketRef, messagePreview),
+        html: getTicketReplyHtml(recipientName, senderName, ticketRef, messagePreview, trackingUrl),
+        text: getTicketReplyText(recipientName, senderName, ticketRef, messagePreview, trackingUrl),
       });
       this.logger.log(
         `Ticket reply notification sent to ${to} for ticket ${ticketRef}`,
@@ -1660,19 +1732,28 @@ export class EmailService {
   }
 
   /**
-   * Send ticket resolved notification email to learner
+   * Send ticket resolved notification email to learner. When a CSAT
+   * survey row is created alongside the resolve (always, for both
+   * authed and guest tickets), the surveyId + locale produce a
+   * one-click "Rate your experience" CTA so the recipient never
+   * has to open the ticket to leave feedback.
    */
   async sendTicketResolved(
     to: string,
     learnerName: string,
     ticketRef: string,
+    surveyId?: string | null,
+    locale: string = 'en',
   ): Promise<void> {
     try {
+      const surveyUrl = surveyId
+        ? `${this.getFrontendBaseUrl()}/${locale}/surveys/csat/${surveyId}`
+        : null;
       await this.send({
         to,
         subject: `Your ticket ${ticketRef} has been resolved`,
-        html: getTicketResolvedHtml(learnerName, ticketRef),
-        text: getTicketResolvedText(learnerName, ticketRef),
+        html: getTicketResolvedHtml(learnerName, ticketRef, surveyUrl),
+        text: getTicketResolvedText(learnerName, ticketRef, surveyUrl),
       });
       this.logger.log(
         `Ticket resolved email sent to ${to} for ticket ${ticketRef}`,
@@ -1769,6 +1850,78 @@ export class EmailService {
     } catch (error) {
       this.logger.error(
         `Failed to send ticket escalation email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  // Notify supervisor/admin that an agent has requested an on-hold
+  // approval. Inline minimal template — the real surface is the
+  // in-app alert / supervisor dashboard banner, not the email body.
+  async sendHoldRequestEmail(
+    to: string,
+    approverName: string,
+    ticketRef: string,
+    subject: string,
+    agentName: string,
+    reason: string,
+    description: string | null,
+  ): Promise<void> {
+    try {
+      await this.send({
+        to,
+        subject: `Hold approval needed — ${ticketRef}`,
+        html: `<p>Hi ${approverName},</p>
+<p><strong>${agentName}</strong> requested a hold on <strong>${ticketRef}</strong> — ${subject}.</p>
+<p><strong>Reason:</strong> ${reason}</p>${
+          description
+            ? `<p><strong>Description:</strong> ${description}</p>`
+            : ''
+        }
+<p>Open the ticket to approve or reject the request.</p>`,
+        text: `${agentName} requested a hold on ${ticketRef} — ${subject}.
+Reason: ${reason}
+${description ? `Description: ${description}\n` : ''}Open the ticket to approve or reject.`,
+      });
+      this.logger.log(
+        `Hold request email sent to ${to} for ticket ${ticketRef}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send hold request email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  // Notify the requesting agent that their hold request has been
+  // approved or rejected.
+  async sendHoldDecisionEmail(
+    to: string,
+    agentName: string,
+    ticketRef: string,
+    subject: string,
+    decision: 'approved' | 'rejected',
+    note: string | null,
+  ): Promise<void> {
+    try {
+      await this.send({
+        to,
+        subject: `Hold request ${decision} — ${ticketRef}`,
+        html: `<p>Hi ${agentName},</p>
+<p>Your hold request on <strong>${ticketRef}</strong> — ${subject} was <strong>${decision}</strong>.</p>${
+          note ? `<p><strong>Note:</strong> ${note}</p>` : ''
+        }`,
+        text: `Your hold request on ${ticketRef} — ${subject} was ${decision}.${
+          note ? `\nNote: ${note}` : ''
+        }`,
+      });
+      this.logger.log(
+        `Hold decision email sent to ${to} for ticket ${ticketRef}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send hold decision email to ${to}`,
         error,
       );
     }

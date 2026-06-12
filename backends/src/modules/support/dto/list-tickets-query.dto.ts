@@ -34,6 +34,22 @@ export class ListTicketsQueryDto {
   @IsOptional()
   tags?: string;
 
+  // Dashboard-of-origin filter. Each role's Support tab scopes its
+  // inbox to tickets raised from that dashboard so a multi-role user
+  // (e.g. instructor + course-manager + TA) does not see a unified
+  // pile across every Support tab.
+  @IsIn(['student', 'instructor', 'course_manager', 'finance', 'ta', 'intervention'])
+  @IsOptional()
+  source?: string;
+
+  // Escalation filter. Whitelist:
+  //   '1' / 'true' → only tickets with escalated_at IS NOT NULL
+  //   '0' / 'false' → only tickets with escalated_at IS NULL
+  // Anything else (or omitted) returns the full set.
+  @IsIn(['1', '0', 'true', 'false'])
+  @IsOptional()
+  escalated?: string;
+
   @IsNumberString()
   @IsOptional()
   page?: string;

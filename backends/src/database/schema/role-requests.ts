@@ -36,12 +36,19 @@ export const roleRequests = pgTable('role_requests', {
   // Nullable — applicants who upload a resume file leave this empty.
   structuredResume: jsonb('structured_resume'),
 
-  // Review
+  // Review (single-slot, legacy — preserved for back-compat with the
+  // existing admin UI. The full history of who-decided-what across
+  // resubmits lives in `role_request_events`.)
   reviewedBy: uuid('reviewed_by').references(() => users.id, {
     onDelete: 'set null',
   }),
   reviewNote: text('review_note'),
   reviewedAt: timestamp('reviewed_at'),
+
+  // Structured "what's missing" checklist. Populated when status =
+  // MORE_INFO; cleared (or replaced) on every admin action. Shape:
+  // Array<{ code: MissingRequirementCode, label?: string, note?: string }>
+  missingRequirements: jsonb('missing_requirements'),
 
   // Timestamps
   createdAt: timestamp('created_at').defaultNow().notNull(),

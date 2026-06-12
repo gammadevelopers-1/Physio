@@ -288,6 +288,125 @@
       "when": 1780740000000,
       "tag": "0054_ticket_attachments",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1780780000000,
+      "tag": "0055_ticket_attachment_reply_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1780820000000,
+      "tag": "0056_cron_runs",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1780860000000,
+      "tag": "0057_ticket_hold_requests",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1780900000000,
+      "tag": "0058_tag_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1780940000000,
+      "tag": "0059_macros_extensions",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1780980000000,
+      "tag": "0060_seed_starter_macros",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1781020000000,
+      "tag": "0061_csat_followup_tracking",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1781060000000,
+      "tag": "0062_service_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1781100000000,
+      "tag": "0063_service_status_auto_detection",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1781140000000,
+      "tag": "0064_trainer_application_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1781180000000,
+      "tag": "0065_attachment_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1781220000000,
+      "tag": "0066_ticket_about_user_and_source",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1781400000000,
+      "tag": "0067_ticket_source_backfill",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1781500000000,
+      "tag": "0068_reset_custom_ticket_categories",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1781600000000,
+      "tag": "0069_sidebar_views",
+      "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1781700000000,
+      "tag": "0070_ticket_escalation_flags",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1781800000000,
+      "tag": "0071_drop_escalation_paths",
+      "breakpoints": true
     }
   ]
 }

@@ -35,8 +35,7 @@ import {
   HelpCircle,
   History,
 } from "lucide-react";
-import { AdminSidebar, AdminNavbar } from "@/components/admin-dashboard";
-import AdminMobileSidebar from "./AdminMobileSidebar";
+import { AdminNavbar } from "@/components/admin-dashboard";
 import { HeroBandSkeleton, SectionCardSkeleton } from "./AdminSkeletons";
 import { roleRequestsApi, type RoleRequest } from "@/lib/api";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
@@ -59,6 +58,27 @@ const STATUS_ICONS = {
   MORE_INFO: AlertCircle,
 } as const;
 
+// Fixed enum of structured missing-requirement codes — must stay in
+// sync with backends/src/database/schema/role-request-events.ts.
+// Order here is the order shown to admins in the request-info modal.
+const MISSING_REQ_CODES = [
+  "CV_MISSING",
+  "SCFHS_VERIFICATION",
+  "QUALIFICATION_DOC",
+  "PHOTO",
+  "BANK_DETAILS",
+  "NATIONAL_ID",
+  "OTHER",
+] as const;
+
+const EVENT_DOT_COLOR: Record<string, string> = {
+  submitted: "#1D4ED8",
+  approved: "#16A34A",
+  rejected: "#DC2626",
+  requested_info: "#B45309",
+  resubmitted: "#7C3AED",
+};
+
 interface Props {
   applicationId: string;
 }
@@ -80,6 +100,13 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showModal, setShowModal] = useState<"approve" | "reject" | "request-info" | null>(null);
   const [reviewNote, setReviewNote] = useState("");
+
+  // Structured "what's missing" picker for the request-info modal.
+  // Keyed by code; OTHER pairs with the free-text otherLabel below.
+  // We keep a Map (rather than a Set) so the order of checks is
+  // stable for screen readers and admins reviewing the list.
+  const [missingChecks, setMissingChecks] = useState<Set<string>>(new Set());
+  const [missingOtherLabel, setMissingOtherLabel] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
 
   // Section refs for in-page nav scroll
@@ -164,12 +191,30 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
         await roleRequestsApi.reject(applicationId, reviewNote);
         toast.success(t("toasts.rejected"));
       } else {
-        await roleRequestsApi.requestInfo(applicationId, reviewNote);
+        // Assemble the structured missing-requirements list. OTHER
+        // only contributes when the admin actually typed a label —
+        // checking the box without a label is a no-op, matching the
+        // backend DTO validator.
+        const missing: Array<{ code: string; label?: string }> = [];
+        for (const code of missingChecks) {
+          if (code === "OTHER") {
+            const label = missingOtherLabel.trim();
+            if (label) missing.push({ code: "OTHER", label });
+          } else {
+            missing.push({ code });
+          }
+        }
+        await roleRequestsApi.requestInfo(applicationId, {
+          reviewNote,
+          missingRequirements: missing.length > 0 ? (missing as any) : undefined,
+        });
         toast.success(t("toasts.infoRequested"));
       }
       await refresh();
       setShowModal(null);
       setReviewNote("");
+      setMissingChecks(new Set());
+      setMissingOtherLabel("");
     } catch (err) {
       setActionError(err instanceof Error ? err.message : t("toasts.actionFailed"));
     } finally {
@@ -191,19 +236,11 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
       <>
         <AdminNavbar admin={admin} />
         <div className="bg-[var(--color-surface-page)] min-h-screen">
-          <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
-            <div className="flex flex-col lg:flex-row gap-6">
-              <div className="hidden lg:block lg:flex-shrink-0">
-                <AdminSidebar admin={admin} />
-              </div>
-              <AdminMobileSidebar admin={admin} />
-              <div className="flex-1 min-w-0">
-                <HeroBandSkeleton stats={4} />
-                <SectionCardSkeleton lines={5} />
-                <SectionCardSkeleton lines={4} />
-                <SectionCardSkeleton lines={3} />
-              </div>
-            </div>
+          <div className="max-w-[1280px] mx-auto px-4 lg:px-8 py-6">
+            <HeroBandSkeleton stats={4} />
+            <SectionCardSkeleton lines={5} />
+            <SectionCardSkeleton lines={4} />
+            <SectionCardSkeleton lines={3} />
           </div>
         </div>
       </>
@@ -214,12 +251,8 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
     return (
       <>
         <AdminNavbar admin={admin} />
-        <div className="flex flex-1 bg-[var(--color-surface-page)] min-h-screen">
-          <div className="hidden lg:block">
-            <AdminSidebar admin={admin} />
-          </div>
-          <AdminMobileSidebar admin={admin} />
-          <div className="flex-1 p-8">
+        <div className="bg-[var(--color-surface-page)] min-h-screen">
+          <div className="max-w-[1280px] mx-auto px-4 lg:px-8 py-6">
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
               {fetchError ?? t("notFound")}
             </div>
@@ -267,15 +300,10 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
     <>
       <AdminNavbar admin={admin} />
       <div
-        className="flex flex-1 bg-[var(--color-surface-page)] min-h-screen"
+        className="bg-[var(--color-surface-page)] min-h-screen"
         dir={isRTL ? "rtl" : "ltr"}
       >
-        <div className="hidden lg:block">
-          <AdminSidebar admin={admin} />
-        </div>
-        <AdminMobileSidebar admin={admin} />
-
-        <div className="flex-1 p-4 lg:p-8 min-w-0">
+        <div className="max-w-[1280px] mx-auto p-4 lg:p-8 min-w-0">
           {/* Back link */}
           <Link
             href={`/${locale}/dashboard/admin/role-requests`}
@@ -293,28 +321,32 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
             {/* Gold accent ribbon, top edge */}
             <div className="absolute inset-x-0 top-0 h-1 bg-[var(--gold-gold-100)]" />
 
-            <div className="relative flex flex-col md:flex-row md:items-start md:justify-between gap-5">
-              <div className="flex items-start gap-4 min-w-0">
-                <ApplicantAvatar request={application} size="xl" />
-                <div className="min-w-0">
+            <div className="relative flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6">
+              <div className="flex items-center gap-4 min-w-0 flex-1">
+                <ApplicantAvatar request={application} size="lg" />
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <h1 className="text-xl md:text-2xl font-bold truncate text-[var(--color-text-primary)]">{name}</h1>
+                    <h1 className="text-lg md:text-xl font-bold text-[var(--color-text-primary)] truncate">
+                      {name}
+                    </h1>
                     <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold ${cfg.badgeBg} ${cfg.badgeText}`}
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold flex-shrink-0 ${cfg.badgeBg} ${cfg.badgeText}`}
                     >
                       <StatusIcon className="w-3 h-3" />
                       {tStatuses(status)}
                     </span>
                   </div>
-                  {nameAr && (
-                    <p className="text-sm text-[var(--color-text-secondary)] mb-1" dir="rtl">
+                  {nameAr && nameAr.trim() !== name.trim() && (
+                    <p className="text-sm text-[var(--color-text-secondary)] mb-1 truncate" dir="rtl">
                       {nameAr}
                     </p>
                   )}
                   {subtitle && (
-                    <p className="text-sm text-[var(--color-text-secondary)] mb-2">{subtitle}</p>
+                    <p className="text-sm text-[var(--color-text-secondary)] mb-2 truncate">
+                      {subtitle}
+                    </p>
                   )}
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--color-text-secondary)]">
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
                     {profile.country && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-full">
                         <MapPin className="w-3 h-3" />
@@ -335,9 +367,12 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
                 </div>
               </div>
 
-              {/* Always-visible actions */}
+              {/* Always-visible actions — sit on a separate row on
+                  narrow viewports so the title block can use the full
+                  width. On wide viewports they pair right-aligned with
+                  the title block. */}
               {canAct && (
-                <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+                <div className="flex flex-wrap items-center gap-2 flex-shrink-0 self-start lg:self-center">
                   <button
                     type="button"
                     onClick={() => {
@@ -345,7 +380,7 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
                       setReviewNote("");
                       setActionError(null);
                     }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#16A34A] hover:bg-[#15803D] text-white rounded-lg text-sm font-medium transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#16A34A] hover:bg-[#15803D] text-white rounded-lg text-sm font-medium transition-colors"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     {t("approve")}
@@ -357,7 +392,7 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
                       setReviewNote("");
                       setActionError(null);
                     }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 border border-[var(--color-border)] hover:bg-[var(--color-border-subtle)] text-[var(--color-text-primary)] rounded-lg text-sm font-medium transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-[var(--color-border)] hover:bg-[var(--color-border-subtle)] text-[var(--color-text-primary)] rounded-lg text-sm font-medium transition-colors"
                   >
                     <HelpCircle className="w-4 h-4" />
                     {t("requestInfo")}
@@ -369,7 +404,7 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
                       setReviewNote("");
                       setActionError(null);
                     }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-lg text-sm font-medium transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-lg text-sm font-medium transition-colors"
                   >
                     <XCircle className="w-4 h-4" />
                     {t("reject")}
@@ -383,6 +418,17 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
               <div className="relative mt-4 px-3 py-2 bg-[#FEE2E2] border border-[#FCA5A5] rounded-lg flex items-center gap-2 text-sm text-[#991B1B]">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{t("overdueBanner", { count: daysOld })}</span>
+              </div>
+            )}
+
+            {/* Reviewer hint — steer admins toward Request More Info
+                when files are missing instead of a hard Reject. The
+                applicant can fix the missing items via the public
+                self-serve portal without starting over. */}
+            {canAct && (status === "PENDING" || status === "MORE_INFO") && (
+              <div className="relative mt-4 px-3 py-2 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] flex items-start gap-2">
+                <HelpCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-[#B45309]" />
+                <span>{t("reviewerHint")}</span>
               </div>
             )}
 
@@ -708,7 +754,11 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
                 </section>
               )}
 
-              {/* Timeline */}
+              {/* Timeline — full event history. Each approve / reject /
+                  request-info / resubmit appends a row, so the story
+                  survives across multiple review cycles. Falls back to
+                  the single-slot reviewedAt for legacy rows that
+                  pre-date the events backfill. */}
               <section
                 ref={refs.timeline}
                 className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5"
@@ -717,22 +767,80 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
                   <History className="w-4 h-4 text-[var(--color-primary)]" />
                   {t("sections.timeline")}
                 </h2>
-                <ol className="relative ms-3 border-s-2 border-[var(--color-border)] space-y-5">
-                  <TimelineItem
-                    color="#64748B"
-                    title={t("timeline.submitted")}
-                    when={formatFullDate(application.createdAt, locale === "ar" ? "ar" : "en", platformLocale)}
-                    body={t("timeline.submittedBy", {
-                      name: application.user?.email ?? "—",
-                    })}
-                  />
-                  {application.reviewedAt && (
-                    <TimelineItem
-                      color={cfg.dot}
-                      title={t(`timeline.${status.toLowerCase()}`)}
-                      when={formatFullDate(application.reviewedAt, locale === "ar" ? "ar" : "en", platformLocale)}
-                      body={application.reviewNote ?? undefined}
-                    />
+                <ol className="relative ms-3 space-y-5">
+                  {application.events && application.events.length > 0 ? (
+                    application.events.map((event, idx) => {
+                      const isLast = idx === (application.events?.length ?? 0) - 1;
+                      const performerName =
+                        `${event.performedByFirstName ?? ""} ${event.performedByLastName ?? ""}`.trim() ||
+                        event.performedByEmail ||
+                        null;
+                      const bodyParts: string[] = [];
+                      if (event.note) bodyParts.push(event.note);
+                      if (
+                        event.missingRequirements &&
+                        event.missingRequirements.length > 0
+                      ) {
+                        const labels = event.missingRequirements
+                          .map((m) =>
+                            m.code === "OTHER"
+                              ? m.label || "—"
+                              : t(`missingReqs.codes.${m.code}`),
+                          )
+                          .filter(Boolean);
+                        bodyParts.push(`• ${labels.join(" • ")}`);
+                      }
+                      return (
+                        <TimelineItem
+                          key={event.id}
+                          color={EVENT_DOT_COLOR[event.action] ?? "#9CA3AF"}
+                          title={t(`timeline.events.${event.action}`)}
+                          when={formatFullDate(
+                            event.createdAt,
+                            locale === "ar" ? "ar" : "en",
+                            platformLocale,
+                          )}
+                          body={
+                            [
+                              performerName
+                                ? t("timeline.by", { name: performerName })
+                                : t("timeline.byApplicant"),
+                              ...bodyParts,
+                            ].join("\n")
+                          }
+                          isLast={isLast}
+                        />
+                      );
+                    })
+                  ) : (
+                    <>
+                      <TimelineItem
+                        color="#64748B"
+                        title={t("timeline.submitted")}
+                        when={formatFullDate(
+                          application.createdAt,
+                          locale === "ar" ? "ar" : "en",
+                          platformLocale,
+                        )}
+                        body={t("timeline.submittedBy", {
+                          name: application.user?.email ?? "—",
+                        })}
+                        isLast={!application.reviewedAt}
+                      />
+                      {application.reviewedAt && (
+                        <TimelineItem
+                          color={cfg.dot}
+                          title={t(`timeline.${status.toLowerCase()}`)}
+                          when={formatFullDate(
+                            application.reviewedAt,
+                            locale === "ar" ? "ar" : "en",
+                            platformLocale,
+                          )}
+                          body={application.reviewNote ?? undefined}
+                          isLast
+                        />
+                      )}
+                    </>
                   )}
                 </ol>
               </section>
@@ -748,40 +856,61 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
           onClick={() => !actionLoading && setShowModal(null)}
         >
           <div
-            className="bg-[var(--color-surface-card)] rounded-2xl w-full max-w-md shadow-xl"
+            className={`bg-[var(--color-surface-card)] rounded-2xl w-full ${
+              showModal === "request-info" ? "max-w-xl" : "max-w-md"
+            } shadow-xl flex flex-col max-h-[90vh] overflow-hidden`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6">
-              <div className="flex items-start gap-3 mb-4">
-                <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    showModal === "approve"
-                      ? "bg-[#DCFCE7]"
-                      : showModal === "reject"
-                        ? "bg-[#FEE2E2]"
-                        : "bg-[#FFEDD5]"
-                  }`}
-                >
-                  {showModal === "approve" && (
-                    <CheckCircle2 className="w-5 h-5 text-[#15803D]" />
-                  )}
-                  {showModal === "reject" && (
-                    <XCircle className="w-5 h-5 text-[#991B1B]" />
-                  )}
-                  {showModal === "request-info" && (
-                    <HelpCircle className="w-5 h-5 text-[#9A3412]" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
-                    {t(`modals.${showModal}.title`)}
-                  </h3>
-                  <p className="text-sm text-[var(--color-text-secondary)] mt-0.5">
-                    {t(`modals.${showModal}.body`, { name })}
-                  </p>
-                </div>
+            {/* Header — coloured strip + icon + title sit on one row.
+                The body copy goes underneath at full width so it never
+                wraps over a narrow side column. */}
+            <div
+              className={`px-5 py-4 border-b border-[var(--color-border)] flex items-center gap-3 ${
+                showModal === "approve"
+                  ? "bg-[#F0FDF4]"
+                  : showModal === "reject"
+                    ? "bg-[#FEF2F2]"
+                    : "bg-[#FFF7ED]"
+              }`}
+            >
+              <div
+                className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  showModal === "approve"
+                    ? "bg-[#DCFCE7]"
+                    : showModal === "reject"
+                      ? "bg-[#FEE2E2]"
+                      : "bg-[#FFEDD5]"
+                }`}
+              >
+                {showModal === "approve" && (
+                  <CheckCircle2 className="w-5 h-5 text-[#15803D]" />
+                )}
+                {showModal === "reject" && (
+                  <XCircle className="w-5 h-5 text-[#991B1B]" />
+                )}
+                {showModal === "request-info" && (
+                  <HelpCircle className="w-5 h-5 text-[#9A3412]" />
+                )}
               </div>
+              <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
+                {t(`modals.${showModal}.title`)}
+              </h3>
+            </div>
 
+            {/* Body — scrollable when content exceeds viewport so the
+                action footer stays sticky in view. */}
+            <div className="p-5 overflow-y-auto">
+              <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
+                {t(`modals.${showModal}.body`, { name })}
+              </p>
+
+              <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-1.5">
+                {showModal === "request-info"
+                  ? t("modals.request-info.messageLabel")
+                  : showModal === "approve"
+                    ? t("noteOptional")
+                    : t("noteRequired")}
+              </label>
               <textarea
                 value={reviewNote}
                 onChange={(e) => setReviewNote(e.target.value)}
@@ -790,42 +919,96 @@ const RoleRequestReviewContent = ({ applicationId }: Props) => {
                     ? t("noteOptional")
                     : t("noteRequired")
                 }
-                rows={5}
-                className="w-full p-3 border border-[var(--color-input-border)] rounded-lg text-sm resize-none outline-none focus:border-[var(--color-primary)]"
+                rows={4}
+                className="w-full p-3 border border-[var(--color-input-border)] rounded-lg text-sm resize-none outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
               />
 
-              {actionError && (
-                <p className="mt-2 text-sm text-[#DC2626]">{actionError}</p>
+              {/* Structured "what's missing" checklist — only on
+                  request-info. The applicant sees these as a list on
+                  their status page + email. Picking nothing is fine;
+                  the free-form note above still goes through. */}
+              {showModal === "request-info" && (
+                <div className="mt-4 border border-[var(--color-border)] rounded-lg p-4 bg-[var(--color-surface-page)]">
+                  <div className="text-[11px] uppercase tracking-wider font-semibold text-[var(--color-text-secondary)] mb-1">
+                    {t("missingReqs.title")}
+                  </div>
+                  <p className="text-xs text-[var(--color-text-secondary)] mb-3">
+                    {t("missingReqs.hint")}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                    {MISSING_REQ_CODES.map((code) => (
+                      <label
+                        key={code}
+                        className={`flex items-center gap-2 px-2 py-2 text-xs rounded-md cursor-pointer transition-colors ${
+                          missingChecks.has(code)
+                            ? "bg-[var(--color-border-subtle)] text-[var(--color-text-primary)] font-medium"
+                            : "text-[var(--color-text-primary)] hover:bg-white"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={missingChecks.has(code)}
+                          onChange={(e) => {
+                            setMissingChecks((prev) => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.add(code);
+                              else next.delete(code);
+                              return next;
+                            });
+                          }}
+                          className="w-3.5 h-3.5 rounded accent-[var(--color-primary)]"
+                        />
+                        <span className="truncate">
+                          {t(`missingReqs.codes.${code}`)}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {missingChecks.has("OTHER") && (
+                    <input
+                      type="text"
+                      value={missingOtherLabel}
+                      onChange={(e) => setMissingOtherLabel(e.target.value)}
+                      placeholder={t("missingReqs.otherPlaceholder")}
+                      className="mt-3 w-full p-2 text-xs border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
+                    />
+                  )}
+                </div>
               )}
 
-              <div className="flex justify-end gap-2 mt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(null)}
-                  disabled={!!actionLoading}
-                  className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-50"
-                >
-                  {t("cancel")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleAction(showModal)}
-                  disabled={!!actionLoading}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 ${
-                    showModal === "approve"
-                      ? "bg-[#16A34A] hover:bg-[#15803D]"
-                      : showModal === "reject"
-                        ? "bg-[#DC2626] hover:bg-[#B91C1C]"
-                        : "bg-[#EA580C] hover:bg-[#C2410C]"
-                  }`}
-                >
-                  {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {!actionLoading && showModal === "approve" && <CheckCircle2 className="w-4 h-4" />}
-                  {!actionLoading && showModal === "reject" && <XCircle className="w-4 h-4" />}
-                  {!actionLoading && showModal === "request-info" && <Send className="w-4 h-4" />}
-                  {t(`modals.${showModal}.confirm`)}
-                </button>
-              </div>
+              {actionError && (
+                <p className="mt-3 text-sm text-[#DC2626]">{actionError}</p>
+              )}
+            </div>
+
+            {/* Footer — sticky action row */}
+            <div className="px-5 py-3 border-t border-[var(--color-border)] bg-[var(--color-surface-page)] flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowModal(null)}
+                disabled={!!actionLoading}
+                className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)] transition-colors disabled:opacity-50"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleAction(showModal)}
+                disabled={!!actionLoading}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 ${
+                  showModal === "approve"
+                    ? "bg-[#16A34A] hover:bg-[#15803D]"
+                    : showModal === "reject"
+                      ? "bg-[#DC2626] hover:bg-[#B91C1C]"
+                      : "bg-[#EA580C] hover:bg-[#C2410C]"
+                }`}
+              >
+                {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {!actionLoading && showModal === "approve" && <CheckCircle2 className="w-4 h-4" />}
+                {!actionLoading && showModal === "reject" && <XCircle className="w-4 h-4" />}
+                {!actionLoading && showModal === "request-info" && <Send className="w-4 h-4" />}
+                {t(`modals.${showModal}.confirm`)}
+              </button>
             </div>
           </div>
         </div>
@@ -983,16 +1166,24 @@ function TimelineItem({
   title,
   when,
   body,
+  isLast,
 }: {
   color: string;
   title: string;
   when: string;
   body?: string;
+  isLast?: boolean;
 }) {
   return (
-    <li className="ms-4">
+    <li className="relative ms-4 ps-4">
+      {!isLast && (
+        <span
+          aria-hidden
+          className="absolute -start-[2px] top-4 -bottom-5 w-0.5 bg-[var(--color-border)]"
+        />
+      )}
       <span
-        className="absolute -start-[7px] w-3 h-3 rounded-full ring-2 ring-[var(--color-surface-card)]"
+        className="absolute -start-[7px] top-1 w-3 h-3 rounded-full ring-2 ring-[var(--color-surface-card)]"
         style={{ backgroundColor: color }}
       />
       <p className="text-sm font-semibold text-[var(--color-text-primary)]">
@@ -1000,7 +1191,7 @@ function TimelineItem({
       </p>
       <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{when}</p>
       {body && (
-        <p className="text-xs text-[var(--color-text-primary)] mt-1.5 p-2.5 bg-[var(--color-border-subtle)] rounded-lg">
+        <p className="text-xs text-[var(--color-text-primary)] mt-1.5 p-2.5 bg-[var(--color-border-subtle)] rounded-lg whitespace-pre-wrap break-words">
           {body}
         </p>
       )}

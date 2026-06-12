@@ -6,3 +6,4 @@ export { default as TAAttendanceView } from './TAAttendanceView';
 export { default as TAAssessmentSubmissionsView } from './TAAssessmentSubmissionsView';
 export { default as TASettingsContent } from './TASettingsContent';
 export { default as TACoursesList } from './TACoursesList';
+export { default as TASupportContent } from './TASupportContent';

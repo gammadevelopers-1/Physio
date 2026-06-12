@@ -24,8 +24,16 @@ import { useTicketDetail } from "@/hooks/useStudentTickets";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { formatPlatformDateReadable } from "@/lib/platform-locale";
 import { FmtDate } from "@/components/ui/Fmt";
-import { studentApi, supportApi } from "@/lib/api";
+import { studentApi, supportApi, uploadFormData } from "@/lib/api";
 import type { TicketReply, TicketStatus } from "@/types/student-dashboard";
+import AttachmentChip, {
+  type Attachment as ChipAttachment,
+} from "@/components/support-dashboard/AttachmentChip";
+import LinkifiedText from "@/components/support/LinkifiedText";
+import CsatReviewCard from "@/components/support-dashboard/CsatReviewCard";
+import AttachmentPreviewModal, {
+  type PreviewableAttachment,
+} from "@/components/support-dashboard/AttachmentPreviewModal";
 
 const REOPEN_GRACE_MS = 48 * 60 * 60 * 1000;
 
@@ -41,6 +49,7 @@ function StatusBadge({
   const styles: Record<string, string> = {
     new: "bg-[#DBEAFE] text-[#1D4ED8]",
     in_progress: "bg-[#FEF9C3] text-[#A16207]",
+    on_hold: "bg-[#FEF3C7] text-[#B45309]",
     resolved: "bg-[#DCFCE7] text-[#15803D]",
     closed: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
   };
@@ -48,6 +57,7 @@ function StatusBadge({
   const icons: Record<string, React.ReactNode> = {
     new: <AlertCircle className="w-3.5 h-3.5" />,
     in_progress: <Clock className="w-3.5 h-3.5" />,
+    on_hold: <Clock className="w-3.5 h-3.5" />,
     resolved: <CheckCircle2 className="w-3.5 h-3.5" />,
     closed: <CheckCircle2 className="w-3.5 h-3.5" />,
   };
@@ -65,12 +75,17 @@ function StatusBadge({
 function ReplyBubble({
   reply,
   locale,
+  t,
+  onPreview,
 }: {
   reply: TicketReply;
   locale: string;
+  t: ReturnType<typeof useTranslations>;
+  onPreview?: (att: ChipAttachment) => void;
 }) {
   const isRTL = locale === "ar";
   const isStaff = reply.isStaffReply;
+  const attachments = reply.attachments || [];
 
   return (
     <div
@@ -99,12 +114,40 @@ function ReplyBubble({
           </span>
         </div>
         <p
-          className={`text-xs sm:text-sm whitespace-pre-wrap leading-relaxed ${
+          className={`text-xs sm:text-sm whitespace-pre-wrap leading-relaxed break-words ${
             isStaff ? "text-[var(--color-text-primary)]" : "text-white"
           }`}
         >
-          {reply.message}
+          <LinkifiedText
+            text={reply.message}
+            linkClassName={
+              isStaff
+                ? "text-[var(--color-primary)] underline decoration-1 underline-offset-2 hover:opacity-80 break-all"
+                : "text-white underline decoration-1 underline-offset-2 hover:opacity-80 break-all"
+            }
+          />
         </p>
+        {attachments.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {attachments.map((a) => (
+              <AttachmentChip
+                key={a.id}
+                attachment={{
+                  id: a.id,
+                  url: a.url,
+                  filename: a.filename ?? null,
+                  mimeType:
+                    (a as { mimeType?: string | null }).mimeType ?? null,
+                  sizeBytes:
+                    (a as { sizeBytes?: number | null }).sizeBytes ?? null,
+                  scanStatus: a.scanStatus,
+                }}
+                inChat
+                onPreview={onPreview}
+              />
+            ))}
+          </div>
+        )}
         <p
           className={`text-[10px] mt-1.5 ${
             isStaff ? "text-[var(--color-text-secondary)]" : "text-white/70"
@@ -218,6 +261,85 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  // In-app preview modal — opened from any attachment chip in the
+  // ticket header or chat thread. Student tickets aren't subject to
+  // staff-side download audit, so no audit hook is called here.
+  const [previewAttachment, setPreviewAttachment] =
+    useState<PreviewableAttachment | null>(null);
+  const handlePreviewStudent = (att: ChipAttachment) =>
+    setPreviewAttachment(att);
+  type PendingReplyAttachment = {
+    id: string;
+    file: File;
+    status: "queued" | "uploading" | "done" | "error";
+    url?: string;
+  };
+  const [pendingReplyAttachments, setPendingReplyAttachments] = useState<
+    PendingReplyAttachment[]
+  >([]);
+  const replyFileInputRef = useRef<HTMLInputElement>(null);
+  const REPLY_MAX_FILES = 10;
+  const REPLY_MAX_BYTES = 5 * 1024 * 1024;
+  const REPLY_ALLOWED_TYPES = new Set([
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+  ]);
+
+  async function uploadOneReply(att: PendingReplyAttachment) {
+    setPendingReplyAttachments((curr) =>
+      curr.map((a) =>
+        a.id === att.id ? { ...a, status: "uploading" as const } : a,
+      ),
+    );
+    try {
+      const fd = new FormData();
+      fd.append("file", att.file);
+      const data = await uploadFormData<{ url: string; filename: string }>(
+        "/storage/upload",
+        fd,
+      );
+      setPendingReplyAttachments((curr) =>
+        curr.map((a) =>
+          a.id === att.id
+            ? { ...a, status: "done" as const, url: data.url }
+            : a,
+        ),
+      );
+    } catch {
+      setPendingReplyAttachments((curr) =>
+        curr.map((a) =>
+          a.id === att.id ? { ...a, status: "error" as const } : a,
+        ),
+      );
+    }
+  }
+
+  function handleReplyAttachmentsAdded(files: File[]) {
+    const accepted: PendingReplyAttachment[] = [];
+    for (const file of files) {
+      if (
+        pendingReplyAttachments.length + accepted.length >=
+        REPLY_MAX_FILES
+      )
+        break;
+      if (!REPLY_ALLOWED_TYPES.has(file.type)) continue;
+      if (file.size > REPLY_MAX_BYTES) continue;
+      accepted.push({
+        id: `${file.name}-${file.size}-${file.lastModified}`,
+        file,
+        status: "queued",
+      });
+    }
+    if (accepted.length === 0) return;
+    setPendingReplyAttachments((curr) => [...curr, ...accepted]);
+    for (const att of accepted) void uploadOneReply(att);
+  }
+
+  function removePendingReply(id: string) {
+    setPendingReplyAttachments((curr) => curr.filter((a) => a.id !== id));
+  }
 
   // Live tick so the 48h grace countdown updates every minute without
   // hammering the API.
@@ -262,10 +384,26 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
 
   const handleSendReply = async () => {
     if (!replyText.trim() || !ticketId) return;
+    // Block while any upload is still pending so we don't ship a reply
+    // with half-attached files.
+    if (
+      pendingReplyAttachments.some(
+        (a) => a.status === "queued" || a.status === "uploading",
+      )
+    )
+      return;
     setSending(true);
     try {
-      await supportApi.addComment(ticketId, { message: replyText.trim() });
+      const attachmentUrls = pendingReplyAttachments
+        .filter((a) => a.status === "done" && a.url)
+        .map((a) => a.url!) as string[];
+      await supportApi.addComment(ticketId, {
+        message: replyText.trim(),
+        attachmentUrls:
+          attachmentUrls.length > 0 ? attachmentUrls : undefined,
+      });
       setReplyText("");
+      setPendingReplyAttachments([]);
       refetch();
     } catch {
       // Silent — server returns 400 with reason; future: surface toast.
@@ -366,53 +504,78 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
                     <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-2">
                       {t("supportPage.description")}
                     </p>
-                    <p className="text-sm text-[var(--color-text-primary)] whitespace-pre-wrap leading-relaxed">
-                      {ticket.description}
+                    <p className="text-sm text-[var(--color-text-primary)] whitespace-pre-wrap leading-relaxed break-words">
+                      <LinkifiedText text={ticket.description} />
                     </p>
                     {/* Attachments — prefer the multi-attachment list when
                         the API surfaces it (post-0054); otherwise fall back
                         to the legacy single-URL field so older tickets
                         still render their chip. */}
                     {(() => {
-                      const multi =
-                        (ticket as any).attachments as
-                          | { id: string; url: string; filename: string | null }[]
-                          | undefined;
-                      const chips =
+                      type Attachment = {
+                        id: string;
+                        url: string;
+                        filename: string | null;
+                        scanStatus?:
+                          | "clean"
+                          | "pending"
+                          | "quarantined"
+                          | "unknown";
+                      };
+                      const multi = (ticket as { attachments?: Attachment[] })
+                        .attachments;
+                      const chips: ChipAttachment[] =
                         multi && multi.length > 0
                           ? multi.map((a) => ({
-                              key: a.id,
+                              id: a.id,
                               url: a.url,
-                              label: a.filename || t("supportPage.attachment"),
+                              filename:
+                                a.filename ?? t("supportPage.attachment"),
+                              mimeType:
+                                (a as { mimeType?: string | null }).mimeType ??
+                                null,
+                              sizeBytes:
+                                (a as { sizeBytes?: number | null })
+                                  .sizeBytes ?? null,
+                              scanStatus: a.scanStatus,
                             }))
                           : ticket.attachmentUrl
                             ? [
                                 {
-                                  key: "legacy",
                                   url: ticket.attachmentUrl,
-                                  label: t("supportPage.attachment"),
+                                  filename: t("supportPage.attachment"),
+                                  scanStatus: "unknown" as const,
                                 },
                               ]
                             : [];
                       if (chips.length === 0) return null;
                       return (
-                        <div className="mt-3 flex flex-wrap gap-1.5">
+                        <div className="mt-3 flex flex-wrap gap-2">
                           {chips.map((c) => (
-                            <a
-                              key={c.key}
-                              href={c.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs text-[var(--color-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] hover:border-[var(--color-primary)]"
-                            >
-                              <Paperclip className="w-3.5 h-3.5" />
-                              <span className="truncate max-w-[200px]">{c.label}</span>
-                            </a>
+                            <AttachmentChip
+                              key={c.id ?? c.url}
+                              attachment={c}
+                              inChat
+                              onPreview={handlePreviewStudent}
+                            />
                           ))}
                         </div>
                       );
                     })()}
                   </div>
+
+                  {/* CSAT review — surface the student's own rating
+                      inline once they've submitted so they (and any
+                      staff member viewing the ticket) see it without
+                      navigating away. */}
+                  {(ticket as { csatReview?: { score: number | null; comment: string | null; submittedAt: string | null; channel?: string | null } | null }).csatReview && (
+                    <div className="p-4 sm:p-6 border-b border-[var(--color-border)]">
+                      <CsatReviewCard
+                        review={(ticket as { csatReview?: { score: number | null; comment: string | null; submittedAt: string | null; channel?: string | null } | null }).csatReview ?? null}
+                        locale={locale}
+                      />
+                    </div>
+                  )}
 
                   {/* Status banners — resolved encouragement / grace countdown / past-grace */}
                   {ticket.status === "resolved" && (
@@ -470,6 +633,8 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
                             key={reply.id}
                             reply={reply}
                             locale={locale}
+                            t={t}
+                            onPreview={handlePreviewStudent}
                           />
                         ))}
                         <div ref={threadEndRef} />
@@ -497,8 +662,29 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
                           />
                           <button
                             type="button"
+                            onClick={() => replyFileInputRef.current?.click()}
+                            className="p-2.5 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] transition-colors flex-shrink-0"
+                            aria-label={t("supportPage.attachFile")}
+                          >
+                            <Paperclip className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                          </button>
+                          <input
+                            ref={replyFileInputRef}
+                            type="file"
+                            multiple
+                            accept=".pdf,.jpg,.jpeg,.png,.webp"
+                            className="hidden"
+                            onChange={(e) => {
+                              handleReplyAttachmentsAdded(
+                                Array.from(e.target.files || []),
+                              );
+                              if (e.target) e.target.value = "";
+                            }}
+                          />
+                          <button
+                            type="button"
                             onClick={handleSendReply}
-                            disabled={sending || !replyText.trim()}
+                            disabled={sending || !replyText.trim() || pendingReplyAttachments.some((a) => a.status === "queued" || a.status === "uploading")}
                             className="p-2.5 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[#001d5e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                             aria-label={t("supportPage.sendReply")}
                           >
@@ -509,6 +695,46 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
                             )}
                           </button>
                         </div>
+                        {pendingReplyAttachments.length > 0 && (
+                          <div className="mt-2 flex flex-col gap-1">
+                            {pendingReplyAttachments.map((att) => (
+                              <div
+                                key={att.id}
+                                className="flex items-center gap-2 px-2 py-1.5 border border-[var(--color-border)] rounded text-[11px]"
+                              >
+                                <Paperclip className="w-3 h-3 text-[var(--color-text-secondary)]" />
+                                <span className="truncate flex-1">
+                                  {att.file.name}
+                                </span>
+                                <span
+                                  className={
+                                    att.status === "done"
+                                      ? "text-[#15803D]"
+                                      : att.status === "error"
+                                        ? "text-[#991B1B]"
+                                        : "text-[var(--color-text-secondary)]"
+                                  }
+                                >
+                                  {att.status === "uploading"
+                                    ? t("supportPage.uploading")
+                                    : att.status === "done"
+                                      ? t("supportPage.uploaded")
+                                      : att.status === "error"
+                                        ? t("supportPage.uploadFailed")
+                                        : "…"}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => removePendingReply(att.id)}
+                                  className="text-[var(--color-text-secondary)] hover:text-[#991B1B]"
+                                  aria-label={t("supportPage.removeAttachment")}
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                         <p className="mt-1.5 text-[10px] text-[var(--color-text-secondary)]">
                           {isResolvedOrInGrace
                             ? t("supportPage.reopenHint")
@@ -533,6 +759,14 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
           </div>
         </div>
       </div>
+
+      {/* In-app PDF / image preview modal for the student. No
+          download-audit hook fires on the student side — they're
+          viewing their own files. */}
+      <AttachmentPreviewModal
+        attachment={previewAttachment}
+        onClose={() => setPreviewAttachment(null)}
+      />
     </>
   );
 };

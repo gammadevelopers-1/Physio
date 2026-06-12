@@ -14,9 +14,11 @@ import {
   Pencil,
   Upload,
   Trash2,
+  Headphones,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { profileApi } from "@/lib/api";
+import { profileApi, SIDEBAR_TAB_KEYS } from "@/lib/api";
+import SidebarBadge from "@/components/SidebarBadge";
 
 const TASidebar = () => {
   const locale = useLocale();
@@ -84,6 +86,11 @@ const TASidebar = () => {
       label: t("sidebar.sessions"),
       href: `/${locale}/dashboard/teaching-assistant/sessions`,
       icon: Calendar,
+    },
+    {
+      label: t("sidebar.support"),
+      href: `/${locale}/dashboard/teaching-assistant/support`,
+      icon: Headphones,
     },
     {
       label: t("sidebar.settings"),
@@ -195,9 +202,12 @@ const TASidebar = () => {
                 <Icon
                   className={`w-5 h-5 ${active ? "text-[var(--color-primary-dark)]" : "text-[var(--color-text-secondary)]"}`}
                 />
-                <span className={`text-sm ${active ? "font-medium" : ""}`}>
+                <span className={`text-sm flex-1 ${active ? "font-medium" : ""}`}>
                   {item.label}
                 </span>
+                {item.href.endsWith("/support") && (
+                  <SidebarBadge tabKey={SIDEBAR_TAB_KEYS.USER_SUPPORT} />
+                )}
               </Link>
             );
           })}

@@ -16,6 +16,7 @@ import {
   X,
   Pencil,
   Wallet,
+  Headphones,
 } from "lucide-react";
 
 interface FinanceProfile {
@@ -70,6 +71,11 @@ const FinanceMobileSidebar = ({ profile }: FinanceMobileSidebarProps) => {
       label: t("sidebar.reports"),
       href: `/${locale}/dashboard/finance/reports`,
       icon: BarChart3,
+    },
+    {
+      label: t("sidebar.support"),
+      href: `/${locale}/dashboard/finance/support`,
+      icon: Headphones,
     },
     {
       label: t("sidebar.settings"),

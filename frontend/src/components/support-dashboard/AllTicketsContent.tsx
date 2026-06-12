@@ -25,6 +25,7 @@ import {
   Loader2,
   Inbox,
   MoreVertical,
+  AlertTriangle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -45,6 +46,7 @@ interface Ticket {
   status: "new" | "inProgress" | "waiting" | "resolved" | "closed";
   assignee: string | null;
   date: string;
+  escalatedAt: string | null;
 }
 
 // API status → UI status key
@@ -94,6 +96,7 @@ const AllTicketsContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [escalatedOnly, setEscalatedOnly] = useState(false);
 
   // Live category list for the filter dropdown — built-ins keep their
   // localised labels; custom admin-added categories show nameAr/nameEn.
@@ -141,6 +144,7 @@ const AllTicketsContent = () => {
       if (apiStatus) params.status = apiStatus;
       if (priorityFilter !== "all") params.priority = priorityFilter;
       if (categoryFilter !== "all") params.category = categoryFilter;
+      if (escalatedOnly) params.escalated = "1";
       if (searchQuery) params.search = searchQuery;
 
       const data = await supportApi.getTickets(params);
@@ -151,7 +155,7 @@ const AllTicketsContent = () => {
     } finally {
       setIsLoadingTickets(false);
     }
-  }, [currentPage, activeTab, priorityFilter, categoryFilter, searchQuery]);
+  }, [currentPage, activeTab, priorityFilter, categoryFilter, escalatedOnly, searchQuery]);
 
   useEffect(() => {
     fetchTickets();
@@ -230,6 +234,7 @@ const AllTicketsContent = () => {
       [tk.assigneeFirstName, tk.assigneeLastName].filter(Boolean).join(" ") ||
       null,
     date: tk.createdAt ? new Date(tk.createdAt).toLocaleDateString() : "",
+    escalatedAt: tk.escalatedAt || null,
   }));
 
   const totalPages = Math.max(1, Math.ceil(totalTickets / pageSize));
@@ -378,8 +383,8 @@ try {
 
               {/* Filters Card — admin-dashboard pattern */}
               <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 mb-6">
-                <div className="flex flex-col md:flex-row gap-3">
-                  <div className="flex-1 relative">
+                <div className="flex flex-col md:flex-row gap-3 flex-wrap">
+                  <div className="relative flex-1 min-w-[240px] md:basis-72">
                     <Search
                       className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                     />
@@ -429,6 +434,23 @@ try {
                       { value: "low", label: t("allTicketsPage.filters.priorities.low") },
                     ]}
                   />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEscalatedOnly((prev) => !prev);
+                      setCurrentPage(1);
+                    }}
+                    className={`h-10 px-3 flex items-center justify-center gap-1.5 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap ${
+                      escalatedOnly
+                        ? "border-red-300 bg-red-50 text-red-700"
+                        : "border-[var(--color-input-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]"
+                    }`}
+                    title={t("allTicketsPage.filters.escalatedOnly")}
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    {t("allTicketsPage.filters.escalatedOnly")}
+                  </button>
                 </div>
               </div>
 
@@ -504,13 +526,20 @@ try {
                       </tr>
                     </thead>
                     <tbody>
-                      {isLoadingTickets && (
-                        <tr>
-                          <td colSpan={9} className="py-12 text-center">
-                            <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)] mx-auto" />
-                          </td>
-                        </tr>
-                      )}
+                      {isLoadingTickets &&
+                        Array.from({ length: 8 }).map((_, i) => (
+                          <tr key={`sk-${i}`} className="border-t border-[var(--color-border)]">
+                            {Array.from({ length: 9 }).map((_, j) => (
+                              <td key={j} className="px-3 py-3">
+                                <div
+                                  className={`h-3 bg-[var(--color-border)] rounded animate-pulse ${
+                                    j === 1 ? "w-40" : j === 0 ? "w-16" : "w-20"
+                                  }`}
+                                />
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
 
                       {!isLoadingTickets && tickets.length === 0 && (
                         <tr>
@@ -571,13 +600,24 @@ try {
                                 {t(`allTicketsPage.filters.categories.${ticket.category}`)}
                               </span>
                             </td>
-                            {/* Priority */}
+                            {/* Priority + Escalated indicator */}
                             <td className="py-3 px-4 whitespace-nowrap">
-                              <span
-                                className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${priorityStyles[ticket.priority]}`}
-                              >
-                                {t(`allTicketsPage.filters.priorities.${ticket.priority}`)}
-                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <span
+                                  className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${priorityStyles[ticket.priority]}`}
+                                >
+                                  {t(`allTicketsPage.filters.priorities.${ticket.priority}`)}
+                                </span>
+                                {ticket.escalatedAt && (
+                                  <span
+                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-red-50 text-red-700 ring-1 ring-inset ring-red-200"
+                                    title={t("allTicketsPage.escalated")}
+                                  >
+                                    <AlertTriangle className="w-2.5 h-2.5" />
+                                    {t("allTicketsPage.escalated")}
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             {/* Status */}
                             <td className="py-3 px-4 whitespace-nowrap">

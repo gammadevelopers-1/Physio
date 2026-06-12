@@ -15,6 +15,7 @@ import RecentPointsWidget from "./RecentPointsWidget";
 import SecuritySnapshotWidget from "./SecuritySnapshotWidget";
 import SupportSnapshotWidget from "./SupportSnapshotWidget";
 import AlertsActivitySidebar from "./AlertsActivitySidebar";
+import AdminDashboardSkeleton from "./AdminDashboardSkeleton";
 import {
   notificationsApi,
   adminApi,
@@ -213,56 +214,67 @@ const AdminDashboardContent = () => {
                 )}
               </div>
 
-              {/* KPI strip — 8 cards in 4 columns × 2 rows. Slot 3 is
-                  Pending Applications and links to the role-requests
-                  page so the admin can act on it in one click. */}
-              <AdminKPICards data={kpiData} />
+              {loading ? (
+                // Full-layout skeleton during initial fetch. Replaces
+                // every widget (and the right rail) so the user never
+                // sees zero-filled cards or empty lists pretending to
+                // be real numbers. Matches the populated layout 1:1
+                // to avoid reflow when data lands.
+                <AdminDashboardSkeleton />
+              ) : (
+                <>
+                  {/* KPI strip — 8 cards in 4 columns × 2 rows. Slot 3 is
+                      Pending Applications and links to the role-requests
+                      page so the admin can act on it in one click. */}
+                  <AdminKPICards data={kpiData} />
 
-              {/* Funnel — full width */}
-              <div className="mb-6">
-                <PlatformAnalyticsWidget
-                  data={{
-                    visitorToSignup: data.analytics.visitorToSignup ?? 0,
-                    signupToEnroll: data.analytics.signupToEnroll,
-                    enrollToPaid: data.analytics.enrollToPaid,
-                    completionRate: data.analytics.completionRate,
-                  }}
-                />
-              </div>
+                  {/* Funnel — full width */}
+                  <div className="mb-6">
+                    <PlatformAnalyticsWidget
+                      data={{
+                        visitorToSignup: data.analytics.visitorToSignup ?? 0,
+                        signupToEnroll: data.analytics.signupToEnroll,
+                        enrollToPaid: data.analytics.enrollToPaid,
+                        completionRate: data.analytics.completionRate,
+                      }}
+                    />
+                  </div>
 
-              {/* Finance — full width on its own row */}
-              <div className="mb-6">
-                <FinanceSummaryWidget data={data.finance} />
-              </div>
+                  {/* Finance — full width on its own row */}
+                  <div className="mb-6">
+                    <FinanceSummaryWidget data={data.finance} />
+                  </div>
 
-              {/* NELC Compliance — full width on its own row */}
-              <div className="mb-6">
-                <NELCComplianceOverviewWidget data={data.compliance} />
-              </div>
+                  {/* NELC Compliance — full width on its own row */}
+                  <div className="mb-6">
+                    <NELCComplianceOverviewWidget data={data.compliance} />
+                  </div>
 
-              {/* Recent Points — full width on its own row. The
-                  Recent Users mini-widget moves to the right rail so
-                  the activity feed gets the main column's breathing
-                  room (richer history per row). */}
-              <RecentPointsWidget rows={data.recentPoints} />
+                  {/* Recent Points — full width on its own row. The
+                      Recent Users mini-widget moves to the right rail so
+                      the activity feed gets the main column's breathing
+                      room (richer history per row). */}
+                  <RecentPointsWidget rows={data.recentPoints} />
+                </>
+              )}
             </div>
 
             {/* Right rail: alerts + activity + a compact security
-                snapshot + recent users. Quick Actions and the
-                duplicate Finance widget were removed — sidebar nav
-                already covers the first and Finance has a dedicated
-                row above. */}
-            <AlertsActivitySidebar
-              alerts={liveAlerts}
-              activities={activities}
-              extras={
-                <>
-                  <SupportSnapshotWidget />
-                  <SecuritySnapshotWidget data={data.security} />
-                  <UserManagementWidget users={data.recentUsers} />
-                </>
-              }
-            />
+                snapshot + recent users. Hidden during initial load —
+                the skeleton above already covers both columns. */}
+            {!loading && (
+              <AlertsActivitySidebar
+                alerts={liveAlerts}
+                activities={activities}
+                extras={
+                  <>
+                    <SupportSnapshotWidget />
+                    <SecuritySnapshotWidget data={data.security} />
+                    <UserManagementWidget users={data.recentUsers} />
+                  </>
+                }
+              />
+            )}
           </div>
         </div>
       </div>

@@ -1,7 +1,24 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(rmdir frontend/src/app/\\\\[locale\\\\]/surveys/nps/\\\\[surveyId\\\\])",
+      "Bash(rmdir frontend/src/app/\\\\[locale\\\\]/surveys/nps)",
+      "Bash(awk '/\\\\{false && / {start=NR; depth=0} {if\\(start\\) {depth += gsub\\(/\\\\{/,\"&\"\\); depth -= gsub\\(/\\\\}/,\"&\"\\); if\\(depth==-1\\) {print start\"-\"NR; start=0; depth=0}}}' frontend/src/components/support-dashboard/SupportSettingsContent.tsx)",
+      "Bash(awk '/^                  \\\\{false &&/ {print \"START at line\", NR; depth=1; next} depth>0 {if\\(match\\($0,/\\\\{[^}]*$/\\)\\) depth++; if\\($0 ~ /^                  \\\\\\)\\\\}/\\) {print \"END at line\", NR, $0; depth=0}}' frontend/src/components/support-dashboard/SupportSettingsContent.tsx)",
+      "Bash(sed -i '1199,1254d' frontend/src/components/support-dashboard/SupportSettingsContent.tsx)",
+      "Bash(sed -i '1142,1196d' frontend/src/components/support-dashboard/SupportSettingsContent.tsx)",
+      "Bash(sed -i '743,803d' frontend/src/components/support-dashboard/SupportSettingsContent.tsx)",
+      "Bash(awk 'NR>=920 && NR<=1000' strapi/scripts/seed-content.js)",
+      "Bash(awk 'NR>=985 && NR<=1000' strapi/scripts/seed-content.js)",
+      "Bash(awk 'NR>=970 && NR<=985' strapi/scripts/seed-content.js)",
+      "Bash(command -v cloud_sql_proxy)",
+      "Bash(command -v cloud-sql-proxy)",
+      "Bash(STRAPI_URL=https://cms.physioguidance.org STRAPI_API_TOKEN=27039af5a5a5418b1bb78dd3522dd19fbc79b5fb651e9d6e0d39c0c9aef5b645b5897deb79490398b0647a3c089d844ffeb73aed5b299b289ca2b139d41c039598f46a9721754df4e0d465226591f47269de9e8c96ec3d5a5418d8bf0be5d448ffcbe00dcd61d96244af7cb23661817b7e4e7a20bde99ac7635723d6d172b182 node strapi/scripts/seed-support-page-only.js)",
+      "Bash(/c/cloud-sql-proxy/cloud-sql-proxy.exe --version)",
+      "Bash(psql --version)",
+      "Bash(kill %1)",
+      "Bash(kill 2118)"
     ]
   }
 }

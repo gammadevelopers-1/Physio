@@ -11,6 +11,7 @@ import SupportKPICards from "./SupportKPICards";
 import TicketsBoardWidget from "./TicketsBoardWidget";
 import SLAPerformanceWidget from "./SLAPerformanceWidget";
 import SupportRightSidebar from "./SupportRightSidebar";
+import SupportDashboardSkeleton from "./SupportDashboardSkeleton";
 
 // Format a minute count as a compact human-readable duration.
 function formatMinutes(minutes: number | null | undefined): string {
@@ -45,6 +46,10 @@ const SupervisorDashboardContent = () => {
   });
 
   const profile = useSupportProfile();
+  // Track the very first load so we can show a skeleton instead of
+  // zero-filled cards. Subsequent silent refreshes don't toggle this
+  // so the dashboard stays readable while the latest numbers refresh.
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const fetchKPIs = useCallback(async () => {
     try {
@@ -62,6 +67,8 @@ const SupervisorDashboardContent = () => {
       }));
     } catch {
       // Leave previous state intact on failure so the UI doesn't flicker to zeros
+    } finally {
+      setIsInitialLoading(false);
     }
   }, []);
 
@@ -105,24 +112,34 @@ const SupervisorDashboardContent = () => {
                 </p>
               </div>
 
-              {/* KPI Cards */}
-              <SupportKPICards data={kpiData} />
+              {isInitialLoading ? (
+                <SupportDashboardSkeleton />
+              ) : (
+                <>
+                  {/* KPI Cards */}
+                  <SupportKPICards data={kpiData} />
 
-              {/* Tickets Board */}
-              <div className="mb-6">
-                <TicketsBoardWidget />
-              </div>
+                  {/* Tickets Board */}
+                  <div className="mb-6">
+                    <TicketsBoardWidget />
+                  </div>
 
-              {/* SLA & Performance */}
-              <div className="mb-6">
-                <SLAPerformanceWidget />
-              </div>
+                  {/* SLA & Performance */}
+                  <div className="mb-6">
+                    <SLAPerformanceWidget />
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Right Sidebar */}
-            <div className="hidden xl:block xl:flex-shrink-0">
-              <SupportRightSidebar />
-            </div>
+            {/* Right Sidebar — hidden during initial load; the
+                dashboard skeleton above already represents the
+                whole content area. */}
+            {!isInitialLoading && (
+              <div className="hidden xl:block xl:flex-shrink-0">
+                <SupportRightSidebar />
+              </div>
+            )}
           </div>
         </div>
       </div>

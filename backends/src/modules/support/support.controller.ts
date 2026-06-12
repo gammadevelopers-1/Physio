@@ -36,9 +36,18 @@ import {
   UpdateMacroDto,
   CreateKbArticleDto,
   UpdateKbArticleDto,
-  CreateEscalationPathDto,
-  UpdateEscalationPathDto,
+  RateTicketDto,
+  EscalateTicketDto,
 } from './dto';
+
+// Date-from-query-string helper for report endpoints. Returns null
+// when missing or unparseable so the service treats it as "no
+// bound" rather than choking on bad input.
+function parseReportDate(input?: string): Date | null {
+  if (!input) return null;
+  const d = new Date(input);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
 
 @Controller('tickets')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -77,6 +86,20 @@ export class SupportController {
       ...query,
       assigneeId: undefined, // Override any assignee filter
     });
+  }
+
+  // ─── Rate Ticket (any requester — own resolved/closed ticket) ─
+  // Role-agnostic CSAT — the requester rates their own ticket
+  // regardless of platform role (student / instructor / finance /
+  // course-manager / TA). Mirrors the legacy /student/tickets/:id/rate
+  // endpoint but doesn't gate on @Roles('STUDENT').
+  @Post(':id/rate')
+  async rateTicket(
+    @Param('id', new ParseUUIDPipe()) ticketId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: RateTicketDto,
+  ) {
+    return this.supportService.rateOwnTicket(user.id, ticketId, dto.rating);
   }
 
   // ─── Get KPIs (support/admin only) ──────────────────────
@@ -327,12 +350,155 @@ export class SupportController {
     );
   }
 
+  // ─── Admin: active supervisors / orphan agents / reassignment ─
+
+  // Used by Create User + Manage Roles modals to populate the
+  // supervisor picker and by the orphans banner to populate the
+  // target dropdown.
+  @Get('team/active-supervisors')
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async listActiveSupervisors() {
+    return this.supportService.listActiveSupervisors();
+  }
+
+  // Surfaced on the admin Team Management page as a banner so any
+  // agent without a supervisor (created before the no-orphan
+  // invariant, or stranded after a supervisor was demoted via legacy
+  // path) is visible and actionable.
+  @Get('team/orphans')
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async listOrphanAgents() {
+    return this.supportService.listOrphanAgents();
+  }
+
+  @Post('team/orphans/bulk-assign')
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async bulkAssignOrphans(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: { supervisorId: string; agentIds: string[] },
+    @Req() req: Request,
+  ) {
+    if (!dto?.supervisorId) {
+      throw new BadRequestException('supervisorId is required');
+    }
+    return this.supportService.bulkAssignOrphansToSupervisor(
+      user,
+      dto.supervisorId,
+      dto.agentIds || [],
+      req.ip || '',
+    );
+  }
+
+  @Post('team/reassign')
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async reassignSupervisorTeam(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: { fromSupervisorId: string; toSupervisorId: string },
+    @Req() req: Request,
+  ) {
+    if (!dto?.fromSupervisorId || !dto?.toSupervisorId) {
+      throw new BadRequestException(
+        'fromSupervisorId and toSupervisorId are required',
+      );
+    }
+    return this.supportService.reassignSupervisorTeam(
+      user,
+      dto.fromSupervisorId,
+      dto.toSupervisorId,
+      req.ip || '',
+    );
+  }
+
   // ─── Admin Support KPIs ────────────────────────────────
 
   @Get('admin/support-kpis')
   @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
   async getAdminSupportKpis() {
     return this.supportService.getAdminSupportKpis();
+  }
+
+  // Admin Support Overview — single-payload feed for the new Overview
+  // tab on the admin dashboard. Returns the 7 client-requested metrics
+  // (open / awaiting response / overdue / by priority / by category /
+  // agent workload / CSAT) plus an at-risk list, recent-activity feed,
+  // 7-day trend deltas, cron-health strip, and pending team-request
+  // count. Read-only — no side-effects.
+  @Get('admin/support-overview')
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getSupportOverview(
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    return this.supportService.getSupportOverview(dateFrom, dateTo);
+  }
+
+  // Admin-only — list supervisors with team-aggregate performance
+  // metrics scoped to an optional date range (7d, 30d, or custom).
+  @Get('admin/supervisors')
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async listSupervisorsWithStats(
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    return this.supportService.listSupervisorsWithStats(dateFrom, dateTo);
+  }
+
+  // Admin-only — supervisor detail bundle: profile + team agents (with
+  // per-agent perf) + supervisor's own active tickets + aggregates.
+  @Get('admin/supervisors/:id')
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getSupervisorDetail(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    return this.supportService.getSupervisorDetail(id, dateFrom, dateTo);
+  }
+
+  // Admin-only — paginated support audit trail. Backs the "Audit trail"
+  // section of the overview tab. Rolls up every meaningful ticket-side
+  // mutation (created, replied, internal note, assignee/status/priority
+  // changed, resolved, closed, reopened) along with the actor and their
+  // role for display.
+  @Get('admin/audit-trail')
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getSupportAuditTrail(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.supportService.getSupportAuditTrail(
+      parseInt(page || '1', 10),
+      parseInt(limit || '20', 10),
+    );
+  }
+
+  // Same payload as the admin endpoint, but open to supervisors so the
+  // supervisor alerts page can render cross-team activity. Agents are
+  // intentionally excluded — they only see alerts on their own queue
+  // via the existing /alerts page that reads from KPIs.
+  @Get('audit-trail')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getSupportAuditTrailScoped(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    // Reject support agents — only supervisors and admin-level roles
+    // see this view. Without this an agent could call the endpoint
+    // directly even though the FE never surfaces a button.
+    const isSupervisor = user.supportSubRole === 'supervisor';
+    const isAdmin =
+      user.roles.includes('ADMIN' as UserRole) ||
+      user.roles.includes('SUPER_ADMIN' as UserRole);
+    if (!isSupervisor && !isAdmin) {
+      throw new ForbiddenException(
+        'Only supervisors and admins can view the support audit trail',
+      );
+    }
+    return this.supportService.getSupportAuditTrail(
+      parseInt(page || '1', 10),
+      parseInt(limit || '20', 10),
+    );
   }
 
   // ─── Settings — Business Hours, Auto-Assignment, Categories, Notifs ──
@@ -389,13 +555,20 @@ export class SupportController {
   }
 
   // Public read so the unauthenticated PublicTicketForm dropdown can
-  // render admin-added categories. Mutations (POST/DELETE below) stay
-  // role-gated. The list only exposes slug + names + auto-priority —
-  // nothing sensitive.
+  // render admin-added categories. Mutations (POST/PATCH/DELETE below)
+  // stay role-gated. The list only exposes slug + names + auto-priority
+  // + applicableRoles — nothing sensitive.
+  //
+  // Optional ?role= filter narrows the list to categories that have
+  // the given role in their applicableRoles array. Each customer
+  // dashboard's Support inbox uses this to drive its create-ticket
+  // dropdown without hardcoded slug lists.
   @Public()
   @Get('settings/ticket-categories')
-  async listTicketCategories() {
-    return this.supportService.listTicketCategories();
+  async listTicketCategories(@Query('role') role?: string) {
+    return this.supportService.listTicketCategories(
+      role ? { role } : undefined,
+    );
   }
 
   @Post('settings/ticket-categories')
@@ -408,6 +581,7 @@ export class SupportController {
       nameEn: string;
       nameAr?: string;
       autoPriority?: 'high' | 'medium' | 'low';
+      applicableRoles?: string[];
     },
   ) {
     if (
@@ -420,6 +594,31 @@ export class SupportController {
       );
     }
     return this.supportService.addTicketCategory(dto);
+  }
+
+  @Patch('settings/ticket-categories/:slug')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async updateTicketCategory(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('slug') slug: string,
+    @Body()
+    dto: {
+      nameEn?: string;
+      nameAr?: string | null;
+      autoPriority?: 'high' | 'medium' | 'low' | null;
+      applicableRoles?: string[];
+    },
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException(
+        'Only supervisors or admins can manage ticket categories',
+      );
+    }
+    return this.supportService.updateTicketCategory(slug, dto);
   }
 
   @Delete('settings/ticket-categories/:slug')
@@ -547,8 +746,87 @@ export class SupportController {
 
   @Get('csat/summary')
   @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
-  async getCsatSummary() {
-    return this.supportService.getCsatSummary();
+  async getCsatSummary(
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    return this.supportService.getCsatSummary({
+      dateFrom: parseReportDate(dateFrom),
+      dateTo: parseReportDate(dateTo),
+    });
+  }
+
+  @Get('csat/by-category')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getCsatByCategory(
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    return this.supportService.getCsatByCategory({
+      dateFrom: parseReportDate(dateFrom),
+      dateTo: parseReportDate(dateTo),
+    });
+  }
+
+  @Get('csat/by-agent')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getCsatByAgent(
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    return this.supportService.getCsatByAgent({
+      dateFrom: parseReportDate(dateFrom),
+      dateTo: parseReportDate(dateTo),
+    });
+  }
+
+  @Get('csat/monthly')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getCsatMonthly(
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    return this.supportService.getCsatMonthlyTrend({
+      dateFrom: parseReportDate(dateFrom),
+      dateTo: parseReportDate(dateTo),
+    });
+  }
+
+  @Get('csat/low-ratings')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getLowRatingSurveys(
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('status') status?: string,
+  ) {
+    const normalisedStatus: 'pending' | 'completed' | 'all' =
+      status === 'pending' ? 'pending' : status === 'completed' ? 'completed' : 'all';
+    return this.supportService.getLowRatingSurveys({
+      dateFrom: parseReportDate(dateFrom),
+      dateTo: parseReportDate(dateTo),
+      status: normalisedStatus,
+    });
+  }
+
+  @Post('csat/:surveyId/follow-up')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async markCsatFollowedUp(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('surveyId', new ParseUUIDPipe()) surveyId: string,
+  ) {
+    // Supervisor / admin only — the panel that surfaces these surveys
+    // is supervisor-gated in the FE, but defence-in-depth at the API
+    // layer keeps lower-privilege roles from poking at the endpoint.
+    const isSupervisorOrAdmin =
+      user.supportSubRole === 'supervisor' ||
+      user.roles.includes('ADMIN' as UserRole) ||
+      user.roles.includes('SUPER_ADMIN' as UserRole);
+    if (!isSupervisorOrAdmin) {
+      throw new ForbiddenException(
+        'Only supervisors can mark CSAT follow-ups',
+      );
+    }
+    return this.supportService.markCsatFollowedUp(surveyId, user.id);
   }
 
   @Get('nps/summary')
@@ -561,8 +839,35 @@ export class SupportController {
 
   @Get('macros')
   @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
-  async getMacros() {
-    return this.supportService.getMacros();
+  async getMacros(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('categoryKey') categoryKey?: string,
+    @Query('includeInactive') includeInactive?: string,
+  ) {
+    // Only supervisors/admins may see inactive macros (so they can
+    // restore them). Agents always get the active subset.
+    const isSupervisorOrAdmin =
+      user.supportSubRole === 'supervisor' ||
+      user.roles.includes('ADMIN' as UserRole) ||
+      user.roles.includes('SUPER_ADMIN' as UserRole);
+    const wantInactive = includeInactive === 'true' && isSupervisorOrAdmin;
+    return this.supportService.getMacros({
+      categoryKey: categoryKey || null,
+      includeInactive: wantInactive,
+    });
+  }
+
+  @Get('macros/usage-stats')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getMacroUsageStats(@CurrentUser() user: AuthenticatedUser) {
+    const isSupervisorOrAdmin =
+      user.supportSubRole === 'supervisor' ||
+      user.roles.includes('ADMIN' as UserRole) ||
+      user.roles.includes('SUPER_ADMIN' as UserRole);
+    if (!isSupervisorOrAdmin) {
+      throw new ForbiddenException('Only supervisors can view macro analytics');
+    }
+    return this.supportService.getMacroUsageStats();
   }
 
   @Get('macros/:id')
@@ -790,6 +1095,47 @@ export class SupportController {
     return this.supportService.getKbSearchAnalytics(dateFrom, dateTo, limit);
   }
 
+  @Get('kb/articles/analytics/most-viewed')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getMostViewedKbArticles(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('limit') limitStr?: string,
+  ) {
+    const isSupervisorOrAdmin =
+      user.supportSubRole === 'supervisor' ||
+      user.roles.includes('ADMIN' as UserRole) ||
+      user.roles.includes('SUPER_ADMIN' as UserRole);
+    if (!isSupervisorOrAdmin) {
+      throw new ForbiddenException('Only supervisors can view KB analytics');
+    }
+    const limit = limitStr ? parseInt(limitStr, 10) : 10;
+    return this.supportService.getMostViewedKbArticles({
+      limit: Number.isFinite(limit) ? limit : 10,
+    });
+  }
+
+  @Get('kb/articles/analytics/low-engagement')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getLowEngagementKbArticles(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('limit') limitStr?: string,
+    @Query('minAgeDays') minAgeDaysStr?: string,
+  ) {
+    const isSupervisorOrAdmin =
+      user.supportSubRole === 'supervisor' ||
+      user.roles.includes('ADMIN' as UserRole) ||
+      user.roles.includes('SUPER_ADMIN' as UserRole);
+    if (!isSupervisorOrAdmin) {
+      throw new ForbiddenException('Only supervisors can view KB analytics');
+    }
+    const limit = limitStr ? parseInt(limitStr, 10) : 10;
+    const minAgeDays = minAgeDaysStr ? parseInt(minAgeDaysStr, 10) : 30;
+    return this.supportService.getLowEngagementKbArticles({
+      limit: Number.isFinite(limit) ? limit : 10,
+      minAgeDays: Number.isFinite(minAgeDays) ? minAgeDays : 30,
+    });
+  }
+
   // ─── Ticket Tags ───────────────────────────────────────
   // The registry is read by any authenticated support user (agents need
   // it to render chips) but mutations are supervisor/admin-gated. The
@@ -798,8 +1144,12 @@ export class SupportController {
 
   @Get('tags')
   @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
-  async listTicketTags() {
-    return this.supportService.listTicketTags();
+  async listTicketTags(
+    @Query('includeArchived') includeArchived?: string,
+  ) {
+    return this.supportService.listTicketTags({
+      includeArchived: includeArchived === 'true' || includeArchived === '1',
+    });
   }
 
   @Post('tags')
@@ -851,6 +1201,137 @@ export class SupportController {
     return this.supportService.deleteTicketTag(id);
   }
 
+  // ─── Archive / unarchive ──────────────────────────────────
+  //
+  // Soft archive — hides the tag from the picker + auto-apply matcher
+  // but keeps assignments + history. The preferred path when a tag is
+  // in active use; delete cascades and loses reporting context.
+
+  @Post('tags/:id/archive')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async archiveTicketTag(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException('Only supervisors can manage ticket tags');
+    }
+    return this.supportService.archiveTicketTag(id);
+  }
+
+  @Post('tags/:id/unarchive')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async unarchiveTicketTag(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException('Only supervisors can manage ticket tags');
+    }
+    return this.supportService.unarchiveTicketTag(id);
+  }
+
+  // ─── Tag rules (auto-apply patterns) ──────────────────────
+
+  @Get('tags/:id/rules')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async listTagRules(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException('Only supervisors can manage tag rules');
+    }
+    return this.supportService.listTagRules(id);
+  }
+
+  @Post('tags/:id/rules')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async createTagRule(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body()
+    dto: {
+      pattern: string;
+      matchScope?: 'subject' | 'description' | 'both';
+      enabled?: boolean;
+    },
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException('Only supervisors can manage tag rules');
+    }
+    return this.supportService.createTagRule(user.id, id, dto);
+  }
+
+  @Patch('tag-rules/:ruleId')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async updateTagRule(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('ruleId', new ParseUUIDPipe()) ruleId: string,
+    @Body()
+    dto: {
+      pattern?: string;
+      matchScope?: 'subject' | 'description' | 'both';
+      enabled?: boolean;
+    },
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException('Only supervisors can manage tag rules');
+    }
+    return this.supportService.updateTagRule(ruleId, dto);
+  }
+
+  @Delete('tag-rules/:ruleId')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async deleteTagRule(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('ruleId', new ParseUUIDPipe()) ruleId: string,
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException('Only supervisors can manage tag rules');
+    }
+    return this.supportService.deleteTagRule(ruleId);
+  }
+
+  // ─── Tag analytics ────────────────────────────────────────
+
+  @Get('tags/analytics/summary')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getTagAnalytics(@CurrentUser() user: AuthenticatedUser) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException('Only supervisors can view tag analytics');
+    }
+    return this.supportService.getTagAnalytics();
+  }
+
   // PATCH because we replace the full tag set on the ticket — POST
   // would imply an append. Any agent on the ticket can change tags.
   @Patch(':id/tags')
@@ -867,6 +1348,17 @@ export class SupportController {
   }
 
   // ─── CSAT Survey (Public — no auth required) ──────────
+
+  // Pending CSAT prompts for the current user. Powers the global
+  // dashboard popup that nudges the user to rate without forcing
+  // them to dig into a resolved ticket. Returns at most 5 surveys
+  // (most recent first) that are still within the 72h window and
+  // not yet submitted. Auth-required because the response leaks
+  // the user's recent resolved tickets.
+  @Get('csat/pending')
+  async getPendingCsatForUser(@CurrentUser() user: AuthenticatedUser) {
+    return this.supportService.getPendingCsatForUser(user);
+  }
 
   @Public()
   @Throttle({ default: { limit: 10, ttl: 60_000 } }) // 10 / min / IP
@@ -973,70 +1465,6 @@ export class SupportController {
     return this.supportService.updateSlaPolicy(priority, dto);
   }
 
-  // ─── Escalation Paths CRUD ──────────────────────────────
-  // Same route-ordering rule: MUST be before @Get(':id')
-
-  @Get('escalation-paths')
-  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
-  async getEscalationPaths() {
-    return this.supportService.getEscalationPaths();
-  }
-
-  @Post('escalation-paths')
-  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
-  async createEscalationPath(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CreateEscalationPathDto,
-  ) {
-    const isSupervisorOrAdmin =
-      user.supportSubRole === 'supervisor' ||
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN');
-    if (!isSupervisorOrAdmin) {
-      throw new ForbiddenException(
-        'Only supervisors can manage escalation paths',
-      );
-    }
-    return this.supportService.createEscalationPath(dto);
-  }
-
-  @Patch('escalation-paths/:id')
-  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
-  async updateEscalationPath(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() dto: UpdateEscalationPathDto,
-  ) {
-    const isSupervisorOrAdmin =
-      user.supportSubRole === 'supervisor' ||
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN');
-    if (!isSupervisorOrAdmin) {
-      throw new ForbiddenException(
-        'Only supervisors can manage escalation paths',
-      );
-    }
-    return this.supportService.updateEscalationPath(id, dto);
-  }
-
-  @Delete('escalation-paths/:id')
-  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
-  async deleteEscalationPath(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('id', new ParseUUIDPipe()) id: string,
-  ) {
-    const isSupervisorOrAdmin =
-      user.supportSubRole === 'supervisor' ||
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN');
-    if (!isSupervisorOrAdmin) {
-      throw new ForbiddenException(
-        'Only supervisors can manage escalation paths',
-      );
-    }
-    return this.supportService.deleteEscalationPath(id);
-  }
-
   // ─── Per-ticket history export (CSV) ───────────────────
   //
   // Declared BEFORE @Get(':id') so the path doesn't shadow this.
@@ -1057,6 +1485,96 @@ export class SupportController {
       'Cache-Control': 'no-store',
     });
     res.send(csv);
+  }
+
+  // Compliance/audit archive — ZIP bundling conversation,
+  // attachments, audit trail, SLA events, and a manifest with
+  // SHA-256 hashes. Access check lives in the service (same as
+  // the CSV export — owner or assigned/privileged staff).
+
+  @Get(':id/export-archive')
+  async exportTicketArchive(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Res() res: Response,
+  ) {
+    const { buffer, filename } = await this.supportService.exportTicketArchive(
+      user,
+      id,
+    );
+    res.set({
+      'Content-Type': 'application/zip',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': buffer.length,
+      'Cache-Control': 'no-store',
+    });
+    res.end(buffer);
+  }
+
+  // ─── Merge candidates (supervisor/admin only) ─────────
+  //
+  // Powers the merge dropdown in the supervisor UI. Returns up to 20
+  // open tickets from the same customer + same category that the
+  // source can be merged into.
+
+  @Get(':id/merge-candidates')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async listMergeCandidates(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException('Only supervisors can merge tickets');
+    }
+    return this.supportService.getMergeCandidates(id);
+  }
+
+  // ─── Student snapshot (any user with ticket access) ────
+  //
+  // One-glance profile shown in the ticket-detail right rail
+  // so agents don't ping-pong dashboards to triage. The service
+  // enforces the same owner/agent isolation as getTicketDetail.
+
+  @Get(':id/student-context')
+  async getStudentContext(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    return this.supportService.getStudentSnapshotForTicket(user, id);
+  }
+
+  @Get(':id/student-timeline')
+  async getStudentTimeline(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    return this.supportService.getStudentTimelineForTicket(user, id);
+  }
+
+  @Get(':id/certificate-details')
+  async getCertificateDetails(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    return this.supportService.getCertificateDetailsForTicket(user, id);
+  }
+
+  // ─── Trainer application context (Amna R3) ─────────────
+  //
+  // Surfaces the applicant's role_request + full event timeline +
+  // missing-requirements checklist on the ticket detail. Matched by
+  // student email (logged-in) or guest email. Hidden by the FE when
+  // no application is found.
+  @Get(':id/trainer-application')
+  async getTrainerApplication(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    return this.supportService.getTrainerApplicationForTicket(user, id);
   }
 
   // ─── Ticket merge (supervisor/admin only) ──────────────
@@ -1164,6 +1682,31 @@ export class SupportController {
     return this.supportService.getAttachmentDownloadLog(id);
   }
 
+  // ─── Attachment version history (Amna R4) ──────────────
+  //
+  // Full timeline of every upload + soft-delete on the ticket.
+  // Staff-only; assignment + supervisor + admin gating handled in
+  // the service.
+
+  @Get(':id/attachment-history')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getAttachmentHistory(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    return this.supportService.getAttachmentHistory(user, id);
+  }
+
+  @Delete(':id/attachments/:attachmentId')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async softDeleteAttachment(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Param('attachmentId', new ParseUUIDPipe()) attachmentId: string,
+  ) {
+    return this.supportService.softDeleteAttachment(user, id, attachmentId);
+  }
+
   // ─── Get Ticket Detail ──────────────────────────────────
 
   @Get(':id')
@@ -1197,6 +1740,54 @@ export class SupportController {
     return this.supportService.addComment(user, id, dto);
   }
 
+  // ─── Hold-approval workflow ──────────────────────────────
+
+  // Agent submits a hold request for the supervisor/admin to decide.
+  // Reason must be one of HOLD_REASONS; description required only when
+  // reason='other'. The service layer also rejects double-submits via
+  // the unique partial index on the table.
+  @Post(':id/hold-requests')
+  @Roles('SUPPORT' as UserRole)
+  async createHoldRequest(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() body: { reason: string; description?: string | null },
+  ) {
+    return this.supportService.createHoldRequest(user, id, {
+      reason: body?.reason,
+      description: body?.description ?? null,
+    });
+  }
+
+  // Supervisor / admin approves or rejects a pending request. Approval
+  // flips the ticket to ON_HOLD; rejection leaves it alone. Both
+  // outcomes notify the requester and write an audit row.
+  @Patch(':id/hold-requests/:requestId')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async decideHoldRequest(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Param('requestId', new ParseUUIDPipe()) requestId: string,
+    @Body() body: { decision: 'approved' | 'rejected'; note?: string | null },
+  ) {
+    return this.supportService.decideHoldRequest(user, id, requestId, {
+      decision: body?.decision,
+      note: body?.note ?? null,
+    });
+  }
+
+  // ─── Manually escalate ticket (supervisor / admin only) ─
+
+  @Post(':id/escalate')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async escalateTicket(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: EscalateTicketDto,
+  ) {
+    return this.supportService.escalateTicket(user, id, dto);
+  }
+
   // ─── Resolve Ticket (support/admin only) ────────────────
 
   @Post(':id/resolve')
@@ -1224,13 +1815,21 @@ export class SupportController {
   @Post(':id/apply-macro')
   @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
   async applyMacro(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() body: { macroId: string },
+    @Body() body: { macroId: string; locale?: string },
   ) {
     if (!body.macroId) {
       throw new BadRequestException('macroId is required');
     }
-    return this.supportService.applyMacro(body.macroId, id);
+    // Locale comes from the client (it knows what the agent is
+    // currently viewing the dashboard in). Defaults to English at the
+    // service layer if absent or unrecognised.
+    const locale = body.locale === 'ar' ? 'ar' : 'en';
+    return this.supportService.applyMacro(body.macroId, id, {
+      userId: user.id,
+      locale,
+    });
   }
 
 }

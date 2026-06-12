@@ -6,6 +6,7 @@ import {
   IsOptional,
   Matches,
   IsIn,
+  IsUUID,
 } from 'class-validator';
 import { ROLE_NAMES, SUPPORT_SUB_ROLES } from '../../../database/schema';
 
@@ -20,6 +21,12 @@ export class CreateUserDto {
   @IsEmail({}, { message: 'Please provide a valid email' })
   email: string;
 
+  // OPTIONAL. New admin "Create User" flow uses the invite path —
+  // omit `password` and the service issues a magic-link password-setup
+  // token and emails the user. Legacy direct-API consumers can still
+  // supply a password to take the legacy "admin sets password" path.
+  // When provided, must satisfy the same policy as register/reset.
+  @IsOptional()
   @IsString()
   @MinLength(8, { message: 'Password must be at least 8 characters' })
   @MaxLength(100)
@@ -27,7 +34,7 @@ export class CreateUserDto {
     message:
       'Password must contain at least one uppercase letter, one lowercase letter, and one number',
   })
-  password: string;
+  password?: string;
 
   @IsString()
   @MinLength(2)
@@ -52,4 +59,14 @@ export class CreateUserDto {
     message: `Support sub-role must be one of: ${validSubRoles.join(', ')}`,
   })
   supportSubRole?: string;
+
+  // Supervisor UUID. Required when creating a Support Agent
+  // (role=SUPPORT, supportSubRole=agent) — the new agent joins this
+  // supervisor's team in the same transaction so no orphan-agent
+  // state can exist by construction. Ignored for non-support roles
+  // and for SUPPORT supervisors (they lead, they don't have a team
+  // lead above them).
+  @IsOptional()
+  @IsUUID('4', { message: 'supervisorId must be a valid UUID' })
+  supervisorId?: string;
 }

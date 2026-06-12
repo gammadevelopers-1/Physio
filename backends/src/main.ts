@@ -5,6 +5,8 @@ import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { csrfMiddleware } from './common/csrf.middleware';
+import { RequestContextService } from './common/request-context.service';
+import { createRequestContextMiddleware } from './common/request-context.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -37,6 +39,15 @@ async function bootstrap() {
   // Cookie parser (for refresh tokens)
   app.use(cookieParser());
 
+  // Per-request context (client IP + user agent) captured into an
+  // AsyncLocalStorage store so AuditLogService can include them on
+  // every write without the call site plumbing through the request.
+  // Must run BEFORE any business middleware that might fork the async
+  // chain — placed right after cookie parser so the store wraps the
+  // entire downstream pipeline (CSRF, guards, controllers, services).
+  const requestContext = app.get(RequestContextService);
+  app.use(createRequestContextMiddleware(requestContext));
+
   // CSRF double-submit cookie middleware. Skips Bearer-auth requests
   // (those are CORS-protected) and webhooks (signed by sender). See
   // common/csrf.middleware.ts for the full rationale.
@@ -47,17 +58,42 @@ async function bootstrap() {
   // but HSTS tells browsers to refuse any future HTTP attempt for 1 year
   // (and to apply the same policy to all subdomains). Skipped in dev so
   // `http://localhost` keeps working.
-  app.use((_req: any, res: any, next: any) => {
+  //
+  // X-Frame-Options is DENY everywhere except `/storage/files/*`, which
+  // serves user-uploaded PDFs and images that the FE embeds in an
+  // <iframe>/<img> from a different origin (api.physioguidance.org vs
+  // physioguidance.org). On those routes we use CSP frame-ancestors so
+  // only the configured CORS origin can embed — keeps clickjacking
+  // protection on JSON endpoints AND lets the attachment preview modal
+  // render PDFs without `refused to connect`.
+  const corsOriginForFrames = corsOrigin
+    .split(',')
+    .map((o: string) => o.trim())
+    .filter(Boolean);
+  app.use((req: any, res: any, next: any) => {
     if (process.env.NODE_ENV === 'production') {
       res.setHeader(
         'Strict-Transport-Security',
         'max-age=31536000; includeSubDomains',
       );
     }
-    // Always-on hardening headers (cheap; defense in depth)
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+    const path: string = (req.originalUrl || req.url || '').split('?')[0];
+    const isStorageFile = /\/storage\/files\//.test(path);
+    if (isStorageFile) {
+      const ancestors = corsOriginForFrames.length
+        ? `'self' ${corsOriginForFrames.join(' ')}`
+        : "'self'";
+      res.setHeader(
+        'Content-Security-Policy',
+        `frame-ancestors ${ancestors}`,
+      );
+    } else {
+      res.setHeader('X-Frame-Options', 'DENY');
+    }
+
     next();
   });
 

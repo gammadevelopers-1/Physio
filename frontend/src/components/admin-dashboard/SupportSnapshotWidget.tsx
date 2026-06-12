@@ -111,9 +111,7 @@ const SupportSnapshotWidget = () => {
       </div>
 
       {loading && !data ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-[var(--color-text-secondary)]" />
-        </div>
+        <SupportSnapshotSkeleton />
       ) : !data ? (
         <p className="text-xs text-[var(--color-text-secondary)] py-6 text-center">
           {t("loadFailed")}
@@ -225,5 +223,31 @@ const SupportSnapshotWidget = () => {
     </div>
   );
 };
+
+// Skeleton matches the populated layout 1:1 so when data lands there's
+// no jumpy reflow. Headline stat + 2x2 grid + action button.
+function SupportSnapshotSkeleton() {
+  return (
+    <div className="animate-pulse">
+      <div className="mb-4">
+        <div className="h-3 w-20 bg-[var(--color-border)] rounded mb-2" />
+        <div className="h-8 w-14 bg-[var(--color-border)] rounded" />
+      </div>
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="p-2.5 bg-[var(--color-surface-page)] rounded-lg"
+          >
+            <div className="h-3 w-10 bg-[var(--color-border)] rounded mb-2" />
+            <div className="h-4 w-12 bg-[var(--color-border)] rounded mb-1.5" />
+            <div className="h-2.5 w-16 bg-[var(--color-border)] rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="h-9 w-full bg-[var(--color-border)] rounded-lg" />
+    </div>
+  );
+}
 
 export default SupportSnapshotWidget;

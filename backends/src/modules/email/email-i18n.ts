@@ -49,6 +49,22 @@ const strings = {
   appMoreInfoTitle:    { en: 'More Information Needed',    ar: 'مطلوب معلومات إضافية' },
   appMoreInfoBody:     { en: 'We are reviewing your trainer application and need some additional information before we can proceed.', ar: 'نحن نراجع طلب المدرب الخاص بك ونحتاج إلى بعض المعلومات الإضافية قبل المتابعة.' },
 
+  /* ── Application CTAs (status portal + support) ──────── */
+  appMissingHeading:    { en: 'What we still need',      ar: 'المطلوب لإكمال طلبك' },
+  appSubmitChangesCta:  { en: 'Submit changes',          ar: 'إرسال التعديلات' },
+  appCheckStatusCta:    { en: 'Check application status', ar: 'تحقق من حالة الطلب' },
+  appContactSupportCta: { en: 'Contact support',         ar: 'تواصل مع الدعم' },
+  appContactSupportHint:{ en: 'Have a question? Our support team is here to help.', ar: 'هل لديك سؤال؟ فريق الدعم لدينا هنا لمساعدتك.' },
+
+  /* ── Structured "what's missing" labels (matches FE) ─── */
+  missingReqCV:             { en: 'CV / Resume',             ar: 'السيرة الذاتية' },
+  missingReqScfhs:          { en: 'SCFHS verification',      ar: 'إثبات التسجيل في الهيئة السعودية للتخصصات الصحية' },
+  missingReqQualification:  { en: 'Qualification document',  ar: 'وثيقة المؤهلات' },
+  missingReqPhoto:          { en: 'Profile photo',           ar: 'الصورة الشخصية' },
+  missingReqBank:           { en: 'Bank account details',    ar: 'تفاصيل الحساب البنكي' },
+  missingReqNationalId:     { en: 'National / Iqama ID',     ar: 'الهوية الوطنية / الإقامة' },
+
+
   newAppAdminSubject:  { en: 'New Instructor Application from {name}', ar: 'طلب مدرب جديد من {name}' },
   newAppAdminTitle:    { en: 'New Application Received',   ar: 'تم استلام طلب جديد' },
   newAppAdminBody:     { en: 'A new instructor application has been submitted and requires your review.', ar: 'تم تقديم طلب مدرب جديد ويتطلب مراجعتك.' },

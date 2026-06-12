@@ -19,9 +19,11 @@ import {
   Pencil,
   Star,
   Trash2,
+  Headphones,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { profileApi } from "@/lib/api";
+import { profileApi, SIDEBAR_TAB_KEYS } from "@/lib/api";
+import SidebarBadge from "@/components/SidebarBadge";
 
 interface InstructorProfile {
   name: string;
@@ -112,6 +114,11 @@ const InstructorSidebar = ({ instructor }: InstructorSidebarProps) => {
       label: t("sidebar.content"),
       href: `/${locale}/dashboard/instructor/content`,
       icon: Upload,
+    },
+    {
+      label: t("sidebar.support"),
+      href: `/${locale}/dashboard/instructor/support`,
+      icon: Headphones,
     },
     {
       label: t("sidebar.settings"),
@@ -251,9 +258,12 @@ const InstructorSidebar = ({ instructor }: InstructorSidebarProps) => {
                 <Icon
                   className={`w-5 h-5 ${active ? "text-[var(--color-primary)]" : "text-[var(--color-text-secondary)]"}`}
                 />
-                <span className={`text-sm ${active ? "font-medium" : ""}`}>
+                <span className={`text-sm flex-1 ${active ? "font-medium" : ""}`}>
                   {item.label}
                 </span>
+                {item.href.endsWith("/support") && (
+                  <SidebarBadge tabKey={SIDEBAR_TAB_KEYS.USER_SUPPORT} />
+                )}
               </Link>
             );
           })}

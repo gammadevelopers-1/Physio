@@ -109,13 +109,21 @@ export class RoleRequestsController {
   }
 
   // ===========================================
-  // GET /role-requests/:id - Single request detail
+  // GET /role-requests/:id - Single request detail (with events)
+  //
+  // Admin detail view. Returns the full role_request plus its event
+  // timeline so the review page can render history without a second
+  // round-trip.
   // ===========================================
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    return this.roleRequestsService.findOne(id);
+    const [request, events] = await Promise.all([
+      this.roleRequestsService.findOne(id),
+      this.roleRequestsService.getEvents(id),
+    ]);
+    return { ...request, events };
   }
 
   // ===========================================

@@ -17,8 +17,12 @@ export function useStudentTickets(params?: { status?: string }) {
     setLoading(true);
     setError(null);
     try {
+      // Scope the student inbox to tickets raised from the student
+      // dashboard so a user who is also (e.g.) an instructor only sees
+      // their student-side tickets here.
       const result = await supportApi.getMyTickets({
         status: params?.status,
+        source: "student",
       });
       setData(result.tickets);
       setTotal(result.total);
@@ -76,6 +80,7 @@ export function useTicketDetail(ticketId: string | null) {
           userName:
             [c.userFirstName, c.userLastName].filter(Boolean).join(" ") ||
             "Unknown",
+          attachments: Array.isArray(c.attachments) ? c.attachments : [],
         })),
       };
       setData(mapped);

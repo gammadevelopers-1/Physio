@@ -2,11 +2,20 @@
  * Application more info request email template for PhysioGuidance
  */
 import { EmailLocale, getEmailStrings, htmlAttrs, textAlign } from '../email-i18n';
+import type { MissingRequirement } from '../../../database/schema';
+import {
+  renderMissingRequirementsHtml,
+  renderMissingRequirementsText,
+  renderTrainerAppCtasHtml,
+  renderTrainerAppCtasText,
+} from './trainer-application-ctas';
 
 export function getApplicationMoreInfoHtml(
   applicantName: string,
   reviewNote: string,
   locale: EmailLocale = 'en',
+  missing?: MissingRequirement[],
+  frontendUrl: string = 'https://app.physioguidance.com',
 ): string {
   const s = getEmailStrings(locale);
   return `<!DOCTYPE html>
@@ -82,15 +91,22 @@ export function getApplicationMoreInfoHtml(
             </td>
           </tr>
 
-          <!-- Instructions -->
-          <tr>
-            <td style="padding:24px 32px;text-align:center;">
-            </td>
-          </tr>
+          <!-- What's missing (structured) -->
+          ${renderMissingRequirementsHtml(missing, locale)}
+
+          <!-- Action buttons: Submit changes / Check status / Contact support -->
+          ${renderTrainerAppCtasHtml({
+            frontendUrl,
+            locale,
+            primary: {
+              href: `${frontendUrl.replace(/\/$/, '')}/${locale}/become-trainer`,
+              label: s.appSubmitChangesCta,
+            },
+          })}
 
           <!-- Divider -->
           <tr>
-            <td style="padding:0 32px;">
+            <td style="padding:16px 32px 0;">
               <div style="height:1px;background-color:#e5e7eb;"></div>
             </td>
           </tr>
@@ -119,8 +135,20 @@ export function getApplicationMoreInfoText(
   applicantName: string,
   reviewNote: string,
   locale: EmailLocale = 'en',
+  missing?: MissingRequirement[],
+  frontendUrl: string = 'https://app.physioguidance.com',
 ): string {
   const s = getEmailStrings(locale);
+  const fe = frontendUrl.replace(/\/$/, '');
+  const ctas = renderTrainerAppCtasText({
+    frontendUrl,
+    locale,
+    primary: {
+      href: `${fe}/${locale}/become-trainer`,
+      label: s.appSubmitChangesCta,
+    },
+  });
+  const missingBlock = renderMissingRequirementsText(missing, locale);
   return `PhysioGuidance - ${s.appMoreInfoTitle}
 
 ${s.hi}, ${applicantName},
@@ -128,7 +156,7 @@ ${s.hi}, ${applicantName},
 ${s.appMoreInfoBody}
 
 ${s.reviewerFeedback} ${reviewNote}
-
+${missingBlock}${ctas}
 © ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
 ${s.nelcFooter}`;
 }

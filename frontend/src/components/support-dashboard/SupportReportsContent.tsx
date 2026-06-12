@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { supportApi } from "@/lib/api";
 import { useSupportProfile } from "@/hooks/useSupportProfile";
@@ -29,6 +30,7 @@ import {
   RefreshCw,
   MessageSquare,
   Calendar,
+  Eye,
 } from "lucide-react";
 
 // ─── Date range helpers ───────────────────────────────────
@@ -91,6 +93,12 @@ const SupportReportsContent = () => {
   const { user } = useAuth();
   const profile = useSupportProfile();
 
+  // Agents (non-supervisors) on the support dashboard are not allowed
+  // to export CSV data — only supervisors and admins can. PDF stays
+  // available for everyone (it bakes one report into a doc, doesn't
+  // expose raw rows).
+  const canExportCsv = user?.supportSubRole === "supervisor";
+
   // ── Filters ──────────────────────────────────────────────────
   const [selectedReport, setSelectedReport] = useState<ReportKey>("overview");
   const [period, setPeriod] = useState("last30Days");
@@ -122,6 +130,10 @@ const SupportReportsContent = () => {
   const [csatData, setCsatData] = useState<any>(null);
   const [npsData, setNpsData] = useState<any>(null);
   const [csatComments, setCsatComments] = useState<any[]>([]);
+  const [csatByCategory, setCsatByCategory] = useState<any[]>([]);
+  const [csatByAgent, setCsatByAgent] = useState<any[]>([]);
+  const [csatMonthly, setCsatMonthly] = useState<any[]>([]);
+  const [lowRatings, setLowRatings] = useState<any[]>([]);
 
   const [reportLoading, setReportLoading] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
@@ -186,14 +198,23 @@ const SupportReportsContent = () => {
           break;
         }
         case "csatNps": {
-          const [csat, nps, comments] = await Promise.all([
-            supportApi.getCsatSummary().catch(() => null),
-            supportApi.getNpsSummary().catch(() => null),
-            supportApi.getRecentCsatComments(8).catch(() => []),
-          ]);
+          const [csat, nps, comments, byCategory, byAgent, monthly, lowRatingList] =
+            await Promise.all([
+              supportApi.getCsatSummary(params).catch(() => null),
+              supportApi.getNpsSummary().catch(() => null),
+              supportApi.getRecentCsatComments(8).catch(() => []),
+              supportApi.getCsatByCategory(params).catch(() => []),
+              supportApi.getCsatByAgent(params).catch(() => []),
+              supportApi.getCsatMonthlyTrend(params).catch(() => []),
+              supportApi.getLowRatingSurveys({ ...params, status: 'all' }).catch(() => []),
+            ]);
           setCsatData(csat);
           setNpsData(nps);
           setCsatComments(Array.isArray(comments) ? comments : []);
+          setCsatByCategory(Array.isArray(byCategory) ? byCategory : []);
+          setCsatByAgent(Array.isArray(byAgent) ? byAgent : []);
+          setCsatMonthly(Array.isArray(monthly) ? monthly : []);
+          setLowRatings(Array.isArray(lowRatingList) ? lowRatingList : []);
           break;
         }
       }
@@ -387,14 +408,16 @@ const SupportReportsContent = () => {
                       <div
                         className={`absolute top-full mt-1 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg z-20 min-w-[200px] py-1 ${isRTL ? "left-0" : "right-0"}`}
                       >
-                        <button
-                          type="button"
-                          onClick={handleExportCsv}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] text-start"
-                        >
-                          <FileSpreadsheet className="w-4 h-4 text-[#16A34A]" />
-                          {t("reportsPage.downloadCsv")}
-                        </button>
+                        {canExportCsv && (
+                          <button
+                            type="button"
+                            onClick={handleExportCsv}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border-subtle)] text-start"
+                          >
+                            <FileSpreadsheet className="w-4 h-4 text-[#16A34A]" />
+                            {t("reportsPage.downloadCsv")}
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={handleExportPdf}
@@ -602,6 +625,12 @@ const SupportReportsContent = () => {
                       csat={csatData}
                       nps={npsData}
                       comments={csatComments}
+                      byCategory={csatByCategory}
+                      byAgent={csatByAgent}
+                      monthly={csatMonthly}
+                      lowRatings={lowRatings}
+                      onLowRatingsChange={setLowRatings}
+                      canManageFollowups={canExportCsv}
                       t={t}
                     />
                   )}
@@ -612,6 +641,7 @@ const SupportReportsContent = () => {
               <AdditionalReportsPanel
                 dateFrom={dateParams.dateFrom}
                 dateTo={dateParams.dateTo}
+                canExportCsv={canExportCsv}
               />
 
               {/* KB search analytics — most-searched + zero-result rate. */}
@@ -639,9 +669,11 @@ const SupportReportsContent = () => {
 function AdditionalReportsPanel({
   dateFrom,
   dateTo,
+  canExportCsv,
 }: {
   dateFrom?: string;
   dateTo?: string;
+  canExportCsv: boolean;
 }) {
   const [exportingType, setExportingType] = useState<string | null>(null);
 
@@ -734,19 +766,21 @@ function AdditionalReportsPanel({
               </p>
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
-              <button
-                type="button"
-                onClick={() => exportOne(r.type, "csv")}
-                disabled={exportingType !== null}
-                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] disabled:opacity-50"
-              >
-                {exportingType === `${r.type}-csv` ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <FileSpreadsheet className="w-3.5 h-3.5 text-[#16A34A]" />
-                )}
-                CSV
-              </button>
+              {canExportCsv && (
+                <button
+                  type="button"
+                  onClick={() => exportOne(r.type, "csv")}
+                  disabled={exportingType !== null}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-border-subtle)] disabled:opacity-50"
+                >
+                  {exportingType === `${r.type}-csv` ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-[#16A34A]" />
+                  )}
+                  CSV
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => exportOne(r.type, "pdf")}
@@ -783,6 +817,8 @@ function KbSearchAnalyticsPanel({
   dateFrom?: string;
   dateTo?: string;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [data, setData] = useState<{
     totalSearches: number;
     zeroResultSearches: number;
@@ -795,20 +831,87 @@ function KbSearchAnalyticsPanel({
       zeroResultCount: number;
     }[];
   } | null>(null);
+  const [mostViewed, setMostViewed] = useState<
+    {
+      id: string;
+      titleEn: string | null;
+      titleAr: string | null;
+      category: string;
+      viewCount: number;
+      updatedAt: string;
+    }[]
+  >([]);
+  const [lowEngagement, setLowEngagement] = useState<
+    {
+      id: string;
+      titleEn: string | null;
+      titleAr: string | null;
+      category: string;
+      viewCount: number;
+      createdAt: string;
+    }[]
+  >([]);
   const [loading, setLoading] = useState(false);
+
+  // Compute the KB-management path from the current pathname by
+  // replacing the trailing /reports segment with /kb. Works for
+  // both /support/reports and /support/supervisor/reports.
+  const kbPath = useMemo(() => {
+    if (!pathname) return "/dashboard/support/kb";
+    return pathname.replace(/\/reports\/?$/, "/kb");
+  }, [pathname]);
+
+  // Suggested FAQs are derived from the existing topQueries data —
+  // no extra fetch needed. We surface every query that returned ≥3
+  // empty results, sorted by empty-count desc. The 3-threshold cuts
+  // out one-off typos while still catching anything searched
+  // repeatedly.
+  const suggestedFaqs = useMemo(() => {
+    if (!data) return [];
+    return data.topQueries
+      .filter((q) => q.zeroResultCount >= 3)
+      .sort((a, b) => b.zeroResultCount - a.zeroResultCount)
+      .slice(0, 10);
+  }, [data]);
 
   useEffect(() => {
     setLoading(true);
-    supportApi
-      .getKbSearchAnalytics({
-        dateFrom: dateFrom || undefined,
-        dateTo: dateTo || undefined,
-        limit: 25,
+    Promise.all([
+      supportApi
+        .getKbSearchAnalytics({
+          dateFrom: dateFrom || undefined,
+          dateTo: dateTo || undefined,
+          limit: 25,
+        })
+        .catch(() => null),
+      supportApi.getMostViewedKbArticles({ limit: 10 }).catch(() => []),
+      supportApi.getLowEngagementKbArticles({ limit: 10, minAgeDays: 30 }).catch(() => []),
+    ])
+      .then(([search, top, low]) => {
+        setData(search);
+        setMostViewed(Array.isArray(top) ? top : []);
+        setLowEngagement(Array.isArray(low) ? low : []);
       })
-      .then((res) => setData(res))
-      .catch(() => setData(null))
       .finally(() => setLoading(false));
   }, [dateFrom, dateTo]);
+
+  const handleCreateFaq = (query: string, locale: string) => {
+    const sp = new URLSearchParams();
+    sp.set("prefillTitle", query);
+    sp.set("prefillLocale", locale === "ar" ? "ar" : "en");
+    router.push(`${kbPath}?${sp.toString()}`);
+  };
+
+  const handleEditArticle = (articleId: string) => {
+    const sp = new URLSearchParams();
+    sp.set("editArticleId", articleId);
+    router.push(`${kbPath}?${sp.toString()}`);
+  };
+
+  const articleTitle = (a: {
+    titleEn: string | null;
+    titleAr: string | null;
+  }) => a.titleEn || a.titleAr || "(untitled)";
 
   return (
     <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 mt-6">
@@ -897,6 +1000,127 @@ function KbSearchAnalyticsPanel({
           </div>
         </>
       )}
+
+      {/* Suggested FAQ opportunities — zero-result queries searched
+          ≥3 times. Each row deep-links into the KB editor with the
+          query as the prefilled title, in the language it was
+          searched in. */}
+      {suggestedFaqs.length > 0 && (
+        <div className="mt-6 pt-5 border-t border-[var(--color-border)]">
+          <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1 flex items-center gap-2">
+            <FileSpreadsheet className="w-4 h-4 text-[#16A34A]" />
+            Suggested FAQ opportunities
+          </h4>
+          <p className="text-xs text-[var(--color-text-secondary)] mb-3">
+            These queries returned no results 3 or more times — strong
+            candidates for new help articles.
+          </p>
+          <div className="space-y-1.5">
+            {suggestedFaqs.map((q, idx) => (
+              <div
+                key={`${q.query}-${q.locale}-${idx}`}
+                className="flex items-center gap-2 p-2 rounded border border-[var(--color-border-subtle)] bg-[var(--color-surface-page)]"
+              >
+                <span className="flex-1 text-xs text-[var(--color-text-primary)] truncate">
+                  &quot;{q.query}&quot;
+                </span>
+                <span className="text-[10px] uppercase text-[var(--color-text-secondary)] font-mono">
+                  {q.locale}
+                </span>
+                <span className="text-[10px] text-[#DC2626] font-medium">
+                  {q.zeroResultCount} empty
+                </span>
+                <button
+                  onClick={() => handleCreateFaq(q.query, q.locale)}
+                  className="px-2 py-1 text-[10px] font-medium bg-[#16A34A] text-white rounded hover:opacity-90"
+                >
+                  Create FAQ
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Most viewed + Low engagement — both all-time (viewCount is a
+          single counter, not date-bucketed). Labeled accordingly so
+          the supervisor doesn't conflate them with the search panel
+          above. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-6 pt-5 border-t border-[var(--color-border)]">
+        <div>
+          <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1 flex items-center gap-2">
+            <Eye className="w-4 h-4 text-[var(--color-primary)]" />
+            Most viewed articles
+            <span className="text-[10px] text-[var(--color-text-secondary)] font-normal">(all time)</span>
+          </h4>
+          {mostViewed.length === 0 ? (
+            <p className="text-xs text-[var(--color-text-secondary)] py-3">
+              No published articles have been viewed yet.
+            </p>
+          ) : (
+            <ul className="space-y-1 mt-3">
+              {mostViewed.map((a) => (
+                <li
+                  key={a.id}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <span className="flex-1 truncate text-[var(--color-text-primary)]">
+                    {articleTitle(a)}
+                  </span>
+                  <span className="text-[10px] text-[var(--color-text-secondary)] capitalize">
+                    {a.category}
+                  </span>
+                  <span className="font-mono text-[var(--color-text-secondary)] min-w-[40px] text-end">
+                    {a.viewCount}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div>
+          <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-[#D97706]" />
+            Low engagement articles
+            <span className="text-[10px] text-[var(--color-text-secondary)] font-normal">
+              (30+ days old, fewest views)
+            </span>
+          </h4>
+          {lowEngagement.length === 0 ? (
+            <p className="text-xs text-[var(--color-text-secondary)] py-3">
+              No articles older than 30 days yet — check back later.
+            </p>
+          ) : (
+            <ul className="space-y-1 mt-3">
+              {lowEngagement.map((a) => (
+                <li
+                  key={a.id}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <span className="flex-1 truncate text-[var(--color-text-primary)]">
+                    {articleTitle(a)}
+                  </span>
+                  <span className="text-[10px] text-[var(--color-text-secondary)] capitalize">
+                    {a.category}
+                  </span>
+                  <span
+                    className={`font-mono min-w-[40px] text-end ${a.viewCount === 0 ? 'text-[#DC2626]' : 'text-[var(--color-text-secondary)]'}`}
+                  >
+                    {a.viewCount}
+                  </span>
+                  <button
+                    onClick={() => handleEditArticle(a.id)}
+                    className="text-[10px] text-[var(--color-primary)] hover:underline"
+                  >
+                    Edit
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -1386,13 +1610,102 @@ function CsatNpsPanel({
   csat,
   nps,
   comments,
+  byCategory,
+  byAgent,
+  monthly,
+  lowRatings,
+  onLowRatingsChange,
+  canManageFollowups,
   t,
 }: {
   csat: any;
   nps: any;
   comments: any[];
+  byCategory: {
+    category: string;
+    responses: number;
+    avgScore: number;
+    detractors: number;
+    promoters: number;
+  }[];
+  byAgent: {
+    agentId: string | null;
+    agentName: string | null;
+    responses: number;
+    avgScore: number;
+    detractors: number;
+    promoters: number;
+  }[];
+  monthly: {
+    bucket: string;
+    responses: number;
+    avgScore: number;
+    detractors: number;
+    promoters: number;
+  }[];
+  lowRatings: {
+    surveyId: string;
+    score: number;
+    comment: string | null;
+    submittedAt: string | null;
+    followUpCompletedAt: string | null;
+    ticketId: string;
+    ticketReference: string;
+    ticketSubject: string;
+    ticketCategory: string;
+    agentName: string | null;
+    followUpBy: string | null;
+  }[];
+  onLowRatingsChange: (next: any[]) => void;
+  canManageFollowups: boolean;
   t: ReturnType<typeof useTranslations>;
 }) {
+  const [lowRatingFilter, setLowRatingFilter] = useState<'pending' | 'completed' | 'all'>('pending');
+  const [markingId, setMarkingId] = useState<string | null>(null);
+
+  const filteredLowRatings = lowRatings.filter((r) => {
+    if (lowRatingFilter === 'pending') return !r.followUpCompletedAt;
+    if (lowRatingFilter === 'completed') return !!r.followUpCompletedAt;
+    return true;
+  });
+
+  const pendingCount = lowRatings.filter((r) => !r.followUpCompletedAt).length;
+  const completedCount = lowRatings.filter((r) => !!r.followUpCompletedAt).length;
+
+  const handleMarkFollowedUp = async (surveyId: string) => {
+    setMarkingId(surveyId);
+    try {
+      const res = await supportApi.markCsatFollowedUp(surveyId);
+      onLowRatingsChange(
+        lowRatings.map((r) =>
+          r.surveyId === surveyId
+            ? { ...r, followUpCompletedAt: res.followUpCompletedAt }
+            : r,
+        ),
+      );
+      toast.success(t("reportsPage.csatPanel.lowRatings.markedFollowedUp"));
+    } catch {
+      toast.error(t("reportsPage.csatPanel.lowRatings.markFailed"));
+    } finally {
+      setMarkingId(null);
+    }
+  };
+
+  // Star-coloured score chip — green ≥4, amber 3, red ≤2
+  const scoreChip = (score: number) => {
+    const color =
+      score >= 4
+        ? 'bg-[#DCFCE7] text-[#166534] border-[#BBF7D0]'
+        : score === 3
+          ? 'bg-[#FEF3C7] text-[#92400E] border-[#FDE68A]'
+          : 'bg-[#FEE2E2] text-[#991B1B] border-[#FECACA]';
+    return (
+      <span className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded border ${color}`}>
+        {score.toFixed(1)}
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -1540,6 +1853,232 @@ function CsatNpsPanel({
             })}
           </div>
         </div>
+      </div>
+
+      {/* By-category + by-agent breakdowns */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3 flex items-center gap-2">
+            <Inbox className="w-4 h-4 text-[var(--color-primary)]" />
+            {t("reportsPage.csatPanel.byCategory.title")}
+          </h3>
+          {byCategory.length === 0 ? (
+            <p className="text-sm text-[var(--color-text-secondary)] py-6 text-center">
+              {t("reportsPage.csatPanel.byCategory.empty")}
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)] border-b border-[var(--color-border)]">
+                    <th className="text-start py-1.5 font-medium">{t("reportsPage.csatPanel.byCategory.category")}</th>
+                    <th className="text-end py-1.5 font-medium">{t("reportsPage.csatPanel.byCategory.responses")}</th>
+                    <th className="text-end py-1.5 font-medium">{t("reportsPage.csatPanel.byCategory.avg")}</th>
+                    <th className="text-end py-1.5 font-medium">{t("reportsPage.csatPanel.byCategory.split")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {byCategory.map((row) => (
+                    <tr key={row.category} className="border-b border-[var(--color-border-subtle)] last:border-b-0">
+                      <td className="py-1.5 text-[var(--color-text-primary)] capitalize">{row.category}</td>
+                      <td className="py-1.5 text-end text-[var(--color-text-secondary)]">{row.responses}</td>
+                      <td className="py-1.5 text-end">{scoreChip(row.avgScore)}</td>
+                      <td className="py-1.5 text-end text-[10px]">
+                        <span className="text-[#16A34A]">{row.promoters}↑</span>
+                        <span className="text-[var(--color-text-secondary)] mx-1">·</span>
+                        <span className="text-[#DC2626]">{row.detractors}↓</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3 flex items-center gap-2">
+            <Users className="w-4 h-4 text-[var(--color-primary)]" />
+            {t("reportsPage.csatPanel.byAgent.title")}
+          </h3>
+          {byAgent.length === 0 ? (
+            <p className="text-sm text-[var(--color-text-secondary)] py-6 text-center">
+              {t("reportsPage.csatPanel.byAgent.empty")}
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)] border-b border-[var(--color-border)]">
+                    <th className="text-start py-1.5 font-medium">{t("reportsPage.csatPanel.byAgent.agent")}</th>
+                    <th className="text-end py-1.5 font-medium">{t("reportsPage.csatPanel.byAgent.responses")}</th>
+                    <th className="text-end py-1.5 font-medium">{t("reportsPage.csatPanel.byAgent.avg")}</th>
+                    <th className="text-end py-1.5 font-medium">{t("reportsPage.csatPanel.byAgent.split")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {byAgent.map((row) => (
+                    <tr key={row.agentId ?? 'unassigned'} className="border-b border-[var(--color-border-subtle)] last:border-b-0">
+                      <td className="py-1.5 text-[var(--color-text-primary)]">
+                        {row.agentName ?? <span className="italic text-[var(--color-text-secondary)]">{t("reportsPage.csatPanel.byAgent.unassigned")}</span>}
+                      </td>
+                      <td className="py-1.5 text-end text-[var(--color-text-secondary)]">{row.responses}</td>
+                      <td className="py-1.5 text-end">{scoreChip(row.avgScore)}</td>
+                      <td className="py-1.5 text-end text-[10px]">
+                        <span className="text-[#16A34A]">{row.promoters}↑</span>
+                        <span className="text-[var(--color-text-secondary)] mx-1">·</span>
+                        <span className="text-[#DC2626]">{row.detractors}↓</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Monthly trend */}
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
+        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3 flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-[var(--color-primary)]" />
+          {t("reportsPage.csatPanel.monthly.title")}
+        </h3>
+        {monthly.length === 0 ? (
+          <p className="text-sm text-[var(--color-text-secondary)] py-6 text-center">
+            {t("reportsPage.csatPanel.monthly.empty")}
+          </p>
+        ) : (
+          <div className="flex items-end gap-3 h-32 px-2">
+            {monthly.map((m) => {
+              const heightPct = Math.max(8, (m.avgScore / 5) * 100);
+              const color =
+                m.avgScore >= 4
+                  ? 'bg-[#22C55E]'
+                  : m.avgScore >= 3
+                    ? 'bg-[#EAB308]'
+                    : 'bg-[#EF4444]';
+              return (
+                <div key={m.bucket} className="flex-1 flex flex-col items-center gap-1.5">
+                  <div className="text-[10px] font-semibold text-[var(--color-text-primary)]">
+                    {m.avgScore.toFixed(1)}
+                  </div>
+                  <div className="w-full flex items-end h-20">
+                    <div
+                      className={`w-full ${color} rounded-t`}
+                      style={{ height: `${heightPct}%` }}
+                      title={`${m.bucket}: avg ${m.avgScore} · ${m.responses} responses`}
+                    />
+                  </div>
+                  <span className="text-[9px] text-[var(--color-text-secondary)] font-mono">{m.bucket.slice(5)}</span>
+                  <span className="text-[9px] text-[var(--color-text-secondary)]">×{m.responses}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Low-rating follow-up panel — detractors needing manual outreach */}
+      <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-5">
+        <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-[#DC2626]" />
+            {t("reportsPage.csatPanel.lowRatings.title")}
+          </h3>
+          <div className="inline-flex items-center rounded-lg border border-[var(--color-border)] overflow-hidden">
+            <button
+              onClick={() => setLowRatingFilter('pending')}
+              className={`px-2.5 py-1 text-[11px] font-medium ${lowRatingFilter === 'pending' ? 'bg-[#DC2626] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]'}`}
+            >
+              {t("reportsPage.csatPanel.lowRatings.pending")} · {pendingCount}
+            </button>
+            <button
+              onClick={() => setLowRatingFilter('completed')}
+              className={`px-2.5 py-1 text-[11px] font-medium border-s border-[var(--color-border)] ${lowRatingFilter === 'completed' ? 'bg-[#16A34A] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]'}`}
+            >
+              {t("reportsPage.csatPanel.lowRatings.completed")} · {completedCount}
+            </button>
+            <button
+              onClick={() => setLowRatingFilter('all')}
+              className={`px-2.5 py-1 text-[11px] font-medium border-s border-[var(--color-border)] ${lowRatingFilter === 'all' ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]'}`}
+            >
+              {t("reportsPage.csatPanel.lowRatings.all")}
+            </button>
+          </div>
+        </div>
+        {filteredLowRatings.length === 0 ? (
+          <p className="text-sm text-[var(--color-text-secondary)] py-6 text-center">
+            {lowRatingFilter === 'pending'
+              ? t("reportsPage.csatPanel.lowRatings.allHandled")
+              : t("reportsPage.csatPanel.lowRatings.empty")}
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {filteredLowRatings.map((row) => (
+              <div
+                key={row.surveyId}
+                className={`border rounded-lg p-3 ${row.followUpCompletedAt ? 'border-[var(--color-border)] bg-[var(--color-surface-page)] opacity-80' : 'border-[#FECACA] bg-[#FFFBFB]'}`}
+              >
+                <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                  <span className="font-mono text-[11px] text-[var(--color-text-secondary)]">{row.ticketReference}</span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded bg-[#FEE2E2] text-[#991B1B] border border-[#FECACA]">
+                    {Array.from({ length: row.score }).map((_, i) => '★').join('')} {row.score}/5
+                  </span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide rounded bg-[#EFF6FF] text-[#3B82F6] border border-[#DBEAFE] capitalize">
+                    {row.ticketCategory}
+                  </span>
+                  <span className="text-[10px] text-[var(--color-text-secondary)] ms-auto">
+                    {row.submittedAt ? new Date(row.submittedAt).toLocaleDateString() : '—'}
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--color-text-primary)] mb-2">
+                  {row.comment ? `"${row.comment}"` : <span className="italic text-[var(--color-text-secondary)]">{t("reportsPage.csatPanel.lowRatings.noComment")}</span>}
+                </p>
+                <div className="flex items-center gap-2 flex-wrap text-[10px]">
+                  <span className="text-[var(--color-text-secondary)]">
+                    {t("reportsPage.csatPanel.lowRatings.agentLabel")}:{' '}
+                    <span className="text-[var(--color-text-primary)]">{row.agentName ?? '—'}</span>
+                  </span>
+                  <span className="text-[var(--color-text-secondary)]">·</span>
+                  <a
+                    href={`/dashboard/support/tickets/${row.ticketId}`}
+                    className="text-[var(--color-primary)] hover:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {t("reportsPage.csatPanel.lowRatings.openTicket")} →
+                  </a>
+                  <div className="ms-auto flex items-center gap-2">
+                    {row.followUpCompletedAt ? (
+                      <span className="inline-flex items-center gap-1 text-[#16A34A] font-medium">
+                        <CheckCircle2 className="w-3 h-3" />
+                        {t("reportsPage.csatPanel.lowRatings.completedBy", {
+                          name: row.followUpBy || t("reportsPage.csatPanel.lowRatings.supervisor"),
+                          date: new Date(row.followUpCompletedAt).toLocaleDateString(),
+                        })}
+                      </span>
+                    ) : canManageFollowups ? (
+                      <button
+                        onClick={() => handleMarkFollowedUp(row.surveyId)}
+                        disabled={markingId === row.surveyId}
+                        className="px-2 py-1 text-[10px] font-medium bg-[#16A34A] text-white rounded hover:opacity-90 disabled:opacity-50"
+                      >
+                        {markingId === row.surveyId
+                          ? t("reportsPage.csatPanel.lowRatings.marking")
+                          : t("reportsPage.csatPanel.lowRatings.markFollowedUp")}
+                      </button>
+                    ) : (
+                      <span className="text-[var(--color-text-secondary)] italic">
+                        {t("reportsPage.csatPanel.lowRatings.supervisorOnly")}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Recent CSAT comments */}

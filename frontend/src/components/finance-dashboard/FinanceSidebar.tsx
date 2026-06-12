@@ -14,7 +14,10 @@ import {
   Settings,
   Pencil,
   Wallet,
+  Headphones,
 } from "lucide-react";
+import { SIDEBAR_TAB_KEYS } from "@/lib/api";
+import SidebarBadge from "@/components/SidebarBadge";
 
 interface FinanceProfile {
   name: string;
@@ -67,6 +70,11 @@ const FinanceSidebar = ({ profile }: FinanceSidebarProps) => {
       label: t("sidebar.reports"),
       href: `/${locale}/dashboard/finance/reports`,
       icon: BarChart3,
+    },
+    {
+      label: t("sidebar.support"),
+      href: `/${locale}/dashboard/finance/support`,
+      icon: Headphones,
     },
     {
       label: t("sidebar.settings"),
@@ -195,6 +203,9 @@ const FinanceSidebar = ({ profile }: FinanceSidebarProps) => {
                   <span className="bg-[#EF4444] text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
                     {item.badge}
                   </span>
+                )}
+                {item.href.endsWith("/support") && (
+                  <SidebarBadge tabKey={SIDEBAR_TAB_KEYS.USER_SUPPORT} />
                 )}
               </Link>
             );

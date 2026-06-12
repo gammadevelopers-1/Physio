@@ -9,7 +9,7 @@ import {
 import * as crypto from 'crypto';
 import * as argon2 from 'argon2';
 import PDFDocument from 'pdfkit';
-import { eq, and, or, desc, asc, sql, ilike, count, inArray, gte, isNull } from 'drizzle-orm';
+import { eq, and, or, desc, asc, sql, ilike, count, inArray, gte, lte, isNull, isNotNull } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { db } from '../../database';
 import {
@@ -25,19 +25,31 @@ import {
   courseRatings,
   supportConfig,
   supportMacros,
+  supportMacroUses,
   kbArticles,
   kbCategories,
-  escalationPaths,
   enrollments,
+  attendance,
+  webinarRegistrations,
+  sessions,
+  submissions,
+  certificateRequests,
+  payments,
   supportTeamMembers,
   supportTeamRequests,
   ticketTags,
   ticketTagAssignments,
+  ticketTagRules,
+  type TagRuleScope,
   ticketAttachments,
   kbSearchEvents,
   attachmentDownloadEvents,
   ticketAttachmentScans,
+  cronRuns,
   auditLogs,
+  ticketHoldRequests,
+  HOLD_REQUEST_STATUS,
+  HOLD_REASONS,
   TICKET_STATUS,
   TICKET_PRIORITY,
   ROLE_NAMES,
@@ -46,6 +58,8 @@ import {
   GUEST_USER_ID,
   SUPPORT_TEAM_REQUEST_KIND,
   SUPPORT_TEAM_REQUEST_STATUS,
+  interventions,
+  courseAssistants,
 } from '../../database/schema';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import {
@@ -63,11 +77,15 @@ import {
 import {
   calculateBusinessMinutesElapsed,
   calculateBusinessDeadline,
+  effectiveBusinessMinutesElapsed,
+  effectiveOnHoldMinutes,
   isWithinBusinessHours,
+  clampToBusinessHours,
   getNextBusinessOpen,
   setBusinessHoursConfig,
   getBusinessHoursConfig,
   refreshBusinessHoursConfigIfStale,
+  describeExpectedResponse,
   DEFAULT_BUSINESS_HOURS,
   type BusinessHoursConfig,
 } from './business-hours.util';
@@ -75,8 +93,11 @@ import { UserNotificationsService } from '../user-notifications/user-notificatio
 import { EmailService } from '../email/email.service';
 import { RecaptchaService } from '../auth/recaptcha.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { StorageService } from '../storage/storage.service';
+import { AuditLogService } from '../audit-logs/audit-logs.service';
+import { RoleRequestsService } from '../role-requests/role-requests.service';
 
-// Fallback auto-priority mapping for the 6 built-ins. Used only when the
+// Fallback auto-priority mapping for the 8 built-ins. Used only when the
 // stored ticket_categories config row has no entry for that slug (which
 // happens for built-ins by default; custom rows always carry their own
 // autoPriority because the admin form requires it). See
@@ -85,7 +106,9 @@ const CATEGORY_PRIORITY_MAP: Record<string, string> = {
   billing: TICKET_PRIORITY.HIGH,
   login: TICKET_PRIORITY.HIGH,
   technical: TICKET_PRIORITY.HIGH,
+  webinar: TICKET_PRIORITY.HIGH,
   certificate: TICKET_PRIORITY.MEDIUM,
+  cme: TICKET_PRIORITY.MEDIUM,
   content: TICKET_PRIORITY.LOW,
   other: TICKET_PRIORITY.LOW,
 };
@@ -185,7 +208,33 @@ export class SupportService implements OnModuleInit {
     private readonly emailService: EmailService,
     private readonly recaptchaService: RecaptchaService,
     private readonly adminNotifications: NotificationsService,
+    private readonly storageService: StorageService,
+    private readonly auditLogService: AuditLogService,
+    private readonly roleRequestsService: RoleRequestsService,
   ) {}
+
+  // Stable action labels for support audit-log entries — used both when
+  // writing rows and when filtering the admin audit-trail surface.
+  // Keep the names short and machine-readable; the FE maps them to
+  // translated display strings.
+  private static readonly SUPPORT_AUDIT_ACTIONS = {
+    TICKET_CREATED: 'ticket_created',
+    TICKET_REPLIED: 'ticket_replied',
+    INTERNAL_NOTE_ADDED: 'internal_note_added',
+    ASSIGNEE_CHANGED: 'assignee_changed',
+    PRIORITY_CHANGED: 'priority_changed',
+    STATUS_CHANGED: 'status_changed',
+    TICKET_RESOLVED: 'ticket_resolved',
+    TICKET_CLOSED: 'ticket_closed',
+    TICKET_REOPENED: 'ticket_reopened',
+    TICKET_MERGED: 'merged',
+    TICKET_MERGE_RECEIVED: 'merge_received',
+    TICKET_TRANSFERRED: 'transferred',
+    TAG_ADDED: 'tag_added',
+    TAG_REMOVED: 'tag_removed',
+    TAG_AUTO_APPLIED: 'tag_auto_applied',
+    TICKET_ESCALATED: 'ticket_escalated',
+  } as const;
 
   // Load business-hours config from DB on boot so SLA math reflects
   // the admin's saved settings without a process restart. Falls back
@@ -199,6 +248,17 @@ export class SupportService implements OnModuleInit {
         `Failed to bootstrap business hours from DB — using defaults. ${err}`,
       );
     }
+  }
+
+  // Build the public tracking URL a guest uses to follow + reply to
+  // their ticket. Honours the FRONTEND_URL env (set by the infra deploy
+  // script) so dev/staging point at the right host. Falls back to the
+  // production marketing domain.
+  private buildGuestTrackingUrl(trackingToken: string): string {
+    const base =
+      (process.env.FRONTEND_URL || '').split(',')[0].trim() ||
+      'https://www.physioguidance.org';
+    return `${base.replace(/\/$/, '')}/en/support/track/${trackingToken}`;
   }
 
   // ─── Agent Ownership Check ──────────────────────────────
@@ -235,6 +295,150 @@ export class SupportService implements OnModuleInit {
     }
   }
 
+  // ─── About-user context composition ─────────────────────
+  //
+  // Builds the inline context block that gets prepended to the ticket
+  // description when one party files about another (instructor → support
+  // follow-up about a student). Lives server-side so the agent sees the
+  // same fields the FE card shows, and so audit-log / email exports
+  // carry the context inline.
+  //
+  // Defensive: every lookup is wrapped so a missing enrollment / no
+  // assessments / blank name never break ticket creation. Worst case we
+  // surface a smaller block — never blow up the parent flow.
+  private async composeAboutUserContextBlock(
+    aboutUserId: string,
+    courseId: string | null,
+  ): Promise<string | null> {
+    try {
+      const [user] = await db
+        .select({
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .where(eq(users.id, aboutUserId))
+        .limit(1);
+      if (!user) return null;
+
+      const name =
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+      const lines: string[] = [];
+      lines.push('─── About this student ───');
+      lines.push(`Name: ${name}`);
+      lines.push(`Email: ${user.email}`);
+
+      // Pick the focal enrollment — the courseId the filer chose, or
+      // fall back to the student's most recent active enrollment.
+      let focalCourseId = courseId;
+      if (focalCourseId) {
+        const [enrol] = await db
+          .select({
+            courseId: enrollments.courseId,
+            progress: enrollments.progress,
+            enrolledAt: enrollments.enrolledAt,
+            lastAccessedAt: enrollments.lastAccessedAt,
+            status: enrollments.status,
+            title: courses.title,
+            titleAr: courses.titleAr,
+          })
+          .from(enrollments)
+          .innerJoin(courses, eq(enrollments.courseId, courses.id))
+          .where(
+            and(
+              eq(enrollments.studentId, aboutUserId),
+              eq(enrollments.courseId, focalCourseId),
+            ),
+          )
+          .limit(1);
+        if (enrol) {
+          lines.push(`Course: ${enrol.title}`);
+          lines.push(
+            `Enrolled: ${enrol.enrolledAt ? enrol.enrolledAt.toISOString().slice(0, 10) : '—'}`,
+          );
+          lines.push(`Progress: ${enrol.progress ?? 0}%`);
+          if (enrol.lastAccessedAt) {
+            const days = Math.floor(
+              (Date.now() - enrol.lastAccessedAt.getTime()) /
+                (1000 * 60 * 60 * 24),
+            );
+            lines.push(`Last accessed: ${days} day(s) ago`);
+          }
+        } else {
+          focalCourseId = null;
+        }
+      }
+
+      // Attendance percentage on the focal course's sessions. Pull all
+      // sessions for the course, count present+late vs total. Cheap
+      // single aggregate query.
+      if (focalCourseId) {
+        const [att] = await db
+          .select({
+            attended: sql<number>`SUM(CASE WHEN ${attendance.status} IN ('present', 'late') THEN 1 ELSE 0 END)`.as(
+              'attended',
+            ),
+            total: sql<number>`COUNT(*)`.as('total'),
+          })
+          .from(attendance)
+          .innerJoin(sessions, eq(attendance.sessionId, sessions.id))
+          .where(
+            and(
+              eq(sessions.courseId, focalCourseId),
+              eq(attendance.studentId, aboutUserId),
+            ),
+          );
+        const attended = Number(att?.attended || 0);
+        const total = Number(att?.total || 0);
+        if (total > 0) {
+          const pct = Math.round((attended / total) * 100);
+          lines.push(`Attendance: ${pct}% (${attended}/${total} sessions)`);
+        }
+      }
+
+      // Recent assessment average — last 5 graded submissions across
+      // this student's record. Filtered to the focal course's
+      // assessments if we have one.
+      const subWhere = focalCourseId
+        ? and(
+            eq(submissions.studentId, aboutUserId),
+            isNotNull(submissions.percentage),
+            sql`${submissions.assessmentId} IN (
+              SELECT id FROM assessments WHERE course_id = ${focalCourseId}
+            )`,
+          )
+        : and(
+            eq(submissions.studentId, aboutUserId),
+            isNotNull(submissions.percentage),
+          );
+      const recentSubs = await db
+        .select({ percentage: submissions.percentage })
+        .from(submissions)
+        .where(subWhere)
+        .orderBy(desc(submissions.submittedAt))
+        .limit(5);
+      if (recentSubs.length > 0) {
+        const avg =
+          recentSubs.reduce(
+            (sum, s) => sum + Number(s.percentage || 0),
+            0,
+          ) / recentSubs.length;
+        lines.push(
+          `Recent assessment average: ${avg.toFixed(0)}% (last ${recentSubs.length})`,
+        );
+      }
+
+      return lines.join('\n');
+    } catch (err) {
+      this.logger.warn(
+        `composeAboutUserContextBlock failed for user ${aboutUserId}: ${err}`,
+      );
+      return null;
+    }
+  }
+
   // ─── Create Ticket ──────────────────────────────────────
 
   async createTicket(userId: string, dto: CreateTicketDto) {
@@ -256,33 +460,76 @@ export class SupportService implements OnModuleInit {
     // Round-robin: find agent with fewest open tickets
     const assigneeId = await this.findNextAgent();
 
-    // Build the full attachment list. We accept both `attachmentUrl`
-    // (legacy single) and `attachmentUrls` (new multi). Each URL is
-    // validated for origin + extension before storage.
+    // Build the full attachment list. We accept three input shapes:
+    //   - dto.attachmentUrl  — legacy single URL
+    //   - dto.attachmentUrls — URL-only multi (older clients)
+    //   - dto.attachments    — rich multi with filename/mimeType/size
+    // Rich entries are preferred when both rich + URL-only carry the
+    // same URL, because we want the metadata. URL validation runs on
+    // every entry; metadata is sanitized to safe lengths/types.
+    const rich = Array.isArray(dto.attachments) ? dto.attachments : [];
     const multi = Array.isArray(dto.attachmentUrls) ? dto.attachmentUrls : [];
-    const combinedRaw = [
-      ...(dto.attachmentUrl ? [dto.attachmentUrl] : []),
-      ...multi,
+    const combinedRaw: {
+      url: string;
+      filename?: string | null;
+      mimeType?: string | null;
+      sizeBytes?: number | null;
+    }[] = [
+      ...(dto.attachmentUrl
+        ? [{ url: dto.attachmentUrl }]
+        : []),
+      ...multi.map((u) => ({ url: u })),
+      ...rich.map((a) => ({
+        url: a.url,
+        filename: a.filename ?? null,
+        mimeType: a.mimeType ?? null,
+        sizeBytes: a.sizeBytes ?? null,
+      })),
     ]
-      .map((u) => (typeof u === 'string' ? u.trim() : ''))
-      .filter(Boolean);
+      .map((a) => ({ ...a, url: typeof a.url === 'string' ? a.url.trim() : '' }))
+      .filter((a) => Boolean(a.url));
 
-    // Dedupe — the FE might re-submit the same URL via both fields,
-    // and the junction table has a (ticket, url) unique index that
-    // would reject the duplicate insert.
-    const seen = new Set<string>();
-    const safeAttachmentUrls: string[] = [];
+    // Dedupe by URL but keep the entry with the richest metadata.
+    const byUrl = new Map<
+      string,
+      {
+        url: string;
+        filename?: string | null;
+        mimeType?: string | null;
+        sizeBytes?: number | null;
+      }
+    >();
     for (const raw of combinedRaw) {
-      const safe = validateTicketAttachmentUrl(raw);
-      if (safe && !seen.has(safe)) {
-        seen.add(safe);
-        safeAttachmentUrls.push(safe);
+      const safe = validateTicketAttachmentUrl(raw.url);
+      if (!safe) continue;
+      const prev = byUrl.get(safe);
+      if (!prev) {
+        byUrl.set(safe, { ...raw, url: safe });
+      } else {
+        byUrl.set(safe, {
+          url: safe,
+          filename: prev.filename || raw.filename || null,
+          mimeType: prev.mimeType || raw.mimeType || null,
+          sizeBytes:
+            prev.sizeBytes != null && prev.sizeBytes >= 0
+              ? prev.sizeBytes
+              : raw.sizeBytes ?? null,
+        });
       }
     }
+    const safeAttachments = Array.from(byUrl.values());
+    const safeAttachmentUrls = safeAttachments.map((a) => a.url);
     // Single-column legacy slot still holds the first attachment so
     // pre-junction code paths (older email templates, exports) keep
     // working without reading the new table.
     const firstAttachmentUrl = safeAttachmentUrls[0] ?? null;
+
+    // The description is now the filer's note verbatim — no auto-
+    // prepended student context. The structured student card on the
+    // ticket detail (composeAboutUserCard / AboutThisStudentCard FE)
+    // already shows the same data more cleanly, so the inline block
+    // is redundant and ugly. Exports + emails read the card too.
+    const finalDescription = dto.description;
 
     const [ticket] = await db
       .insert(tickets)
@@ -291,25 +538,44 @@ export class SupportService implements OnModuleInit {
         category: dto.category,
         priority: autoPriority,
         subject: dto.subject,
-        description: dto.description,
+        description: finalDescription,
         courseId: dto.courseId || null,
         attachmentUrl: firstAttachmentUrl,
         status: TICKET_STATUS.NEW,
         assigneeId,
+        aboutUserId: dto.aboutUserId || null,
+        source: dto.source || null,
       })
       .returning();
 
+    // ─── Auto-tag intervention tickets ─────────────────────
+    // Tag `at-risk-follow-up` so supervisors can filter the queue by
+    // these high-context tickets. Tag creation is idempotent —
+    // existing rows are matched, missing ones are seeded once.
+    if (dto.source === 'intervention') {
+      try {
+        await this.applyAutoTag(ticket.id, 'at-risk-follow-up', userId);
+      } catch (err) {
+        this.logger.warn(
+          `Failed to auto-tag intervention ticket ${ticket.id}: ${err}`,
+        );
+      }
+    }
+
     // Junction rows — one per URL. The (ticket_id, url) unique index
     // means onConflictDoNothing absorbs accidental double-submits.
-    if (safeAttachmentUrls.length > 0) {
+    if (safeAttachments.length > 0) {
       try {
         await db
           .insert(ticketAttachments)
           .values(
-            safeAttachmentUrls.map((url) => ({
+            safeAttachments.map((a) => ({
               ticketId: ticket.id,
-              url,
+              url: a.url,
               uploadedBy: userId,
+              filename: a.filename || null,
+              mimeType: a.mimeType || null,
+              sizeBytes: a.sizeBytes != null ? a.sizeBytes : -1,
             })),
           )
           .onConflictDoNothing();
@@ -335,23 +601,32 @@ export class SupportService implements OnModuleInit {
       .from(slaPolicies)
       .where(eq(slaPolicies.priority, autoPriority));
 
-    let expectedResponseTime: string | null = null;
-    if (slaPolicy) {
-      const deadline = calculateBusinessDeadline(
-        ticket.createdAt,
-        slaPolicy.frtMinutes,
-      );
-      expectedResponseTime = deadline.toISOString();
-    }
+    // Expected-response phrasing branches on whether the ticket was
+    // submitted during business hours. In-hours → "4 hours". Off-hours
+    // → "Sunday at 9:00 AM AST" (when the team is next online). The
+    // structured fields ride along so the FE pill can re-render in any
+    // locale without recomputing.
+    const expected = slaPolicy
+      ? describeExpectedResponse(ticket.createdAt, slaPolicy.frtMinutes)
+      : null;
+    const expectedResponseTime = expected ? expected.deadline.toISOString() : null;
+    const expectedResponsePhrasing = expected
+      ? expected.phrasing
+      : 'within business hours';
+    const expectedResponseMode = expected ? expected.mode : null;
 
     // Step 5: Notifications (P-01, SYS-05)
     // Notify student: ticket received
     try {
+      const learnerNoticeBody =
+        expected?.mode === 'queued_until_resume'
+          ? `Your ticket ${ticket.referenceNumber} is queued. We'll respond when business hours resume on ${expected.phrasing}.`
+          : `Your ticket ${ticket.referenceNumber} has been received. Expected response within ${expected?.phrasing ?? 'business hours'}.`;
       await this.notificationsService.create({
         recipientId: userId,
         type: 'ticket_created',
         title: 'Ticket Received',
-        message: `Your ticket ${ticket.referenceNumber} has been received. Expected response within ${slaPolicy?.frtMinutes || 30} minutes.`,
+        message: learnerNoticeBody,
         link: `/dashboard/student/support`,
         entityType: 'ticket',
         entityId: ticket.id,
@@ -373,7 +648,9 @@ export class SupportService implements OnModuleInit {
       // Notifications are non-blocking (P-07)
     }
 
-    // Send email to student
+    // Send email to student. Email phrasing matches the in-app
+    // notification — in-hours = "within 4 hours"; off-hours = "when
+    // business hours resume on Sunday at 9:00 AM AST".
     try {
       const [studentInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, userId));
       if (studentInfo?.email) {
@@ -381,13 +658,17 @@ export class SupportService implements OnModuleInit {
           studentInfo.email,
           studentInfo.firstName || 'Student',
           ticket.referenceNumber,
-          expectedResponseTime || 'within business hours',
+          expectedResponsePhrasing,
+          expectedResponseMode || undefined,
         );
       }
     } catch { /* non-blocking */ }
 
-    // Send email to agent (respects support staff email master)
-    if (assigneeId && (await this.shouldNotifySupport(assigneeId, 'email'))) {
+    // Send email to agent. Initial assignment is treated as a
+    // transactional event — the agent needs to know they own a ticket
+    // even if their general notification prefs are off. (Routine
+    // reassignments downstream still respect prefs.)
+    if (assigneeId) {
       try {
         const [agentInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, assigneeId));
         if (agentInfo?.email) {
@@ -397,15 +678,50 @@ export class SupportService implements OnModuleInit {
             ticket.referenceNumber,
             dto.subject,
             autoPriority,
-            expectedResponseTime || '--',
+            expectedResponsePhrasing,
           );
         }
       } catch { /* non-blocking */ }
     }
 
+    // Audit log — ticket creation is the first event on the trail.
+    await this.auditLogService.log({
+      entityType: 'ticket',
+      entityId: ticket.id,
+      action: SupportService.SUPPORT_AUDIT_ACTIONS.TICKET_CREATED,
+      performedBy: userId,
+      metadata: {
+        referenceNumber: ticket.referenceNumber,
+        subject: dto.subject,
+        category: dto.category,
+        priority: autoPriority,
+        assigneeId: assigneeId || null,
+      },
+    });
+
+    // Auto-tag rule engine — scans subject + description against every
+    // enabled rule on non-archived tags and attaches matches. Failure
+    // is swallowed: ticket creation has already committed, so a bad
+    // rule shouldn't surface as "creation failed".
+    try {
+      const matches = await this.matchAutoApplyTags({
+        subject: dto.subject,
+        description: dto.description,
+      });
+      if (matches.length > 0) {
+        await this.applyAutoTagsToTicket(ticket.id, userId, matches);
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Auto-tag scan failed for ticket ${ticket.id}: ${err}`,
+      );
+    }
+
     return {
       ...ticket,
       expectedResponseTime,
+      expectedResponsePhrasing,
+      expectedResponseMode,
       slaPolicy: slaPolicy || null,
     };
   }
@@ -446,6 +762,12 @@ export class SupportService implements OnModuleInit {
     if (query.priority) conditions.push(eq(tickets.priority, query.priority));
     if (query.category) conditions.push(eq(tickets.category, query.category));
     if (query.assigneeId) conditions.push(eq(tickets.assigneeId, query.assigneeId));
+    if (query.source) conditions.push(eq(tickets.source, query.source));
+    if (query.escalated === '1' || query.escalated === 'true') {
+      conditions.push(isNotNull(tickets.escalatedAt));
+    } else if (query.escalated === '0' || query.escalated === 'false') {
+      conditions.push(isNull(tickets.escalatedAt));
+    }
 
     // Tag filter: AND semantics — every requested tag must be present.
     // Implemented as a correlated EXISTS subquery per tag so additional
@@ -471,14 +793,20 @@ export class SupportService implements OnModuleInit {
       // way staff find a ticket from an email or phone call, so it
       // sits at the top of the OR chain. Customer columns are on the
       // joined `users` row; the join is added below.
+      //
+      // NB: we deliberately do NOT ILIKE on tickets.id — Postgres
+      // can't apply ILIKE to a uuid column without a ::text cast, so
+      // including it errors the whole query and silently breaks
+      // search across the list view. Users search by reference
+      // (T-000123), not by raw UUID.
+      const term = query.search.trim();
       conditions.push(
         or(
-          ilike(tickets.referenceNumber, `%${query.search}%`),
-          ilike(tickets.subject, `%${query.search}%`),
-          ilike(tickets.id, `%${query.search}%`),
-          ilike(users.firstName, `%${query.search}%`),
-          ilike(users.lastName, `%${query.search}%`),
-          ilike(users.email, `%${query.search}%`),
+          ilike(tickets.referenceNumber, `%${term}%`),
+          ilike(tickets.subject, `%${term}%`),
+          ilike(users.firstName, `%${term}%`),
+          ilike(users.lastName, `%${term}%`),
+          ilike(users.email, `%${term}%`),
         ),
       );
     }
@@ -503,6 +831,7 @@ export class SupportService implements OnModuleInit {
           firstResponseAt: tickets.firstResponseAt,
           slaBreachedFrt: tickets.slaBreachedFrt,
           slaBreachedTtr: tickets.slaBreachedTtr,
+          onHoldAt: tickets.onHoldAt,
           onHoldTotalMinutes: tickets.onHoldTotalMinutes,
           createdAt: tickets.createdAt,
           updatedAt: tickets.updatedAt,
@@ -511,8 +840,12 @@ export class SupportService implements OnModuleInit {
           studentFirstName: users.firstName,
           studentLastName: users.lastName,
           studentEmail: users.email,
+          studentIdRaw: tickets.studentId,
+          guestName: tickets.guestName,
+          guestEmail: tickets.guestEmail,
           assigneeFirstName: assigneeUsers.firstName,
           assigneeLastName: assigneeUsers.lastName,
+          escalatedAt: tickets.escalatedAt,
         })
         .from(tickets)
         .leftJoin(users, eq(tickets.studentId, users.id))
@@ -540,6 +873,12 @@ export class SupportService implements OnModuleInit {
       TICKET_STATUS.CLOSED,
     ]);
 
+    // Hoist once so every row sees the same `now` and pause snapshot.
+    // Off-hours is a process-wide state; per-row checks would re-read
+    // the same clock and waste cycles.
+    const listNow = new Date();
+    const listInBusinessHours = isWithinBusinessHours(listNow);
+
     const enriched = ticketsList.map((t) => {
       const policy = policyMap.get(t.priority);
       const terminal = TERMINAL_STATUSES.has(t.status as any);
@@ -548,22 +887,60 @@ export class SupportService implements OnModuleInit {
       let ttrRemainingMinutes: number | null = null;
 
       if (policy && !terminal) {
+        // Use the helper so on-hold tickets correctly subtract the
+        // in-flight hold period from elapsed. The previous FRT path
+        // didn't subtract holds at all, so a ticket sitting on hold
+        // before first response would breach FRT on the list view
+        // even though the per-ticket detail showed it paused.
+        const effective = effectiveBusinessMinutesElapsed(t, listNow);
         if (!t.firstResponseAt) {
-          const elapsed = calculateBusinessMinutesElapsed(
-            t.createdAt,
-            new Date(),
-          );
-          frtRemainingMinutes = policy.frtMinutes - elapsed;
+          frtRemainingMinutes = policy.frtMinutes - effective;
         }
-        const elapsedTtr = Math.max(
-          0,
-          calculateBusinessMinutesElapsed(t.createdAt, new Date()) -
-            (t.onHoldTotalMinutes || 0),
-        );
-        ttrRemainingMinutes = policy.ttrMinutes - elapsedTtr;
+        ttrRemainingMinutes = policy.ttrMinutes - effective;
       }
 
-      return { ...t, frtRemainingMinutes, ttrRemainingMinutes };
+      // Per-row pause flag so the list/badge views have the SAME
+      // source of truth as the per-ticket detail view. Without this
+      // the FE falls back to the global supportOnline signal, which
+      // drifts from BE math (on-hold tickets never showed as paused
+      // in the list, and a manual admin online-toggle could hide the
+      // off-hours pause). Terminal tickets are never paused.
+      const onHold = t.status === TICKET_STATUS.ON_HOLD;
+      const slaPaused = !terminal && (onHold || !listInBusinessHours);
+      const slaPausedReason: 'on_hold' | 'off_hours' | null = !slaPaused
+        ? null
+        : onHold
+          ? 'on_hold'
+          : 'off_hours';
+
+      // Guest overlay — for tickets opened anonymously via the public
+      // form, the joined `users` row is the GUEST sentinel ("Guest User"
+      // / guest@system.internal). Surface the real submitter name and
+      // email the form captured, and flag the row so the FE can render
+      // a small "Guest" indicator if it wants to.
+      const isGuestTicket = t.studentIdRaw === GUEST_USER_ID;
+      let studentFirstName = t.studentFirstName;
+      let studentLastName = t.studentLastName;
+      let studentEmail = t.studentEmail;
+      if (isGuestTicket) {
+        if (t.guestName) {
+          const parts = t.guestName.trim().split(/\s+/);
+          studentFirstName = parts[0] || t.guestName;
+          studentLastName = parts.slice(1).join(' ') || null;
+        }
+        if (t.guestEmail) studentEmail = t.guestEmail;
+      }
+      return {
+        ...t,
+        studentFirstName,
+        studentLastName,
+        studentEmail,
+        isGuestTicket,
+        frtRemainingMinutes,
+        ttrRemainingMinutes,
+        slaPaused,
+        slaPausedReason,
+      };
     });
 
     // Bulk-fetch tag assignments for the rendered page in one query, then
@@ -641,6 +1018,14 @@ export class SupportService implements OnModuleInit {
         updatedAt: tickets.updatedAt,
         resolvedAt: tickets.resolvedAt,
         closedAt: tickets.closedAt,
+        mergedIntoTicketId: tickets.mergedIntoTicketId,
+        guestEmail: tickets.guestEmail,
+        guestName: tickets.guestName,
+        aboutUserId: tickets.aboutUserId,
+        source: tickets.source,
+        escalatedAt: tickets.escalatedAt,
+        escalatedBy: tickets.escalatedBy,
+        escalationReason: tickets.escalationReason,
         studentFirstName: users.firstName,
         studentLastName: users.lastName,
         studentEmail: users.email,
@@ -673,7 +1058,7 @@ export class SupportService implements OnModuleInit {
       commentsConditions.push(eq(ticketReplies.isInternal, false));
     }
 
-    const comments = await db
+    const commentRows = await db
       .select({
         id: ticketReplies.id,
         message: ticketReplies.message,
@@ -688,6 +1073,145 @@ export class SupportService implements OnModuleInit {
       .leftJoin(users, eq(ticketReplies.userId, users.id))
       .where(and(...commentsConditions))
       .orderBy(asc(ticketReplies.createdAt));
+
+    // Bulk-fetch reply-level attachments for the rendered comments in a
+    // single query, then enrich each with the GCS scan verdict. A reply
+    // typically has 0–3 files; we keep the bulk to one query but still
+    // hit the scan-status helper per file because the verdict comes
+    // from object metadata, not the DB.
+    type ReplyAttachment = {
+      id: string;
+      url: string;
+      filename: string | null;
+      sizeBytes: number | null;
+      mimeType: string | null;
+      uploadedAt: Date;
+      scanStatus: 'clean' | 'pending' | 'quarantined' | 'unknown';
+      scannedAt: string | null;
+    };
+    const replyIds = commentRows.map((c) => c.id);
+    const replyAttachmentsByReply = new Map<string, ReplyAttachment[]>();
+
+    if (replyIds.length > 0) {
+      const rows = await db
+        .select({
+          id: ticketAttachments.id,
+          replyId: ticketAttachments.replyId,
+          url: ticketAttachments.url,
+          filename: ticketAttachments.filename,
+          sizeBytes: ticketAttachments.sizeBytes,
+          mimeType: ticketAttachments.mimeType,
+          uploadedAt: ticketAttachments.uploadedAt,
+        })
+        .from(ticketAttachments)
+        .where(
+          and(
+            inArray(ticketAttachments.replyId, replyIds),
+            // Soft-delete filter — removed attachments only surface
+            // via the explicit /attachment-history endpoint.
+            isNull(ticketAttachments.removedAt),
+          ),
+        );
+      for (const row of rows) {
+        if (!row.replyId) continue;
+        const scan = await this.lookupScanStatusForUrl(row.url);
+        const enriched = {
+          id: row.id,
+          url: row.url,
+          filename: row.filename,
+          sizeBytes: row.sizeBytes,
+          mimeType: row.mimeType,
+          uploadedAt: row.uploadedAt,
+          scanStatus: scan.status,
+          scannedAt: scan.scannedAt,
+        };
+        const bucket = replyAttachmentsByReply.get(row.replyId) || [];
+        bucket.push(enriched);
+        replyAttachmentsByReply.set(row.replyId, bucket);
+      }
+    }
+
+    // Resolve each commenter's primary role so the FE can show a more
+    // specific badge than just "Staff" — admin / supervisor / agent /
+    // student. Batched in a single query keyed by distinct userIds; the
+    // pick order below picks the most-meaningful role when a user holds
+    // multiple (rare, but possible for super admins).
+    const distinctCommenterIds = Array.from(
+      new Set(commentRows.map((c) => c.userId).filter((id): id is string => !!id)),
+    );
+    const commenterRoleMap = new Map<
+      string,
+      'super_admin' | 'admin' | 'supervisor' | 'agent' | 'student' | null
+    >();
+    if (distinctCommenterIds.length > 0) {
+      const roleRows = await db
+        .select({
+          userId: userRoles.userId,
+          roleName: roles.name,
+          supportSubRole: userRoles.supportSubRole,
+        })
+        .from(userRoles)
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .where(inArray(userRoles.userId, distinctCommenterIds));
+      const grouped = new Map<
+        string,
+        { roleName: string; supportSubRole: string | null }[]
+      >();
+      for (const r of roleRows) {
+        const list = grouped.get(r.userId) || [];
+        list.push({ roleName: r.roleName, supportSubRole: r.supportSubRole });
+        grouped.set(r.userId, list);
+      }
+      for (const id of distinctCommenterIds) {
+        const list = grouped.get(id) || [];
+        let chosen:
+          | 'super_admin'
+          | 'admin'
+          | 'supervisor'
+          | 'agent'
+          | 'student'
+          | null = null;
+        if (list.some((x) => x.roleName === ROLE_NAMES.SUPER_ADMIN)) {
+          chosen = 'super_admin';
+        } else if (list.some((x) => x.roleName === ROLE_NAMES.ADMIN)) {
+          chosen = 'admin';
+        } else {
+          const support = list.find((x) => x.roleName === ROLE_NAMES.SUPPORT);
+          if (support) {
+            chosen =
+              support.supportSubRole === SUPPORT_SUB_ROLES.SUPERVISOR
+                ? 'supervisor'
+                : 'agent';
+          } else if (list.some((x) => x.roleName === ROLE_NAMES.STUDENT)) {
+            chosen = 'student';
+          }
+        }
+        commenterRoleMap.set(id, chosen);
+      }
+    }
+
+    // Pre-compute the guest's display name so we can overlay the
+    // sentinel "Guest User" on any replies the guest left through the
+    // public tracking page. Staff replies stay untouched.
+    const guestParts = ticket.guestName
+      ? ticket.guestName.trim().split(/\s+/)
+      : null;
+    const guestFirst = guestParts ? guestParts[0] || ticket.guestName : null;
+    const guestLast = guestParts ? guestParts.slice(1).join(' ') || null : null;
+
+    const comments = commentRows.map((c) => {
+      const isGuestReply =
+        !c.isStaffReply &&
+        ticket.studentId === GUEST_USER_ID &&
+        c.userId === GUEST_USER_ID;
+      return {
+        ...c,
+        userFirstName: isGuestReply && guestFirst ? guestFirst : c.userFirstName,
+        userLastName: isGuestReply && guestLast ? guestLast : c.userLastName,
+        userRole: c.userId ? commenterRoleMap.get(c.userId) ?? null : null,
+        attachments: replyAttachmentsByReply.get(c.id) || [],
+      };
+    });
 
     // Fetch assignee name
     let assigneeName: string | null = null;
@@ -725,14 +1249,39 @@ export class SupportService implements OnModuleInit {
     let frtRemainingMinutes: number | null = null;
     let ttrRemainingMinutes: number | null = null;
 
+    // Detect pause state up-front so the math anchors on the right
+    // reference timestamp:
+    //   • on-hold:      paused — the timer should not advance at all
+    //   • off-hours:    paused — clamp `now` to last business close
+    //                   so the snapshot is the EXACT remaining at the
+    //                   moment business hours ended (no drift while
+    //                   the user is viewing during off-hours)
+    //   • neither:      live — use the real `now`
+    const realNow = new Date();
+    const inBusinessHours = isWithinBusinessHours(realNow);
+    const slaPaused =
+      ticket.status === TICKET_STATUS.ON_HOLD || !inBusinessHours;
+    const slaPausedReason: 'on_hold' | 'off_hours' | null =
+      ticket.status === TICKET_STATUS.ON_HOLD
+        ? 'on_hold'
+        : !inBusinessHours
+          ? 'off_hours'
+          : null;
+
     if (slaPolicy) {
-      const now = new Date();
-      const holdMinutes = ticket.onHoldTotalMinutes || 0;
-      const elapsedBizMinutes = calculateBusinessMinutesElapsed(
-        ticket.createdAt,
-        now,
+      // For paused tickets we clamp the math anchor to the last
+      // business close. Live tickets compute against actual `now`.
+      const calcNow = slaPaused ? clampToBusinessHours(realNow) : realNow;
+      // Effective math — accounts for the IN-FLIGHT on-hold period as
+      // well as completed hold time. The raw onHoldTotalMinutes only
+      // updates on transition OFF hold, so reading it directly let the
+      // SLA clock keep ticking during the hold (root cause of the
+      // "ticket was on hold but timer never stopped" bug).
+      const holdMinutes = effectiveOnHoldMinutes(ticket, calcNow);
+      const effectiveBizMinutes = effectiveBusinessMinutesElapsed(
+        ticket,
+        calcNow,
       );
-      const effectiveBizMinutes = elapsedBizMinutes - holdMinutes;
 
       // FRT deadline — only if not yet responded and not breached
       if (!ticket.firstResponseAt) {
@@ -776,8 +1325,112 @@ export class SupportService implements OnModuleInit {
     const tags = await this.getTicketTags(ticket.id);
     const attachments = await this.getTicketAttachments(ticket.id);
 
+    // Surface any pending hold request inline so the FE doesn't have
+    // to make a second call. Visible to the requester (so they see
+    // their "pending" state) and to anyone with decision power.
+    const pendingHoldRequest = await this.getPendingHoldRequest(ticket.id);
+
+    // Merge breadcrumbs — surface both directions inline so the FE
+    // can show a clear banner without a second round-trip:
+    //   • mergedInto:  this ticket was rolled INTO another (target)
+    //   • mergedFrom:  other tickets were rolled INTO this one (sources)
+    let mergedInto: {
+      ticketId: string;
+      referenceNumber: string;
+      subject: string;
+    } | null = null;
+    if (ticket.mergedIntoTicketId) {
+      const [target] = await db
+        .select({
+          id: tickets.id,
+          referenceNumber: tickets.referenceNumber,
+          subject: tickets.subject,
+        })
+        .from(tickets)
+        .where(eq(tickets.id, ticket.mergedIntoTicketId));
+      if (target) {
+        mergedInto = {
+          ticketId: target.id,
+          referenceNumber: target.referenceNumber,
+          subject: target.subject,
+        };
+      }
+    }
+
+    const mergedFrom = await db
+      .select({
+        ticketId: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        subject: tickets.subject,
+        closedAt: tickets.closedAt,
+      })
+      .from(tickets)
+      .where(eq(tickets.mergedIntoTicketId, ticket.id))
+      .orderBy(desc(tickets.closedAt));
+
+    // Latest submitted CSAT survey for this ticket — surfaces the
+    // customer's score + comment on the detail view so staff (and the
+    // customer themselves) can see the feedback inline instead of
+    // hunting through the Reports tab. Falls back to null if no
+    // survey was sent or the customer never responded.
+    const [csatRow] = await db
+      .select({
+        score: csatSurveys.score,
+        comment: csatSurveys.comment,
+        submittedAt: csatSurveys.submittedAt,
+        channel: csatSurveys.channel,
+      })
+      .from(csatSurveys)
+      .where(
+        and(
+          eq(csatSurveys.ticketId, ticket.id),
+          isNotNull(csatSurveys.submittedAt),
+        ),
+      )
+      .orderBy(desc(csatSurveys.submittedAt))
+      .limit(1);
+    const csatReview = csatRow
+      ? {
+          score: csatRow.score,
+          comment: csatRow.comment,
+          submittedAt: csatRow.submittedAt?.toISOString() ?? null,
+          channel: csatRow.channel,
+        }
+      : null;
+
+    // "About this user" card — populated for tickets filed about a
+    // third party (instructor → student follow-up). Rendered for
+    // support agents, supervisors, admins, AND the filer themselves
+    // (so the instructor sees the same structured snapshot in their
+    // own Support tab instead of having to remember what they sent).
+    // The student the ticket is about never sees this ticket because
+    // it isn't in their inbox.
+    const isFilerOfAboutTicket =
+      ticket.aboutUserId != null && ticket.studentId === user.id;
+    const aboutUser =
+      ticket.aboutUserId && (isSupportOrAdmin || isFilerOfAboutTicket)
+        ? await this.composeAboutUserCard(ticket.aboutUserId, ticket.courseId)
+        : null;
+
+    // Guest overlay — surface the real submitter name + email captured
+    // by the public form, not the GUEST sentinel row. Also flag the
+    // ticket so the FE can render a small "Guest" badge.
+    const isGuestTicket = ticket.studentId === GUEST_USER_ID;
+    const displayStudentFirstName =
+      isGuestTicket && guestFirst ? guestFirst : ticket.studentFirstName;
+    const displayStudentLastName =
+      isGuestTicket && guestLast !== null ? guestLast : ticket.studentLastName;
+    const displayStudentEmail =
+      isGuestTicket && ticket.guestEmail
+        ? ticket.guestEmail
+        : ticket.studentEmail;
+
     return {
       ...ticket,
+      studentFirstName: displayStudentFirstName,
+      studentLastName: displayStudentLastName,
+      studentEmail: displayStudentEmail,
+      isGuestTicket,
       assigneeName,
       courseName,
       comments,
@@ -786,9 +1439,189 @@ export class SupportService implements OnModuleInit {
       ttrDeadline,
       frtRemainingMinutes,
       ttrRemainingMinutes,
+      // True when the SLA clock is not advancing right now — used by
+      // the FE to render an amber "Paused at X" badge and explain why.
+      // The remaining-minutes values above are anchored at the moment
+      // the pause began (last business close, or the on-hold transition
+      // for on_hold tickets), so the badge stays stable across refreshes.
+      slaPaused,
+      slaPausedReason,
       tags,
       attachments,
+      pendingHoldRequest,
+      mergedInto,
+      mergedFrom,
+      csatReview,
+      aboutUser,
     };
+  }
+
+  // ─── Structured "about this user" card data ───────────────
+  //
+  // Same data source as composeAboutUserContextBlock but returns a
+  // shaped object so the FE can render a styled card without parsing
+  // markdown. Hidden from non-staff requesters by getTicketDetail.
+  private async composeAboutUserCard(
+    aboutUserId: string,
+    courseId: string | null,
+  ): Promise<{
+    id: string;
+    name: string;
+    email: string;
+    avatar: string | null;
+    course: {
+      id: string;
+      title: string;
+      titleAr: string | null;
+      enrolledAt: string | null;
+      progress: number;
+      lastAccessedAt: string | null;
+      status: string | null;
+    } | null;
+    attendance: { attended: number; total: number; percentage: number } | null;
+    assessmentAvg: { avgPercentage: number; count: number } | null;
+  } | null> {
+    try {
+      const [user] = await db
+        .select({
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          avatar: users.avatar,
+        })
+        .from(users)
+        .where(eq(users.id, aboutUserId))
+        .limit(1);
+      if (!user) return null;
+
+      const name =
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+
+      let courseCard: {
+        id: string;
+        title: string;
+        titleAr: string | null;
+        enrolledAt: string | null;
+        progress: number;
+        lastAccessedAt: string | null;
+        status: string | null;
+      } | null = null;
+      let focalCourseId = courseId;
+      if (focalCourseId) {
+        const [enrol] = await db
+          .select({
+            id: enrollments.courseId,
+            progress: enrollments.progress,
+            enrolledAt: enrollments.enrolledAt,
+            lastAccessedAt: enrollments.lastAccessedAt,
+            status: enrollments.status,
+            title: courses.title,
+            titleAr: courses.titleAr,
+          })
+          .from(enrollments)
+          .innerJoin(courses, eq(enrollments.courseId, courses.id))
+          .where(
+            and(
+              eq(enrollments.studentId, aboutUserId),
+              eq(enrollments.courseId, focalCourseId),
+            ),
+          )
+          .limit(1);
+        if (enrol) {
+          courseCard = {
+            id: enrol.id,
+            title: enrol.title,
+            titleAr: enrol.titleAr ?? null,
+            enrolledAt: enrol.enrolledAt?.toISOString() ?? null,
+            progress: enrol.progress ?? 0,
+            lastAccessedAt: enrol.lastAccessedAt?.toISOString() ?? null,
+            status: enrol.status,
+          };
+        } else {
+          focalCourseId = null;
+        }
+      }
+
+      let attendanceCard: {
+        attended: number;
+        total: number;
+        percentage: number;
+      } | null = null;
+      if (focalCourseId) {
+        const [att] = await db
+          .select({
+            attended: sql<number>`SUM(CASE WHEN ${attendance.status} IN ('present', 'late') THEN 1 ELSE 0 END)`.as(
+              'attended',
+            ),
+            total: sql<number>`COUNT(*)`.as('total'),
+          })
+          .from(attendance)
+          .innerJoin(sessions, eq(attendance.sessionId, sessions.id))
+          .where(
+            and(
+              eq(sessions.courseId, focalCourseId),
+              eq(attendance.studentId, aboutUserId),
+            ),
+          );
+        const attended = Number(att?.attended || 0);
+        const total = Number(att?.total || 0);
+        if (total > 0) {
+          attendanceCard = {
+            attended,
+            total,
+            percentage: Math.round((attended / total) * 100),
+          };
+        }
+      }
+
+      const subWhere = focalCourseId
+        ? and(
+            eq(submissions.studentId, aboutUserId),
+            isNotNull(submissions.percentage),
+            sql`${submissions.assessmentId} IN (
+              SELECT id FROM assessments WHERE course_id = ${focalCourseId}
+            )`,
+          )
+        : and(
+            eq(submissions.studentId, aboutUserId),
+            isNotNull(submissions.percentage),
+          );
+      const recentSubs = await db
+        .select({ percentage: submissions.percentage })
+        .from(submissions)
+        .where(subWhere)
+        .orderBy(desc(submissions.submittedAt))
+        .limit(5);
+
+      let assessmentCard: { avgPercentage: number; count: number } | null = null;
+      if (recentSubs.length > 0) {
+        const avg =
+          recentSubs.reduce(
+            (sum, s) => sum + Number(s.percentage || 0),
+            0,
+          ) / recentSubs.length;
+        assessmentCard = {
+          avgPercentage: Math.round(avg),
+          count: recentSubs.length,
+        };
+      }
+
+      return {
+        id: user.id,
+        name,
+        email: user.email,
+        avatar: user.avatar ?? null,
+        course: courseCard,
+        attendance: attendanceCard,
+        assessmentAvg: assessmentCard,
+      };
+    } catch (err) {
+      this.logger.warn(
+        `composeAboutUserCard failed for user ${aboutUserId}: ${err}`,
+      );
+      return null;
+    }
   }
 
   // ─── Update Ticket ──────────────────────────────────────
@@ -805,6 +1638,8 @@ export class SupportService implements OnModuleInit {
         studentId: tickets.studentId,
         subject: tickets.subject,
         status: tickets.status,
+        priority: tickets.priority,
+        assigneeId: tickets.assigneeId,
         onHoldAt: tickets.onHoldAt,
         onHoldTotalMinutes: tickets.onHoldTotalMinutes,
       })
@@ -847,12 +1682,27 @@ export class SupportService implements OnModuleInit {
 
       updateData.status = dto.status;
 
-      // Transitioning TO on_hold (BH-05)
+      // Transitioning TO on_hold (BH-05). Plain agents can NOT flip
+      // a ticket directly — they must submit a hold request via the
+      // dedicated endpoint, which a supervisor/admin then approves.
+      // Supervisors and admins keep the direct path so they can
+      // self-hold without going through their own approval queue.
       if (dto.status === TICKET_STATUS.ON_HOLD) {
         if (!dto.onHoldReason) {
           throw new BadRequestException(
             'On hold reason is required when setting status to on_hold',
           );
+        }
+        if (user) {
+          const isPrivileged =
+            user.supportSubRole === SUPPORT_SUB_ROLES.SUPERVISOR ||
+            user.roles.includes(ROLE_NAMES.ADMIN) ||
+            user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+          if (!isPrivileged) {
+            throw new ForbiddenException(
+              'Agents must submit a hold request — a supervisor or admin will decide.',
+            );
+          }
         }
         updateData.onHoldReason = dto.onHoldReason;
         updateData.onHoldAt = new Date();
@@ -979,6 +1829,190 @@ export class SupportService implements OnModuleInit {
       }
     }
 
+    // Assignee-change notifications. When a supervisor reassigns a
+    // ticket via PATCH /tickets/:id, three parties need to know:
+    //   - the OLD agent loses the ticket (drop it off their queue
+    //     view in their head)
+    //   - the NEW agent gains it (otherwise they only discover via
+    //     the next list refresh)
+    //   - the learner sees "now with {name}" so they don't worry the
+    //     ticket got dropped
+    // Best-effort; failures here never block the ticket write.
+    if (
+      dto.assigneeId &&
+      !isTerminal &&
+      dto.assigneeId !== existing.assigneeId
+    ) {
+      try {
+        const [newAgent] = await db
+          .select({
+            firstName: users.firstName,
+            lastName: users.lastName,
+            email: users.email,
+          })
+          .from(users)
+          .where(eq(users.id, dto.assigneeId));
+        const newAgentName =
+          [newAgent?.firstName, newAgent?.lastName].filter(Boolean).join(' ') ||
+          'an agent';
+
+        // Notify the learner
+        try {
+          await this.notificationsService.create({
+            recipientId: existing.studentId,
+            type: 'ticket_assigned',
+            title: 'Ticket reassigned',
+            message: `Your ticket "${existing.subject}" is now with ${newAgentName}.`,
+            link: `/dashboard/student/support`,
+            entityType: 'ticket',
+            entityId: ticketId,
+          });
+        } catch {
+          /* non-blocking */
+        }
+
+        // Notify the new agent
+        try {
+          if (await this.shouldNotifySupport(dto.assigneeId, 'inApp')) {
+            await this.notificationsService.create({
+              recipientId: dto.assigneeId,
+              type: 'ticket_assigned',
+              title: 'New Ticket Assigned',
+              message: `${existing.referenceNumber} — ${existing.subject}`,
+              link: `/dashboard/support/agent/tickets/${ticketId}`,
+              entityType: 'ticket',
+              entityId: ticketId,
+            });
+          }
+          if (newAgent?.email) {
+            // Assignment emails are transactional — the receiving agent
+            // needs to know they own a ticket regardless of their
+            // general support-notification opt-outs.
+            await this.emailService.sendTicketAssignedAgent(
+              newAgent.email,
+              newAgent.firstName || 'Agent',
+              existing.referenceNumber,
+              existing.subject,
+              dto.priority || existing.priority,
+              existing.assigneeId ? 'reassigned by supervisor' : 'assigned by supervisor',
+            );
+          }
+        } catch {
+          /* non-blocking */
+        }
+
+        // Notify the previous agent that they've been unassigned
+        try {
+          if (
+            existing.assigneeId &&
+            (await this.shouldNotifySupport(existing.assigneeId, 'inApp'))
+          ) {
+            await this.notificationsService.create({
+              recipientId: existing.assigneeId,
+              type: 'ticket_assigned',
+              title: 'Ticket reassigned',
+              message: `${existing.referenceNumber} has been reassigned to ${newAgentName}.`,
+              link: `/dashboard/support/agent`,
+              entityType: 'ticket',
+              entityId: ticketId,
+            });
+          }
+        } catch {
+          /* non-blocking */
+        }
+      } catch {
+        /* non-blocking */
+      }
+    }
+
+    // Priority-change notifications. A supervisor manually re-prioritising
+    // a ticket should land on the same surfaces as the auto-escalation
+    // cron — the learner sees the new urgency, the assigned agent sees
+    // the reshuffle in their queue.
+    if (
+      dto.priority &&
+      !isTerminal &&
+      dto.priority !== existing.priority
+    ) {
+      try {
+        await this.notificationsService.create({
+          recipientId: existing.studentId,
+          type: 'ticket_status_change',
+          title: 'Ticket priority updated',
+          message: `Your ticket "${existing.subject}" is now ${dto.priority} priority.`,
+          link: `/dashboard/student/support`,
+          entityType: 'ticket',
+          entityId: ticketId,
+        });
+      } catch {
+        /* non-blocking */
+      }
+
+      const notifyAssignee = dto.assigneeId || existing.assigneeId;
+      if (notifyAssignee) {
+        try {
+          if (await this.shouldNotifySupport(notifyAssignee, 'inApp')) {
+            await this.notificationsService.create({
+              recipientId: notifyAssignee,
+              type: 'ticket_status_change',
+              title: 'Ticket priority changed',
+              message: `${existing.referenceNumber} is now ${dto.priority} priority.`,
+              link: `/dashboard/support/agent/tickets/${ticketId}`,
+              entityType: 'ticket',
+              entityId: ticketId,
+            });
+          }
+        } catch {
+          /* non-blocking */
+        }
+      }
+    }
+
+    // Audit log — record each field that actually changed so the trail
+    // shows a separate row per action (assignee | priority | status).
+    // Best-effort; an audit-write failure never blocks the response.
+    if (user) {
+      if (dto.assigneeId !== undefined && dto.assigneeId !== existing.assigneeId) {
+        await this.auditLogService.log({
+          entityType: 'ticket',
+          entityId: ticketId,
+          action: SupportService.SUPPORT_AUDIT_ACTIONS.ASSIGNEE_CHANGED,
+          performedBy: user.id,
+          metadata: {
+            referenceNumber: existing.referenceNumber,
+            previousAssigneeId: existing.assigneeId,
+            newAssigneeId: dto.assigneeId,
+          },
+        });
+      }
+      if (dto.priority && dto.priority !== existing.priority) {
+        await this.auditLogService.log({
+          entityType: 'ticket',
+          entityId: ticketId,
+          action: SupportService.SUPPORT_AUDIT_ACTIONS.PRIORITY_CHANGED,
+          performedBy: user.id,
+          metadata: {
+            referenceNumber: existing.referenceNumber,
+            previousPriority: existing.priority,
+            newPriority: dto.priority,
+          },
+        });
+      }
+      if (dto.status && dto.status !== existing.status) {
+        await this.auditLogService.log({
+          entityType: 'ticket',
+          entityId: ticketId,
+          action: SupportService.SUPPORT_AUDIT_ACTIONS.STATUS_CHANGED,
+          performedBy: user.id,
+          metadata: {
+            referenceNumber: existing.referenceNumber,
+            previousStatus: existing.status,
+            newStatus: dto.status,
+          },
+        });
+      }
+    }
+
     return updated;
   }
 
@@ -1004,6 +2038,9 @@ export class SupportService implements OnModuleInit {
         closedAt: tickets.closedAt,
         subject: tickets.subject,
         assigneeId: tickets.assigneeId,
+        guestEmail: tickets.guestEmail,
+        guestName: tickets.guestName,
+        guestTrackingToken: tickets.guestTrackingToken,
       })
       .from(tickets)
       .where(eq(tickets.id, ticketId));
@@ -1061,6 +2098,52 @@ export class SupportService implements OnModuleInit {
       }
     }
 
+    // Pre-validate reply-attachment URLs outside the transaction so a
+    // 400 doesn't trigger a needless rollback. Dedup to defeat
+    // double-submit double-clicks before we touch the DB. Accepts
+    // both URL-only `attachmentUrls` and rich `attachments` — rich
+    // wins on metadata when both refer to the same URL.
+    const rawReplyUrls = Array.isArray(dto.attachmentUrls)
+      ? dto.attachmentUrls
+      : [];
+    const rawReplyRich = Array.isArray(dto.attachments) ? dto.attachments : [];
+    const replyByUrl = new Map<
+      string,
+      {
+        url: string;
+        filename?: string | null;
+        mimeType?: string | null;
+        sizeBytes?: number | null;
+      }
+    >();
+    for (const u of rawReplyUrls) {
+      const safe = validateTicketAttachmentUrl(u);
+      if (safe && !replyByUrl.has(safe)) {
+        replyByUrl.set(safe, { url: safe });
+      }
+    }
+    for (const a of rawReplyRich) {
+      const safe = validateTicketAttachmentUrl(a.url);
+      if (!safe) continue;
+      const prev = replyByUrl.get(safe);
+      replyByUrl.set(safe, {
+        url: safe,
+        filename: prev?.filename || a.filename || null,
+        mimeType: prev?.mimeType || a.mimeType || null,
+        sizeBytes:
+          prev?.sizeBytes != null && prev.sizeBytes >= 0
+            ? prev.sizeBytes
+            : a.sizeBytes ?? null,
+      });
+    }
+    const safeReplyAttachments = Array.from(replyByUrl.values());
+    const safeReplyAttachmentUrls = safeReplyAttachments.map((a) => a.url);
+
+    // Captured by the inner txn block if a student reply causes a
+    // resolved/closed ticket to reopen — used for the audit log row
+    // after the txn commits.
+    let reopenedFrom: string | null = null;
+
     // All writes go in one transaction so a crash mid-flow can't leave
     // an orphaned reply with no corresponding ticket-state update
     // (e.g. firstResponseAt set but status still NEW, or a student
@@ -1076,6 +2159,25 @@ export class SupportService implements OnModuleInit {
           isInternal,
         })
         .returning();
+
+      // Persist any reply-scoped attachments inside the same txn so
+      // they vanish if the reply insert later rolls back.
+      if (safeReplyAttachments.length > 0) {
+        await tx
+          .insert(ticketAttachments)
+          .values(
+            safeReplyAttachments.map((a) => ({
+              ticketId,
+              replyId: inserted.id,
+              url: a.url,
+              uploadedBy: user.id,
+              filename: a.filename || null,
+              mimeType: a.mimeType || null,
+              sizeBytes: a.sizeBytes != null ? a.sizeBytes : -1,
+            })),
+          )
+          .onConflictDoNothing();
+      }
 
       const now = new Date();
       const ticketUpdate: Record<string, unknown> = { updatedAt: now };
@@ -1099,6 +2201,7 @@ export class SupportService implements OnModuleInit {
         ticketUpdate.status = TICKET_STATUS.NEW;
         ticketUpdate.resolvedAt = null;
         ticketUpdate.closedAt = null;
+        reopenedFrom = ticket.status;
       }
 
       await tx
@@ -1108,6 +2211,13 @@ export class SupportService implements OnModuleInit {
 
       return inserted;
     });
+
+    // Kick off scan tracking for each reply-scoped upload. The Eventarc
+    // scanner writes its verdict back to the GCS object metadata; this
+    // row exists so the UI has a row to look up even before that runs.
+    for (const url of safeReplyAttachmentUrls) {
+      await this.recordAttachmentScanPending(ticketId, url);
+    }
 
     // Notifications for comments (AR-01, AR-02)
     try {
@@ -1145,15 +2255,40 @@ export class SupportService implements OnModuleInit {
     // Send email notifications
     try {
       if (isSupportOrAdmin && !isInternal) {
-        // Agent replied → email student
-        const [studentInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, ticket.studentId));
-        if (studentInfo?.email) {
+        // Agent replied → email the customer. For guest tickets, the
+        // customer is identified by ticket.guestEmail + ticket.guestName
+        // (studentId is the sentinel), so look there first before
+        // falling back to a real user row. The tracking URL is the
+        // guest's only path back to the conversation.
+        let recipientEmail: string | null = null;
+        let recipientName = 'Student';
+        let trackingUrl: string | undefined;
+
+        if (ticket.guestEmail && ticket.studentId === GUEST_USER_ID) {
+          recipientEmail = ticket.guestEmail;
+          recipientName = ticket.guestName || 'there';
+          trackingUrl = ticket.guestTrackingToken
+            ? this.buildGuestTrackingUrl(ticket.guestTrackingToken)
+            : undefined;
+        } else {
+          const [studentInfo] = await db
+            .select({ email: users.email, firstName: users.firstName })
+            .from(users)
+            .where(eq(users.id, ticket.studentId));
+          if (studentInfo?.email) {
+            recipientEmail = studentInfo.email;
+            recipientName = studentInfo.firstName || 'Student';
+          }
+        }
+
+        if (recipientEmail) {
           await this.emailService.sendTicketReplyNotification(
-            studentInfo.email,
-            studentInfo.firstName || 'Student',
+            recipientEmail,
+            recipientName,
             user.firstName || 'Support Agent',
             ticket.referenceNumber,
             dto.message.substring(0, 200),
+            trackingUrl,
           );
         }
       } else if (
@@ -1174,6 +2309,38 @@ export class SupportService implements OnModuleInit {
         }
       }
     } catch { /* non-blocking */ }
+
+    // Audit log — distinguishes public replies from internal notes so
+    // the trail can show them with different icons.
+    await this.auditLogService.log({
+      entityType: 'ticket',
+      entityId: ticketId,
+      action: isInternal
+        ? SupportService.SUPPORT_AUDIT_ACTIONS.INTERNAL_NOTE_ADDED
+        : SupportService.SUPPORT_AUDIT_ACTIONS.TICKET_REPLIED,
+      performedBy: user.id,
+      metadata: {
+        referenceNumber: ticket.referenceNumber,
+        isStaffReply: isSupportOrAdmin,
+        replyId: comment.id,
+        attachmentCount: safeReplyAttachmentUrls.length,
+      },
+    });
+
+    // Separate row when the same reply also reopened the ticket — the
+    // FE shows this as its own line on the trail.
+    if (reopenedFrom) {
+      await this.auditLogService.log({
+        entityType: 'ticket',
+        entityId: ticketId,
+        action: SupportService.SUPPORT_AUDIT_ACTIONS.TICKET_REOPENED,
+        performedBy: user.id,
+        metadata: {
+          referenceNumber: ticket.referenceNumber,
+          previousStatus: reopenedFrom,
+        },
+      });
+    }
 
     return comment;
   }
@@ -1197,6 +2364,8 @@ export class SupportService implements OnModuleInit {
         slaBreachedTtr: tickets.slaBreachedTtr,
         onHoldAt: tickets.onHoldAt,
         onHoldTotalMinutes: tickets.onHoldTotalMinutes,
+        source: tickets.source,
+        aboutUserId: tickets.aboutUserId,
       })
       .from(tickets)
       .where(eq(tickets.id, ticketId));
@@ -1238,14 +2407,19 @@ export class SupportService implements OnModuleInit {
     // surveyed about — silently dropping the CSAT response rate.
     // The SLA event log stays as best-effort outside the tx (it's an
     // analytics signal, not a correctness guarantee).
-    const updated = await db.transaction(async (tx) => {
+    const { updated, surveyId } = await db.transaction(async (tx) => {
       const [updatedTicket] = await tx
         .update(tickets)
         .set(updateData)
         .where(eq(tickets.id, ticketId))
         .returning();
 
-      await tx
+      // Capture the survey id so the resolution email can carry a
+      // one-click CTA. onConflictDoNothing means the returning row
+      // is empty when a survey already exists — fall back to a
+      // lookup in that case so a re-resolved ticket still emails
+      // the recipient the same survey link.
+      const [insertedSurvey] = await tx
         .insert(csatSurveys)
         .values({
           ticketId,
@@ -1253,9 +2427,24 @@ export class SupportService implements OnModuleInit {
           courseId: ticket.courseId || null,
           channel: 'email',
         })
-        .onConflictDoNothing();
+        .onConflictDoNothing()
+        .returning({ id: csatSurveys.id });
 
-      return updatedTicket;
+      let resolvedSurveyId: string | null = insertedSurvey?.id ?? null;
+      if (!resolvedSurveyId) {
+        const [existing] = await tx
+          .select({ id: csatSurveys.id })
+          .from(csatSurveys)
+          .where(
+            and(
+              eq(csatSurveys.ticketId, ticketId),
+              eq(csatSurveys.userId, ticket.studentId),
+            ),
+          );
+        resolvedSurveyId = existing?.id ?? null;
+      }
+
+      return { updated: updatedTicket, surveyId: resolvedSurveyId };
     });
 
     // Log resolved_within_sla event (SB-13) — best-effort, outside the
@@ -1288,22 +2477,237 @@ export class SupportService implements OnModuleInit {
       // Non-blocking
     }
 
-    // Send resolution email
+    // Send resolution email. Guest tickets get the same email at
+    // the stored guestEmail so the public CSAT link is their entry
+    // point (no dashboard to surface the popup in).
     try {
-      const [studentInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, ticket.studentId));
-      if (studentInfo?.email) {
-        await this.emailService.sendTicketResolved(
-          studentInfo.email,
-          studentInfo.firstName || 'Student',
-          ticket.referenceNumber,
-        );
+      if (ticket.studentId === GUEST_USER_ID) {
+        const [guest] = await db
+          .select({
+            guestEmail: tickets.guestEmail,
+            guestName: tickets.guestName,
+          })
+          .from(tickets)
+          .where(eq(tickets.id, ticketId));
+        if (guest?.guestEmail) {
+          await this.emailService.sendTicketResolved(
+            guest.guestEmail,
+            guest.guestName || 'Guest',
+            ticket.referenceNumber,
+            surveyId,
+          );
+        }
+      } else {
+        const [studentInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, ticket.studentId));
+        if (studentInfo?.email) {
+          await this.emailService.sendTicketResolved(
+            studentInfo.email,
+            studentInfo.firstName || 'Student',
+            ticket.referenceNumber,
+            surveyId,
+          );
+        }
       }
     } catch { /* non-blocking */ }
+
+    // Audit log
+    if (user) {
+      await this.auditLogService.log({
+        entityType: 'ticket',
+        entityId: ticketId,
+        action: SupportService.SUPPORT_AUDIT_ACTIONS.TICKET_RESOLVED,
+        performedBy: user.id,
+        metadata: { referenceNumber: ticket.referenceNumber },
+      });
+    }
+
+    // Reverse-sync — if this is an intervention-sourced ticket, append
+    // the resolution outcome to the originating intervention's metadata
+    // so the instructor sees "Support resolved: <agent>" in their
+    // student timeline without chasing the ticket. Non-blocking.
+    if (ticket.source === 'intervention' && ticket.aboutUserId) {
+      try {
+        const agentName = user
+          ? `${(user as any).firstName || ''} ${(user as any).lastName || ''}`.trim() ||
+            (user as any).email ||
+            'Support agent'
+          : 'Support agent';
+        const resolvedAtIso = new Date().toISOString();
+        await db.execute(sql`
+          UPDATE interventions
+          SET metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object(
+            'resolutionStatus', 'resolved',
+            'resolutionNote', ${`Resolved by ${agentName}`},
+            'resolvedAt', ${resolvedAtIso}
+          )
+          WHERE metadata->>'ticketId' = ${ticketId}
+        `);
+      } catch (err) {
+        this.logger.warn(
+          `Reverse-sync to intervention failed for ticket ${ticketId}: ${err}`,
+        );
+      }
+    }
 
     return updated;
   }
 
   // ─── Close Ticket ──────────────────────────────────────
+
+  // Manual escalation. Sets escalated_at/by/reason, optionally bumps
+  // the priority, logs an sla_events row + audit entry, and fans out
+  // notifications to assignee + supervisor + every admin. Idempotent
+  // on escalated_at — re-escalating only updates the reason +
+  // optionally bumps priority, and skips the notification fan-out
+  // to avoid noise.
+  async escalateTicket(
+    user: AuthenticatedUser,
+    ticketId: string,
+    dto: { reason: string; bumpPriority?: 'medium' | 'high' },
+  ) {
+    const isSupervisorOrAdmin =
+      user.supportSubRole === 'supervisor' ||
+      user.roles.includes(ROLE_NAMES.ADMIN) ||
+      user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+    if (!isSupervisorOrAdmin) {
+      throw new ForbiddenException(
+        'Only supervisors and admins can escalate tickets',
+      );
+    }
+
+    const [ticket] = await db
+      .select({
+        id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        subject: tickets.subject,
+        priority: tickets.priority,
+        assigneeId: tickets.assigneeId,
+        escalatedAt: tickets.escalatedAt,
+      })
+      .from(tickets)
+      .where(eq(tickets.id, ticketId));
+
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    const wasAlreadyEscalated = ticket.escalatedAt != null;
+    const now = new Date();
+
+    // Honour the bump only when it's an actual upgrade.
+    const priorityRank: Record<string, number> = { low: 1, medium: 2, high: 3 };
+    let newPriority: string | null = null;
+    if (
+      dto.bumpPriority &&
+      (priorityRank[dto.bumpPriority] || 0) >
+        (priorityRank[ticket.priority] || 0)
+    ) {
+      newPriority = dto.bumpPriority;
+    }
+
+    const update: Record<string, unknown> = {
+      escalatedBy: user.id,
+      escalationReason: dto.reason,
+      updatedAt: now,
+    };
+    // Don't overwrite the first-escalated timestamp — escalation is
+    // sticky, so the chip's "since" stamp stays meaningful.
+    if (!wasAlreadyEscalated) update.escalatedAt = now;
+    if (newPriority) update.priority = newPriority;
+
+    await db.update(tickets).set(update).where(eq(tickets.id, ticketId));
+
+    await db.insert(slaEvents).values({
+      ticketId,
+      eventType: SLA_EVENT_TYPES.MANUAL_ESCALATION,
+      notifiedUserIds: ticket.assigneeId ? [ticket.assigneeId] : [],
+    });
+
+    await this.auditLogService.log({
+      entityType: 'ticket',
+      entityId: ticketId,
+      action: SupportService.SUPPORT_AUDIT_ACTIONS.TICKET_ESCALATED,
+      performedBy: user.id,
+      metadata: {
+        referenceNumber: ticket.referenceNumber,
+        reason: dto.reason,
+        priorityBefore: ticket.priority,
+        priorityAfter: newPriority || ticket.priority,
+        reEscalation: wasAlreadyEscalated,
+      },
+    });
+
+    // Skip the noisy fan-out on re-escalation — the audit row +
+    // updated reason are enough for the second pass.
+    if (wasAlreadyEscalated) {
+      return {
+        success: true as const,
+        escalatedAt: ticket.escalatedAt,
+        priority: newPriority || ticket.priority,
+      };
+    }
+
+    // Fan out: assignee + supervisor + all admins (deduped).
+    const supervisorId = await this.findSupervisorId();
+    const adminIds = await this.findAdminUserIds();
+    const recipientIds = new Set<string>();
+    if (ticket.assigneeId) recipientIds.add(ticket.assigneeId);
+    if (supervisorId) recipientIds.add(supervisorId);
+    for (const a of adminIds) recipientIds.add(a);
+    recipientIds.delete(user.id); // never notify the actor
+
+    const recipients = Array.from(recipientIds);
+    if (recipients.length > 0) {
+      const userRows = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+        })
+        .from(users)
+        .where(inArray(users.id, recipients));
+
+      await Promise.all(
+        userRows.map(async (r) => {
+          // In-app notification (gated per-recipient).
+          try {
+            await this.notificationsService.create({
+              recipientId: r.id,
+              type: 'ticket_escalated',
+              title: 'Ticket escalated',
+              message: `${ticket.referenceNumber} — ${ticket.subject}: ${dto.reason}`,
+              link: `/dashboard/support/agent/tickets/${ticketId}`,
+              entityType: 'ticket',
+              entityId: ticketId,
+            });
+          } catch {
+            /* non-blocking */
+          }
+          // Email (gated by the recipient's preferences).
+          try {
+            if (
+              r.email &&
+              (await this.shouldNotifySupport(r.id, 'email'))
+            ) {
+              await this.emailService.sendTicketEscalation(
+                r.email,
+                r.firstName || 'Team',
+                ticket.referenceNumber,
+                '',
+                `Manually escalated by supervisor: ${dto.reason}`,
+              );
+            }
+          } catch {
+            /* non-blocking */
+          }
+        }),
+      );
+    }
+
+    return {
+      success: true as const,
+      escalatedAt: now,
+      priority: newPriority || ticket.priority,
+    };
+  }
 
   async closeTicket(ticketId: string, user?: AuthenticatedUser) {
     // Agent isolation: non-supervisor agents can only close their own tickets
@@ -1369,6 +2773,17 @@ export class SupportService implements OnModuleInit {
       }
     } catch {
       // Non-blocking
+    }
+
+    // Audit log
+    if (user) {
+      await this.auditLogService.log({
+        entityType: 'ticket',
+        entityId: ticketId,
+        action: SupportService.SUPPORT_AUDIT_ACTIONS.TICKET_CLOSED,
+        performedBy: user.id,
+        metadata: { referenceNumber: ticketFull?.referenceNumber || null },
+      });
     }
 
     return updated;
@@ -1812,7 +3227,7 @@ export class SupportService implements OnModuleInit {
    * agents are deprioritised (now applied as a soft skip, not a hard
    * filter, so heavy days don't starve the queue).
    */
-  private async findNextAgent(): Promise<string | null> {
+  async findNextAgent(category?: string): Promise<string | null> {
     const cfg = await this.getAutoAssignment();
 
     // Master OFF or manual mode → supervisor handles assignment.
@@ -1850,6 +3265,22 @@ export class SupportService implements OnModuleInit {
     // Every agent at/above cap → supervisor takes overflow (Q2 you asked).
     if (eligible.length === 0) {
       return this.findSupervisorId();
+    }
+
+    // Category-aware preference (used by transfer). Prefer agents who
+    // are already working at least one open ticket in this category —
+    // a lightweight specialty signal that works without admin-defined
+    // specializations. Falls back to the full pool when no agent has
+    // prior tickets in this category.
+    if (category && eligible.length > 1) {
+      const specialists = await this.getAgentsActiveInCategory(
+        eligible.map((a) => a.userId),
+        category,
+      );
+      if (specialists.size > 0) {
+        const narrowed = eligible.filter((a) => specialists.has(a.userId));
+        if (narrowed.length > 0) eligible = narrowed;
+      }
     }
 
     if (eligible.length === 1) return eligible[0].userId;
@@ -1961,6 +3392,37 @@ export class SupportService implements OnModuleInit {
    * paused-waiting-on-student and shouldn't count against capacity since
    * the agent isn't actively working it).
    */
+  // Lightweight category-specialty lookup used by `findNextAgent`.
+  // Returns the subset of agents who currently own at least one open
+  // ticket (NEW / IN_PROGRESS / ON_HOLD) in the given category. Used
+  // by transfer routing so the new assignee is likelier to already
+  // have context for that category. No admin config required.
+  private async getAgentsActiveInCategory(
+    agentIds: string[],
+    category: string,
+  ): Promise<Set<string>> {
+    const result = new Set<string>();
+    if (agentIds.length === 0 || !category) return result;
+    const rows = await db
+      .select({ assigneeId: tickets.assigneeId })
+      .from(tickets)
+      .where(
+        and(
+          inArray(tickets.assigneeId, agentIds),
+          eq(tickets.category, category),
+          inArray(tickets.status, [
+            TICKET_STATUS.NEW,
+            TICKET_STATUS.IN_PROGRESS,
+            TICKET_STATUS.ON_HOLD,
+          ]),
+        ),
+      );
+    for (const r of rows) {
+      if (r.assigneeId) result.add(r.assigneeId);
+    }
+    return result;
+  }
+
   private async getAgentOpenTicketCounts(
     agentIds: string[],
   ): Promise<Map<string, number>> {
@@ -2092,6 +3554,61 @@ export class SupportService implements OnModuleInit {
 
     // Dedupe — a single user can hold both ADMIN and SUPER_ADMIN rows.
     return Array.from(new Set(rows.map((r) => r.userId)));
+  }
+
+  // ─── In-app CSAT rate (any requester) ──────────────────
+  // Role-agnostic equivalent of student.rateTicket. Mirrors the legacy
+  // student endpoint's logic but allows any platform role (instructor,
+  // course-manager, finance, TA, etc.) to rate their own resolved ticket
+  // from the in-app sidebar. Writes to both tickets.satisfactionRating
+  // and csat_surveys (upsert) so the rating button display and dashboard
+  // analytics never disagree.
+  async rateOwnTicket(userId: string, ticketId: string, rating: number) {
+    const [ticket] = await db
+      .select({
+        id: tickets.id,
+        status: tickets.status,
+        courseId: tickets.courseId,
+        requesterId: tickets.studentId,
+      })
+      .from(tickets)
+      .where(and(eq(tickets.id, ticketId), eq(tickets.studentId, userId)));
+
+    if (!ticket) {
+      throw new NotFoundException('Ticket not found');
+    }
+    if (ticket.status !== 'resolved' && ticket.status !== 'closed') {
+      throw new BadRequestException(
+        'Can only rate resolved or closed tickets',
+      );
+    }
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(tickets)
+        .set({ satisfactionRating: rating })
+        .where(eq(tickets.id, ticketId));
+
+      await tx
+        .insert(csatSurveys)
+        .values({
+          ticketId,
+          userId,
+          courseId: ticket.courseId || null,
+          score: rating,
+          channel: 'email',
+          submittedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [csatSurveys.ticketId, csatSurveys.userId],
+          set: {
+            score: rating,
+            submittedAt: new Date(),
+          },
+        });
+    });
+
+    return { success: true };
   }
 
   // ─── CSAT Survey Submission (RS-02 to RS-07) ──────────
@@ -2233,15 +3750,78 @@ export class SupportService implements OnModuleInit {
     };
   }
 
+  // Pending CSAT prompts surfaced in a global dashboard popup so the
+  // user doesn't have to open the resolved ticket to give feedback.
+  // Returns at most 5 surveys (most recent first) where:
+  //   - the survey belongs to the current user
+  //   - it hasn't been submitted yet
+  //   - sentAt is within the 72h response window
+  //   - the underlying ticket is still resolved/closed (not reopened)
+  // Guest tickets are never returned — they have no dashboard; their
+  // entry point is the email CTA.
+  async getPendingCsatForUser(user: AuthenticatedUser) {
+    const SEVENTY_TWO_HOURS_MS = 72 * 60 * 60 * 1000;
+    const cutoff = new Date(Date.now() - SEVENTY_TWO_HOURS_MS);
+
+    const rows = await db
+      .select({
+        surveyId: csatSurveys.id,
+        ticketId: csatSurveys.ticketId,
+        sentAt: csatSurveys.sentAt,
+        ticketReferenceNumber: tickets.referenceNumber,
+        ticketSubject: tickets.subject,
+        ticketStatus: tickets.status,
+        resolvedAt: tickets.resolvedAt,
+        agentFirstName: users.firstName,
+        agentLastName: users.lastName,
+      })
+      .from(csatSurveys)
+      .innerJoin(tickets, eq(csatSurveys.ticketId, tickets.id))
+      .leftJoin(users, eq(tickets.assigneeId, users.id))
+      .where(
+        and(
+          eq(csatSurveys.userId, user.id),
+          isNull(csatSurveys.submittedAt),
+          gte(csatSurveys.sentAt, cutoff),
+          inArray(tickets.status, [
+            TICKET_STATUS.RESOLVED,
+            TICKET_STATUS.CLOSED,
+          ]),
+        ),
+      )
+      .orderBy(desc(csatSurveys.sentAt))
+      .limit(5);
+
+    return rows.map((r) => ({
+      surveyId: r.surveyId,
+      ticketId: r.ticketId,
+      ticketReferenceNumber: r.ticketReferenceNumber,
+      ticketSubject: r.ticketSubject,
+      resolvedAt: r.resolvedAt,
+      agentName: [r.agentFirstName, r.agentLastName]
+        .filter(Boolean)
+        .join(' ')
+        .trim() || null,
+    }));
+  }
+
   // ─── Summary / Analytics ──────────────────────────────
 
-  async getCsatSummary() {
+  async getCsatSummary(opts?: { dateFrom?: Date | null; dateTo?: Date | null }) {
+    // Date range applies to sentAt — "how the cohort sent in this
+    // window performed". Using submittedAt would exclude pending
+    // surveys and skew response rate.
+    const conditions: any[] = [];
+    if (opts?.dateFrom) conditions.push(gte(csatSurveys.sentAt, opts.dateFrom));
+    if (opts?.dateTo) conditions.push(lte(csatSurveys.sentAt, opts.dateTo));
+
     const allSurveys = await db
       .select({
         score: csatSurveys.score,
         submittedAt: csatSurveys.submittedAt,
       })
-      .from(csatSurveys);
+      .from(csatSurveys)
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
 
     const total = allSurveys.length;
     const responded = allSurveys.filter((s) => s.submittedAt).length;
@@ -2265,6 +3845,226 @@ export class SupportService implements OnModuleInit {
       avgScore: Math.round(avgScore * 10) / 10,
       distribution,
     };
+  }
+
+  // ─── CSAT breakdown reports ─────────────────────────────
+  //
+  // Four read-only aggregations powering the extended CSAT reports
+  // panel: by-category, by-agent, monthly trend, and detractor
+  // (low-rating) follow-up list. All four respect the page-level
+  // date range and the same submittedAt + non-null score filter so
+  // the headline avg matches the breakdowns.
+
+  async getCsatByCategory(opts?: {
+    dateFrom?: Date | null;
+    dateTo?: Date | null;
+  }) {
+    const conditions: any[] = [isNotNull(csatSurveys.score)];
+    if (opts?.dateFrom) conditions.push(gte(csatSurveys.submittedAt, opts.dateFrom));
+    if (opts?.dateTo) conditions.push(lte(csatSurveys.submittedAt, opts.dateTo));
+
+    const rows = await db
+      .select({
+        category: tickets.category,
+        responses: sql<number>`COUNT(${csatSurveys.id})`.as('responses'),
+        avgScore: sql<number>`AVG(${csatSurveys.score})`.as('avg_score'),
+        detractors: sql<number>`COUNT(*) FILTER (WHERE ${csatSurveys.score} <= 2)`.as('detractors'),
+        promoters: sql<number>`COUNT(*) FILTER (WHERE ${csatSurveys.score} >= 4)`.as('promoters'),
+      })
+      .from(csatSurveys)
+      .innerJoin(tickets, eq(csatSurveys.ticketId, tickets.id))
+      .where(and(...conditions))
+      .groupBy(tickets.category)
+      .orderBy(desc(sql`avg_score`));
+
+    return rows.map((r) => ({
+      category: r.category,
+      responses: Number(r.responses ?? 0),
+      avgScore: r.avgScore != null ? Math.round(Number(r.avgScore) * 10) / 10 : 0,
+      detractors: Number(r.detractors ?? 0),
+      promoters: Number(r.promoters ?? 0),
+    }));
+  }
+
+  async getCsatByAgent(opts?: {
+    dateFrom?: Date | null;
+    dateTo?: Date | null;
+  }) {
+    const conditions: any[] = [isNotNull(csatSurveys.score)];
+    if (opts?.dateFrom) conditions.push(gte(csatSurveys.submittedAt, opts.dateFrom));
+    if (opts?.dateTo) conditions.push(lte(csatSurveys.submittedAt, opts.dateTo));
+
+    // The agent being rated is the ticket's assignee at the time of
+    // resolution. tickets.assigneeId can be NULL for tickets that
+    // were never assigned (escalation path closed via auto-rule);
+    // those land in a single "Unassigned" bucket so they don't get
+    // dropped from totals.
+    const rows = await db
+      .select({
+        agentId: tickets.assigneeId,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        responses: sql<number>`COUNT(${csatSurveys.id})`.as('responses'),
+        avgScore: sql<number>`AVG(${csatSurveys.score})`.as('avg_score'),
+        detractors: sql<number>`COUNT(*) FILTER (WHERE ${csatSurveys.score} <= 2)`.as('detractors'),
+        promoters: sql<number>`COUNT(*) FILTER (WHERE ${csatSurveys.score} >= 4)`.as('promoters'),
+      })
+      .from(csatSurveys)
+      .innerJoin(tickets, eq(csatSurveys.ticketId, tickets.id))
+      .leftJoin(users, eq(tickets.assigneeId, users.id))
+      .where(and(...conditions))
+      .groupBy(tickets.assigneeId, users.firstName, users.lastName)
+      .orderBy(desc(sql`avg_score`));
+
+    return rows.map((r) => ({
+      agentId: r.agentId,
+      agentName: r.agentId
+        ? [r.firstName, r.lastName].filter(Boolean).join(' ') || 'Agent'
+        : null,
+      responses: Number(r.responses ?? 0),
+      avgScore: r.avgScore != null ? Math.round(Number(r.avgScore) * 10) / 10 : 0,
+      detractors: Number(r.detractors ?? 0),
+      promoters: Number(r.promoters ?? 0),
+    }));
+  }
+
+  async getCsatMonthlyTrend(opts?: {
+    dateFrom?: Date | null;
+    dateTo?: Date | null;
+  }) {
+    // Default to the trailing 6 months when no range is provided —
+    // a single empty month at the end of a sparse dataset is more
+    // informative than an open-ended scan.
+    const dateTo = opts?.dateTo ?? new Date();
+    const defaultFrom = new Date(dateTo.getTime());
+    defaultFrom.setMonth(defaultFrom.getMonth() - 6);
+    const dateFrom = opts?.dateFrom ?? defaultFrom;
+
+    const rows = await db
+      .select({
+        bucket: sql<string>`to_char(${csatSurveys.submittedAt}, 'YYYY-MM')`.as('bucket'),
+        responses: sql<number>`COUNT(${csatSurveys.id})`.as('responses'),
+        avgScore: sql<number>`AVG(${csatSurveys.score})`.as('avg_score'),
+        detractors: sql<number>`COUNT(*) FILTER (WHERE ${csatSurveys.score} <= 2)`.as('detractors'),
+        promoters: sql<number>`COUNT(*) FILTER (WHERE ${csatSurveys.score} >= 4)`.as('promoters'),
+      })
+      .from(csatSurveys)
+      .where(
+        and(
+          isNotNull(csatSurveys.score),
+          gte(csatSurveys.submittedAt, dateFrom),
+          lte(csatSurveys.submittedAt, dateTo),
+        ),
+      )
+      .groupBy(sql`bucket`)
+      .orderBy(sql`bucket ASC`);
+
+    return rows.map((r) => ({
+      bucket: r.bucket,
+      responses: Number(r.responses ?? 0),
+      avgScore: r.avgScore != null ? Math.round(Number(r.avgScore) * 10) / 10 : 0,
+      detractors: Number(r.detractors ?? 0),
+      promoters: Number(r.promoters ?? 0),
+    }));
+  }
+
+  async getLowRatingSurveys(opts?: {
+    dateFrom?: Date | null;
+    dateTo?: Date | null;
+    status?: 'pending' | 'completed' | 'all';
+  }) {
+    const status = opts?.status ?? 'all';
+    const conditions: any[] = [
+      isNotNull(csatSurveys.score),
+      lte(csatSurveys.score, 2),
+    ];
+    if (opts?.dateFrom) conditions.push(gte(csatSurveys.submittedAt, opts.dateFrom));
+    if (opts?.dateTo) conditions.push(lte(csatSurveys.submittedAt, opts.dateTo));
+    if (status === 'pending') {
+      conditions.push(isNull(csatSurveys.followUpCompletedAt));
+    } else if (status === 'completed') {
+      conditions.push(isNotNull(csatSurveys.followUpCompletedAt));
+    }
+
+    // Single query joins ticket → agent (assignee) and a separate
+    // join to users for the follow-up resolver name. Both join
+    // aliases avoid column ambiguity from a multi-join on users.
+    const assigneeUsers = alias(users, 'assignee_users');
+    const followupUsers = alias(users, 'followup_users');
+
+    const rows = await db
+      .select({
+        surveyId: csatSurveys.id,
+        score: csatSurveys.score,
+        comment: csatSurveys.comment,
+        submittedAt: csatSurveys.submittedAt,
+        followUpCompletedAt: csatSurveys.followUpCompletedAt,
+        ticketId: tickets.id,
+        ticketReference: tickets.referenceNumber,
+        ticketSubject: tickets.subject,
+        ticketCategory: tickets.category,
+        agentId: tickets.assigneeId,
+        agentFirstName: assigneeUsers.firstName,
+        agentLastName: assigneeUsers.lastName,
+        followUpByFirstName: followupUsers.firstName,
+        followUpByLastName: followupUsers.lastName,
+      })
+      .from(csatSurveys)
+      .innerJoin(tickets, eq(csatSurveys.ticketId, tickets.id))
+      .leftJoin(assigneeUsers, eq(tickets.assigneeId, assigneeUsers.id))
+      .leftJoin(followupUsers, eq(csatSurveys.followUpCompletedBy, followupUsers.id))
+      .where(and(...conditions))
+      .orderBy(desc(csatSurveys.submittedAt))
+      .limit(100);
+
+    return rows.map((r) => ({
+      surveyId: r.surveyId,
+      score: r.score,
+      comment: r.comment,
+      submittedAt: r.submittedAt,
+      followUpCompletedAt: r.followUpCompletedAt,
+      ticketId: r.ticketId,
+      ticketReference: r.ticketReference,
+      ticketSubject: r.ticketSubject,
+      ticketCategory: r.ticketCategory,
+      agentId: r.agentId,
+      agentName: r.agentId
+        ? [r.agentFirstName, r.agentLastName].filter(Boolean).join(' ') || 'Agent'
+        : null,
+      followUpBy: r.followUpCompletedAt
+        ? [r.followUpByFirstName, r.followUpByLastName].filter(Boolean).join(' ') || 'Supervisor'
+        : null,
+    }));
+  }
+
+  async markCsatFollowedUp(surveyId: string, userId: string) {
+    const [existing] = await db
+      .select({
+        id: csatSurveys.id,
+        score: csatSurveys.score,
+        followUpCompletedAt: csatSurveys.followUpCompletedAt,
+      })
+      .from(csatSurveys)
+      .where(eq(csatSurveys.id, surveyId));
+    if (!existing) throw new NotFoundException('CSAT survey not found');
+    if (existing.score == null || existing.score > 2) {
+      throw new BadRequestException(
+        'Only low-rating surveys (1-2) can be marked as followed up',
+      );
+    }
+    if (existing.followUpCompletedAt) {
+      // Idempotent — caller already marked it; just return current state.
+      return { surveyId, followUpCompletedAt: existing.followUpCompletedAt };
+    }
+    const now = new Date();
+    await db
+      .update(csatSurveys)
+      .set({
+        followUpCompletedAt: now,
+        followUpCompletedBy: userId,
+      })
+      .where(eq(csatSurveys.id, surveyId));
+    return { surveyId, followUpCompletedAt: now };
   }
 
   /**
@@ -2327,13 +4127,33 @@ export class SupportService implements OnModuleInit {
       await this.recaptchaService.verify(dto.recaptchaToken, 'guest-ticket');
     }
 
-    // Server-side guard: guest tickets are restricted to login issues.
-    // DTO @IsIn(['login']) covers the happy path; this catches any caller
-    // that bypasses DTO validation (e.g. a future internal call site).
-    if (dto.category !== 'login') {
+    // Server-side guard: guest tickets are restricted to a small set
+    // of allowed categories. DTO covers the happy path; this catches
+    // any caller that bypasses DTO validation (e.g. a future internal
+    // call site).
+    const ALLOWED_GUEST_CATEGORIES = new Set(['login', 'trainer']);
+    if (!ALLOWED_GUEST_CATEGORIES.has(dto.category)) {
       throw new BadRequestException(
-        'Guest tickets are only allowed for login issues',
+        'Guest tickets are only allowed for login or trainer-application issues',
       );
+    }
+
+    // Auto-tag as 'trainer' when the guest email matches an existing
+    // trainer application. This survives the case where the applicant
+    // picked the default category by accident — agents shouldn't have
+    // to re-route those manually. If the applicant explicitly picked
+    // 'trainer' we still set it; the lookup result is the same either
+    // way.
+    let effectiveCategory = dto.category;
+    let matchedRoleRequestId: string | null = null;
+    if (dto.email) {
+      const matched = await this.roleRequestsService.findMostRecentByEmail(
+        dto.email,
+      );
+      if (matched) {
+        effectiveCategory = 'trainer';
+        matchedRoleRequestId = matched.id;
+      }
     }
 
     // M8: Rate-limit guest ticket creation — max 3 per email per 24h
@@ -2370,10 +4190,12 @@ export class SupportService implements OnModuleInit {
       );
     }
 
-    // Guest tickets are DTO-locked to 'login' but resolve via the live
-    // map anyway so admin overrides on built-in priorities take effect.
-    // Fall back to HIGH (the historical guest default) rather than MEDIUM.
-    const resolvedGuest = await this.resolveCategoryPriority(dto.category);
+    // Guest tickets resolve priority via the live map so admin
+    // overrides on built-in priorities take effect. Fall back to
+    // HIGH (the historical guest default) rather than MEDIUM. Use
+    // effectiveCategory so a 'trainer' auto-tag carries the right
+    // category-specific priority if admins configured one.
+    const resolvedGuest = await this.resolveCategoryPriority(effectiveCategory);
     const autoPriority = resolvedGuest.isValidSlug
       ? resolvedGuest.priority
       : TICKET_PRIORITY.HIGH;
@@ -2406,7 +4228,7 @@ export class SupportService implements OnModuleInit {
       .insert(tickets)
       .values({
         studentId: GUEST_USER_ID,
-        category: dto.category,
+        category: effectiveCategory,
         priority: autoPriority,
         subject: dto.subject,
         description: dto.description,
@@ -2418,6 +4240,27 @@ export class SupportService implements OnModuleInit {
         guestEmail: dto.email,
       })
       .returning();
+
+    // Audit the auto-tag so support can see "we routed this to trainer
+    // because the applicant's email matched role_request X". Best-effort
+    // — `log()` already swallows DB errors so no try/catch needed.
+    if (
+      matchedRoleRequestId &&
+      effectiveCategory !== dto.category &&
+      ticket?.id
+    ) {
+      await this.auditLogService.log({
+        entityType: 'support_ticket',
+        entityId: ticket.id,
+        action: 'auto_tagged_trainer',
+        performedBy: ticket.assigneeId ?? GUEST_USER_ID,
+        metadata: {
+          requestedCategory: dto.category,
+          matchedRoleRequestId,
+          matchedByEmail: dto.email,
+        },
+      });
+    }
 
     if (safeGuestAttachmentUrls.length > 0) {
       try {
@@ -2456,6 +4299,55 @@ export class SupportService implements OnModuleInit {
       } catch {
         // Non-blocking
       }
+    }
+
+    // Confirmation email to the guest with their tracking URL. Guests
+    // don't have a dashboard, and the in-browser tracking link shown
+    // on the success screen is lost the moment they close the tab.
+    // The email gives them a durable path back to reply or check
+    // status. Compute the expected-response phrasing so the email
+    // matches what authenticated learners get.
+    try {
+      const [guestSlaPolicy] = await db
+        .select()
+        .from(slaPolicies)
+        .where(eq(slaPolicies.priority, autoPriority));
+      if (guestSlaPolicy) {
+        const expected = describeExpectedResponse(
+          ticket.createdAt,
+          guestSlaPolicy.frtMinutes,
+        );
+        const trackingUrl = this.buildGuestTrackingUrl(trackingToken);
+        await this.emailService.sendTicketCreatedLearner(
+          dto.email,
+          dto.name || 'there',
+          ticket.referenceNumber,
+          expected.phrasing,
+          expected.mode,
+          trackingUrl,
+        );
+      }
+    } catch (err) {
+      // Best-effort — don't fail the request if email is misconfigured.
+      this.logger.warn(
+        `Guest confirmation email failed for ticket ${ticket.id}: ${err}`,
+      );
+    }
+
+    // Auto-tag rule engine — same as createTicket. Failures are
+    // logged + swallowed; the guest already got their tracking token.
+    try {
+      const matches = await this.matchAutoApplyTags({
+        subject: dto.subject,
+        description: dto.description,
+      });
+      if (matches.length > 0) {
+        await this.applyAutoTagsToTicket(ticket.id, GUEST_USER_ID, matches);
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Auto-tag scan failed for guest ticket ${ticket.id}: ${err}`,
+      );
     }
 
     return { ticket, trackingToken };
@@ -2575,6 +4467,161 @@ export class SupportService implements OnModuleInit {
   // Bulk attachment fetch for a single ticket. The legacy
   // `attachmentUrl` column is folded in too so old tickets created
   // before migration 0054 still surface as one chip in the UI.
+  //
+  // Each attachment is enriched with the malware-scan verdict read
+  // straight from GCS object metadata. Verdict source of truth lives
+  // on the object itself, written by the Eventarc-triggered scanner
+  // ([infra/malware-scanner/main.js](infra/malware-scanner/main.js)).
+  // We do one metadata fetch per attachment — usually 0–3 per ticket,
+  // each <10ms — which is cheap enough to do inline on the detail load.
+  // ─── Soft-delete an attachment (Amna R4 — Jun 2026) ─────────
+  //
+  // Removes an attachment from the active list without destroying
+  // the row, so the attachment-history view can still show what was
+  // there. Gated to assignee + supervisor + admin — learners can't
+  // remove their own attachments once they've been submitted (we
+  // treat them as evidence).
+  async softDeleteAttachment(
+    user: AuthenticatedUser,
+    ticketId: string,
+    attachmentId: string,
+  ) {
+    const [ticket] = await db
+      .select({ assigneeId: tickets.assigneeId })
+      .from(tickets)
+      .where(eq(tickets.id, ticketId));
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    const isAdmin =
+      user.roles.includes(ROLE_NAMES.ADMIN) ||
+      user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+    const isSupport = user.roles.includes(ROLE_NAMES.SUPPORT);
+    const isSupervisor = user.supportSubRole === 'supervisor';
+
+    if (!isAdmin && !isSupport) {
+      throw new ForbiddenException(
+        'Only support staff can remove attachments',
+      );
+    }
+    if (!isAdmin && !isSupervisor && ticket.assigneeId !== user.id) {
+      throw new ForbiddenException(
+        'You are not assigned to this ticket',
+      );
+    }
+
+    const [target] = await db
+      .select({
+        id: ticketAttachments.id,
+        ticketId: ticketAttachments.ticketId,
+        url: ticketAttachments.url,
+        removedAt: ticketAttachments.removedAt,
+      })
+      .from(ticketAttachments)
+      .where(eq(ticketAttachments.id, attachmentId))
+      .limit(1);
+
+    if (!target || target.ticketId !== ticketId) {
+      throw new NotFoundException('Attachment not found on this ticket');
+    }
+    if (target.removedAt) {
+      throw new BadRequestException('Attachment is already removed');
+    }
+
+    await db
+      .update(ticketAttachments)
+      .set({ removedAt: new Date(), removedBy: user.id })
+      .where(eq(ticketAttachments.id, attachmentId));
+
+    // Mirror to audit_logs so the attachment removal shows up in the
+    // ticket's general audit trail alongside status changes etc.
+    await this.auditLogService.log({
+      entityType: 'support_ticket',
+      entityId: ticketId,
+      action: 'attachment_removed',
+      performedBy: user.id,
+      metadata: {
+        attachmentId: target.id,
+        attachmentUrl: target.url,
+      },
+    });
+
+    return { success: true as const, attachmentId: target.id };
+  }
+
+  // ─── Attachment version history (Amna R4 — Jun 2026) ────────
+  //
+  // Returns EVERY attachment ever uploaded to this ticket, both
+  // active and soft-deleted, in chronological order. Each row carries
+  // the uploader, the remover (when removed), and the soft-delete
+  // timestamps so the FE can render a "Uploaded → Removed" timeline.
+  //
+  // Gated to support + admin — learners don't see other people's
+  // removed files. (They don't see other people's tickets at all,
+  // but defensive: this endpoint is on the staff side only.)
+  async getAttachmentHistory(
+    user: AuthenticatedUser,
+    ticketId: string,
+  ) {
+    const isStaff =
+      user.roles.includes(ROLE_NAMES.SUPPORT) ||
+      user.roles.includes(ROLE_NAMES.ADMIN) ||
+      user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+    if (!isStaff) {
+      throw new ForbiddenException(
+        'Only support staff can view attachment history',
+      );
+    }
+
+    const [ticket] = await db
+      .select({ assigneeId: tickets.assigneeId })
+      .from(tickets)
+      .where(eq(tickets.id, ticketId));
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    const isSupervisorOrAdmin =
+      user.supportSubRole === 'supervisor' ||
+      user.roles.includes(ROLE_NAMES.ADMIN) ||
+      user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+    if (!isSupervisorOrAdmin && ticket.assigneeId !== user.id) {
+      throw new ForbiddenException('You are not assigned to this ticket');
+    }
+
+    const uploaderAlias = alias(users, 'attachment_uploader');
+    const removerAlias = alias(users, 'attachment_remover');
+
+    return db
+      .select({
+        id: ticketAttachments.id,
+        replyId: ticketAttachments.replyId,
+        url: ticketAttachments.url,
+        filename: ticketAttachments.filename,
+        sizeBytes: ticketAttachments.sizeBytes,
+        mimeType: ticketAttachments.mimeType,
+        uploadedAt: ticketAttachments.uploadedAt,
+        removedAt: ticketAttachments.removedAt,
+        sha256: ticketAttachments.sha256,
+        uploaderId: ticketAttachments.uploadedBy,
+        uploaderFirstName: uploaderAlias.firstName,
+        uploaderLastName: uploaderAlias.lastName,
+        uploaderEmail: uploaderAlias.email,
+        removerId: ticketAttachments.removedBy,
+        removerFirstName: removerAlias.firstName,
+        removerLastName: removerAlias.lastName,
+        removerEmail: removerAlias.email,
+      })
+      .from(ticketAttachments)
+      .leftJoin(
+        uploaderAlias,
+        eq(uploaderAlias.id, ticketAttachments.uploadedBy),
+      )
+      .leftJoin(
+        removerAlias,
+        eq(removerAlias.id, ticketAttachments.removedBy),
+      )
+      .where(eq(ticketAttachments.ticketId, ticketId))
+      .orderBy(asc(ticketAttachments.uploadedAt));
+  }
+
   async getTicketAttachments(ticketId: string) {
     const rows = await db
       .select({
@@ -2586,9 +4633,73 @@ export class SupportService implements OnModuleInit {
         uploadedAt: ticketAttachments.uploadedAt,
       })
       .from(ticketAttachments)
-      .where(eq(ticketAttachments.ticketId, ticketId))
+      .where(
+        and(
+          eq(ticketAttachments.ticketId, ticketId),
+          // Active attachments only. The history endpoint returns
+          // removed ones separately.
+          isNull(ticketAttachments.removedAt),
+        ),
+      )
       .orderBy(asc(ticketAttachments.uploadedAt));
-    return rows;
+
+    return Promise.all(
+      rows.map(async (row) => {
+        const scan = await this.lookupScanStatusForUrl(row.url);
+        return {
+          ...row,
+          scanStatus: scan.status,
+          scannedAt: scan.scannedAt,
+        };
+      }),
+    );
+  }
+
+  /**
+   * Resolve a stored attachment URL → scan verdict. Handles both URL
+   * shapes we ever persist:
+   *   - `/api/storage/files/<bucket>/<path>`  (our proxy URL — most cases)
+   *   - `https://storage.googleapis.com/<bucket>/<path>` (legacy / direct)
+   * Anything else gets `unknown` so the UI doesn't pretend it knows.
+   */
+  private async lookupScanStatusForUrl(url: string): Promise<{
+    status: 'clean' | 'pending' | 'quarantined' | 'unknown';
+    scannedAt: string | null;
+  }> {
+    if (!url) return { status: 'unknown', scannedAt: null };
+
+    let bucket: 'public' | 'private' | 'trainers' | null = null;
+    let filename: string | null = null;
+
+    try {
+      const parsed = new URL(url);
+      const path = parsed.pathname;
+      const proxyMatch = path.match(
+        /\/storage\/files\/(public|private|trainers)\/(.+)$/,
+      );
+      if (proxyMatch) {
+        bucket = proxyMatch[1] as 'public' | 'private' | 'trainers';
+        filename = decodeURIComponent(proxyMatch[2]);
+      } else if (parsed.host.endsWith('storage.googleapis.com')) {
+        // path is /<bucket>/<file...>
+        const stripped = path.replace(/^\/+/, '');
+        const slash = stripped.indexOf('/');
+        if (slash > 0) {
+          const bucketName = stripped.slice(0, slash);
+          filename = decodeURIComponent(stripped.slice(slash + 1));
+          if (bucketName.includes('private')) bucket = 'private';
+          else if (bucketName.includes('trainers')) bucket = 'trainers';
+          else bucket = 'public';
+        }
+      }
+    } catch {
+      // malformed URL — fall through
+    }
+
+    if (!bucket || !filename) {
+      return { status: 'unknown', scannedAt: null };
+    }
+    return this.storageService.getScanStatus(bucket, filename);
   }
 
   async addGuestReply(token: string, message: string) {
@@ -2823,7 +4934,9 @@ export class SupportService implements OnModuleInit {
     const openTickets = await db
       .select({
         id: tickets.id,
+        status: tickets.status,
         createdAt: tickets.createdAt,
+        onHoldAt: tickets.onHoldAt,
         onHoldTotalMinutes: tickets.onHoldTotalMinutes,
       })
       .from(tickets)
@@ -2844,8 +4957,7 @@ export class SupportService implements OnModuleInit {
     ];
 
     for (const ticket of openTickets) {
-      const elapsed = calculateBusinessMinutesElapsed(ticket.createdAt, now);
-      const effective = elapsed - (ticket.onHoldTotalMinutes || 0);
+      const effective = effectiveBusinessMinutesElapsed(ticket, now);
       for (const bucket of buckets) {
         if (effective >= bucket.min && effective < bucket.max) {
           bucket.count++;
@@ -3172,6 +5284,26 @@ export class SupportService implements OnModuleInit {
             )
           : null;
 
+      // Avg TTR (minutes) — resolution-time across this agent's
+      // resolved tickets. Powers the TTR column on the admin
+      // supervisor detail page and the team-aggregate avgTtrMinutes
+      // surface. Skipped when the agent has no resolved tickets yet.
+      const ttrTimes = resolved
+        .filter((t) => t.resolvedAt)
+        .map((t) => {
+          return (
+            (new Date(t.resolvedAt!).getTime() -
+              new Date(t.createdAt).getTime()) /
+            60000
+          );
+        });
+      const avgTtr =
+        ttrTimes.length > 0
+          ? Math.round(
+              ttrTimes.reduce((a, b) => a + b, 0) / ttrTimes.length,
+            )
+          : null;
+
       // Per-agent CSAT avg — only count ratings on tickets this agent
       // was assigned to
       const agentCsat = await db
@@ -3202,6 +5334,7 @@ export class SupportService implements OnModuleInit {
         openTickets,
         resolvedTickets: resolved.length,
         avgFrtMinutes: avgFrt,
+        avgTtrMinutes: avgTtr,
         csatAvgScore,
         csatResponses: csatScores.length,
         frtBreaches,
@@ -3290,6 +5423,375 @@ export class SupportService implements OnModuleInit {
       csv: lines.join('\n'),
       filename: `ticket_${baseName}_${now.toISOString().split('T')[0]}.csv`,
     };
+  }
+
+  // ─── Per-ticket compliance archive (ZIP) ───────────────
+  //
+  // Bundles the full ticket record into a single ZIP suitable for
+  // legal/audit handover:
+  //   • conversation.csv  — ticket fields + reply transcript +
+  //                         attachment manifest rows
+  //   • audit_trail.csv   — every audit_logs entry for this ticket
+  //                         (status changes, assignments, tag edits,
+  //                         merges, etc.) with actor + timestamp
+  //   • sla_events.csv    — FRT/TTR breaches, escalations, warnings
+  //   • attachments/      — actual file bytes pulled from storage
+  //   • manifest.json     — export metadata + SHA-256 of every
+  //                         attached file (tamper evidence)
+  //
+  // Reuses the same access check as exportTicketHistory by calling
+  // getTicketDetail() first — a student can pull their own archive,
+  // an unassigned agent cannot read someone else's.
+  async exportTicketArchive(user: AuthenticatedUser, ticketId: string) {
+    const archiver = (await import('archiver')).default;
+    const { createHash } = await import('crypto');
+
+    const detail = await this.getTicketDetail(user, ticketId);
+    const now = new Date();
+    const baseName = (detail.referenceNumber || detail.id).replace(
+      /[^a-zA-Z0-9-]/g,
+      '_',
+    );
+
+    const [auditRows, slaRows, attachmentRows] = await Promise.all([
+      this.getTicketAuditLog(ticketId, 500),
+      db
+        .select({
+          eventType: slaEvents.eventType,
+          triggeredAt: slaEvents.triggeredAt,
+          notifiedUserIds: slaEvents.notifiedUserIds,
+          resolvedWithinSla: slaEvents.resolvedWithinSla,
+        })
+        .from(slaEvents)
+        .where(eq(slaEvents.ticketId, ticketId))
+        .orderBy(asc(slaEvents.triggeredAt)),
+      db
+        .select({
+          id: ticketAttachments.id,
+          replyId: ticketAttachments.replyId,
+          url: ticketAttachments.url,
+          filename: ticketAttachments.filename,
+          sizeBytes: ticketAttachments.sizeBytes,
+          mimeType: ticketAttachments.mimeType,
+          uploadedAt: ticketAttachments.uploadedAt,
+        })
+        .from(ticketAttachments)
+        // Export archive includes only active attachments — removed
+        // files aren't part of the canonical record handed to legal /
+        // compliance teams. The audit-trail timeline is the place to
+        // see deletions.
+        .where(
+          and(
+            eq(ticketAttachments.ticketId, ticketId),
+            isNull(ticketAttachments.removedAt),
+          ),
+        )
+        .orderBy(asc(ticketAttachments.uploadedAt)),
+    ]);
+
+    // ─── Generate the three CSVs ───────────────────────────
+    const conversationCsv = this.buildConversationCsv(
+      detail,
+      user,
+      attachmentRows,
+      now,
+    );
+    const auditCsv = this.buildAuditTrailCsv(auditRows);
+    const slaCsv = this.buildSlaEventsCsv(slaRows);
+
+    // ─── Download attachments + build manifest ─────────────
+    //
+    // We collect every file, even ones that fail to download, so
+    // the manifest tells the auditor exactly which artifacts were
+    // unavailable (rather than silently dropping them).
+    type AttachmentRecord = {
+      filename: string;
+      replyId: string | null;
+      sizeBytes: number;
+      mimeType: string | null;
+      uploadedAt: string;
+      sha256: string | null;
+      downloadStatus: 'ok' | 'failed';
+      failureReason?: string;
+    };
+
+    const attachmentRecords: AttachmentRecord[] = [];
+    const fileEntries: { name: string; buffer: Buffer }[] = [];
+    const usedNames = new Set<string>();
+
+    for (const att of attachmentRows) {
+      const safeName = this.uniqueZipFilename(
+        att.filename || `attachment-${att.id}`,
+        usedNames,
+      );
+      try {
+        const buf = await this.storageService.downloadBuffer(att.url);
+        const sha = createHash('sha256').update(buf).digest('hex');
+        attachmentRecords.push({
+          filename: safeName,
+          replyId: att.replyId,
+          sizeBytes: buf.length,
+          mimeType: att.mimeType,
+          uploadedAt: new Date(att.uploadedAt).toISOString(),
+          sha256: sha,
+          downloadStatus: 'ok',
+        });
+        fileEntries.push({ name: `attachments/${safeName}`, buffer: buf });
+      } catch (err) {
+        attachmentRecords.push({
+          filename: safeName,
+          replyId: att.replyId,
+          sizeBytes: Number(att.sizeBytes ?? 0),
+          mimeType: att.mimeType,
+          uploadedAt: new Date(att.uploadedAt).toISOString(),
+          sha256: null,
+          downloadStatus: 'failed',
+          failureReason: (err as Error).message,
+        });
+      }
+    }
+
+    const manifest = {
+      exportedAt: now.toISOString(),
+      exportedBy: user.id,
+      ticket: {
+        id: detail.id,
+        referenceNumber: detail.referenceNumber || null,
+        subject: detail.subject,
+      },
+      counts: {
+        comments: (detail.comments || []).length,
+        auditEntries: auditRows.length,
+        slaEvents: slaRows.length,
+        attachments: attachmentRecords.length,
+        attachmentsFailed: attachmentRecords.filter(
+          (a) => a.downloadStatus === 'failed',
+        ).length,
+      },
+      attachments: attachmentRecords,
+    };
+
+    // ─── Stream everything into a ZIP buffer ───────────────
+    const archive = archiver('zip', { zlib: { level: 6 } });
+    const chunks: Buffer[] = [];
+    archive.on('data', (chunk: Buffer) => chunks.push(chunk));
+
+    const finished = new Promise<Buffer>((resolve, reject) => {
+      archive.on('end', () => resolve(Buffer.concat(chunks)));
+      archive.on('error', (err: Error) => reject(err));
+    });
+
+    archive.append(conversationCsv, { name: 'conversation.csv' });
+    archive.append(auditCsv, { name: 'audit_trail.csv' });
+    archive.append(slaCsv, { name: 'sla_events.csv' });
+    archive.append(JSON.stringify(manifest, null, 2), { name: 'manifest.json' });
+    for (const entry of fileEntries) {
+      archive.append(entry.buffer, { name: entry.name });
+    }
+    await archive.finalize();
+    const zipBuffer = await finished;
+
+    return {
+      buffer: zipBuffer,
+      filename: `ticket_${baseName}_${now.toISOString().split('T')[0]}.zip`,
+    };
+  }
+
+  // ─── Archive helpers ──────────────────────────────────
+
+  private buildConversationCsv(
+    detail: any,
+    user: AuthenticatedUser,
+    attachments: {
+      id: string;
+      replyId: string | null;
+      filename: string | null;
+      sizeBytes: number | null;
+      mimeType: string | null;
+      uploadedAt: Date;
+    }[],
+    now: Date,
+  ): string {
+    const csvEscape = (v: unknown): string => {
+      if (v == null) return '';
+      const s = String(v);
+      if (/[",\n\r]/.test(s)) {
+        return `"${s.replace(/"/g, '""')}"`;
+      }
+      return s;
+    };
+
+    const customerName = [detail.studentFirstName, detail.studentLastName]
+      .filter(Boolean)
+      .join(' ');
+
+    const lines: string[] = [
+      `# exported_at: ${now.toISOString()}`,
+      `# exported_by: ${user.id}`,
+      `# ticket_reference: ${detail.referenceNumber || ''}`,
+      `# ticket_id: ${detail.id}`,
+      '',
+      'field,value',
+      `reference,${csvEscape(detail.referenceNumber || '')}`,
+      `subject,${csvEscape(detail.subject)}`,
+      `customer_name,${csvEscape(customerName)}`,
+      `customer_email,${csvEscape(detail.studentEmail || '')}`,
+      `category,${csvEscape(detail.category)}`,
+      `priority,${csvEscape(detail.priority)}`,
+      `status,${csvEscape(detail.status)}`,
+      `created_at,${csvEscape(new Date(detail.createdAt).toISOString())}`,
+      `first_response_at,${csvEscape(detail.firstResponseAt ? new Date(detail.firstResponseAt).toISOString() : '')}`,
+      `resolved_at,${csvEscape(detail.resolvedAt ? new Date(detail.resolvedAt).toISOString() : '')}`,
+      `closed_at,${csvEscape(detail.closedAt ? new Date(detail.closedAt).toISOString() : '')}`,
+      `tags,${csvEscape(((detail.tags || []) as any[]).map((t) => t.name).join('; '))}`,
+      '',
+      'reply_index,timestamp,author,role,is_internal,message',
+    ];
+
+    const comments = (detail.comments || []) as any[];
+    comments.forEach((c, idx) => {
+      const authorName = [c.userFirstName, c.userLastName]
+        .filter(Boolean)
+        .join(' ');
+      lines.push(
+        [
+          idx + 1,
+          csvEscape(new Date(c.createdAt).toISOString()),
+          csvEscape(authorName),
+          c.isStaffReply ? 'staff' : 'customer',
+          c.isInternal ? 'yes' : 'no',
+          csvEscape(c.message),
+        ].join(','),
+      );
+    });
+
+    // Attachment manifest section — points back to attachments/
+    // folder in the ZIP and matches by filename + replyId.
+    lines.push('', 'attachment_filename,reply_index,size_bytes,mime_type,uploaded_at');
+    attachments.forEach((att) => {
+      const replyIdx = att.replyId
+        ? comments.findIndex((c) => c.id === att.replyId)
+        : -1;
+      lines.push(
+        [
+          csvEscape(att.filename || `attachment-${att.id}`),
+          replyIdx >= 0 ? replyIdx + 1 : 'ticket',
+          att.sizeBytes ?? '',
+          csvEscape(att.mimeType || ''),
+          csvEscape(new Date(att.uploadedAt).toISOString()),
+        ].join(','),
+      );
+    });
+
+    return lines.join('\n');
+  }
+
+  private buildAuditTrailCsv(
+    auditRows: Awaited<ReturnType<SupportService['getTicketAuditLog']>>,
+  ): string {
+    const csvEscape = (v: unknown): string => {
+      if (v == null) return '';
+      const s = String(v);
+      if (/[",\n\r]/.test(s)) {
+        return `"${s.replace(/"/g, '""')}"`;
+      }
+      return s;
+    };
+
+    const lines: string[] = [
+      'timestamp,action,performed_by_id,performed_by_name,performed_by_email,metadata_json',
+    ];
+
+    // Reverse to chronological order — getTicketAuditLog returns
+    // newest-first for the UI, but a compliance trail reads better
+    // oldest-first.
+    [...auditRows]
+      .sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      )
+      .forEach((row) => {
+        const performerName = [row.performerFirstName, row.performerLastName]
+          .filter(Boolean)
+          .join(' ');
+        lines.push(
+          [
+            csvEscape(new Date(row.createdAt).toISOString()),
+            csvEscape(row.action),
+            csvEscape(row.performedBy || ''),
+            csvEscape(performerName),
+            csvEscape(row.performerEmail || ''),
+            csvEscape(JSON.stringify(row.metadata || {})),
+          ].join(','),
+        );
+      });
+
+    return lines.join('\n');
+  }
+
+  private buildSlaEventsCsv(
+    slaRows: {
+      eventType: string;
+      triggeredAt: Date;
+      notifiedUserIds: unknown;
+      resolvedWithinSla: boolean | null;
+    }[],
+  ): string {
+    const csvEscape = (v: unknown): string => {
+      if (v == null) return '';
+      const s = String(v);
+      if (/[",\n\r]/.test(s)) {
+        return `"${s.replace(/"/g, '""')}"`;
+      }
+      return s;
+    };
+
+    const lines: string[] = [
+      'triggered_at,event_type,notified_user_count,resolved_within_sla',
+    ];
+
+    slaRows.forEach((row) => {
+      const notified = Array.isArray(row.notifiedUserIds)
+        ? row.notifiedUserIds.length
+        : 0;
+      const resolvedWithin =
+        row.resolvedWithinSla === null || row.resolvedWithinSla === undefined
+          ? ''
+          : row.resolvedWithinSla
+            ? 'yes'
+            : 'no';
+      lines.push(
+        [
+          csvEscape(new Date(row.triggeredAt).toISOString()),
+          csvEscape(row.eventType),
+          notified,
+          csvEscape(resolvedWithin),
+        ].join(','),
+      );
+    });
+
+    return lines.join('\n');
+  }
+
+  // Avoid two attachments overwriting each other in the zip when
+  // they share a filename. Adds `(1)`, `(2)`, etc. before the
+  // extension. Tracked via the `seen` set passed by the caller.
+  private uniqueZipFilename(original: string, seen: Set<string>): string {
+    const sanitised = original.replace(/[\\/:*?"<>|]/g, '_');
+    if (!seen.has(sanitised)) {
+      seen.add(sanitised);
+      return sanitised;
+    }
+    const dot = sanitised.lastIndexOf('.');
+    const stem = dot > 0 ? sanitised.slice(0, dot) : sanitised;
+    const ext = dot > 0 ? sanitised.slice(dot) : '';
+    let n = 1;
+    while (seen.has(`${stem}(${n})${ext}`)) {
+      n += 1;
+    }
+    const candidate = `${stem}(${n})${ext}`;
+    seen.add(candidate);
+    return candidate;
   }
 
   async exportReport(
@@ -3645,6 +6147,7 @@ export class SupportService implements OnModuleInit {
         status: tickets.status,
         createdAt: tickets.createdAt,
         firstResponseAt: tickets.firstResponseAt,
+        onHoldAt: tickets.onHoldAt,
         onHoldTotalMinutes: tickets.onHoldTotalMinutes,
         slaBreachedFrt: tickets.slaBreachedFrt,
         slaBreachedTtr: tickets.slaBreachedTtr,
@@ -3670,8 +6173,7 @@ export class SupportService implements OnModuleInit {
       const policy = policyMap.get(r.priority);
       if (!policy) continue;
 
-      const totalElapsed = calculateBusinessMinutesElapsed(r.createdAt, now);
-      const effective = totalElapsed - (r.onHoldTotalMinutes || 0);
+      const effective = effectiveBusinessMinutesElapsed(r, now);
 
       const frtOverdue =
         !r.firstResponseAt && effective > policy.frtMinutes;
@@ -3879,87 +6381,531 @@ export class SupportService implements OnModuleInit {
     };
   }
 
-  // ─── SLA Policy CRUD ──────────────────────────────────
+  /**
+   * Admin Support Overview — single payload for the new admin
+   * dashboard tab. Folds the 7 client-requested metrics together with
+   * an at-risk list, an activity feed, 7-day trend deltas, cron
+   * health, and the pending team-request count.
+   *
+   * Accepts an optional date range (`dateFrom`/`dateTo`) for the
+   * window-scoped health metrics (avg FRT/TTR, SLA %, escalations,
+   * created trend). "Current open" numbers stay as a live snapshot
+   * regardless of the range. Defaults to the last 7 days when
+   * neither bound is provided.
+   *
+   * Queries run in parallel via Promise.all where dependencies allow.
+   * Heavy aggregates (by-category, agent workload) are capped/sliced
+   * so a busy queue still returns in <300ms.
+   */
+  async getSupportOverview(dateFrom?: string, dateTo?: string) {
+    const now = new Date();
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const sevenDaysAgo = new Date(now.getTime() - SEVEN_DAYS_MS);
+    const fourteenDaysAgo = new Date(now.getTime() - 2 * SEVEN_DAYS_MS);
 
-  // ─── Escalation Paths CRUD ──────────────────────────────
+    // Parse the window for health metrics. Invalid input falls back
+    // to the default 7-day window — never throws, since this endpoint
+    // is read-only and called by polling code.
+    const parsedFrom = dateFrom ? new Date(dateFrom) : null;
+    const parsedTo = dateTo ? new Date(dateTo) : null;
+    const windowFrom =
+      parsedFrom && !Number.isNaN(parsedFrom.getTime())
+        ? parsedFrom
+        : sevenDaysAgo;
+    const windowTo =
+      parsedTo && !Number.isNaN(parsedTo.getTime()) ? parsedTo : now;
 
-  async getEscalationPaths() {
-    return db
-      .select()
-      .from(escalationPaths)
-      .where(eq(escalationPaths.active, true))
-      .orderBy(asc(escalationPaths.name));
-  }
+    const openStatuses = [
+      TICKET_STATUS.NEW,
+      TICKET_STATUS.IN_PROGRESS,
+      TICKET_STATUS.ON_HOLD,
+    ];
 
-  async createEscalationPath(dto: {
-    name: string;
-    steps: { afterMinutes: number; assignToRole: string }[];
-  }) {
-    // Validate steps are in ascending afterMinutes order
-    for (let i = 1; i < dto.steps.length; i++) {
-      if (dto.steps[i].afterMinutes <= dto.steps[i - 1].afterMinutes) {
-        throw new BadRequestException(
-          'Escalation steps must be in ascending afterMinutes order',
+    // Group the cheap counts into a single Promise.all so we eat one
+    // RTT for all of them.
+    const [
+      openCountRow,
+      awaitingResponseRow,
+      overdueCountRow,
+      priorityRows,
+      categoryRows,
+      agentWorkloadRows,
+      csatSummary,
+      pendingTeamRequestsCount,
+      createdLast7Row,
+      createdPrev7Row,
+      escalationCountRow,
+      windowTicketsRows,
+      supportAgentRows,
+    ] = await Promise.all([
+      // Open tickets
+      db
+        .select({ count: count() })
+        .from(tickets)
+        .where(inArray(tickets.status, openStatuses)),
+
+      // Awaiting response = open AND no first response yet. The
+      // "customer replied last" case isn't easily counted in SQL
+      // without a window function; for an overview number this
+      // approximation tracks the operationally interesting bucket
+      // (work the team owes a first reply to).
+      db
+        .select({ count: count() })
+        .from(tickets)
+        .where(
+          and(
+            inArray(tickets.status, openStatuses),
+            sql`${tickets.firstResponseAt} IS NULL`,
+          ),
+        ),
+
+      // Overdue = SLA-breached AND still open
+      db
+        .select({ count: count() })
+        .from(tickets)
+        .where(
+          and(
+            inArray(tickets.status, openStatuses),
+            or(
+              eq(tickets.slaBreachedFrt, true),
+              eq(tickets.slaBreachedTtr, true),
+            ),
+          ),
+        ),
+
+      // By priority (only open tickets)
+      db
+        .select({ priority: tickets.priority, count: count() })
+        .from(tickets)
+        .where(inArray(tickets.status, openStatuses))
+        .groupBy(tickets.priority),
+
+      // By category (only open tickets) — top by count
+      db
+        .select({ category: tickets.category, count: count() })
+        .from(tickets)
+        .where(inArray(tickets.status, openStatuses))
+        .groupBy(tickets.category)
+        .orderBy(desc(count()))
+        .limit(10),
+
+      // Agent workload — top 10 by active assigned count.
+      // Joins users so we can return display names without a second
+      // round-trip on the FE.
+      db
+        .select({
+          agentId: tickets.assigneeId,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          activeCount: count(),
+        })
+        .from(tickets)
+        .leftJoin(users, eq(tickets.assigneeId, users.id))
+        .where(
+          and(
+            inArray(tickets.status, openStatuses),
+            sql`${tickets.assigneeId} IS NOT NULL`,
+          ),
+        )
+        .groupBy(tickets.assigneeId, users.firstName, users.lastName)
+        .orderBy(desc(count()))
+        .limit(10),
+
+      this.getCsatSummary(),
+      this.countPendingTeamRequests(),
+
+      // Trend deltas: tickets created in the last 7 days vs. the 7
+      // days before that. Powers the small "↗ +4" indicators on the
+      // overview cards.
+      db
+        .select({ count: count() })
+        .from(tickets)
+        .where(gte(tickets.createdAt, sevenDaysAgo)),
+      db
+        .select({ count: count() })
+        .from(tickets)
+        .where(
+          and(
+            gte(tickets.createdAt, fourteenDaysAgo),
+            sql`${tickets.createdAt} < ${sevenDaysAgo}`,
+          ),
+        ),
+
+      // Escalation count for the window: any sla_events row of an
+      // escalation shape (auto-escalation fired or priority bumped).
+      db
+        .select({ count: count() })
+        .from(slaEvents)
+        .where(
+          and(
+            inArray(slaEvents.eventType, [
+              SLA_EVENT_TYPES.ESCALATION_TRIGGERED,
+              SLA_EVENT_TYPES.PRIORITY_ESCALATED,
+            ]),
+            gte(slaEvents.triggeredAt, windowFrom),
+            lte(slaEvents.triggeredAt, windowTo),
+          ),
+        ),
+
+      // Tickets created inside the window — the JS reducer below
+      // turns these into avg FRT, avg TTR and SLA compliance % for
+      // the same window. Capped at 1000 to keep one outlier query
+      // from dragging the dashboard. SLA compliance falls back to
+      // 100% when the sample is empty.
+      db
+        .select({
+          createdAt: tickets.createdAt,
+          firstResponseAt: tickets.firstResponseAt,
+          resolvedAt: tickets.resolvedAt,
+          onHoldTotalMinutes: tickets.onHoldTotalMinutes,
+          status: tickets.status,
+          slaBreachedFrt: tickets.slaBreachedFrt,
+          slaBreachedTtr: tickets.slaBreachedTtr,
+        })
+        .from(tickets)
+        .where(
+          and(
+            gte(tickets.createdAt, windowFrom),
+            lte(tickets.createdAt, windowTo),
+          ),
+        )
+        .limit(1000),
+
+      // Full support-agent roster so the workload card can render
+      // *distribution* (over- vs under-loaded), not just the top-10.
+      // Only active users with a SUPPORT role. Joined with userRoles
+      // for the supervisor/agent label.
+      db
+        .select({
+          userId: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          supportSubRole: userRoles.supportSubRole,
+        })
+        .from(users)
+        .innerJoin(userRoles, eq(userRoles.userId, users.id))
+        .innerJoin(roles, eq(roles.id, userRoles.roleId))
+        .where(
+          and(
+            eq(roles.name, ROLE_NAMES.SUPPORT),
+            eq(users.isActive, true),
+          ),
+        )
+        .limit(200),
+    ]);
+
+    // At-risk in the next 30 business minutes. Computed in JS using
+    // the business-hours util — cheaper than fighting SQL for it. We
+    // page over the open set (already capped above) and compute
+    // remaining minutes per ticket; top 5 are returned.
+    const atRiskCandidates = await db
+      .select({
+        id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        subject: tickets.subject,
+        priority: tickets.priority,
+        status: tickets.status,
+        firstResponseAt: tickets.firstResponseAt,
+        onHoldAt: tickets.onHoldAt,
+        onHoldTotalMinutes: tickets.onHoldTotalMinutes,
+        createdAt: tickets.createdAt,
+        assigneeId: tickets.assigneeId,
+        slaBreachedFrt: tickets.slaBreachedFrt,
+        slaBreachedTtr: tickets.slaBreachedTtr,
+      })
+      .from(tickets)
+      .where(inArray(tickets.status, openStatuses))
+      .limit(500);
+
+    const policies = await db.select().from(slaPolicies);
+    const policyMap = new Map(policies.map((p) => [p.priority, p]));
+
+    type AtRiskRow = {
+      id: string;
+      referenceNumber: string;
+      subject: string;
+      priority: string;
+      minutesRemaining: number;
+      target: 'frt' | 'ttr';
+      assigneeId: string | null;
+      assigneeName: string | null;
+    };
+
+    const assigneeIds = Array.from(
+      new Set(
+        atRiskCandidates
+          .map((t) => t.assigneeId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    );
+    const assigneeNames = new Map<string, string>();
+    if (assigneeIds.length > 0) {
+      const rows = await db
+        .select({
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        })
+        .from(users)
+        .where(inArray(users.id, assigneeIds));
+      for (const r of rows) {
+        assigneeNames.set(
+          r.id,
+          [r.firstName, r.lastName].filter(Boolean).join(' ') || 'Agent',
         );
       }
     }
 
-    const [path] = await db
-      .insert(escalationPaths)
-      .values({
-        name: dto.name,
-        steps: dto.steps,
-      })
-      .returning();
+    const atRisk: AtRiskRow[] = [];
+    for (const t of atRiskCandidates) {
+      const policy = policyMap.get(t.priority);
+      if (!policy) continue;
+      // Skip already-breached — those go on the overdue counter
+      if (t.slaBreachedFrt || t.slaBreachedTtr) continue;
+      // Skip currently on-hold — the timer is paused so they aren't
+      // "at risk in 30 minutes" by any meaningful measure.
+      if (t.status === TICKET_STATUS.ON_HOLD) continue;
 
-    return path;
-  }
+      const effectiveElapsed = effectiveBusinessMinutesElapsed(t, now);
 
-  async updateEscalationPath(
-    id: string,
-    dto: {
-      name?: string;
-      steps?: { afterMinutes: number; assignToRole: string }[];
-      active?: boolean;
-    },
-  ) {
-    if (dto.steps) {
-      for (let i = 1; i < dto.steps.length; i++) {
-        if (dto.steps[i].afterMinutes <= dto.steps[i - 1].afterMinutes) {
-          throw new BadRequestException(
-            'Escalation steps must be in ascending afterMinutes order',
-          );
+      // FRT check (only if no first response yet)
+      if (!t.firstResponseAt) {
+        const remaining = policy.frtMinutes - effectiveElapsed;
+        if (remaining > 0 && remaining <= 30) {
+          atRisk.push({
+            id: t.id,
+            referenceNumber: t.referenceNumber,
+            subject: t.subject,
+            priority: t.priority,
+            minutesRemaining: remaining,
+            target: 'frt',
+            assigneeId: t.assigneeId,
+            assigneeName: t.assigneeId
+              ? assigneeNames.get(t.assigneeId) || null
+              : null,
+          });
+          continue;
+        }
+      }
+      // TTR check (skip on-hold)
+      if (t.status !== TICKET_STATUS.ON_HOLD) {
+        const remaining = policy.ttrMinutes - effectiveElapsed;
+        if (remaining > 0 && remaining <= 30) {
+          atRisk.push({
+            id: t.id,
+            referenceNumber: t.referenceNumber,
+            subject: t.subject,
+            priority: t.priority,
+            minutesRemaining: remaining,
+            target: 'ttr',
+            assigneeId: t.assigneeId,
+            assigneeName: t.assigneeId
+              ? assigneeNames.get(t.assigneeId) || null
+              : null,
+          });
         }
       }
     }
+    atRisk.sort((a, b) => a.minutesRemaining - b.minutesRemaining);
+    const atRiskTop = atRisk.slice(0, 5);
 
-    const updateData: Record<string, any> = {};
-    if (dto.name !== undefined) updateData.name = dto.name;
-    if (dto.steps !== undefined) updateData.steps = dto.steps;
-    if (dto.active !== undefined) updateData.active = dto.active;
+    // Recent activity feed — last 20 ticket events. Reuse the
+    // existing helper but force the supervisor scope (queue-wide).
+    const fakeSupervisorUser = {
+      id: 'overview',
+      roles: [ROLE_NAMES.SUPER_ADMIN],
+      supportSubRole: SUPPORT_SUB_ROLES.SUPERVISOR,
+    } as unknown as AuthenticatedUser;
+    let recentActivity: Awaited<ReturnType<typeof this.getActivity>> = [];
+    try {
+      recentActivity = await this.getActivity(fakeSupervisorUser, 20);
+    } catch {
+      /* best-effort — overview shouldn't fail if activity feed errs */
+    }
 
-    const [updated] = await db
-      .update(escalationPaths)
-      .set(updateData)
-      .where(eq(escalationPaths.id, id))
-      .returning();
+    // Cron health: the most-recent row per cron_name. PostgreSQL's
+    // DISTINCT ON is the natural fit; the (cron_name, started_at DESC)
+    // index makes it index-only.
+    type CronHealthRow = {
+      name: string;
+      lastStartedAt: Date | null;
+      lastFinishedAt: Date | null;
+      status: string;
+      durationMs: number | null;
+      errorMessage: string | null;
+    };
+    let cronHealth: CronHealthRow[] = [];
+    try {
+      const rows = await db.execute<{
+        cron_name: string;
+        started_at: Date;
+        finished_at: Date | null;
+        status: string;
+        duration_ms: number | null;
+        error_message: string | null;
+      }>(sql`
+        SELECT DISTINCT ON (cron_name)
+          cron_name, started_at, finished_at, status, duration_ms, error_message
+        FROM cron_runs
+        ORDER BY cron_name, started_at DESC
+      `);
+      const list = Array.isArray(rows) ? rows : (rows as any).rows || [];
+      cronHealth = list.map((r: any) => ({
+        name: r.cron_name,
+        lastStartedAt: r.started_at,
+        lastFinishedAt: r.finished_at,
+        status: r.status,
+        durationMs: r.duration_ms,
+        errorMessage: r.error_message,
+      }));
+    } catch {
+      /* best-effort — overview still renders without cron strip */
+    }
 
-    if (!updated)
-      throw new NotFoundException(`Escalation path ${id} not found`);
-    return updated;
+    const openTickets = openCountRow[0]?.count ?? 0;
+    const awaitingResponse = awaitingResponseRow[0]?.count ?? 0;
+    const overdueTickets = overdueCountRow[0]?.count ?? 0;
+    const createdLast7 = createdLast7Row[0]?.count ?? 0;
+    const createdPrev7 = createdPrev7Row[0]?.count ?? 0;
+
+    const byPriority: Record<string, number> = {
+      [TICKET_PRIORITY.HIGH]: 0,
+      [TICKET_PRIORITY.MEDIUM]: 0,
+      [TICKET_PRIORITY.LOW]: 0,
+    };
+    for (const row of priorityRows) byPriority[row.priority] = row.count;
+
+    const byCategory = categoryRows.map((r) => ({
+      category: r.category,
+      count: r.count,
+    }));
+
+    const agentWorkload = agentWorkloadRows
+      .filter((r) => r.agentId)
+      .map((r) => ({
+        agentId: r.agentId as string,
+        agentName:
+          [r.firstName, r.lastName].filter(Boolean).join(' ') || 'Agent',
+        activeCount: r.activeCount,
+      }));
+
+    // Merge the active-count map with the full SUPPORT roster so the
+    // distribution card can show idle agents too. Idle agents get a
+    // 0 count; the supportSubRole tag lets the FE separate supervisors
+    // from regular agents in the distribution.
+    const workloadByAgent = new Map(
+      agentWorkload.map((w) => [w.agentId, w.activeCount]),
+    );
+    const agentDistribution = supportAgentRows.map((r) => ({
+      agentId: r.userId,
+      agentName:
+        [r.firstName, r.lastName].filter(Boolean).join(' ') || 'Agent',
+      supportSubRole: r.supportSubRole as
+        | 'supervisor'
+        | 'agent'
+        | null,
+      activeCount: Number(workloadByAgent.get(r.userId) ?? 0),
+    }));
+    agentDistribution.sort((a, b) => b.activeCount - a.activeCount);
+
+    // Window-scoped health metrics. Same business-hours math as
+    // getKPIs(), but scoped to the caller-supplied range.
+    const frtSamples: number[] = [];
+    const ttrSamples: number[] = [];
+    let windowBreaches = 0;
+    let windowResolvedOrClosed = 0;
+    for (const row of windowTicketsRows) {
+      if (row.firstResponseAt) {
+        const m = calculateBusinessMinutesElapsed(
+          row.createdAt,
+          row.firstResponseAt,
+        );
+        if (Number.isFinite(m) && m >= 0) frtSamples.push(m);
+      }
+      if (row.resolvedAt) {
+        const raw = calculateBusinessMinutesElapsed(
+          row.createdAt,
+          row.resolvedAt,
+        );
+        const effective = Math.max(
+          0,
+          raw - (row.onHoldTotalMinutes || 0),
+        );
+        if (Number.isFinite(effective)) ttrSamples.push(effective);
+      }
+      if (
+        row.status === TICKET_STATUS.RESOLVED ||
+        row.status === TICKET_STATUS.CLOSED
+      ) {
+        windowResolvedOrClosed += 1;
+        if (row.slaBreachedFrt || row.slaBreachedTtr) windowBreaches += 1;
+      }
+    }
+    const windowAvgFrt = frtSamples.length
+      ? Math.round(
+          frtSamples.reduce((a, b) => a + b, 0) / frtSamples.length,
+        )
+      : null;
+    const windowAvgTtr = ttrSamples.length
+      ? Math.round(
+          ttrSamples.reduce((a, b) => a + b, 0) / ttrSamples.length,
+        )
+      : null;
+    const windowSlaCompliance =
+      windowResolvedOrClosed > 0
+        ? Math.max(
+            0,
+            Math.round(
+              ((windowResolvedOrClosed - windowBreaches) /
+                windowResolvedOrClosed) *
+                100,
+            ),
+          )
+        : 100;
+    const escalationCount = Number(escalationCountRow[0]?.count ?? 0);
+
+    return {
+      // Client's 7 requested metrics
+      openTickets,
+      awaitingResponse,
+      overdueTickets,
+      byPriority,
+      byCategory,
+      agentWorkload,
+      csat: {
+        averageScore: csatSummary.avgScore,
+        responseCount: csatSummary.totalResponded,
+        responseRate: csatSummary.responseRate,
+        distribution: csatSummary.distribution,
+      },
+      // Health dashboard additions — window-scoped to dateFrom/dateTo
+      health: {
+        avgFrtMinutes: windowAvgFrt,
+        avgTtrMinutes: windowAvgTtr,
+        slaCompliancePct: windowSlaCompliance,
+        escalationCount,
+        sampleSize: windowTicketsRows.length,
+        windowFrom: windowFrom.toISOString(),
+        windowTo: windowTo.toISOString(),
+      },
+      agentDistribution,
+      // Bonus additions
+      atRisk: atRiskTop,
+      recentActivity,
+      trends: {
+        createdLast7,
+        createdPrev7,
+        createdDelta: createdLast7 - createdPrev7,
+      },
+      cronHealth,
+      pendingTeamRequests: pendingTeamRequestsCount,
+      // Echo the moment the snapshot was computed so the FE can show
+      // "Updated 12 seconds ago" without doing wall-clock guesswork.
+      generatedAt: now.toISOString(),
+    };
   }
 
-  async deleteEscalationPath(id: string) {
-    const [updated] = await db
-      .update(escalationPaths)
-      .set({ active: false })
-      .where(eq(escalationPaths.id, id))
-      .returning();
-
-    if (!updated)
-      throw new NotFoundException(`Escalation path ${id} not found`);
-    return updated;
-  }
+  // ─── SLA Policy CRUD ──────────────────────────────────
 
   async getSlaPolicies() {
     return db
@@ -4055,44 +7001,81 @@ export class SupportService implements OnModuleInit {
 
   // ─── Macros CRUD ──────────────────────────────────────
 
-  async getMacros() {
-    return db
+  async getMacros(opts?: {
+    categoryKey?: string | null;
+    includeInactive?: boolean;
+  }) {
+    const conditions: any[] = [];
+    if (!opts?.includeInactive) {
+      conditions.push(eq(supportMacros.isActive, true));
+    }
+    if (opts?.categoryKey) {
+      // Caller wants a specific category — include both that category
+      // AND general-purpose (null categoryKey) macros so the dropdown
+      // surfaces both "recommended for this ticket" and universals.
+      conditions.push(
+        or(
+          eq(supportMacros.categoryKey, opts.categoryKey),
+          isNull(supportMacros.categoryKey),
+        ),
+      );
+    }
+
+    const rows = await db
       .select({
         id: supportMacros.id,
         title: supportMacros.title,
         bodyTemplate: supportMacros.bodyTemplate,
+        bodyAr: supportMacros.bodyAr,
+        categoryKey: supportMacros.categoryKey,
         variables: supportMacros.variables,
         kbArticleUrls: supportMacros.kbArticleUrls,
-        escalationPathId: supportMacros.escalationPathId,
         isActive: supportMacros.isActive,
         createdAt: supportMacros.createdAt,
         creatorFirstName: users.firstName,
         creatorLastName: users.lastName,
+        useCount: sql<number>`COALESCE(COUNT(${supportMacroUses.id}), 0)`.as('use_count'),
+        lastUsedAt: sql<Date | null>`MAX(${supportMacroUses.appliedAt})`.as('last_used_at'),
       })
       .from(supportMacros)
       .leftJoin(users, eq(supportMacros.createdBy, users.id))
-      .where(eq(supportMacros.isActive, true))
+      .leftJoin(supportMacroUses, eq(supportMacroUses.macroId, supportMacros.id))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .groupBy(
+        supportMacros.id,
+        users.firstName,
+        users.lastName,
+      )
       .orderBy(desc(supportMacros.createdAt));
+
+    return rows.map((r) => ({
+      ...r,
+      useCount: Number(r.useCount ?? 0),
+    }));
   }
 
   async getMacro(id: string) {
     const [macro] = await db
       .select()
       .from(supportMacros)
-      .where(and(eq(supportMacros.id, id), eq(supportMacros.isActive, true)));
+      .where(eq(supportMacros.id, id));
     if (!macro) throw new NotFoundException('Macro not found');
     return macro;
   }
 
   async createMacro(userId: string, dto: CreateMacroDto) {
+    if (dto.categoryKey) {
+      await this.assertCategoryKeyExists(dto.categoryKey);
+    }
     const [macro] = await db
       .insert(supportMacros)
       .values({
         title: dto.title,
         bodyTemplate: dto.bodyTemplate,
+        bodyAr: dto.bodyAr ?? null,
+        categoryKey: dto.categoryKey ?? null,
         variables: dto.variables || null,
         kbArticleUrls: dto.kbArticleUrls || null,
-        escalationPathId: dto.escalationPathId || null,
         createdBy: userId,
       })
       .returning();
@@ -4106,12 +7089,17 @@ export class SupportService implements OnModuleInit {
       .where(eq(supportMacros.id, id));
     if (!existing) throw new NotFoundException('Macro not found');
 
+    if (dto.categoryKey) {
+      await this.assertCategoryKeyExists(dto.categoryKey);
+    }
+
     const updateData: Record<string, any> = { updatedAt: new Date() };
     if (dto.title !== undefined) updateData.title = dto.title;
     if (dto.bodyTemplate !== undefined) updateData.bodyTemplate = dto.bodyTemplate;
+    if (dto.bodyAr !== undefined) updateData.bodyAr = dto.bodyAr;
+    if (dto.categoryKey !== undefined) updateData.categoryKey = dto.categoryKey;
     if (dto.variables !== undefined) updateData.variables = dto.variables;
     if (dto.kbArticleUrls !== undefined) updateData.kbArticleUrls = dto.kbArticleUrls;
-    if (dto.escalationPathId !== undefined) updateData.escalationPathId = dto.escalationPathId;
     if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
 
     const [updated] = await db
@@ -4136,7 +7124,95 @@ export class SupportService implements OnModuleInit {
     return { success: true };
   }
 
-  async applyMacro(macroId: string, ticketId: string) {
+  // Guard the categoryKey input against arbitrary text — validate
+  // against the live category list (builtins + custom) so we don't
+  // silently store typos like 'logn' that would never match anything.
+  private async assertCategoryKeyExists(slug: string) {
+    const all = await this.listTicketCategories();
+    if (!all.some((c) => c.slug === slug)) {
+      throw new BadRequestException(`Unknown ticket category: ${slug}`);
+    }
+  }
+
+  // ─── Macro usage analytics ────────────────────────────
+  //
+  // Returns per-macro use counts, per-category aggregates, and the
+  // monthly trend over the last 6 months. Powers the "Usage" panel
+  // in the macros management view.
+  async getMacroUsageStats() {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const [perMacro, perCategory, monthly] = await Promise.all([
+      // Each macro with its lifetime use count + last-used timestamp.
+      // LEFT JOIN keeps unused macros in the result so the "untouched"
+      // table can be derived in the FE.
+      db
+        .select({
+          id: supportMacros.id,
+          title: supportMacros.title,
+          categoryKey: supportMacros.categoryKey,
+          isActive: supportMacros.isActive,
+          useCount: sql<number>`COALESCE(COUNT(${supportMacroUses.id}), 0)`.as('use_count'),
+          lastUsedAt: sql<Date | null>`MAX(${supportMacroUses.appliedAt})`.as('last_used_at'),
+        })
+        .from(supportMacros)
+        .leftJoin(supportMacroUses, eq(supportMacroUses.macroId, supportMacros.id))
+        .groupBy(supportMacros.id)
+        .orderBy(desc(sql`use_count`)),
+
+      // Sum of uses bucketed by macro.categoryKey. NULL becomes 'general'
+      // in the response so the FE doesn't need a special case.
+      db
+        .select({
+          categoryKey: supportMacros.categoryKey,
+          uses: sql<number>`COUNT(${supportMacroUses.id})`.as('uses'),
+          macroCount: sql<number>`COUNT(DISTINCT ${supportMacros.id})`.as('macro_count'),
+        })
+        .from(supportMacros)
+        .leftJoin(supportMacroUses, eq(supportMacroUses.macroId, supportMacros.id))
+        .groupBy(supportMacros.categoryKey)
+        .orderBy(desc(sql`uses`)),
+
+      // Last 6 months of activity, bucketed by YYYY-MM (UTC). Empty
+      // months are NOT returned — FE fills the gap with zeros.
+      db
+        .select({
+          bucket: sql<string>`to_char(${supportMacroUses.appliedAt}, 'YYYY-MM')`.as('bucket'),
+          uses: sql<number>`COUNT(*)`.as('uses'),
+        })
+        .from(supportMacroUses)
+        .where(gte(supportMacroUses.appliedAt, sixMonthsAgo))
+        .groupBy(sql`bucket`)
+        .orderBy(sql`bucket ASC`),
+    ]);
+
+    const totalUses = perMacro.reduce((sum, m) => sum + Number(m.useCount ?? 0), 0);
+    return {
+      totalUses,
+      totalMacros: perMacro.length,
+      unusedCount: perMacro.filter((m) => Number(m.useCount ?? 0) === 0).length,
+      perMacro: perMacro.map((m) => ({
+        ...m,
+        useCount: Number(m.useCount ?? 0),
+      })),
+      perCategory: perCategory.map((c) => ({
+        categoryKey: c.categoryKey ?? 'general',
+        uses: Number(c.uses ?? 0),
+        macroCount: Number(c.macroCount ?? 0),
+      })),
+      monthly: monthly.map((b) => ({
+        bucket: b.bucket,
+        uses: Number(b.uses ?? 0),
+      })),
+    };
+  }
+
+  async applyMacro(
+    macroId: string,
+    ticketId: string,
+    opts?: { userId?: string | null; locale?: string | null },
+  ) {
     // Fetch macro (404 if deleted/inactive)
     const [macro] = await db
       .select()
@@ -4197,8 +7273,68 @@ export class SupportService implements OnModuleInit {
     // learner name. Falls back to the full name if there's no whitespace.
     const learnerFirstName = (learnerName.split(/\s+/)[0] || learnerName).trim();
 
-    // Variable resolution — original 4 + 5 new ticket-field shortcuts.
-    let resolvedBody = macro.bodyTemplate;
+    // Three richer placeholders — only fetched when the student is
+    // registered (guest tickets have no profile to look up).
+    let certificateStatus = '';
+    let webinarJoinUrl = '';
+    let paymentAmountStr = '';
+
+    if (ticket.studentId && ticket.studentId !== GUEST_USER_ID) {
+      const [cert, webinarReg, payment] = await Promise.all([
+        db
+          .select({ status: certificateRequests.status })
+          .from(certificateRequests)
+          .where(eq(certificateRequests.studentId, ticket.studentId))
+          .orderBy(desc(certificateRequests.createdAt))
+          .limit(1),
+
+        // Prefer the next upcoming webinar (still useful to the
+        // student). If none upcoming, fall back to most recent so
+        // recording-related macros still have a sensible link.
+        db
+          .select({
+            joinUrl: webinarRegistrations.joinUrl,
+            scheduledAt: sessions.scheduledAt,
+          })
+          .from(webinarRegistrations)
+          .innerJoin(sessions, eq(webinarRegistrations.sessionId, sessions.id))
+          .where(eq(webinarRegistrations.userId, ticket.studentId))
+          .orderBy(desc(sessions.scheduledAt))
+          .limit(5),
+
+        db
+          .select({
+            amount: payments.amount,
+            currency: payments.currency,
+          })
+          .from(payments)
+          .where(eq(payments.userId, ticket.studentId))
+          .orderBy(desc(payments.createdAt))
+          .limit(1),
+      ]);
+
+      certificateStatus = cert[0]?.status ?? '';
+
+      // Pick the next upcoming, else the most recent past.
+      const now = new Date();
+      const upcoming = webinarReg.find(
+        (r) => r.scheduledAt && new Date(r.scheduledAt) > now,
+      );
+      webinarJoinUrl = (upcoming?.joinUrl || webinarReg[0]?.joinUrl) ?? '';
+
+      if (payment[0]) {
+        const amount = Number(payment[0].amount ?? 0);
+        const currency = payment[0].currency || 'SAR';
+        paymentAmountStr = amount > 0 ? `${amount.toFixed(2)} ${currency}` : '';
+      }
+    }
+
+    // Pick Arabic body when requested and present; English is the
+    // fallback in every other case (no AR body, locale missing, or
+    // locale is anything other than 'ar').
+    const useArabic = opts?.locale === 'ar' && !!macro.bodyAr;
+    let resolvedBody = useArabic ? (macro.bodyAr as string) : macro.bodyTemplate;
+
     resolvedBody = resolvedBody.replace(/\{\{learner_name\}\}/g, learnerName);
     resolvedBody = resolvedBody.replace(/\{\{learner_first_name\}\}/g, learnerFirstName);
     resolvedBody = resolvedBody.replace(/\{\{course_name\}\}/g, courseName);
@@ -4208,6 +7344,9 @@ export class SupportService implements OnModuleInit {
     resolvedBody = resolvedBody.replace(/\{\{ticket_category\}\}/g, ticket.category || '');
     resolvedBody = resolvedBody.replace(/\{\{ticket_status\}\}/g, ticket.status || '');
     resolvedBody = resolvedBody.replace(/\{\{agent_name\}\}/g, agentName);
+    resolvedBody = resolvedBody.replace(/\{\{certificate_status\}\}/g, certificateStatus);
+    resolvedBody = resolvedBody.replace(/\{\{webinar_join_url\}\}/g, webinarJoinUrl);
+    resolvedBody = resolvedBody.replace(/\{\{payment_amount\}\}/g, paymentAmountStr);
 
     // Replace any remaining unresolved {{...}} with empty string
     resolvedBody = resolvedBody.replace(/\{\{[^}]*\}\}/g, '');
@@ -4245,6 +7384,24 @@ export class SupportService implements OnModuleInit {
         for (const vUrl of validUrls) {
           resolvedBody += `\n- ${vUrl}`;
         }
+      }
+    }
+
+    // Log the apply for analytics. Best-effort — a logging failure
+    // must not break the agent's reply flow, so we catch + drop.
+    // Only log when we know who applied it (controller always passes
+    // userId; safety net for direct internal callers).
+    if (opts?.userId) {
+      try {
+        await db.insert(supportMacroUses).values({
+          macroId,
+          ticketId,
+          userId: opts.userId,
+        });
+      } catch (err) {
+        this.logger.warn(
+          `Failed to log macro use (macro=${macroId} ticket=${ticketId}): ${(err as Error).message}`,
+        );
       }
     }
 
@@ -4418,20 +7575,893 @@ export class SupportService implements OnModuleInit {
     const perfRows = await this.getAgentPerformance();
     const perfById = new Map(perfRows.map((p: any) => [p.userId, p]));
 
-    return rows.map((r) => ({
-      membershipId: r.membershipId,
-      userId: r.agentId,
-      firstName: r.firstName,
-      lastName: r.lastName,
-      email: r.email,
-      avatar: r.avatar,
-      phone: r.phone,
-      isActive: r.isActive,
-      lastLoginAt: r.lastLoginAt,
-      assignedAt: r.assignedAt,
-      supportSubRole: r.supportSubRole,
-      performance: perfById.get(r.agentId) ?? null,
-    }));
+    // Map performance to the canonical supervisor-rollup shape so all
+    // callers (supervisor dashboard, getSupervisorDetail aggregation,
+    // listSupervisorsWithStats) read the same field names. The raw
+    // getAgentPerformance shape uses totalTickets / csatAvgScore /
+    // frtBreaches+ttrBreaches — without remapping here the consumers
+    // read undefined and the FE crashes on perf.csatScore.toFixed().
+    return rows.map((r) => {
+      // Hydrate per-agent perf in the union shape consumed by every
+      // surface that reads `member.performance.*`:
+      //   • Supervisor "My Team" KPIs + agent cards
+      //   • Admin Supervisor Detail aggregates
+      //   • getSupervisorDetail aggregation roll-up
+      // We carry both the legacy keys (ticketsHandled / csatScore /
+      // slaBreachCount) AND the granular per-ticket counters
+      // (openTickets / resolvedTickets / csatAvgScore /
+      // frtBreaches / ttrBreaches / avgTtrMinutes) so the FE never
+      // reads `undefined` and silently counts as zero.
+      const raw = perfById.get(r.agentId) as
+        | {
+            totalTickets?: number;
+            openTickets?: number;
+            resolvedTickets?: number;
+            avgFrtMinutes?: number | null;
+            avgTtrMinutes?: number | null;
+            csatAvgScore?: number | null;
+            csatResponses?: number;
+            frtBreaches?: number;
+            ttrBreaches?: number;
+          }
+        | undefined;
+      const performance = raw
+        ? {
+            ticketsHandled: raw.totalTickets || 0,
+            totalTickets: raw.totalTickets || 0,
+            openTickets: raw.openTickets || 0,
+            resolvedTickets: raw.resolvedTickets || 0,
+            avgFrtMinutes: raw.avgFrtMinutes ?? null,
+            avgTtrMinutes: raw.avgTtrMinutes ?? null,
+            csatScore: raw.csatAvgScore ?? null,
+            csatAvgScore: raw.csatAvgScore ?? null,
+            csatResponses: raw.csatResponses || 0,
+            frtBreaches: raw.frtBreaches || 0,
+            ttrBreaches: raw.ttrBreaches || 0,
+            slaBreachCount: (raw.frtBreaches || 0) + (raw.ttrBreaches || 0),
+          }
+        : null;
+      return {
+        membershipId: r.membershipId,
+        userId: r.agentId,
+        firstName: r.firstName,
+        lastName: r.lastName,
+        email: r.email,
+        avatar: r.avatar,
+        phone: r.phone,
+        isActive: r.isActive,
+        lastLoginAt: r.lastLoginAt,
+        assignedAt: r.assignedAt,
+        supportSubRole: r.supportSubRole,
+        performance,
+      };
+    });
+  }
+
+  /**
+   * Admin-only — paginated support audit trail. Reads from the shared
+   * audit_logs table filtered to entityType='ticket' AND action in the
+   * support-action set. Each row carries the performer's name, primary
+   * role (admin/supervisor/agent/student), and the ticket reference so
+   * the FE can render without N+1 calls.
+   *
+   * The performer role uses the same precedence as the comment-role
+   * resolver in getTicketDetail (super_admin > admin > supervisor >
+   * agent > student) so labels are consistent across surfaces.
+   */
+  async getSupportAuditTrail(page = 1, limit = 20) {
+    const safeLimit = Math.min(Math.max(1, limit), 100);
+    const safePage = Math.max(1, page);
+    const offset = (safePage - 1) * safeLimit;
+
+    const supportActions = Object.values(SupportService.SUPPORT_AUDIT_ACTIONS);
+
+    // Pull both user-action rows AND system-generated SLA events,
+    // then merge them in JS. Pagination needs the global ordered list,
+    // so we cap each source at (offset + safeLimit) and merge. This
+    // keeps the query simple at the cost of fetching a few extra rows.
+    // For the page sizes we use (≤100) the overhead is negligible.
+    const fetchSize = offset + safeLimit;
+    const [userRows, slaRows, [totalAudit], [totalSla]] = await Promise.all([
+      db
+        .select({
+          id: auditLogs.id,
+          entityType: auditLogs.entityType,
+          entityId: auditLogs.entityId,
+          action: auditLogs.action,
+          performedBy: auditLogs.performedBy,
+          metadata: auditLogs.metadata,
+          createdAt: auditLogs.createdAt,
+          performerFirstName: users.firstName,
+          performerLastName: users.lastName,
+          ticketReferenceNumber: tickets.referenceNumber,
+          ticketSubject: tickets.subject,
+        })
+        .from(auditLogs)
+        .leftJoin(users, eq(users.id, auditLogs.performedBy))
+        .leftJoin(tickets, eq(tickets.id, auditLogs.entityId))
+        .where(
+          and(
+            eq(auditLogs.entityType, 'ticket'),
+            inArray(auditLogs.action, supportActions),
+          ),
+        )
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(fetchSize),
+      db
+        .select({
+          id: slaEvents.id,
+          ticketId: slaEvents.ticketId,
+          eventType: slaEvents.eventType,
+          triggeredAt: slaEvents.triggeredAt,
+          ticketReferenceNumber: tickets.referenceNumber,
+          ticketSubject: tickets.subject,
+        })
+        .from(slaEvents)
+        .leftJoin(tickets, eq(tickets.id, slaEvents.ticketId))
+        .orderBy(desc(slaEvents.triggeredAt))
+        .limit(fetchSize),
+      db
+        .select({ count: count() })
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.entityType, 'ticket'),
+            inArray(auditLogs.action, supportActions),
+          ),
+        ),
+      db.select({ count: count() }).from(slaEvents),
+    ]);
+
+    // Map sla_events rows into the same shape as user-action rows so
+    // the rest of the function processes one unified list. Actions
+    // are prefixed `sla_` so the FE can pick distinct icons + tone.
+    const slaActionMap: Record<string, string> = {
+      frt_breach: 'sla_frt_breach',
+      ttr_breach: 'sla_ttr_breach',
+      frt_warning_75: 'sla_frt_warning_75',
+      priority_escalated: 'sla_priority_escalated',
+      escalation_triggered: 'sla_escalation_triggered',
+      frt_breach_reassigned: 'sla_frt_breach_reassigned',
+      ttr_breach_reassigned: 'sla_ttr_breach_reassigned',
+      resolved_within_sla: 'sla_resolved_within_sla',
+    };
+    type CombinedRow = {
+      id: string;
+      action: string;
+      entityId: string;
+      performedBy: string | null;
+      metadata: Record<string, unknown> | null;
+      createdAt: Date;
+      performerFirstName: string | null;
+      performerLastName: string | null;
+      ticketReferenceNumber: string | null;
+      ticketSubject: string | null;
+    };
+    const combined: CombinedRow[] = [];
+    for (const r of userRows) {
+      combined.push({
+        id: r.id,
+        action: r.action,
+        entityId: r.entityId,
+        performedBy: r.performedBy,
+        metadata: r.metadata as Record<string, unknown> | null,
+        createdAt: r.createdAt,
+        performerFirstName: r.performerFirstName,
+        performerLastName: r.performerLastName,
+        ticketReferenceNumber: r.ticketReferenceNumber,
+        ticketSubject: r.ticketSubject,
+      });
+    }
+    for (const r of slaRows) {
+      const action = slaActionMap[r.eventType] || `sla_${r.eventType}`;
+      combined.push({
+        id: `sla:${r.id}`,
+        action,
+        entityId: r.ticketId,
+        performedBy: null,
+        metadata: { source: 'sla_monitor', eventType: r.eventType },
+        createdAt: r.triggeredAt,
+        performerFirstName: null,
+        performerLastName: null,
+        ticketReferenceNumber: r.ticketReferenceNumber,
+        ticketSubject: r.ticketSubject,
+      });
+    }
+    combined.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const rows = combined.slice(offset, offset + safeLimit);
+    const totalRow = {
+      count: (totalAudit?.count || 0) + (totalSla?.count || 0),
+    };
+
+    // Resolve the primary role for the distinct performers on this
+    // page in a single query; per-row joins would explode if a user
+    // holds multiple roles.
+    const performerIds = Array.from(
+      new Set(rows.map((r) => r.performedBy).filter((v): v is string => !!v)),
+    );
+    const performerRoleMap = new Map<
+      string,
+      'super_admin' | 'admin' | 'supervisor' | 'agent' | 'student' | null
+    >();
+    if (performerIds.length > 0) {
+      const roleRows = await db
+        .select({
+          userId: userRoles.userId,
+          roleName: roles.name,
+          supportSubRole: userRoles.supportSubRole,
+        })
+        .from(userRoles)
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .where(inArray(userRoles.userId, performerIds));
+      const grouped = new Map<
+        string,
+        { roleName: string; supportSubRole: string | null }[]
+      >();
+      for (const r of roleRows) {
+        const list = grouped.get(r.userId) || [];
+        list.push({ roleName: r.roleName, supportSubRole: r.supportSubRole });
+        grouped.set(r.userId, list);
+      }
+      for (const id of performerIds) {
+        const list = grouped.get(id) || [];
+        let chosen:
+          | 'super_admin'
+          | 'admin'
+          | 'supervisor'
+          | 'agent'
+          | 'student'
+          | null = null;
+        if (list.some((x) => x.roleName === ROLE_NAMES.SUPER_ADMIN)) {
+          chosen = 'super_admin';
+        } else if (list.some((x) => x.roleName === ROLE_NAMES.ADMIN)) {
+          chosen = 'admin';
+        } else {
+          const support = list.find((x) => x.roleName === ROLE_NAMES.SUPPORT);
+          if (support) {
+            chosen =
+              support.supportSubRole === SUPPORT_SUB_ROLES.SUPERVISOR
+                ? 'supervisor'
+                : 'agent';
+          } else if (list.some((x) => x.roleName === ROLE_NAMES.STUDENT)) {
+            chosen = 'student';
+          }
+        }
+        performerRoleMap.set(id, chosen);
+      }
+    }
+
+    const total = totalRow?.count || 0;
+    return {
+      data: rows.map((r) => ({
+        id: r.id,
+        action: r.action,
+        ticketId: r.entityId,
+        ticketReferenceNumber: r.ticketReferenceNumber,
+        ticketSubject: r.ticketSubject,
+        performerId: r.performedBy,
+        performerName:
+          [r.performerFirstName, r.performerLastName]
+            .filter(Boolean)
+            .join(' ') || null,
+        performerRole: r.performedBy
+          ? performerRoleMap.get(r.performedBy) ?? null
+          : null,
+        metadata: r.metadata,
+        createdAt: r.createdAt,
+      })),
+      page: safePage,
+      limit: safeLimit,
+      total,
+      totalPages: Math.ceil(total / safeLimit),
+    };
+  }
+
+  // ─── Hold-approval workflow ──────────────────────────────
+  //
+  // Agents cannot flip a ticket directly to ON_HOLD. They submit a
+  // request via createHoldRequest. A supervisor or admin then resolves
+  // it via decideHoldRequest. Notifications + audit logs are written
+  // at every step so the activity ends up on the audit trail without
+  // additional plumbing.
+
+  async createHoldRequest(
+    user: AuthenticatedUser,
+    ticketId: string,
+    input: { reason: string; description?: string | null },
+  ) {
+    // Validate reason against the same whitelist the ticket already uses.
+    if (!HOLD_REASONS.includes(input.reason as (typeof HOLD_REASONS)[number])) {
+      throw new BadRequestException(
+        `Invalid hold reason. Allowed: ${HOLD_REASONS.join(', ')}`,
+      );
+    }
+    // "other" requires a description so supervisors aren't deciding blind.
+    if (input.reason === 'other' && !input.description?.trim()) {
+      throw new BadRequestException(
+        'A description is required when the reason is "other".',
+      );
+    }
+
+    const [ticket] = await db
+      .select({
+        id: tickets.id,
+        status: tickets.status,
+        assigneeId: tickets.assigneeId,
+        subject: tickets.subject,
+        referenceNumber: tickets.referenceNumber,
+        studentId: tickets.studentId,
+      })
+      .from(tickets)
+      .where(eq(tickets.id, ticketId));
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    // Only the assignee can request. (Admins / supervisors don't go
+    // through this flow at all — they use updateTicket directly.)
+    if (ticket.assigneeId !== user.id) {
+      throw new ForbiddenException(
+        'Only the ticket assignee can request a hold',
+      );
+    }
+    if (
+      ticket.status === TICKET_STATUS.RESOLVED ||
+      ticket.status === TICKET_STATUS.CLOSED
+    ) {
+      throw new BadRequestException(
+        'Cannot put a resolved or closed ticket on hold',
+      );
+    }
+    if (ticket.status === TICKET_STATUS.ON_HOLD) {
+      throw new BadRequestException('Ticket is already on hold');
+    }
+
+    // Reject if there's already a pending request. The DB unique
+    // partial index would catch this anyway; the explicit check gives
+    // a friendlier message than a 23505.
+    const [existingPending] = await db
+      .select({ id: ticketHoldRequests.id })
+      .from(ticketHoldRequests)
+      .where(
+        and(
+          eq(ticketHoldRequests.ticketId, ticketId),
+          eq(ticketHoldRequests.status, HOLD_REQUEST_STATUS.PENDING),
+        ),
+      );
+    if (existingPending) {
+      throw new BadRequestException(
+        'A hold request is already pending for this ticket',
+      );
+    }
+
+    const [row] = await db
+      .insert(ticketHoldRequests)
+      .values({
+        ticketId,
+        requestedBy: user.id,
+        reason: input.reason,
+        description: input.description?.trim() || null,
+        status: HOLD_REQUEST_STATUS.PENDING,
+      })
+      .returning();
+
+    // Audit log entry — "hold_requested". Action lives outside the
+    // SUPPORT_AUDIT_ACTIONS set so it doesn't surface inside the
+    // generic audit trail filter; the supervisor's pending-decisions
+    // view reads `ticket_hold_requests` directly.
+    await this.auditLogService.log({
+      entityType: 'ticket',
+      entityId: ticketId,
+      action: 'hold_requested',
+      performedBy: user.id,
+      metadata: {
+        referenceNumber: ticket.referenceNumber,
+        reason: input.reason,
+        holdRequestId: row.id,
+      },
+    });
+
+    // Find the right approver: supervisor of the requester's team,
+    // falling back to all supervisors. Notify each with an in-app
+    // alert + email so they see the request promptly.
+    const [membership] = await db
+      .select({ supervisorId: supportTeamMembers.supervisorId })
+      .from(supportTeamMembers)
+      .where(eq(supportTeamMembers.agentId, user.id))
+      .limit(1);
+
+    const approverIds = new Set<string>();
+    if (membership?.supervisorId) approverIds.add(membership.supervisorId);
+
+    // Always tap admins so a stranded request without a supervisor
+    // still gets eyes on it.
+    const adminUsers = await db
+      .select({ userId: userRoles.userId })
+      .from(userRoles)
+      .innerJoin(roles, eq(userRoles.roleId, roles.id))
+      .where(
+        inArray(roles.name, [ROLE_NAMES.ADMIN, ROLE_NAMES.SUPER_ADMIN] as any),
+      );
+    for (const a of adminUsers) approverIds.add(a.userId);
+
+    const requesterName =
+      [user.firstName, user.lastName].filter(Boolean).join(' ') || 'An agent';
+    for (const approverId of approverIds) {
+      try {
+        await this.notificationsService.create({
+          recipientId: approverId,
+          type: 'hold_requested',
+          title: 'Hold approval needed',
+          message: `${requesterName} requested a hold on ${ticket.referenceNumber}: ${input.reason}`,
+          link: `/dashboard/support/supervisor/tickets/${ticketId}`,
+          entityType: 'ticket',
+          entityId: ticketId,
+        });
+      } catch {
+        /* non-blocking */
+      }
+      // Email
+      try {
+        const [approver] = await db
+          .select({ email: users.email, firstName: users.firstName })
+          .from(users)
+          .where(eq(users.id, approverId));
+        if (approver?.email) {
+          await this.emailService.sendHoldRequestEmail(
+            approver.email,
+            approver.firstName || 'Supervisor',
+            ticket.referenceNumber,
+            ticket.subject,
+            requesterName,
+            input.reason,
+            input.description || null,
+          );
+        }
+      } catch {
+        /* non-blocking */
+      }
+    }
+
+    return row;
+  }
+
+  async decideHoldRequest(
+    user: AuthenticatedUser,
+    ticketId: string,
+    requestId: string,
+    input: { decision: 'approved' | 'rejected'; note?: string | null },
+  ) {
+    const isPrivileged =
+      user.supportSubRole === SUPPORT_SUB_ROLES.SUPERVISOR ||
+      user.roles.includes(ROLE_NAMES.ADMIN) ||
+      user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+    if (!isPrivileged) {
+      throw new ForbiddenException(
+        'Only supervisors and admins can decide hold requests',
+      );
+    }
+
+    const [req] = await db
+      .select()
+      .from(ticketHoldRequests)
+      .where(
+        and(
+          eq(ticketHoldRequests.id, requestId),
+          eq(ticketHoldRequests.ticketId, ticketId),
+        ),
+      );
+    if (!req) throw new NotFoundException('Hold request not found');
+    if (req.status !== HOLD_REQUEST_STATUS.PENDING) {
+      throw new BadRequestException(
+        `Request is already ${req.status} — no further decision needed.`,
+      );
+    }
+
+    const [ticket] = await db
+      .select({
+        id: tickets.id,
+        status: tickets.status,
+        subject: tickets.subject,
+        referenceNumber: tickets.referenceNumber,
+        onHoldTotalMinutes: tickets.onHoldTotalMinutes,
+      })
+      .from(tickets)
+      .where(eq(tickets.id, ticketId));
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    const now = new Date();
+    await db
+      .update(ticketHoldRequests)
+      .set({
+        status:
+          input.decision === 'approved'
+            ? HOLD_REQUEST_STATUS.APPROVED
+            : HOLD_REQUEST_STATUS.REJECTED,
+        decidedBy: user.id,
+        decidedAt: now,
+        decisionNote: input.note?.trim() || null,
+      })
+      .where(eq(ticketHoldRequests.id, requestId));
+
+    // On approval, actually flip the ticket. On rejection, just leave
+    // it alone — the agent gets the notification and the audit row.
+    if (input.decision === 'approved') {
+      if (
+        ticket.status === TICKET_STATUS.RESOLVED ||
+        ticket.status === TICKET_STATUS.CLOSED
+      ) {
+        throw new BadRequestException(
+          'Ticket reached a terminal state while the request was pending — cannot approve.',
+        );
+      }
+      await db
+        .update(tickets)
+        .set({
+          status: TICKET_STATUS.ON_HOLD,
+          onHoldReason: req.reason,
+          onHoldAt: now,
+          onHoldResumedAt: null,
+          updatedAt: now,
+        })
+        .where(eq(tickets.id, ticketId));
+    }
+
+    // Audit row + notification + email to the requester.
+    await this.auditLogService.log({
+      entityType: 'ticket',
+      entityId: ticketId,
+      action: input.decision === 'approved' ? 'hold_approved' : 'hold_rejected',
+      performedBy: user.id,
+      metadata: {
+        referenceNumber: ticket.referenceNumber,
+        reason: req.reason,
+        holdRequestId: requestId,
+        decisionNote: input.note || null,
+      },
+    });
+
+    try {
+      const [requester] = await db
+        .select({
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        })
+        .from(users)
+        .where(eq(users.id, req.requestedBy));
+      await this.notificationsService.create({
+        recipientId: req.requestedBy,
+        type: 'hold_decided',
+        title:
+          input.decision === 'approved'
+            ? 'Hold request approved'
+            : 'Hold request rejected',
+        message: `${ticket.referenceNumber} — ${input.decision === 'approved' ? 'on hold' : 'rejected'}.${
+          input.note ? ` Note: ${input.note}` : ''
+        }`,
+        link: `/dashboard/support/agent/tickets/${ticketId}`,
+        entityType: 'ticket',
+        entityId: ticketId,
+      });
+      if (requester?.email) {
+        await this.emailService.sendHoldDecisionEmail(
+          requester.email,
+          requester.firstName || 'Agent',
+          ticket.referenceNumber,
+          ticket.subject,
+          input.decision,
+          input.note || null,
+        );
+      }
+    } catch {
+      /* non-blocking */
+    }
+
+    return { ok: true, decision: input.decision };
+  }
+
+  // Look up the pending hold request for a ticket — if one exists,
+  // it surfaces in getTicketDetail so the FE can render the pending
+  // banner without an extra round-trip.
+  async getPendingHoldRequest(ticketId: string) {
+    const [row] = await db
+      .select({
+        id: ticketHoldRequests.id,
+        reason: ticketHoldRequests.reason,
+        description: ticketHoldRequests.description,
+        createdAt: ticketHoldRequests.createdAt,
+        requestedBy: ticketHoldRequests.requestedBy,
+        requesterFirstName: users.firstName,
+        requesterLastName: users.lastName,
+      })
+      .from(ticketHoldRequests)
+      .leftJoin(users, eq(users.id, ticketHoldRequests.requestedBy))
+      .where(
+        and(
+          eq(ticketHoldRequests.ticketId, ticketId),
+          eq(ticketHoldRequests.status, HOLD_REQUEST_STATUS.PENDING),
+        ),
+      )
+      .limit(1);
+    return row || null;
+  }
+
+  /**
+   * Admin-only — list all supervisors with team-aggregate stats.
+   * One row per supervisor, sorted by team size desc. Stats are
+   * scoped to the optional date range (defaults to last 30 days when
+   * neither bound is supplied).
+   *
+   * Powers the admin "Supervisors" tab list view.
+   */
+  async listSupervisorsWithStats(dateFrom?: string, dateTo?: string) {
+    // 1. Find every SUPPORT user whose sub-role is "supervisor".
+    const [supportRole] = await db
+      .select({ id: roles.id })
+      .from(roles)
+      .where(eq(roles.name, ROLE_NAMES.SUPPORT))
+      .limit(1);
+    if (!supportRole) return [];
+
+    const supervisors = await db
+      .select({
+        userId: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        avatar: users.avatar,
+        lastLoginAt: users.lastLoginAt,
+      })
+      .from(userRoles)
+      .innerJoin(users, eq(users.id, userRoles.userId))
+      .where(
+        and(
+          eq(userRoles.roleId, supportRole.id),
+          eq(userRoles.supportSubRole, SUPPORT_SUB_ROLES.SUPERVISOR),
+        ),
+      )
+      .orderBy(asc(users.firstName));
+
+    if (supervisors.length === 0) return [];
+
+    // 2. Team-size + active-tickets per supervisor, in two GROUP BYs.
+    const teamSizes = await db
+      .select({
+        supervisorId: supportTeamMembers.supervisorId,
+        size: count(),
+      })
+      .from(supportTeamMembers)
+      .groupBy(supportTeamMembers.supervisorId);
+    const teamSizeMap = new Map(teamSizes.map((r) => [r.supervisorId, r.size]));
+
+    // 3. Per-supervisor active ticket count across their team's agents.
+    //    Computed via the supportTeamMembers join — counts tickets where
+    //    the assignee belongs to that supervisor's team and the ticket
+    //    is still open.
+    const teamActive = await db
+      .select({
+        supervisorId: supportTeamMembers.supervisorId,
+        activeCount: count(),
+      })
+      .from(supportTeamMembers)
+      .innerJoin(
+        tickets,
+        and(
+          eq(tickets.assigneeId, supportTeamMembers.agentId),
+          inArray(tickets.status, [
+            TICKET_STATUS.NEW,
+            TICKET_STATUS.IN_PROGRESS,
+            TICKET_STATUS.ON_HOLD,
+          ]),
+        ),
+      )
+      .groupBy(supportTeamMembers.supervisorId);
+    const teamActiveMap = new Map(
+      teamActive.map((r) => [r.supervisorId, r.activeCount]),
+    );
+
+    // 4. Performance aggregates — reuse getAgentPerformance with the
+    //    supplied window, then roll up per supervisor by joining via
+    //    supportTeamMembers. getAgentPerformance returns totalTickets /
+    //    csatAvgScore / frtBreaches + ttrBreaches, so we map into the
+    //    supervisor-rollup shape (ticketsHandled / csatScore / slaBreachCount).
+    const perfRaw = await this.getAgentPerformance(dateFrom, dateTo);
+    const perfByAgent = new Map(
+      perfRaw.map((p) => [
+        p.userId,
+        {
+          ticketsHandled: p.totalTickets,
+          avgFrtMinutes: p.avgFrtMinutes,
+          avgTtrMinutes: p.avgTtrMinutes ?? null,
+          csatScore: p.csatAvgScore,
+          slaBreachCount: (p.frtBreaches || 0) + (p.ttrBreaches || 0),
+        },
+      ]),
+    );
+
+    const memberships = await db
+      .select({
+        supervisorId: supportTeamMembers.supervisorId,
+        agentId: supportTeamMembers.agentId,
+      })
+      .from(supportTeamMembers);
+
+    type Agg = {
+      ticketsHandled: number;
+      frtSum: number;
+      frtCount: number;
+      ttrSum: number;
+      ttrCount: number;
+      csatSum: number;
+      csatCount: number;
+      slaBreachCount: number;
+    };
+    const aggBySupervisor = new Map<string, Agg>();
+    for (const m of memberships) {
+      const p = perfByAgent.get(m.agentId);
+      if (!p) continue;
+      const cur = aggBySupervisor.get(m.supervisorId) || {
+        ticketsHandled: 0,
+        frtSum: 0,
+        frtCount: 0,
+        ttrSum: 0,
+        ttrCount: 0,
+        csatSum: 0,
+        csatCount: 0,
+        slaBreachCount: 0,
+      };
+      cur.ticketsHandled += p.ticketsHandled || 0;
+      if (p.avgFrtMinutes != null) {
+        cur.frtSum += p.avgFrtMinutes;
+        cur.frtCount += 1;
+      }
+      if (p.avgTtrMinutes != null) {
+        cur.ttrSum += p.avgTtrMinutes;
+        cur.ttrCount += 1;
+      }
+      if (p.csatScore != null) {
+        cur.csatSum += p.csatScore;
+        cur.csatCount += 1;
+      }
+      cur.slaBreachCount += p.slaBreachCount || 0;
+      aggBySupervisor.set(m.supervisorId, cur);
+    }
+
+    const rows = supervisors.map((s) => {
+      const agg = aggBySupervisor.get(s.userId);
+      return {
+        userId: s.userId,
+        firstName: s.firstName,
+        lastName: s.lastName,
+        email: s.email,
+        avatar: s.avatar,
+        lastLoginAt: s.lastLoginAt,
+        teamSize: teamSizeMap.get(s.userId) || 0,
+        activeTickets: teamActiveMap.get(s.userId) || 0,
+        ticketsHandled: agg?.ticketsHandled || 0,
+        avgFrtMinutes:
+          agg && agg.frtCount > 0 ? Math.round(agg.frtSum / agg.frtCount) : null,
+        avgTtrMinutes:
+          agg && agg.ttrCount > 0 ? Math.round(agg.ttrSum / agg.ttrCount) : null,
+        csatScore:
+          agg && agg.csatCount > 0
+            ? Math.round((agg.csatSum / agg.csatCount) * 10) / 10
+            : null,
+        slaBreachCount: agg?.slaBreachCount || 0,
+      };
+    });
+
+    // Sort by team size desc, then active tickets desc — supervisors
+    // with the largest / busiest teams float to the top.
+    rows.sort(
+      (a, b) => b.teamSize - a.teamSize || b.activeTickets - a.activeTickets,
+    );
+    return rows;
+  }
+
+  /**
+   * Admin-only — supervisor detail bundle: profile + team agents
+   * (with per-agent perf) + supervisor's own open tickets + team-wide
+   * aggregates. Date range is optional; defaults to the same window as
+   * getAgentPerformance (last 30 days when not provided).
+   */
+  async getSupervisorDetail(
+    supervisorId: string,
+    dateFrom?: string,
+    dateTo?: string,
+  ) {
+    const [supervisor] = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        avatar: users.avatar,
+        phone: users.phone,
+        lastLoginAt: users.lastLoginAt,
+      })
+      .from(users)
+      .where(eq(users.id, supervisorId));
+    if (!supervisor) {
+      throw new NotFoundException('Supervisor not found');
+    }
+
+    // Reuse the supervisor's own listMyTeam call so the team-member
+    // payload matches the supervisor dashboard exactly (perf included).
+    const team = await this.listMyTeam(supervisorId);
+
+    // Supervisor's own active tickets (rare but possible — supervisors
+    // can be assigned tickets directly).
+    const supervisorTickets = await db
+      .select({
+        id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        subject: tickets.subject,
+        priority: tickets.priority,
+        status: tickets.status,
+        createdAt: tickets.createdAt,
+        slaBreachedFrt: tickets.slaBreachedFrt,
+        slaBreachedTtr: tickets.slaBreachedTtr,
+      })
+      .from(tickets)
+      .where(
+        and(
+          eq(tickets.assigneeId, supervisorId),
+          inArray(tickets.status, [
+            TICKET_STATUS.NEW,
+            TICKET_STATUS.IN_PROGRESS,
+            TICKET_STATUS.ON_HOLD,
+          ]),
+        ),
+      )
+      .orderBy(desc(tickets.createdAt))
+      .limit(50);
+
+    // Team-wide aggregates — sum + average across all team members for
+    // the requested date window.
+    let totalTicketsHandled = 0;
+    let frtSum = 0;
+    let frtCount = 0;
+    let ttrSum = 0;
+    let ttrCount = 0;
+    let csatSum = 0;
+    let csatCount = 0;
+    let slaBreachCount = 0;
+    for (const member of team) {
+      const p = member.performance as any;
+      if (!p) continue;
+      totalTicketsHandled += p.ticketsHandled || 0;
+      if (p.avgFrtMinutes != null) {
+        frtSum += p.avgFrtMinutes;
+        frtCount += 1;
+      }
+      if (p.avgTtrMinutes != null) {
+        ttrSum += p.avgTtrMinutes;
+        ttrCount += 1;
+      }
+      if (p.csatScore != null) {
+        csatSum += p.csatScore;
+        csatCount += 1;
+      }
+      slaBreachCount += p.slaBreachCount || 0;
+    }
+
+    return {
+      supervisor,
+      team,
+      supervisorTickets,
+      aggregates: {
+        teamSize: team.length,
+        ticketsHandled: totalTicketsHandled,
+        avgFrtMinutes: frtCount > 0 ? Math.round(frtSum / frtCount) : null,
+        avgTtrMinutes: ttrCount > 0 ? Math.round(ttrSum / ttrCount) : null,
+        csatScore:
+          csatCount > 0
+            ? Math.round((csatSum / csatCount) * 10) / 10
+            : null,
+        slaBreachCount,
+      },
+      dateRange: { dateFrom: dateFrom || null, dateTo: dateTo || null },
+    };
   }
 
   /**
@@ -4532,6 +8562,275 @@ export class SupportService implements OnModuleInit {
       openTickets,
       recentCsat,
     };
+  }
+
+  /**
+   * Admin-side: list every active Support Supervisor in a lightweight
+   * shape suitable for dropdowns (Create User, Reassign Team, bulk-
+   * assign orphans). Sorted by first name for predictable UX. Suspended
+   * supervisors are excluded — they can't accept new agents.
+   */
+  async listActiveSupervisors(): Promise<
+    {
+      userId: string;
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+      teamSize: number;
+    }[]
+  > {
+    const [supportRole] = await db
+      .select({ id: roles.id })
+      .from(roles)
+      .where(eq(roles.name, ROLE_NAMES.SUPPORT));
+    if (!supportRole) return [];
+
+    const supervisors = await db
+      .select({
+        userId: userRoles.userId,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+      })
+      .from(userRoles)
+      .innerJoin(users, eq(userRoles.userId, users.id))
+      .where(
+        and(
+          eq(userRoles.roleId, supportRole.id),
+          eq(userRoles.supportSubRole, SUPPORT_SUB_ROLES.SUPERVISOR),
+          eq(users.isActive, true),
+        ),
+      )
+      .orderBy(asc(users.firstName), asc(users.lastName));
+    if (supervisors.length === 0) return [];
+
+    const teamSizes = await db
+      .select({
+        supervisorId: supportTeamMembers.supervisorId,
+        size: count(),
+      })
+      .from(supportTeamMembers)
+      .groupBy(supportTeamMembers.supervisorId);
+    const sizeMap = new Map(teamSizes.map((r) => [r.supervisorId, r.size]));
+
+    return supervisors.map((s) => ({
+      ...s,
+      teamSize: Number(sizeMap.get(s.userId) ?? 0),
+    }));
+  }
+
+  /**
+   * Admin-side: every Support Agent who currently isn't on any
+   * supervisor's team. Surfaces the cleanup queue for the orphan
+   * banner on the Team Management page.
+   */
+  async listOrphanAgents(): Promise<
+    {
+      userId: string;
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+      avatar: string | null;
+      isActive: boolean;
+      createdAt: Date;
+    }[]
+  > {
+    const [supportRole] = await db
+      .select({ id: roles.id })
+      .from(roles)
+      .where(eq(roles.name, ROLE_NAMES.SUPPORT));
+    if (!supportRole) return [];
+
+    const agents = await db
+      .select({
+        userId: userRoles.userId,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        avatar: users.avatar,
+        isActive: users.isActive,
+        createdAt: users.createdAt,
+      })
+      .from(userRoles)
+      .innerJoin(users, eq(userRoles.userId, users.id))
+      .where(
+        and(
+          eq(userRoles.roleId, supportRole.id),
+          or(
+            eq(userRoles.supportSubRole, SUPPORT_SUB_ROLES.AGENT),
+            sql`${userRoles.supportSubRole} IS NULL`,
+          ),
+        ),
+      );
+
+    const memberRows = await db
+      .select({ agentId: supportTeamMembers.agentId })
+      .from(supportTeamMembers);
+    const taken = new Set(memberRows.map((m) => m.agentId));
+
+    return agents
+      .filter((a) => !taken.has(a.userId))
+      .sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''));
+  }
+
+  /**
+   * Admin assigns one or more orphan agents to a supervisor. Skips
+   * any agent that's somehow already on a team (race-safe), and
+   * silently ignores invalid UUIDs. Returns the count successfully
+   * placed.
+   */
+  async bulkAssignOrphansToSupervisor(
+    admin: AuthenticatedUser,
+    supervisorId: string,
+    agentIds: string[],
+    ipAddress: string,
+  ): Promise<{ assigned: number; skipped: number }> {
+    if (!Array.isArray(agentIds) || agentIds.length === 0) {
+      throw new BadRequestException('Pick at least one agent to assign');
+    }
+
+    const [supRole] = await db
+      .select({ id: roles.id })
+      .from(roles)
+      .where(eq(roles.name, ROLE_NAMES.SUPPORT));
+    if (!supRole) throw new BadRequestException('SUPPORT role missing');
+
+    const [supervisor] = await db
+      .select({
+        userId: userRoles.userId,
+        supportSubRole: userRoles.supportSubRole,
+        isActive: users.isActive,
+      })
+      .from(userRoles)
+      .innerJoin(users, eq(userRoles.userId, users.id))
+      .where(
+        and(
+          eq(userRoles.userId, supervisorId),
+          eq(userRoles.roleId, supRole.id),
+        ),
+      )
+      .limit(1);
+    if (
+      !supervisor ||
+      supervisor.supportSubRole !== SUPPORT_SUB_ROLES.SUPERVISOR
+    ) {
+      throw new BadRequestException(
+        'Target supervisor not found or not a Support Supervisor',
+      );
+    }
+    if (!supervisor.isActive) {
+      throw new BadRequestException(
+        'Cannot assign to a suspended supervisor',
+      );
+    }
+
+    // Drop anyone already on a team to keep the assignment idempotent.
+    const existing = await db
+      .select({ agentId: supportTeamMembers.agentId })
+      .from(supportTeamMembers)
+      .where(inArray(supportTeamMembers.agentId, agentIds));
+    const taken = new Set(existing.map((r) => r.agentId));
+    const fresh = agentIds.filter((id) => !taken.has(id));
+
+    if (fresh.length === 0) {
+      return { assigned: 0, skipped: agentIds.length };
+    }
+
+    await db.insert(supportTeamMembers).values(
+      fresh.map((agentId) => ({
+        supervisorId,
+        agentId,
+        addedBy: admin.id,
+      })),
+    );
+
+    await db.insert(auditLogs).values({
+      entityType: 'support_team_member',
+      entityId: supervisorId,
+      action: 'bulk_assigned',
+      performedBy: admin.id,
+      metadata: {
+        supervisorId,
+        agentIds: fresh,
+        skipped: agentIds.length - fresh.length,
+      },
+      ipAddress,
+    });
+
+    return {
+      assigned: fresh.length,
+      skipped: agentIds.length - fresh.length,
+    };
+  }
+
+  /**
+   * Admin moves every agent from one supervisor's team to another.
+   * Used in the "demote / remove SUPPORT from supervisor" flow — the
+   * UI must reassign first or the role removal is blocked server-side.
+   */
+  async reassignSupervisorTeam(
+    admin: AuthenticatedUser,
+    fromSupervisorId: string,
+    toSupervisorId: string,
+    ipAddress: string,
+  ): Promise<{ moved: number }> {
+    if (fromSupervisorId === toSupervisorId) {
+      throw new BadRequestException(
+        'Source and target supervisor must be different',
+      );
+    }
+
+    const [supRole] = await db
+      .select({ id: roles.id })
+      .from(roles)
+      .where(eq(roles.name, ROLE_NAMES.SUPPORT));
+    if (!supRole) throw new BadRequestException('SUPPORT role missing');
+
+    const [target] = await db
+      .select({
+        userId: userRoles.userId,
+        supportSubRole: userRoles.supportSubRole,
+        isActive: users.isActive,
+      })
+      .from(userRoles)
+      .innerJoin(users, eq(userRoles.userId, users.id))
+      .where(
+        and(
+          eq(userRoles.userId, toSupervisorId),
+          eq(userRoles.roleId, supRole.id),
+        ),
+      )
+      .limit(1);
+    if (
+      !target ||
+      target.supportSubRole !== SUPPORT_SUB_ROLES.SUPERVISOR ||
+      !target.isActive
+    ) {
+      throw new BadRequestException(
+        'Target supervisor must be an active Support Supervisor',
+      );
+    }
+
+    const result = await db
+      .update(supportTeamMembers)
+      .set({ supervisorId: toSupervisorId, addedBy: admin.id })
+      .where(eq(supportTeamMembers.supervisorId, fromSupervisorId))
+      .returning({ id: supportTeamMembers.id });
+
+    await db.insert(auditLogs).values({
+      entityType: 'support_team',
+      entityId: fromSupervisorId,
+      action: 'reassigned',
+      performedBy: admin.id,
+      metadata: {
+        fromSupervisorId,
+        toSupervisorId,
+        moved: result.length,
+      },
+      ipAddress,
+    });
+
+    return { moved: result.length };
   }
 
   /**
@@ -4744,15 +9043,53 @@ export class SupportService implements OnModuleInit {
       const supervisorName =
         [supervisor.firstName, supervisor.lastName].filter(Boolean).join(' ') ||
         supervisor.email;
-      const candidateLabel =
-        dto.kind === SUPPORT_TEAM_REQUEST_KIND.ADD_NEW
-          ? `${dto.candidateFirstName} ${dto.candidateLastName} <${dto.candidateEmail}>`
-          : 'an existing support agent';
+
+      // For an "add_existing" request the previous text was the generic
+      // "an existing support agent" — admin had to click through to find
+      // out who. Look up the candidate now so the notification text is
+      // self-contained and decision-ready.
+      let candidateLabel: string;
+      if (dto.kind === SUPPORT_TEAM_REQUEST_KIND.ADD_NEW) {
+        candidateLabel = `${dto.candidateFirstName} ${dto.candidateLastName} <${dto.candidateEmail}>`;
+      } else {
+        const candidateId = dto.candidateUserId;
+        let candidateName = 'an existing support agent';
+        if (candidateId) {
+          try {
+            const [candidate] = await db
+              .select({
+                firstName: users.firstName,
+                lastName: users.lastName,
+                email: users.email,
+              })
+              .from(users)
+              .where(eq(users.id, candidateId));
+            if (candidate) {
+              const fullName = [candidate.firstName, candidate.lastName]
+                .filter(Boolean)
+                .join(' ');
+              candidateName = fullName
+                ? `${fullName} <${candidate.email}>`
+                : candidate.email;
+            }
+          } catch {
+            // Fall back to generic label if the lookup fails.
+          }
+        }
+        candidateLabel = candidateName;
+      }
+
+      // Stable URL pattern: the admin support page reads ?tab + ?request
+      // and auto-opens the decision modal for that request in any state
+      // (pending → action buttons; approved/rejected → read-only audit).
+      // Avoids the previous /team-requests/:id 404 once a request was
+      // actioned (the per-id route was never built; the request lives
+      // only inside a tab + modal).
       await this.adminNotifications.create({
         type: 'info',
         title: 'New support team request',
         description: `${supervisorName} requested to add ${candidateLabel} to their team.`,
-        link: `/dashboard/admin/support/team-requests/${request.id}`,
+        link: `/dashboard/admin/support?tab=team-requests&request=${request.id}`,
       });
     } catch {
       // Notification failure must not break the request submission.
@@ -5328,22 +9665,43 @@ export class SupportService implements OnModuleInit {
     };
   }
 
-  async listTicketCategories(): Promise<
+  async listTicketCategories(filter?: {
+    role?: string;
+  }): Promise<
     {
       slug: string;
       nameEn: string;
       nameAr: string | null;
       autoPriority: 'high' | 'medium' | 'low' | null;
+      applicableRoles: string[];
       builtin: boolean;
     }[]
   > {
+    // Default role-applicability mapping for built-ins. Each category
+    // declares which customer dashboards (student / instructor /
+    // course_manager / finance / ta) should show it in the create-ticket
+    // dropdown. This replaces the legacy hardcoded slug arrays that
+    // used to live in each role wrapper. Custom categories carry their
+    // own applicableRoles, set by the supervisor when creating them.
+    const ALL: string[] = ['student', 'instructor', 'course_manager', 'finance', 'ta'];
     const builtins = [
-      { slug: 'billing', nameEn: 'Billing', nameAr: 'الفواتير', autoPriority: 'medium' as const },
-      { slug: 'login', nameEn: 'Login', nameAr: 'تسجيل الدخول', autoPriority: 'high' as const },
-      { slug: 'certificate', nameEn: 'Certificate', nameAr: 'الشهادات', autoPriority: 'medium' as const },
-      { slug: 'content', nameEn: 'Content', nameAr: 'المحتوى', autoPriority: 'low' as const },
-      { slug: 'technical', nameEn: 'Technical', nameAr: 'تقني', autoPriority: 'medium' as const },
-      { slug: 'other', nameEn: 'Other', nameAr: 'أخرى', autoPriority: 'low' as const },
+      { slug: 'billing', nameEn: 'Billing', nameAr: 'الفواتير', autoPriority: 'medium' as const, applicableRoles: ['student', 'finance'] },
+      { slug: 'login', nameEn: 'Login', nameAr: 'تسجيل الدخول', autoPriority: 'high' as const, applicableRoles: ALL },
+      { slug: 'certificate', nameEn: 'Certificate', nameAr: 'الشهادات', autoPriority: 'medium' as const, applicableRoles: ['student', 'course_manager'] },
+      { slug: 'webinar', nameEn: 'Webinar', nameAr: 'الندوة الإلكترونية', autoPriority: 'high' as const, applicableRoles: ['student', 'instructor', 'course_manager'] },
+      { slug: 'cme', nameEn: 'CME / CPD', nameAr: 'الساعات المعتمدة', autoPriority: 'medium' as const, applicableRoles: ['student', 'course_manager'] },
+      { slug: 'content', nameEn: 'Content', nameAr: 'المحتوى', autoPriority: 'low' as const, applicableRoles: ['student', 'instructor', 'course_manager', 'ta'] },
+      { slug: 'technical', nameEn: 'Technical', nameAr: 'تقني', autoPriority: 'medium' as const, applicableRoles: ALL },
+      { slug: 'trainer', nameEn: 'Trainer Application', nameAr: 'طلب التدريب', autoPriority: 'medium' as const, applicableRoles: ['student'] },
+      { slug: 'courses', nameEn: 'Courses', nameAr: 'الدورات', autoPriority: 'medium' as const, applicableRoles: ['student', 'instructor', 'course_manager', 'ta'] },
+      { slug: 'sessions', nameEn: 'Sessions & Schedule', nameAr: 'الجلسات والمواعيد', autoPriority: 'medium' as const, applicableRoles: ['student', 'instructor', 'ta'] },
+      { slug: 'payments', nameEn: 'Payments', nameAr: 'المدفوعات', autoPriority: 'high' as const, applicableRoles: ['student', 'finance'] },
+      { slug: 'invoices', nameEn: 'Invoices', nameAr: 'الفواتير الضريبية', autoPriority: 'medium' as const, applicableRoles: ['student', 'finance'] },
+      { slug: 'refunds', nameEn: 'Refunds', nameAr: 'المبالغ المستردة', autoPriority: 'high' as const, applicableRoles: ['student', 'finance'] },
+      { slug: 'integrations', nameEn: 'Third-party Integrations', nameAr: 'تكاملات الطرف الثالث', autoPriority: 'high' as const, applicableRoles: ['course_manager', 'finance'] },
+      { slug: 'course_approvals', nameEn: 'Course Approvals', nameAr: 'اعتماد الدورات', autoPriority: 'medium' as const, applicableRoles: ['course_manager'] },
+      { slug: 'system_issues', nameEn: 'System Issues', nameAr: 'مشاكل النظام', autoPriority: 'high' as const, applicableRoles: ['instructor', 'course_manager', 'finance', 'ta'] },
+      { slug: 'other', nameEn: 'Other', nameAr: 'أخرى', autoPriority: 'low' as const, applicableRoles: ALL },
     ];
 
     const [row] = await db
@@ -5353,19 +9711,36 @@ export class SupportService implements OnModuleInit {
       .limit(1);
 
     const custom = Array.isArray(row?.value) ? (row!.value as any[]) : [];
-    return [
+    const merged = [
       ...builtins.map((b) => ({ ...b, builtin: true })),
-      ...custom.map((c: any) => ({
-        slug: String(c.slug || ''),
-        nameEn: String(c.nameEn || c.slug || ''),
-        nameAr: c.nameAr ? String(c.nameAr) : null,
-        autoPriority:
-          c.autoPriority && ['high', 'medium', 'low'].includes(c.autoPriority)
-            ? c.autoPriority
-            : null,
-        builtin: false,
-      })),
+      ...custom.map((c: any) => {
+        // Legacy custom rows pre-Fix #2 won't carry applicableRoles.
+        // Default them to ALL so they stay visible everywhere — the
+        // supervisor can narrow later via the Categories panel.
+        const roles = Array.isArray(c.applicableRoles)
+          ? c.applicableRoles.filter((r: any): r is string =>
+              typeof r === 'string' && ALL.includes(r),
+            )
+          : ALL;
+        return {
+          slug: String(c.slug || ''),
+          nameEn: String(c.nameEn || c.slug || ''),
+          nameAr: c.nameAr ? String(c.nameAr) : null,
+          autoPriority:
+            c.autoPriority && ['high', 'medium', 'low'].includes(c.autoPriority)
+              ? c.autoPriority
+              : null,
+          applicableRoles: roles,
+          builtin: false,
+        };
+      }),
     ];
+
+    if (filter?.role) {
+      const role = filter.role;
+      return merged.filter((c) => c.applicableRoles.includes(role));
+    }
+    return merged;
   }
 
   async addTicketCategory(input: {
@@ -5373,6 +9748,7 @@ export class SupportService implements OnModuleInit {
     nameEn: string;
     nameAr?: string;
     autoPriority?: 'high' | 'medium' | 'low';
+    applicableRoles?: string[];
   }) {
     if (!input.nameEn?.trim()) {
       throw new BadRequestException('English name is required');
@@ -5392,6 +9768,12 @@ export class SupportService implements OnModuleInit {
         'A category with this slug already exists',
       );
     }
+    const applicableRoles = this.sanitizeApplicableRoles(input.applicableRoles);
+    if (applicableRoles.length === 0) {
+      throw new BadRequestException(
+        'At least one applicable role is required',
+      );
+    }
 
     const custom = existing.filter((c) => !c.builtin);
     custom.push({
@@ -5399,6 +9781,7 @@ export class SupportService implements OnModuleInit {
       nameEn: input.nameEn.trim(),
       nameAr: input.nameAr?.trim() || null,
       autoPriority: input.autoPriority ?? null,
+      applicableRoles,
       builtin: false,
     });
 
@@ -5417,6 +9800,90 @@ export class SupportService implements OnModuleInit {
         },
       });
     return { slug };
+  }
+
+  async updateTicketCategory(
+    slug: string,
+    input: {
+      nameEn?: string;
+      nameAr?: string | null;
+      autoPriority?: 'high' | 'medium' | 'low' | null;
+      applicableRoles?: string[];
+    },
+  ) {
+    const existing = await this.listTicketCategories();
+    const target = existing.find((c) => c.slug === slug);
+    if (!target) throw new NotFoundException('Category not found');
+    if (target.builtin) {
+      throw new BadRequestException(
+        'Built-in categories cannot be edited. Their role-applicability is set in the platform code.',
+      );
+    }
+
+    const next = existing
+      .filter((c) => !c.builtin)
+      .map((c) => {
+        if (c.slug !== slug) return c;
+        const nameEn = input.nameEn?.trim() ?? c.nameEn;
+        if (!nameEn) {
+          throw new BadRequestException('English name is required');
+        }
+        const applicableRoles =
+          input.applicableRoles !== undefined
+            ? this.sanitizeApplicableRoles(input.applicableRoles)
+            : c.applicableRoles;
+        if (applicableRoles.length === 0) {
+          throw new BadRequestException(
+            'At least one applicable role is required',
+          );
+        }
+        return {
+          ...c,
+          nameEn,
+          nameAr:
+            input.nameAr === undefined
+              ? c.nameAr
+              : input.nameAr?.trim() || null,
+          autoPriority:
+            input.autoPriority === undefined ? c.autoPriority : input.autoPriority,
+          applicableRoles,
+        };
+      })
+      .map(({ builtin: _builtin, ...c }) => c);
+
+    await db
+      .insert(supportConfig)
+      .values({
+        key: 'ticket_categories',
+        value: next,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: supportConfig.key,
+        set: { value: next, updatedAt: new Date() },
+      });
+    return { slug };
+  }
+
+  private sanitizeApplicableRoles(roles?: string[]): string[] {
+    const ALLOWED = new Set([
+      'student',
+      'instructor',
+      'course_manager',
+      'finance',
+      'ta',
+    ]);
+    if (!Array.isArray(roles)) return [];
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const r of roles) {
+      if (typeof r !== 'string') continue;
+      if (!ALLOWED.has(r)) continue;
+      if (seen.has(r)) continue;
+      seen.add(r);
+      out.push(r);
+    }
+    return out;
   }
 
   async removeTicketCategory(slug: string) {
@@ -5570,21 +10037,38 @@ export class SupportService implements OnModuleInit {
   // setTicketTags are gated in the controller. Naming is
   // case-insensitive: "Refund" and "refund" collide.
 
-  async listTicketTags() {
-    return db
+  // Returns the tag registry. Active tags (the default) feed the
+  // picker and the auto-apply matcher. The manager surface passes
+  // `includeArchived` so it can show archived rows in a separate
+  // section without a second round-trip.
+  async listTicketTags(opts: { includeArchived?: boolean } = {}) {
+    const includeArchived = opts.includeArchived === true;
+    const baseQuery = db
       .select({
         id: ticketTags.id,
         name: ticketTags.name,
         color: ticketTags.color,
         description: ticketTags.description,
         createdAt: ticketTags.createdAt,
+        archivedAt: ticketTags.archivedAt,
         usageCount: sql<number>`(
           SELECT COUNT(*)::int FROM ${ticketTagAssignments}
           WHERE ${ticketTagAssignments.tagId} = ${ticketTags.id}
         )`,
+        ruleCount: sql<number>`(
+          SELECT COUNT(*)::int FROM ${ticketTagRules}
+          WHERE ${ticketTagRules.tagId} = ${ticketTags.id}
+            AND ${ticketTagRules.enabled} = TRUE
+        )`,
       })
-      .from(ticketTags)
-      .orderBy(asc(ticketTags.name));
+      .from(ticketTags);
+
+    const rows = includeArchived
+      ? await baseQuery.orderBy(asc(ticketTags.name))
+      : await baseQuery
+          .where(sql`${ticketTags.archivedAt} IS NULL`)
+          .orderBy(asc(ticketTags.name));
+    return rows;
   }
 
   async createTicketTag(
@@ -5698,23 +10182,52 @@ export class SupportService implements OnModuleInit {
     // their own assigned tickets; supervisors and admins are unrestricted.
     await this.assertAgentOwnership(user, ticketId);
 
-    // Dedupe + validate the requested tag IDs exist before we touch
-    // the junction. Returning a 400 with the missing IDs is much
+    // Dedupe + validate the requested tag IDs exist AND aren't archived
+    // — archived tags can't be applied to new tickets (they're still
+    // valid in history). Returning a 400 with the missing IDs is much
     // friendlier than the bare FK violation Postgres would emit.
     const uniqueIds = Array.from(new Set(tagIds.filter(Boolean)));
+    let resolvedTags: { id: string; name: string; color: string }[] = [];
     if (uniqueIds.length > 0) {
-      const found = await db
-        .select({ id: ticketTags.id })
+      resolvedTags = await db
+        .select({
+          id: ticketTags.id,
+          name: ticketTags.name,
+          color: ticketTags.color,
+        })
         .from(ticketTags)
-        .where(inArray(ticketTags.id, uniqueIds));
-      if (found.length !== uniqueIds.length) {
-        const foundSet = new Set(found.map((r) => r.id));
+        .where(
+          and(
+            inArray(ticketTags.id, uniqueIds),
+            sql`${ticketTags.archivedAt} IS NULL`,
+          ),
+        );
+      if (resolvedTags.length !== uniqueIds.length) {
+        const foundSet = new Set(resolvedTags.map((r) => r.id));
         const missing = uniqueIds.filter((id) => !foundSet.has(id));
         throw new BadRequestException(
-          `Unknown tag id(s): ${missing.join(', ')}`,
+          `Unknown or archived tag id(s): ${missing.join(', ')}`,
         );
       }
     }
+
+    // Compute the add/remove diff BEFORE the txn so we can write audit
+    // rows that name the specific tags involved (not just counts).
+    const beforeAssignments = await db
+      .select({
+        tagId: ticketTagAssignments.tagId,
+        name: ticketTags.name,
+        color: ticketTags.color,
+      })
+      .from(ticketTagAssignments)
+      .innerJoin(ticketTags, eq(ticketTagAssignments.tagId, ticketTags.id))
+      .where(eq(ticketTagAssignments.ticketId, ticketId));
+
+    const beforeSet = new Set(beforeAssignments.map((r) => r.tagId));
+    const afterSet = new Set(uniqueIds);
+
+    const addedTags = resolvedTags.filter((t) => !beforeSet.has(t.id));
+    const removedTags = beforeAssignments.filter((r) => !afterSet.has(r.tagId));
 
     await db.transaction(async (tx) => {
       await tx
@@ -5732,7 +10245,429 @@ export class SupportService implements OnModuleInit {
       }
     });
 
+    // Audit — one row per add and one per remove so the supervisor
+    // trail and the per-ticket history both surface meaningful events
+    // (instead of a single "tags edited" line). Fire-and-forget; the
+    // tag change is already committed.
+    for (const t of addedTags) {
+      await this.logTicketAudit(
+        SupportService.SUPPORT_AUDIT_ACTIONS.TAG_ADDED,
+        ticketId,
+        user.id,
+        { tagId: t.id, tagName: t.name, tagColor: t.color },
+      );
+    }
+    for (const t of removedTags) {
+      await this.logTicketAudit(
+        SupportService.SUPPORT_AUDIT_ACTIONS.TAG_REMOVED,
+        ticketId,
+        user.id,
+        { tagId: t.tagId, tagName: t.name, tagColor: t.color },
+      );
+    }
+
     return this.getTicketTags(ticketId);
+  }
+
+  // ─── Tag archive lifecycle ────────────────────────────────
+  //
+  // Archive flips the soft flag so the tag stops appearing in pickers
+  // and stops feeding the auto-apply matcher. Existing assignments
+  // stay so historical reporting / filtering remains accurate. The
+  // tag can be unarchived at any time.
+
+  async archiveTicketTag(id: string) {
+    const [updated] = await db
+      .update(ticketTags)
+      .set({ archivedAt: new Date(), updatedAt: new Date() })
+      .where(
+        and(
+          eq(ticketTags.id, id),
+          sql`${ticketTags.archivedAt} IS NULL`,
+        ),
+      )
+      .returning();
+    if (!updated) {
+      // Either the tag doesn't exist or it's already archived. Both
+      // collapse to a 404 — caller doesn't care which.
+      throw new NotFoundException('Tag not found or already archived');
+    }
+    return updated;
+  }
+
+  async unarchiveTicketTag(id: string) {
+    const [updated] = await db
+      .update(ticketTags)
+      .set({ archivedAt: null, updatedAt: new Date() })
+      .where(eq(ticketTags.id, id))
+      .returning();
+    if (!updated) throw new NotFoundException('Tag not found');
+    return updated;
+  }
+
+  // ─── Tag rule engine ──────────────────────────────────────
+  //
+  // CRUD for the per-tag auto-apply rules + the matcher invoked when
+  // a new ticket is created. Patterns are case-insensitive substring
+  // matches — no regex, intentionally, so admins can't author a
+  // catastrophically slow expression.
+
+  async listTagRules(tagId: string) {
+    const [tag] = await db
+      .select({ id: ticketTags.id })
+      .from(ticketTags)
+      .where(eq(ticketTags.id, tagId));
+    if (!tag) throw new NotFoundException('Tag not found');
+    return db
+      .select({
+        id: ticketTagRules.id,
+        tagId: ticketTagRules.tagId,
+        pattern: ticketTagRules.pattern,
+        matchScope: ticketTagRules.matchScope,
+        enabled: ticketTagRules.enabled,
+        createdAt: ticketTagRules.createdAt,
+      })
+      .from(ticketTagRules)
+      .where(eq(ticketTagRules.tagId, tagId))
+      .orderBy(asc(ticketTagRules.createdAt));
+  }
+
+  async createTagRule(
+    userId: string,
+    tagId: string,
+    dto: { pattern: string; matchScope?: TagRuleScope; enabled?: boolean },
+  ) {
+    const pattern = dto.pattern?.trim();
+    if (!pattern) throw new BadRequestException('Pattern is required');
+    if (pattern.length > 200) {
+      throw new BadRequestException('Pattern must be 200 characters or fewer');
+    }
+    const matchScope = dto.matchScope || 'both';
+    if (!['subject', 'description', 'both'].includes(matchScope)) {
+      throw new BadRequestException('matchScope must be subject, description, or both');
+    }
+
+    const [tag] = await db
+      .select({ id: ticketTags.id })
+      .from(ticketTags)
+      .where(eq(ticketTags.id, tagId));
+    if (!tag) throw new NotFoundException('Tag not found');
+
+    const [created] = await db
+      .insert(ticketTagRules)
+      .values({
+        tagId,
+        pattern,
+        matchScope,
+        enabled: dto.enabled !== false,
+        createdBy: userId,
+      })
+      .returning();
+    return created;
+  }
+
+  async updateTagRule(
+    id: string,
+    dto: { pattern?: string; matchScope?: TagRuleScope; enabled?: boolean },
+  ) {
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    if (dto.pattern !== undefined) {
+      const pattern = dto.pattern.trim();
+      if (!pattern) throw new BadRequestException('Pattern cannot be empty');
+      if (pattern.length > 200) {
+        throw new BadRequestException('Pattern must be 200 characters or fewer');
+      }
+      updates.pattern = pattern;
+    }
+    if (dto.matchScope !== undefined) {
+      if (!['subject', 'description', 'both'].includes(dto.matchScope)) {
+        throw new BadRequestException('matchScope must be subject, description, or both');
+      }
+      updates.matchScope = dto.matchScope;
+    }
+    if (dto.enabled !== undefined) {
+      updates.enabled = dto.enabled;
+    }
+
+    const [updated] = await db
+      .update(ticketTagRules)
+      .set(updates)
+      .where(eq(ticketTagRules.id, id))
+      .returning();
+    if (!updated) throw new NotFoundException('Rule not found');
+    return updated;
+  }
+
+  async deleteTagRule(id: string) {
+    const [deleted] = await db
+      .delete(ticketTagRules)
+      .where(eq(ticketTagRules.id, id))
+      .returning();
+    if (!deleted) throw new NotFoundException('Rule not found');
+    return { success: true };
+  }
+
+  // Fired by createTicket. Scans all enabled rules on non-archived
+  // tags and returns the set of tag IDs to attach. Failure here must
+  // NOT break ticket creation — caller wraps the call in a try/catch
+  // and continues with an empty set.
+  async matchAutoApplyTags(input: {
+    subject: string;
+    description: string;
+  }): Promise<{ tagId: string; tagName: string; tagColor: string }[]> {
+    const subject = (input.subject || '').toLowerCase();
+    const description = (input.description || '').toLowerCase();
+    if (!subject && !description) return [];
+
+    const rules = await db
+      .select({
+        ruleId: ticketTagRules.id,
+        tagId: ticketTagRules.tagId,
+        pattern: ticketTagRules.pattern,
+        matchScope: ticketTagRules.matchScope,
+        tagName: ticketTags.name,
+        tagColor: ticketTags.color,
+      })
+      .from(ticketTagRules)
+      .innerJoin(ticketTags, eq(ticketTagRules.tagId, ticketTags.id))
+      .where(
+        and(
+          eq(ticketTagRules.enabled, true),
+          sql`${ticketTags.archivedAt} IS NULL`,
+        ),
+      );
+
+    const matched = new Map<
+      string,
+      { tagId: string; tagName: string; tagColor: string }
+    >();
+    for (const rule of rules) {
+      if (matched.has(rule.tagId)) continue;
+      const needle = rule.pattern.toLowerCase();
+      if (!needle) continue;
+      const inSubject = rule.matchScope !== 'description';
+      const inDescription = rule.matchScope !== 'subject';
+      const hit =
+        (inSubject && subject.includes(needle)) ||
+        (inDescription && description.includes(needle));
+      if (hit) {
+        matched.set(rule.tagId, {
+          tagId: rule.tagId,
+          tagName: rule.tagName,
+          tagColor: rule.tagColor,
+        });
+      }
+    }
+    return Array.from(matched.values());
+  }
+
+  // Applies an auto-match result to a freshly-created ticket. Done
+  // outside the create transaction so a bad rule doesn't surface to
+  // the user as "ticket creation failed". The opener's userId is the
+  // performer on the audit row (with metadata.auto=true) so the
+  // supervisor trail still attributes the event consistently — the
+  // GUEST sentinel works the same as for ticket_created.
+  // Single-tag-by-name helper used by the intervention flow. Creates
+  // the tag row if missing so the first instructor follow-up seeds the
+  // 'at-risk-follow-up' tag without an admin pre-populating it. Idempotent.
+  async applyAutoTag(
+    ticketId: string,
+    tagName: string,
+    openerId: string,
+  ): Promise<void> {
+    // Look up or create — match on LOWER(name) to mirror the unique
+    // index, then apply via the batched helper for audit-log parity.
+    const trimmed = tagName.trim();
+    if (!trimmed) return;
+    const [existing] = await db
+      .select({
+        id: ticketTags.id,
+        name: ticketTags.name,
+        color: ticketTags.color,
+      })
+      .from(ticketTags)
+      .where(sql`LOWER(${ticketTags.name}) = LOWER(${trimmed})`)
+      .limit(1);
+
+    let tag: { id: string; name: string; color: string };
+    if (existing) {
+      tag = existing;
+    } else {
+      const [created] = await db
+        .insert(ticketTags)
+        .values({
+          name: trimmed,
+          color: '#FEF3C7',
+          description: 'Auto-generated tag for at-risk student follow-ups',
+          createdBy: openerId,
+        })
+        .returning({
+          id: ticketTags.id,
+          name: ticketTags.name,
+          color: ticketTags.color,
+        });
+      tag = created;
+    }
+
+    await this.applyAutoTagsToTicket(ticketId, openerId, [
+      { tagId: tag.id, tagName: tag.name, tagColor: tag.color },
+    ]);
+  }
+
+  async applyAutoTagsToTicket(
+    ticketId: string,
+    openerId: string,
+    matches: { tagId: string; tagName: string; tagColor: string }[],
+  ): Promise<void> {
+    if (matches.length === 0) return;
+    try {
+      await db
+        .insert(ticketTagAssignments)
+        .values(
+          matches.map((m) => ({
+            ticketId,
+            tagId: m.tagId,
+            assignedBy: null,
+          })),
+        )
+        .onConflictDoNothing();
+      for (const m of matches) {
+        await this.logTicketAudit(
+          SupportService.SUPPORT_AUDIT_ACTIONS.TAG_AUTO_APPLIED,
+          ticketId,
+          openerId,
+          {
+            tagId: m.tagId,
+            tagName: m.tagName,
+            tagColor: m.tagColor,
+            auto: true,
+          },
+        );
+      }
+    } catch (err) {
+      this.logger.warn(`Auto-tag apply failed for ticket ${ticketId}: ${err}`);
+    }
+  }
+
+  // ─── Tag analytics ────────────────────────────────────────
+  //
+  // Powers Settings → Tags → Analytics. Three rolled-up views:
+  //   • topTags    — overall usage + last-30-day deltas
+  //   • trend      — daily assignment counts for the last 30 days
+  //   • byCategory — which tags dominate each ticket category
+  // All computed in SQL to avoid trickling thousands of join rows
+  // into Node and reaggregating.
+
+  async getTagAnalytics() {
+    const now = new Date();
+    const since30 = new Date(now);
+    since30.setDate(since30.getDate() - 30);
+    const since30Iso = since30.toISOString();
+
+    const [topTags, trendRows, byCategoryRaw, [totals]] = await Promise.all([
+      db
+        .select({
+          tagId: ticketTags.id,
+          name: ticketTags.name,
+          color: ticketTags.color,
+          archivedAt: ticketTags.archivedAt,
+          usageCount: sql<number>`(
+            SELECT COUNT(*)::int FROM ${ticketTagAssignments}
+            WHERE ${ticketTagAssignments.tagId} = ${ticketTags.id}
+          )`,
+          last30Count: sql<number>`(
+            SELECT COUNT(*)::int FROM ${ticketTagAssignments}
+            WHERE ${ticketTagAssignments.tagId} = ${ticketTags.id}
+              AND ${ticketTagAssignments.assignedAt} >= ${since30Iso}
+          )`,
+          resolvedCount: sql<number>`(
+            SELECT COUNT(*)::int FROM ${ticketTagAssignments} a
+            INNER JOIN ${tickets} tk ON tk.id = a.ticket_id
+            WHERE a.tag_id = ${ticketTags.id}
+              AND tk.status IN ('resolved', 'closed')
+          )`,
+        })
+        .from(ticketTags)
+        .orderBy(desc(sql`(
+          SELECT COUNT(*)::int FROM ${ticketTagAssignments}
+          WHERE ${ticketTagAssignments.tagId} = ${ticketTags.id}
+        )`))
+        .limit(15),
+      // Daily trend across all tags.
+      db.execute(sql`
+        SELECT
+          DATE_TRUNC('day', a.assigned_at)::date AS day,
+          COUNT(*)::int AS count
+        FROM ticket_tag_assignments a
+        WHERE a.assigned_at >= ${since30Iso}
+        GROUP BY day
+        ORDER BY day ASC
+      `),
+      // Tag × category cross-tab — top 3 tags per category.
+      db.execute(sql`
+        SELECT
+          tk.category AS category,
+          tt.id::text AS tag_id,
+          tt.name AS tag_name,
+          tt.color AS tag_color,
+          COUNT(*)::int AS count
+        FROM ticket_tag_assignments a
+        INNER JOIN ${tickets} tk ON tk.id = a.ticket_id
+        INNER JOIN ticket_tags tt ON tt.id = a.tag_id
+        GROUP BY tk.category, tt.id, tt.name, tt.color
+        ORDER BY tk.category ASC, count DESC
+      `),
+      db
+        .select({
+          total: count(),
+          archived: sql<number>`COUNT(*) FILTER (WHERE ${ticketTags.archivedAt} IS NOT NULL)::int`,
+        })
+        .from(ticketTags),
+    ]);
+
+    // Reshape byCategory raw rows into { category, tags[] } — keep
+    // only the top three tags per category to keep the surface tight.
+    const byCategoryMap = new Map<
+      string,
+      { tagId: string; name: string; color: string; count: number }[]
+    >();
+    for (const row of byCategoryRaw.rows as any[]) {
+      const list = byCategoryMap.get(row.category) || [];
+      if (list.length < 3) {
+        list.push({
+          tagId: String(row.tag_id),
+          name: String(row.tag_name),
+          color: String(row.tag_color),
+          count: Number(row.count),
+        });
+        byCategoryMap.set(row.category, list);
+      }
+    }
+
+    const byCategory = Array.from(byCategoryMap.entries())
+      .map(([category, tags]) => ({ category, tags }))
+      .sort((a, b) => a.category.localeCompare(b.category));
+
+    const trend = (trendRows.rows as any[]).map((r) => ({
+      day: new Date(r.day).toISOString().slice(0, 10),
+      count: Number(r.count),
+    }));
+
+    return {
+      totalTags: Number(totals?.total || 0),
+      archivedTags: Number(totals?.archived || 0),
+      topTags: topTags.map((r) => ({
+        tagId: r.tagId,
+        name: r.name,
+        color: r.color,
+        archived: r.archivedAt !== null,
+        usageCount: Number(r.usageCount),
+        last30Count: Number(r.last30Count),
+        resolvedCount: Number(r.resolvedCount),
+      })),
+      trend,
+      byCategory,
+    };
   }
 
   async getTicketTags(ticketId: string) {
@@ -5813,6 +10748,1177 @@ export class SupportService implements OnModuleInit {
   // inherits replies + tags. We deliberately keep the source row
   // (rather than hard-deleting) so the audit trail covers what was
   // merged and supervisors can refund or revert if needed.
+  // List tickets the source could be merged INTO. The supervisor UI
+  // calls this to populate the merge dropdown, so there's no need to
+  // paste UUIDs anymore. Rules mirror `mergeTicket`'s validation:
+  //   • same customer (studentId, or guest email for guests)
+  //   • same category (we don't merge cross-category in this product)
+  //   • open status (NEW / IN_PROGRESS / ON_HOLD)
+  //   • not already merged into something else
+  //   • not the source itself
+  // Ordered newest-first; capped at 20 entries to keep the dropdown
+  // usable.
+  async getMergeCandidates(sourceId: string) {
+    const [source] = await db
+      .select({
+        id: tickets.id,
+        studentId: tickets.studentId,
+        guestEmail: tickets.guestEmail,
+        category: tickets.category,
+        status: tickets.status,
+        mergedIntoTicketId: tickets.mergedIntoTicketId,
+      })
+      .from(tickets)
+      .where(eq(tickets.id, sourceId));
+    if (!source) throw new NotFoundException('Ticket not found');
+
+    if (source.mergedIntoTicketId) {
+      return [];
+    }
+    if (
+      source.status === TICKET_STATUS.RESOLVED ||
+      source.status === TICKET_STATUS.CLOSED
+    ) {
+      return [];
+    }
+
+    const baseConditions = [
+      eq(tickets.category, source.category),
+      eq(tickets.studentId, source.studentId),
+      inArray(tickets.status, [
+        TICKET_STATUS.NEW,
+        TICKET_STATUS.IN_PROGRESS,
+        TICKET_STATUS.ON_HOLD,
+      ]),
+      sql`${tickets.mergedIntoTicketId} IS NULL`,
+      sql`${tickets.id} <> ${sourceId}`,
+    ];
+
+    // Guests share the studentId sentinel — narrow further by email
+    // so two unrelated guests don't bleed together.
+    if (source.studentId === GUEST_USER_ID) {
+      baseConditions.push(
+        sql`LOWER(${tickets.guestEmail}) = LOWER(${source.guestEmail || ''})`,
+      );
+    }
+
+    return db
+      .select({
+        id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        subject: tickets.subject,
+        status: tickets.status,
+        priority: tickets.priority,
+        createdAt: tickets.createdAt,
+      })
+      .from(tickets)
+      .where(and(...baseConditions))
+      .orderBy(desc(tickets.createdAt))
+      .limit(20);
+  }
+
+  // ─── Requester snapshot for a ticket ───────────────────────
+  //
+  // Resolves the ticket's requester + source role, enforces the
+  // same access checks as getTicketDetail, then dispatches to a
+  // role-specific composer. The right-rail snapshot card on the
+  // support side branches on `role` to render the appropriate
+  // KPIs — student stats for student-raised tickets, teaching
+  // stats for instructor-raised tickets, etc. Prevents bleed
+  // across roles when a user holds more than one (e.g.
+  // instructor + manager + TA).
+  async getStudentSnapshotForTicket(user: AuthenticatedUser, ticketId: string) {
+    const [ticket] = await db
+      .select({
+        studentId: tickets.studentId,
+        assigneeId: tickets.assigneeId,
+        source: tickets.source,
+      })
+      .from(tickets)
+      .where(eq(tickets.id, ticketId));
+
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    const isSupportOrAdmin =
+      user.roles.includes(ROLE_NAMES.SUPPORT) ||
+      user.roles.includes(ROLE_NAMES.ADMIN) ||
+      user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+
+    if (!isSupportOrAdmin && ticket.studentId !== user.id) {
+      throw new ForbiddenException('You do not have access to this ticket');
+    }
+
+    if (isSupportOrAdmin) {
+      const isSupervisorOrAdmin =
+        user.supportSubRole === 'supervisor' ||
+        user.roles.includes(ROLE_NAMES.ADMIN) ||
+        user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+      if (!isSupervisorOrAdmin && ticket.assigneeId !== user.id) {
+        throw new ForbiddenException('You are not assigned to this ticket');
+      }
+    }
+
+    if (!ticket.studentId || ticket.studentId === GUEST_USER_ID) {
+      return { isGuest: true as const, role: 'guest' as const, snapshot: null };
+    }
+
+    // Map ticket source → requester role. Intervention tickets are
+    // filed by instructors about students, so the requester role
+    // there is 'instructor'.
+    const source = ticket.source || 'student';
+    const role: 'student' | 'instructor' | 'manager' | 'ta' | 'finance' =
+      source === 'instructor' || source === 'intervention'
+        ? 'instructor'
+        : source === 'course_manager'
+          ? 'manager'
+          : source === 'ta'
+            ? 'ta'
+            : source === 'finance'
+              ? 'finance'
+              : 'student';
+
+    if (role === 'instructor') {
+      const snapshot = await this.getInstructorSnapshot(ticket.studentId);
+      return { isGuest: false as const, role, snapshot };
+    }
+    if (role === 'manager') {
+      const snapshot = await this.getManagerSnapshot(ticket.studentId);
+      return { isGuest: false as const, role, snapshot };
+    }
+    if (role === 'ta') {
+      const snapshot = await this.getTaSnapshot(ticket.studentId);
+      return { isGuest: false as const, role, snapshot };
+    }
+    if (role === 'finance') {
+      const snapshot = await this.getFinanceSnapshot(ticket.studentId);
+      return { isGuest: false as const, role, snapshot };
+    }
+
+    const snapshot = await this.getStudentSnapshot(ticket.studentId);
+    return { isGuest: false as const, role, snapshot };
+  }
+
+  // ─── Role-specific snapshot composers ──────────────────────
+  //
+  // Each composer returns a tight KPI rollup for the requester's
+  // role from a single ticket source. Kept narrow and parallel
+  // so the right rail loads in one round trip per role.
+
+  async getInstructorSnapshot(userId: string) {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [taughtCourseRows, sessionRows, interventionRows] = await Promise.all([
+      db
+        .select({ id: courses.id })
+        .from(courses)
+        .where(eq(courses.instructorId, userId)),
+
+      db
+        .select({
+          id: sessions.id,
+          scheduledAt: sessions.scheduledAt,
+          status: sessions.status,
+        })
+        .from(sessions)
+        .where(eq(sessions.instructorId, userId)),
+
+      db
+        .select({
+          id: interventions.id,
+          type: interventions.type,
+          createdAt: interventions.createdAt,
+        })
+        .from(interventions)
+        .where(eq(interventions.instructorId, userId)),
+    ]);
+
+    const courseIds = taughtCourseRows.map((c) => c.id);
+    let studentCount = 0;
+    if (courseIds.length > 0) {
+      const [{ value }] = await db
+        .select({
+          value: sql<number>`count(distinct ${enrollments.studentId})::int`,
+        })
+        .from(enrollments)
+        .where(inArray(enrollments.courseId, courseIds));
+      studentCount = Number(value) || 0;
+    }
+
+    const sessionsThisMonth = sessionRows.filter(
+      (s) => s.scheduledAt && new Date(s.scheduledAt) >= monthStart,
+    ).length;
+
+    const interventionsFiled = interventionRows.length;
+    const interventionsThisMonth = interventionRows.filter(
+      (i) => i.createdAt && new Date(i.createdAt) >= monthStart,
+    ).length;
+
+    return {
+      courses: { teaching: courseIds.length },
+      students: { total: studentCount },
+      sessions: {
+        total: sessionRows.length,
+        thisMonth: sessionsThisMonth,
+      },
+      interventions: {
+        total: interventionsFiled,
+        thisMonth: interventionsThisMonth,
+      },
+    };
+  }
+
+  async getManagerSnapshot(userId: string) {
+    const managedRows = await db
+      .select({
+        id: courses.id,
+        instructorId: courses.instructorId,
+      })
+      .from(courses)
+      .where(eq(courses.managerId, userId));
+
+    const courseIds = managedRows.map((r) => r.id);
+    const instructorIds = new Set(
+      managedRows.map((r) => r.instructorId).filter(Boolean) as string[],
+    );
+
+    let studentCount = 0;
+    if (courseIds.length > 0) {
+      const [{ value }] = await db
+        .select({
+          value: sql<number>`count(distinct ${enrollments.studentId})::int`,
+        })
+        .from(enrollments)
+        .where(inArray(enrollments.courseId, courseIds));
+      studentCount = Number(value) || 0;
+    }
+
+    return {
+      courses: { managed: courseIds.length },
+      instructors: { count: instructorIds.size },
+      students: { total: studentCount },
+    };
+  }
+
+  async getTaSnapshot(userId: string) {
+    const assistingRows = await db
+      .select({ courseId: courseAssistants.courseId })
+      .from(courseAssistants)
+      .where(
+        and(
+          eq(courseAssistants.userId, userId),
+          eq(courseAssistants.status, 'approved'),
+        ),
+      );
+
+    const courseIds = assistingRows.map((r) => r.courseId);
+    let sessionTotal = 0;
+    let sessionsThisMonth = 0;
+    if (courseIds.length > 0) {
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const sessionRows = await db
+        .select({
+          id: sessions.id,
+          scheduledAt: sessions.scheduledAt,
+        })
+        .from(sessions)
+        .where(inArray(sessions.courseId, courseIds));
+      sessionTotal = sessionRows.length;
+      sessionsThisMonth = sessionRows.filter(
+        (s) => s.scheduledAt && new Date(s.scheduledAt) >= monthStart,
+      ).length;
+    }
+
+    return {
+      courses: { assisting: courseIds.length },
+      sessions: { total: sessionTotal, thisMonth: sessionsThisMonth },
+    };
+  }
+
+  async getFinanceSnapshot(userId: string) {
+    // Finance staff don't accrue per-user academic stats. The card
+    // is intentionally lean — identity + ticket activity is enough
+    // context for the agent.
+    const [{ value: totalTickets }] = await db
+      .select({ value: sql<number>`count(*)::int` })
+      .from(tickets)
+      .where(eq(tickets.studentId, userId));
+
+    return {
+      tickets: { raised: Number(totalTickets) || 0 },
+    };
+  }
+
+  // Reusable primitive — aggregates a profile snapshot for any
+  // student id. Six queries in parallel; all touched columns are
+  // indexed. ~5–15ms typical on a modest dataset.
+  async getStudentSnapshot(studentId: string) {
+    if (!studentId || studentId === GUEST_USER_ID) {
+      throw new NotFoundException('No student linked to this ticket');
+    }
+
+    const [enrollmentRows, webinarRows, attendanceRows, certRows, cmeRows, paymentRows] =
+      await Promise.all([
+        db
+          .select({ status: enrollments.status })
+          .from(enrollments)
+          .where(eq(enrollments.studentId, studentId)),
+
+        db
+          .select({
+            attended: webinarRegistrations.attended,
+            scheduledAt: sessions.scheduledAt,
+            sessionStatus: sessions.status,
+          })
+          .from(webinarRegistrations)
+          .innerJoin(sessions, eq(webinarRegistrations.sessionId, sessions.id))
+          .where(eq(webinarRegistrations.userId, studentId)),
+
+        db
+          .select({ status: attendance.status })
+          .from(attendance)
+          .where(eq(attendance.studentId, studentId)),
+
+        db
+          .select({ status: certificateRequests.status })
+          .from(certificateRequests)
+          .where(eq(certificateRequests.studentId, studentId)),
+
+        // Single query covers both "earned" (cert approved) and
+        // "pending" (course completed but cert not approved yet).
+        db
+          .select({
+            cmeHours: courses.cmeHours,
+            certStatus: certificateRequests.status,
+            enrollmentStatus: enrollments.status,
+          })
+          .from(enrollments)
+          .innerJoin(courses, eq(enrollments.courseId, courses.id))
+          .leftJoin(
+            certificateRequests,
+            and(
+              eq(certificateRequests.courseId, enrollments.courseId),
+              eq(certificateRequests.studentId, enrollments.studentId),
+            ),
+          )
+          .where(
+            and(
+              eq(enrollments.studentId, studentId),
+              eq(courses.isCmeAccredited, true),
+              sql`${courses.cmeHours} > 0`,
+            ),
+          ),
+
+        db
+          .select({
+            status: payments.status,
+            amount: payments.amount,
+            currency: payments.currency,
+            createdAt: payments.createdAt,
+          })
+          .from(payments)
+          .where(eq(payments.userId, studentId))
+          .orderBy(desc(payments.createdAt)),
+      ]);
+
+    // Courses — only count "real" enrollments (drop suspended/dropped
+    // from the headline; they're not actionable for support).
+    const activeCourses = enrollmentRows.filter((r) => r.status === 'active').length;
+    const completedCourses = enrollmentRows.filter((r) => r.status === 'completed').length;
+    const totalCourses = activeCourses + completedCourses;
+
+    // Webinars — total registered, attended count, upcoming count.
+    const now = new Date();
+    const totalWebinars = webinarRows.length;
+    const attendedWebinars = webinarRows.filter((r) => r.attended).length;
+    const upcomingWebinars = webinarRows.filter(
+      (r) =>
+        r.scheduledAt &&
+        new Date(r.scheduledAt) > now &&
+        (r.sessionStatus === 'scheduled' || r.sessionStatus === 'live'),
+    ).length;
+
+    // Attendance — (present + late) / total. Excused counts neither
+    // for nor against (matches the policy used in CME eligibility).
+    const totalAttendanceRecords = attendanceRows.length;
+    const consideredAttendance = attendanceRows.filter(
+      (r) => r.status !== 'excused',
+    );
+    const presentCount = consideredAttendance.filter(
+      (r) => r.status === 'present' || r.status === 'late',
+    ).length;
+    const attendancePct =
+      consideredAttendance.length > 0
+        ? Math.round((presentCount / consideredAttendance.length) * 100)
+        : null;
+
+    // Certificates
+    const certsIssued = certRows.filter((r) => r.status === 'approved').length;
+    const certsPending = certRows.filter((r) => r.status === 'pending').length;
+    const certsRevoked = certRows.filter((r) => r.status === 'revoked').length;
+
+    // CME — earned = cert approved; pending = course completed but cert
+    // not approved. Don't double-count; a row contributes to exactly one
+    // bucket based on its certStatus.
+    let cmeEarned = 0;
+    let cmePending = 0;
+    for (const row of cmeRows) {
+      const hours = Number(row.cmeHours ?? 0);
+      if (row.certStatus === 'approved') {
+        cmeEarned += hours;
+      } else if (row.enrollmentStatus === 'completed') {
+        cmePending += hours;
+      }
+    }
+
+    // Payments — total spent (completed SAR only), pending/failed counts
+    // for amber/red signals, last payment date for context.
+    let totalPaidSar = 0;
+    let completedCount = 0;
+    let pendingCount = 0;
+    let failedCount = 0;
+    let refundedCount = 0;
+    for (const p of paymentRows) {
+      if (p.status === 'completed' && p.currency === 'SAR') {
+        totalPaidSar += Number(p.amount ?? 0);
+        completedCount += 1;
+      } else if (p.status === 'pending') {
+        pendingCount += 1;
+      } else if (p.status === 'failed') {
+        failedCount += 1;
+      } else if (p.status === 'refunded') {
+        refundedCount += 1;
+      }
+    }
+    const lastPaymentAt = paymentRows[0]?.createdAt ?? null;
+
+    return {
+      courses: {
+        total: totalCourses,
+        active: activeCourses,
+        completed: completedCourses,
+      },
+      webinars: {
+        total: totalWebinars,
+        attended: attendedWebinars,
+        upcoming: upcomingWebinars,
+      },
+      attendance: {
+        percent: attendancePct,
+        sessionCount: totalAttendanceRecords,
+      },
+      certificates: {
+        issued: certsIssued,
+        pending: certsPending,
+        revoked: certsRevoked,
+      },
+      cme: {
+        earned: cmeEarned,
+        pending: cmePending,
+      },
+      payments: {
+        totalPaidSar,
+        completedCount,
+        pendingCount,
+        failedCount,
+        refundedCount,
+        lastPaymentAt,
+      },
+    };
+  }
+
+  // ─── Trainer application for a ticket (Amna R3 — Jun 2026) ─────
+  //
+  // Surfaces the applicant's role_request + event timeline + missing
+  // requirements on the ticket-detail card. The card hides itself
+  // when there's no match. RBAC mirrors getStudentSnapshotForTicket:
+  // assignee, supervisor, or admin only — same rule for guest
+  // tickets (where the match is by guestEmail rather than studentId).
+  async getTrainerApplicationForTicket(
+    user: AuthenticatedUser,
+    ticketId: string,
+  ) {
+    const [ticket] = await db
+      .select({
+        studentId: tickets.studentId,
+        assigneeId: tickets.assigneeId,
+        guestEmail: tickets.guestEmail,
+      })
+      .from(tickets)
+      .where(eq(tickets.id, ticketId));
+
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    const isSupportOrAdmin =
+      user.roles.includes(ROLE_NAMES.SUPPORT) ||
+      user.roles.includes(ROLE_NAMES.ADMIN) ||
+      user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+
+    if (!isSupportOrAdmin && ticket.studentId !== user.id) {
+      throw new ForbiddenException('You do not have access to this ticket');
+    }
+
+    if (isSupportOrAdmin) {
+      const isSupervisorOrAdmin =
+        user.supportSubRole === 'supervisor' ||
+        user.roles.includes(ROLE_NAMES.ADMIN) ||
+        user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+      if (!isSupervisorOrAdmin && ticket.assigneeId !== user.id) {
+        throw new ForbiddenException('You are not assigned to this ticket');
+      }
+    }
+
+    // Resolve the applicant email. Logged-in tickets look up the
+    // student row; guest tickets carry the applicant email directly.
+    let applicantEmail: string | null = null;
+    if (ticket.studentId && ticket.studentId !== GUEST_USER_ID) {
+      const [studentRow] = await db
+        .select({ email: users.email })
+        .from(users)
+        .where(eq(users.id, ticket.studentId))
+        .limit(1);
+      applicantEmail = studentRow?.email ?? null;
+    } else if (ticket.guestEmail) {
+      applicantEmail = ticket.guestEmail;
+    }
+
+    if (!applicantEmail) {
+      return { application: null, events: [] };
+    }
+
+    const matched = await this.roleRequestsService.findMostRecentByEmail(
+      applicantEmail,
+    );
+    if (!matched) {
+      return { application: null, events: [] };
+    }
+
+    const events = await this.roleRequestsService.getEvents(matched.id);
+    return { application: matched, events };
+  }
+
+  // ─── Per-course certificate & CME detail (Amna R2 — Jun 2026) ──
+  //
+  // The student-wide snapshot answers "how many certs / how much CME?";
+  // this method answers "for course X, why isn't the cert issued?". Used
+  // by the cert/CME panel on the ticket-detail right rail. One row per
+  // course the student is enrolled in, with the cached eligibility
+  // fields from certificate_requests when one exists. RBAC mirrors
+  // getStudentSnapshotForTicket so the panel is gated to assignees +
+  // supervisors + admins.
+  async getCertificateDetailsForTicket(
+    user: AuthenticatedUser,
+    ticketId: string,
+  ) {
+    const [ticket] = await db
+      .select({
+        studentId: tickets.studentId,
+        assigneeId: tickets.assigneeId,
+      })
+      .from(tickets)
+      .where(eq(tickets.id, ticketId));
+
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    const isSupportOrAdmin =
+      user.roles.includes(ROLE_NAMES.SUPPORT) ||
+      user.roles.includes(ROLE_NAMES.ADMIN) ||
+      user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+
+    if (!isSupportOrAdmin && ticket.studentId !== user.id) {
+      throw new ForbiddenException('You do not have access to this ticket');
+    }
+
+    if (isSupportOrAdmin) {
+      const isSupervisorOrAdmin =
+        user.supportSubRole === 'supervisor' ||
+        user.roles.includes(ROLE_NAMES.ADMIN) ||
+        user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+      if (!isSupervisorOrAdmin && ticket.assigneeId !== user.id) {
+        throw new ForbiddenException('You are not assigned to this ticket');
+      }
+    }
+
+    if (!ticket.studentId || ticket.studentId === GUEST_USER_ID) {
+      return { isGuest: true as const, details: null };
+    }
+
+    // One query: every enrollment with its course meta + (optional) cert
+    // request. LEFT JOIN keeps enrollments that haven't generated a
+    // request yet — those render as "Not yet requested".
+    const rows = await db
+      .select({
+        courseId: enrollments.courseId,
+        courseTitle: courses.title,
+        courseTitleAr: courses.titleAr,
+        deliveryType: courses.deliveryType,
+        cmeHours: courses.cmeHours,
+        isCmeAccredited: courses.isCmeAccredited,
+        enrollmentStatus: enrollments.status,
+        certId: certificateRequests.id,
+        certStatus: certificateRequests.status,
+        certAttendancePercent: certificateRequests.attendancePercent,
+        certAssessmentPassed: certificateRequests.assessmentPassed,
+        certCourseCompleted: certificateRequests.courseCompleted,
+        certApprovedAt: certificateRequests.approvedAt,
+        certReviewedAt: certificateRequests.reviewedAt,
+        certRevokedAt: certificateRequests.revokedAt,
+        certRejectedAt: certificateRequests.rejectedAt,
+        certificateUrl: certificateRequests.certificateUrl,
+      })
+      .from(enrollments)
+      .innerJoin(courses, eq(enrollments.courseId, courses.id))
+      .leftJoin(
+        certificateRequests,
+        and(
+          eq(certificateRequests.courseId, enrollments.courseId),
+          eq(certificateRequests.studentId, ticket.studentId),
+        ),
+      )
+      .where(eq(enrollments.studentId, ticket.studentId))
+      .orderBy(desc(enrollments.enrolledAt));
+
+    // Eligibility threshold — kept in sync with the certs module
+    // (default for non-self-paced courses). When the threshold changes
+    // in product, surface a TODO here and update both spots.
+    const ATTENDANCE_THRESHOLD = 75;
+
+    const details = rows.map((r) => {
+      const attendancePct =
+        r.certAttendancePercent == null
+          ? null
+          : Number(r.certAttendancePercent);
+
+      // Eligibility traffic light — derived, not stored. Logic:
+      //   approved      → eligible (cert issued)
+      //   rejected      → ineligible
+      //   revoked       → revoked (treat as ineligible for the badge)
+      //   pending/held  → check the three component fields
+      //   no request    → not yet requested
+      let eligibility:
+        | 'eligible'
+        | 'partial'
+        | 'ineligible'
+        | 'revoked'
+        | 'not_requested';
+      const isSelfPaced = r.deliveryType === 'self-paced';
+
+      if (r.certStatus === 'approved') {
+        eligibility = 'eligible';
+      } else if (r.certStatus === 'revoked') {
+        eligibility = 'revoked';
+      } else if (r.certStatus === 'rejected') {
+        eligibility = 'ineligible';
+      } else if (r.certStatus === 'pending' || r.certStatus === 'held') {
+        // Pending — eligibility = three conditions all true. Self-paced
+        // courses get a free pass on attendance.
+        const attendanceOk =
+          isSelfPaced ||
+          (attendancePct != null && attendancePct >= ATTENDANCE_THRESHOLD);
+        const assessmentOk = r.certAssessmentPassed === true;
+        const completedOk = r.certCourseCompleted === true;
+        const passed = attendanceOk && assessmentOk && completedOk;
+        eligibility = passed ? 'eligible' : 'partial';
+      } else {
+        eligibility = 'not_requested';
+      }
+
+      // Assessment status — three states agents care about: passed,
+      // failed, or not yet attempted. The cert request stores a single
+      // bool; null means "no submission graded yet".
+      const assessmentStatus: 'passed' | 'failed' | 'not_attempted' =
+        r.certAssessmentPassed === true
+          ? 'passed'
+          : r.certAssessmentPassed === false
+            ? 'failed'
+            : 'not_attempted';
+
+      // Issued date — prefer approvedAt (per-transition column added
+      // May 2026), fall back to reviewedAt for legacy approvals that
+      // pre-date the column.
+      const issuedAt =
+        r.certStatus === 'approved'
+          ? (r.certApprovedAt ?? r.certReviewedAt ?? null)
+          : null;
+
+      return {
+        courseId: r.courseId,
+        courseTitle: r.courseTitle,
+        courseTitleAr: r.courseTitleAr,
+        deliveryType: r.deliveryType,
+        isCmeAccredited: !!r.isCmeAccredited,
+        cmeHours: Number(r.cmeHours ?? 0),
+        enrollmentStatus: r.enrollmentStatus,
+        eligibility,
+        attendancePercent: attendancePct,
+        attendanceThreshold: ATTENDANCE_THRESHOLD,
+        attendanceApplicable: !isSelfPaced,
+        assessmentStatus,
+        certificate: r.certId
+          ? {
+              id: r.certId,
+              status: r.certStatus,
+              issuedAt: issuedAt ? issuedAt.toISOString() : null,
+              revokedAt: r.certRevokedAt
+                ? r.certRevokedAt.toISOString()
+                : null,
+              rejectedAt: r.certRejectedAt
+                ? r.certRejectedAt.toISOString()
+                : null,
+              // Verification code = short prefix of UUID (8 chars,
+              // displayed uppercase). Matches what users see on the
+              // PDF and the public verify page.
+              verificationCode: r.certId.split('-')[0].toUpperCase(),
+              certificateUrl: r.certificateUrl ?? null,
+            }
+          : null,
+      };
+    });
+
+    return { isGuest: false as const, details };
+  }
+
+  // ─── Student timeline for a ticket ─────────────────────────
+  //
+  // Unified chronological feed of every meaningful event for the
+  // ticket's student. Powers the "Recent activity" card in the
+  // detail-view right rail. Five sources merged + sorted DESC:
+  //
+  //   1. Previous tickets (this student, excluding the current one)
+  //   2. Course enrollments (status moot — the event is the join date)
+  //   3. Webinar registrations (with attendance status badge)
+  //   4. Payments (any status; chip colour distinguishes)
+  //   5. Certificate issuances (only `approved` rows — those are the
+  //      meaningful event; pending/held rows are noise)
+  //
+  // Caller is responsible for the RBAC + guest check; this method
+  // is wrapped by getStudentTimelineForTicket below. Limit is hard
+  // at 20 — the FE expects a tight feed, not a paginated log.
+  async getStudentTimelineForTicket(
+    user: AuthenticatedUser,
+    ticketId: string,
+  ) {
+    const [ticket] = await db
+      .select({
+        studentId: tickets.studentId,
+        assigneeId: tickets.assigneeId,
+        source: tickets.source,
+      })
+      .from(tickets)
+      .where(eq(tickets.id, ticketId));
+
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    const isSupportOrAdmin =
+      user.roles.includes(ROLE_NAMES.SUPPORT) ||
+      user.roles.includes(ROLE_NAMES.ADMIN) ||
+      user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+
+    if (!isSupportOrAdmin && ticket.studentId !== user.id) {
+      throw new ForbiddenException('You do not have access to this ticket');
+    }
+
+    if (isSupportOrAdmin) {
+      const isSupervisorOrAdmin =
+        user.supportSubRole === 'supervisor' ||
+        user.roles.includes(ROLE_NAMES.ADMIN) ||
+        user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+      if (!isSupervisorOrAdmin && ticket.assigneeId !== user.id) {
+        throw new ForbiddenException('You are not assigned to this ticket');
+      }
+    }
+
+    if (!ticket.studentId || ticket.studentId === GUEST_USER_ID) {
+      return { isGuest: true as const, role: 'guest' as const, events: [] };
+    }
+
+    // Map source → requester role, mirroring the snapshot dispatcher.
+    // Recent-activity events are filtered to what's meaningful for
+    // that role so a multi-role user (e.g. instructor + manager)
+    // doesn't see their instructor activity mixed into a ticket
+    // raised from the manager dashboard.
+    const source = ticket.source || 'student';
+    const role: 'student' | 'instructor' | 'manager' | 'ta' | 'finance' =
+      source === 'instructor' || source === 'intervention'
+        ? 'instructor'
+        : source === 'course_manager'
+          ? 'manager'
+          : source === 'ta'
+            ? 'ta'
+            : source === 'finance'
+              ? 'finance'
+              : 'student';
+
+    if (role !== 'student') {
+      const events = await this.getStaffTimeline(
+        ticket.studentId,
+        role,
+        ticketId,
+      );
+      return { isGuest: false as const, role, events };
+    }
+
+    const studentId = ticket.studentId;
+
+    const [
+      ticketRows,
+      enrollmentRows,
+      webinarRows,
+      paymentRows,
+      certRows,
+    ] = await Promise.all([
+      // Previous tickets — exclude the current one so the agent
+      // doesn't see a self-reference.
+      db
+        .select({
+          id: tickets.id,
+          referenceNumber: tickets.referenceNumber,
+          subject: tickets.subject,
+          status: tickets.status,
+          category: tickets.category,
+          createdAt: tickets.createdAt,
+        })
+        .from(tickets)
+        .where(
+          and(
+            eq(tickets.studentId, studentId),
+            sql`${tickets.id} <> ${ticketId}`,
+          ),
+        )
+        .orderBy(desc(tickets.createdAt))
+        .limit(30),
+
+      db
+        .select({
+          id: enrollments.id,
+          status: enrollments.status,
+          enrolledAt: enrollments.enrolledAt,
+          courseId: courses.id,
+          courseTitle: courses.title,
+        })
+        .from(enrollments)
+        .innerJoin(courses, eq(enrollments.courseId, courses.id))
+        .where(eq(enrollments.studentId, studentId))
+        .orderBy(desc(enrollments.enrolledAt))
+        .limit(30),
+
+      db
+        .select({
+          id: webinarRegistrations.id,
+          createdAt: webinarRegistrations.createdAt,
+          attended: webinarRegistrations.attended,
+          scheduledAt: sessions.scheduledAt,
+          sessionId: sessions.id,
+          sessionTitle: sessions.title,
+        })
+        .from(webinarRegistrations)
+        .innerJoin(sessions, eq(webinarRegistrations.sessionId, sessions.id))
+        .where(eq(webinarRegistrations.userId, studentId))
+        .orderBy(desc(webinarRegistrations.createdAt))
+        .limit(30),
+
+      db
+        .select({
+          id: payments.id,
+          createdAt: payments.createdAt,
+          amount: payments.amount,
+          currency: payments.currency,
+          status: payments.status,
+          courseTitle: courses.title,
+        })
+        .from(payments)
+        .leftJoin(courses, eq(payments.courseId, courses.id))
+        .where(eq(payments.userId, studentId))
+        .orderBy(desc(payments.createdAt))
+        .limit(30),
+
+      // Only emit approved certs — pending / held / revoked are
+      // tracked in the snapshot counters but aren't meaningful
+      // "events" for the timeline.
+      db
+        .select({
+          id: certificateRequests.id,
+          approvedAt: certificateRequests.approvedAt,
+          courseTitle: courses.title,
+        })
+        .from(certificateRequests)
+        .innerJoin(courses, eq(certificateRequests.courseId, courses.id))
+        .where(
+          and(
+            eq(certificateRequests.studentId, studentId),
+            eq(certificateRequests.status, 'approved'),
+            isNotNull(certificateRequests.approvedAt),
+          ),
+        )
+        .orderBy(desc(certificateRequests.approvedAt))
+        .limit(30),
+    ]);
+
+    type TimelineEvent = {
+      type: 'ticket' | 'enrollment' | 'webinar' | 'payment' | 'certificate';
+      timestamp: Date;
+      title: string;
+      subtitle: string | null;
+      status: string | null;
+      linkTarget: { kind: 'ticket'; ticketId: string } | null;
+    };
+
+    const events: TimelineEvent[] = [];
+
+    for (const t of ticketRows) {
+      if (!t.createdAt) continue;
+      events.push({
+        type: 'ticket',
+        timestamp: new Date(t.createdAt),
+        title: t.subject || '(no subject)',
+        subtitle: `${t.referenceNumber} · ${t.category}`,
+        status: t.status,
+        linkTarget: { kind: 'ticket', ticketId: t.id },
+      });
+    }
+
+    for (const e of enrollmentRows) {
+      if (!e.enrolledAt) continue;
+      events.push({
+        type: 'enrollment',
+        timestamp: new Date(e.enrolledAt),
+        title: e.courseTitle,
+        subtitle: null,
+        status: e.status,
+        linkTarget: null,
+      });
+    }
+
+    for (const w of webinarRows) {
+      if (!w.createdAt) continue;
+      let status = 'registered';
+      if (w.attended) {
+        status = 'attended';
+      } else if (w.scheduledAt && new Date(w.scheduledAt) > new Date()) {
+        status = 'upcoming';
+      } else if (w.scheduledAt && new Date(w.scheduledAt) < new Date()) {
+        status = 'missed';
+      }
+      events.push({
+        type: 'webinar',
+        timestamp: new Date(w.createdAt),
+        title: w.sessionTitle,
+        subtitle: null,
+        status,
+        linkTarget: null,
+      });
+    }
+
+    for (const p of paymentRows) {
+      if (!p.createdAt) continue;
+      const amount = Number(p.amount ?? 0);
+      const currency = p.currency || 'SAR';
+      events.push({
+        type: 'payment',
+        timestamp: new Date(p.createdAt),
+        title: amount > 0 ? `${amount.toFixed(2)} ${currency}` : currency,
+        subtitle: p.courseTitle ?? null,
+        status: p.status,
+        linkTarget: null,
+      });
+    }
+
+    for (const c of certRows) {
+      if (!c.approvedAt) continue;
+      events.push({
+        type: 'certificate',
+        timestamp: new Date(c.approvedAt),
+        title: c.courseTitle,
+        subtitle: null,
+        status: 'issued',
+        linkTarget: null,
+      });
+    }
+
+    events.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
+    return {
+      isGuest: false as const,
+      role: 'student' as const,
+      events: events.slice(0, 20),
+    };
+  }
+
+  // ─── Staff timeline ────────────────────────────────────────
+  //
+  // Builds the right-rail "recent activity" feed for non-student
+  // requesters. Each role surfaces a different mix of events so
+  // a multi-role user (e.g. instructor + manager) does not see
+  // cross-role activity bleed into a ticket they raised from one
+  // dashboard. Scope:
+  //
+  //   instructor → tickets raised, sessions conducted, interventions filed
+  //   manager    → tickets raised, courses they manage (created/updated), instructor changes
+  //   ta         → tickets raised, sessions in courses they assist
+  //   finance    → tickets raised only (no academic activity)
+  //
+  // Caller passes the current ticket id so it can be excluded from
+  // the "previous tickets" list — same convention as the student
+  // timeline.
+  private async getStaffTimeline(
+    userId: string,
+    role: 'instructor' | 'manager' | 'ta' | 'finance',
+    currentTicketId: string,
+  ) {
+    type TimelineEvent = {
+      type:
+        | 'ticket'
+        | 'session'
+        | 'intervention'
+        | 'course_managed'
+        | 'ta_assignment';
+      timestamp: Date;
+      title: string;
+      subtitle: string | null;
+      status: string | null;
+      linkTarget: { kind: 'ticket'; ticketId: string } | null;
+    };
+
+    const events: TimelineEvent[] = [];
+
+    // Every staff role gets their own ticket history first — that
+    // is the most relevant context for the agent triaging.
+    const ticketRows = await db
+      .select({
+        id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        subject: tickets.subject,
+        status: tickets.status,
+        category: tickets.category,
+        createdAt: tickets.createdAt,
+      })
+      .from(tickets)
+      .where(
+        and(
+          eq(tickets.studentId, userId),
+          sql`${tickets.id} <> ${currentTicketId}`,
+        ),
+      )
+      .orderBy(desc(tickets.createdAt))
+      .limit(30);
+
+    for (const t of ticketRows) {
+      if (!t.createdAt) continue;
+      events.push({
+        type: 'ticket',
+        timestamp: new Date(t.createdAt),
+        title: t.subject || '(no subject)',
+        subtitle: `${t.referenceNumber} · ${t.category}`,
+        status: t.status,
+        linkTarget: { kind: 'ticket', ticketId: t.id },
+      });
+    }
+
+    if (role === 'instructor') {
+      const [sessionRows, interventionRows] = await Promise.all([
+        db
+          .select({
+            id: sessions.id,
+            scheduledAt: sessions.scheduledAt,
+            status: sessions.status,
+            title: sessions.title,
+          })
+          .from(sessions)
+          .where(eq(sessions.instructorId, userId))
+          .orderBy(desc(sessions.scheduledAt))
+          .limit(30),
+
+        db
+          .select({
+            id: interventions.id,
+            type: interventions.type,
+            createdAt: interventions.createdAt,
+          })
+          .from(interventions)
+          .where(eq(interventions.instructorId, userId))
+          .orderBy(desc(interventions.createdAt))
+          .limit(30),
+      ]);
+
+      for (const s of sessionRows) {
+        if (!s.scheduledAt) continue;
+        events.push({
+          type: 'session',
+          timestamp: new Date(s.scheduledAt),
+          title: s.title || 'Session',
+          subtitle: null,
+          status: s.status,
+          linkTarget: null,
+        });
+      }
+
+      for (const i of interventionRows) {
+        if (!i.createdAt) continue;
+        events.push({
+          type: 'intervention',
+          timestamp: new Date(i.createdAt),
+          title: i.type,
+          subtitle: null,
+          status: null,
+          linkTarget: null,
+        });
+      }
+    } else if (role === 'manager') {
+      const managedRows = await db
+        .select({
+          id: courses.id,
+          title: courses.title,
+          createdAt: courses.createdAt,
+        })
+        .from(courses)
+        .where(eq(courses.managerId, userId))
+        .orderBy(desc(courses.createdAt))
+        .limit(20);
+
+      for (const c of managedRows) {
+        if (!c.createdAt) continue;
+        events.push({
+          type: 'course_managed',
+          timestamp: new Date(c.createdAt),
+          title: c.title,
+          subtitle: null,
+          status: 'managed',
+          linkTarget: null,
+        });
+      }
+    } else if (role === 'ta') {
+      const assignmentRows = await db
+        .select({
+          id: courseAssistants.id,
+          assignedAt: courseAssistants.assignedAt,
+          status: courseAssistants.status,
+          courseTitle: courses.title,
+        })
+        .from(courseAssistants)
+        .innerJoin(courses, eq(courseAssistants.courseId, courses.id))
+        .where(eq(courseAssistants.userId, userId))
+        .orderBy(desc(courseAssistants.assignedAt))
+        .limit(20);
+
+      for (const a of assignmentRows) {
+        if (!a.assignedAt) continue;
+        events.push({
+          type: 'ta_assignment',
+          timestamp: new Date(a.assignedAt),
+          title: a.courseTitle,
+          subtitle: null,
+          status: a.status,
+          linkTarget: null,
+        });
+      }
+    }
+    // finance: tickets only — nothing to append.
+
+    events.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    return events.slice(0, 20);
+  }
+
   async mergeTicket(
     user: AuthenticatedUser,
     sourceId: string,
@@ -6003,10 +12109,12 @@ export class SupportService implements OnModuleInit {
     }
 
     // Find the next agent for the new category. Default to re-running
-    // auto-assignment unless the caller opts out.
+    // auto-assignment unless the caller opts out. Pass the target
+    // category so the picker prefers agents already working that
+    // category (specialty signal).
     const shouldReassign = dto.reassign !== false;
     const newAssigneeId = shouldReassign
-      ? await this.findNextAgent()
+      ? await this.findNextAgent(dto.category)
       : existing.assigneeId;
 
     await db
@@ -6272,5 +12380,62 @@ export class SupportService implements OnModuleInit {
         zeroResultCount: Number(q.zeroResultCount || 0),
       })),
     };
+  }
+
+  // ─── KB article performance ────────────────────────────────
+  //
+  // viewCount is a single all-time counter on kbArticles (no event
+  // table behind it), so both reports below are inherently all-time.
+  // The FE labels them as such — date-scoping would require a
+  // separate kb_article_views events table, deliberately out of
+  // scope for now.
+
+  async getMostViewedKbArticles(opts?: { limit?: number }) {
+    const limit = Math.min(Math.max(opts?.limit ?? 10, 1), 50);
+    return db
+      .select({
+        id: kbArticles.id,
+        titleEn: kbArticles.titleEn,
+        titleAr: kbArticles.titleAr,
+        category: kbArticles.category,
+        viewCount: kbArticles.viewCount,
+        updatedAt: kbArticles.updatedAt,
+      })
+      .from(kbArticles)
+      .where(eq(kbArticles.published, true))
+      .orderBy(desc(kbArticles.viewCount))
+      .limit(limit);
+  }
+
+  async getLowEngagementKbArticles(opts?: {
+    limit?: number;
+    minAgeDays?: number;
+  }) {
+    const limit = Math.min(Math.max(opts?.limit ?? 10, 1), 50);
+    const minAgeDays = opts?.minAgeDays ?? 30;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - minAgeDays);
+
+    // Filter to published articles older than minAgeDays so brand-new
+    // articles aren't unfairly flagged as "low engagement". Sort by
+    // viewCount ascending so the worst offenders surface first.
+    return db
+      .select({
+        id: kbArticles.id,
+        titleEn: kbArticles.titleEn,
+        titleAr: kbArticles.titleAr,
+        category: kbArticles.category,
+        viewCount: kbArticles.viewCount,
+        createdAt: kbArticles.createdAt,
+      })
+      .from(kbArticles)
+      .where(
+        and(
+          eq(kbArticles.published, true),
+          lte(kbArticles.createdAt, cutoff),
+        ),
+      )
+      .orderBy(asc(kbArticles.viewCount), desc(kbArticles.createdAt))
+      .limit(limit);
   }
 }

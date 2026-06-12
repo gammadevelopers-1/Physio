@@ -1,21 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Plus, Edit3, Trash2, Loader2, Tag as TagIcon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Plus,
+  Edit3,
+  Trash2,
+  Loader2,
+  Tag as TagIcon,
+  Zap,
+  Archive,
+  ArchiveRestore,
+  AlertTriangle,
+  BarChart3,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supportApi } from "@/lib/api";
+import TagRulesModal from "./TagRulesModal";
+import TagAnalyticsPanel from "./TagAnalyticsPanel";
 
 type Tag = {
   id: string;
   name: string;
   color: string;
   description: string | null;
+  archivedAt: string | null;
   usageCount: number;
+  ruleCount: number;
   createdAt: string;
 };
 
-// Curated palette for the color picker. Admins can still type any hex,
-// but most will pick from this list — keeps the chip palette coherent.
 const PRESET_COLORS = [
   "#FEE2E2",
   "#FED7AA",
@@ -39,20 +52,37 @@ function textForBg(hex: string): string {
     : "#FFFFFF";
 }
 
+type Section = "active" | "archived" | "analytics";
+
+// Settings → Tags. Three sections:
+//   • Active     — the live taxonomy. Create / edit / archive / delete /
+//                  manage auto-apply rules.
+//   • Archived   — soft-archived tags. Hidden from the picker + matcher
+//                  but assignments preserved. Restore turns them active.
+//   • Analytics  — top tags, 30-day trend, per-category breakdown.
+//
+// Delete is gated by a themed modal that quotes usage count + offers
+// Archive as the safer path. Hard delete still cascades, per the
+// owner's call.
 export default function TagsManagerPanel() {
+  const [section, setSection] = useState<Section>("active");
   const [tags, setTags] = useState<Tag[] | null>(null);
   const [editing, setEditing] = useState<Tag | null>(null);
   const [creating, setCreating] = useState(false);
+  const [rulesFor, setRulesFor] = useState<Tag | null>(null);
+  const [deleting, setDeleting] = useState<Tag | null>(null);
 
   // form state shared by create + edit dialogs
   const [name, setName] = useState("");
   const [color, setColor] = useState(PRESET_COLORS[0]);
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
+  const [busyTagId, setBusyTagId] = useState<string | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   async function reload() {
     try {
-      const list = await supportApi.listTicketTags();
+      const list = await supportApi.listTicketTags({ includeArchived: true });
       setTags(list);
     } catch {
       setTags([]);
@@ -62,6 +92,16 @@ export default function TagsManagerPanel() {
   useEffect(() => {
     reload();
   }, []);
+
+  const { active, archived } = useMemo(() => {
+    const a: Tag[] = [];
+    const arch: Tag[] = [];
+    for (const t of tags || []) {
+      if (t.archivedAt) arch.push(t);
+      else a.push(t);
+    }
+    return { active: a, archived: arch };
+  }, [tags]);
 
   function openCreate() {
     setEditing(null);
@@ -115,54 +155,106 @@ export default function TagsManagerPanel() {
     }
   }
 
-  async function remove(tag: Tag) {
-    const message =
-      tag.usageCount > 0
-        ? `Delete "${tag.name}"? ${tag.usageCount} ticket(s) currently use it — they'll lose this tag.`
-        : `Delete "${tag.name}"?`;
-    if (!window.confirm(message)) return;
+  async function archive(tag: Tag) {
+    setBusyTagId(tag.id);
     try {
-      await supportApi.deleteTicketTag(tag.id);
-      toast.success("Tag deleted");
+      await supportApi.archiveTicketTag(tag.id);
+      toast.success(`Archived "${tag.name}"`);
       await reload();
     } catch (err: any) {
+      toast.error(err?.message || "Archive failed");
+    } finally {
+      setBusyTagId(null);
+    }
+  }
+
+  async function unarchive(tag: Tag) {
+    setBusyTagId(tag.id);
+    try {
+      await supportApi.unarchiveTicketTag(tag.id);
+      toast.success(`Restored "${tag.name}"`);
+      await reload();
+    } catch (err: any) {
+      toast.error(err?.message || "Restore failed");
+    } finally {
+      setBusyTagId(null);
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deleting) return;
+    setDeleteBusy(true);
+    try {
+      await supportApi.deleteTicketTag(deleting.id);
+      toast.success("Tag deleted");
+      await reload();
+      setDeleting(null);
+    } catch (err: any) {
       toast.error(err?.message || "Delete failed");
+    } finally {
+      setDeleteBusy(false);
     }
   }
 
   return (
     <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <TagIcon className="w-4 h-4 text-[var(--color-text-secondary)]" />
           <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
             Ticket Tags
           </h3>
         </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-[var(--color-primary)] text-white rounded-lg hover:bg-[#001d5e]"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          New tag
-        </button>
+        {section !== "analytics" && (
+          <button
+            type="button"
+            onClick={openCreate}
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-[var(--color-primary)] text-white rounded-lg hover:bg-[#001d5e]"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            New tag
+          </button>
+        )}
       </div>
 
-      {tags === null ? (
+      {/* Sub-tabs */}
+      <div className="flex items-center gap-1 mb-4 border-b border-[var(--color-border-subtle)]">
+        <SubTab
+          label={`Active${tags ? ` · ${active.length}` : ""}`}
+          active={section === "active"}
+          onClick={() => setSection("active")}
+        />
+        <SubTab
+          label={`Archived${tags ? ` · ${archived.length}` : ""}`}
+          active={section === "archived"}
+          onClick={() => setSection("archived")}
+        />
+        <SubTab
+          label="Analytics"
+          icon={<BarChart3 className="w-3.5 h-3.5" />}
+          active={section === "analytics"}
+          onClick={() => setSection("analytics")}
+        />
+      </div>
+
+      {section === "analytics" ? (
+        <TagAnalyticsPanel />
+      ) : tags === null ? (
         <div className="flex justify-center py-6">
           <Loader2 className="w-5 h-5 animate-spin text-[var(--color-primary)]" />
         </div>
-      ) : tags.length === 0 ? (
-        <div className="text-xs text-[var(--color-text-secondary)] py-3 text-center">
-          No tags yet. Create one to start tagging tickets.
-        </div>
+      ) : (section === "active" ? active : archived).length === 0 ? (
+        <EmptyState section={section} />
       ) : (
         <div className="space-y-1.5">
-          {tags.map((tag) => (
+          {(section === "active" ? active : archived).map((tag) => (
             <div
               key={tag.id}
-              className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-[var(--color-border-subtle)] hover:border-[var(--color-border)]"
+              className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg border ${
+                tag.archivedAt
+                  ? "border-[var(--color-border-subtle)] opacity-75"
+                  : "border-[var(--color-border-subtle)] hover:border-[var(--color-border)]"
+              }`}
             >
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <span
@@ -179,33 +271,77 @@ export default function TagsManagerPanel() {
                     {tag.description}
                   </span>
                 )}
-                <span className="text-[10px] text-[var(--color-text-secondary)] ml-auto">
-                  {tag.usageCount} ticket{tag.usageCount === 1 ? "" : "s"}
+                <span className="text-[10px] text-[var(--color-text-secondary)] ml-auto flex items-center gap-2">
+                  <span>
+                    {tag.usageCount} ticket{tag.usageCount === 1 ? "" : "s"}
+                  </span>
+                  {tag.ruleCount > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-[#15803D] bg-[#DCFCE7] border border-[#86EFAC] px-1.5 py-0.5 rounded">
+                      <Zap className="w-2.5 h-2.5" />
+                      {tag.ruleCount}
+                    </span>
+                  )}
                 </span>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={() => openEdit(tag)}
-                  className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] rounded"
-                  aria-label="Edit tag"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => remove(tag)}
-                  className="p-1.5 text-[var(--color-text-secondary)] hover:text-[#DC2626] rounded"
-                  aria-label="Delete tag"
+                {!tag.archivedAt && (
+                  <>
+                    <IconButton
+                      title="Auto-apply rules"
+                      onClick={() => setRulesFor(tag)}
+                      hover="text-[var(--color-primary)]"
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                    </IconButton>
+                    <IconButton
+                      title="Edit"
+                      onClick={() => openEdit(tag)}
+                      hover="text-[var(--color-primary)]"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </IconButton>
+                    <IconButton
+                      title="Archive (hide from picker, keep history)"
+                      onClick={() => archive(tag)}
+                      disabled={busyTagId === tag.id}
+                      hover="text-[#F59E0B]"
+                    >
+                      {busyTagId === tag.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Archive className="w-3.5 h-3.5" />
+                      )}
+                    </IconButton>
+                  </>
+                )}
+                {tag.archivedAt && (
+                  <IconButton
+                    title="Restore tag"
+                    onClick={() => unarchive(tag)}
+                    disabled={busyTagId === tag.id}
+                    hover="text-[var(--color-primary)]"
+                  >
+                    {busyTagId === tag.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <ArchiveRestore className="w-3.5 h-3.5" />
+                    )}
+                  </IconButton>
+                )}
+                <IconButton
+                  title="Delete (cascades — removes from all tickets)"
+                  onClick={() => setDeleting(tag)}
+                  hover="text-[#DC2626]"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                </IconButton>
               </div>
             </div>
           ))}
         </div>
       )}
 
+      {/* ── Create / edit modal ───────────────────────────── */}
       {(creating || editing) && (
         <div
           className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
@@ -301,6 +437,159 @@ export default function TagsManagerPanel() {
           </div>
         </div>
       )}
+
+      {/* ── Rules modal ─────────────────────────────────── */}
+      {rulesFor && (
+        <TagRulesModal
+          tagId={rulesFor.id}
+          tagName={rulesFor.name}
+          tagColor={rulesFor.color}
+          onClose={() => {
+            setRulesFor(null);
+            reload();
+          }}
+        />
+      )}
+
+      {/* ── Delete confirmation ─────────────────────────── */}
+      {deleting && (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !deleteBusy) setDeleting(null);
+          }}
+        >
+          <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] w-full max-w-md overflow-hidden">
+            <div className="px-5 py-4 border-b border-[var(--color-border-subtle)] flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-[#DC2626]" />
+              <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
+                Delete tag “{deleting.name}”?
+              </h4>
+            </div>
+            <div className="px-5 py-4 text-sm text-[var(--color-text-primary)] space-y-2">
+              {deleting.usageCount > 0 ? (
+                <>
+                  <p>
+                    This tag is currently applied to{" "}
+                    <span className="font-semibold text-[#DC2626]">
+                      {deleting.usageCount}{" "}
+                      ticket{deleting.usageCount === 1 ? "" : "s"}
+                    </span>
+                    . Deleting cascades — the tag will be removed from all of
+                    them and lost from filters and reports.
+                  </p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">
+                    Consider{" "}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = deleting;
+                        setDeleting(null);
+                        archive(target);
+                      }}
+                      className="text-[var(--color-primary)] underline"
+                    >
+                      archiving
+                    </button>{" "}
+                    instead — that hides the tag from the picker but keeps
+                    history searchable.
+                  </p>
+                </>
+              ) : (
+                <p>This tag isn’t on any tickets. Safe to remove.</p>
+              )}
+              {deleting.ruleCount > 0 && (
+                <p className="text-xs text-[#92400E] bg-[#FEF3C7] border border-[#FDE68A] rounded px-2 py-1.5">
+                  {deleting.ruleCount} auto-apply rule
+                  {deleting.ruleCount === 1 ? "" : "s"} will also be deleted.
+                </p>
+              )}
+            </div>
+            <div className="px-5 py-3 border-t border-[var(--color-border-subtle)] flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleting(null)}
+                disabled={deleteBusy}
+                className="px-3 h-9 text-sm rounded-lg border border-[var(--color-border)] disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deleteBusy}
+                className="px-4 h-9 text-sm bg-[#DC2626] text-white rounded-lg hover:bg-[#B91C1C] disabled:opacity-50 inline-flex items-center gap-1"
+              >
+                {deleteBusy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Delete tag
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SubTab({
+  label,
+  active,
+  onClick,
+  icon,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 -mb-px transition-colors ${
+        active
+          ? "border-[var(--color-primary)] text-[var(--color-primary)]"
+          : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+      }`}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+function IconButton({
+  children,
+  title,
+  onClick,
+  hover,
+  disabled,
+}: {
+  children: React.ReactNode;
+  title: string;
+  onClick: () => void;
+  hover: string;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`p-1.5 text-[var(--color-text-secondary)] hover:${hover} rounded disabled:opacity-50`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function EmptyState({ section }: { section: Section }) {
+  return (
+    <div className="text-xs text-[var(--color-text-secondary)] py-6 text-center">
+      {section === "active"
+        ? "No active tags yet. Create one to start tagging tickets."
+        : "No archived tags. Archived tags show up here so you can restore them."}
     </div>
   );
 }

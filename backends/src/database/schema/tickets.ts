@@ -66,6 +66,28 @@ export const tickets = pgTable(
     // The source row stays for audit; the target becomes the live
     // ticket. See migration 0053 + SupportService.mergeTicket.
     mergedIntoTicketId: uuid('merged_into_ticket_id'),
+    // The third-party "subject" of the ticket — used when one party
+    // files about another (e.g. instructor → support follow-up about a
+    // struggling student). NULL for ordinary tickets. See migration
+    // 0066. The supervisor + admin UI render an "About this user" card
+    // when this is populated.
+    aboutUserId: uuid('about_user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    // Provenance — known values: 'intervention' (instructor at-risk
+    // dashboard), 'at_risk_alert' (future automated alerts). NULL =
+    // direct ticket from the requester. Migration 0066.
+    source: varchar('source', { length: 30 }),
+    // Escalation state. Set once and kept — escalation is sticky
+    // through the rest of the ticket's lifecycle for audit. Both
+    // manual (supervisor clicks "Escalate") and automatic (FRT/TTR
+    // breach cron) escalations populate escalated_at; only manual
+    // populates escalated_by + escalation_reason. Migration 0070.
+    escalatedAt: timestamp('escalated_at'),
+    escalatedBy: uuid('escalated_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    escalationReason: text('escalation_reason'),
   },
   (table) => [
     index('tickets_student_id_idx').on(table.studentId),
@@ -73,6 +95,9 @@ export const tickets = pgTable(
     index('tickets_category_idx').on(table.category),
     index('tickets_assignee_id_idx').on(table.assigneeId),
     index('tickets_reference_number_idx').on(table.referenceNumber),
+    index('tickets_about_user_id_idx').on(table.aboutUserId),
+    index('tickets_source_idx').on(table.source),
+    index('tickets_escalated_at_idx').on(table.escalatedAt),
     check(
       'tickets_status_check',
       sql`${table.status} IN ('new', 'in_progress', 'on_hold', 'resolved', 'closed')`,

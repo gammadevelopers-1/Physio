@@ -10,8 +10,12 @@ import {
 } from 'class-validator';
 
 /**
- * Guest ticket creation — ONLY for login issues.
- * No authentication required. Category locked to 'login'.
+ * Guest ticket creation — public, unauthenticated.
+ * Category is restricted to the small set of guest-allowed values:
+ *   - 'login'    Login / OTP issues
+ *   - 'trainer'  Become-a-trainer applicants asking about their submission
+ *                (the public form surfaces this option; agents see the
+ *                applicant's application status in the ticket card).
  */
 export class CreateGuestTicketDto {
   @IsString()
@@ -23,8 +27,8 @@ export class CreateGuestTicketDto {
   @IsNotEmpty()
   email: string;
 
-  @IsIn(['login'], {
-    message: 'Guest tickets are only allowed for login issues',
+  @IsIn(['login', 'trainer'], {
+    message: 'Guest tickets are only allowed for login or trainer-application issues',
   })
   @IsNotEmpty()
   category: string;

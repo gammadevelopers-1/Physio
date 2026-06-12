@@ -297,6 +297,58 @@ export class StorageService {
   }
 
   /**
+   * Read the malware-scan verdict produced by the Eventarc-triggered
+   * scanner ([infra/malware-scanner/main.js](infra/malware-scanner/main.js)).
+   *
+   * Verdict source of truth lives on the GCS object metadata:
+   *   - `malware-scan: clean` + `malware-scan-at: <iso>`  → object scanned and passed
+   *   - object missing entirely                          → moved to the quarantine
+   *                                                          bucket (= infected)
+   *   - metadata absent on a present object              → still scanning, or
+   *                                                          skipped (>50 MiB)
+   *
+   * Local-storage driver has no scanner, so we report `clean` to avoid
+   * false alarms in dev.
+   */
+  async getScanStatus(
+    bucket: 'public' | 'private' | 'trainers',
+    filename: string,
+  ): Promise<{
+    status: 'clean' | 'pending' | 'quarantined' | 'unknown';
+    scannedAt: string | null;
+  }> {
+    if (this.useLocal || !this.buckets) {
+      return { status: 'clean', scannedAt: null };
+    }
+
+    const file = this.buckets[bucket].file(filename);
+    try {
+      const [meta] = await file.getMetadata();
+      const custom =
+        (meta.metadata as Record<string, string | undefined>) || {};
+      const verdict = custom['malware-scan'];
+      const scannedAt = custom['malware-scan-at'] || null;
+      if (verdict === 'clean') return { status: 'clean', scannedAt };
+      // Object exists but no verdict yet → scan still running, or it
+      // was skipped because it exceeded the scanner size cap. Either
+      // way, treat as pending so the UI shows a "scan in progress"
+      // chip rather than silently allowing the download.
+      return { status: 'pending', scannedAt: null };
+    } catch (err) {
+      // getMetadata throws 404 when the object isn't in this bucket.
+      // The scanner moves infected files to the quarantine bucket, so
+      // a missing object on an attachment URL that was once valid
+      // means it got yanked.
+      const code = (err as { code?: number })?.code;
+      if (code === 404) return { status: 'quarantined', scannedAt: null };
+      this.logger.warn(
+        `Scan-status lookup failed for ${bucket}/${filename}: ${err}`,
+      );
+      return { status: 'unknown', scannedAt: null };
+    }
+  }
+
+  /**
    * Download a file as a Buffer given its URL (local or GCS).
    * Handles both local file paths and GCS-backed URLs.
    */

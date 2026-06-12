@@ -252,6 +252,50 @@ async function fetchApi<T>(
 }
 
 // ===========================================
+// Shared types
+// ===========================================
+
+// Single row of the support audit trail. Used by both the admin
+// overview tab and the supervisor alerts page (same endpoint shape).
+// The action union covers user-initiated rows in audit_logs and
+// system-generated rows in sla_events (prefixed `sla_`).
+export type AuditTrailEntry = {
+  id: string;
+  action:
+    | 'ticket_created'
+    | 'ticket_replied'
+    | 'internal_note_added'
+    | 'assignee_changed'
+    | 'priority_changed'
+    | 'status_changed'
+    | 'ticket_resolved'
+    | 'ticket_closed'
+    | 'ticket_reopened'
+    | 'sla_frt_breach'
+    | 'sla_ttr_breach'
+    | 'sla_frt_warning_75'
+    | 'sla_priority_escalated'
+    | 'sla_escalation_triggered'
+    | 'sla_frt_breach_reassigned'
+    | 'sla_ttr_breach_reassigned'
+    | 'sla_resolved_within_sla';
+  ticketId: string;
+  ticketReferenceNumber: string | null;
+  ticketSubject: string | null;
+  performerId: string | null;
+  performerName: string | null;
+  performerRole:
+    | 'super_admin'
+    | 'admin'
+    | 'supervisor'
+    | 'agent'
+    | 'student'
+    | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+};
+
+// ===========================================
 // FormData Upload (multipart/form-data)
 // ===========================================
 export async function uploadFormData<T>(
@@ -522,12 +566,19 @@ export const authApi = {
 // ===========================================
 export interface CreateUserData {
   email: string;
-  password: string;
+  // Optional in the new admin invite flow — when omitted, the BE
+  // issues a password-setup magic link to the user's inbox so they
+  // pick their own. UI no longer collects password from the admin.
+  password?: string;
   firstName: string;
   lastName: string;
   phone?: string;
   role: string;
   supportSubRole?: string;
+  // Required server-side when role=SUPPORT + supportSubRole='agent'.
+  // The new agent joins this supervisor's team in the same request so
+  // no orphan agent ever exists.
+  supervisorId?: string;
 }
 
 export interface UpdateUserData {
@@ -611,20 +662,36 @@ export const adminApi = {
   getUserRoles: (userId: string) =>
     api.get<{ userId: string; roles: string[] }>(`/auth/users/${userId}/roles`),
 
-  // Assign a role to a user
-  assignRole: (userId: string, role: string, supportSubRole?: string) =>
+  // Assign a role to a user. When granting SUPPORT + supportSubRole='agent',
+  // the BE now requires a `supervisorId` — the team the agent joins.
+  assignRole: (
+    userId: string,
+    role: string,
+    supportSubRole?: string,
+    supervisorId?: string,
+  ) =>
     api.post<{ message: string; roles: string[] }>(`/auth/users/${userId}/roles`, {
       role,
       ...(supportSubRole ? { supportSubRole } : {}),
+      ...(supervisorId ? { supervisorId } : {}),
     }),
 
   // Remove a role from a user
   removeRole: (userId: string, role: string) =>
     api.delete<{ message: string; roles: string[] }>(`/auth/users/${userId}/roles/${role}`),
 
-  // Create a new user (admin only)
+  // Create a new user (admin only). When `data.password` is omitted,
+  // the BE issues a magic-link invite to the user's inbox so they
+  // pick their own password. The response includes `inviteSent` so
+  // the UI can confirm delivery.
   createUser: (data: CreateUserData) =>
-    api.post<User>('/auth/users', data),
+    api.post<User & { inviteSent?: boolean }>('/auth/users', data),
+
+  // Resend the password-setup invite to an admin-created user that
+  // hasn't completed setup. Rejected (400) if the user is already
+  // verified. Generates a fresh 24h token, invalidates the prior one.
+  resendUserInvite: (userId: string) =>
+    api.post<{ sent: boolean }>(`/auth/users/${userId}/resend-invite`, {}),
 
   // Update user details (admin only)
   updateUser: (userId: string, data: UpdateUserData) =>
@@ -1020,11 +1087,51 @@ export interface RoleWithCount {
 // ===========================================
 // Role Request Types
 // ===========================================
+export type RoleRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'MORE_INFO';
+
+/** Fixed enum — keep in sync with backends/database/schema/role-request-events.ts */
+export type MissingRequirementCode =
+  | 'CV_MISSING'
+  | 'SCFHS_VERIFICATION'
+  | 'QUALIFICATION_DOC'
+  | 'PHOTO'
+  | 'BANK_DETAILS'
+  | 'NATIONAL_ID'
+  | 'OTHER';
+
+export interface MissingRequirement {
+  code: MissingRequirementCode;
+  /** Required when code === 'OTHER'; optional override otherwise. */
+  label?: string;
+  /** Optional admin note targeted at this specific requirement. */
+  note?: string;
+}
+
+export type RoleRequestEventAction =
+  | 'submitted'
+  | 'approved'
+  | 'rejected'
+  | 'requested_info'
+  | 'resubmitted';
+
+export interface RoleRequestEvent {
+  id: string;
+  action: RoleRequestEventAction;
+  note: string | null;
+  missingRequirements: MissingRequirement[] | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  performedById: string | null;
+  performedByFirstName: string | null;
+  performedByLastName: string | null;
+  performedByEmail: string | null;
+}
+
 export interface RoleRequest {
   id: string;
   userId: string;
   requestedRole: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'MORE_INFO';
+  status: RoleRequestStatus;
   profileData: Record<string, unknown>;
   bankData: Record<string, unknown> | null;
   resumeFiles: Array<{ type: string; url: string; filename: string }> | null;
@@ -1037,6 +1144,9 @@ export interface RoleRequest {
   reviewedBy: string | null;
   reviewNote: string | null;
   reviewedAt: string | null;
+  missingRequirements?: MissingRequirement[] | null;
+  /** Present on the admin detail endpoint (includes event timeline). */
+  events?: RoleRequestEvent[];
   createdAt: string;
   updatedAt: string;
   user?: {
@@ -1045,6 +1155,19 @@ export interface RoleRequest {
     lastName: string | null;
     avatar?: string | null;
   };
+}
+
+/** Slim row returned by the support list endpoint. */
+export interface SupportRoleRequestRow {
+  id: string;
+  status: RoleRequestStatus;
+  submittedAt: string;
+  reviewedAt: string | null;
+  applicantEmail: string;
+  applicantFirstName: string | null;
+  applicantLastName: string | null;
+  profileData: Record<string, unknown>;
+  missingRequirements: MissingRequirement[] | null;
 }
 
 export interface RoleRequestStats {
@@ -1104,9 +1227,13 @@ export const roleRequestsApi = {
   reject: (id: string, reviewNote: string) =>
     api.patch<{ message: string }>(`/role-requests/${id}/reject`, { reviewNote }),
 
-  // Request more info (admin)
-  requestInfo: (id: string, reviewNote: string) =>
-    api.patch<{ message: string }>(`/role-requests/${id}/request-info`, { reviewNote }),
+  // Request more info (admin) — accepts a structured missing-reqs
+  // checklist that propagates to the applicant's email + status page.
+  requestInfo: (
+    id: string,
+    payload: { reviewNote: string; missingRequirements?: MissingRequirement[] },
+  ) =>
+    api.patch<{ message: string }>(`/role-requests/${id}/request-info`, payload),
 
   // Resubmit application (student)
   resubmit: (id: string, data: {
@@ -1122,6 +1249,170 @@ export const roleRequestsApi = {
       reviewNote,
       blockNationalId: true,
     }),
+
+  // ─── Support-facing reads (no write actions exposed here) ────
+  support: {
+    list: (params?: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string;
+    }) => {
+      const qs = new URLSearchParams();
+      if (params?.page) qs.set('page', String(params.page));
+      if (params?.limit) qs.set('limit', String(params.limit));
+      if (params?.search) qs.set('search', params.search);
+      if (params?.status) qs.set('status', params.status);
+      const tail = qs.toString();
+      return api.get<{
+        items: SupportRoleRequestRow[];
+        total: number;
+        page: number;
+        limit: number;
+      }>(`/support/role-requests${tail ? `?${tail}` : ''}`);
+    },
+    getById: (id: string) =>
+      api.get<{
+        request: RoleRequest;
+        events: RoleRequestEvent[];
+      }>(`/support/role-requests/${id}`),
+  },
+};
+
+// ===========================================
+// Trainer Applications — public self-serve portal
+//
+// The /become-trainer status flow uses these endpoints. Distinct from
+// roleRequestsApi (which is for logged-in users) — these are
+// captcha + OTP gated and require no platform login. The verify
+// endpoint returns a short-lived scoped token that authorises
+// `portalResubmit` for a MORE_INFO application.
+// ===========================================
+
+const API_URL_FOR_PORTAL =
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+
+export type PortalApplicationStatus =
+  | { found: false }
+  | {
+      found: true;
+      isPlaceholder: boolean;
+      request: {
+        id: string;
+        status: RoleRequestStatus;
+        requestedRole: string;
+        submittedAt: string;
+        updatedAt: string;
+        reviewedAt: string | null;
+        reviewNote: string | null;
+        missingRequirements: MissingRequirement[] | null;
+        prefill: {
+          profileData: Record<string, unknown>;
+          bankData: Record<string, unknown> | null;
+          resumeFiles: Array<{
+            type: string;
+            url: string;
+            filename: string;
+          }> | null;
+          structuredResume: Record<string, unknown> | null;
+        } | null;
+      };
+      events: RoleRequestEvent[];
+    };
+
+async function postJson<T>(
+  url: string,
+  body: Record<string, unknown>,
+  token?: string,
+): Promise<T> {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    let message = `Request failed (${res.status})`;
+    try {
+      const data = (await res.json()) as { message?: string };
+      if (data?.message) message = data.message;
+    } catch {
+      // body wasn't JSON — fall through with the default message
+    }
+    throw new Error(message);
+  }
+  return res.json() as Promise<T>;
+}
+
+async function getJson<T>(url: string, token?: string): Promise<T> {
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  if (!res.ok) {
+    let message = `Request failed (${res.status})`;
+    try {
+      const data = (await res.json()) as { message?: string };
+      if (data?.message) message = data.message;
+    } catch {
+      // ignore
+    }
+    throw new Error(message);
+  }
+  return res.json() as Promise<T>;
+}
+
+export const trainerApplicationsPortalApi = {
+  /** Step 1 — captcha + send portal OTP. */
+  requestOtp: (data: {
+    email: string;
+    recaptchaToken?: string;
+    locale?: string;
+  }) =>
+    postJson<{ message: string }>(
+      `${API_URL_FOR_PORTAL}/trainer-applications/portal/request-otp`,
+      data,
+    ),
+
+  /**
+   * Step 2 — verify OTP. Returns:
+   *   - token: scoped JWT (purpose=trainer-application-portal, 15 min)
+   *   - email: the verified email
+   *   - application: current status snapshot (use immediately, no
+   *     separate fetch needed)
+   */
+  verifyOtp: (data: { email: string; code: string }) =>
+    postJson<{
+      token: string;
+      email: string;
+      application: PortalApplicationStatus;
+    }>(`${API_URL_FOR_PORTAL}/trainer-applications/portal/verify-otp`, data),
+
+  /** Refresh the status with an active portal token. */
+  status: (token: string) =>
+    getJson<PortalApplicationStatus>(
+      `${API_URL_FOR_PORTAL}/trainer-applications/portal/status`,
+      token,
+    ),
+
+  /** Submit updated application data for a MORE_INFO request. */
+  resubmit: (
+    token: string,
+    data: {
+      roleRequestId: string;
+      profileData: Record<string, unknown>;
+      bankData?: Record<string, unknown>;
+      resumeFiles?: Array<{ type: string; url: string; filename: string }>;
+      structuredResume?: Record<string, unknown>;
+    },
+  ) =>
+    postJson<{ requestId: string; message: string }>(
+      `${API_URL_FOR_PORTAL}/trainer-applications/portal/resubmit`,
+      data,
+      token,
+    ),
 };
 
 // ===========================================
@@ -1561,6 +1852,35 @@ export const profileApi = {
     fd.append('file', file);
     return uploadFormData<{ url: string; filename: string }>('/storage/upload-avatar', fd);
   },
+};
+
+// ===========================================
+// Sidebar alert badges — per-tab unread counters
+// ===========================================
+export const SIDEBAR_TAB_KEYS = {
+  SUPPORT_MY_TICKETS: 'support:my-tickets',
+  SUPPORT_ALL_TICKETS: 'support:all-tickets',
+  SUPPORT_ALERTS: 'support:alerts',
+  SUPPORT_TEAM: 'support:team',
+  SUPPORT_TRAINER_APPS: 'support:trainer-applications',
+  ADMIN_USERS: 'admin:users',
+  ADMIN_TRAINER_APPS: 'admin:trainer-applications',
+  USER_SUPPORT: 'user:support',
+} as const;
+
+export type SidebarTabKey =
+  (typeof SIDEBAR_TAB_KEYS)[keyof typeof SIDEBAR_TAB_KEYS];
+
+export const sidebarBadgesApi = {
+  // Map of tabKey → unread count. Returns only keys relevant to the
+  // caller's role.
+  get: () => api.get<Record<string, number>>('/me/sidebar-badges'),
+
+  // Bump the user's viewed_at for a tab to NOW — clears that tab's
+  // badge on the next poll. Called by each badge-eligible page on
+  // mount.
+  markViewed: (tabKey: SidebarTabKey) =>
+    api.post<{ success: true }>(`/me/sidebar-badges/${tabKey}/viewed`, {}),
 };
 
 // ===========================================
@@ -2177,6 +2497,150 @@ export const publicSettingsApi = {
     api.get<{ email: boolean; whatsapp: boolean }>(
       '/public/notification-channels',
       { skipAuth: true },
+    ),
+};
+
+// ===========================================
+// Service status API (public read + admin write)
+// ===========================================
+
+export type ServiceStatusComponentStatus =
+  | 'operational'
+  | 'degraded'
+  | 'partial_outage'
+  | 'major_outage'
+  | 'maintenance';
+
+export type ServiceStatusIncidentStatus =
+  | 'investigating'
+  | 'identified'
+  | 'monitoring'
+  | 'resolved';
+
+export type ServiceStatusCheckType = 'manual' | 'internal_db' | 'statuspage';
+
+export type ServiceStatusComponent = {
+  key: string;
+  nameEn: string;
+  nameAr: string | null;
+  descriptionEn: string | null;
+  descriptionAr: string | null;
+  currentStatus: ServiceStatusComponentStatus;
+  currentMessageEn: string | null;
+  currentMessageAr: string | null;
+  displayOrder: number;
+  isActive?: boolean;
+  updatedAt: string;
+  // Auto-detection layer (migration 0063). Public reads expose
+  // `checkType`, `autoCheckedAt`, and `isManualOverride` so the
+  // page can render "Last checked X · pinned by admin" without
+  // a second round-trip. Admin reads include the full picture.
+  checkType?: ServiceStatusCheckType;
+  checkConfig?: Record<string, unknown> | null;
+  autoStatus?: ServiceStatusComponentStatus | null;
+  autoCheckedAt?: string | null;
+  autoError?: string | null;
+  isManualOverride?: boolean;
+  manualOverrideStatus?: ServiceStatusComponentStatus | null;
+  manualOverrideSetAt?: string | null;
+  manualOverrideSetBy?: string | null;
+};
+
+export type ServiceStatusIncidentUpdate = {
+  id: string;
+  incidentId: string;
+  status: ServiceStatusIncidentStatus;
+  messageEn: string;
+  messageAr: string | null;
+  postedAt: string;
+  postedBy: string | null;
+};
+
+export type ServiceStatusIncident = {
+  id: string;
+  titleEn: string;
+  titleAr: string | null;
+  affectedComponents: string[];
+  currentStatus: ServiceStatusIncidentStatus;
+  severity: 'minor' | 'major' | 'critical';
+  startedAt: string;
+  resolvedAt: string | null;
+  updates: ServiceStatusIncidentUpdate[];
+};
+
+export type ServiceStatusPublicResponse = {
+  overallStatus: 'operational' | 'degraded' | 'down' | 'maintenance';
+  components: ServiceStatusComponent[];
+  activeIncidents: ServiceStatusIncident[];
+  recentResolvedIncidents: ServiceStatusIncident[];
+  generatedAt: string;
+};
+
+export const serviceStatusApi = {
+  // Public — no auth, used by /[locale]/status
+  getPublic: () =>
+    api.get<ServiceStatusPublicResponse>('/public/service-status', {
+      skipAuth: true,
+    }),
+
+  // Admin
+  listComponents: () =>
+    api.get<ServiceStatusComponent[]>('/admin/service-status/components'),
+
+  updateComponent: (
+    key: string,
+    data: {
+      currentStatus: ServiceStatusComponentStatus;
+      currentMessageEn?: string;
+      currentMessageAr?: string;
+    },
+  ) =>
+    api.put<{ success: true }>(
+      `/admin/service-status/components/${encodeURIComponent(key)}`,
+      data,
+    ),
+
+  clearComponentOverride: (key: string) =>
+    api.post<{ success: true; alreadyAuto?: boolean }>(
+      `/admin/service-status/components/${encodeURIComponent(key)}/clear-override`,
+      {},
+    ),
+
+  listIncidents: (status?: 'active' | 'resolved' | 'all') => {
+    const sp = new URLSearchParams();
+    if (status) sp.set('status', status);
+    const qs = sp.toString();
+    return api.get<ServiceStatusIncident[]>(
+      `/admin/service-status/incidents${qs ? `?${qs}` : ''}`,
+    );
+  },
+
+  createIncident: (data: {
+    titleEn: string;
+    titleAr?: string;
+    affectedComponents: string[];
+    severity: 'minor' | 'major' | 'critical';
+    initialStatus: ServiceStatusIncidentStatus;
+    initialMessageEn: string;
+    initialMessageAr?: string;
+  }) => api.post<ServiceStatusIncident>('/admin/service-status/incidents', data),
+
+  postIncidentUpdate: (
+    incidentId: string,
+    data: {
+      status: ServiceStatusIncidentStatus;
+      messageEn: string;
+      messageAr?: string;
+    },
+  ) =>
+    api.post<{ success: true }>(
+      `/admin/service-status/incidents/${incidentId}/updates`,
+      data,
+    ),
+
+  deleteIncident: (incidentId: string) =>
+    api.delete<{ success: true }>(
+      `/admin/service-status/incidents/${incidentId}`,
     ),
 };
 
@@ -4256,6 +4720,14 @@ export const supportApi = {
     courseId?: string;
     attachmentUrl?: string;
     attachmentUrls?: string[];
+    attachments?: {
+      url: string;
+      filename?: string;
+      mimeType?: string;
+      sizeBytes?: number;
+    }[];
+    source?: string;
+    aboutUserId?: string;
   }) => api.post<{ id: string }>('/tickets', data),
 
   getTickets: (params?: {
@@ -4264,6 +4736,8 @@ export const supportApi = {
     category?: string;
     assigneeId?: string;
     search?: string;
+    tags?: string;
+    source?: string;
     page?: number;
     limit?: number;
   }) => {
@@ -4286,6 +4760,7 @@ export const supportApi = {
 
   getMyTickets: (params?: {
     status?: string;
+    source?: string;
     page?: number;
     limit?: number;
   }) => {
@@ -4308,6 +4783,12 @@ export const supportApi = {
 
   getTicket: (id: string) => api.get<any>(`/tickets/${id}`),
 
+  // Role-agnostic CSAT — any requester can rate their own resolved
+  // ticket. Mirrors legacy studentApi.rateTicket() but works for
+  // instructor/CM/finance/TA roles too.
+  rateTicket: (id: string, rating: number) =>
+    api.post<{ success: boolean }>(`/tickets/${id}/rate`, { rating }),
+
   updateTicket: (
     id: string,
     data: {
@@ -4320,8 +4801,42 @@ export const supportApi = {
 
   addComment: (
     id: string,
-    data: { message: string; isInternal?: boolean },
+    data: {
+      message: string;
+      isInternal?: boolean;
+      attachmentUrls?: string[];
+      attachments?: {
+        url: string;
+        filename?: string;
+        mimeType?: string;
+        sizeBytes?: number;
+      }[];
+    },
   ) => api.post<any>(`/tickets/${id}/comments`, data),
+
+  // Hold-approval workflow. Agents submit; supervisors/admins decide.
+  createHoldRequest: (
+    ticketId: string,
+    data: { reason: string; description?: string | null },
+  ) =>
+    api.post<{
+      id: string;
+      ticketId: string;
+      reason: string;
+      description: string | null;
+      status: string;
+      createdAt: string;
+    }>(`/tickets/${ticketId}/hold-requests`, data),
+
+  decideHoldRequest: (
+    ticketId: string,
+    requestId: string,
+    data: { decision: 'approved' | 'rejected'; note?: string | null },
+  ) =>
+    api.patch<{ ok: boolean; decision: 'approved' | 'rejected' }>(
+      `/tickets/${ticketId}/hold-requests/${requestId}`,
+      data,
+    ),
 
   resolveTicket: (id: string) => api.post<any>(`/tickets/${id}/resolve`),
 
@@ -4350,6 +4865,211 @@ export const supportApi = {
         highPriority: { id: string; subject: string; priority: string }[];
       };
     }>('/tickets/kpis'),
+
+  // Admin Support Overview — single-payload feed for the new Overview
+  // tab on the admin support page. Read-only.
+  //
+  // Optional `dateFrom`/`dateTo` scope the health metrics block
+  // (avg FRT, avg TTR, SLA compliance %, escalations + the created
+  // trend). "Current open" numbers stay as a live snapshot regardless.
+  getSupportOverview: (params?: { dateFrom?: string; dateTo?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.dateFrom) qs.set("dateFrom", params.dateFrom);
+    if (params?.dateTo) qs.set("dateTo", params.dateTo);
+    const s = qs.toString();
+    return api.get<{
+      openTickets: number;
+      awaitingResponse: number;
+      overdueTickets: number;
+      byPriority: Record<string, number>;
+      byCategory: { category: string; count: number }[];
+      agentWorkload: {
+        agentId: string;
+        agentName: string;
+        activeCount: number;
+      }[];
+      csat: {
+        averageScore: number;
+        responseCount: number;
+        responseRate: number;
+        distribution: Record<string, number>;
+      };
+      health: {
+        avgFrtMinutes: number | null;
+        avgTtrMinutes: number | null;
+        slaCompliancePct: number;
+        escalationCount: number;
+        sampleSize: number;
+        windowFrom: string;
+        windowTo: string;
+      };
+      agentDistribution: {
+        agentId: string;
+        agentName: string;
+        supportSubRole: 'supervisor' | 'agent' | null;
+        activeCount: number;
+      }[];
+      atRisk: {
+        id: string;
+        referenceNumber: string;
+        subject: string;
+        priority: string;
+        minutesRemaining: number;
+        target: 'frt' | 'ttr';
+        assigneeId: string | null;
+        assigneeName: string | null;
+      }[];
+      recentActivity: {
+        id: string;
+        ticketId: string;
+        type: string;
+        subject: string;
+        timestamp: string;
+        actor: string | null;
+      }[];
+      trends: {
+        createdLast7: number;
+        createdPrev7: number;
+        createdDelta: number;
+      };
+      cronHealth: {
+        name: string;
+        lastStartedAt: string | null;
+        lastFinishedAt: string | null;
+        status: string;
+        durationMs: number | null;
+        errorMessage: string | null;
+      }[];
+      pendingTeamRequests: number;
+      generatedAt: string;
+    }>(
+      s
+        ? `/tickets/admin/support-overview?${s}`
+        : '/tickets/admin/support-overview',
+    );
+  },
+
+  // Admin-only — supervisors list with team aggregate stats. Optional
+  // date range filters; defaults to last 30 days when omitted.
+  listSupervisorsWithStats: (params?: {
+    dateFrom?: string;
+    dateTo?: string;
+  }) => {
+    const qs = new URLSearchParams();
+    if (params?.dateFrom) qs.set("dateFrom", params.dateFrom);
+    if (params?.dateTo) qs.set("dateTo", params.dateTo);
+    const s = qs.toString();
+    return api.get<
+      {
+        userId: string;
+        firstName: string | null;
+        lastName: string | null;
+        email: string | null;
+        avatar: string | null;
+        lastLoginAt: string | null;
+        teamSize: number;
+        activeTickets: number;
+        ticketsHandled: number;
+        avgFrtMinutes: number | null;
+        avgTtrMinutes: number | null;
+        csatScore: number | null;
+        slaBreachCount: number;
+      }[]
+    >(`/tickets/admin/supervisors${s ? `?${s}` : ''}`);
+  },
+
+  // Admin-only — full supervisor detail bundle.
+  getSupervisorDetail: (
+    id: string,
+    params?: { dateFrom?: string; dateTo?: string },
+  ) => {
+    const qs = new URLSearchParams();
+    if (params?.dateFrom) qs.set("dateFrom", params.dateFrom);
+    if (params?.dateTo) qs.set("dateTo", params.dateTo);
+    const s = qs.toString();
+    return api.get<{
+      supervisor: {
+        id: string;
+        firstName: string | null;
+        lastName: string | null;
+        email: string | null;
+        avatar: string | null;
+        phone: string | null;
+        lastLoginAt: string | null;
+      };
+      team: {
+        userId: string;
+        firstName: string | null;
+        lastName: string | null;
+        email: string | null;
+        avatar: string | null;
+        phone: string | null;
+        isActive: boolean | null;
+        lastLoginAt: string | null;
+        assignedAt: string;
+        supportSubRole: string | null;
+        performance: {
+          userId: string;
+          ticketsHandled: number;
+          avgFrtMinutes: number | null;
+          avgTtrMinutes: number | null;
+          csatScore: number | null;
+          slaBreachCount: number;
+        } | null;
+      }[];
+      supervisorTickets: {
+        id: string;
+        referenceNumber: string | null;
+        subject: string;
+        priority: string;
+        status: string;
+        createdAt: string;
+        slaBreachedFrt: boolean;
+        slaBreachedTtr: boolean;
+      }[];
+      aggregates: {
+        teamSize: number;
+        ticketsHandled: number;
+        avgFrtMinutes: number | null;
+        avgTtrMinutes: number | null;
+        csatScore: number | null;
+        slaBreachCount: number;
+      };
+      dateRange: { dateFrom: string | null; dateTo: string | null };
+    }>(`/tickets/admin/supervisors/${id}${s ? `?${s}` : ''}`);
+  },
+
+  // Admin-only — paginated support audit trail. Each entry is one
+  // immutable row from the support actions audit log (created, replied,
+  // status/priority/assignee changed, resolved, closed, reopened).
+  getSupportAuditTrail: (page = 1, limit = 20) => {
+    const qs = new URLSearchParams();
+    qs.set('page', String(page));
+    qs.set('limit', String(limit));
+    return api.get<{
+      data: AuditTrailEntry[];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    }>(`/tickets/admin/audit-trail?${qs.toString()}`);
+  },
+
+  // Supervisor-scoped audit trail. Same shape as the admin endpoint
+  // above; agents are 403'd at the service. Backs the supervisor's
+  // /alerts page.
+  getSupervisorAuditTrail: (page = 1, limit = 20) => {
+    const qs = new URLSearchParams();
+    qs.set('page', String(page));
+    qs.set('limit', String(limit));
+    return api.get<{
+      data: AuditTrailEntry[];
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    }>(`/tickets/audit-trail?${qs.toString()}`);
+  },
 
   getActivity: (limit = 20) =>
     api.get<
@@ -4453,6 +5173,7 @@ export const supportApi = {
         openTickets: number;
         resolvedTickets: number;
         avgFrtMinutes: number | null;
+        avgTtrMinutes: number | null;
         csatAvgScore: number | null;
         csatResponses: number;
         frtBreaches: number;
@@ -4476,6 +5197,49 @@ export const supportApi = {
 
   removeTeamMember: (agentId: string) =>
     api.delete<{ success: true }>(`/tickets/team/members/${agentId}`),
+
+  // Admin-side: list of active Support Supervisors used to populate the
+  // supervisor picker in Create User / Manage Roles / Reassign Team.
+  listActiveSupervisors: () =>
+    api.get<
+      {
+        userId: string;
+        firstName: string | null;
+        lastName: string | null;
+        email: string;
+        teamSize: number;
+      }[]
+    >('/tickets/team/active-supervisors'),
+
+  // Admin-side: Support Agents without a supervisor. Powers the
+  // orphans banner on Team Management.
+  listOrphanAgents: () =>
+    api.get<
+      {
+        userId: string;
+        firstName: string | null;
+        lastName: string | null;
+        email: string;
+        avatar: string | null;
+        isActive: boolean;
+        createdAt: string;
+      }[]
+    >('/tickets/team/orphans'),
+
+  // Bulk-assign one or more orphan agents to a supervisor.
+  bulkAssignOrphans: (data: { supervisorId: string; agentIds: string[] }) =>
+    api.post<{ assigned: number; skipped: number }>(
+      '/tickets/team/orphans/bulk-assign',
+      data,
+    ),
+
+  // Move every agent from one supervisor's team to another. Required
+  // before the admin can demote / remove SUPPORT from a supervisor
+  // whose team has members.
+  reassignSupervisorTeam: (data: {
+    fromSupervisorId: string;
+    toSupervisorId: string;
+  }) => api.post<{ moved: number }>('/tickets/team/reassign', data),
 
   createTeamRequest: (data: {
     kind: 'add_existing' | 'add_new';
@@ -4625,15 +5389,118 @@ export const supportApi = {
   submitCsat: (surveyId: string, data: { score: number; comment?: string }) =>
     api.post<any>(`/tickets/csat/${surveyId}`, data, { skipAuth: true }),
 
+  // Pending CSAT prompts surfaced in the global dashboard popup
+  // so the user can rate without digging into the resolved ticket.
+  // Auth-required, capped at 5, within the 72h response window.
+  getPendingCsat: () =>
+    api.get<
+      {
+        surveyId: string;
+        ticketId: string;
+        ticketReferenceNumber: string;
+        ticketSubject: string;
+        resolvedAt: string | null;
+        agentName: string | null;
+      }[]
+    >(`/tickets/csat/pending`),
+
   // CSAT/NPS Summaries (auth required)
-  getCsatSummary: () =>
-    api.get<{
+  getCsatSummary: (params?: { dateFrom?: string; dateTo?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    const qs = sp.toString();
+    return api.get<{
       totalSent: number;
       totalResponded: number;
       responseRate: number;
       avgScore: number;
       distribution: Record<string, number>;
-    }>('/tickets/csat/summary'),
+    }>(`/tickets/csat/summary${qs ? `?${qs}` : ''}`);
+  },
+
+  getCsatByCategory: (params?: { dateFrom?: string; dateTo?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    const qs = sp.toString();
+    return api.get<
+      {
+        category: string;
+        responses: number;
+        avgScore: number;
+        detractors: number;
+        promoters: number;
+      }[]
+    >(`/tickets/csat/by-category${qs ? `?${qs}` : ''}`);
+  },
+
+  getCsatByAgent: (params?: { dateFrom?: string; dateTo?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    const qs = sp.toString();
+    return api.get<
+      {
+        agentId: string | null;
+        agentName: string | null;
+        responses: number;
+        avgScore: number;
+        detractors: number;
+        promoters: number;
+      }[]
+    >(`/tickets/csat/by-agent${qs ? `?${qs}` : ''}`);
+  },
+
+  getCsatMonthlyTrend: (params?: { dateFrom?: string; dateTo?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    const qs = sp.toString();
+    return api.get<
+      {
+        bucket: string;
+        responses: number;
+        avgScore: number;
+        detractors: number;
+        promoters: number;
+      }[]
+    >(`/tickets/csat/monthly${qs ? `?${qs}` : ''}`);
+  },
+
+  getLowRatingSurveys: (params?: {
+    dateFrom?: string;
+    dateTo?: string;
+    status?: 'pending' | 'completed' | 'all';
+  }) => {
+    const sp = new URLSearchParams();
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    if (params?.status) sp.set('status', params.status);
+    const qs = sp.toString();
+    return api.get<
+      {
+        surveyId: string;
+        score: number;
+        comment: string | null;
+        submittedAt: string | null;
+        followUpCompletedAt: string | null;
+        ticketId: string;
+        ticketReference: string;
+        ticketSubject: string;
+        ticketCategory: string;
+        agentId: string | null;
+        agentName: string | null;
+        followUpBy: string | null;
+      }[]
+    >(`/tickets/csat/low-ratings${qs ? `?${qs}` : ''}`);
+  },
+
+  markCsatFollowedUp: (surveyId: string) =>
+    api.post<{ surveyId: string; followUpCompletedAt: string }>(
+      `/tickets/csat/${surveyId}/follow-up`,
+      {},
+    ),
 
   getSlaBreaches: () =>
     api.get<any[]>('/tickets/sla/breaches'),
@@ -4743,52 +5610,92 @@ export const supportApi = {
   },
 
   // Macros CRUD
-  getMacros: () => api.get<any[]>('/tickets/macros'),
+  getMacros: (opts?: { categoryKey?: string | null; includeInactive?: boolean }) => {
+    const params = new URLSearchParams();
+    if (opts?.categoryKey) params.set('categoryKey', opts.categoryKey);
+    if (opts?.includeInactive) params.set('includeInactive', 'true');
+    const qs = params.toString();
+    return api.get<
+      {
+        id: string;
+        title: string;
+        bodyTemplate: string;
+        bodyAr: string | null;
+        categoryKey: string | null;
+        kbArticleUrls: string[] | null;
+        isActive: boolean;
+        createdAt: string;
+        creatorFirstName: string | null;
+        creatorLastName: string | null;
+        useCount: number;
+        lastUsedAt: string | null;
+      }[]
+    >(`/tickets/macros${qs ? `?${qs}` : ''}`);
+  },
 
   getMacro: (id: string) => api.get<any>(`/tickets/macros/${id}`),
 
   createMacro: (data: {
     title: string;
     bodyTemplate: string;
+    bodyAr?: string | null;
+    categoryKey?: string | null;
     variables?: string[];
     kbArticleUrls?: string[];
-    escalationPathId?: string;
   }) => api.post<any>('/tickets/macros', data),
 
-  updateMacro: (id: string, data: any) =>
-    api.patch<any>(`/tickets/macros/${id}`, data),
+  updateMacro: (
+    id: string,
+    data: {
+      title?: string;
+      bodyTemplate?: string;
+      bodyAr?: string | null;
+      categoryKey?: string | null;
+      kbArticleUrls?: string[];
+      isActive?: boolean;
+    },
+  ) => api.patch<any>(`/tickets/macros/${id}`, data),
 
   deleteMacro: (id: string) =>
     api.delete<any>(`/tickets/macros/${id}`),
 
-  applyMacro: (ticketId: string, macroId: string) =>
+  applyMacro: (ticketId: string, macroId: string, locale?: string) =>
     api.post<{ resolvedBody: string; macroTitle: string }>(
       `/tickets/${ticketId}/apply-macro`,
-      { macroId },
+      { macroId, locale },
     ),
 
-  // Escalation Paths CRUD
-  getEscalationPaths: () =>
-    api.get<
-      {
+  getMacroUsageStats: () =>
+    api.get<{
+      totalUses: number;
+      totalMacros: number;
+      unusedCount: number;
+      perMacro: {
         id: string;
-        name: string;
-        steps: { afterMinutes: number; assignToRole: string }[];
-        active: boolean;
-        createdAt: string;
-      }[]
-    >('/tickets/escalation-paths'),
+        title: string;
+        categoryKey: string | null;
+        isActive: boolean;
+        useCount: number;
+        lastUsedAt: string | null;
+      }[];
+      perCategory: {
+        categoryKey: string;
+        uses: number;
+        macroCount: number;
+      }[];
+      monthly: { bucket: string; uses: number }[];
+    }>('/tickets/macros/usage-stats'),
 
-  createEscalationPath: (data: {
-    name: string;
-    steps: { afterMinutes: number; assignToRole: string }[];
-  }) => api.post<any>('/tickets/escalation-paths', data),
-
-  updateEscalationPath: (id: string, data: any) =>
-    api.patch<any>(`/tickets/escalation-paths/${id}`, data),
-
-  deleteEscalationPath: (id: string) =>
-    api.delete<any>(`/tickets/escalation-paths/${id}`),
+  // Manual ticket escalation. Supervisor + admin only.
+  escalateTicket: (
+    ticketId: string,
+    data: { reason: string; bumpPriority?: 'medium' | 'high' },
+  ) =>
+    api.post<{
+      success: true;
+      escalatedAt: string;
+      priority: string;
+    }>(`/tickets/${ticketId}/escalate`, data),
 
   // Knowledge Base CRUD
   getKbArticles: (params?: { category?: string; search?: string }) => {
@@ -4851,23 +5758,41 @@ export const supportApi = {
     maxConcurrentPerAgent?: number;
   }) => api.patch<any>('/tickets/settings/auto-assignment', data),
 
-  listTicketCategories: () =>
-    api.get<
+  listTicketCategories: (params?: { role?: string }) => {
+    const qs = params?.role ? `?role=${encodeURIComponent(params.role)}` : '';
+    return api.get<
       {
         slug: string;
         nameEn: string;
         nameAr: string | null;
         autoPriority: 'high' | 'medium' | 'low' | null;
+        applicableRoles: string[];
         builtin: boolean;
       }[]
-    >('/tickets/settings/ticket-categories', { skipAuth: true }),
+    >(`/tickets/settings/ticket-categories${qs}`, { skipAuth: true });
+  },
 
   addTicketCategory: (data: {
     slug?: string;
     nameEn: string;
     nameAr?: string;
     autoPriority?: 'high' | 'medium' | 'low';
+    applicableRoles: string[];
   }) => api.post<{ slug: string }>('/tickets/settings/ticket-categories', data),
+
+  updateTicketCategory: (
+    slug: string,
+    data: {
+      nameEn?: string;
+      nameAr?: string | null;
+      autoPriority?: 'high' | 'medium' | 'low' | null;
+      applicableRoles?: string[];
+    },
+  ) =>
+    api.patch<{ slug: string }>(
+      `/tickets/settings/ticket-categories/${encodeURIComponent(slug)}`,
+      data,
+    ),
 
   removeTicketCategory: (slug: string) =>
     api.delete<{ success: true }>(
@@ -4945,6 +5870,37 @@ export const supportApi = {
     }>(`/tickets/kb/search-analytics${sp.toString() ? `?${sp.toString()}` : ''}`);
   },
 
+  getMostViewedKbArticles: (params?: { limit?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.limit) sp.set('limit', String(params.limit));
+    return api.get<
+      {
+        id: string;
+        titleEn: string | null;
+        titleAr: string | null;
+        category: string;
+        viewCount: number;
+        updatedAt: string;
+      }[]
+    >(`/tickets/kb/articles/analytics/most-viewed${sp.toString() ? `?${sp.toString()}` : ''}`);
+  },
+
+  getLowEngagementKbArticles: (params?: { limit?: number; minAgeDays?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.limit) sp.set('limit', String(params.limit));
+    if (params?.minAgeDays) sp.set('minAgeDays', String(params.minAgeDays));
+    return api.get<
+      {
+        id: string;
+        titleEn: string | null;
+        titleAr: string | null;
+        category: string;
+        viewCount: number;
+        createdAt: string;
+      }[]
+    >(`/tickets/kb/articles/analytics/low-engagement${sp.toString() ? `?${sp.toString()}` : ''}`);
+  },
+
   // Image upload for article bodies — reuses the trainer-doc bucket
   // since it already accepts image MIME types and is public-served.
   uploadKbImage: (file: File) => {
@@ -4960,7 +5916,7 @@ export const supportApi = {
   // The registry is readable by any support user (we need to render
   // chips); mutations are gated to supervisor/admin on the server.
 
-  listTicketTags: () =>
+  listTicketTags: (opts: { includeArchived?: boolean } = {}) =>
     api.get<
       {
         id: string;
@@ -4968,9 +5924,13 @@ export const supportApi = {
         color: string;
         description: string | null;
         createdAt: string;
+        archivedAt: string | null;
         usageCount: number;
+        ruleCount: number;
       }[]
-    >('/tickets/tags'),
+    >(
+      `/tickets/tags${opts.includeArchived ? '?includeArchived=true' : ''}`,
+    ),
 
   createTicketTag: (data: { name: string; color?: string; description?: string }) =>
     api.post<{ id: string; name: string; color: string }>('/tickets/tags', data),
@@ -4982,6 +5942,77 @@ export const supportApi = {
 
   deleteTicketTag: (id: string) =>
     api.delete<{ success: true }>(`/tickets/tags/${id}`),
+
+  archiveTicketTag: (id: string) =>
+    api.post<{ id: string; archivedAt: string }>(`/tickets/tags/${id}/archive`, {}),
+
+  unarchiveTicketTag: (id: string) =>
+    api.post<{ id: string }>(`/tickets/tags/${id}/unarchive`, {}),
+
+  // ── Tag rules (auto-apply patterns) ─────────────────────────
+
+  listTagRules: (tagId: string) =>
+    api.get<
+      {
+        id: string;
+        tagId: string;
+        pattern: string;
+        matchScope: 'subject' | 'description' | 'both';
+        enabled: boolean;
+        createdAt: string;
+      }[]
+    >(`/tickets/tags/${tagId}/rules`),
+
+  createTagRule: (
+    tagId: string,
+    data: {
+      pattern: string;
+      matchScope?: 'subject' | 'description' | 'both';
+      enabled?: boolean;
+    },
+  ) =>
+    api.post<{ id: string; pattern: string }>(
+      `/tickets/tags/${tagId}/rules`,
+      data,
+    ),
+
+  updateTagRule: (
+    ruleId: string,
+    data: {
+      pattern?: string;
+      matchScope?: 'subject' | 'description' | 'both';
+      enabled?: boolean;
+    },
+  ) =>
+    api.patch<{ id: string; pattern: string }>(
+      `/tickets/tag-rules/${ruleId}`,
+      data,
+    ),
+
+  deleteTagRule: (ruleId: string) =>
+    api.delete<{ success: true }>(`/tickets/tag-rules/${ruleId}`),
+
+  // ── Tag analytics ───────────────────────────────────────────
+
+  getTagAnalytics: () =>
+    api.get<{
+      totalTags: number;
+      archivedTags: number;
+      topTags: {
+        tagId: string;
+        name: string;
+        color: string;
+        archived: boolean;
+        usageCount: number;
+        last30Count: number;
+        resolvedCount: number;
+      }[];
+      trend: { day: string; count: number }[];
+      byCategory: {
+        category: string;
+        tags: { tagId: string; name: string; color: string; count: number }[];
+      }[];
+    }>('/tickets/tags/analytics/summary'),
 
   // Replace the ticket's full tag set. Server-side accepts an empty
   // array and clears the tags — matches the obvious UX of "deselect
@@ -5001,7 +6032,168 @@ export const supportApi = {
     downloadBlob(blob, `ticket_${base}_${ts}.csv`);
   },
 
+  // Compliance ZIP — conversation + attachments + audit + SLA +
+  // manifest. Larger payload than the CSV; suitable for legal/audit
+  // handover, not for quick scrubbing.
+  exportTicketArchive: async (ticketId: string, referenceNumber?: string | null) => {
+    const blob = await fetchBlob(`/tickets/${ticketId}/export-archive`);
+    const ts = new Date().toISOString().slice(0, 10);
+    const base = (referenceNumber || ticketId).replace(/[^a-zA-Z0-9-]/g, '_');
+    downloadBlob(blob, `ticket_${base}_${ts}.zip`);
+  },
+
   // ── R3 governance ──────────────────────────────────────────
+
+  getMergeCandidates: (sourceId: string) =>
+    api.get<
+      {
+        id: string;
+        referenceNumber: string;
+        subject: string;
+        status: string;
+        priority: string;
+        createdAt: string;
+      }[]
+    >(`/tickets/${sourceId}/merge-candidates`),
+
+  // Chronological activity feed for the ticket's requester.
+  // BE filters events by ticket.source — a multi-role user (e.g.
+  // instructor + manager) won't see cross-role activity bleed.
+  // Returns isGuest=true and empty events for guest tickets.
+  getTicketStudentTimeline: (ticketId: string) =>
+    api.get<{
+      isGuest: boolean;
+      role:
+        | 'student'
+        | 'instructor'
+        | 'manager'
+        | 'ta'
+        | 'finance'
+        | 'guest';
+      events: {
+        type:
+          | 'ticket'
+          | 'enrollment'
+          | 'webinar'
+          | 'payment'
+          | 'certificate'
+          | 'session'
+          | 'intervention'
+          | 'course_managed'
+          | 'ta_assignment';
+        timestamp: string;
+        title: string;
+        subtitle: string | null;
+        status: string | null;
+        linkTarget: { kind: 'ticket'; ticketId: string } | null;
+      }[];
+    }>(`/tickets/${ticketId}/student-timeline`),
+
+  // Requester snapshot panel — at-a-glance KPIs scoped to the
+  // ticket source role. BE dispatches by ticket.source so the
+  // card never shows another role's data even when the user
+  // holds multiple roles. Returns isGuest=true and snapshot=null
+  // for guest tickets.
+  getTicketStudentContext: (ticketId: string) =>
+    api.get<{
+      isGuest: boolean;
+      role:
+        | 'student'
+        | 'instructor'
+        | 'manager'
+        | 'ta'
+        | 'finance'
+        | 'guest';
+      snapshot:
+        | {
+            courses: { total: number; active: number; completed: number };
+            webinars: { total: number; attended: number; upcoming: number };
+            attendance: { percent: number | null; sessionCount: number };
+            certificates: { issued: number; pending: number; revoked: number };
+            cme: { earned: number; pending: number };
+            payments: {
+              totalPaidSar: number;
+              completedCount: number;
+              pendingCount: number;
+              failedCount: number;
+              refundedCount: number;
+              lastPaymentAt: string | null;
+            };
+          }
+        | {
+            courses: { teaching: number };
+            students: { total: number };
+            sessions: { total: number; thisMonth: number };
+            interventions: { total: number; thisMonth: number };
+          }
+        | {
+            courses: { managed: number };
+            instructors: { count: number };
+            students: { total: number };
+          }
+        | {
+            courses: { assisting: number };
+            sessions: { total: number; thisMonth: number };
+          }
+        | { tickets: { raised: number } }
+        | null;
+    }>(`/tickets/${ticketId}/student-context`),
+
+  // Per-course certificate & CME details for the ticket's student.
+  // Powers the cert/CME panel in the ticket-detail right rail. Returns
+  // isGuest=true and details=null for guest tickets (FE hides panel).
+  getTicketCertificateDetails: (ticketId: string) =>
+    api.get<{
+      isGuest: boolean;
+      details:
+        | {
+            courseId: string;
+            courseTitle: string;
+            courseTitleAr: string | null;
+            deliveryType: string;
+            isCmeAccredited: boolean;
+            cmeHours: number;
+            enrollmentStatus: string;
+            eligibility:
+              | 'eligible'
+              | 'partial'
+              | 'ineligible'
+              | 'revoked'
+              | 'not_requested';
+            attendancePercent: number | null;
+            attendanceThreshold: number;
+            attendanceApplicable: boolean;
+            assessmentStatus: 'passed' | 'failed' | 'not_attempted';
+            certificate: {
+              id: string;
+              status: string;
+              issuedAt: string | null;
+              revokedAt: string | null;
+              rejectedAt: string | null;
+              verificationCode: string;
+              certificateUrl: string | null;
+            } | null;
+          }[]
+        | null;
+    }>(`/tickets/${ticketId}/certificate-details`),
+
+  // Trainer application context for the ticket — match by student
+  // email (logged-in) OR guest email. Returns { application: null }
+  // when there's no matching role_request; the FE hides the card.
+  getTicketTrainerApplication: (ticketId: string) =>
+    api.get<{
+      application: {
+        id: string;
+        status: RoleRequestStatus;
+        requestedRole: string;
+        submittedAt: string;
+        reviewedAt: string | null;
+        reviewNote: string | null;
+        missingRequirements: MissingRequirement[] | null;
+        applicantId: string;
+      } | null;
+      events: RoleRequestEvent[];
+    }>(`/tickets/${ticketId}/trainer-application`),
 
   mergeTicket: (sourceId: string, targetTicketId: string, note?: string) =>
     api.post<{ success: true; targetTicketId: string }>(
@@ -5049,6 +6241,38 @@ export const supportApi = {
         downloaderEmail: string | null;
       }[]
     >(`/tickets/${ticketId}/attachment-download-log`),
+
+  // Full version history — active + soft-deleted, with uploader and
+  // (where applicable) remover. Staff-only — service enforces.
+  getAttachmentHistory: (ticketId: string) =>
+    api.get<
+      {
+        id: string;
+        replyId: string | null;
+        url: string;
+        filename: string | null;
+        sizeBytes: number;
+        mimeType: string | null;
+        uploadedAt: string;
+        removedAt: string | null;
+        sha256: string | null;
+        uploaderId: string | null;
+        uploaderFirstName: string | null;
+        uploaderLastName: string | null;
+        uploaderEmail: string | null;
+        removerId: string | null;
+        removerFirstName: string | null;
+        removerLastName: string | null;
+        removerEmail: string | null;
+      }[]
+    >(`/tickets/${ticketId}/attachment-history`),
+
+  // Soft-delete an attachment (assignee / supervisor / admin).
+  // The row stays — it just drops out of the active chip list.
+  softDeleteAttachment: (ticketId: string, attachmentId: string) =>
+    api.delete<{ success: true; attachmentId: string }>(
+      `/tickets/${ticketId}/attachments/${attachmentId}`,
+    ),
 
   getRetentionConfig: () =>
     api.get<{ retentionDays: number }>('/tickets/config/retention'),

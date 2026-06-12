@@ -9,6 +9,7 @@ export * from './roles';
 export * from './two-factor';
 export * from './email-verifications';
 export * from './role-requests';
+export * from './role-request-events';
 export * from './blocked-national-ids';
 export * from './admin-notifications';
 export * from './user-notifications';
@@ -65,10 +66,11 @@ export * from './session-recordings';
 export * from './tickets';
 export * from './ticket-tags';
 export * from './ticket-attachments';
+export * from './ticket-hold-requests';
 export * from './support-governance';
+export * from './cron-runs';
 export * from './sla';
 export * from './support-macros';
-export * from './escalation-paths';
 export * from './surveys';
 export * from './kb-articles';
 export * from './kb-categories';
@@ -83,6 +85,9 @@ export * from './audit-logs';
 // Backup schemas
 export * from './backups';
 export * from './restore-clones';
+
+// Service status (public /status page) schemas
+export * from './service-status';
 
 // Scheduled Reports schemas
 export * from './scheduled-reports';
@@ -106,6 +111,9 @@ export * from './point-transactions';
 export * from './point-redemptions';
 export * from './points-config';
 export * from './course-redemption-settings';
+
+// Sidebar alert badges — per-user last-viewed timestamps per tab
+export * from './sidebar-views';
 
 // Health check (can remove later)
 import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';

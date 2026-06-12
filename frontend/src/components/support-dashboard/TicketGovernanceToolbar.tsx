@@ -1,9 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Merge, ArrowRightLeft, FileClock, Loader2, X } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  Merge,
+  ArrowRightLeft,
+  Loader2,
+  X,
+  ChevronDown,
+  Inbox,
+  Check,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { supportApi } from "@/lib/api";
 
 interface Props {
@@ -14,16 +23,34 @@ interface Props {
   onChanged?: () => void;
 }
 
-type Dialog = null | "merge" | "transfer" | "audit";
+type Dialog = null | "merge" | "transfer";
+
+type MergeCandidate = {
+  id: string;
+  referenceNumber: string;
+  subject: string;
+  status: string;
+  priority: string;
+  createdAt: string;
+};
+
+type Category = {
+  slug: string;
+  nameEn: string;
+  nameAr: string | null;
+};
 
 // Compact governance bar shown above the ticket header for supervisors.
-// Three actions:
-//   - Merge: roll this ticket into another (same customer)
-//   - Transfer: change the category + reassign
-//   - Audit: read-only view of the ticket's audit_logs rows
+// Two actions:
+//   - Merge:    pick from a list of same-customer / same-category open
+//               tickets (no UUID pasting). Confirmed actions feed the
+//               supervisor audit trail as `merged`.
+//   - Transfer: pick the target category from the admin-defined list
+//               (no free-text). Confirmed actions feed the supervisor
+//               audit trail as `transferred`.
 //
-// Agent role hides the bar entirely — these are policy actions, not
-// agent workflow.
+// Agents don't see this bar — these are policy actions, not agent
+// workflow.
 export default function TicketGovernanceToolbar({
   ticketId,
   ticketCategory,
@@ -32,97 +59,164 @@ export default function TicketGovernanceToolbar({
   onChanged,
 }: Props) {
   const router = useRouter();
+  const t = useTranslations("supportDashboard.ticketDetail.governance");
+  const tCat = useTranslations("supportDashboard.tickets");
   const [dialog, setDialog] = useState<Dialog>(null);
 
-  // Merge state
-  const [mergeTargetRef, setMergeTargetRef] = useState("");
+  // ── Merge state ───────────────────────────────────────────
+  const [candidates, setCandidates] = useState<MergeCandidate[] | null>(null);
+  const [candidatesLoading, setCandidatesLoading] = useState(false);
+  const [mergeTargetId, setMergeTargetId] = useState<string>("");
   const [mergeNote, setMergeNote] = useState("");
+  const [mergeOpen, setMergeOpen] = useState(false);
   const [merging, setMerging] = useState(false);
+  const mergeRef = useRef<HTMLDivElement>(null);
 
-  // Transfer state
+  // ── Transfer state ────────────────────────────────────────
+  const [categories, setCategories] = useState<Category[] | null>(null);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [transferCategory, setTransferCategory] = useState("");
   const [transferReason, setTransferReason] = useState("");
   const [transferReassign, setTransferReassign] = useState(true);
+  const [transferOpen, setTransferOpen] = useState(false);
   const [transferring, setTransferring] = useState(false);
+  const transferRef = useRef<HTMLDivElement>(null);
 
-  // Audit state (loaded lazily on open)
-  const [audit, setAudit] = useState<Awaited<
-    ReturnType<typeof supportApi.getTicketAuditLog>
-  > | null>(null);
-  const [auditLoading, setAuditLoading] = useState(false);
-
+  // Reset form state whenever the modal re-opens so leftover values
+  // from a cancelled attempt don't bleed into the next one.
   useEffect(() => {
-    if (dialog !== "audit") return;
-    setAuditLoading(true);
-    supportApi
-      .getTicketAuditLog(ticketId, 50)
-      .then((rows) => setAudit(rows))
-      .catch(() => setAudit([]))
-      .finally(() => setAuditLoading(false));
-  }, [dialog, ticketId]);
-
-  if (!isSupervisor) return null;
-
-  async function doMerge() {
-    // The user pasted a reference like "T-000123" — server expects a
-    // UUID. We need to resolve it via a list lookup. Simplest path:
-    // ask the user for the target UUID via a paste of the URL. For
-    // now we accept a UUID directly; supervisors can copy from the
-    // ticket URL.
-    const trimmed = mergeTargetRef.trim();
-    if (!trimmed) {
-      toast.error("Paste the target ticket's URL or UUID");
-      return;
+    if (dialog === null) {
+      setMergeOpen(false);
+      setTransferOpen(false);
     }
-    // Allow pasting a full /tickets/:id URL — extract the UUID at the end.
-    const uuidMatch = trimmed.match(
-      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
-    );
-    if (!uuidMatch) {
-      toast.error("Target must be a ticket UUID or URL");
+    if (dialog === "merge") {
+      setMergeTargetId("");
+      setMergeNote("");
+      setCandidatesLoading(true);
+      supportApi
+        .getMergeCandidates(ticketId)
+        .then((rows) => setCandidates(rows))
+        .catch(() => setCandidates([]))
+        .finally(() => setCandidatesLoading(false));
+    }
+    if (dialog === "transfer") {
+      setTransferReason("");
+      setTransferReassign(true);
+      setCategoriesLoading(true);
+      supportApi
+        .listTicketCategories()
+        .then((rows) => {
+          const filtered = rows.filter((c) => c.slug !== ticketCategory);
+          setCategories(filtered);
+          setTransferCategory(filtered[0]?.slug || "");
+        })
+        .catch(() => setCategories([]))
+        .finally(() => setCategoriesLoading(false));
+    }
+  }, [dialog, ticketId, ticketCategory]);
+
+  // Esc-to-close.
+  useEffect(() => {
+    if (!dialog) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDialog(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [dialog]);
+
+  // Close dropdowns on outside click.
+  useEffect(() => {
+    if (!mergeOpen && !transferOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (
+        mergeOpen &&
+        mergeRef.current &&
+        !mergeRef.current.contains(e.target as Node)
+      ) {
+        setMergeOpen(false);
+      }
+      if (
+        transferOpen &&
+        transferRef.current &&
+        !transferRef.current.contains(e.target as Node)
+      ) {
+        setTransferOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [mergeOpen, transferOpen]);
+
+  const doMerge = useCallback(async () => {
+    if (!mergeTargetId) {
+      toast.error(t("merge.errorPickTarget"));
       return;
     }
     setMerging(true);
     try {
       const res = await supportApi.mergeTicket(
         ticketId,
-        uuidMatch[0],
+        mergeTargetId,
         mergeNote.trim() || undefined,
       );
-      toast.success("Ticket merged");
+      toast.success(t("merge.success"));
       setDialog(null);
-      // Route the user to the target so they see the unified thread.
       router.push(`${basePath}/tickets/${res.targetTicketId}`);
       onChanged?.();
     } catch (err: any) {
-      toast.error(err?.message || "Merge failed");
+      toast.error(err?.message || t("merge.errorGeneric"));
     } finally {
       setMerging(false);
     }
-  }
+  }, [mergeTargetId, mergeNote, ticketId, basePath, router, onChanged, t]);
 
-  async function doTransfer() {
-    const cat = transferCategory.trim();
-    if (!cat) {
-      toast.error("Pick a target category");
+  const doTransfer = useCallback(async () => {
+    if (!transferCategory) {
+      toast.error(t("transfer.errorPickCategory"));
       return;
     }
     setTransferring(true);
     try {
       await supportApi.transferTicket(ticketId, {
-        category: cat,
+        category: transferCategory,
         reason: transferReason.trim() || undefined,
         reassign: transferReassign,
       });
-      toast.success("Ticket transferred");
+      toast.success(t("transfer.success"));
       setDialog(null);
       onChanged?.();
     } catch (err: any) {
-      toast.error(err?.message || "Transfer failed");
+      toast.error(err?.message || t("transfer.errorGeneric"));
     } finally {
       setTransferring(false);
     }
-  }
+  }, [
+    transferCategory,
+    transferReason,
+    transferReassign,
+    ticketId,
+    onChanged,
+    t,
+  ]);
+
+  if (!isSupervisor) return null;
+
+  // Pretty category label — fall back to the slug if no translation key.
+  const categoryLabel = (slug: string, nameEn: string | null) => {
+    try {
+      const label = tCat(`categories.${slug}` as any);
+      if (label && !label.includes("categories.")) return label;
+    } catch {
+      /* ignore — slug isn't a known key */
+    }
+    return nameEn || slug;
+  };
+
+  const selectedCandidate =
+    candidates?.find((c) => c.id === mergeTargetId) || null;
+  const selectedCategory =
+    categories?.find((c) => c.slug === transferCategory) || null;
 
   return (
     <>
@@ -133,26 +227,15 @@ export default function TicketGovernanceToolbar({
           className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]"
         >
           <Merge className="w-3.5 h-3.5" />
-          Merge
+          {t("mergeButton")}
         </button>
         <button
           type="button"
-          onClick={() => {
-            setTransferCategory(ticketCategory === "billing" ? "" : "billing");
-            setDialog("transfer");
-          }}
+          onClick={() => setDialog("transfer")}
           className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]"
         >
           <ArrowRightLeft className="w-3.5 h-3.5" />
-          Transfer
-        </button>
-        <button
-          type="button"
-          onClick={() => setDialog("audit")}
-          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]"
-        >
-          <FileClock className="w-3.5 h-3.5" />
-          Audit
+          {t("transferButton")}
         </button>
       </div>
 
@@ -163,176 +246,323 @@ export default function TicketGovernanceToolbar({
             if (e.target === e.currentTarget) setDialog(null);
           }}
         >
-          <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 w-full max-w-md max-h-[80vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
-                {dialog === "merge"
-                  ? "Merge this ticket into another"
-                  : dialog === "transfer"
-                    ? "Transfer ticket"
-                    : "Ticket audit log"}
-              </h4>
+          <div
+            className="w-full max-w-lg bg-[var(--color-surface-card)] rounded-2xl shadow-xl border border-[var(--color-border)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* ── header ─────────────────────────────────── */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border-subtle)]">
+              <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
+                {dialog === "merge" ? t("merge.title") : t("transfer.title")}
+              </h3>
               <button
                 type="button"
                 onClick={() => setDialog(null)}
-                className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                disabled={merging || transferring}
+                className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-50"
+                aria-label={t("close")}
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            {dialog === "merge" && (
-              <>
-                <p className="text-xs text-[var(--color-text-secondary)] mb-3">
-                  Replies and tags move to the target ticket; this one
-                  becomes a closed reference.
-                </p>
-                <label className="block text-[11px] font-medium text-[var(--color-text-secondary)] uppercase mb-1">
-                  Target ticket URL or UUID
-                </label>
-                <input
-                  type="text"
-                  value={mergeTargetRef}
-                  onChange={(e) => setMergeTargetRef(e.target.value)}
-                  className="w-full h-9 px-3 mb-3 text-sm border border-[var(--color-input-border)] rounded-lg"
-                  placeholder="Paste from the other ticket's URL"
-                />
-                <label className="block text-[11px] font-medium text-[var(--color-text-secondary)] uppercase mb-1">
-                  Note (optional)
-                </label>
-                <input
-                  type="text"
-                  value={mergeNote}
-                  onChange={(e) => setMergeNote(e.target.value)}
-                  maxLength={200}
-                  className="w-full h-9 px-3 mb-4 text-sm border border-[var(--color-input-border)] rounded-lg"
-                  placeholder="Visible in the merged thread"
-                />
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setDialog(null)}
-                    className="px-3 h-9 text-sm rounded-lg border border-[var(--color-border)]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={doMerge}
-                    disabled={merging}
-                    className="px-4 h-9 text-sm bg-[var(--color-primary)] text-white rounded-lg disabled:opacity-50 inline-flex items-center gap-1"
-                  >
-                    {merging && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                    Merge
-                  </button>
-                </div>
-              </>
-            )}
-
-            {dialog === "transfer" && (
-              <>
-                <p className="text-xs text-[var(--color-text-secondary)] mb-3">
-                  Moves the ticket to a different category. Auto-assignment
-                  re-runs by default.
-                </p>
-                <label className="block text-[11px] font-medium text-[var(--color-text-secondary)] uppercase mb-1">
-                  New category
-                </label>
-                <input
-                  type="text"
-                  value={transferCategory}
-                  onChange={(e) => setTransferCategory(e.target.value)}
-                  className="w-full h-9 px-3 mb-3 text-sm border border-[var(--color-input-border)] rounded-lg"
-                  placeholder="e.g. technical"
-                />
-                <label className="block text-[11px] font-medium text-[var(--color-text-secondary)] uppercase mb-1">
-                  Reason (optional)
-                </label>
-                <input
-                  type="text"
-                  value={transferReason}
-                  onChange={(e) => setTransferReason(e.target.value)}
-                  maxLength={200}
-                  className="w-full h-9 px-3 mb-3 text-sm border border-[var(--color-input-border)] rounded-lg"
-                  placeholder="Visible in the thread"
-                />
-                <label className="flex items-center gap-2 text-xs text-[var(--color-text-primary)] mb-4">
-                  <input
-                    type="checkbox"
-                    checked={transferReassign}
-                    onChange={(e) => setTransferReassign(e.target.checked)}
-                  />
-                  Re-run auto-assignment for the new category
-                </label>
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setDialog(null)}
-                    className="px-3 h-9 text-sm rounded-lg border border-[var(--color-border)]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={doTransfer}
-                    disabled={transferring}
-                    className="px-4 h-9 text-sm bg-[var(--color-primary)] text-white rounded-lg disabled:opacity-50 inline-flex items-center gap-1"
-                  >
-                    {transferring && (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    )}
-                    Transfer
-                  </button>
-                </div>
-              </>
-            )}
-
-            {dialog === "audit" && (
-              <>
-                {auditLoading ? (
-                  <div className="flex justify-center py-6">
-                    <Loader2 className="w-5 h-5 animate-spin text-[var(--color-primary)]" />
-                  </div>
-                ) : !audit || audit.length === 0 ? (
-                  <p className="text-xs text-[var(--color-text-secondary)] py-3 text-center">
-                    No audit events yet.
+            {/* ── body ───────────────────────────────────── */}
+            <div className="px-5 py-4 space-y-4">
+              {dialog === "merge" && (
+                <>
+                  <p className="text-sm text-[var(--color-text-secondary)]">
+                    {t("merge.intro")}
                   </p>
-                ) : (
-                  <div className="space-y-2">
-                    {audit.map((row) => (
-                      <div
-                        key={row.id}
-                        className="p-2.5 rounded-lg border border-[var(--color-border-subtle)]"
+
+                  {/* Themed target dropdown */}
+                  <div>
+                    <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1.5">
+                      {t("merge.targetLabel")}
+                    </label>
+                    <div ref={mergeRef} className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setMergeOpen((v) => !v)}
+                        disabled={merging || candidatesLoading}
+                        className="w-full min-h-[40px] px-3 py-2 flex items-center justify-between gap-2 bg-white border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] hover:border-[var(--color-primary)] focus:outline-none focus:border-[var(--color-primary)] disabled:opacity-50"
                       >
-                        <div className="flex items-center justify-between gap-2 text-[11px]">
-                          <span className="font-semibold text-[var(--color-text-primary)] uppercase">
-                            {row.action.replace(/_/g, " ")}
-                          </span>
-                          <span className="text-[var(--color-text-secondary)]">
-                            {new Date(row.createdAt).toLocaleString()}
-                          </span>
+                        <span className="text-start truncate">
+                          {candidatesLoading ? (
+                            <span className="text-[var(--color-text-secondary)]">
+                              {t("merge.loading")}
+                            </span>
+                          ) : selectedCandidate ? (
+                            <span>
+                              <span className="font-medium">
+                                {selectedCandidate.referenceNumber}
+                              </span>{" "}
+                              <span className="text-[var(--color-text-secondary)]">
+                                — {selectedCandidate.subject}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-[var(--color-text-secondary)]">
+                              {t("merge.targetPlaceholder")}
+                            </span>
+                          )}
+                        </span>
+                        <ChevronDown
+                          className={`w-4 h-4 shrink-0 transition-transform ${
+                            mergeOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                      {mergeOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 py-1 overflow-hidden max-h-72 overflow-y-auto">
+                          {candidates && candidates.length > 0 ? (
+                            candidates.map((c) => {
+                              const isSelected = c.id === mergeTargetId;
+                              return (
+                                <button
+                                  key={c.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setMergeTargetId(c.id);
+                                    setMergeOpen(false);
+                                  }}
+                                  className={`w-full px-3 py-2.5 text-start hover:bg-[var(--color-border-subtle)] flex items-start gap-2 ${
+                                    isSelected
+                                      ? "bg-[var(--color-border-subtle)]"
+                                      : ""
+                                  }`}
+                                >
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <span
+                                        className={`font-semibold ${
+                                          isSelected
+                                            ? "text-[var(--color-primary)]"
+                                            : "text-[var(--color-text-primary)]"
+                                        }`}
+                                      >
+                                        {c.referenceNumber}
+                                      </span>
+                                      <PriorityChip priority={c.priority} />
+                                      <StatusChip status={c.status} />
+                                    </div>
+                                    <p className="text-xs text-[var(--color-text-secondary)] truncate mt-0.5">
+                                      {c.subject}
+                                    </p>
+                                  </div>
+                                  {isSelected && (
+                                    <Check className="w-4 h-4 text-[var(--color-primary)] shrink-0 mt-1" />
+                                  )}
+                                </button>
+                              );
+                            })
+                          ) : (
+                            <div className="px-3 py-6 flex flex-col items-center gap-2 text-center">
+                              <Inbox className="w-6 h-6 text-[var(--color-text-secondary)] opacity-60" />
+                              <p className="text-xs text-[var(--color-text-secondary)]">
+                                {t("merge.empty")}
+                              </p>
+                            </div>
+                          )}
                         </div>
-                        <p className="text-[11px] text-[var(--color-text-secondary)] mt-0.5">
-                          {[row.performerFirstName, row.performerLastName]
-                            .filter(Boolean)
-                            .join(" ") ||
-                            row.performerEmail ||
-                            "(unknown)"}
-                        </p>
-                        {row.metadata && (
-                          <pre className="mt-1 text-[10px] text-[var(--color-text-secondary)] whitespace-pre-wrap overflow-x-auto">
-                            {JSON.stringify(row.metadata, null, 2)}
-                          </pre>
-                        )}
-                      </div>
-                    ))}
+                      )}
+                    </div>
                   </div>
-                )}
-              </>
-            )}
+
+                  {/* Optional note */}
+                  <div>
+                    <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1.5">
+                      {t("merge.noteLabel")}
+                    </label>
+                    <input
+                      type="text"
+                      value={mergeNote}
+                      onChange={(e) => setMergeNote(e.target.value)}
+                      maxLength={200}
+                      disabled={merging}
+                      placeholder={t("merge.notePlaceholder")}
+                      className="w-full h-10 px-3 bg-white border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] disabled:opacity-50"
+                    />
+                  </div>
+                </>
+              )}
+
+              {dialog === "transfer" && (
+                <>
+                  <p className="text-sm text-[var(--color-text-secondary)]">
+                    {t("transfer.intro")}
+                  </p>
+
+                  {/* Themed category dropdown */}
+                  <div>
+                    <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1.5">
+                      {t("transfer.categoryLabel")}
+                    </label>
+                    <div ref={transferRef} className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setTransferOpen((v) => !v)}
+                        disabled={transferring || categoriesLoading}
+                        className="w-full h-10 px-3 flex items-center justify-between bg-white border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] hover:border-[var(--color-primary)] focus:outline-none focus:border-[var(--color-primary)] disabled:opacity-50"
+                      >
+                        <span>
+                          {categoriesLoading ? (
+                            <span className="text-[var(--color-text-secondary)]">
+                              {t("transfer.loading")}
+                            </span>
+                          ) : selectedCategory ? (
+                            categoryLabel(
+                              selectedCategory.slug,
+                              selectedCategory.nameEn,
+                            )
+                          ) : (
+                            <span className="text-[var(--color-text-secondary)]">
+                              {t("transfer.categoryPlaceholder")}
+                            </span>
+                          )}
+                        </span>
+                        <ChevronDown
+                          className={`w-4 h-4 transition-transform ${
+                            transferOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                      {transferOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 py-1 overflow-hidden max-h-64 overflow-y-auto">
+                          {categories && categories.length > 0 ? (
+                            categories.map((c) => (
+                              <button
+                                key={c.slug}
+                                type="button"
+                                onClick={() => {
+                                  setTransferCategory(c.slug);
+                                  setTransferOpen(false);
+                                }}
+                                className={`w-full px-3 py-2 text-sm text-start hover:bg-[var(--color-border-subtle)] flex items-center justify-between ${
+                                  c.slug === transferCategory
+                                    ? "text-[var(--color-primary)] font-medium bg-[var(--color-border-subtle)]"
+                                    : "text-[var(--color-text-primary)]"
+                                }`}
+                              >
+                                <span>
+                                  {categoryLabel(c.slug, c.nameEn)}
+                                </span>
+                                {c.slug === transferCategory && (
+                                  <Check className="w-4 h-4" />
+                                )}
+                              </button>
+                            ))
+                          ) : (
+                            <p className="px-3 py-3 text-xs text-[var(--color-text-secondary)] text-center">
+                              {t("transfer.noOtherCategories")}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1.5">
+                      {t("transfer.reasonLabel")}
+                    </label>
+                    <input
+                      type="text"
+                      value={transferReason}
+                      onChange={(e) => setTransferReason(e.target.value)}
+                      maxLength={200}
+                      disabled={transferring}
+                      placeholder={t("transfer.reasonPlaceholder")}
+                      className="w-full h-10 px-3 bg-white border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] disabled:opacity-50"
+                    />
+                  </div>
+
+                  <label className="flex items-center gap-2 text-xs text-[var(--color-text-primary)] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={transferReassign}
+                      onChange={(e) => setTransferReassign(e.target.checked)}
+                      disabled={transferring}
+                      className="w-4 h-4 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                    />
+                    {t("transfer.reassignLabel")}
+                  </label>
+                </>
+              )}
+            </div>
+
+            {/* ── footer ────────────────────────────────── */}
+            <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--color-border-subtle)]">
+              <button
+                type="button"
+                onClick={() => setDialog(null)}
+                disabled={merging || transferring}
+                className="px-3 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-50"
+              >
+                {t("cancel")}
+              </button>
+              {dialog === "merge" ? (
+                <button
+                  type="button"
+                  onClick={doMerge}
+                  disabled={
+                    merging || candidatesLoading || !mergeTargetId
+                  }
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50"
+                >
+                  {merging && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {t("merge.submit")}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={doTransfer}
+                  disabled={
+                    transferring || categoriesLoading || !transferCategory
+                  }
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50"
+                >
+                  {transferring && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {t("transfer.submit")}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
     </>
+  );
+}
+
+// Tiny inline chips for the merge dropdown rows. Kept local to the
+// toolbar because they're only used here and stay simple/visual.
+function PriorityChip({ priority }: { priority: string }) {
+  const cls =
+    priority === "high"
+      ? "text-[#991B1B] bg-[#FEE2E2] border-[#FCA5A5]"
+      : priority === "low"
+        ? "text-[#1D4ED8] bg-[#DBEAFE] border-[#93C5FD]"
+        : "text-[#92400E] bg-[#FEF3C7] border-[#FDE68A]";
+  return (
+    <span
+      className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded border ${cls} uppercase`}
+    >
+      {priority}
+    </span>
+  );
+}
+
+function StatusChip({ status }: { status: string }) {
+  const cls =
+    status === "new"
+      ? "text-[#1D4ED8] bg-[#DBEAFE] border-[#93C5FD]"
+      : status === "in_progress"
+        ? "text-[#92400E] bg-[#FEF3C7] border-[#FDE68A]"
+        : "text-[#6B21A8] bg-[#F3E8FF] border-[#D8B4FE]"; // on_hold
+  return (
+    <span
+      className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded border ${cls} uppercase`}
+    >
+      {status.replace(/_/g, " ")}
+    </span>
   );
 }

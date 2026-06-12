@@ -23,6 +23,7 @@ import {
   Star,
   Upload,
   Trash2,
+  Headphones,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { profileApi, courseManagerApi } from "@/lib/api";
@@ -149,6 +150,11 @@ const CourseManagerMobileSidebar = ({
       label: t("sidebar.reports"),
       href: `/${locale}/dashboard/manager/reports`,
       icon: BarChart3,
+    },
+    {
+      label: t("sidebar.support"),
+      href: `/${locale}/dashboard/manager/support`,
+      icon: Headphones,
     },
     {
       label: t("sidebar.settings"),

@@ -15,7 +15,7 @@ const OTP_COOLDOWN_SECONDS = 60; // anti-spam: one code per email per minute
 const MAX_ATTEMPTS = 5;
 const MAX_PER_IP_PER_HOUR = 10; // soft cap on /request-otp per IP
 
-type Purpose = 'trainer-application';
+type Purpose = 'trainer-application' | 'trainer-application-portal';
 
 @Injectable()
 export class EmailVerificationService {

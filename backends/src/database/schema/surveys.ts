@@ -34,6 +34,15 @@ export const csatSurveys = pgTable(
     channel: varchar('channel', { length: 20 }).notNull().default('email'),
     sentAt: timestamp('sent_at').defaultNow().notNull(),
     submittedAt: timestamp('submitted_at'),
+    // Manual-followup tracking. Set by a supervisor when they mark a
+    // low-rating survey as "we reached out" via the Reports panel.
+    // NULL = needs follow-up; non-NULL = handled. The auto-apology
+    // email that fires on detractor submit is separate from this —
+    // these columns are purely for human-driven outreach.
+    followUpCompletedAt: timestamp('follow_up_completed_at'),
+    followUpCompletedBy: uuid('follow_up_completed_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
   },
   (table) => [
     index('csat_surveys_ticket_id_idx').on(table.ticketId),

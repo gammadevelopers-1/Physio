@@ -140,58 +140,37 @@ function SLAPolicyRow({ policy, canEdit, isSaving, onSave, t }: {
           </span>
         </td>
         <td className="py-3 px-4 align-top">
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={frt}
-            onChange={(e) => setFrt(sanitize(e.target.value))}
+          <DhmInput
+            totalMinutes={frtNum}
+            onTotalChange={(m) => setFrt(String(m))}
             disabled={!canEdit || isSaving}
-            className={inputClass(!Number.isInteger(frtNum) || frtNum < 1)}
+            invalid={!Number.isInteger(frtNum) || frtNum < 1}
+            t={t}
           />
-          {Number.isFinite(frtNum) && (
-            <p className="text-[11px] text-[var(--color-text-secondary)] mt-1 h-3">
-              {formatMinutesHint(frtNum, t) ?? ""}
-            </p>
-          )}
         </td>
         <td className="py-3 px-4 align-top">
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={ttr}
-            onChange={(e) => setTtr(sanitize(e.target.value))}
+          <DhmInput
+            totalMinutes={ttrNum}
+            onTotalChange={(m) => setTtr(String(m))}
             disabled={!canEdit || isSaving}
-            className={inputClass(
-              !Number.isInteger(ttrNum) || ttrNum < 1 || ttrNum <= frtNum,
-            )}
+            invalid={
+              !Number.isInteger(ttrNum) || ttrNum < 1 || ttrNum <= frtNum
+            }
+            t={t}
           />
-          {Number.isFinite(ttrNum) && (
-            <p className="text-[11px] text-[var(--color-text-secondary)] mt-1 h-3">
-              {formatMinutesHint(ttrNum, t) ?? ""}
-            </p>
-          )}
         </td>
         <td className="py-3 px-4 align-top">
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={escalate}
-            onChange={(e) => setEscalate(sanitize(e.target.value))}
+          <DhmInput
+            totalMinutes={escalateNum}
+            onTotalChange={(m) => setEscalate(String(m))}
             disabled={!canEdit || isSaving}
-            className={inputClass(
+            invalid={
               !Number.isInteger(escalateNum) ||
-                escalateNum < 1 ||
-                escalateNum > ttrNum,
-            )}
+              escalateNum < 1 ||
+              escalateNum > ttrNum
+            }
+            t={t}
           />
-          {Number.isFinite(escalateNum) && (
-            <p className="text-[11px] text-[var(--color-text-secondary)] mt-1 h-3">
-              {formatMinutesHint(escalateNum, t) ?? ""}
-            </p>
-          )}
         </td>
         <td className="py-3 px-4 text-right align-top">
           {canEdit && hasChanges && (
@@ -219,6 +198,118 @@ function SLAPolicyRow({ policy, canEdit, isSaving, onSave, t }: {
         </tr>
       )}
     </>
+  );
+}
+
+// Days / hours / minutes input row that emits a single total-minutes
+// value back to the parent. Splitting the input is purely cosmetic —
+// the underlying SLA policy still stores minutes — so the persisted
+// shape doesn't change and the math elsewhere stays untouched.
+//
+// Per-field clamping: hours 0–23, minutes 0–59. Days is unbounded
+// (some support orgs run 7-day TTRs). NaN inputs collapse to 0 so a
+// partially-cleared row never poisons the total.
+function DhmInput({
+  totalMinutes,
+  onTotalChange,
+  disabled,
+  invalid,
+  t,
+}: {
+  totalMinutes: number;
+  onTotalChange: (next: number) => void;
+  disabled: boolean;
+  invalid: boolean;
+  t: (key: string, vars?: Record<string, any>) => string;
+}) {
+  const safeTotal = Number.isFinite(totalMinutes) ? Math.max(0, totalMinutes) : 0;
+  const days = Math.floor(safeTotal / (24 * 60));
+  const hours = Math.floor((safeTotal - days * 24 * 60) / 60);
+  const minutes = safeTotal - days * 24 * 60 - hours * 60;
+
+  const update = (d: number, h: number, m: number) => {
+    const next = Math.max(0, d) * 24 * 60 + Math.max(0, h) * 60 + Math.max(0, m);
+    onTotalChange(next);
+  };
+
+  const inputCls = `w-14 h-9 px-2 text-sm text-center border rounded-lg focus:outline-none disabled:bg-[var(--color-surface-page)] disabled:text-[var(--color-text-secondary)] ${
+    invalid
+      ? "border-[#FECACA] focus:border-[#EF4444]"
+      : "border-[var(--color-border)] focus:border-[var(--color-primary)]"
+  }`;
+
+  return (
+    <div>
+      <div className="inline-flex items-end gap-1.5">
+        <DhmField
+          value={days}
+          onChange={(v) => update(v, hours, minutes)}
+          unit={t("settingsPage.slaPanel.unitDays")}
+          inputCls={inputCls}
+          disabled={disabled}
+        />
+        <DhmField
+          value={hours}
+          onChange={(v) => update(days, Math.min(23, v), minutes)}
+          unit={t("settingsPage.slaPanel.unitHours")}
+          max={23}
+          inputCls={inputCls}
+          disabled={disabled}
+        />
+        <DhmField
+          value={minutes}
+          onChange={(v) => update(days, hours, Math.min(59, v))}
+          unit={t("settingsPage.slaPanel.unitMinutes")}
+          max={59}
+          inputCls={inputCls}
+          disabled={disabled}
+        />
+      </div>
+      <p className="text-[10px] text-[var(--color-text-secondary)] mt-1 h-3">
+        {t("settingsPage.slaPanel.totalMinutes", { count: safeTotal })}
+      </p>
+    </div>
+  );
+}
+
+function DhmField({
+  value,
+  onChange,
+  unit,
+  max,
+  inputCls,
+  disabled,
+}: {
+  value: number;
+  onChange: (next: number) => void;
+  unit: string;
+  max?: number;
+  inputCls: string;
+  disabled: boolean;
+}) {
+  // Sanitize: digits only, strip leading zeros, optionally clamp to max.
+  const sanitize = (raw: string): number => {
+    const digits = raw.replace(/[^0-9]/g, "").slice(0, 4);
+    if (digits === "") return 0;
+    const n = parseInt(digits, 10);
+    if (Number.isNaN(n)) return 0;
+    return max !== undefined ? Math.min(max, n) : n;
+  };
+  return (
+    <div className="flex flex-col items-center">
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={String(value)}
+        onChange={(e) => onChange(sanitize(e.target.value))}
+        disabled={disabled}
+        className={inputCls}
+      />
+      <span className="text-[10px] text-[var(--color-text-secondary)] mt-0.5">
+        {unit}
+      </span>
+    </div>
   );
 }
 
@@ -262,17 +353,59 @@ const SupportSettingsContent = () => {
   const [macrosLoading, setMacrosLoading] = useState(false);
   const [showMacroForm, setShowMacroForm] = useState(false);
   const [editingMacro, setEditingMacro] = useState<any>(null);
-  const [macroForm, setMacroForm] = useState({ title: '', bodyTemplate: '', kbArticleUrls: '' });
+  const [macroForm, setMacroForm] = useState<{
+    title: string;
+    bodyTemplate: string;
+    bodyAr: string;
+    categoryKey: string;
+    kbArticleIds: string[];
+  }>({ title: '', bodyTemplate: '', bodyAr: '', categoryKey: '', kbArticleIds: [] });
   const [macroSaving, setMacroSaving] = useState(false);
+  const [showInactiveMacros, setShowInactiveMacros] = useState(false);
+  const [macroCategoryFilter, setMacroCategoryFilter] = useState<string>('');
+  const [macroSearch, setMacroSearch] = useState('');
+  const [macroSubView, setMacroSubView] = useState<'library' | 'analytics'>('library');
+
+  // Categories + KB articles for the picker dropdowns. Loaded once
+  // when the macros tab opens — both fit comfortably in memory and
+  // don't change often during a session.
+  const [ticketCategories, setTicketCategories] = useState<
+    { slug: string; nameEn: string; nameAr: string | null }[]
+  >([]);
+  const [kbArticlesForPicker, setKbArticlesForPicker] = useState<
+    { id: string; titleEn?: string | null; titleAr?: string | null; category: string; published: boolean }[]
+  >([]);
+  const [macroUsageStats, setMacroUsageStats] = useState<any | null>(null);
+  const [usageStatsLoading, setUsageStatsLoading] = useState(false);
+
+  const refreshMacros = async () => {
+    setMacrosLoading(true);
+    try {
+      const refreshed = await supportApi.getMacros({
+        includeInactive: showInactiveMacros,
+      });
+      setMacrosList(refreshed || []);
+    } catch { toast.error(t("settingsPage.macrosPanel.toasts.saveFailed")); }
+    finally { setMacrosLoading(false); }
+  };
 
   const handleSaveMacro = async () => {
     if (!macroForm.title.trim() || !macroForm.bodyTemplate.trim()) { toast.error(t("settingsPage.macrosPanel.toasts.titleBodyRequired")); return; }
     setMacroSaving(true);
     try {
+      // Translate selected KB article IDs back to URLs (the backend
+      // still stores URLs — we only swapped the editor UX for IDs).
+      const kbArticleUrls = macroForm.kbArticleIds
+        .map((id) => kbArticlesForPicker.find((a) => a.id === id))
+        .filter(Boolean)
+        .map((a) => `/help/${a!.id}`);
+
       const data = {
         title: macroForm.title.trim(),
         bodyTemplate: macroForm.bodyTemplate.trim(),
-        kbArticleUrls: macroForm.kbArticleUrls ? macroForm.kbArticleUrls.split('\n').filter(Boolean) : [],
+        bodyAr: macroForm.bodyAr.trim() || null,
+        categoryKey: macroForm.categoryKey || null,
+        kbArticleUrls,
       };
       if (editingMacro) {
         await supportApi.updateMacro(editingMacro.id, data);
@@ -282,22 +415,72 @@ const SupportSettingsContent = () => {
         toast.success(t("settingsPage.macrosPanel.toasts.created"));
       }
       setShowMacroForm(false);
-      // Refresh list
-      const refreshed = await supportApi.getMacros();
-      setMacrosList(refreshed || []);
+      await refreshMacros();
     } catch { toast.error(t("settingsPage.macrosPanel.toasts.saveFailed")); }
     finally { setMacroSaving(false); }
+  };
+
+  const handleToggleMacroActive = async (macro: any) => {
+    try {
+      await supportApi.updateMacro(macro.id, { isActive: !macro.isActive });
+      await refreshMacros();
+      toast.success(
+        macro.isActive
+          ? t("settingsPage.macrosPanel.toasts.deactivated")
+          : t("settingsPage.macrosPanel.toasts.reactivated"),
+      );
+    } catch { toast.error(t("settingsPage.macrosPanel.toasts.saveFailed")); }
   };
 
   // SLA state lives inside <SLAPoliciesPanel /> now — same panel admins
   // embed on /dashboard/admin/support, so behaviour stays identical.
 
   useEffect(() => {
-    if (activeSub === 'macros') {
-      setMacrosLoading(true);
-      supportApi.getMacros().then(data => setMacrosList(data || [])).catch(() => {}).finally(() => setMacrosLoading(false));
+    if (activeSub !== 'macros') return;
+    refreshMacros();
+    if (ticketCategories.length === 0) {
+      supportApi.listTicketCategories().then(setTicketCategories).catch(() => {});
     }
-  }, [activeSub]);
+    if (kbArticlesForPicker.length === 0) {
+      supportApi.getKbArticles().then((arts: any[]) => {
+        setKbArticlesForPicker(
+          (arts || []).filter((a) => a.published).map((a) => ({
+            id: a.id,
+            titleEn: a.titleEn,
+            titleAr: a.titleAr,
+            category: a.category,
+            published: a.published,
+          })),
+        );
+      }).catch(() => {});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSub, showInactiveMacros]);
+
+  useEffect(() => {
+    if (activeSub !== 'macros' || macroSubView !== 'analytics') return;
+    setUsageStatsLoading(true);
+    supportApi.getMacroUsageStats()
+      .then(setMacroUsageStats)
+      .catch(() => {})
+      .finally(() => setUsageStatsLoading(false));
+  }, [activeSub, macroSubView]);
+
+  // Visible list after applying the category + search filters.
+  // Filtering client-side so toggling the chips feels instant —
+  // the dataset is bounded (a few dozen rows at most).
+  const filteredMacros = useMemo(() => {
+    const q = macroSearch.trim().toLowerCase();
+    return macrosList.filter((m) => {
+      if (macroCategoryFilter && (m.categoryKey || '') !== macroCategoryFilter) {
+        return false;
+      }
+      if (q && !m.title.toLowerCase().includes(q)) {
+        return false;
+      }
+      return true;
+    });
+  }, [macrosList, macroSearch, macroCategoryFilter]);
 
   const isSupervisorOrAdmin = Boolean(
     user?.supportSubRole === "supervisor" ||
@@ -527,24 +710,90 @@ const SupportSettingsContent = () => {
                   {/* Macros */}
                   {activeSub === "macros" && (
                     <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{t("settingsPage.macrosPanel.title")}</h3>
-                        {isSupervisorOrAdmin && (
+                      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{t("settingsPage.macrosPanel.title")}</h3>
+                          {/* Library / Analytics sub-tabs */}
+                          <div className="inline-flex items-center rounded-lg border border-[var(--color-border)] overflow-hidden ml-2">
+                            <button
+                              onClick={() => setMacroSubView('library')}
+                              className={`px-2.5 py-1 text-[11px] font-medium ${macroSubView === 'library' ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]'}`}
+                            >
+                              {t("settingsPage.macrosPanel.tabLibrary")}
+                            </button>
+                            <button
+                              onClick={() => setMacroSubView('analytics')}
+                              className={`px-2.5 py-1 text-[11px] font-medium ${macroSubView === 'analytics' ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]'}`}
+                            >
+                              {t("settingsPage.macrosPanel.tabAnalytics")}
+                            </button>
+                          </div>
+                        </div>
+                        {isSupervisorOrAdmin && macroSubView === 'library' && (
                           <button className="px-3 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg hover:opacity-90"
-                            onClick={() => { setEditingMacro(null); setMacroForm({ title: '', bodyTemplate: '', kbArticleUrls: '' }); setShowMacroForm(true); }}>
+                            onClick={() => { setEditingMacro(null); setMacroForm({ title: '', bodyTemplate: '', bodyAr: '', categoryKey: '', kbArticleIds: [] }); setShowMacroForm(true); }}>
                             {t("settingsPage.macrosPanel.newMacro")}
                           </button>
                         )}
                       </div>
-                      <p className="text-sm text-[var(--color-text-secondary)] mb-4">{t("settingsPage.macrosPanel.description", { variables: '{{learner_name}}, {{learner_first_name}}, {{course_name}}, {{ticket_id}}, {{ticket_subject}}, {{ticket_priority}}, {{ticket_category}}, {{ticket_status}}, {{agent_name}}' })}</p>
+                      {macroSubView === 'library' && (
+                        <>
+                      <p className="text-sm text-[var(--color-text-secondary)] mb-4">{t("settingsPage.macrosPanel.description", { variables: '{{learner_name}}, {{learner_first_name}}, {{course_name}}, {{ticket_id}}, {{ticket_subject}}, {{ticket_priority}}, {{ticket_category}}, {{ticket_status}}, {{agent_name}}, {{certificate_status}}, {{webinar_join_url}}, {{payment_amount}}' })}</p>
+
+                      {/* Filter strip: search + category chips + show-inactive toggle */}
+                      <div className="flex items-center gap-2 flex-wrap mb-4">
+                        <input
+                          type="text"
+                          value={macroSearch}
+                          onChange={(e) => setMacroSearch(e.target.value)}
+                          placeholder={t("settingsPage.macrosPanel.searchPlaceholder")}
+                          className="h-8 px-3 border border-[var(--color-border)] rounded-lg text-xs focus:outline-none focus:border-[var(--color-primary)] flex-1 min-w-[180px] max-w-[280px]"
+                        />
+                        <select
+                          value={macroCategoryFilter}
+                          onChange={(e) => setMacroCategoryFilter(e.target.value)}
+                          className="h-8 px-2 border border-[var(--color-border)] rounded-lg text-xs bg-white focus:outline-none focus:border-[var(--color-primary)]"
+                        >
+                          <option value="">{t("settingsPage.macrosPanel.filterAllCategories")}</option>
+                          <option value="">— {t("settingsPage.macrosPanel.categoryGeneral")} —</option>
+                          {ticketCategories.map((c) => (
+                            <option key={c.slug} value={c.slug}>{c.nameEn}</option>
+                          ))}
+                        </select>
+                        <label className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)] cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={showInactiveMacros}
+                            onChange={(e) => setShowInactiveMacros(e.target.checked)}
+                            className="w-3.5 h-3.5 rounded border-[var(--color-input-border)]"
+                          />
+                          {t("settingsPage.macrosPanel.showInactive")}
+                        </label>
+                      </div>
+
                       {showMacroForm && (
                         <div className="mb-6 p-4 border border-[#C7D5F0] bg-[#F0F4FF] rounded-lg">
                           <h4 className="text-sm font-semibold text-[var(--color-primary)] mb-3">{editingMacro ? t("settingsPage.macrosPanel.editTitle") : t("settingsPage.macrosPanel.createTitle")}</h4>
                           <div className="space-y-3">
-                            <div>
-                              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.macrosPanel.formTitle")}</label>
-                              <input type="text" value={macroForm.title} onChange={e => setMacroForm(p => ({...p, title: e.target.value}))}
-                                className="w-full h-9 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder={t("settingsPage.macrosPanel.formTitlePlaceholder")} />
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                              <div className="md:col-span-2">
+                                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.macrosPanel.formTitle")}</label>
+                                <input type="text" value={macroForm.title} onChange={e => setMacroForm(p => ({...p, title: e.target.value}))}
+                                  className="w-full h-9 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" placeholder={t("settingsPage.macrosPanel.formTitlePlaceholder")} />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.macrosPanel.formCategory")}</label>
+                                <select
+                                  value={macroForm.categoryKey}
+                                  onChange={(e) => setMacroForm((p) => ({ ...p, categoryKey: e.target.value }))}
+                                  className="w-full h-9 px-2 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:outline-none focus:border-[var(--color-primary)]"
+                                >
+                                  <option value="">{t("settingsPage.macrosPanel.categoryGeneral")}</option>
+                                  {ticketCategories.map((c) => (
+                                    <option key={c.slug} value={c.slug}>{c.nameEn}</option>
+                                  ))}
+                                </select>
+                              </div>
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.macrosPanel.bodyTemplate")}</label>
@@ -560,6 +809,9 @@ const SupportSettingsContent = () => {
                                   { key: '{{ticket_category}}', label: t("settingsPage.macrosPanel.variables.ticketCategory") },
                                   { key: '{{ticket_status}}', label: t("settingsPage.macrosPanel.variables.ticketStatus") },
                                   { key: '{{agent_name}}', label: t("settingsPage.macrosPanel.variables.agentName") },
+                                  { key: '{{certificate_status}}', label: t("settingsPage.macrosPanel.variables.certificateStatus") },
+                                  { key: '{{webinar_join_url}}', label: t("settingsPage.macrosPanel.variables.webinarJoinUrl") },
+                                  { key: '{{payment_amount}}', label: t("settingsPage.macrosPanel.variables.paymentAmount") },
                                 ].map(v => (
                                   <button
                                     key={v.key}
@@ -598,10 +850,56 @@ const SupportSettingsContent = () => {
                               <p className="text-[10px] text-[var(--color-text-secondary)] text-right mt-0.5">{macroForm.bodyTemplate.length}/10,000</p>
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.macrosPanel.kbUrls")}</label>
-                              <textarea value={macroForm.kbArticleUrls} onChange={e => setMacroForm(p => ({...p, kbArticleUrls: e.target.value}))}
-                                rows={2} className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm resize-none focus:outline-none focus:border-[var(--color-primary)]"
-                                placeholder="https://..." />
+                              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                                {t("settingsPage.macrosPanel.bodyTemplateAr")}
+                                <span className="text-[10px] text-[var(--color-text-secondary)] font-normal ml-1">({t("settingsPage.macrosPanel.optional")})</span>
+                              </label>
+                              <textarea
+                                value={macroForm.bodyAr}
+                                onChange={e => setMacroForm(p => ({...p, bodyAr: e.target.value}))}
+                                rows={5}
+                                maxLength={10000}
+                                dir="rtl"
+                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm resize-none focus:outline-none focus:border-[var(--color-primary)]"
+                                placeholder={t("settingsPage.macrosPanel.bodyArPlaceholder")}
+                              />
+                              <p className="text-[10px] text-[var(--color-text-secondary)] text-right mt-0.5">{macroForm.bodyAr.length}/10,000</p>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.macrosPanel.kbPickerLabel")}</label>
+                              <div className="border border-[var(--color-border)] rounded-lg max-h-44 overflow-y-auto bg-white">
+                                {kbArticlesForPicker.length === 0 ? (
+                                  <p className="text-xs text-[var(--color-text-secondary)] p-3">{t("settingsPage.macrosPanel.kbPickerEmpty")}</p>
+                                ) : (
+                                  kbArticlesForPicker.map((art) => {
+                                    const checked = macroForm.kbArticleIds.includes(art.id);
+                                    const title = art.titleEn || art.titleAr || '(untitled)';
+                                    return (
+                                      <label
+                                        key={art.id}
+                                        className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-[var(--color-border-subtle)]"
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={checked}
+                                          onChange={() =>
+                                            setMacroForm((p) => ({
+                                              ...p,
+                                              kbArticleIds: checked
+                                                ? p.kbArticleIds.filter((id) => id !== art.id)
+                                                : [...p.kbArticleIds, art.id],
+                                            }))
+                                          }
+                                          className="w-3.5 h-3.5"
+                                        />
+                                        <span className="flex-1 truncate">{title}</span>
+                                        <span className="text-[10px] text-[var(--color-text-secondary)] font-mono">{art.category}</span>
+                                      </label>
+                                    );
+                                  })
+                                )}
+                              </div>
+                              <p className="text-[10px] text-[var(--color-text-secondary)] mt-1">{t("settingsPage.macrosPanel.kbPickerHint")}</p>
                             </div>
                             <div className="flex gap-2">
                               <button onClick={handleSaveMacro} disabled={macroSaving}
@@ -615,25 +913,63 @@ const SupportSettingsContent = () => {
                       )}
                       {macrosLoading ? (
                         <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[var(--color-primary)]" /></div>
-                      ) : macrosList.length === 0 ? (
+                      ) : filteredMacros.length === 0 ? (
                         <p className="text-center py-8 text-sm text-[var(--color-text-secondary)]">{t("settingsPage.macrosPanel.noMacros")}</p>
                       ) : (
                         <div className="space-y-3">
-                          {macrosList.map(macro => (
-                            <div key={macro.id} className="p-4 border border-[var(--color-border)] rounded-lg">
-                              <div className="flex items-center justify-between mb-2">
-                                <h4 className="text-sm font-medium text-[var(--color-text-primary)]">{macro.title}</h4>
+                          {filteredMacros.map(macro => {
+                            const categoryLabel = macro.categoryKey
+                              ? ticketCategories.find((c) => c.slug === macro.categoryKey)?.nameEn || macro.categoryKey
+                              : t("settingsPage.macrosPanel.categoryGeneral");
+                            return (
+                            <div key={macro.id} className={`p-4 border rounded-lg ${macro.isActive ? 'border-[var(--color-border)]' : 'border-[var(--color-border)] bg-[var(--color-surface-page)] opacity-70'}`}>
+                              <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <h4 className="text-sm font-medium text-[var(--color-text-primary)] truncate">{macro.title}</h4>
+                                  <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide rounded bg-[#EFF6FF] text-[#3B82F6] border border-[#DBEAFE]">
+                                    {categoryLabel}
+                                  </span>
+                                  {macro.bodyAr && (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide rounded bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]">
+                                      EN + AR
+                                    </span>
+                                  )}
+                                  {!macro.isActive && (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide rounded bg-[#F3F4F6] text-[#6B7280] border border-[#E5E7EB]">
+                                      {t("settingsPage.macrosPanel.inactiveBadge")}
+                                    </span>
+                                  )}
+                                </div>
                                 {isSupervisorOrAdmin && (
-                                  <div className="flex items-center">
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    <span className="text-[10px] text-[var(--color-text-secondary)]" title={macro.lastUsedAt ? new Date(macro.lastUsedAt).toLocaleString() : ''}>
+                                      {t("settingsPage.macrosPanel.usedTimes", { count: macro.useCount ?? 0 })}
+                                    </span>
+                                    <button onClick={() => handleToggleMacroActive(macro)} className="text-xs text-[var(--color-text-secondary)] hover:underline">
+                                      {macro.isActive ? t("settingsPage.macrosPanel.deactivate") : t("settingsPage.macrosPanel.reactivate")}
+                                    </button>
                                     <button onClick={() => {
                                       setEditingMacro(macro);
-                                      setMacroForm({ title: macro.title, bodyTemplate: macro.bodyTemplate, kbArticleUrls: (macro.kbArticleUrls || []).join('\n') });
+                                      // Recover article IDs from URLs (we store /help/{id})
+                                      const ids = (macro.kbArticleUrls || [])
+                                        .map((url: string) => {
+                                          const m = url.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+                                          return m ? m[1] : null;
+                                        })
+                                        .filter(Boolean) as string[];
+                                      setMacroForm({
+                                        title: macro.title,
+                                        bodyTemplate: macro.bodyTemplate,
+                                        bodyAr: macro.bodyAr || '',
+                                        categoryKey: macro.categoryKey || '',
+                                        kbArticleIds: ids,
+                                      });
                                       setShowMacroForm(true);
-                                    }} className="text-xs text-[var(--color-primary)] hover:underline mr-2">{t("settingsPage.macrosPanel.edit")}</button>
+                                    }} className="text-xs text-[var(--color-primary)] hover:underline">{t("settingsPage.macrosPanel.edit")}</button>
                                     <button onClick={async () => {
                                       if (confirm(t("settingsPage.macrosPanel.toasts.confirmDelete"))) {
                                         await supportApi.deleteMacro(macro.id);
-                                        setMacrosList(prev => prev.filter(m => m.id !== macro.id));
+                                        await refreshMacros();
                                         toast.success(t("settingsPage.macrosPanel.toasts.deleted"));
                                       }
                                     }} className="text-xs text-red-500 hover:underline">{t("settingsPage.macrosPanel.delete")}</button>
@@ -642,8 +978,97 @@ const SupportSettingsContent = () => {
                               </div>
                               <p className="text-xs text-[var(--color-text-secondary)] whitespace-pre-wrap line-clamp-3">{macro.bodyTemplate}</p>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
+                      )}
+                        </>
+                      )}
+
+                      {macroSubView === 'analytics' && (
+                        <>
+                          {usageStatsLoading ? (
+                            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[var(--color-primary)]" /></div>
+                          ) : !macroUsageStats ? (
+                            <p className="text-center py-8 text-sm text-[var(--color-text-secondary)]">{t("settingsPage.macrosPanel.analytics.noData")}</p>
+                          ) : (
+                            <div className="space-y-4">
+                              {/* KPI strip */}
+                              <div className="grid grid-cols-3 gap-3">
+                                <div className="p-3 border border-[var(--color-border)] rounded-lg">
+                                  <div className="text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)]">{t("settingsPage.macrosPanel.analytics.totalUses")}</div>
+                                  <div className="text-xl font-semibold text-[var(--color-text-primary)] mt-1">{macroUsageStats.totalUses}</div>
+                                </div>
+                                <div className="p-3 border border-[var(--color-border)] rounded-lg">
+                                  <div className="text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)]">{t("settingsPage.macrosPanel.analytics.totalMacros")}</div>
+                                  <div className="text-xl font-semibold text-[var(--color-text-primary)] mt-1">{macroUsageStats.totalMacros}</div>
+                                </div>
+                                <div className="p-3 border border-[var(--color-border)] rounded-lg">
+                                  <div className="text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)]">{t("settingsPage.macrosPanel.analytics.unused")}</div>
+                                  <div className={`text-xl font-semibold mt-1 ${macroUsageStats.unusedCount > 0 ? 'text-[#B45309]' : 'text-[var(--color-text-primary)]'}`}>{macroUsageStats.unusedCount}</div>
+                                </div>
+                              </div>
+
+                              {/* Top used */}
+                              <div className="p-4 border border-[var(--color-border)] rounded-lg">
+                                <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">{t("settingsPage.macrosPanel.analytics.topUsed")}</h4>
+                                {macroUsageStats.perMacro.filter((m: any) => m.useCount > 0).slice(0, 10).length === 0 ? (
+                                  <p className="text-xs text-[var(--color-text-secondary)] py-2">{t("settingsPage.macrosPanel.analytics.noUsesYet")}</p>
+                                ) : (
+                                  <ul className="space-y-1.5">
+                                    {macroUsageStats.perMacro.filter((m: any) => m.useCount > 0).slice(0, 10).map((m: any) => (
+                                      <li key={m.id} className="flex items-center gap-2 text-xs">
+                                        <span className="flex-1 truncate text-[var(--color-text-primary)]">{m.title}</span>
+                                        <span className="font-mono text-[var(--color-text-secondary)]">×{m.useCount}</span>
+                                        {m.categoryKey && (
+                                          <span className="px-1.5 py-0.5 text-[9px] font-semibold uppercase rounded bg-[#EFF6FF] text-[#3B82F6] border border-[#DBEAFE]">{m.categoryKey}</span>
+                                        )}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+
+                              {/* By category */}
+                              <div className="p-4 border border-[var(--color-border)] rounded-lg">
+                                <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">{t("settingsPage.macrosPanel.analytics.byCategory")}</h4>
+                                <ul className="space-y-1.5">
+                                  {macroUsageStats.perCategory.map((c: any) => (
+                                    <li key={c.categoryKey} className="flex items-center gap-2 text-xs">
+                                      <span className="flex-1 capitalize text-[var(--color-text-primary)]">{c.categoryKey}</span>
+                                      <span className="text-[var(--color-text-secondary)]">{t("settingsPage.macrosPanel.analytics.macrosShort", { count: c.macroCount })}</span>
+                                      <span className="font-mono text-[var(--color-text-primary)] min-w-[40px] text-right">×{c.uses}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+
+                              {/* Monthly trend — simple bars */}
+                              <div className="p-4 border border-[var(--color-border)] rounded-lg">
+                                <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">{t("settingsPage.macrosPanel.analytics.monthlyTrend")}</h4>
+                                {macroUsageStats.monthly.length === 0 ? (
+                                  <p className="text-xs text-[var(--color-text-secondary)] py-2">{t("settingsPage.macrosPanel.analytics.noUsesYet")}</p>
+                                ) : (
+                                  <div className="flex items-end gap-2 h-24">
+                                    {(() => {
+                                      const max = Math.max(...macroUsageStats.monthly.map((b: any) => b.uses), 1);
+                                      return macroUsageStats.monthly.map((b: any) => (
+                                        <div key={b.bucket} className="flex-1 flex flex-col items-center gap-1">
+                                          <div
+                                            className="w-full bg-[#3B82F6] rounded-t"
+                                            style={{ height: `${Math.max(4, (b.uses / max) * 80)}px` }}
+                                            title={`${b.bucket}: ${b.uses}`}
+                                          />
+                                          <span className="text-[9px] text-[var(--color-text-secondary)] font-mono">{b.bucket.slice(5)}</span>
+                                        </div>
+                                      ));
+                                    })()}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
@@ -1341,6 +1766,16 @@ function ChannelRow({
 // remove custom categories. Stored in support_config.
 // ──────────────────────────────────────────────────────────────────
 
+const APPLICABLE_ROLE_OPTIONS: { value: string; tKey: string }[] = [
+  { value: "student", tKey: "applicableRoles.student" },
+  { value: "instructor", tKey: "applicableRoles.instructor" },
+  { value: "course_manager", tKey: "applicableRoles.course_manager" },
+  { value: "finance", tKey: "applicableRoles.finance" },
+  { value: "ta", tKey: "applicableRoles.ta" },
+];
+
+const DEFAULT_NEW_CATEGORY_ROLES = ["student"] as const;
+
 export function TicketCategoriesPanel() {
   const t = useTranslations("supportDashboard");
   const [cats, setCats] = useState<
@@ -1349,6 +1784,7 @@ export function TicketCategoriesPanel() {
       nameEn: string;
       nameAr: string | null;
       autoPriority: "high" | "medium" | "low" | null;
+      applicableRoles: string[];
       builtin: boolean;
     }[]
   >([]);
@@ -1358,8 +1794,12 @@ export function TicketCategoriesPanel() {
     nameEn: "",
     nameAr: "",
     autoPriority: "medium" as "high" | "medium" | "low",
+    applicableRoles: [...DEFAULT_NEW_CATEGORY_ROLES] as string[],
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [editingSlug, setEditingSlug] = useState<string | null>(null);
+  const [editRoles, setEditRoles] = useState<string[]>([]);
+  const [editSaving, setEditSaving] = useState(false);
 
   const fetchCategories = useCallback(() => {
     setIsLoading(true);
@@ -1374,9 +1814,18 @@ export function TicketCategoriesPanel() {
     fetchCategories();
   }, [fetchCategories]);
 
+  function toggleRole(roles: string[], role: string): string[] {
+    if (roles.includes(role)) return roles.filter((r) => r !== role);
+    return [...roles, role];
+  }
+
   async function addCategory() {
     if (!form.nameEn.trim()) {
       toast.error(t("settingsPage.ticketCategoriesPanel.nameEnRequired"));
+      return;
+    }
+    if (form.applicableRoles.length === 0) {
+      toast.error(t("settingsPage.ticketCategoriesPanel.applicableRolesRequired"));
       return;
     }
     setIsSaving(true);
@@ -1385,15 +1834,39 @@ export function TicketCategoriesPanel() {
         nameEn: form.nameEn.trim(),
         nameAr: form.nameAr.trim() || undefined,
         autoPriority: form.autoPriority,
+        applicableRoles: form.applicableRoles,
       });
       toast.success(t("settingsPage.ticketCategoriesPanel.added"));
-      setForm({ nameEn: "", nameAr: "", autoPriority: "medium" });
+      setForm({
+        nameEn: "",
+        nameAr: "",
+        autoPriority: "medium",
+        applicableRoles: [...DEFAULT_NEW_CATEGORY_ROLES],
+      });
       setShowAdd(false);
       fetchCategories();
     } catch (err: any) {
       toast.error(err?.message || t("settingsPage.ticketCategoriesPanel.addFailed"));
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function saveEditRoles(slug: string) {
+    if (editRoles.length === 0) {
+      toast.error(t("settingsPage.ticketCategoriesPanel.applicableRolesRequired"));
+      return;
+    }
+    setEditSaving(true);
+    try {
+      await supportApi.updateTicketCategory(slug, { applicableRoles: editRoles });
+      toast.success(t("settingsPage.ticketCategoriesPanel.updated"));
+      setEditingSlug(null);
+      fetchCategories();
+    } catch (err: any) {
+      toast.error(err?.message || t("settingsPage.ticketCategoriesPanel.updateFailed"));
+    } finally {
+      setEditSaving(false);
     }
   }
 
@@ -1493,6 +1966,41 @@ export function TicketCategoriesPanel() {
               ))}
             </div>
           </div>
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+              {t("settingsPage.ticketCategoriesPanel.applicableRolesLabel")}
+            </label>
+            <p className="text-[11px] text-[var(--color-text-secondary)] mb-2">
+              {t("settingsPage.ticketCategoriesPanel.applicableRolesHint")}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {APPLICABLE_ROLE_OPTIONS.map((opt) => {
+                const active = form.applicableRoles.includes(opt.value);
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        applicableRoles: toggleRole(
+                          form.applicableRoles,
+                          opt.value,
+                        ),
+                      })
+                    }
+                    className={`px-3 h-8 rounded-full text-xs font-medium border transition-colors ${
+                      active
+                        ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]"
+                        : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:border-[var(--color-text-secondary)]"
+                    }`}
+                  >
+                    {t(`settingsPage.ticketCategoriesPanel.${opt.tKey}`)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <div className="flex justify-end gap-2 pt-1">
             <button
               type="button"
@@ -1515,50 +2023,146 @@ export function TicketCategoriesPanel() {
       )}
 
       <div className="mt-5 space-y-2">
-        {cats.map((c) => (
-          <div
-            key={c.slug}
-            className="flex items-center gap-3 border border-[var(--color-border)] rounded-lg p-3"
-          >
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
-                  {c.nameEn}
-                  {c.nameAr && (
-                    <span className="text-[var(--color-text-secondary)] font-normal mx-1">
-                      / {c.nameAr}
-                    </span>
-                  )}
-                </p>
-                {c.builtin && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F3F4F6] text-[#4B5563] font-medium">
-                    {t("settingsPage.ticketCategoriesPanel.builtin")}
-                  </span>
-                )}
-                {c.autoPriority && (
-                  <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${priorityStyles[c.autoPriority]}`}
-                  >
-                    {t(`settingsPage.ticketCategoriesPanel.priorities.${c.autoPriority}`)}
-                  </span>
+        {cats.map((c) => {
+          const isEditing = editingSlug === c.slug;
+          return (
+            <div
+              key={c.slug}
+              className="border border-[var(--color-border)] rounded-lg p-3"
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                      {c.nameEn}
+                      {c.nameAr && (
+                        <span className="text-[var(--color-text-secondary)] font-normal mx-1">
+                          / {c.nameAr}
+                        </span>
+                      )}
+                    </p>
+                    {c.builtin && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F3F4F6] text-[#4B5563] font-medium">
+                        {t("settingsPage.ticketCategoriesPanel.builtin")}
+                      </span>
+                    )}
+                    {c.autoPriority && (
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${priorityStyles[c.autoPriority]}`}
+                      >
+                        {t(`settingsPage.ticketCategoriesPanel.priorities.${c.autoPriority}`)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-[var(--color-text-secondary)] font-mono mt-0.5">
+                    {c.slug}
+                  </p>
+                </div>
+                {!c.builtin && !isEditing && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingSlug(c.slug);
+                        setEditRoles([...(c.applicableRoles ?? [])]);
+                      }}
+                      className="text-[11px] px-2 h-7 rounded-md border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                    >
+                      {t("settingsPage.ticketCategoriesPanel.editRoles")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeCategory(c.slug)}
+                      className="p-1.5 hover:bg-[#FEE2E2] rounded-md text-[#DC2626]"
+                      aria-label={t("settingsPage.ticketCategoriesPanel.removeCategory")}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 )}
               </div>
-              <p className="text-[11px] text-[var(--color-text-secondary)] font-mono mt-0.5">
-                {c.slug}
-              </p>
+
+              {!isEditing && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {(c.applicableRoles ?? []).length === 0 ? (
+                    <span className="text-[11px] text-[var(--color-text-secondary)] italic">
+                      {t("settingsPage.ticketCategoriesPanel.noApplicableRoles")}
+                    </span>
+                  ) : (
+                    (c.applicableRoles ?? []).map((r) => (
+                      <span
+                        key={r}
+                        className="text-[10px] px-2 py-0.5 rounded-full bg-[#EEF2FF] text-[#3730A3] font-medium"
+                      >
+                        {t(
+                          `settingsPage.ticketCategoriesPanel.applicableRoles.${r}` as Parameters<
+                            typeof t
+                          >[0],
+                        )}
+                      </span>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {isEditing && (
+                <div className="mt-3 p-3 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-page)]">
+                  <p className="text-[11px] text-[var(--color-text-secondary)] mb-2">
+                    {t("settingsPage.ticketCategoriesPanel.applicableRolesHint")}
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {APPLICABLE_ROLE_OPTIONS.map((opt) => {
+                      const active = editRoles.includes(opt.value);
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() =>
+                            setEditRoles(toggleRole(editRoles, opt.value))
+                          }
+                          className={`px-3 h-8 rounded-full text-xs font-medium border transition-colors ${
+                            active
+                              ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]"
+                              : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:border-[var(--color-text-secondary)]"
+                          }`}
+                        >
+                          {t(
+                            `settingsPage.ticketCategoriesPanel.${opt.tKey}` as Parameters<
+                              typeof t
+                            >[0],
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditingSlug(null)}
+                      disabled={editSaving}
+                      className="h-8 px-3 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] disabled:opacity-50"
+                    >
+                      {t("settingsPage.cancelChanges")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => saveEditRoles(c.slug)}
+                      disabled={editSaving}
+                      className="h-8 px-3 bg-[var(--color-primary)] hover:bg-[#001d5e] text-white rounded-lg text-xs flex items-center gap-1 disabled:opacity-50"
+                    >
+                      {editSaving ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Save className="w-3 h-3" />
+                      )}
+                      {t("settingsPage.saveChanges")}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            {!c.builtin && (
-              <button
-                type="button"
-                onClick={() => removeCategory(c.slug)}
-                className="p-1.5 hover:bg-[#FEE2E2] rounded-md text-[#DC2626]"
-                aria-label={t("settingsPage.ticketCategoriesPanel.removeCategory")}
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

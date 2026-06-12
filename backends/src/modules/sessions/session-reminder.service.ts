@@ -372,6 +372,7 @@ export class SessionReminderService {
             action: 'session.auto_ended',
             performedBy: session.instructorId,
             metadata: { courseId: updated.courseId, durationMinutes: session.durationMinutes },
+            ipAddress: 'system',
           }).catch(() => {});
 
           // 4. Notify enrolled students

@@ -9,4 +9,5 @@ export { CreateMacroDto } from './create-macro.dto';
 export { UpdateMacroDto } from './update-macro.dto';
 export { CreateKbArticleDto } from './create-kb-article.dto';
 export { UpdateKbArticleDto } from './update-kb-article.dto';
-export { CreateEscalationPathDto, UpdateEscalationPathDto } from './escalation-path.dto';
+export { RateTicketDto } from './rate-ticket.dto';
+export { EscalateTicketDto } from './escalate-ticket.dto';

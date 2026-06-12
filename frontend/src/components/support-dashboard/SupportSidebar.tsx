@@ -17,10 +17,13 @@ import {
   Headphones,
   Upload,
   Trash2,
+  Bell,
+  GraduationCap,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { profileApi } from "@/lib/api";
+import { profileApi, SIDEBAR_TAB_KEYS, type SidebarTabKey } from "@/lib/api";
 import { useSupportOnlineStatus } from "@/hooks/useSupportOnlineStatus";
+import SidebarBadge from "@/components/SidebarBadge";
 
 interface SupportProfile {
   name: string;
@@ -94,48 +97,76 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
     ? `/${locale}/dashboard/support/supervisor`
     : `/${locale}/dashboard/support/agent`;
 
-  const allNavItems = [
+  const allNavItems: Array<{
+    label: string;
+    href: string;
+    icon: typeof LayoutDashboard;
+    showFor: "all" | "supervisor";
+    badgeKey?: SidebarTabKey;
+    badgeTone?: "info" | "alert";
+  }> = [
     {
       label: t("sidebar.dashboard"),
       href: basePath,
       icon: LayoutDashboard,
-      showFor: "all" as const,
+      showFor: "all",
     },
     {
       label: t("sidebar.allTickets"),
       href: `${basePath}/tickets`,
       icon: ClipboardList,
-      showFor: "supervisor" as const,
+      showFor: "supervisor",
+      badgeKey: SIDEBAR_TAB_KEYS.SUPPORT_ALL_TICKETS,
     },
     {
       label: t("sidebar.myTickets"),
       href: `${basePath}/my-tickets`,
       icon: Inbox,
-      showFor: "all" as const,
+      showFor: "all",
+      badgeKey: SIDEBAR_TAB_KEYS.SUPPORT_MY_TICKETS,
     },
     {
       label: t("sidebar.team"),
       href: `${basePath}/team`,
       icon: Users,
-      showFor: "supervisor" as const,
+      showFor: "supervisor",
+      badgeKey: SIDEBAR_TAB_KEYS.SUPPORT_TEAM,
+    },
+    {
+      label: t("sidebar.alerts"),
+      href: `${basePath}/alerts`,
+      icon: Bell,
+      showFor: "supervisor",
+      badgeKey: SIDEBAR_TAB_KEYS.SUPPORT_ALERTS,
+      badgeTone: "alert",
     },
     {
       label: t("sidebar.knowledgeBase"),
       href: `${basePath}/kb`,
       icon: BookOpen,
-      showFor: "all" as const,
+      showFor: "all",
+    },
+    {
+      // Trainer applications — read-only lookup so support can answer
+      // applicant questions without admin access. Shared path (not
+      // sub-role specific) since the page is read-only either way.
+      label: t("sidebar.trainerApplications"),
+      href: `/${locale}/dashboard/support/trainer-applications`,
+      icon: GraduationCap,
+      showFor: "all",
+      badgeKey: SIDEBAR_TAB_KEYS.SUPPORT_TRAINER_APPS,
     },
     {
       label: t("sidebar.reports"),
       href: `${basePath}/reports`,
       icon: BarChart3,
-      showFor: "supervisor" as const,
+      showFor: "supervisor",
     },
     {
       label: t("sidebar.settings"),
       href: `${basePath}/settings`,
       icon: Settings,
-      showFor: "all" as const,
+      showFor: "all",
     },
   ];
 
@@ -344,6 +375,12 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
                 >
                   {item.label}
                 </span>
+                {item.badgeKey && (
+                  <SidebarBadge
+                    tabKey={item.badgeKey}
+                    tone={item.badgeTone || "info"}
+                  />
+                )}
               </Link>
             );
           })}

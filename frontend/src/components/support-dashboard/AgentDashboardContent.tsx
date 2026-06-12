@@ -8,6 +8,7 @@ import { supportApi } from "@/lib/api";
 import { useSupportProfile } from "@/hooks/useSupportProfile";
 import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
+import SupportDashboardSkeleton from "./SupportDashboardSkeleton";
 import {
   Inbox,
   Clock,
@@ -33,6 +34,8 @@ interface MyTicketRow {
   ttrRemainingMinutes: number | null;
   slaBreachedTtr: boolean;
   slaBreachedFrt: boolean;
+  slaPaused: boolean;
+  slaPausedReason: "on_hold" | "off_hours" | null;
   firstResponseAt: string | null;
   createdAt: string;
 }
@@ -94,6 +97,11 @@ const AgentDashboardContent = () => {
             typeof x.ttrRemainingMinutes === "number" ? x.ttrRemainingMinutes : null,
           slaBreachedTtr: Boolean(x.slaBreachedTtr),
           slaBreachedFrt: Boolean(x.slaBreachedFrt),
+          slaPaused: Boolean(x.slaPaused),
+          slaPausedReason:
+            x.slaPausedReason === "on_hold" || x.slaPausedReason === "off_hours"
+              ? x.slaPausedReason
+              : null,
           firstResponseAt: x.firstResponseAt ?? null,
           createdAt: x.createdAt,
         }));
@@ -225,6 +233,15 @@ const AgentDashboardContent = () => {
     if (ticket.status === "resolved" || ticket.status === "closed") return null;
     const m = ticket.ttrRemainingMinutes;
     if (m == null) return null;
+    // Paused (off-hours or on-hold) — surface the SAME truth as the
+    // per-ticket detail view. Without this, the badge looked identical
+    // at 3 AM and 11 AM, making the timer feel like it was ticking in
+    // the background.
+    if (ticket.slaPaused && m >= 0)
+      return {
+        text: t("agentDashboard.sla.paused", { value: formatMinutes(m) }),
+        cls: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
+      };
     if (m < 0)
       return {
         text: t("agentDashboard.sla.overBy", { value: formatMinutes(m) }),
@@ -281,6 +298,16 @@ const AgentDashboardContent = () => {
                   <span className="hidden sm:inline">{t("myTicketsPage.refresh")}</span>
                 </button>
               </div>
+
+              {/* Initial-load skeleton — only shown on the very first
+                  fetch (silent refreshes use isRefreshing and keep the
+                  existing data on screen). Replaces stat cards, Next Up,
+                  Quick Actions, and the assigned tickets table so the
+                  agent never sees zero counts during the first paint. */}
+              {isLoading ? (
+                <SupportDashboardSkeleton />
+              ) : (
+              <>
 
               {/* Stats — 4 themed cards */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -560,6 +587,8 @@ const AgentDashboardContent = () => {
                   </div>
                 )}
               </div>
+              </>
+              )}
             </div>
           </div>
         </div>

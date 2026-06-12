@@ -1,10 +1,50 @@
 /**
- * Ticket resolved notification email template for learners
+ * Ticket resolved notification email template for learners.
+ * Includes a one-click "Rate your experience" CTA + per-star
+ * deep links so the recipient can rate from the inbox without
+ * digging into the ticket detail page.
  */
 export function getTicketResolvedHtml(
   learnerName: string,
   ticketId: string,
+  surveyUrl: string | null,
 ): string {
+  const ratingBlock = surveyUrl
+    ? `
+          <!-- Rate-your-experience CTA. Stars deep-link with ?score=N
+               so the public CSAT page pre-selects the rating; user
+               only needs one confirm click. -->
+          <tr>
+            <td style="padding:0 32px 8px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#fffbeb;border:1px solid #fde68a;border-radius:12px;">
+                <tr>
+                  <td style="padding:18px 20px;text-align:center;">
+                    <p style="margin:0 0 6px;font-size:13px;color:#92400e;font-family:'DM Sans',Arial,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">How did we do?</p>
+                    <p style="margin:0 0 12px;font-size:13px;color:#78350f;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
+                      Tap a star to rate your support experience.
+                    </p>
+                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                      <tr>
+                        ${[1, 2, 3, 4, 5]
+                          .map(
+                            (n) => `<td style="padding:0 4px;">
+                          <a href="${surveyUrl}?score=${n}" style="display:inline-block;width:34px;height:34px;line-height:34px;background-color:#ffffff;border:1px solid #fde68a;border-radius:50%;color:#b45309;font-size:18px;text-decoration:none;text-align:center;font-family:Arial,sans-serif;" aria-label="Rate ${n} of 5">&#9733;</a>
+                        </td>`,
+                          )
+                          .join('')}
+                      </tr>
+                    </table>
+                    <p style="margin:14px 0 0;font-size:12px;color:#a16207;font-family:'DM Sans',Arial,sans-serif;">
+                      <a href="${surveyUrl}" style="color:#a16207;text-decoration:underline;">Rate your experience</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+`
+    : '';
+
   return `<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -75,10 +115,10 @@ export function getTicketResolvedHtml(
               </table>
             </td>
           </tr>
-
+${ratingBlock}
           <!-- Button -->
           <tr>
-            <td style="padding:0 32px 24px;text-align:center;">
+            <td style="padding:8px 32px 24px;text-align:center;">
               <a href="https://physioguidance.org/en/dashboard/support" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#a37f49,#6b4e24);color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;font-family:'DM Sans',Arial,sans-serif;">
                 Reopen Ticket
               </a>
@@ -115,17 +155,20 @@ export function getTicketResolvedHtml(
 export function getTicketResolvedText(
   learnerName: string,
   ticketId: string,
+  surveyUrl: string | null,
 ): string {
+  const ratingLine = surveyUrl
+    ? `\n\nRate your experience: ${surveyUrl}\n`
+    : '';
   return `PhysioGuidance - Ticket Resolved
 
 Hi ${learnerName},
 
 Your support issue has been resolved. If your issue is not fully resolved, you can reopen this ticket within 48 hours.
 
-Ticket #${ticketId} has been resolved.
-
+Ticket #${ticketId} has been resolved.${ratingLine}
 Reopen Ticket: https://physioguidance.org/en/dashboard/support
 
-\u00a9 ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
-NELC Accredited \u00b7 Saudi Arabia`;
+© ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
+NELC Accredited · Saudi Arabia`;
 }

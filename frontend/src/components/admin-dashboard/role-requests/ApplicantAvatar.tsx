@@ -44,8 +44,18 @@ export default function ApplicantAvatar({
   const profile = getProfile(request);
   const initials = getApplicantInitials(request);
   const sizeClass = SIZE_MAP[size];
+  // BecomeTrainerForm uploads the profile photo as a `{type: "photo"}`
+  // entry inside `resumeFiles`, not as a direct field on profileData.
+  // Check both locations so older and newer submissions both render.
+  const photoFromResumeFiles = request.resumeFiles?.find(
+    (f) => f.type === "photo" && f.url,
+  )?.url;
   const avatarUrl =
-    profile.avatar || profile.profilePhoto || profile.photo || null;
+    profile.avatar ||
+    profile.profilePhoto ||
+    profile.photo ||
+    photoFromResumeFiles ||
+    null;
   const ringClass = showStatusRing
     ? `ring-2 ring-offset-2 ring-offset-[var(--color-surface-card)] ${
         STATUS_RING[request.status] ?? "ring-[var(--color-border)]"

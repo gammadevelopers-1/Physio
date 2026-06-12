@@ -59,6 +59,7 @@ const BUILTIN_LABEL_KEYS: Record<string, string> = {
   billing: "category_billing",
   certificate: "category_certificate",
   content: "category_content",
+  trainer: "category_trainer",
   other: "category_other",
 };
 
@@ -299,11 +300,50 @@ export default function PublicTicketForm({
       }
 
       toast.success(t("ticketSubmitted"));
-    } catch {
+    } catch (err: unknown) {
       // Reset captcha so the user can re-verify after a failed submit.
       recaptchaRef.current?.reset();
       setRecaptchaToken(null);
-      toast.error(t("errorSubmitting"));
+      // Surface a meaningful error. The generic catch used to swallow
+      // everything as "errorSubmitting", which hid useful info like
+      // throttle, validation, or session/captcha problems. Map status
+      // codes to friendly copy, and fall back to the API message when
+      // it's present.
+      const apiErr = err as {
+        status?: number;
+        message?: string;
+        messages?: string[];
+      };
+      const code = apiErr?.status;
+      const rawMsg =
+        (Array.isArray(apiErr?.messages) && apiErr.messages?.[0]) ||
+        apiErr?.message ||
+        "";
+      let label: string;
+      if (code === 403 && /csrf/i.test(rawMsg)) {
+        label = isRTL
+          ? "تعذّر التحقق من أمان النموذج. حدّث الصفحة وحاول مرة أخرى."
+          : "Could not verify form security. Please refresh the page and try again.";
+      } else if (code === 429) {
+        label = isRTL
+          ? "عدد طلبات كبير. انتظر لحظة ثم حاول مجددًا."
+          : "Too many attempts. Please wait a moment and try again.";
+      } else if (code === 400 && rawMsg) {
+        label = rawMsg;
+      } else if (code === 401 || code === 403) {
+        label = isRTL
+          ? "تم رفض الطلب. أعد تحميل الصفحة وحاول مجددًا."
+          : "Request was rejected. Please reload the page and try again.";
+      } else if (code && code >= 500) {
+        label = isRTL
+          ? "خطأ في الخادم. يرجى المحاولة بعد قليل."
+          : "Server error. Please try again in a moment.";
+      } else if (rawMsg) {
+        label = rawMsg;
+      } else {
+        label = t("errorSubmitting");
+      }
+      toast.error(label);
     } finally {
       setIsSubmitting(false);
     }
@@ -396,7 +436,14 @@ export default function PublicTicketForm({
     );
   }
 
-  const selectedCategory = categories.find((c) => c.slug === category);
+  // Guests on the public Support page can only file tickets in the
+  // categories the backend allows for unauthenticated submissions:
+  // 'login' or 'trainer'. Authenticated users see the full list.
+  const GUEST_ALLOWED_SLUGS = new Set(["login", "trainer"]);
+  const visibleCategories = guestLoginMode
+    ? categories.filter((c) => GUEST_ALLOWED_SLUGS.has(c.slug))
+    : categories;
+  const selectedCategory = visibleCategories.find((c) => c.slug === category);
 
   const inputClass = (field: string) =>
     `w-full h-[44px] px-3.5 border rounded-[10px] text-sm bg-white shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] outline-none transition-colors ${
@@ -520,19 +567,9 @@ export default function PublicTicketForm({
           {t("category")}{" "}
           <span className="text-[#DC2626]">*</span>
         </label>
-        {guestLoginMode ? (
-          <div
-            className="w-full h-[44px] px-3.5 border rounded-[10px] text-sm bg-gray-50 shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] flex items-center border-[#C8D5E1] cursor-not-allowed"
-            dir={isRTL ? "rtl" : "ltr"}
-          >
-            <span className="text-gray-900">
-              {t("category_login")}
-            </span>
-          </div>
-        ) : (
-          <>
-            <button
-              id="ticket-category"
+        <>
+          <button
+            id="ticket-category"
               type="button"
               onClick={() => setDropdownOpen(!dropdownOpen)}
               className={`w-full h-[44px] px-3.5 border rounded-[10px] text-sm bg-white shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] outline-none transition-colors flex items-center justify-between ${
@@ -557,7 +594,7 @@ export default function PublicTicketForm({
                 className="absolute z-10 w-full mt-1 bg-white border border-[#C8D5E1] rounded-[10px] shadow-lg overflow-hidden"
                 dir={isRTL ? "rtl" : "ltr"}
               >
-                {categories.map((cat) => (
+                {visibleCategories.map((cat) => (
                   <button
                     key={cat.slug}
                     type="button"
@@ -582,8 +619,7 @@ export default function PublicTicketForm({
             {errors.category && (
               <p className="text-xs text-[#DC2626] mt-1">{errors.category}</p>
             )}
-          </>
-        )}
+        </>
       </div>
 
       {/* Description */}

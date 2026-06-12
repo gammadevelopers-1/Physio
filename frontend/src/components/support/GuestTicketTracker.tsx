@@ -12,6 +12,7 @@ import {
   Headphones,
   Star,
 } from "lucide-react";
+import LinkifiedText from "./LinkifiedText";
 
 interface CsatSurveyState {
   id: string;
@@ -199,10 +200,10 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
           </span>
         </div>
         <p
-          className="text-sm text-[var(--color-text-secondary)] mt-2"
+          className="text-sm text-[var(--color-text-secondary)] mt-2 whitespace-pre-wrap break-words"
           style={{ textAlign: isRTL ? "right" : "left" }}
         >
-          {ticket.description}
+          <LinkifiedText text={ticket.description} />
         </p>
         <div className="flex gap-4 mt-3 text-xs text-[var(--color-text-secondary)]">
           <span>{t("categoryLabel")} {ticket.category}</span>
@@ -226,10 +227,10 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
             </span>
           </div>
           <p
-            className="text-sm text-[var(--color-text-primary)]"
+            className="text-sm text-[var(--color-text-primary)] whitespace-pre-wrap break-words"
             style={{ textAlign: isRTL ? "right" : "left" }}
           >
-            {ticket.description}
+            <LinkifiedText text={ticket.description} />
           </p>
         </div>
 
@@ -279,10 +280,10 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
                   </span>
                 </div>
                 <p
-                  className="text-sm text-[var(--color-text-primary)]"
+                  className="text-sm text-[var(--color-text-primary)] whitespace-pre-wrap break-words"
                   style={{ textAlign: isRTL ? "right" : "left" }}
                 >
-                  {comment.message}
+                  <LinkifiedText text={comment.message} />
                 </p>
               </div>
             );

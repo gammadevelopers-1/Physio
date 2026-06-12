@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { db } from '../../database';
 import { auditLogs, users } from '../../database/schema';
 import { eq, and, desc, count, gte, lte, or, ilike, sql } from 'drizzle-orm';
+import { RequestContextService } from '../../common/request-context.service';
 
 export interface AdminAuditLogFilters {
   entityType?: string;
@@ -18,8 +19,16 @@ export interface AdminAuditLogFilters {
 export class AuditLogService {
   private readonly logger = new Logger(AuditLogService.name);
 
+  constructor(private readonly requestContext: RequestContextService) {}
+
   /**
    * Log an immutable audit entry. No update/delete methods exist by design.
+   *
+   * IP resolution order:
+   *   1. Explicit `ipAddress` argument (e.g. workers passing 'system').
+   *   2. Per-request store populated by RequestContextMiddleware.
+   *   3. null — only happens for non-HTTP code paths that forgot to
+   *      tag themselves; the admin Logs page will flag those rows.
    */
   async log(data: {
     entityType: string;
@@ -30,13 +39,14 @@ export class AuditLogService {
     ipAddress?: string;
   }): Promise<void> {
     try {
+      const ipAddress = data.ipAddress || this.requestContext.getIp() || null;
       await db.insert(auditLogs).values({
         entityType: data.entityType,
         entityId: data.entityId,
         action: data.action,
         performedBy: data.performedBy,
         metadata: data.metadata || null,
-        ipAddress: data.ipAddress || null,
+        ipAddress,
       });
     } catch (error) {
       this.logger.error('Failed to write audit log', error);

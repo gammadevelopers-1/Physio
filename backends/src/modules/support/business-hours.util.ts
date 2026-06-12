@@ -207,6 +207,101 @@ export function getNextBusinessOpen(date: Date): Date {
 }
 
 /**
+ * Returns the last moment within business hours at or before `date`.
+ * If `date` is already within business hours, returns `date` unchanged.
+ * Otherwise walks back to the previous business day's close timestamp.
+ *
+ * Use this when computing display values that must be frozen during
+ * off-hours: clamp `now` to this value so the SLA remaining-minutes
+ * snapshot anchors at the moment business hours ended, instead of
+ * drifting forward with wall-clock time. Without the clamp, callers
+ * relying on `calculateBusinessMinutesElapsed` already get a stable
+ * answer (off-hours add nothing), but the deadline/elapsed math used
+ * for the UI is more transparent when `now` is explicitly capped.
+ */
+export function clampToBusinessHours(date: Date): Date {
+  const ast = toAST(date);
+  const timeMinutes = ast.hour * 60 + ast.minute;
+  const open = bizStartHour() * 60;
+  const close = bizEndHour() * 60;
+
+  if (isBusinessDay(ast.dayOfWeek) && timeMinutes >= open && timeMinutes < close) {
+    return date;
+  }
+
+  // After close on a business day → that day's close.
+  if (isBusinessDay(ast.dayOfWeek) && timeMinutes >= close) {
+    return fromAST(ast.year, ast.month, ast.day, bizEndHour(), 0);
+  }
+
+  // Before open on a business day, or weekend → previous business close.
+  // Walk back day-by-day until we hit a business day, then return its
+  // close timestamp.
+  let prev = new Date(date.getTime());
+  for (let i = 0; i < 14; i++) {
+    prev = new Date(prev.getTime() - 24 * 60 * 60 * 1000);
+    const prevAst = toAST(prev);
+    if (isBusinessDay(prevAst.dayOfWeek)) {
+      return fromAST(prevAst.year, prevAst.month, prevAst.day, bizEndHour(), 0);
+    }
+  }
+  // Fallback — shouldn't reach here with any sane config.
+  return date;
+}
+
+/**
+ * Effective business minutes elapsed on a ticket, with on-hold time
+ * subtracted — including the IN-FLIGHT hold period when the ticket is
+ * currently on hold.
+ *
+ * The previous code path subtracted only `onHoldTotalMinutes`, which is
+ * only updated when a ticket transitions OFF hold. While a ticket sat
+ * in ON_HOLD, the SLA counter still ticked because the live elapsed
+ * grew but the deduction did not. Result: agents reported tickets
+ * that were on hold still breaching SLA. This helper closes that gap
+ * by adding the running `onHoldAt → now` delta when status='on_hold'.
+ *
+ * Use this everywhere SLA math runs (detail view, breach detection,
+ * 75% warning, reports). Never subtract `onHoldTotalMinutes` raw.
+ */
+export function effectiveBusinessMinutesElapsed(
+  ticket: {
+    createdAt: Date;
+    status: string;
+    onHoldAt: Date | null;
+    onHoldTotalMinutes: number | null;
+  },
+  now: Date,
+): number {
+  const totalElapsed = calculateBusinessMinutesElapsed(ticket.createdAt, now);
+  let holdMinutes = ticket.onHoldTotalMinutes || 0;
+  if (ticket.status === 'on_hold' && ticket.onHoldAt) {
+    holdMinutes += calculateBusinessMinutesElapsed(ticket.onHoldAt, now);
+  }
+  return Math.max(0, totalElapsed - holdMinutes);
+}
+
+/**
+ * The total on-hold minutes including the in-flight hold period — used
+ * when callers need the "deduction" amount (e.g. computing a moving
+ * deadline that should slide right as a ticket stays on hold).
+ */
+export function effectiveOnHoldMinutes(
+  ticket: {
+    status: string;
+    onHoldAt: Date | null;
+    onHoldTotalMinutes: number | null;
+  },
+  now: Date,
+): number {
+  let holdMinutes = ticket.onHoldTotalMinutes || 0;
+  if (ticket.status === 'on_hold' && ticket.onHoldAt) {
+    holdMinutes += calculateBusinessMinutesElapsed(ticket.onHoldAt, now);
+  }
+  return holdMinutes;
+}
+
+/**
  * Calculate business minutes elapsed between two timestamps
  * Only counts minutes that fall within business hours (Sun-Thu 9AM-6PM AST)
  *
@@ -318,4 +413,94 @@ export function calculateBusinessDeadline(
   }
 
   return current; // fallback
+}
+
+/**
+ * Human-readable phrasing for "expected first response" used in emails,
+ * in-app notifications, and the dashboard pill. The output is locale-
+ * sensitive but English-only today — Arabic is computed on the FE from
+ * the structured `mode` + `deadline` fields.
+ *
+ * Two branches:
+ *   - Created in business hours → "X hours" / "X minutes" (duration)
+ *   - Created off-hours        → "Sunday at 9:00 AM AST"  (resume time)
+ *
+ * Returning the structured fields too lets the FE re-render in Arabic
+ * without re-running this util.
+ */
+export function describeExpectedResponse(
+  createdAt: Date,
+  frtMinutes: number,
+): {
+  mode: 'in_hours' | 'queued_until_resume';
+  /** Duration of FRT in minutes (in_hours) or wait-then-FRT total (queued). */
+  durationMinutes: number;
+  /** Absolute deadline timestamp (business-minute aware). */
+  deadline: Date;
+  /** Resume timestamp — only set when queued. */
+  resumeAt: Date | null;
+  /** English phrasing for emails ("4 hours" or "Sunday at 9:00 AM AST"). */
+  phrasing: string;
+} {
+  const inHours = isWithinBusinessHours(createdAt);
+  const deadline = calculateBusinessDeadline(createdAt, frtMinutes);
+
+  if (inHours) {
+    const minutes = frtMinutes;
+    const phrasing =
+      minutes >= 60
+        ? `${Math.round(minutes / 60)} hour${Math.round(minutes / 60) === 1 ? '' : 's'}`
+        : `${minutes} minute${minutes === 1 ? '' : 's'}`;
+    return {
+      mode: 'in_hours',
+      durationMinutes: minutes,
+      deadline,
+      resumeAt: null,
+      phrasing,
+    };
+  }
+
+  // Off-hours: phrase as "{Weekday} at {h:mm} {AM/PM} AST".
+  const resumeAt = getNextBusinessOpen(createdAt);
+  const ast = toASTPublic(resumeAt);
+  const days = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+  ];
+  const hour12 = ast.hour % 12 === 0 ? 12 : ast.hour % 12;
+  const ampm = ast.hour < 12 ? 'AM' : 'PM';
+  const minuteStr = ast.minute.toString().padStart(2, '0');
+  const tzLabel = currentConfig.timezoneOffsetHours === 3 ? 'AST' : `UTC+${currentConfig.timezoneOffsetHours}`;
+  const phrasing = `${days[ast.dayOfWeek]} at ${hour12}:${minuteStr} ${ampm} ${tzLabel}`;
+
+  return {
+    mode: 'queued_until_resume',
+    durationMinutes: frtMinutes,
+    deadline,
+    resumeAt,
+    phrasing,
+  };
+}
+
+/**
+ * Exposed AST helper for callers that need to format their own date
+ * strings (the dashboard pill in Arabic uses this on the FE).
+ */
+export function toASTPublic(date: Date) {
+  const astMs =
+    date.getTime() + currentConfig.timezoneOffsetHours * 60 * 60 * 1000;
+  const ast = new Date(astMs);
+  return {
+    year: ast.getUTCFullYear(),
+    month: ast.getUTCMonth(),
+    day: ast.getUTCDate(),
+    hour: ast.getUTCHours(),
+    minute: ast.getUTCMinutes(),
+    dayOfWeek: ast.getUTCDay(),
+  };
 }

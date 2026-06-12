@@ -64,6 +64,7 @@ export class CaptionsProcessor extends WorkerHost {
         action: 'transcript.generation_started',
         performedBy,
         metadata: { courseId, trigger: 'auto' },
+        ipAddress: 'system',
       });
 
       // 1. Download source video to temp
@@ -110,6 +111,7 @@ export class CaptionsProcessor extends WorkerHost {
         action: 'transcript.generation_completed',
         performedBy,
         metadata: { courseId, captionsUrl, vttLength: result.vtt.length },
+        ipAddress: 'system',
       });
 
       // 6. Chain to transcript generation
@@ -134,6 +136,7 @@ export class CaptionsProcessor extends WorkerHost {
         action: 'transcript.generation_failed',
         performedBy,
         metadata: { courseId, error: (error as Error).message },
+        ipAddress: 'system',
       });
 
       await this.processingService.markFailed(materialId, `Caption generation failed: ${(error as Error).message}`);

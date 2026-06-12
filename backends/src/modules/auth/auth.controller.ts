@@ -596,7 +596,13 @@ export class AuthController {
     @Body() dto: AssignRoleDto,
     @CurrentUser('id') adminId: string,
   ) {
-    return this.authService.assignRole(userId, dto.role as RoleName, adminId, dto.supportSubRole);
+    return this.authService.assignRole(
+      userId,
+      dto.role as RoleName,
+      adminId,
+      dto.supportSubRole,
+      dto.supervisorId,
+    );
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -618,6 +624,23 @@ export class AuthController {
     @CurrentUser('id') adminId: string,
   ) {
     return this.authService.createUser(dto, adminId);
+  }
+
+  // Re-send the password-setup invite email for an admin-created user
+  // who hasn't completed setup yet. Generates a fresh 24h token,
+  // invalidates the previous one. Rate-limited per target user to
+  // prevent inbox flooding (a determined admin can still resend via
+  // the throttle window; this is a safety net, not a hard quota).
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post('users/:id/resend-invite')
+  @HttpCode(HttpStatus.OK)
+  async resendUserInvite(
+    @Param('id') userId: string,
+    @CurrentUser('id') adminId: string,
+  ) {
+    return this.authService.resendUserInvite(userId, adminId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

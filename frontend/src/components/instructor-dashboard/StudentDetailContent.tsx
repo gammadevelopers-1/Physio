@@ -12,11 +12,13 @@ import { formatPlatformDate } from "@/lib/platform-locale";
 import DatePicker from "@/components/ui/DatePicker";
 import { instructorApi } from "@/lib/api";
 import { toast } from "sonner";
+import Select from "@/components/admin-dashboard/Select";
 import type {
   StudentDetailResponse,
   AtRiskStudent,
   InterventionRecord,
   InterventionType,
+  InterventionConcern,
   CreateInterventionPayload,
 } from "@/types/instructor-dashboard";
 import {
@@ -74,6 +76,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
   const [interventionType, setInterventionType] = useState<InterventionType>("email");
   const [interventionMessage, setInterventionMessage] = useState("");
   const [interventionCourseId, setInterventionCourseId] = useState("");
+  const [interventionConcern, setInterventionConcern] = useState<InterventionConcern>("attendance");
   const [submittingIntervention, setSubmittingIntervention] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -243,6 +246,12 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
   ];
 
   const handleSubmitIntervention = async () => {
+    // Client-side guard mirrors the BE rule — keeps the form honest
+    // without a round-trip just to show "Concern is required".
+    if (interventionType === "ticket" && !interventionConcern) {
+      toast.error(t("studentDetail.interventionConcernRequired"));
+      return;
+    }
     setSubmittingIntervention(true);
     try {
       const payload: CreateInterventionPayload = {
@@ -250,6 +259,9 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
         studentId,
         message: interventionMessage || undefined,
         courseId: interventionCourseId || undefined,
+        ...(interventionType === "ticket" && {
+          concern: interventionConcern,
+        }),
       };
       await instructorApi.createIntervention(payload);
       toast.success(t("studentDetail.interventionCreated"));
@@ -259,8 +271,12 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
       // Refresh interventions
       const fresh = await instructorApi.getStudentInterventions(studentId);
       setInterventions(fresh as InterventionRecord[]);
-    } catch {
-      toast.error(t("studentDetail.interventionFailed"));
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t("studentDetail.interventionFailed"),
+      );
     } finally {
       setSubmittingIntervention(false);
     }
@@ -847,16 +863,85 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                                   {t("studentDetail.interventionTypeLabel")}
                                 </label>
-                                <select
+                                <Select
                                   value={interventionType}
-                                  onChange={(e) => setInterventionType(e.target.value as InterventionType)}
-                                  className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-[var(--color-input-focus)] outline-none"
-                                >
-                                  <option value="email">{t("studentDetail.interventionEmail")}</option>
-                                  <option value="makeup_session">{t("studentDetail.interventionMakeup")}</option>
-                                  <option value="ticket">{t("studentDetail.interventionTicket")}</option>
-                                </select>
+                                  onChange={(v) =>
+                                    setInterventionType(v as InterventionType)
+                                  }
+                                  options={[
+                                    {
+                                      value: "email",
+                                      label: t("studentDetail.interventionEmail"),
+                                    },
+                                    {
+                                      value: "makeup_session",
+                                      label: t("studentDetail.interventionMakeup"),
+                                    },
+                                    {
+                                      value: "ticket",
+                                      label: t("studentDetail.interventionTicket"),
+                                    },
+                                  ]}
+                                />
                               </div>
+
+                              {/* Concern picker — only shown for the
+                                  "ticket" intervention type. Tells support
+                                  what kind of follow-up is being requested
+                                  so they can triage faster. */}
+                              {interventionType === "ticket" && (
+                                <div>
+                                  <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                                    {t("studentDetail.interventionConcernLabel")}
+                                  </label>
+                                  <Select
+                                    value={interventionConcern}
+                                    onChange={(v) =>
+                                      setInterventionConcern(
+                                        v as InterventionConcern,
+                                      )
+                                    }
+                                    options={[
+                                      {
+                                        value: "attendance",
+                                        label: t(
+                                          "studentDetail.interventionConcerns.attendance",
+                                        ),
+                                      },
+                                      {
+                                        value: "progress",
+                                        label: t(
+                                          "studentDetail.interventionConcerns.progress",
+                                        ),
+                                      },
+                                      {
+                                        value: "assessment",
+                                        label: t(
+                                          "studentDetail.interventionConcerns.assessment",
+                                        ),
+                                      },
+                                      {
+                                        value: "engagement",
+                                        label: t(
+                                          "studentDetail.interventionConcerns.engagement",
+                                        ),
+                                      },
+                                      {
+                                        value: "technical",
+                                        label: t(
+                                          "studentDetail.interventionConcerns.technical",
+                                        ),
+                                      },
+                                      {
+                                        value: "other",
+                                        label: t(
+                                          "studentDetail.interventionConcerns.other",
+                                        ),
+                                      },
+                                    ]}
+                                  />
+                                </div>
+                              )}
 
                               {/* Course selector (optional) */}
                               {student.enrollments.length > 0 && (
@@ -864,18 +949,28 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                   <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                                     {t("studentDetail.interventionCourse")}
                                   </label>
-                                  <select
+                                  <Select
                                     value={interventionCourseId}
-                                    onChange={(e) => setInterventionCourseId(e.target.value)}
-                                    className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm bg-[var(--color-surface-card)] focus:ring-2 focus:ring-[var(--color-input-focus)] focus:border-[var(--color-input-focus)] outline-none"
-                                  >
-                                    <option value="">{t("studentDetail.interventionAnyCourse")}</option>
-                                    {student.enrollments.map((e) => (
-                                      <option key={e.courseId} value={e.courseId}>
-                                        {locale === "ar" && e.courseTitleAr ? e.courseTitleAr : e.courseTitle}
-                                      </option>
-                                    ))}
-                                  </select>
+                                    onChange={(v) => setInterventionCourseId(v)}
+                                    placeholder={t(
+                                      "studentDetail.interventionAnyCourse",
+                                    )}
+                                    options={[
+                                      {
+                                        value: "",
+                                        label: t(
+                                          "studentDetail.interventionAnyCourse",
+                                        ),
+                                      },
+                                      ...student.enrollments.map((e) => ({
+                                        value: e.courseId,
+                                        label:
+                                          locale === "ar" && e.courseTitleAr
+                                            ? e.courseTitleAr
+                                            : e.courseTitle,
+                                      })),
+                                    ]}
+                                  />
                                 </div>
                               )}
 
@@ -933,7 +1028,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                     {getInterventionIcon(iv.type)}
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
+                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                                       <span className="text-sm font-medium text-[var(--color-text-primary)]">
                                         {getInterventionLabel(iv.type)}
                                       </span>
@@ -942,10 +1037,33 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                           {iv.courseName}
                                         </span>
                                       )}
+                                      {iv.type === "ticket" && iv.ticketReferenceNumber && (
+                                        <Link
+                                          href={`/${locale}/dashboard/instructor/support`}
+                                          className="text-[11px] font-mono text-[var(--color-primary)] bg-[var(--color-border-subtle)] px-1.5 py-0.5 rounded hover:underline"
+                                          title={t("studentDetail.interventionTicketLink") || "Open ticket"}
+                                        >
+                                          {iv.ticketReferenceNumber}
+                                        </Link>
+                                      )}
+                                      {iv.resolutionStatus === "resolved" && (
+                                        <span className="text-[11px] font-medium text-[#15803D] bg-[#DCFCE7] px-1.5 py-0.5 rounded inline-flex items-center gap-1">
+                                          <CheckCircle className="w-3 h-3" />
+                                          {t("studentDetail.interventionResolved") || "Resolved"}
+                                        </span>
+                                      )}
                                     </div>
                                     {iv.message && (
                                       <p className="text-sm text-[var(--color-text-secondary)] mb-1">
                                         {iv.message}
+                                      </p>
+                                    )}
+                                    {iv.resolutionNote && (
+                                      <p className="text-xs text-[#15803D] mb-1 italic">
+                                        {iv.resolutionNote}
+                                        {iv.resolvedAt && (
+                                          <> · {formatDate(iv.resolvedAt)}</>
+                                        )}
                                       </p>
                                     )}
                                     <p className="text-xs text-[var(--color-text-secondary)]">

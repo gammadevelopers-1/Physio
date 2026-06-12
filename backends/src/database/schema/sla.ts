@@ -56,7 +56,8 @@ export const slaEvents = pgTable(
       sql`${table.eventType} IN (
         'frt_breach', 'ttr_breach', 'escalation_triggered', 'resolved_within_sla',
         'frt_warning_75', 'priority_escalated',
-        'frt_breach_reassigned', 'ttr_breach_reassigned'
+        'frt_breach_reassigned', 'ttr_breach_reassigned',
+        'manual_escalation'
       )`,
     ),
   ],
@@ -87,4 +88,5 @@ export const SLA_EVENT_TYPES = {
   PRIORITY_ESCALATED: 'priority_escalated',
   FRT_BREACH_REASSIGNED: 'frt_breach_reassigned',
   TTR_BREACH_REASSIGNED: 'ttr_breach_reassigned',
+  MANUAL_ESCALATION: 'manual_escalation',
 } as const;

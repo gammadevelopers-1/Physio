@@ -22,9 +22,11 @@ import {
   Star,
   Upload,
   Trash2,
+  Headphones,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { profileApi, courseManagerApi } from "@/lib/api";
+import { profileApi, courseManagerApi, SIDEBAR_TAB_KEYS } from "@/lib/api";
+import SidebarBadge from "@/components/SidebarBadge";
 
 interface CourseManagerProfile {
   name: string;
@@ -144,6 +146,11 @@ const CourseManagerSidebar = ({ manager, pendingReviews: pendingReviewsProp }: C
       label: t("sidebar.reports"),
       href: `/${locale}/dashboard/manager/reports`,
       icon: BarChart3,
+    },
+    {
+      label: t("sidebar.support"),
+      href: `/${locale}/dashboard/manager/support`,
+      icon: Headphones,
     },
     {
       label: t("sidebar.settings"),
@@ -284,6 +291,9 @@ const CourseManagerSidebar = ({ manager, pendingReviews: pendingReviewsProp }: C
                   <span className="bg-[#EF4444] text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
                     {item.badge}
                   </span>
+                )}
+                {item.href.endsWith("/support") && (
+                  <SidebarBadge tabKey={SIDEBAR_TAB_KEYS.USER_SUPPORT} />
                 )}
               </Link>
             );

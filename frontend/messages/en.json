@@ -4,6 +4,54 @@
     "subtitle": "The platform is undergoing scheduled maintenance.",
     "autoRecoverHint": "This page will refresh automatically when we're back online."
   },
+  "statusPage": {
+    "loadError": {
+      "title": "Couldn't load service status",
+      "body": "We're having trouble reaching the status backend. Please try again in a moment."
+    },
+    "componentsHeading": "Components",
+    "activeIncidentsHeading": "Active incidents",
+    "recentResolvedHeading": "Recently resolved (last 7 days)",
+    "generatedAt": "Last updated {time}",
+    "incidentStartedAt": "Started {time}",
+    "incidentResolvedAt": "Resolved {time}",
+    "overall": {
+      "operational": {
+        "title": "All systems operational",
+        "body": "Everything is running normally right now."
+      },
+      "degraded": {
+        "title": "Some systems are experiencing issues",
+        "body": "Service may be slower than usual or partially affected. See details below."
+      },
+      "down": {
+        "title": "Major outage in progress",
+        "body": "We are aware of a significant outage and are working on it. See details below."
+      },
+      "maintenance": {
+        "title": "Scheduled maintenance",
+        "body": "Some services are temporarily unavailable for planned maintenance."
+      }
+    },
+    "componentStatus": {
+      "operational": "Operational",
+      "degraded": "Degraded",
+      "partial_outage": "Partial outage",
+      "major_outage": "Major outage",
+      "maintenance": "Maintenance"
+    },
+    "incidentStatus": {
+      "investigating": "Investigating",
+      "identified": "Identified",
+      "monitoring": "Monitoring",
+      "resolved": "Resolved"
+    },
+    "lastChecked": "Last checked {time}",
+    "notYetChecked": "Auto-check pending — waiting for first run",
+    "justNow": "just now",
+    "minutesAgo": "{count, plural, one {1 min ago} other {# min ago}}",
+    "hoursAgo": "{count, plural, one {1 hour ago} other {# hours ago}}"
+  },
   "navbar": {
     "home": "Home",
     "courses": "Courses",
@@ -1265,6 +1313,104 @@
     "submitError": "Failed to submit your application. Please try again.",
     "submitting": "Submitting..."
   },
+  "trainerPortal": {
+    "banner": {
+      "alreadyApplied": "Already applied?",
+      "checkStatus": "Check your status"
+    },
+    "modal": {
+      "title": "Check your application"
+    },
+    "emailStep": {
+      "intro": "Enter the email you used to apply. We'll send you a 6-digit verification code.",
+      "label": "Email address",
+      "placeholder": "you@example.com",
+      "submit": "Send verification code"
+    },
+    "otpStep": {
+      "intro": "We sent a 6-digit code to {email}. Enter it below to view your application status.",
+      "label": "Verification code",
+      "verify": "Verify",
+      "resend": "Use a different email or resend the code"
+    },
+    "toasts": {
+      "otpSent": "Verification code sent. Check your inbox."
+    },
+    "errors": {
+      "emailRequired": "Please enter your email address.",
+      "captchaRequired": "Please complete the captcha.",
+      "otpSendFailed": "Couldn't send the verification code. Please try again.",
+      "otpInvalid": "Enter the full 6-digit code.",
+      "otpVerifyFailed": "Verification failed. Please request a new code.",
+      "sessionExpired": "Your session expired. Please verify your email again.",
+      "uploadFailed": "Upload failed. Please try again.",
+      "resubmitFailed": "Couldn't submit your changes. Please try again."
+    },
+    "status": {
+      "notFound": {
+        "title": "No application found",
+        "body": "We couldn't find an application for that email. If you haven't applied yet, scroll down to start a new application."
+      },
+      "PENDING": {
+        "title": "Under review",
+        "body": "Your application is with our review team. We'll email you the moment there's an update."
+      },
+      "APPROVED": {
+        "title": "Approved",
+        "body": "Welcome aboard! Your trainer application has been approved.",
+        "checkEmail": "Check your inbox for instructions to set your password and finish setting up your account.",
+        "loginCta": "Log in to your dashboard"
+      },
+      "REJECTED": {
+        "title": "Not approved",
+        "body": "Unfortunately we weren't able to approve your application at this time. The reviewer's note is below — please contact support if you have questions."
+      },
+      "MORE_INFO": {
+        "title": "Changes requested",
+        "body": "Our team needs a few more things before we can approve your application. Update what's missing below and re-submit."
+      },
+      "submittedOn": "Submitted on",
+      "reviewerNote": "Reviewer's note",
+      "missingReqsTitle": "What we still need",
+      "missingReqs": {
+        "CV_MISSING": "CV / Resume",
+        "SCFHS_VERIFICATION": "SCFHS verification document",
+        "QUALIFICATION_DOC": "Qualification document",
+        "PHOTO": "Profile photo",
+        "BANK_DETAILS": "Bank account details",
+        "NATIONAL_ID": "National / Iqama ID"
+      },
+      "activity": "Activity",
+      "contactSupport": "Have a question? Contact support."
+    },
+    "events": {
+      "submitted": "Application submitted",
+      "approved": "Approved",
+      "rejected": "Not approved",
+      "requested_info": "Changes requested",
+      "resubmitted": "You re-submitted your application"
+    },
+    "resubmit": {
+      "title": "Submit your updated application",
+      "intro": "Edit your details and upload any documents the reviewer asked for. Everything we already have on file stays unless you change it.",
+      "documents": "Documents",
+      "documentsHint": "Upload PDF, JPG, PNG, or WebP — up to 10 MB each. New uploads add to your existing files.",
+      "removeFile": "Remove",
+      "uploadCta": "Upload documents",
+      "submit": "Submit updated application",
+      "success": "Thank you — your updated application is back with our team.",
+      "fileUploaded": "File uploaded.",
+      "fields": {
+        "fullNameEnglish": "Full name (English)",
+        "fullNameArabic": "Full name (Arabic)",
+        "mobileNumber": "Mobile number",
+        "specialty": "Specialty",
+        "qualification": "Qualification",
+        "scfhsNumber": "SCFHS number",
+        "nationalId": "National / Iqama ID"
+      }
+    }
+  },
   "studentDashboard": {
     "title": "Student Dashboard",
     "continueLearning": {
@@ -1747,6 +1893,7 @@
       "filterClosed": "Closed",
       "status_new": "New",
       "status_in_progress": "In Progress",
+      "status_on_hold": "On Hold",
       "status_resolved": "Resolved",
       "status_closed": "Closed",
       "priority_high": "High",
@@ -1793,11 +1940,15 @@
         "body": "The 48-hour reopen window has passed. Please create a new ticket to continue."
       },
       "expectedResponse": "Expected response within {hours}h",
+      "queuedUntilResume": "Queued — waiting for business hours",
       "slaOverdue": "Response overdue",
       "selectCourse": "Select related course (optional)",
       "relatedCourse": "Related Course",
       "attachment": "Attachment",
       "attachments": "Attachments",
+      "scanClean": "Scanned · safe",
+      "scanPending": "Scanning…",
+      "scanBlocked": "Blocked — malware detected",
       "attachFile": "Attach file (PDF, JPG, PNG, max 5MB)",
       "removeFile": "Remove file",
       "removeAttachment": "Remove attachment",
@@ -2308,6 +2459,135 @@
       "error": "Failed to enroll. Please try again."
     }
   },
+  "aboutThisStudent": {
+    "title": "About this student",
+    "progress": "Progress",
+    "lastAccessed": "Last accessed",
+    "enrolled": "Enrolled",
+    "attendance": "Attendance",
+    "sessions": "sessions",
+    "assessmentAvg": "Assessment avg",
+    "lastN": "Last {count}",
+    "footnote": "Context attached automatically — read-only."
+  },
+  "userSupport": {
+    "title": "Support",
+    "newTicket": "New Ticket",
+    "backToTickets": "Back to tickets",
+    "refresh": "Refresh",
+    "createFirst": "Create your first ticket",
+    "noTicketsTitle": "No tickets yet",
+    "noTicketsDescription": "When you submit a support ticket it will appear here so you can track its status and replies.",
+    "loadFailed": "Could not load your tickets.",
+    "retry": "Retry",
+    "filter": {
+      "all": "All",
+      "new": "New",
+      "in_progress": "In Progress",
+      "on_hold": "On Hold",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "status": {
+      "new": "New",
+      "in_progress": "In Progress",
+      "on_hold": "On Hold",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "category": {
+      "billing": "Billing",
+      "login": "Login",
+      "content": "Content",
+      "certificate": "Certificate",
+      "technical": "Technical",
+      "webinar": "Webinar",
+      "cme": "CME / CPD",
+      "trainer": "Trainer Application",
+      "courses": "Courses",
+      "sessions": "Sessions & Schedule",
+      "payments": "Payments",
+      "invoices": "Invoices",
+      "refunds": "Refunds",
+      "integrations": "Third-party Integrations",
+      "course_approvals": "Course Approvals",
+      "system_issues": "System Issues",
+      "other": "Other"
+    },
+    "sla": {
+      "queuedUntilResume": "Queued — support resumes during business hours",
+      "overdue": "Response overdue",
+      "expectedIn": "Response within ~{hours}h"
+    },
+    "form": {
+      "category": "Category",
+      "categoryPlaceholder": "Choose a category…",
+      "relatedCourse": "Related course (optional)",
+      "selectCourse": "Select a course…",
+      "subject": "Subject",
+      "subjectPlaceholder": "Short summary of the issue",
+      "description": "Description",
+      "descriptionPlaceholder": "Share the details — what happened, when, and what you expected.",
+      "attachments": "Attachments",
+      "dropFilesHere": "Drop files here or click to upload",
+      "fileHint": "PDF, JPG, PNG, WebP — up to 5 MB each, max 10 files.",
+      "uploading": "Uploading…",
+      "uploaded": "Uploaded",
+      "uploadFailed": "Upload failed",
+      "retryUpload": "Retry",
+      "removeAttachment": "Remove attachment",
+      "maxAttachmentsReached": "You can attach up to {max} files.",
+      "fileTooLarge": "Each file must be 5 MB or smaller.",
+      "invalidFileType": "Only PDF, JPG, PNG, or WebP files are allowed.",
+      "waitForUploads": "Wait for uploads to finish.",
+      "submit": "Submit ticket",
+      "submitting": "Submitting…",
+      "cancel": "Cancel",
+      "attachmentErrorsTip": "Some attachments failed — remove them to continue.",
+      "submitFailed": "Could not submit your ticket. Please try again.",
+      "submitted": "Ticket submitted."
+    },
+    "detail": {
+      "createdOn": "Created on {date}",
+      "description": "Description",
+      "attachment": "Attachment",
+      "concerns": {
+        "attendance": "Attendance",
+        "progress": "Progress",
+        "assessment": "Assessment",
+        "engagement": "Engagement",
+        "technical": "Technical",
+        "other": "Other"
+      },
+      "replies": "Replies",
+      "noRepliesYet": "No replies yet. The support team will respond as soon as they can.",
+      "replyPlaceholder": "Type your reply…",
+      "reopenPlaceholder": "Send a reply to reopen this ticket…",
+      "attachFile": "Attach file",
+      "sendReply": "Send reply",
+      "replyHint": "Press Enter to send · Shift+Enter for a new line",
+      "reopenHint": "Replying within 48 hours will reopen this ticket.",
+      "uploading": "Uploading…",
+      "uploaded": "Uploaded",
+      "uploadFailed": "Failed",
+      "retryUpload": "Retry",
+      "removeAttachment": "Remove",
+      "resolvedBanner": {
+        "title": "This ticket is marked resolved.",
+        "body": "If everything looks good, no action needed. If you still have issues, reply below and the agent will reopen the conversation."
+      },
+      "graceBanner": {
+        "title": "Closed — you can still reply for {time}.",
+        "body": "Replying will reopen this ticket so the team can pick it back up."
+      },
+      "closedBanner": {
+        "title": "This ticket is closed.",
+        "body": "Please create a new ticket if you need further help."
+      },
+      "rateExperience": "How was your experience?",
+      "thankYou": "Thanks for the feedback!"
+    }
+  },
   "instructorDashboard": {
     "title": "Instructor Dashboard",
     "courses": {
@@ -2380,6 +2660,7 @@
       "certificates": "Certificates",
       "content": "Content",
       "reports": "Reports",
+      "support": "Support",
       "settings": "Settings",
       "rating": "Rating",
       "profileCompletion": "Profile Completion",
@@ -3130,12 +3411,24 @@
       "interventionAnyCourse": "Any course",
       "interventionNote": "Note",
       "interventionNotePlaceholder": "Add a note about this intervention...",
+      "interventionConcernLabel": "Concern *",
+      "interventionConcernRequired": "Pick a concern before submitting the support ticket.",
+      "interventionConcerns": {
+        "attendance": "Attendance",
+        "progress": "Progress",
+        "assessment": "Assessment",
+        "engagement": "Engagement",
+        "technical": "Technical",
+        "other": "Other"
+      },
       "interventionCancel": "Cancel",
       "submitIntervention": "Submit",
       "interventionCreated": "Intervention recorded successfully",
       "interventionFailed": "Failed to create intervention",
       "noInterventions": "No interventions recorded yet.",
       "interventionBy": "By {name}",
+      "interventionTicketLink": "Open ticket",
+      "interventionResolved": "Resolved",
       "atRisk": "At Risk",
       "enrollmentCompleted": "Completed",
       "enrollmentInProgress": "In Progress",
@@ -3883,6 +4176,7 @@
       "reviews": "Reviews",
       "nelcCompliance": "NELC Compliance",
       "reports": "Reports",
+      "support": "Support",
       "settings": "Settings",
       "courseManager": "Course Manager",
       "nelc": "NELC",
@@ -5242,7 +5536,7 @@
       "statuses": {
         "active": "Active",
         "suspended": "Suspended",
-        "pending": "Pending",
+        "pending": "Invite sent",
         "inactive": "Inactive"
       },
       "sampleUsers": {
@@ -5368,7 +5662,32 @@
         "suspend": "Suspend",
         "activate": "Activate",
         "trustedDevices": "Trusted Devices",
-        "delete": "Delete"
+        "delete": "Delete",
+        "resendInvite": "Resend invite"
+      },
+      "inviteFlowTitle": "We'll email a setup link",
+      "inviteFlowDescription": "Instead of choosing a password, the user gets a one-time link to set their own. The link expires in 24 hours — you can resend it from the user list.",
+      "inviteResent": "Invite resent to {email}.",
+      "inviteResendFailed": "Could not resend the invite. Please try again.",
+      "createUser": {
+        "supervisorLabel": "Supervisor *",
+        "supervisorHint": "Every Support Agent must belong to a supervisor's team. Pick the supervisor this agent will work under.",
+        "supervisorPlaceholder": "Select a supervisor",
+        "supervisorLoading": "Loading supervisors…",
+        "supervisorRequired": "Pick a supervisor before creating the agent.",
+        "noSupervisorsTitle": "No Support Supervisors yet",
+        "noSupervisorsHint": "Create a Support Supervisor first, then add agents to their team.",
+        "teamCount": "{count} on team"
+      },
+      "manageRoles": {
+        "reassignTitle": "Reassign team before removing the role",
+        "reassignDescription": "{name} still has {count} agent(s) under them. Move the team to another supervisor before removing the Support role.",
+        "reassignTargetLabel": "Move agents to",
+        "reassignTargetPlaceholder": "Select another supervisor",
+        "reassignPickTarget": "Pick a target supervisor.",
+        "reassignSuccess": "Moved {count} agent(s) to the new supervisor.",
+        "reassignCancel": "Cancel",
+        "reassignConfirm": "Reassign team & remove role"
       },
       "detail": {
         "close": "Close",
@@ -6197,6 +6516,7 @@
         "payments": "Payments",
         "integrations": "Integrations",
         "backups": "Backups",
+        "service-status": "Service status",
         "maintenance": "Maintenance"
       },
       "general": {
@@ -6631,6 +6951,99 @@
         "rolledBackToast": "Live traffic now serving {revision}",
         "rollbackFailedToast": "Rollback failed. Please try again or check the audit log."
       },
+      "serviceStatusTab": {
+        "intro": {
+          "title": "Public service status",
+          "body": "Flip a component's status or post incident updates — everything here is reflected on the public status page at"
+        },
+        "components": {
+          "title": "Components",
+          "statusLabel": "Status",
+          "messageEnLabel": "Message (English)",
+          "messageArLabel": "Message (Arabic)",
+          "messagePlaceholder": "Optional public note (e.g. 'Investigating slowness')",
+          "save": "Save",
+          "saving": "Saving…",
+          "cancel": "Cancel",
+          "pinned": "Pinned",
+          "autoSays": "Auto detects",
+          "lastChecked": "Last checked",
+          "lastCheckError": "Last check failed",
+          "notYetChecked": "Not yet checked",
+          "clearOverride": "Clear override",
+          "manualOnly": "Manual control only — auto-detection will be wired when a real payment gateway is integrated.",
+          "justNow": "just now",
+          "minutesAgo": "{count, plural, one {1 min ago} other {# min ago}}",
+          "hoursAgo": "{count, plural, one {1 hour ago} other {# hours ago}}",
+          "daysAgo": "{count, plural, one {1 day ago} other {# days ago}}"
+        },
+        "componentStatus": {
+          "operational": "Operational",
+          "degraded": "Degraded",
+          "partial_outage": "Partial outage",
+          "major_outage": "Major outage",
+          "maintenance": "Maintenance"
+        },
+        "incidentStatus": {
+          "investigating": "Investigating",
+          "identified": "Identified",
+          "monitoring": "Monitoring",
+          "resolved": "Resolved"
+        },
+        "severity": {
+          "minor": "Minor",
+          "major": "Major",
+          "critical": "Critical"
+        },
+        "incidents": {
+          "title": "Incidents",
+          "create": "Create incident",
+          "creating": "Creating…",
+          "post": "Post update",
+          "posting": "Posting…",
+          "postUpdate": "Post update",
+          "cancel": "Cancel",
+          "delete": "Delete",
+          "empty": "No incidents in this range.",
+          "emptyActive": "No active incidents — everything is calm.",
+          "noComponents": "No specific component",
+          "createTitle": "Create incident",
+          "postUpdateTitle": "Post incident update",
+          "filter": {
+            "active": "Active",
+            "resolved": "Resolved",
+            "all": "All"
+          },
+          "fields": {
+            "titleEn": "Title (English)",
+            "titleAr": "Title (Arabic)",
+            "affected": "Affected components",
+            "severity": "Severity",
+            "initialStatus": "Initial status",
+            "status": "Status",
+            "messageEn": "Message (English)",
+            "messageAr": "Message (Arabic)"
+          },
+          "errors": {
+            "required": "Title and English message are required."
+          },
+          "toasts": {
+            "created": "Incident created",
+            "createFailed": "Couldn't create incident",
+            "updatePosted": "Update posted",
+            "updateFailed": "Couldn't post update"
+          }
+        },
+        "toasts": {
+          "loadFailed": "Couldn't load service status",
+          "componentSaved": "Component updated",
+          "saveFailed": "Couldn't save",
+          "confirmDelete": "Delete this incident and its entire timeline?",
+          "incidentDeleted": "Incident deleted",
+          "deleteFailed": "Couldn't delete incident",
+          "overrideCleared": "Manual override cleared — auto-detection resumed"
+        }
+      },
       "maintenance": {
         "title": "Maintenance Mode",
         "subtitle": "Take the public site down for planned work. Admins keep access so they can turn it back on.",
@@ -6660,9 +7073,320 @@
       "subtitle": "Review supervisor requests and manage the Help Center.",
       "unknown": "Unknown",
       "tabs": {
+        "overview": "Overview",
+        "tickets": "Tickets",
+        "supervisors": "Supervisors",
         "teamRequests": "Team Requests",
         "helpCenter": "Help Center",
         "settings": "Settings"
+      },
+      "tickets": {
+        "searchPlaceholder": "Search ref or subject…",
+        "noTickets": "No tickets match these filters.",
+        "unassigned": "Unassigned",
+        "slaBreached": "SLA breached",
+        "slaFulfilled": "Fulfilled",
+        "clearAllFilters": "Clear all filters",
+        "clearFilter": "Clear",
+        "pageOf": "Page {page} of {totalPages}",
+        "prev": "Previous",
+        "next": "Next",
+        "computedFilter": {
+          "overdue": "Showing overdue tickets only",
+          "awaiting": "Showing tickets awaiting staff response"
+        },
+        "columns": {
+          "ref": "Ref",
+          "subject": "Subject",
+          "customer": "Customer",
+          "priority": "Priority",
+          "status": "Status",
+          "assignee": "Assignee",
+          "sla": "SLA"
+        },
+        "filters": {
+          "status": {
+            "all": "All statuses",
+            "new": "New",
+            "in_progress": "In progress",
+            "on_hold": "On hold",
+            "resolved": "Resolved",
+            "closed": "Closed"
+          },
+          "priority": {
+            "all": "All priorities",
+            "high": "High",
+            "medium": "Medium",
+            "low": "Low"
+          },
+          "category": {
+            "all": "All categories",
+            "billing": "Billing",
+            "login": "Login",
+            "content": "Content",
+            "certificate": "Certificate",
+            "technical": "Technical",
+            "other": "Other"
+          }
+        }
+      },
+      "ticketDetail": {
+        "backToList": "Back to tickets",
+        "notFound": "Ticket not found.",
+        "attachmentRemovedToast": "Attachment removed",
+        "attachmentRemoveFailed": "Couldn't remove attachment",
+        "unknownCustomer": "Unknown customer",
+        "unknownAuthor": "Unknown",
+        "description": "Description",
+        "thread": "Thread ({count})",
+        "noComments": "No replies yet.",
+        "internalNoteTitle": "Internal note",
+        "internalNoteHint": "Visible to support staff only. Customer never sees these.",
+        "internalNotePlaceholder": "Add a note for the team…",
+        "attachFiles": "Attach files",
+        "attachmentUploading": "Uploading…",
+        "attachmentUploaded": "Uploaded",
+        "attachmentFailed": "Failed",
+        "attachmentQueued": "Queued",
+        "addNote": "Add note",
+        "sla": "SLA",
+        "firstResponse": "First response",
+        "resolution": "Resolution",
+        "minutesLeft": "{count}m left",
+        "breached": "Breached",
+        "assignee": "Assignee",
+        "unassigned": "Unassigned",
+        "pickAgent": "Pick an agent…",
+        "supervisorBadge": "Supervisor",
+        "reassign": "Reassign",
+        "changeStatus": "Change status",
+        "changePriority": "Change priority",
+        "customer": "Customer",
+        "categoryLabel": "Category",
+        "created": "Created",
+        "slaBreached": "SLA breached",
+        "slaFulfilled": "Fulfilled",
+        "slaWaiting": "Waiting",
+        "slaPaused": "Paused",
+        "staffBadge": "Staff",
+        "internalBadge": "Internal",
+        "roleBadge": {
+          "super_admin": "Super Admin",
+          "admin": "Admin",
+          "supervisor": "Supervisor",
+          "agent": "Agent",
+          "student": "Student"
+        },
+        "attachment": "Attachment",
+        "filters": {
+          "priority": {
+            "high": "High",
+            "medium": "Medium",
+            "low": "Low"
+          },
+          "status": {
+            "new": "New",
+            "in_progress": "In progress",
+            "on_hold": "On hold",
+            "resolved": "Resolved",
+            "closed": "Closed"
+          }
+        },
+        "statusActions": {
+          "in_progress": "Mark in progress",
+          "on_hold": "Put on hold",
+          "resolved": "Mark resolved",
+          "closed": "Close ticket"
+        },
+        "category": {
+          "billing": "Billing",
+          "login": "Login",
+          "content": "Content",
+          "certificate": "Certificate",
+          "technical": "Technical",
+          "webinar": "Webinar",
+          "cme": "CME / CPD",
+          "trainer": "Trainer Application",
+          "courses": "Courses",
+          "sessions": "Sessions & Schedule",
+          "payments": "Payments",
+          "invoices": "Invoices",
+          "refunds": "Refunds",
+          "integrations": "Third-party Integrations",
+          "course_approvals": "Course Approvals",
+          "system_issues": "System Issues",
+          "other": "Other"
+        },
+        "toasts": {
+          "loadFailed": "Failed to load ticket",
+          "internalAdded": "Internal note added",
+          "replyFailed": "Failed to send",
+          "reassigned": "Ticket reassigned",
+          "statusChanged": "Status updated",
+          "priorityChanged": "Priority updated",
+          "actionFailed": "Action failed",
+          "waitForUploads": "Wait for uploads to finish"
+        }
+      },
+      "supervisors": {
+        "empty": "No supervisors configured yet.",
+        "range": "Range:",
+        "ranges": {
+          "7d": "Last 7 days",
+          "30d": "Last 30 days",
+          "custom": "Custom"
+        },
+        "teamSize": "{count} team",
+        "activeTickets": "{count} active",
+        "slaBreaches": "{count} breaches",
+        "orphans": {
+          "title": "{count} Support Agent(s) without a supervisor",
+          "description": "These agents handle tickets but aren't on any team — they're invisible in team reports and can't have hold requests routed to a supervisor. Assign them to fix.",
+          "assignButton": "Assign to supervisor",
+          "modalTitle": "Assign orphan agents to a supervisor",
+          "targetSupervisor": "Supervisor to assign to",
+          "pickSupervisor": "Pick a supervisor",
+          "pickAgent": "Pick at least one agent",
+          "noSupervisors": "No active supervisors — create one first.",
+          "teamCount": "{count} on team",
+          "agentList": "Agents ({count})",
+          "suspended": "Suspended",
+          "cancel": "Cancel",
+          "confirm": "Assign {count} agent(s)",
+          "assigned": "{count} agent(s) assigned."
+        }
+      },
+      "supervisorDetail": {
+        "backToList": "Back to supervisors",
+        "notFound": "Supervisor not found.",
+        "lastLogin": "Last login",
+        "range": "Range:",
+        "ranges": {
+          "7d": "Last 7 days",
+          "30d": "Last 30 days",
+          "custom": "Custom"
+        },
+        "teamSize": "Team size",
+        "ticketsHandled": "Handled",
+        "avgFrt": "Avg FRT",
+        "avgTtr": "Avg TTR",
+        "csat": "CSAT",
+        "slaBreaches": "SLA breaches",
+        "teamMembers": "Team members ({count})",
+        "noTeamMembers": "No agents on this team yet.",
+        "handled": "{count} handled",
+        "breaches": "{count} breaches",
+        "supervisorTickets": "Supervisor's own tickets ({count})",
+        "noSupervisorTickets": "This supervisor isn't currently assigned any tickets directly.",
+        "breached": "Breached"
+      },
+      "overview": {
+        "loadFailed": "Failed to load support overview.",
+        "openTickets": "Open tickets",
+        "awaitingResponse": "Awaiting response",
+        "overdueTickets": "Overdue",
+        "csatScore": "CSAT",
+        "csatResponses": "{count} responses",
+        "vsLastWeek": "vs last week",
+        "pendingTeamRequests": "{count} supervisor requests need your decision",
+        "pendingTeamRequestsHint": "Open the Team Requests tab to review and approve.",
+        "ticketsByPriority": "Tickets by priority",
+        "ticketsByCategory": "Tickets by category",
+        "agentWorkload": "Agent workload",
+        "atRiskTitle": "At risk in next 30 minutes",
+        "atRiskSubtitle": "Tickets about to breach SLA",
+        "recentActivity": "Recent activity",
+        "cronHealth": "Automation",
+        "noTicketsByPriority": "No open tickets.",
+        "noTicketsByCategory": "No open tickets.",
+        "noActiveAgents": "No agents currently have active tickets.",
+        "noAtRisk": "No tickets at risk in the next 30 minutes.",
+        "noActivity": "No recent activity.",
+        "assignedTo": "Assigned to {name}",
+        "unassigned": "Unassigned",
+        "minutesLeft": "{count}m left",
+        "activeTickets": "{count} active",
+        "priority_high": "High",
+        "priority_medium": "Medium",
+        "priority_low": "Low",
+        "updatedAgo": "Updated {seconds}s ago",
+        "agoSeconds": "{count}s ago",
+        "agoMinutes": "{count}m ago",
+        "agoHours": "{count}h ago",
+        "cron_SLA_BREACH_CHECK": "SLA monitor",
+        "cron_PRIORITY_ESCALATION": "Priority escalation",
+        "cron_AUTO_CLOSE_RESOLVED": "Auto-close resolved",
+        "cron_AUTO_CLOSE_WAITING_STUDENT": "Auto-close waiting",
+        "cron_CSAT_EMAIL_SEND": "CSAT batch",
+        "cron_BUSINESS_RESUME_SWEEP": "Business resume sweep",
+        "cron_service_status_check": "Service status check",
+        "cronHealthSummary": "{ok} of {total} healthy",
+        "cronNeverRan": "Never ran",
+        "cronError": "Error",
+        "auditTrail": "Audit trail",
+        "refresh": "Refresh",
+        "noAuditTrail": "No audit events yet.",
+        "auditUnknownActor": "System",
+        "paginationShowing": "{from}–{to} of {total}",
+        "auditDetailAssignee": "reassigned",
+        "auditDetailPriority": "{from} → {to}",
+        "auditDetailStatus": "{from} → {to}",
+        "auditAction": {
+          "ticket_created": "Ticket created",
+          "ticket_replied": "Replied",
+          "internal_note_added": "Internal note",
+          "assignee_changed": "Assignee changed",
+          "priority_changed": "Priority changed",
+          "status_changed": "Status changed",
+          "ticket_resolved": "Resolved",
+          "ticket_closed": "Closed",
+          "ticket_reopened": "Reopened",
+          "merged": "Merged into another ticket",
+          "merge_received": "Other ticket merged in",
+          "transferred": "Transferred to new category",
+          "tag_added": "Tag added",
+          "tag_removed": "Tag removed",
+          "tag_auto_applied": "Tag auto-applied",
+          "sla_frt_breach": "FRT breached",
+          "sla_ttr_breach": "TTR breached",
+          "sla_frt_warning_75": "FRT 75% warning",
+          "sla_priority_escalated": "Priority escalated",
+          "sla_escalation_triggered": "Escalation triggered",
+          "sla_frt_breach_reassigned": "FRT breach — reassigned",
+          "sla_ttr_breach_reassigned": "TTR breach — reassigned",
+          "sla_resolved_within_sla": "Resolved within SLA"
+        },
+        "auditRole": {
+          "super_admin": "Super admin",
+          "admin": "Admin",
+          "supervisor": "Supervisor",
+          "agent": "Agent",
+          "student": "Student"
+        },
+        "workloadSubtitle": "All support staff — idle agents included",
+        "supervisorBadge": "Supervisor",
+        "idleBadge": "Idle",
+        "overloadedBadge": "Overloaded",
+        "health": {
+          "title": "Health metrics",
+          "sampleSize": "{count, plural, =0 {No tickets in window} one {# ticket in window} other {# tickets in window}}",
+          "avgFrt": "Avg first response",
+          "avgTtr": "Avg resolution time",
+          "slaCompliance": "SLA compliance",
+          "escalations": "Escalations",
+          "escalationsHint": "Auto-escalated or priority-bumped",
+          "businessHoursAware": "Business-hours-aware",
+          "slaTone": {
+            "success": "On target",
+            "warning": "Watch closely",
+            "danger": "Below threshold"
+          },
+          "range7d": "7d",
+          "range30d": "30d",
+          "rangeCustom": "Custom",
+          "rangeFromLabel": "From date",
+          "rangeToLabel": "To date"
+        }
       },
       "settings": {
         "adminHeadingTitle": "Platform-wide support settings",
@@ -6672,6 +7396,7 @@
         "title": "Team requests",
         "subtitle": "Requests from supervisors to add or onboard agents.",
         "empty": "No requests match this filter.",
+        "notFoundFallback": "This request no longer exists or has been removed.",
         "statusFilters": {
           "pending": "Pending",
           "approved": "Approved",
@@ -6816,7 +7541,31 @@
         "approved": "Application approved",
         "rejected": "Application rejected",
         "more_info": "More information requested",
-        "pending": "Status changed to pending"
+        "pending": "Status changed to pending",
+        "by": "By {name}",
+        "byApplicant": "By the applicant",
+        "events": {
+          "submitted": "Application submitted",
+          "approved": "Application approved",
+          "rejected": "Application rejected",
+          "requested_info": "More information requested",
+          "resubmitted": "Applicant re-submitted with updates"
+        }
+      },
+      "reviewerHint": "If documents are missing, use Request More Info — the applicant can fix the items and re-submit without starting over. Reject only when the issue can't be addressed by re-submission.",
+      "missingReqs": {
+        "title": "What's missing (optional)",
+        "hint": "Tick anything the applicant needs to provide. We'll show this list on their status page and in the email.",
+        "otherPlaceholder": "Describe the other missing item…",
+        "codes": {
+          "CV_MISSING": "CV / Resume",
+          "SCFHS_VERIFICATION": "SCFHS verification document",
+          "QUALIFICATION_DOC": "Qualification document",
+          "PHOTO": "Profile photo",
+          "BANK_DETAILS": "Bank account details",
+          "NATIONAL_ID": "National / Iqama ID",
+          "OTHER": "Other (specify)"
+        }
       },
       "noteOptional": "Add an optional note for the audit trail (the candidate will not see this)…",
       "noteRequired": "Write the message the candidate will receive…",
@@ -6842,7 +7591,8 @@
         "request-info": {
           "title": "Request more information",
           "body": "{name} will receive your message and can re-submit additional details. The application stays pending until they reply.",
-          "confirm": "Send request"
+          "confirm": "Send request",
+          "messageLabel": "Message to the applicant"
         }
       }
     }
@@ -6857,6 +7607,7 @@
       "refunds": "Refunds",
       "discounts": "Discounts",
       "reports": "Reports",
+      "support": "Support",
       "settings": "Settings",
       "financeManager": "Finance Manager",
       "revenue": "Revenue",
@@ -7246,12 +7997,36 @@
     }
   },
   "supportDashboard": {
+    "csatPrompt": {
+      "title": "How did we do?",
+      "body": "Your ticket is resolved. Take a moment to rate your support experience.",
+      "bodyWithAgent": "Your ticket is resolved. How was your experience with {agent}?",
+      "commentLabel": "Comment (optional)",
+      "commentPlaceholder": "Tell us what worked, or what we could do better…",
+      "submit": "Submit rating",
+      "notNow": "Not now",
+      "submittedToast": "Thanks for your feedback!",
+      "errorToast": "Couldn't submit rating. Please try again.",
+      "dismissAria": "Close rating prompt",
+      "starAria": "Rate {n} of 5",
+      "thanksTitle": "Thanks for rating!",
+      "thanksBody": "Your feedback helps us keep improving.",
+      "scoreLabel": {
+        "1": "Very poor",
+        "2": "Poor",
+        "3": "Neutral",
+        "4": "Good",
+        "5": "Excellent"
+      }
+    },
     "sidebar": {
       "dashboard": "Dashboard",
       "allTickets": "All Tickets",
       "myTickets": "My Tickets",
       "team": "Team",
+      "alerts": "Alerts",
       "knowledgeBase": "Help Center",
+      "trainerApplications": "Trainer Applications",
       "reports": "Reports",
       "settings": "Settings",
       "supportLead": "Support Lead",
@@ -7264,6 +8039,104 @@
       "editProfile": "Edit Profile",
       "viewProfile": "View Profile",
       "logout": "Logout"
+    },
+    "attachmentPreview": {
+      "untitled": "Attachment",
+      "close": "Close preview",
+      "download": "Download",
+      "openInNewTab": "Open in new tab",
+      "uploadedBy": "Uploaded by {name}",
+      "blockedTitle": "This file is blocked",
+      "blockedBody": "Malware was detected during scanning. Preview is disabled.",
+      "unsupportedTitle": "Preview not available",
+      "unsupportedBody": "This file type can't be previewed in the browser. Download to view it locally."
+    },
+    "attachmentChip": {
+      "untitled": "Attachment",
+      "remove": "Remove",
+      "removeConfirm": "Remove this attachment? It will stay in the version history but will no longer appear in the active list."
+    },
+    "attachmentAudit": {
+      "title": "Attachments — history & access",
+      "loading": "Loading…",
+      "loadError": "Couldn't load attachment audit.",
+      "historyHeading": "Version history",
+      "historyEmpty": "No attachments on this ticket yet.",
+      "downloadsHeading": "Download log",
+      "downloadsEmpty": "No staff downloads recorded.",
+      "untitled": "Attachment",
+      "anonymous": "Unknown user",
+      "removed": "Removed",
+      "uploadedByUnknown": "Uploaded by unknown user",
+      "removedByUnknown": "Removed by unknown user"
+    },
+    "trainerApplication": {
+      "title": "Trainer application",
+      "loadError": "Couldn't load application context.",
+      "viewFull": "View full application",
+      "activity": "Activity",
+      "submittedOn": "Submitted on",
+      "latestReviewer": "Latest reviewer",
+      "latestNote": "Latest reviewer note",
+      "eventByApplicant": "Applicant",
+      "missingReqsTitle": "What admin still needs",
+      "status": {
+        "PENDING": "Pending review",
+        "APPROVED": "Approved",
+        "REJECTED": "Not approved",
+        "MORE_INFO": "Changes requested"
+      },
+      "events": {
+        "submitted": "Application submitted",
+        "approved": "Approved",
+        "rejected": "Not approved",
+        "requested_info": "Changes requested",
+        "resubmitted": "Updated application submitted"
+      },
+      "missingReqs": {
+        "CV_MISSING": "CV / Resume",
+        "SCFHS_VERIFICATION": "SCFHS verification document",
+        "QUALIFICATION_DOC": "Qualification document",
+        "PHOTO": "Profile photo",
+        "BANK_DETAILS": "Bank account details",
+        "NATIONAL_ID": "National / Iqama ID"
+      },
+      "list": {
+        "title": "Trainer applications",
+        "subtitle": "Look up an applicant's submission and review history (read-only).",
+        "tabAll": "All",
+        "searchPlaceholder": "Search by name or email",
+        "loading": "Loading applications…",
+        "loadError": "Couldn't load applications. Please try again.",
+        "emptyTitle": "No applications match",
+        "emptyHint": "Try a different search or status filter.",
+        "submittedOn": "Submitted",
+        "pageOf": "Page {page} of {totalPages}"
+      },
+      "detail": {
+        "back": "Back to applications",
+        "loading": "Loading application…",
+        "loadError": "Couldn't load this application.",
+        "submittedOn": "Submitted",
+        "lastUpdated": "Last updated",
+        "requestedRole": "Requested role",
+        "latestReviewerNote": "Latest reviewer note",
+        "documents": "Documents",
+        "open": "Open",
+        "profile": "Applicant profile",
+        "activity": "Review history",
+        "noActivity": "No history yet."
+      },
+      "profile": {
+        "specialty": "Specialty",
+        "profession": "Profession",
+        "qualification": "Qualification",
+        "scfhsNumber": "SCFHS number",
+        "nationalId": "National / Iqama ID",
+        "phone": "Phone",
+        "city": "City",
+        "country": "Country"
+      }
     },
     "navbar": {
       "toggleMenu": "Toggle menu",
@@ -7425,6 +8298,7 @@
     "alertsPage": {
       "title": "All Alerts",
       "subtitle": "Open tickets needing attention across the support queue.",
+      "subtitleSupervisor": "Breaches, escalations, and every meaningful action across the support queue.",
       "backToDashboard": "Back to dashboard",
       "tabs": {
         "all": "All"
@@ -7435,12 +8309,57 @@
       },
       "showDismissed": "Show dismissed ({count})",
       "restoreAll": "Restore all",
-      "restoreOne": "Restore"
+      "restoreOne": "Restore",
+      "kpiAlertsTitle": "Tickets needing attention",
+      "auditTrailTitle": "Recent activity",
+      "noAuditTrail": "No activity in the last 24 hours.",
+      "refresh": "Refresh",
+      "auditUnknownActor": "System",
+      "paginationShowing": "{from}–{to} of {total}",
+      "auditDetailAssignee": "reassigned",
+      "auditDetailPriority": "{from} → {to}",
+      "auditDetailStatus": "{from} → {to}",
+      "agoSeconds": "{count}s ago",
+      "agoMinutes": "{count}m ago",
+      "agoHours": "{count}h ago",
+      "auditAction": {
+        "ticket_created": "Ticket created",
+        "ticket_replied": "Replied",
+        "internal_note_added": "Internal note",
+        "assignee_changed": "Assignee changed",
+        "priority_changed": "Priority changed",
+        "status_changed": "Status changed",
+        "ticket_resolved": "Resolved",
+        "ticket_closed": "Closed",
+        "ticket_reopened": "Reopened",
+        "merged": "Merged into another ticket",
+        "merge_received": "Other ticket merged in",
+        "transferred": "Transferred to new category",
+        "tag_added": "Tag added",
+        "tag_removed": "Tag removed",
+        "tag_auto_applied": "Tag auto-applied",
+        "sla_frt_breach": "FRT breached",
+        "sla_ttr_breach": "TTR breached",
+        "sla_frt_warning_75": "FRT 75% warning",
+        "sla_priority_escalated": "Priority escalated",
+        "sla_escalation_triggered": "Escalation triggered",
+        "sla_frt_breach_reassigned": "FRT breach — reassigned",
+        "sla_ttr_breach_reassigned": "TTR breach — reassigned",
+        "sla_resolved_within_sla": "Resolved within SLA"
+      },
+      "auditRole": {
+        "super_admin": "Super admin",
+        "admin": "Admin",
+        "supervisor": "Supervisor",
+        "agent": "Agent",
+        "student": "Student"
+      }
     },
     "allTicketsPage": {
       "title": "All Tickets",
       "subtitle": "Manage and track all support tickets",
       "createTicket": "New Ticket",
+      "escalated": "Escalated",
       "stats": {
         "totalTickets": "Total Tickets",
         "open": "Open",
@@ -7491,13 +8410,26 @@
           "login": "Login",
           "certificate": "Certificate",
           "content": "Content",
-          "technical": "Technical"
+          "technical": "Technical",
+          "webinar": "Webinar",
+          "cme": "CME / CPD",
+          "trainer": "Trainer Application",
+          "courses": "Courses",
+          "sessions": "Sessions & Schedule",
+          "payments": "Payments",
+          "invoices": "Invoices",
+          "refunds": "Refunds",
+          "integrations": "Third-party Integrations",
+          "course_approvals": "Course Approvals",
+          "system_issues": "System Issues",
+          "other": "Other"
         },
         "priorities": {
           "high": "High",
           "medium": "Medium",
           "low": "Low"
-        }
+        },
+        "escalatedOnly": "Escalated only"
       },
       "columns": {
         "ticketId": "Ticket #",
@@ -7535,6 +8467,7 @@
       "slaRemaining": "remaining",
       "slaLeft": "left",
       "slaOverBy": "over",
+      "slaPaused": "Paused",
       "slaWarning": "SLA Warning",
       "refresh": "Refresh",
       "sort": {
@@ -7875,7 +8808,46 @@
         "responses": "Responses",
         "responseRate": "Response Rate",
         "recentComments": "Recent feedback",
-        "noComments": "No customer comments yet — they'll appear here as CSAT surveys come back."
+        "noComments": "No customer comments yet — they'll appear here as CSAT surveys come back.",
+        "byCategory": {
+          "title": "Avg score by category",
+          "empty": "No category data for this date range yet.",
+          "category": "Category",
+          "responses": "Responses",
+          "avg": "Avg",
+          "split": "Promoters / Detractors"
+        },
+        "byAgent": {
+          "title": "Avg score by agent",
+          "empty": "No agent data for this date range yet.",
+          "agent": "Agent",
+          "responses": "Responses",
+          "avg": "Avg",
+          "split": "Promoters / Detractors",
+          "unassigned": "Unassigned"
+        },
+        "monthly": {
+          "title": "Monthly trend",
+          "empty": "No monthly data available yet."
+        },
+        "lowRatings": {
+          "title": "Low ratings — needs follow-up",
+          "pending": "Pending",
+          "completed": "Followed up",
+          "all": "All",
+          "empty": "No low ratings in this range.",
+          "allHandled": "All low ratings have been followed up — nice work.",
+          "noComment": "(no written comment)",
+          "agentLabel": "Agent",
+          "openTicket": "Open ticket",
+          "markFollowedUp": "Mark followed up",
+          "marking": "Saving…",
+          "markedFollowedUp": "Marked as followed up",
+          "markFailed": "Couldn't mark as followed up",
+          "completedBy": "Followed up by {name} on {date}",
+          "supervisor": "Supervisor",
+          "supervisorOnly": "Supervisor action"
+        }
       },
       "npsPanel": {
         "title": "Net Promoter Score",
@@ -7995,7 +8967,7 @@
       },
       "ticketCategoriesPanel": {
         "title": "Ticket Categories",
-        "description": "Built-in categories ship with the platform. Add custom categories to track unique workflows.",
+        "description": "Built-in categories ship with the platform. Add custom categories to track unique workflows. Each category can be made available to specific dashboards.",
         "addCategory": "Add category",
         "removeCategory": "Remove",
         "nameEn": "English name *",
@@ -8012,7 +8984,21 @@
         "addFailed": "Failed to add category",
         "removed": "Category removed",
         "removeFailed": "Failed to remove category",
-        "confirmDelete": "Remove the \"{slug}\" category?"
+        "updated": "Category updated",
+        "updateFailed": "Failed to update category",
+        "confirmDelete": "Remove the \"{slug}\" category?",
+        "editRoles": "Edit roles",
+        "applicableRolesLabel": "Available to dashboards *",
+        "applicableRolesHint": "Pick which role dashboards see this category in their create-ticket dropdown. Supervisors and admins always see every category in the queue.",
+        "applicableRolesRequired": "Pick at least one dashboard.",
+        "noApplicableRoles": "Not assigned to any dashboard",
+        "applicableRoles": {
+          "student": "Student",
+          "instructor": "Instructor",
+          "course_manager": "Course Manager",
+          "finance": "Finance",
+          "ta": "Teaching Assistant"
+        }
       },
       "sla": {
         "title": "SLA Target Configuration",
@@ -8161,21 +9147,25 @@
       },
       "slaPanel": {
         "title": "SLA Targets",
-        "description": "First Response Time (FRT), Time to Resolution (TTR), and priority-escalation thresholds per ticket priority. Values are in business minutes — non-working hours pause the SLA clock. Set your business window in the Business Hours tab. Changes apply to future tickets only.",
+        "description": "First Response Time (FRT), Time to Resolution (TTR), and priority-escalation thresholds per ticket priority. Values count business time only — non-working hours pause the SLA clock. Set your business window in the Business Hours tab. Changes apply to future tickets only.",
         "loadFailedTitle": "Failed to load SLA policies",
         "retry": "Retry",
         "noPolicies": "No SLA policies configured. Contact an administrator.",
         "columns": {
           "priority": "Priority",
-          "frt": "FRT (minutes)",
-          "ttr": "TTR (minutes)",
-          "escalate": "Escalate After (min)"
+          "frt": "First Response",
+          "ttr": "Resolution",
+          "escalate": "Escalate After"
         },
         "saving": "Saving...",
         "save": "Save",
         "hintHours": "≈ {n}h",
         "hintDays": "≈ {n}d",
         "hintHoursMinutes": "≈ {h}h {m}m",
+        "unitDays": "d",
+        "unitHours": "h",
+        "unitMinutes": "m",
+        "totalMinutes": "{count} min total",
         "validation": {
           "frtPositive": "FRT must be a positive integer",
           "ttrPositive": "TTR must be a positive integer",
@@ -8197,15 +9187,32 @@
         "createTitle": "Create New Macro",
         "formTitle": "Title *",
         "formTitlePlaceholder": "e.g., Zoom Session Fix",
-        "bodyTemplate": "Body Template *",
+        "formCategory": "Category",
+        "categoryGeneral": "General (all tickets)",
+        "bodyTemplate": "Body Template (English) *",
+        "bodyTemplateAr": "Body Template (Arabic)",
+        "optional": "optional",
+        "bodyArPlaceholder": "نسخة عربية من القالب…",
         "insertVariablesHint": "Click a variable to insert it at the cursor:",
         "bodyTemplatePlaceholder": "Hi {learnerVar}, thank you for reaching out...",
         "kbUrls": "KB Article URLs (one per line)",
+        "kbPickerLabel": "Linked KB articles",
+        "kbPickerEmpty": "No published KB articles yet.",
+        "kbPickerHint": "Selected articles are appended to the reply after the body.",
+        "searchPlaceholder": "Search by title…",
+        "filterAllCategories": "All categories",
+        "showInactive": "Show inactive",
+        "inactiveBadge": "Inactive",
+        "deactivate": "Deactivate",
+        "reactivate": "Reactivate",
+        "usedTimes": "Used {count, plural, =0 {never} one {1 time} other {# times}}",
+        "tabLibrary": "Library",
+        "tabAnalytics": "Usage",
         "saving": "Saving...",
         "update": "Update",
         "create": "Create",
         "cancel": "Cancel",
-        "noMacros": "No macros created yet.",
+        "noMacros": "No macros match the current filters.",
         "edit": "Edit",
         "delete": "Delete",
         "variables": {
@@ -8217,7 +9224,21 @@
           "ticketPriority": "Priority",
           "ticketCategory": "Category",
           "ticketStatus": "Status",
-          "agentName": "Agent Name"
+          "agentName": "Agent Name",
+          "certificateStatus": "Certificate Status",
+          "webinarJoinUrl": "Webinar Join URL",
+          "paymentAmount": "Last Payment Amount"
+        },
+        "analytics": {
+          "noData": "No usage data available.",
+          "totalUses": "Total uses",
+          "totalMacros": "Total macros",
+          "unused": "Unused",
+          "topUsed": "Most used macros",
+          "byCategory": "Uses by category",
+          "monthlyTrend": "Last 6 months",
+          "macrosShort": "{count} macros",
+          "noUsesYet": "No macros have been applied yet."
         },
         "toasts": {
           "titleBodyRequired": "Title and body are required",
@@ -8225,7 +9246,9 @@
           "created": "Macro created",
           "saveFailed": "Failed to save macro",
           "confirmDelete": "Delete this macro?",
-          "deleted": "Macro deleted"
+          "deleted": "Macro deleted",
+          "deactivated": "Macro deactivated",
+          "reactivated": "Macro reactivated"
         }
       },
       "escalationPanel": {
@@ -8348,7 +9371,8 @@
       },
       "sla": {
         "left": "{value} left",
-        "overBy": "Over by {value}"
+        "overBy": "Over by {value}",
+        "paused": "Paused — {value}"
       },
       "columns": {
         "id": "ID",
@@ -8360,16 +9384,50 @@
       }
     },
     "ticketDetail": {
+      "csatReview": {
+        "title": "Customer review",
+        "toneSatisfied": "Satisfied",
+        "toneNeutral": "Neutral",
+        "toneDissatisfied": "Dissatisfied",
+        "noComment": "No comment was left.",
+        "submittedAt": "Submitted {date}"
+      },
       "backToTickets": "Back to Tickets",
       "notFound": "Ticket not found",
+      "mergedIntoTitle": "This ticket was merged",
+      "mergedIntoDescription": "The conversation continues in the target ticket. This one is kept closed for reference.",
+      "openTarget": "Open {ref}",
+      "mergedFromTitle": "{count, plural, one {# ticket was merged into this one} other {# tickets were merged into this one}}",
       "staffBadge": "Staff",
       "internalBadge": "Internal",
+      "roleBadge": {
+        "super_admin": "Super Admin",
+        "admin": "Admin",
+        "supervisor": "Supervisor",
+        "agent": "Agent",
+        "student": "Student"
+      },
       "unknownAuthor": "Unknown",
       "reply": "Reply",
+      "export": {
+        "title": "Export this ticket",
+        "button": "Export",
+        "csvLabel": "Download CSV",
+        "csvHint": "Ticket fields + reply transcript. Quick for a glance.",
+        "csvFailed": "Couldn't download CSV",
+        "archiveLabel": "Download full archive (ZIP)",
+        "archiveHint": "Conversation, attachments, audit trail, and SLA events — for compliance and audit.",
+        "archiveReady": "Archive downloaded",
+        "archiveFailed": "Couldn't download archive"
+      },
       "applyMacro": "Apply Macro",
       "macroPreview": "Macro Preview",
       "insertMacro": "Insert",
       "cancelMacro": "Cancel",
+      "macroSearchPlaceholder": "Search macros…",
+      "macroSearchEmpty": "No matching macros.",
+      "macroRecommended": "Recommended for this ticket",
+      "macroOthers": "Other macros",
       "internalNote": "Internal Note",
       "internalNotePlaceholder": "Add an internal note (not visible to student)...",
       "replyPlaceholder": "Type your reply...",
@@ -8393,7 +9451,9 @@
         "target": "Target: {value}",
         "remaining": "{value} remaining",
         "overdueBy": "Overdue by {value}",
-        "pausedOnHold": "SLA paused (on hold)"
+        "pausedOnHold": "SLA paused (on hold)",
+        "pausedOffHours": "SLA paused (outside business hours)",
+        "pausedAt": "Paused at {value}"
       },
       "actions": {
         "title": "Actions",
@@ -8402,22 +9462,84 @@
         "close": "Close Ticket",
         "reopen": "Reopen Ticket",
         "onHold": "Put On Hold",
+        "requestOnHold": "Request On Hold",
         "resume": "Resume Ticket",
-        "supervisorBadge": "(Supervisor)"
+        "supervisorBadge": "(Supervisor)",
+        "escalate": "Escalate Ticket",
+        "updateEscalation": "Update Escalation",
+        "escalated": "Escalated"
+      },
+      "escalate": {
+        "title": "Escalate this ticket",
+        "titleUpdate": "Update escalation",
+        "body": "Tell the team what changed. The assignee, supervisor, and all admins will be notified.",
+        "bodyUpdate": "Update the reason or bump the priority. We won't re-notify the team — the original escalation already did.",
+        "reasonLabel": "Reason",
+        "reasonPlaceholder": "What's blocking this ticket? Why does it need attention now?",
+        "bumpLabel": "Priority",
+        "bumpKeep": "Keep {current}",
+        "bumpMedium": "Bump to MEDIUM",
+        "bumpHigh": "Bump to HIGH",
+        "submit": "Escalate",
+        "submitUpdate": "Update",
+        "cancel": "Cancel",
+        "dismissAria": "Close escalate modal",
+        "validation": {
+          "reasonTooShort": "Reason must be at least 3 characters."
+        },
+        "toasts": {
+          "escalated": "Ticket escalated.",
+          "updated": "Escalation updated.",
+          "failed": "Couldn't escalate ticket. Please try again."
+        }
       },
       "customer": "Customer",
       "customerRating": "Customer Rating",
+      "guestBadge": "Guest",
+      "guestTicketHint": "Submitted via the public form (no account).",
+      "requesterRole": {
+        "student": "Student",
+        "instructor": "Instructor",
+        "manager": "Manager",
+        "ta": "TA",
+        "finance": "Finance"
+      },
+      "requesterRoleHint": {
+        "student": "Raised from the student dashboard.",
+        "instructor": "Raised from the instructor dashboard.",
+        "manager": "Raised from the course manager dashboard.",
+        "ta": "Raised from the teaching assistant dashboard.",
+        "finance": "Raised from the finance dashboard."
+      },
       "openAttachment": "View attachment",
+      "attachFiles": "Attach files (PDF, JPG, PNG, WebP — up to 10 × 5MB)",
+      "attachmentUploading": "Uploading…",
+      "attachmentUploaded": "Uploaded",
+      "attachmentFailed": "Upload failed",
+      "attachmentQueued": "Queued",
+      "removeAttachment": "Remove attachment",
+      "attachmentRemovedToast": "Attachment removed",
+      "attachmentRemoveFailed": "Couldn't remove attachment",
+      "scanClean": "Scanned · safe",
+      "scanPending": "Scanning…",
+      "scanBlocked": "Blocked — malware detected",
       "toasts": {
         "loadFailed": "Failed to load ticket",
         "internalAdded": "Internal note added",
         "replySent": "Reply sent",
         "replyFailed": "Failed to send reply",
+        "waitForUploads": "Wait for uploads to finish",
         "statusChanged": "Status changed to {status}",
         "statusFailed": "Failed to update status",
         "applyMacroFailed": "Failed to apply macro",
         "reassigned": "Reassigned to {name}",
-        "reassignFailed": "Failed to reassign"
+        "reassignFailed": "Failed to reassign",
+        "holdRequested": "Hold request submitted — awaiting approval",
+        "holdApplied": "Ticket put on hold",
+        "holdFailed": "Failed to submit hold request",
+        "holdApprovedToast": "Hold request approved — ticket is now on hold",
+        "holdRejectedToast": "Hold request rejected",
+        "holdDecisionFailed": "Failed to record decision"
       },
       "onHold": {
         "selectReason": "Select a reason to put this ticket on hold:",
@@ -8430,13 +9552,213 @@
         },
         "confirm": "Confirm Hold",
         "cancel": "Cancel"
+      },
+      "holdModal": {
+        "title": "Put ticket on hold",
+        "intro": "A supervisor or admin will review your request before the ticket is paused.",
+        "reasonLabel": "Reason",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Explain why this ticket needs to be paused…",
+        "descriptionHelp": "Required when the reason is 'Other'. Visible to the supervisor reviewing your request.",
+        "submit": "Submit request",
+        "cancel": "Cancel",
+        "close": "Close"
+      },
+      "timeline": {
+        "title": "Recent activity",
+        "loadError": "Couldn't load activity",
+        "empty": "No activity yet for this student.",
+        "emptyFilter": "No events match this filter.",
+        "eventsCount": "{count, plural, =0 {No events} one {1 event} other {# events}}",
+        "filters": {
+          "all": "All",
+          "tickets": "Tickets",
+          "courses": "Courses",
+          "webinars": "Webinars",
+          "payments": "Payments",
+          "sessions": "Sessions",
+          "interventions": "Interventions",
+          "coursesManaged": "Courses managed",
+          "taAssignments": "TA assignments"
+        },
+        "status": {
+          "ticket": {
+            "new": "New",
+            "in_progress": "Open",
+            "on_hold": "On hold",
+            "resolved": "Resolved",
+            "closed": "Closed"
+          },
+          "enrollment": {
+            "active": "Active",
+            "completed": "Completed",
+            "dropped": "Dropped",
+            "suspended": "Suspended"
+          },
+          "webinar": {
+            "registered": "Registered",
+            "attended": "Attended",
+            "upcoming": "Upcoming",
+            "missed": "Missed"
+          },
+          "payment": {
+            "completed": "Paid",
+            "pending": "Pending",
+            "failed": "Failed",
+            "refunded": "Refunded"
+          },
+          "certificate": {
+            "issued": "Issued"
+          }
+        }
+      },
+      "snapshot": {
+        "title": "Student snapshot",
+        "titleInstructor": "Instructor snapshot",
+        "titleManager": "Manager snapshot",
+        "titleTa": "TA snapshot",
+        "titleFinance": "Finance snapshot",
+        "loadError": "Couldn't load snapshot",
+        "none": "None",
+        "courses": "Courses",
+        "coursesEnrolled": "{count, plural, one {# enrolled} other {# enrolled}}",
+        "activeShort": "{count} active",
+        "completedShort": "{count} completed",
+        "webinars": "Webinars",
+        "webinarsRegistered": "{count, plural, one {# registered} other {# registered}}",
+        "attendedShort": "{count} attended",
+        "upcomingShort": "{count} upcoming",
+        "attendance": "Attendance",
+        "noSessions": "No sessions yet",
+        "sessions": "{count, plural, one {# session} other {# sessions}}",
+        "certificates": "Certificates",
+        "certIssued": "{count, plural, one {# issued} other {# issued}}",
+        "certPending": "{count} pending",
+        "certRevoked": "{count} revoked",
+        "cme": "CME / CPD",
+        "noCredits": "No credits yet",
+        "cmeEarned": "{count, plural, one {# credit earned} other {# credits earned}}",
+        "cmePending": "{count} pending",
+        "payments": "Payments",
+        "noPayments": "No payments",
+        "paid": "Paid · {amount} SAR",
+        "paymentPending": "{count} pending",
+        "paymentFailed": "{count} failed",
+        "coursesTeaching": "Teaching",
+        "coursesTeachingValue": "{count, plural, =0 {No courses} one {# course} other {# courses}}",
+        "studentsTotal": "Students",
+        "studentsAcross": "Students (all courses)",
+        "studentsValue": "{count, plural, =0 {None} one {# student} other {# students}}",
+        "sessionsConducted": "Sessions conducted",
+        "sessionsScope": "Sessions in scope",
+        "sessionsValue": "{count, plural, =0 {None} one {# session} other {# sessions}}",
+        "thisMonth": "{count} this month",
+        "interventionsFiled": "Interventions filed",
+        "interventionsValue": "{count, plural, =0 {None} one {# intervention} other {# interventions}}",
+        "coursesManaged": "Courses managed",
+        "coursesManagedValue": "{count, plural, =0 {None} one {# course} other {# courses}}",
+        "instructorsUnder": "Instructors",
+        "instructorsValue": "{count, plural, =0 {None} one {# instructor} other {# instructors}}",
+        "coursesAssisting": "Assisting in",
+        "coursesAssistingValue": "{count, plural, =0 {None} one {# course} other {# courses}}",
+        "ticketsRaised": "Tickets raised",
+        "ticketsValue": "{count, plural, =0 {None} one {# ticket} other {# tickets}}"
+      },
+      "certDetails": {
+        "title": "Certificate & CME details",
+        "loadError": "Couldn't load certificate details",
+        "noCourses": "Student isn't enrolled in any courses yet.",
+        "attendance": "Attendance",
+        "attendanceNA": "N/A (self-paced)",
+        "attendanceNoData": "No data yet",
+        "assessment": "Assessment",
+        "assessmentStatus": {
+          "passed": "Passed",
+          "failed": "Failed",
+          "not_attempted": "Not attempted"
+        },
+        "cmeHours": "CME hours",
+        "cmeEarnedHours": "{hours} earned",
+        "cmePendingHours": "{hours} pending",
+        "notCmeAccredited": "Not accredited",
+        "certStatus": "Certificate",
+        "certStatusValue": {
+          "pending": "Pending review",
+          "approved": "Issued",
+          "rejected": "Rejected",
+          "held": "On hold",
+          "revoked": "Revoked"
+        },
+        "certNotRequested": "Not yet requested",
+        "issuedAt": "Issued on",
+        "revokedAt": "Revoked on",
+        "verificationCode": "Verification code",
+        "copyCode": "Copy",
+        "copied": "Copied",
+        "openVerify": "Verify",
+        "openPdf": "Open PDF",
+        "eligibility": {
+          "eligible": "Eligible",
+          "partial": "Partial",
+          "ineligible": "Ineligible",
+          "revoked": "Revoked",
+          "notRequested": "Not requested"
+        }
+      },
+      "governance": {
+        "mergeButton": "Merge",
+        "transferButton": "Transfer",
+        "cancel": "Cancel",
+        "close": "Close",
+        "merge": {
+          "title": "Merge this ticket into another",
+          "intro": "Replies and tags move to the target ticket. This one stays closed as a reference.",
+          "targetLabel": "Target ticket (same customer, same category)",
+          "targetPlaceholder": "Select a ticket…",
+          "loading": "Loading candidates…",
+          "empty": "No open tickets from this customer in this category.",
+          "noteLabel": "Note (optional)",
+          "notePlaceholder": "Visible in the merged thread",
+          "submit": "Merge",
+          "success": "Ticket merged",
+          "errorPickTarget": "Pick a target ticket",
+          "errorGeneric": "Merge failed"
+        },
+        "transfer": {
+          "title": "Transfer ticket",
+          "intro": "Move the ticket to a different category. Auto-assignment re-runs by default and prefers agents already working that category.",
+          "categoryLabel": "New category",
+          "categoryPlaceholder": "Select a category…",
+          "loading": "Loading categories…",
+          "noOtherCategories": "No other categories available.",
+          "reasonLabel": "Reason (optional)",
+          "reasonPlaceholder": "Visible in the thread",
+          "reassignLabel": "Re-run auto-assignment for the new category",
+          "submit": "Transfer",
+          "success": "Ticket transferred",
+          "errorPickCategory": "Pick a target category",
+          "errorGeneric": "Transfer failed"
+        }
+      },
+      "holdBanner": {
+        "pendingTitle": "Hold approval pending",
+        "requestedBy": "Requested by {name}",
+        "reasonLabel": "Reason",
+        "descriptionLabel": "Description",
+        "unknownRequester": "Agent",
+        "notePlaceholder": "Optional note to the requester…",
+        "approve": "Approve",
+        "reject": "Reject",
+        "waitingForApproval": "Waiting for supervisor approval."
       }
     },
     "a11y": {
       "moreActions": "More actions",
       "ticketActions": "Ticket actions",
       "articleActions": "Article actions",
-      "editPhoto": "Edit profile photo"
+      "editPhoto": "Edit profile photo",
+      "previousPage": "Previous page",
+      "nextPage": "Next page"
     },
     "errorState": {
       "title": "Failed to load data",
@@ -8642,6 +9964,7 @@
       "dashboard": "Dashboard",
       "courses": "Courses",
       "sessions": "Lectures",
+      "support": "Support",
       "settings": "Settings",
       "viewProfile": "View Profile",
       "editProfile": "Edit Profile",
@@ -8866,6 +10189,8 @@
     "passwordMinLength8": "Password must be at least 8 characters",
     "passwordComplexity": "Password must contain uppercase, lowercase, and a number",
     "userCreated": "User created successfully",
+    "userCreatedInviteSent": "User created. Setup link emailed to {email}.",
+    "userCreatedInviteFailed": "User created, but the setup email could not be sent. Use \"Resend invite\" to retry.",
     "firstLastNameRequired": "First name and last name are required",
     "userUpdated": "User updated successfully",
     "userMustHaveRole": "User must have at least one role",
@@ -8913,6 +10238,8 @@
     "category_certificate_desc": "Certificate not received, verification issues, or expiring soon",
     "category_content": "Content",
     "category_content_desc": "Videos not playing, missing course materials, or broken links",
+    "category_trainer": "Trainer Application",
+    "category_trainer_desc": "Questions about your Become-a-Trainer application status, missing documents, or resubmissions",
     "category_other_technical": "Technical",
     "category_other_technical_desc": "Platform bugs, browser compatibility, or general technical issues",
     "category_other": "General Enquiry",

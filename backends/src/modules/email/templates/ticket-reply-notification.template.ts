@@ -6,7 +6,12 @@ export function getTicketReplyHtml(
   senderName: string,
   ticketId: string,
   messagePreview: string,
+  trackingUrl?: string,
 ): string {
+  // Guests don't have a dashboard — point the CTA at their tracking
+  // URL so they have a one-click path back to the conversation.
+  const ctaHref = trackingUrl || 'https://physioguidance.org/en/dashboard/support';
+  const ctaLabel = trackingUrl ? 'View & Reply' : 'View Full Reply';
   return `<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -81,8 +86,8 @@ export function getTicketReplyHtml(
           <!-- Button -->
           <tr>
             <td style="padding:0 32px 24px;text-align:center;">
-              <a href="https://physioguidance.org/en/dashboard/support" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#a37f49,#6b4e24);color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;font-family:'DM Sans',Arial,sans-serif;">
-                View Full Reply
+              <a href="${ctaHref}" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#a37f49,#6b4e24);color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;font-family:'DM Sans',Arial,sans-serif;">
+                ${ctaLabel}
               </a>
             </td>
           </tr>
@@ -119,7 +124,10 @@ export function getTicketReplyText(
   senderName: string,
   ticketId: string,
   messagePreview: string,
+  trackingUrl?: string,
 ): string {
+  const ctaUrl = trackingUrl || 'https://physioguidance.org/en/dashboard/support';
+  const ctaLabel = trackingUrl ? 'View & Reply' : 'View Full Reply';
   return `PhysioGuidance - New Reply on Ticket #${ticketId}
 
 Hi ${recipientName},
@@ -129,7 +137,7 @@ ${senderName} has replied to ticket #${ticketId}.
 Message Preview:
 ${messagePreview.substring(0, 200)}${messagePreview.length > 200 ? '...' : ''}
 
-View Full Reply: https://physioguidance.org/en/dashboard/support
+${ctaLabel}: ${ctaUrl}
 
 \u00a9 ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
 NELC Accredited \u00b7 Saudi Arabia`;

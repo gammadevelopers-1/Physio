@@ -1,4 +1,6 @@
 import AllTicketsContent from "@/components/support-dashboard/AllTicketsContent";
+import MarkTabViewed from "@/components/MarkTabViewed";
+import { SIDEBAR_TAB_KEYS } from "@/lib/api";
 import { setRequestLocale } from "next-intl/server";
 
 export const metadata = { title: "All Tickets | Supervisor Dashboard" };
@@ -10,5 +12,10 @@ export default async function SupervisorTicketsPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  return <AllTicketsContent />;
+  return (
+    <>
+      <MarkTabViewed tabKey={SIDEBAR_TAB_KEYS.SUPPORT_ALL_TICKETS} />
+      <AllTicketsContent />
+    </>
+  );
 }

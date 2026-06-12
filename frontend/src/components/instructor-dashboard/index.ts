@@ -25,3 +25,4 @@ export { default as ContentManagementContent } from "./ContentManagementContent"
 export { default as ReportsContent } from "./ReportsContent";
 export { default as SettingsContent } from "./SettingsContent";
 export { default as InstructorCourseReviewsContent } from "./InstructorCourseReviewsContent";
+export { default as InstructorSupportContent } from "./InstructorSupportContent";

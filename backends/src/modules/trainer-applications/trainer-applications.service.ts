@@ -3,6 +3,7 @@ import {
   Logger,
   ConflictException,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { eq } from 'drizzle-orm';
@@ -16,6 +17,9 @@ import { RoleRequestsService } from '../role-requests/role-requests.service';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { SubmitApplicationDto } from './dto/submit-application.dto';
+import { PortalRequestOtpDto } from './dto/portal-request-otp.dto';
+import { PortalVerifyOtpDto } from './dto/portal-verify-otp.dto';
+import { PortalResubmitDto } from './dto/portal-resubmit.dto';
 
 @Injectable()
 export class TrainerApplicationsService {
@@ -179,5 +183,116 @@ export class TrainerApplicationsService {
     });
 
     return { requestId: request.id, userId };
+  }
+
+  // ===========================================================
+  // Self-serve portal — applicants check status + resubmit without
+  // logging in. Three steps mirror the existing submit flow:
+  //
+  //   1. portalRequestOtp     — captcha + send OTP
+  //   2. portalVerifyOtp      — verify code, return scoped JWT + status
+  //   3. portalResubmit       — update an existing MORE_INFO application
+  //
+  // The portal token (`trainer-application-portal`) is distinct from
+  // the submit token (`trainer-application`) so a leaked code from
+  // one flow can't be used in the other.
+  // ===========================================================
+
+  async portalRequestOtp(
+    dto: PortalRequestOtpDto,
+    meta: { ipAddress?: string; userAgent?: string },
+  ): Promise<{ message: string }> {
+    await this.recaptchaService.verify(
+      dto.recaptchaToken,
+      'trainer-application-portal-request-otp',
+    );
+
+    await this.emailVerificationService.issueCode({
+      email: dto.email,
+      purpose: 'trainer-application-portal',
+      locale: (dto.locale as 'en' | 'ar') || 'en',
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+
+    return { message: 'Verification code sent' };
+  }
+
+  /**
+   * Verify the portal OTP and return:
+   *   - a short-lived (15 min) scoped JWT authorising a resubmit
+   *   - the current application status snapshot so the FE can render
+   *     the correct panel immediately (no second round-trip)
+   *
+   * Returns `application: null` when there's no application for this
+   * email — frontend shows a "not found" state with a CTA to apply.
+   */
+  async portalVerifyOtp(dto: PortalVerifyOtpDto): Promise<{
+    token: string;
+    email: string;
+    application:
+      | Awaited<
+          ReturnType<RoleRequestsService['getPublicStatusByEmail']>
+        >
+      | null;
+  }> {
+    const verifiedEmail = await this.emailVerificationService.verifyCode({
+      email: dto.email,
+      code: dto.code,
+      purpose: 'trainer-application-portal',
+    });
+
+    const token = await this.jwtService.signAsync(
+      { purpose: 'trainer-application-portal', email: verifiedEmail },
+      { expiresIn: '15m' },
+    );
+
+    const application =
+      await this.roleRequestsService.getPublicStatusByEmail(verifiedEmail);
+
+    return { token, email: verifiedEmail, application };
+  }
+
+  /**
+   * Resubmit an existing MORE_INFO application. Email comes from the
+   * scoped JWT (verified by ScopedJwtGuard); the service double-checks
+   * the role_request belongs to that email before touching anything.
+   */
+  async portalResubmit(
+    verifiedEmail: string,
+    dto: PortalResubmitDto,
+    meta: { ipAddress?: string | null; userAgent?: string | null },
+  ): Promise<{ requestId: string; message: string }> {
+    const result = await this.roleRequestsService.publicResubmit(
+      dto.roleRequestId,
+      verifiedEmail,
+      {
+        requestedRole: 'INSTRUCTOR',
+        profileData: dto.profileData,
+        bankData: dto.bankData,
+        resumeFiles: dto.resumeFiles,
+        structuredResume: dto.structuredResume,
+      },
+      meta,
+    );
+
+    return {
+      requestId: dto.roleRequestId,
+      message: result.message,
+    };
+  }
+
+  /**
+   * Re-fetch the status with an active portal token. Used by the FE
+   * after a resubmit completes so the timeline refreshes without a
+   * full page reload.
+   */
+  async portalStatus(verifiedEmail: string) {
+    const application =
+      await this.roleRequestsService.getPublicStatusByEmail(verifiedEmail);
+    if (!application.found) {
+      throw new NotFoundException('No application found for this email');
+    }
+    return application;
   }
 }

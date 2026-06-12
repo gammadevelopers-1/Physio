@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { supportApi } from "@/lib/api";
 import { toast } from "sonner";
 import Select from "@/components/admin-dashboard/Select";
@@ -103,6 +104,48 @@ export default function HelpCenterManager({
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
+
+  // Deep-link support: when the Reports page hands off a zero-result
+  // search query as a FAQ candidate, we land here with ?prefillTitle
+  // (and ?prefillLocale=ar|en). Open the editor with that title
+  // populated in the right language so the supervisor only has to
+  // write the body. Cleared from the URL after consumption so a
+  // refresh doesn't re-open the dialog.
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const prefillConsumedRef = useRef(false);
+  useEffect(() => {
+    if (!canEdit || prefillConsumedRef.current) return;
+    if (categories.length === 0) return; // wait for category list
+    const prefillTitle = searchParams?.get("prefillTitle");
+    const prefillLocale = searchParams?.get("prefillLocale");
+    const editArticleId = searchParams?.get("editArticleId");
+
+    if (prefillTitle) {
+      prefillConsumedRef.current = true;
+      const isAr = prefillLocale === "ar";
+      setEditingArticle({
+        titleEn: isAr ? "" : prefillTitle,
+        titleAr: isAr ? prefillTitle : "",
+        bodyEn: "",
+        bodyAr: "",
+        category: categories[0]?.slug || "",
+        published: false,
+      });
+      setEditorOpen(true);
+      // Strip the query so a refresh doesn't re-trigger.
+      router.replace(pathname || "", { scroll: false });
+    } else if (editArticleId && articles.length > 0) {
+      const target = articles.find((a) => a.id === editArticleId);
+      if (target) {
+        prefillConsumedRef.current = true;
+        setEditingArticle(target);
+        setEditorOpen(true);
+        router.replace(pathname || "", { scroll: false });
+      }
+    }
+  }, [searchParams, canEdit, categories, articles, router, pathname]);
 
   const categoryBySlug = useMemo(() => {
     const m = new Map<string, Category>();

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { supportApi } from "@/lib/api";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
@@ -9,6 +10,9 @@ import { AdminSidebar, AdminNavbar } from "@/components/admin-dashboard";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import Select from "./Select";
 import HelpCenterManager from "@/components/support-dashboard/HelpCenterManager";
+import SupportOverviewTab from "./SupportOverviewTab";
+import AdminTicketsTab from "./AdminTicketsTab";
+import AdminSupervisorsTab from "./AdminSupervisorsTab";
 import {
   AutoAssignmentPanel,
   BusinessHoursPanel,
@@ -30,10 +34,17 @@ import {
   BookOpen,
   Users as UsersIcon,
   Settings as SettingsIcon,
+  LayoutDashboard,
 } from "lucide-react";
 
 type TeamRequest = Awaited<ReturnType<typeof supportApi.listTeamRequests>>[number];
-type Tab = "team-requests" | "help-center" | "settings";
+type Tab =
+  | "overview"
+  | "tickets"
+  | "supervisors"
+  | "team-requests"
+  | "help-center"
+  | "settings";
 
 const AdminSupportContent = () => {
   const t = useTranslations("adminDashboard.supportPage");
@@ -41,11 +52,61 @@ const AdminSupportContent = () => {
   const isRTL = locale === "ar";
   const admin = useAdminProfile();
 
-  const [activeTab, setActiveTab] = useState<Tab>("team-requests");
-  const [statusFilter, setStatusFilter] = useState<string>("pending");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  // Deep-link params drive the initial tab + auto-open behaviour:
+  //   ?tab=<key>            → which tab to land on
+  //   ?request=<requestId>  → open the team-request decision modal
+  //                            for that request, in any state. Used
+  //                            by the in-app notification when a
+  //                            supervisor submits a request.
+  const deepLinkTab = searchParams?.get("tab");
+  const deepLinkRequestId = searchParams?.get("request");
+
+  const initialTab: Tab =
+    deepLinkTab === "tickets" ||
+    deepLinkTab === "supervisors" ||
+    deepLinkTab === "team-requests" ||
+    deepLinkTab === "help-center" ||
+    deepLinkTab === "settings" ||
+    deepLinkTab === "overview"
+      ? deepLinkTab
+      : "overview";
+
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
+
+  // Keep activeTab in sync with the ?tab= query param so that
+  // deep-link pushes from SupportOverviewTab (KPI cards, priority bars,
+  // agent workload, at-risk list) actually switch tabs. Without this
+  // the tab state is frozen at the initial mount value.
+  useEffect(() => {
+    if (
+      deepLinkTab === "overview" ||
+      deepLinkTab === "tickets" ||
+      deepLinkTab === "supervisors" ||
+      deepLinkTab === "team-requests" ||
+      deepLinkTab === "help-center" ||
+      deepLinkTab === "settings"
+    ) {
+      if (deepLinkTab !== activeTab) {
+        setActiveTab(deepLinkTab);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLinkTab]);
+  // If we're deep-linked into a specific request, fetch across ALL
+  // statuses so an already-actioned request still appears in the list
+  // and the modal can render its read-only audit view.
+  const [statusFilter, setStatusFilter] = useState<string>(
+    deepLinkRequestId ? "all" : "pending",
+  );
   const [requests, setRequests] = useState<TeamRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selected, setSelected] = useState<TeamRequest | null>(null);
+  // Track whether we've already consumed the deep-link request id, so
+  // refreshing the page or switching tabs doesn't re-pop the modal.
+  const deepLinkConsumedRef = useRef(false);
 
   const fetchRequests = useCallback(async () => {
     setIsLoading(true);
@@ -62,6 +123,33 @@ const AdminSupportContent = () => {
   useEffect(() => {
     fetchRequests();
   }, [fetchRequests]);
+
+  // Once the list is loaded, surface the deep-linked request if any.
+  // Handles three cases:
+  //   - Pending → modal opens with action buttons
+  //   - Approved / rejected → modal opens with read-only audit info
+  //   - Not in list at all → friendly toast, no 404
+  useEffect(() => {
+    if (!deepLinkRequestId) return;
+    if (deepLinkConsumedRef.current) return;
+    if (isLoading) return;
+
+    const match = requests.find((r) => r.id === deepLinkRequestId);
+    if (match) {
+      setSelected(match);
+    } else {
+      toast.error(t("teamRequests.notFoundFallback"));
+    }
+    deepLinkConsumedRef.current = true;
+
+    // Strip the ?request param from the URL so a refresh doesn't
+    // re-trigger the modal. Keep ?tab so the user stays on this tab.
+    const next = new URLSearchParams(searchParams?.toString() || "");
+    next.delete("request");
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname || "/admin/support");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requests, isLoading, deepLinkRequestId]);
 
   return (
     <>
@@ -87,8 +175,23 @@ const AdminSupportContent = () => {
               </div>
 
               {/* Tabs */}
-              <div className="flex gap-1 mb-5 border-b border-[var(--color-border)] overflow-x-auto">
+              <div className="flex gap-1 mb-5 border-b border-[var(--color-border)] overflow-x-auto scrollbar-hide">
                 {[
+                  {
+                    key: "overview" as Tab,
+                    label: t("tabs.overview"),
+                    icon: LayoutDashboard,
+                  },
+                  {
+                    key: "tickets" as Tab,
+                    label: t("tabs.tickets"),
+                    icon: Inbox,
+                  },
+                  {
+                    key: "supervisors" as Tab,
+                    label: t("tabs.supervisors"),
+                    icon: ShieldQuestion,
+                  },
                   {
                     key: "team-requests" as Tab,
                     label: t("tabs.teamRequests"),
@@ -111,7 +214,19 @@ const AdminSupportContent = () => {
                     <button
                       key={tab.key}
                       type="button"
-                      onClick={() => setActiveTab(tab.key)}
+                      onClick={() => {
+                        setActiveTab(tab.key);
+                        // Push the tab onto the URL so the active tab is
+                        // shareable + back-button friendly. Strip filter
+                        // params from the previous tab so a click on
+                        // "Overview" doesn't carry over ?filter=overdue.
+                        const next = new URLSearchParams();
+                        next.set("tab", tab.key);
+                        router.push(
+                          `${pathname}?${next.toString()}`,
+                          { scroll: false },
+                        );
+                      }}
                       className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-[1px] whitespace-nowrap ${
                         active
                           ? "border-[var(--color-primary)] text-[var(--color-primary)]"
@@ -124,6 +239,15 @@ const AdminSupportContent = () => {
                   );
                 })}
               </div>
+
+              {/* Overview tab */}
+              {activeTab === "overview" && <SupportOverviewTab />}
+
+              {/* Tickets tab */}
+              {activeTab === "tickets" && <AdminTicketsTab />}
+
+              {/* Supervisors tab */}
+              {activeTab === "supervisors" && <AdminSupervisorsTab />}
 
               {/* Help Center tab */}
               {activeTab === "help-center" && <HelpCenterManager />}

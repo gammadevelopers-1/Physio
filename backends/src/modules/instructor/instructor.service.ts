@@ -1,6 +1,7 @@
 import {
   Injectable,
   NotFoundException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { eq, and, sql, inArray, count, asc, desc, gte, lte, or, isNull } from 'drizzle-orm';
@@ -22,6 +23,7 @@ import {
   courseRatings,
   instructorRatings,
   materialProgress,
+  tickets,
   ATTENDANCE_STATUS,
   INTERVENTION_TYPE,
 } from '../../database/schema';
@@ -33,6 +35,7 @@ import { SessionsService } from '../sessions/sessions.service';
 import { CertificatesService } from '../certificates/certificates.service';
 import { EmailService } from '../email/email.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
+import { SupportService } from '../support/support.service';
 import { CreateInterventionDto } from './dto';
 
 @Injectable()
@@ -45,6 +48,7 @@ export class InstructorService {
     private readonly certificatesService: CertificatesService,
     private readonly emailService: EmailService,
     private readonly userNotificationsService: UserNotificationsService,
+    private readonly supportService: SupportService,
   ) {}
 
   /**
@@ -1932,13 +1936,106 @@ export class InstructorService {
       }
 
       case INTERVENTION_TYPE.TICKET: {
+        // Concern is required for ticket interventions so support can
+        // triage the queue and the FE can render a header chip. Other
+        // intervention types (email, makeup_session) don't need it.
+        if (!dto.concern) {
+          throw new BadRequestException(
+            'Concern is required when filing a support follow-up ticket.',
+          );
+        }
+
+        // De-dupe guard — don't file a second open intervention ticket
+        // for the same student + course within 24h. Prevents accidental
+        // double-clicks and repeated worry-clicks from cluttering the
+        // support queue. The instructor sees the existing ticket
+        // reference in the error toast.
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const [existingOpen] = await db
+          .select({
+            id: tickets.id,
+            referenceNumber: tickets.referenceNumber,
+          })
+          .from(tickets)
+          .where(
+            and(
+              eq(tickets.studentId, user.id),
+              eq(tickets.aboutUserId, dto.studentId),
+              eq(tickets.courseId, resolvedCourseId),
+              eq(tickets.source, 'intervention'),
+              inArray(tickets.status, ['new', 'in_progress', 'on_hold']),
+              gte(tickets.createdAt, twentyFourHoursAgo),
+            ),
+          )
+          .limit(1);
+
+        if (existingOpen) {
+          throw new BadRequestException(
+            `You already have an open support follow-up ticket (${existingOpen.referenceNumber}) for this student. Check your Support tab for status.`,
+          );
+        }
+
+        // Compose the ticket. The structured student card surfaces on
+        // the detail page via composeAboutUserCard — we no longer
+        // prepend a text block in the description, so the body is the
+        // instructor's note verbatim. Subject carries the concern
+        // category so the support queue is scannable.
+        const studentName =
+          `${student.firstName || ''} ${student.lastName || ''}`.trim() ||
+          student.email;
+        const concernLabel: Record<string, string> = {
+          attendance: 'Attendance',
+          progress: 'Progress',
+          assessment: 'Assessment',
+          engagement: 'Engagement',
+          technical: 'Technical',
+          other: 'Other',
+        };
+        const concernText = concernLabel[dto.concern] || 'Other';
+        const createdTicket = await this.supportService.createTicket(user.id, {
+          category: 'courses',
+          subject: `${concernText} concern — ${studentName} in "${courseName}"`,
+          description:
+            dto.message?.trim() ||
+            `Please reach out to ${studentName} about ${concernText.toLowerCase()} in "${courseName}". Filed from the At-Risk Interventions panel.`,
+          courseId: resolvedCourseId,
+          aboutUserId: dto.studentId,
+          source: 'intervention',
+        });
+
+        // Auto-tag the concern so supervisors can filter by category
+        // ("show me all attendance concerns"). The tag is created on
+        // the fly the first time it's used. Best-effort — never blocks
+        // the ticket creation.
+        try {
+          await this.supportService.applyAutoTag(
+            createdTicket.id,
+            `concern-${dto.concern}`,
+            user.id,
+          );
+        } catch (err) {
+          this.logger.warn(
+            `Failed to auto-tag concern ${dto.concern} on ${createdTicket.id}: ${err}`,
+          );
+        }
+
+        // Hydrate the audit metadata with the real ticket reference so
+        // the intervention timeline can deep-link to it.
+        const [createdRow] = await db
+          .select({ referenceNumber: tickets.referenceNumber })
+          .from(tickets)
+          .where(eq(tickets.id, createdTicket.id))
+          .limit(1);
         metadata = {
-          action: 'ticket_placeholder',
+          action: 'support_ticket_filed',
+          ticketId: createdTicket.id,
+          referenceNumber: createdRow?.referenceNumber || null,
           courseName,
-          message: dto.message || 'Support ticket requested',
+          concern: dto.concern,
+          message: dto.message || 'Support follow-up requested',
         };
         this.logger.log(
-          `Support ticket placeholder logged for student ${dto.studentId}`,
+          `Support follow-up ticket ${createdRow?.referenceNumber} filed by instructor ${user.id} about student ${dto.studentId}`,
         );
         break;
       }
@@ -2037,6 +2134,7 @@ export class InstructorService {
         id: interventions.id,
         type: interventions.type,
         message: interventions.message,
+        metadata: interventions.metadata,
         createdAt: interventions.createdAt,
         courseId: interventions.courseId,
         instructorFirstName: instructorUser.firstName,
@@ -2058,14 +2156,38 @@ export class InstructorService {
         : [];
     const courseNameMap = new Map(courseNames.map((c) => [c.id, c.title]));
 
-    return rows.map((r) => ({
-      id: r.id,
-      type: r.type as 'email' | 'makeup_session' | 'ticket',
-      message: r.message,
-      instructorName: `${r.instructorFirstName || ''} ${r.instructorLastName || ''}`.trim() || 'Unknown',
-      courseName: r.courseId ? courseNameMap.get(r.courseId) || null : null,
-      createdAt: r.createdAt.toISOString(),
-    }));
+    return rows.map((r) => {
+      const md = (r.metadata || {}) as Record<string, unknown>;
+      // Surface the ticket reference + resolution outcome to the FE
+      // timeline. Reverse-sync writes resolution fields into the same
+      // metadata blob when the support agent closes the ticket.
+      const ticketRef = typeof md.referenceNumber === 'string'
+        ? md.referenceNumber
+        : null;
+      const ticketId = typeof md.ticketId === 'string' ? md.ticketId : null;
+      const resolutionStatus = typeof md.resolutionStatus === 'string'
+        ? md.resolutionStatus
+        : null;
+      const resolutionNote = typeof md.resolutionNote === 'string'
+        ? md.resolutionNote
+        : null;
+      const resolvedAt = typeof md.resolvedAt === 'string'
+        ? md.resolvedAt
+        : null;
+      return {
+        id: r.id,
+        type: r.type as 'email' | 'makeup_session' | 'ticket',
+        message: r.message,
+        instructorName: `${r.instructorFirstName || ''} ${r.instructorLastName || ''}`.trim() || 'Unknown',
+        courseName: r.courseId ? courseNameMap.get(r.courseId) || null : null,
+        createdAt: r.createdAt.toISOString(),
+        ticketId,
+        ticketReferenceNumber: ticketRef,
+        resolutionStatus,
+        resolutionNote,
+        resolvedAt,
+      };
+    });
   }
 
   // ─── Instructor Roster ──────────────────────────────────────

@@ -493,6 +493,14 @@ export interface SupportTicket {
   createdAt: string;
   updatedAt: string;
   resolvedAt: string | null;
+  referenceNumber?: string | null;
+  /** Business-minute aware remaining time to first response. Null when
+   *  the ticket is already first-responded or the SLA doesn't apply.
+   *  Negative when overdue. Computed BE-side so the FE doesn't need to
+   *  duplicate business-hours math. */
+  frtRemainingMinutes?: number | null;
+  /** Same for time-to-resolve. */
+  ttrRemainingMinutes?: number | null;
 }
 
 export interface TicketReply {
@@ -501,6 +509,15 @@ export interface TicketReply {
   isStaffReply: boolean;
   createdAt: string;
   userName: string;
+  attachments?: {
+    id: string;
+    url: string;
+    filename: string | null;
+    sizeBytes: number | null;
+    mimeType: string | null;
+    scanStatus?: "clean" | "pending" | "quarantined" | "unknown";
+    scannedAt?: string | null;
+  }[];
 }
 
 export interface TicketDetail {

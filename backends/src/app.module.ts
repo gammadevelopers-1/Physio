@@ -39,6 +39,8 @@ import { AdminNotificationsModule } from './modules/admin-notifications/admin-no
 import { AdminSettingsModule } from './modules/admin-settings/admin-settings.module';
 import { TemplatesModule } from './modules/templates/templates.module';
 import { BackupsModule } from './modules/backups/backups.module';
+import { ServiceStatusModule } from './modules/service-status/service-status.module';
+import { SidebarBadgesModule } from './modules/sidebar-badges/sidebar-badges.module';
 import { MaintenanceMiddleware } from './common/maintenance.middleware';
 import { JwtAuthGuard } from './modules/auth/guards';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -141,6 +143,8 @@ import processingConfig from './config/processing.config';
     AdminNotificationsModule,
     AdminSettingsModule,
     TemplatesModule,
+    ServiceStatusModule,
+    SidebarBadgesModule,
   ],
   controllers: [AppController],
   providers: [

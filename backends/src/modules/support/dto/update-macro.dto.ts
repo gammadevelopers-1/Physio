@@ -18,6 +18,18 @@ export class UpdateMacroDto {
   @MaxLength(10000)
   bodyTemplate?: string;
 
+  // Pass null to clear an existing Arabic body, undefined to leave
+  // it unchanged.
+  @IsOptional()
+  @IsString()
+  @MaxLength(10000)
+  bodyAr?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  categoryKey?: string | null;
+
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -27,10 +39,6 @@ export class UpdateMacroDto {
   @IsArray()
   @IsString({ each: true })
   kbArticleUrls?: string[];
-
-  @IsOptional()
-  @IsUUID('4')
-  escalationPathId?: string;
 
   @IsOptional()
   @IsBoolean()

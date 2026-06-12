@@ -25,6 +25,8 @@ import {
   RoleName,
   PERMISSION_CATEGORIES,
   RolePermissions,
+  supportTeamMembers,
+  SUPPORT_SUB_ROLES,
 } from '../../database/schema';
 import { RegisterDto, LoginDto, CreateUserDto, UpdateUserDto, UpdateProfileDto } from './dto';
 import { EmailService } from '../email/email.service';
@@ -32,6 +34,7 @@ import { JwtPayload } from './strategies/jwt.strategy';
 import { ModuleRef } from '@nestjs/core';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { AdminSettingsService } from '../admin-settings/admin-settings.service';
+import { PasswordSetupService } from './password-setup.service';
 import { encryptPII, decryptPII, decryptUserPII } from '../../common/crypto';
 import { validatePasswordPolicy } from '../../common/password-policy';
 
@@ -48,6 +51,7 @@ export class AuthService {
     private moduleRef: ModuleRef,
     private auditLogService: AuditLogService,
     private adminSettings: AdminSettingsService,
+    private passwordSetupService: PasswordSetupService,
   ) {}
 
   /**
@@ -376,6 +380,7 @@ export class AuthService {
     roleName: RoleName,
     assignedBy: string,
     supportSubRole?: string,
+    supervisorId?: string,
   ): Promise<{ message: string; roles: string[] }> {
     // Verify user exists
     const [user] = await db
@@ -424,6 +429,59 @@ export class AuthService {
       }
     }
 
+    // Same no-orphan-agent invariant as createUser: when an existing
+    // user is granted SUPPORT/agent, the admin must pick the team
+    // supervisor up front so we never leave the agent in limbo. For
+    // SUPPORT/supervisor promotion, if the user was previously on
+    // another supervisor's team as an agent, that membership is
+    // dropped — a supervisor doesn't sit inside another supervisor's
+    // team.
+    if (roleName === ROLE_NAMES.SUPPORT) {
+      if (supportSubRole === SUPPORT_SUB_ROLES.AGENT) {
+        if (!supervisorId) {
+          throw new BadRequestException(
+            'A supervisor must be assigned when granting the Support Agent role. Pick one from the Supervisor field — or create a Support Supervisor first if none exist.',
+          );
+        }
+        const [supervisor] = await db
+          .select({
+            userId: userRoles.userId,
+            supportSubRole: userRoles.supportSubRole,
+            isActive: users.isActive,
+          })
+          .from(userRoles)
+          .innerJoin(users, eq(userRoles.userId, users.id))
+          .innerJoin(roles, eq(userRoles.roleId, roles.id))
+          .where(
+            and(
+              eq(userRoles.userId, supervisorId),
+              eq(roles.name, ROLE_NAMES.SUPPORT),
+            ),
+          )
+          .limit(1);
+        if (
+          !supervisor ||
+          supervisor.supportSubRole !== SUPPORT_SUB_ROLES.SUPERVISOR
+        ) {
+          throw new BadRequestException(
+            'Selected supervisor does not exist or is not a Support Supervisor',
+          );
+        }
+        if (!supervisor.isActive) {
+          throw new BadRequestException(
+            'Selected supervisor is suspended — pick an active supervisor instead',
+          );
+        }
+      }
+      if (supportSubRole === SUPPORT_SUB_ROLES.SUPERVISOR) {
+        // Promotion: if this user used to be someone else's agent,
+        // drop that membership. They now lead their own team.
+        await db
+          .delete(supportTeamMembers)
+          .where(eq(supportTeamMembers.agentId, userId));
+      }
+    }
+
     // Assign role
     await db.insert(userRoles).values({
       userId,
@@ -432,6 +490,21 @@ export class AuthService {
       supportSubRole:
         roleName === 'SUPPORT' ? supportSubRole || null : null,
     });
+
+    // For SUPPORT agents, write the supervisor membership in the same
+    // request so creation and team-binding are atomic from the
+    // admin's perspective.
+    if (
+      roleName === ROLE_NAMES.SUPPORT &&
+      supportSubRole === SUPPORT_SUB_ROLES.AGENT &&
+      supervisorId
+    ) {
+      await db.insert(supportTeamMembers).values({
+        supervisorId,
+        agentId: userId,
+        addedBy: assignedBy,
+      });
+    }
 
     // Admin-assigned roles implicitly verify the user
     if (!user.isVerified) {
@@ -511,10 +584,48 @@ export class AuthService {
       throw new BadRequestException('Cannot remove the last role. User must have at least one role.');
     }
 
+    // Force-reassign guard: removing SUPPORT from a supervisor with
+    // active agents would orphan every agent on their team. Block the
+    // removal until the admin reassigns the team to another supervisor
+    // via `POST /support/team/reassign`. The error message tells the
+    // UI exactly how many agents need to move so it can show the right
+    // modal.
+    if (roleName === ROLE_NAMES.SUPPORT) {
+      const [subRoleRow] = await db
+        .select({ supportSubRole: userRoles.supportSubRole })
+        .from(userRoles)
+        .where(
+          and(eq(userRoles.userId, userId), eq(userRoles.roleId, role.id)),
+        )
+        .limit(1);
+      if (subRoleRow?.supportSubRole === SUPPORT_SUB_ROLES.SUPERVISOR) {
+        const [{ teamSize } = { teamSize: 0 }] = await db
+          .select({ teamSize: sql<number>`count(*)::int` })
+          .from(supportTeamMembers)
+          .where(eq(supportTeamMembers.supervisorId, userId));
+        if (Number(teamSize) > 0) {
+          throw new BadRequestException(
+            `Cannot remove the Support role — this supervisor still has ${teamSize} agent${
+              Number(teamSize) === 1 ? '' : 's'
+            } on their team. Reassign their agents to another supervisor first.`,
+          );
+        }
+      }
+    }
+
     // Remove role
     await db
       .delete(userRoles)
       .where(and(eq(userRoles.userId, userId), eq(userRoles.roleId, role.id)));
+
+    // If we just removed SUPPORT from an agent, drop their team
+    // membership too — without the SUPPORT role they can't be on a
+    // team. Idempotent for users who weren't on any team.
+    if (roleName === ROLE_NAMES.SUPPORT) {
+      await db
+        .delete(supportTeamMembers)
+        .where(eq(supportTeamMembers.agentId, userId));
+    }
 
     // If removed role was active, switch to first available role
     if (user.activeRole === roleName) {
@@ -794,7 +905,7 @@ export class AuthService {
   async createUser(
     dto: CreateUserDto,
     createdBy: string,
-  ): Promise<Partial<User> & { roles: string[] }> {
+  ): Promise<Partial<User> & { roles: string[]; inviteSent?: boolean }> {
     // Check if user exists
     const [existingUser] = await db
       .select()
@@ -806,20 +917,34 @@ export class AuthService {
       throw new ConflictException('Email already registered');
     }
 
-    // Enforce admin-configured password policy
-    const authSettings = await this.adminSettings.getAuthSettings();
-    const policyErrors = validatePasswordPolicy(dto.password, {
-      minLength: authSettings.passwordMinLength,
-      requireUppercase: authSettings.passwordRequireUppercase,
-      requireNumber: authSettings.passwordRequireNumber,
-      requireSpecial: authSettings.passwordRequireSpecial,
-    });
-    if (policyErrors.length) {
-      throw new BadRequestException(policyErrors.join('. '));
+    // INVITE PATH (recommended) — admin omits password. The user
+    // sets their own via a magic-link email. Admin never sees or
+    // chooses the user's password. Aligns with the trainer-approval
+    // and webinar-auto-enroll flows that already use this pattern.
+    const useInviteFlow = !dto.password;
+
+    if (!useInviteFlow) {
+      // Legacy "admin sets password" path — kept for direct API
+      // consumers, but unreachable from the UI. Enforce policy.
+      const authSettings = await this.adminSettings.getAuthSettings();
+      const policyErrors = validatePasswordPolicy(dto.password!, {
+        minLength: authSettings.passwordMinLength,
+        requireUppercase: authSettings.passwordRequireUppercase,
+        requireNumber: authSettings.passwordRequireNumber,
+        requireSpecial: authSettings.passwordRequireSpecial,
+      });
+      if (policyErrors.length) {
+        throw new BadRequestException(policyErrors.join('. '));
+      }
     }
 
-    // Hash password
-    const passwordHash = await argon2.hash(dto.password);
+    // For the invite path we still need *some* hash in the column
+    // (NOT NULL on users.passwordHash). A 64-byte random secret makes
+    // the placeholder hash unguessable — only the magic-link path
+    // unlocks the account.
+    const passwordHash = useInviteFlow
+      ? await argon2.hash(randomBytes(64).toString('hex'))
+      : await argon2.hash(dto.password!);
 
     // Get the requested role
     const [role] = await db
@@ -832,8 +957,58 @@ export class AuthService {
       throw new BadRequestException(`Role ${dto.role} does not exist`);
     }
 
+    // No-orphan-agent invariant: when creating a Support Agent, the
+    // admin must pick the supervisor whose team the agent joins. The
+    // membership row is written in the same transaction below, so an
+    // orphan agent (SUPPORT user with no team) cannot exist by
+    // construction. Resolved once here so we can fail fast before
+    // any writes hit the DB.
+    const isSupportAgentCreation =
+      dto.role === ROLE_NAMES.SUPPORT &&
+      dto.supportSubRole === SUPPORT_SUB_ROLES.AGENT;
+    if (isSupportAgentCreation) {
+      if (!dto.supervisorId) {
+        throw new BadRequestException(
+          'A supervisor must be assigned when creating a Support Agent. Pick one from the Supervisor field — or create a Support Supervisor first if none exist.',
+        );
+      }
+      const [supervisor] = await db
+        .select({
+          userId: userRoles.userId,
+          supportSubRole: userRoles.supportSubRole,
+          isActive: users.isActive,
+        })
+        .from(userRoles)
+        .innerJoin(users, eq(userRoles.userId, users.id))
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .where(
+          and(
+            eq(userRoles.userId, dto.supervisorId),
+            eq(roles.name, ROLE_NAMES.SUPPORT),
+          ),
+        )
+        .limit(1);
+      if (
+        !supervisor ||
+        supervisor.supportSubRole !== SUPPORT_SUB_ROLES.SUPERVISOR
+      ) {
+        throw new BadRequestException(
+          'Selected supervisor does not exist or is not a Support Supervisor',
+        );
+      }
+      if (!supervisor.isActive) {
+        throw new BadRequestException(
+          'Selected supervisor is suspended — pick an active supervisor instead',
+        );
+      }
+    }
+
     // Create user with the specified active role. Phone is encrypted at
-    // application layer (same as register flow above).
+    // application layer (same as register flow above). Invite-flow
+    // users stay `isVerified: false` until they complete password
+    // setup — the login guard at the top of this service already
+    // blocks unverified users, so they cannot sign in with anything
+    // until the email link is consumed.
     const [newUser] = await db
       .insert(users)
       .values({
@@ -843,7 +1018,7 @@ export class AuthService {
         lastName: dto.lastName,
         phone: encryptPII(dto.phone),
         activeRole: dto.role,
-        isVerified: true, // Admin-created users are pre-verified
+        isVerified: !useInviteFlow,
       })
       .returning({
         id: users.id,
@@ -866,18 +1041,100 @@ export class AuthService {
         dto.role === 'SUPPORT' ? dto.supportSubRole || null : null,
     });
 
+    // Bind the new Support Agent to the chosen supervisor's team so
+    // the orphan-agent state never arises. Done in the same request
+    // path; if this insert fails the whole createUser fails and the
+    // outer 500 surfaces so the admin can retry.
+    if (isSupportAgentCreation && dto.supervisorId) {
+      await db.insert(supportTeamMembers).values({
+        supervisorId: dto.supervisorId,
+        agentId: newUser.id,
+        addedBy: createdBy,
+      });
+    }
+
+    // Send password-setup invite for the new (recommended) path.
+    // Email send is best-effort — a network failure shouldn't roll
+    // back the user creation; the admin can use "Resend invite".
+    let inviteSent = false;
+    if (useInviteFlow) {
+      try {
+        const recipientName =
+          `${newUser.firstName || ''} ${newUser.lastName || ''}`.trim() ||
+          newUser.email;
+        await this.passwordSetupService.sendAdminAccountInviteEmail({
+          email: newUser.email,
+          recipientName,
+          locale: 'en',
+        });
+        inviteSent = true;
+      } catch (err) {
+        this.logger.warn(
+          `Invite email send failed for ${newUser.email}: ${err}. Admin can resend.`,
+        );
+      }
+    }
+
     await this.logSecurityEvent(
       createdBy,
       'user',
       newUser.id,
-      'user.created',
-      { email: newUser.email, role: dto.role },
+      useInviteFlow ? 'user.invited' : 'user.created',
+      {
+        email: newUser.email,
+        role: dto.role,
+        ...(useInviteFlow ? { inviteSent } : {}),
+      },
     );
 
     return {
       ...newUser,
       roles: [dto.role],
+      inviteSent,
     };
+  }
+
+  /**
+   * Resend the admin-account invite. Used by the user-list "Resend
+   * invite" action when the original email got lost or the 24h token
+   * expired. Generates a fresh token (invalidating any prior unused
+   * one) and re-sends the email.
+   */
+  async resendUserInvite(targetUserId: string, adminId: string): Promise<{ sent: boolean }> {
+    const [user] = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        isVerified: users.isVerified,
+      })
+      .from(users)
+      .where(eq(users.id, targetUserId))
+      .limit(1);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (user.isVerified) {
+      throw new BadRequestException(
+        'User has already completed setup. Invite cannot be resent.',
+      );
+    }
+
+    const recipientName =
+      `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+    await this.passwordSetupService.sendAdminAccountInviteEmail({
+      email: user.email,
+      recipientName,
+      locale: 'en',
+    });
+
+    await this.logSecurityEvent(adminId, 'user', user.id, 'user.invite_resent', {
+      email: user.email,
+    });
+
+    return { sent: true };
   }
 
   // ===========================================
@@ -1536,6 +1793,7 @@ export class AuthService {
           email: users.email,
           firstName: users.firstName,
           lastName: users.lastName,
+          avatar: users.avatar,
           zoomEmail: users.zoomEmail,
           scfhsNumber: users.scfhsNumber,
           activeRole: users.activeRole,

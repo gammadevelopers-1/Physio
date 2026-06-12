@@ -2,6 +2,8 @@
 
 import { usePathname } from 'next/navigation';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import CsatPromptModal from '@/components/support-shared/CsatPromptModal';
+import { SidebarBadgesProvider } from '@/contexts/SidebarBadgesContext';
 
 // Maps each dashboard path segment to the roles allowed to access it
 const DASHBOARD_ROLE_MAP: Record<string, string[]> = {
@@ -27,7 +29,14 @@ export function DashboardAuthGuard({ children }: { children: React.ReactNode }) 
 
   return (
     <ProtectedRoute allowedRoles={allowedRoles}>
-      {children}
+      <SidebarBadgesProvider>
+        {children}
+        {/* Global CSAT nudge. Mounts behind the auth guard so the
+            pending-survey fetch always has a valid session. Renders
+            nothing when the queue is empty, so the cost on dashboards
+            without pending feedback is one cached GET. */}
+        <CsatPromptModal />
+      </SidebarBadgesProvider>
     </ProtectedRoute>
   );
 }

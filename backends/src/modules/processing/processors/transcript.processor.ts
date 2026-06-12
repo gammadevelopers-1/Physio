@@ -62,6 +62,7 @@ export class TranscriptProcessor extends WorkerHost {
         action: 'transcript.text_completed',
         performedBy,
         metadata: { courseId, transcriptUrl, textLength: captionsText.length },
+        ipAddress: 'system',
       });
 
       // 3. Chain to WCAG check
@@ -107,6 +108,7 @@ export class TranscriptProcessor extends WorkerHost {
         action: 'transcript.text_failed',
         performedBy,
         metadata: { courseId, error: (error as Error).message },
+        ipAddress: 'system',
       });
 
       await this.processingService.markFailed(materialId, `Transcript generation failed: ${(error as Error).message}`);

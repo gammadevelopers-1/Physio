@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import BecomeTrainerForm from "@/components/BecomeTrainerForm";
+import BecomeTrainerPortal from "@/components/trainer-application/BecomeTrainerPortal";
 import Footer from "@/components/Footer";
 import { setRequestLocale } from "next-intl/server";
 import { getBecomeTrainerPage, getBecomeTrainerPageData, getSiteSettings, getStrapiMediaUrl } from "@/lib/strapi";
@@ -52,6 +53,11 @@ export default async function BecomeTrainerPage({
   return (
     <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} footerLinks={footerLinks} />
+      {/* Self-serve status portal — applicants who already submitted
+          can check their status, see admin's notes, and (for
+          MORE_INFO requests) re-upload missing documents without
+          starting over. */}
+      <BecomeTrainerPortal />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
       <BecomeTrainerForm
         pageTitle={data?.pageTitle}

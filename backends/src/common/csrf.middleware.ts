@@ -42,10 +42,30 @@ const TOKEN_BYTES = 24;
 //     These endpoints are already protected by reCAPTCHA + rate
 //     limiting + per-account brute-force lockout, so CSRF would be
 //     defense-in-depth that breaks login UX entirely. Bypass them.
+//   - Public guest-support endpoints (file upload, guest ticket
+//     submit + reply, public CSAT). Same cross-origin cookie problem
+//     as auth — guests on the marketing site can't read the cookie
+//     set on the API origin. Each endpoint has its own protection:
+//     storage/upload caps size + mime, /tickets/guest has reCAPTCHA +
+//     per-email rate limit, /tickets/track/* uses an unguessable
+//     UUID token + per-IP throttle. CSRF here would just break the
+//     flow without adding real defense.
 const BYPASS_PREFIXES = [
   '/api/zoom/webhook',
   '/api/payments/webhook',
   '/api/auth/',
+  '/api/storage/upload',
+  '/api/tickets/guest',
+  '/api/tickets/track/',
+  '/api/tickets/csat/',
+  '/api/tickets/kb/searches',
+  // Trainer applications — both the initial apply flow and the
+  // self-serve "Check your application" portal hit the API from
+  // the public marketing site, so they share the cross-origin
+  // cookie isolation problem. Endpoints are protected by reCAPTCHA
+  // on the OTP request, OTP on submit/resubmit, and a scoped JWT
+  // for any portal mutation, so CSRF here would only break the UX.
+  '/api/trainer-applications/',
 ];
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);

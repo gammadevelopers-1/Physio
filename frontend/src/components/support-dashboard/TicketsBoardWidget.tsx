@@ -169,9 +169,12 @@ const TicketsBoardWidget = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <div>
-        <table className="w-full">
+      {/* Table — give the board a real working height so a sparse
+           queue doesn't collapse to a 60-px strip below the filters.
+           Overflow-y so a busy queue stays scannable without pushing
+           the SLA performance section below the fold. */}
+      <div className="min-h-[480px] max-h-[640px] overflow-y-auto overflow-x-auto">
+        <table className="w-full min-w-[760px]">
           <thead>
             <tr className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
               <th className="text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5">
@@ -196,11 +199,19 @@ const TicketsBoardWidget = () => {
           </thead>
           <tbody>
             {isLoading ? (
-              <tr>
-                <td colSpan={6} className="px-3 py-10 text-center">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#3B82F6] mx-auto" />
-                </td>
-              </tr>
+              Array.from({ length: 6 }).map((_, i) => (
+                <tr key={`sk-${i}`} className="border-t border-[var(--color-border)]">
+                  {Array.from({ length: 6 }).map((_, j) => (
+                    <td key={j} className="px-3 py-3">
+                      <div
+                        className={`h-3 bg-[var(--color-border)] rounded animate-pulse ${
+                          j === 1 ? "w-40" : j === 0 ? "w-16" : "w-20"
+                        }`}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))
             ) : filteredTickets.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-3 py-10 text-center text-sm text-[var(--color-text-secondary)]">
@@ -213,7 +224,7 @@ const TicketsBoardWidget = () => {
                 onClick={() => router.push(`${basePath}/tickets/${ticket.id}`)}
                 className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-border-subtle)] transition-colors cursor-pointer"
               >
-                <td className="px-3 py-3">
+                <td className="px-3 py-3 whitespace-nowrap">
                   <span className="text-[13px] font-medium text-[var(--color-primary)]">
                     {ticket.displayId}
                   </span>
@@ -228,23 +239,23 @@ const TicketsBoardWidget = () => {
                     {ticket.customer}
                   </span>
                 </td>
-                <td className="px-3 py-3 hidden md:table-cell">
+                <td className="px-3 py-3 hidden md:table-cell whitespace-nowrap">
                   <span className="text-[11px] font-medium bg-[#F3F4F6] text-[#4B5563] px-2 py-0.5 rounded-md">
                     {ticket.category}
                   </span>
                 </td>
-                <td className="px-3 py-3">
+                <td className="px-3 py-3 whitespace-nowrap">
                   <span
-                    className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${priorityStyles[ticket.priority]}`}
+                    className={`inline-block text-[11px] font-medium px-2 py-0.5 rounded-full ${priorityStyles[ticket.priority]}`}
                   >
                     {t(
                       `ticketsBoard.priorities.${ticket.priority.toLowerCase()}`
                     )}
                   </span>
                 </td>
-                <td className="px-3 py-3">
+                <td className="px-3 py-3 whitespace-nowrap">
                   <span
-                    className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${statusStyles[ticket.status]}`}
+                    className={`inline-block text-[11px] font-medium px-2 py-0.5 rounded-full ${statusStyles[ticket.status]}`}
                   >
                     {t(
                       `ticketsBoard.statuses.${

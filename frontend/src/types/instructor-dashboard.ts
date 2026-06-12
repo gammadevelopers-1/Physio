@@ -691,11 +691,23 @@ export interface BatchCertificateResult {
 
 export type InterventionType = 'email' | 'makeup_session' | 'ticket';
 
+export type InterventionConcern =
+  | 'attendance'
+  | 'progress'
+  | 'assessment'
+  | 'engagement'
+  | 'technical'
+  | 'other';
+
 export interface CreateInterventionPayload {
   type: InterventionType;
   studentId: string;
   courseId?: string;
   message?: string;
+  // Required server-side when type='ticket'. Surfaces as an auto-tag
+  // on the resulting support ticket so supervisors can triage by
+  // concern category.
+  concern?: InterventionConcern;
 }
 
 export interface InterventionResponse {
@@ -716,6 +728,16 @@ export interface InterventionRecord {
   instructorName: string;
   courseName: string | null;
   createdAt: string;
+  // Populated when type === 'ticket' — the BE files a real support
+  // ticket on submit and surfaces its ID + reference number here so
+  // the timeline can deep-link. resolutionStatus / resolutionNote /
+  // resolvedAt get appended by the reverse-sync hook when the support
+  // agent closes the ticket.
+  ticketId?: string | null;
+  ticketReferenceNumber?: string | null;
+  resolutionStatus?: string | null;
+  resolutionNote?: string | null;
+  resolvedAt?: string | null;
 }
 
 // ─── Public Course Listing ──────────────────────────────────

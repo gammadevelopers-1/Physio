@@ -25,6 +25,8 @@ import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
 import StudentDashboardError from "./StudentDashboardError";
 import OfflineBanner from "./OfflineBanner";
+import SupportOfflineBanner from "./SupportOfflineBanner";
+import { useSupportOnlineStatus } from "@/hooks/useSupportOnlineStatus";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentTickets } from "@/hooks/useStudentTickets";
 import { useStudentCourses } from "@/hooks/useStudentCourses";
@@ -47,14 +49,11 @@ const STATUS_TABS: { key: string; label: string }[] = [
   { key: "closed", label: "supportPage.filterClosed" },
 ];
 
-const CATEGORIES: TicketCategory[] = [
-  "billing",
-  "login",
-  "content",
-  "certificate",
-  "technical",
-  "other",
-];
+// Fallback used only when the live category endpoint is unreachable.
+// In normal operation, the form fetches the student-applicable list
+// from `GET /tickets/settings/ticket-categories?role=student`, which
+// reflects whatever the supervisor configured in the Categories panel.
+const FALLBACK_CATEGORIES: TicketCategory[] = ["billing", "login", "other"];
 
 function StatusBadge({
   status,
@@ -66,6 +65,7 @@ function StatusBadge({
   const styles: Record<string, string> = {
     new: "bg-blue-50 text-blue-700",
     in_progress: "bg-yellow-50 text-yellow-700",
+    on_hold: "bg-amber-50 text-amber-700",
     resolved: "bg-green-50 text-green-700",
     closed: "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]",
   };
@@ -73,6 +73,7 @@ function StatusBadge({
   const icons: Record<string, React.ReactNode> = {
     new: <AlertCircle className="w-3 h-3" />,
     in_progress: <Clock className="w-3 h-3" />,
+    on_hold: <Clock className="w-3 h-3" />,
     resolved: <CheckCircle2 className="w-3 h-3" />,
     closed: <CheckCircle2 className="w-3 h-3" />,
   };
@@ -87,23 +88,38 @@ function StatusBadge({
   );
 }
 
-function getSlaHours(priority: string): number {
-  switch (priority) {
-    case "high": return 2;
-    case "medium": return 4;
-    case "low": return 8;
-    default: return 4;
-  }
-}
-
-function SlaBadge({ ticket, t }: { ticket: SupportTicket; t: ReturnType<typeof useTranslations> }) {
+function SlaBadge({
+  ticket,
+  t,
+  supportOnline,
+}: {
+  ticket: SupportTicket;
+  t: ReturnType<typeof useTranslations>;
+  /** True if support business hours are open right now. null while loading. */
+  supportOnline: boolean | null;
+}) {
   if (ticket.status === "resolved" || ticket.status === "closed") return null;
-  const slaHours = getSlaHours(ticket.priority);
-  const slaDeadline = new Date(ticket.createdAt).getTime() + slaHours * 3600000;
-  const remaining = slaDeadline - Date.now();
-  const hoursLeft = remaining / 3600000;
 
-  if (remaining <= 0) {
+  // Use the BE-computed business-minute remaining. This is paused during
+  // off-hours by definition (calculateBusinessMinutesElapsed skips
+  // non-business time). When undefined (older API response), fall back
+  // to a neutral chip rather than the old wall-clock countdown so we
+  // never display a misleading number.
+  const remaining = ticket.frtRemainingMinutes;
+
+  // Off-hours, awaiting business resume: show a "queued" pill, no number.
+  if (supportOnline === false) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-full bg-gray-100 text-gray-700">
+        <Clock className="w-2.5 h-2.5" />
+        {t("supportPage.queuedUntilResume")}
+      </span>
+    );
+  }
+
+  if (remaining == null) return null;
+
+  if (remaining < 0) {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-full bg-red-100 text-red-700">
         <Clock className="w-2.5 h-2.5" />
@@ -111,11 +127,20 @@ function SlaBadge({ ticket, t }: { ticket: SupportTicket; t: ReturnType<typeof u
       </span>
     );
   }
-  const color = hoursLeft > 2 ? "bg-green-100 text-green-700" : hoursLeft > 1 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700";
+
+  const hoursLeft = remaining / 60;
+  const color =
+    hoursLeft > 2
+      ? "bg-green-100 text-green-700"
+      : hoursLeft > 1
+        ? "bg-yellow-100 text-yellow-700"
+        : "bg-red-100 text-red-700";
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-full ${color}`}>
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-full ${color}`}
+    >
       <Clock className="w-2.5 h-2.5" />
-      {t("supportPage.expectedResponse", { hours: Math.ceil(hoursLeft) })}
+      {t("supportPage.expectedResponse", { hours: Math.max(1, Math.ceil(hoursLeft)) })}
     </span>
   );
 }
@@ -124,11 +149,13 @@ function TicketRow({
   ticket,
   t,
   locale,
+  supportOnline,
   onClick,
 }: {
   ticket: SupportTicket;
   t: ReturnType<typeof useTranslations>;
   locale: string;
+  supportOnline: boolean | null;
   onClick: () => void;
 }) {
   const isRTL = locale === "ar";
@@ -165,7 +192,7 @@ function TicketRow({
             locale={locale === "ar" ? "ar" : "en"}
             className="text-[10px] text-[var(--color-text-secondary)]"
           />
-          <SlaBadge ticket={ticket} t={t} />
+          <SlaBadge ticket={ticket} t={t} supportOnline={supportOnline} />
         </div>
       </div>
       <ChevronRight
@@ -219,7 +246,7 @@ function CreateTicketForm({
   onCancel: () => void;
 }) {
   const isRTL = locale === "ar";
-  const [category, setCategory] = useState<TicketCategory>("technical");
+  const [category, setCategory] = useState<TicketCategory | string>("technical");
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [courseId, setCourseId] = useState("");
@@ -229,11 +256,58 @@ function CreateTicketForm({
 
   const { data: enrolledCourses } = useStudentCourses({ limit: 100 });
 
+  // Categories applicable to the student dashboard, fetched from the
+  // supervisor-managed list. Supervisors choose which categories apply
+  // to students via the Categories panel; no hardcoded slug array
+  // here so they don't need a dev change to add one.
+  const [applicableCats, setApplicableCats] = useState<
+    { slug: string; nameEn: string; nameAr: string | null }[]
+  >([]);
+  useEffect(() => {
+    let cancelled = false;
+    supportApi
+      .listTicketCategories({ role: "student" })
+      .then((cats) => {
+        if (cancelled) return;
+        const list = cats.map((c) => ({
+          slug: c.slug,
+          nameEn: c.nameEn,
+          nameAr: c.nameAr,
+        }));
+        const next = list.length > 0
+          ? list
+          : FALLBACK_CATEGORIES.map((slug) => ({ slug, nameEn: slug, nameAr: null }));
+        setApplicableCats(next);
+        setCategory((current) => {
+          if (current && next.some((c) => c.slug === current)) return current;
+          return next[0]?.slug ?? "other";
+        });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        const next = FALLBACK_CATEGORIES.map((slug) => ({
+          slug,
+          nameEn: slug,
+          nameAr: null,
+        }));
+        setApplicableCats(next);
+        setCategory(next[0]?.slug ?? "other");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Build options for the custom Select components.
-  const categoryOptions = CATEGORIES.map((cat) => ({
-    value: cat,
-    label: t(`supportPage.category_${cat}` as Parameters<typeof t>[0]),
-  }));
+  const categoryOptions = applicableCats.map((c) => {
+    let label: string;
+    try {
+      label = t(`supportPage.category_${c.slug}` as Parameters<typeof t>[0]);
+    } catch {
+      label = isRTL && c.nameAr ? c.nameAr : c.nameEn;
+    }
+    return { value: c.slug, label };
+  });
   const courseOptions = [
     { value: "", label: t("supportPage.selectCourse") },
     ...enrolledCourses.map((c) => ({
@@ -332,6 +406,7 @@ function CreateTicketForm({
         category,
         subject: subject.trim(),
         description: description.trim(),
+        source: "student",
         ...(courseId && { courseId }),
         ...(attachmentUrls.length > 0 && { attachmentUrls }),
       });
@@ -375,7 +450,7 @@ function CreateTicketForm({
           <Select
             options={categoryOptions}
             value={category}
-            onChange={(v) => setCategory(v as TicketCategory)}
+            onChange={(v) => setCategory(v)}
             placeholder={t("supportPage.category")}
           />
         </div>
@@ -682,6 +757,7 @@ const SupportContent = () => {
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
   const userData = useStudentProfile();
+  const { isOnline: supportOnline } = useSupportOnlineStatus();
 
   const [mainTab, setMainTab] = useState<MainTab>("tickets");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -746,9 +822,10 @@ const SupportContent = () => {
               </div>
 
               <OfflineBanner />
+              <SupportOfflineBanner />
 
               {/* Main Tabs: Tickets / Help Articles / FAQ */}
-              <div className="flex gap-1 mb-4 border-b border-[var(--color-border)] overflow-x-auto">
+              <div className="flex gap-1 mb-4 border-b border-[var(--color-border)] overflow-x-auto scrollbar-hide">
                 {([
                   { key: "tickets" as MainTab, label: t("supportPage.tabTickets"), icon: MessageSquarePlus },
                   { key: "articles" as MainTab, label: t("supportPage.tabArticles"), icon: BookOpen },
@@ -843,6 +920,7 @@ const SupportContent = () => {
                             ticket={ticket}
                             t={t}
                             locale={locale}
+                            supportOnline={supportOnline}
                             onClick={() => setSelectedTicketId(ticket.id)}
                           />
                         ))}

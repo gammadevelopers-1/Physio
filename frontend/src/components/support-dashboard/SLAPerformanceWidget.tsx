@@ -190,8 +190,39 @@ const SLAPerformanceWidget = () => {
             </h3>
           </div>
         </div>
-        <div className="flex items-center justify-center p-10">
-          <Loader2 className="w-6 h-6 text-[#8B5CF6] animate-spin" />
+        {/* Skeleton mirroring the populated body: 4 SLA metric cards
+            + agent performance table. No reflow when data lands. */}
+        <div className="p-5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="p-3 bg-[var(--color-surface-page)] rounded-xl space-y-1.5"
+              >
+                <div className="h-3 w-16 bg-[var(--color-border)] rounded animate-pulse" />
+                <div className="h-6 w-12 bg-[var(--color-border)] rounded animate-pulse" />
+                <div className="h-2.5 w-20 bg-[var(--color-border)] rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+          <div className="h-4 w-40 bg-[var(--color-border)] rounded animate-pulse mb-3" />
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 py-2 border-b border-[var(--color-border)]"
+              >
+                <div className="w-8 h-8 bg-[var(--color-border)] rounded-full animate-pulse" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3 w-32 bg-[var(--color-border)] rounded animate-pulse" />
+                  <div className="h-2.5 w-48 bg-[var(--color-border)] rounded animate-pulse" />
+                </div>
+                <div className="h-3 w-12 bg-[var(--color-border)] rounded animate-pulse" />
+                <div className="h-3 w-12 bg-[var(--color-border)] rounded animate-pulse" />
+                <div className="h-3 w-12 bg-[var(--color-border)] rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

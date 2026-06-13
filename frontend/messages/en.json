@@ -9462,9 +9462,6 @@
         "youLabel": "You",
         "unknownAuthor": "Team member"
       },
-      "toasts": {
-        "sendFailed": "Couldn't send reply"
-      },
       "banner": {
         "requester": "You are the requester on this ticket. Replies are public.",
         "collaborator": "You are a collaborator on this ticket. Replies are internal only."
@@ -9691,7 +9688,8 @@
         "holdFailed": "Failed to submit hold request",
         "holdApprovedToast": "Hold request approved — ticket is now on hold",
         "holdRejectedToast": "Hold request rejected",
-        "holdDecisionFailed": "Failed to record decision"
+        "holdDecisionFailed": "Failed to record decision",
+        "sendFailed": "Couldn't send reply"
       },
       "onHold": {
         "selectReason": "Select a reason to put this ticket on hold:",

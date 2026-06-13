@@ -9462,9 +9462,6 @@
         "youLabel": "أنت",
         "unknownAuthor": "عضو الفريق"
       },
-      "toasts": {
-        "sendFailed": "تعذّر إرسال الرد"
-      },
       "banner": {
         "requester": "أنت صاحب الطلب على هذه التذكرة. الردود علنية.",
         "collaborator": "أنت مشارك على هذه التذكرة. الردود داخلية فقط."
@@ -9691,7 +9688,8 @@
         "holdFailed": "تعذّر إرسال طلب التعليق",
         "holdApprovedToast": "تمت الموافقة على طلب التعليق — التذكرة الآن معلّقة",
         "holdRejectedToast": "تم رفض طلب التعليق",
-        "holdDecisionFailed": "تعذّر تسجيل القرار"
+        "holdDecisionFailed": "تعذّر تسجيل القرار",
+        "sendFailed": "تعذّر إرسال الرد"
       },
       "onHold": {
         "selectReason": "اختر سببًا لتعليق هذه التذكرة:",

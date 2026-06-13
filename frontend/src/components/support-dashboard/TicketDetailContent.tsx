@@ -25,6 +25,7 @@ import AttachmentPreviewModal, {
 import AttachmentAuditPanel from "./AttachmentAuditPanel";
 import StudentTimelineCard from "./StudentTimelineCard";
 import CollaboratorsPanel from "./CollaboratorsPanel";
+import CollaboratorChatPanel from "./CollaboratorChatPanel";
 import TransferTicketModal from "./TransferTicketModal";
 import {
   ArrowLeft,
@@ -1602,6 +1603,32 @@ const TicketDetailContent = () => {
                         }}
                       />
                     )}
+
+                    {/* Phase 2 — Dedicated collaborator chat for support.
+                        Shows the internal channel as a chat-style surface
+                        so the agent has a focused place to talk with the
+                        looped-in dept without scanning the main thread.
+                        Only renders when there are collaborators to talk
+                        to and the viewer is support. */}
+                    {ticket.viewerRole === "support" &&
+                      (ticket.collaborators?.length ?? 0) > 0 &&
+                      user?.id && (
+                        <CollaboratorChatPanel
+                          ticketId={ticket.id}
+                          comments={ticket.comments as any}
+                          currentUserId={user.id}
+                          composerEnabled={
+                            ticket.status !== "closed" &&
+                            ticket.status !== "resolved"
+                          }
+                          onSent={() => {
+                            supportApi
+                              .getTicket(ticket.id)
+                              .then((d) => setTicket(d))
+                              .catch(() => undefined);
+                          }}
+                        />
+                      )}
 
                     {/* Phase 2 — Transfer button (support/admin only).
                         Opens a modal that re-categorises + loops in the

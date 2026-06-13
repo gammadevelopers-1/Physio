@@ -1,5 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
-import LoopedInTickets from "@/components/support-shared/LoopedInTickets";
+import SupportAssistingSupportContent from "@/components/support-dashboard/SupportAssistingSupportContent";
 import MarkTabViewed from "@/components/MarkTabViewed";
 import { SIDEBAR_TAB_KEYS } from "@/lib/api";
 
@@ -16,16 +16,11 @@ export default async function AgentLoopedInPage({
   setRequestLocale(locale);
 
   return (
-    <main
-      id="main-content"
-      className="min-h-screen bg-[var(--color-surface-page)] py-6"
-    >
+    <main id="main-content" className="min-h-screen">
       <MarkTabViewed tabKey={SIDEBAR_TAB_KEYS.USER_LOOPED_IN} />
-      <div className="max-w-3xl mx-auto px-4">
-        <LoopedInTickets
-          detailBasePath={`/${locale}/dashboard/support/agent/tickets`}
-        />
-      </div>
+      <SupportAssistingSupportContent
+        detailBasePath={`/${locale}/dashboard/support/agent/tickets`}
+      />
     </main>
   );
 }

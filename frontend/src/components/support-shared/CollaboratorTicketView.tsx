@@ -21,6 +21,9 @@ import AttachmentChip, {
   type Attachment as ChipAttachment,
 } from "@/components/support-dashboard/AttachmentChip";
 import LinkifiedText from "@/components/support/LinkifiedText";
+import StudentSnapshotCard from "@/components/support-dashboard/StudentSnapshotCard";
+import CertificateDetailsCard from "@/components/support-dashboard/CertificateDetailsCard";
+import AboutThisStudentCard from "@/components/support-shared/AboutThisStudentCard";
 
 /**
  * Dedicated ticket view for collaborators (looped-in roles).
@@ -70,6 +73,8 @@ type Ticket = {
   attachments?: ChipAttachment[];
   comments: Comment[];
   viewerRole?: "support" | "collaborator" | "requester" | "none";
+  isGuestTicket?: boolean;
+  aboutUser?: import("@/components/support-shared/AboutThisStudentCard").AboutUserData | null;
 };
 
 interface Props {
@@ -198,8 +203,10 @@ export default function CollaboratorTicketView({ backHref }: Props) {
 
   return (
     <main className="min-h-screen bg-[var(--color-surface-page)]" dir={isRTL ? "rtl" : "ltr"}>
-      <div className="max-w-4xl mx-auto px-4 py-5">
-        {/* Back link */}
+      <div className="max-w-[1280px] mx-auto px-4 py-5">
+        {/* Back link — sticks to the very top so the agent can always
+            get out of the chat with one click, regardless of how far
+            they've scrolled through the conversation. */}
         <Link
           href={backHref}
           className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] mb-4"
@@ -208,7 +215,7 @@ export default function CollaboratorTicketView({ backHref }: Props) {
           {t("backToInbox")}
         </Link>
 
-        {/* Ticket header */}
+        {/* Ticket header — full-width banner. */}
         <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5 mb-4">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className="text-[10px] uppercase tracking-wide font-semibold text-[var(--color-text-secondary)] font-mono">
@@ -255,8 +262,14 @@ export default function CollaboratorTicketView({ backHref }: Props) {
           </div>
         </div>
 
+        {/* Two-column layout from here down. Chat + requester context
+            on the left, requester info rail on the right. Stacks on
+            mobile so nothing fights for space. */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 space-y-4">
+
         {/* Requester's context (collapsible) */}
-        <div className="bg-white rounded-2xl border border-[var(--color-border)] mb-4 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
           <button
             type="button"
             onClick={() => setContextOpen((v) => !v)}
@@ -408,6 +421,36 @@ export default function CollaboratorTicketView({ backHref }: Props) {
               {t("collab.composerHint")}
             </p>
           </div>
+        </div>
+
+          </div>
+
+          {/* Right info rail — read-only requester context that helps
+              the collaborator answer Support without asking back.
+              Deliberately limited:
+                ✓ About-this-student (when ticket is filed about a 3rd
+                  party — instructor follow-up case)
+                ✓ Student snapshot (courses, attendance, certs, CME,
+                  payments — at-a-glance profile)
+                ✓ Certificate & CME details (auto-expands for cert
+                  category tickets)
+              ✗ Recent activity / timeline — audit detail, not useful
+              ✗ Attachment audit panel — internal compliance surface
+              ✗ Trainer application — only meaningful for support */}
+          <aside className="space-y-4">
+            {ticket.aboutUser && (
+              <AboutThisStudentCard data={ticket.aboutUser} />
+            )}
+            <StudentSnapshotCard
+              ticketId={ticket.id}
+              isGuestTicket={!!ticket.isGuestTicket}
+            />
+            <CertificateDetailsCard
+              ticketId={ticket.id}
+              ticketCategory={ticket.category}
+              isGuestTicket={!!ticket.isGuestTicket}
+            />
+          </aside>
         </div>
       </div>
     </main>

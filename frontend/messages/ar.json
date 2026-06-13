@@ -9471,6 +9471,19 @@
         "public": "علني",
         "internal": "داخلي"
       },
+      "collabChat": {
+        "title": "محادثة مع المشاركين",
+        "subtitle": "داخلي فقط",
+        "emptyTitle": "لا توجد رسائل بعد",
+        "emptyHint": "اكتب رسالة أدناه — يراها فريق الدعم والمشاركون فقط.",
+        "composerPlaceholder": "راسل المشاركين…",
+        "composerDisabledPlaceholder": "التذكرة مغلقة",
+        "composerHint": "قناة داخلية — لا يراها صاحب الطلب أبدًا. اضغط ⌘/Ctrl+Enter للإرسال.",
+        "sendReply": "إرسال",
+        "sendFailed": "تعذّر إرسال الرسالة",
+        "youLabel": "أنت",
+        "unknownAuthor": "عضو الفريق"
+      },
       "collaborators": {
         "title": "الإدارات المشاركة",
         "loopIn": "إشراك",

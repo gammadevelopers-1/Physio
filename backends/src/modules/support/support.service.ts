@@ -9,7 +9,7 @@ import {
 import * as crypto from 'crypto';
 import * as argon2 from 'argon2';
 import PDFDocument from 'pdfkit';
-import { eq, and, or, desc, asc, sql, ilike, count, inArray, gte, lte, isNull, isNotNull } from 'drizzle-orm';
+import { eq, and, or, desc, asc, sql, ilike, count, inArray, notInArray, gte, lte, isNull, isNotNull } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { db } from '../../database';
 import {
@@ -1072,29 +1072,37 @@ export class SupportService implements OnModuleInit {
 
     if (!ticket) throw new NotFoundException('Ticket not found');
 
-    // Phase 2 — collaborator admission. A user who isn't support/admin
-    // and isn't the requester may still be a looped-in collaborator,
-    // in which case they get to see both public + internal channels
-    // (but the controller hides the right-panel collab list from
-    // non-staff via the viewerRole field).
+    // Phase 2 — collaborator admission. We compute isCollab for EVERY
+    // viewer, not just non-staff. A user with the SUPPORT role can
+    // also be a looped-in collaborator on a ticket they don't own
+    // (this is exactly what escalation auto-add does for the admin
+    // team). Without computing isCollab unconditionally, the agent
+    // isolation check below would block those users from reading
+    // tickets they were explicitly invited to.
     const isRequester = ticket.studentId === user.id;
-    const isCollab =
-      !isSupportOrAdmin && !isRequester
-        ? await this.isCollaborator(ticketId, user.id)
-        : false;
+    const isCollab = !isRequester
+      ? await this.isCollaborator(ticketId, user.id)
+      : false;
 
     // Access check: owner, support/admin, OR active collaborator.
     if (!isSupportOrAdmin && !isRequester && !isCollab) {
       throw new ForbiddenException('You do not have access to this ticket');
     }
 
-    // Agent isolation: non-supervisor agents can only view their assigned tickets
+    // Agent isolation: non-supervisor agents can only view tickets
+    // they're assigned to — UNLESS they're also a collaborator on this
+    // ticket, in which case the looped-in admission overrides the
+    // assignment requirement.
     if (isSupportOrAdmin) {
       const isSupervisorOrAdmin =
         user.supportSubRole === 'supervisor' ||
         user.roles.includes(ROLE_NAMES.ADMIN) ||
         user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
-      if (!isSupervisorOrAdmin && ticket.assigneeId !== user.id) {
+      if (
+        !isSupervisorOrAdmin &&
+        ticket.assigneeId !== user.id &&
+        !isCollab
+      ) {
         throw new ForbiddenException('You are not assigned to this ticket');
       }
     }
@@ -2111,36 +2119,42 @@ export class SupportService implements OnModuleInit {
 
     if (!ticket) throw new NotFoundException('Ticket not found');
 
-    // Phase 2 — collaborator admission. A non-support, non-requester
-    // user who is a looped-in collaborator can post replies, but ONLY
-    // on the internal channel. The visibility matrix is enforced below.
+    // Phase 2 — collaborator admission. Computed for EVERY viewer so
+    // a support user who's also looped-in (e.g. escalation auto-add)
+    // bypasses agent isolation. The visibility matrix below enforces
+    // the channel restrictions per role.
     const isRequester = ticket.studentId === user.id;
-    const isCollab =
-      !isSupportOrAdmin && !isRequester
-        ? await this.isCollaborator(ticketId, user.id)
-        : false;
+    const isCollab = !isRequester
+      ? await this.isCollaborator(ticketId, user.id)
+      : false;
 
     if (!isSupportOrAdmin && !isRequester && !isCollab) {
       throw new ForbiddenException('You do not have access to this ticket');
     }
 
-    // Collaborators are pure brokered participants — they cannot post
-    // public messages. If the FE sends `isInternal=false` from a
-    // collaborator, reject loudly so we never accidentally leak their
-    // voice into the requester's channel.
-    if (isCollab && dto.isInternal === false) {
+    // Pure brokered collaborators (non-support roles) can only post
+    // internal replies — we never want their voice in the requester's
+    // channel. Support staff who are also collaborators keep both
+    // channels (they are the broker).
+    if (isCollab && !isSupportOrAdmin && dto.isInternal === false) {
       throw new BadRequestException(
         'Collaborators can only post internal replies',
       );
     }
 
-    // Agent isolation: non-supervisor agents can only comment on their assigned tickets
+    // Agent isolation: non-supervisor agents can only comment on
+    // tickets they own — unless they're also a collaborator on this
+    // one, in which case looped-in admission overrides assignment.
     if (isSupportOrAdmin) {
       const isSupervisorOrAdmin =
         user.supportSubRole === 'supervisor' ||
         user.roles.includes(ROLE_NAMES.ADMIN) ||
         user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
-      if (!isSupervisorOrAdmin && ticket.assigneeId !== user.id) {
+      if (
+        !isSupervisorOrAdmin &&
+        ticket.assigneeId !== user.id &&
+        !isCollab
+      ) {
         throw new ForbiddenException('You are not assigned to this ticket');
       }
     }
@@ -13019,6 +13033,13 @@ export class SupportService implements OnModuleInit {
         and(
           eq(ticketCollaborators.userId, user.id),
           isNull(ticketCollaborators.removedAt),
+          // Phase 2 — collaborators only see live work. Once a ticket
+          // resolves or closes, drop it from their inbox; Support
+          // retains the full record on their side.
+          notInArray(tickets.status, [
+            TICKET_STATUS.RESOLVED,
+            TICKET_STATUS.CLOSED,
+          ]),
         ),
       )
       .orderBy(desc(tickets.updatedAt))

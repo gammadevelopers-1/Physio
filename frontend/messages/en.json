@@ -9471,6 +9471,19 @@
         "public": "Public",
         "internal": "Internal"
       },
+      "collabChat": {
+        "title": "Chat with collaborators",
+        "subtitle": "Internal only",
+        "emptyTitle": "No messages yet",
+        "emptyHint": "Send a message below — only Support and looped-in collaborators see it.",
+        "composerPlaceholder": "Message your collaborators…",
+        "composerDisabledPlaceholder": "Ticket is closed",
+        "composerHint": "Internal channel — the requester never sees this. ⌘/Ctrl+Enter to send.",
+        "sendReply": "Send",
+        "sendFailed": "Couldn't send message",
+        "youLabel": "You",
+        "unknownAuthor": "Team member"
+      },
       "collaborators": {
         "title": "Involved Departments",
         "loopIn": "Loop in",

@@ -14,16 +14,21 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { supportApi } from "@/lib/api";
+import TransferTicketModal from "./TransferTicketModal";
 
 interface Props {
   ticketId: string;
   ticketCategory: string;
   basePath: string;
   isSupervisor: boolean;
+  /** Course attached to this ticket — gates course-bound departments
+   *  in the Transfer modal. Leave null/undefined when unknown (the
+   *  modal falls back to a course-agnostic dept list). */
+  courseId?: string | null;
   onChanged?: () => void;
 }
 
-type Dialog = null | "merge" | "transfer";
+type Dialog = null | "merge";
 
 type MergeCandidate = {
   id: string;
@@ -38,6 +43,9 @@ type Category = {
   slug: string;
   nameEn: string;
   nameAr: string | null;
+  requiresCourse: boolean;
+  suggestedDepartment: string | null;
+  applicableRoles: string[];
 };
 
 // Compact governance bar shown above the ticket header for supervisors.
@@ -56,11 +64,11 @@ export default function TicketGovernanceToolbar({
   ticketCategory,
   basePath,
   isSupervisor,
+  courseId,
   onChanged,
 }: Props) {
   const router = useRouter();
   const t = useTranslations("supportDashboard.ticketDetail.governance");
-  const tCat = useTranslations("supportDashboard.tickets");
   const [dialog, setDialog] = useState<Dialog>(null);
 
   // ── Merge state ───────────────────────────────────────────
@@ -73,21 +81,29 @@ export default function TicketGovernanceToolbar({
   const mergeRef = useRef<HTMLDivElement>(null);
 
   // ── Transfer state ────────────────────────────────────────
+  // Phase 2 — the Transfer button now opens the canonical
+  // <TransferTicketModal> (broker-model: category + dept + system
+  // message). We still own a small categories cache here so the modal
+  // doesn't have to refetch on every open.
   const [categories, setCategories] = useState<Category[] | null>(null);
-  const [categoriesLoading, setCategoriesLoading] = useState(false);
-  const [transferCategory, setTransferCategory] = useState("");
-  const [transferReason, setTransferReason] = useState("");
-  const [transferReassign, setTransferReassign] = useState(true);
-  const [transferOpen, setTransferOpen] = useState(false);
-  const [transferring, setTransferring] = useState(false);
-  const transferRef = useRef<HTMLDivElement>(null);
+  const [showTransferModal, setShowTransferModal] = useState(false);
 
-  // Reset form state whenever the modal re-opens so leftover values
-  // from a cancelled attempt don't bleed into the next one.
+  // Lazy-load categories the first time the user opens Transfer; cache
+  // for the lifetime of the toolbar so reopening is instant.
+  useEffect(() => {
+    if (!showTransferModal || categories) return;
+    supportApi
+      .listTicketCategories()
+      .then((rows) => setCategories(rows))
+      .catch(() => setCategories([]));
+  }, [showTransferModal, categories]);
+
+  // Reset merge form state whenever the merge modal re-opens so
+  // leftover values from a cancelled attempt don't bleed into the
+  // next one.
   useEffect(() => {
     if (dialog === null) {
       setMergeOpen(false);
-      setTransferOpen(false);
     }
     if (dialog === "merge") {
       setMergeTargetId("");
@@ -99,21 +115,7 @@ export default function TicketGovernanceToolbar({
         .catch(() => setCandidates([]))
         .finally(() => setCandidatesLoading(false));
     }
-    if (dialog === "transfer") {
-      setTransferReason("");
-      setTransferReassign(true);
-      setCategoriesLoading(true);
-      supportApi
-        .listTicketCategories()
-        .then((rows) => {
-          const filtered = rows.filter((c) => c.slug !== ticketCategory);
-          setCategories(filtered);
-          setTransferCategory(filtered[0]?.slug || "");
-        })
-        .catch(() => setCategories([]))
-        .finally(() => setCategoriesLoading(false));
-    }
-  }, [dialog, ticketId, ticketCategory]);
+  }, [dialog, ticketId]);
 
   // Esc-to-close.
   useEffect(() => {
@@ -125,28 +127,17 @@ export default function TicketGovernanceToolbar({
     return () => window.removeEventListener("keydown", onKey);
   }, [dialog]);
 
-  // Close dropdowns on outside click.
+  // Close merge dropdown on outside click.
   useEffect(() => {
-    if (!mergeOpen && !transferOpen) return;
+    if (!mergeOpen) return;
     const onClick = (e: MouseEvent) => {
-      if (
-        mergeOpen &&
-        mergeRef.current &&
-        !mergeRef.current.contains(e.target as Node)
-      ) {
+      if (mergeRef.current && !mergeRef.current.contains(e.target as Node)) {
         setMergeOpen(false);
-      }
-      if (
-        transferOpen &&
-        transferRef.current &&
-        !transferRef.current.contains(e.target as Node)
-      ) {
-        setTransferOpen(false);
       }
     };
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
-  }, [mergeOpen, transferOpen]);
+  }, [mergeOpen]);
 
   const doMerge = useCallback(async () => {
     if (!mergeTargetId) {
@@ -171,58 +162,10 @@ export default function TicketGovernanceToolbar({
     }
   }, [mergeTargetId, mergeNote, ticketId, basePath, router, onChanged, t]);
 
-  const doTransfer = useCallback(async () => {
-    if (!transferCategory) {
-      toast.error(t("transfer.errorPickCategory"));
-      return;
-    }
-    setTransferring(true);
-    try {
-      // Phase 2 — transfer is now broker-model: changes category +
-      // loops in a target department. The legacy toolbar passes the
-      // category; we default the dept to 'admin' which is the safest
-      // catch-all when no explicit dept context is available. For
-      // richer routing, use the dedicated TransferTicketModal in the
-      // ticket detail right panel.
-      await supportApi.transferTicket(ticketId, {
-        toCategory: transferCategory,
-        toDepartment: 'admin',
-        noteToRequester: transferReason.trim() || undefined,
-      });
-      toast.success(t("transfer.success"));
-      setDialog(null);
-      onChanged?.();
-    } catch (err: any) {
-      toast.error(err?.message || t("transfer.errorGeneric"));
-    } finally {
-      setTransferring(false);
-    }
-  }, [
-    transferCategory,
-    transferReason,
-    transferReassign,
-    ticketId,
-    onChanged,
-    t,
-  ]);
-
   if (!isSupervisor) return null;
-
-  // Pretty category label — fall back to the slug if no translation key.
-  const categoryLabel = (slug: string, nameEn: string | null) => {
-    try {
-      const label = tCat(`categories.${slug}` as any);
-      if (label && !label.includes("categories.")) return label;
-    } catch {
-      /* ignore — slug isn't a known key */
-    }
-    return nameEn || slug;
-  };
 
   const selectedCandidate =
     candidates?.find((c) => c.id === mergeTargetId) || null;
-  const selectedCategory =
-    categories?.find((c) => c.slug === transferCategory) || null;
 
   return (
     <>
@@ -237,7 +180,7 @@ export default function TicketGovernanceToolbar({
         </button>
         <button
           type="button"
-          onClick={() => setDialog("transfer")}
+          onClick={() => setShowTransferModal(true)}
           className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]"
         >
           <ArrowRightLeft className="w-3.5 h-3.5" />
@@ -259,12 +202,12 @@ export default function TicketGovernanceToolbar({
             {/* ── header ─────────────────────────────────── */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border-subtle)]">
               <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
-                {dialog === "merge" ? t("merge.title") : t("transfer.title")}
+                {t("merge.title")}
               </h3>
               <button
                 type="button"
                 onClick={() => setDialog(null)}
-                disabled={merging || transferring}
+                disabled={merging}
                 className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-50"
                 aria-label={t("close")}
               >
@@ -392,108 +335,6 @@ export default function TicketGovernanceToolbar({
                 </>
               )}
 
-              {dialog === "transfer" && (
-                <>
-                  <p className="text-sm text-[var(--color-text-secondary)]">
-                    {t("transfer.intro")}
-                  </p>
-
-                  {/* Themed category dropdown */}
-                  <div>
-                    <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1.5">
-                      {t("transfer.categoryLabel")}
-                    </label>
-                    <div ref={transferRef} className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setTransferOpen((v) => !v)}
-                        disabled={transferring || categoriesLoading}
-                        className="w-full h-10 px-3 flex items-center justify-between bg-white border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] hover:border-[var(--color-primary)] focus:outline-none focus:border-[var(--color-primary)] disabled:opacity-50"
-                      >
-                        <span>
-                          {categoriesLoading ? (
-                            <span className="text-[var(--color-text-secondary)]">
-                              {t("transfer.loading")}
-                            </span>
-                          ) : selectedCategory ? (
-                            categoryLabel(
-                              selectedCategory.slug,
-                              selectedCategory.nameEn,
-                            )
-                          ) : (
-                            <span className="text-[var(--color-text-secondary)]">
-                              {t("transfer.categoryPlaceholder")}
-                            </span>
-                          )}
-                        </span>
-                        <ChevronDown
-                          className={`w-4 h-4 transition-transform ${
-                            transferOpen ? "rotate-180" : ""
-                          }`}
-                        />
-                      </button>
-                      {transferOpen && (
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 py-1 overflow-hidden max-h-64 overflow-y-auto">
-                          {categories && categories.length > 0 ? (
-                            categories.map((c) => (
-                              <button
-                                key={c.slug}
-                                type="button"
-                                onClick={() => {
-                                  setTransferCategory(c.slug);
-                                  setTransferOpen(false);
-                                }}
-                                className={`w-full px-3 py-2 text-sm text-start hover:bg-[var(--color-border-subtle)] flex items-center justify-between ${
-                                  c.slug === transferCategory
-                                    ? "text-[var(--color-primary)] font-medium bg-[var(--color-border-subtle)]"
-                                    : "text-[var(--color-text-primary)]"
-                                }`}
-                              >
-                                <span>
-                                  {categoryLabel(c.slug, c.nameEn)}
-                                </span>
-                                {c.slug === transferCategory && (
-                                  <Check className="w-4 h-4" />
-                                )}
-                              </button>
-                            ))
-                          ) : (
-                            <p className="px-3 py-3 text-xs text-[var(--color-text-secondary)] text-center">
-                              {t("transfer.noOtherCategories")}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1.5">
-                      {t("transfer.reasonLabel")}
-                    </label>
-                    <input
-                      type="text"
-                      value={transferReason}
-                      onChange={(e) => setTransferReason(e.target.value)}
-                      maxLength={200}
-                      disabled={transferring}
-                      placeholder={t("transfer.reasonPlaceholder")}
-                      className="w-full h-10 px-3 bg-white border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] disabled:opacity-50"
-                    />
-                  </div>
-
-                  <label className="flex items-center gap-2 text-xs text-[var(--color-text-primary)] cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={transferReassign}
-                      onChange={(e) => setTransferReassign(e.target.checked)}
-                      disabled={transferring}
-                      className="w-4 h-4 rounded border-[var(--color-input-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
-                    />
-                    {t("transfer.reassignLabel")}
-                  </label>
-                </>
-              )}
             </div>
 
             {/* ── footer ────────────────────────────────── */}
@@ -501,12 +342,12 @@ export default function TicketGovernanceToolbar({
               <button
                 type="button"
                 onClick={() => setDialog(null)}
-                disabled={merging || transferring}
+                disabled={merging}
                 className="px-3 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-50"
               >
                 {t("cancel")}
               </button>
-              {dialog === "merge" ? (
+              {dialog === "merge" && (
                 <button
                   type="button"
                   onClick={doMerge}
@@ -518,23 +359,24 @@ export default function TicketGovernanceToolbar({
                   {merging && <Loader2 className="w-4 h-4 animate-spin" />}
                   {t("merge.submit")}
                 </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={doTransfer}
-                  disabled={
-                    transferring || categoriesLoading || !transferCategory
-                  }
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50"
-                >
-                  {transferring && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {t("transfer.submit")}
-                </button>
               )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Phase 2 — Transfer (broker model). Same modal the right-hand
+          "Involved departments" panel opens; mounting it here ensures
+          the toolbar's Transfer button uses the identical flow. */}
+      <TransferTicketModal
+        open={showTransferModal}
+        onOpenChange={setShowTransferModal}
+        ticketId={ticketId}
+        currentCategory={ticketCategory}
+        courseId={courseId ?? null}
+        categories={categories ?? []}
+        onTransferred={() => onChanged?.()}
+      />
     </>
   );
 }

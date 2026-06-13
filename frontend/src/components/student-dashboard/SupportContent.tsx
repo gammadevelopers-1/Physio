@@ -55,6 +55,18 @@ const STATUS_TABS: { key: string; label: string }[] = [
 // reflects whatever the supervisor configured in the Categories panel.
 const FALLBACK_CATEGORIES: TicketCategory[] = ["billing", "login", "other"];
 
+// "courses" → "Courses", "technical_general" → "Technical General".
+// Used when a category slug has no matching i18n key (typical for
+// supervisor-added categories), so the chip stays readable instead of
+// showing the raw `studentDashboard.supportPage.category_X` path.
+function humanizeCategorySlug(slug: string): string {
+  return slug
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function StatusBadge({
   status,
   t,
@@ -163,6 +175,22 @@ function TicketRow({
     isRTL && ticket.courseTitleAr
       ? ticket.courseTitleAr
       : ticket.courseTitle;
+  // Categories outside the builtin set (supervisor-added ones like
+  // "courses") have no i18n key — render the humanized slug rather
+  // than the raw `studentDashboard.supportPage.category_xyz` path.
+  let categoryLabel: string;
+  try {
+    categoryLabel = t(
+      `supportPage.category_${ticket.category}` as Parameters<typeof t>[0],
+    );
+    if (
+      categoryLabel.endsWith(`supportPage.category_${ticket.category}`)
+    ) {
+      categoryLabel = humanizeCategorySlug(ticket.category);
+    }
+  } catch {
+    categoryLabel = humanizeCategorySlug(ticket.category);
+  }
 
   return (
     <button
@@ -174,7 +202,7 @@ function TicketRow({
         <div className="flex items-center gap-2 mb-1 flex-wrap">
           <StatusBadge status={ticket.status} t={t} />
           <span className="text-[10px] text-[var(--color-text-secondary)]">
-            {t(`supportPage.category_${ticket.category}` as Parameters<typeof t>[0])}
+            {categoryLabel}
           </span>
         </div>
         <h3 className="text-sm font-medium text-[var(--color-text-primary)] truncate">
@@ -300,11 +328,17 @@ function CreateTicketForm({
 
   // Build options for the custom Select components.
   const categoryOptions = applicableCats.map((c) => {
+    const fallback = isRTL && c.nameAr ? c.nameAr : c.nameEn || humanizeCategorySlug(c.slug);
     let label: string;
     try {
       label = t(`supportPage.category_${c.slug}` as Parameters<typeof t>[0]);
+      // next-intl returns the namespaced path on miss — detect and
+      // swap in the supervisor-authored name (or humanized slug).
+      if (label.endsWith(`supportPage.category_${c.slug}`)) {
+        label = fallback;
+      }
     } catch {
-      label = isRTL && c.nameAr ? c.nameAr : c.nameEn;
+      label = fallback;
     }
     return { value: c.slug, label };
   });

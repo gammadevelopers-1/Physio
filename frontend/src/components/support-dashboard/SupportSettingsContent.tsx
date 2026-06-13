@@ -37,7 +37,14 @@ import {
   Eye,
   EyeOff,
   Smartphone,
+  ChevronDown,
+  ChevronUp,
+  Search,
+  BarChart3,
+  TrendingUp,
+  AlertCircle,
 } from "lucide-react";
+import Select from "@/components/admin-dashboard/Select";
 
 // Format a minute value as a friendly time hint. Show the smallest
 // unit that divides cleanly — falls back to "Xh Ym" for awkward
@@ -117,63 +124,78 @@ function SLAPolicyRow({ policy, canEdit, isSaving, onSave, t }: {
   })();
   const isValid = validationError === null;
 
+  // Larger, more readable chip — used as the visual "anchor" for each
+  // row in the new card layout (replacing the old table pill).
   const priorityStyles: Record<string, string> = {
-    high: 'bg-[#FEE2E2] text-[#EF4444]',
-    medium: 'bg-[#FFEDD5] text-[#F97316]',
-    low: 'bg-[#DCFCE7] text-[#22C55E]',
+    high: 'bg-[#FEE2E2] text-[#B91C1C] ring-[#FCA5A5]',
+    medium: 'bg-[#FFEDD5] text-[#9A3412] ring-[#FDBA74]',
+    low: 'bg-[#DCFCE7] text-[#166534] ring-[#86EFAC]',
+  };
+  const priorityLabel: Record<string, string> = {
+    high: t('settingsPage.slaPanel.priorities.high'),
+    medium: t('settingsPage.slaPanel.priorities.medium'),
+    low: t('settingsPage.slaPanel.priorities.low'),
   };
 
-  const inputBase =
-    'w-24 h-9 px-3 border rounded-lg text-sm focus:outline-none disabled:bg-[var(--color-surface-page)] disabled:text-[var(--color-text-secondary)]';
-  const inputClass = (fieldError: boolean) =>
-    `${inputBase} ${
-      hasChanges && fieldError
-        ? 'border-[#FECACA] focus:border-[#EF4444]'
-        : 'border-[var(--color-border)] focus:border-[var(--color-primary)]'
-    }`;
+  const labelCls =
+    'text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-1.5';
 
   return (
-    <>
-      <tr className="border-b border-[var(--color-border-subtle)]">
-        <td className="py-3 px-4">
-          <span className={`px-2.5 py-1 text-xs font-medium rounded-full capitalize ${priorityStyles[policy.priority] || ''}`}>
-            {policy.priority}
+    <div className="py-5 first:pt-3 last:pb-3">
+      <div className="flex items-start gap-5 flex-wrap">
+        {/* Priority anchor */}
+        <div className="w-24 flex-shrink-0 pt-2">
+          <span
+            className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ring-1 ring-inset ${
+              priorityStyles[policy.priority] || ''
+            }`}
+          >
+            {priorityLabel[policy.priority] || policy.priority}
           </span>
-        </td>
-        <td className="py-3 px-4 align-top">
-          <DhmInput
-            totalMinutes={frtNum}
-            onTotalChange={(m) => setFrt(String(m))}
-            disabled={!canEdit || isSaving}
-            invalid={!Number.isInteger(frtNum) || frtNum < 1}
-            t={t}
-          />
-        </td>
-        <td className="py-3 px-4 align-top">
-          <DhmInput
-            totalMinutes={ttrNum}
-            onTotalChange={(m) => setTtr(String(m))}
-            disabled={!canEdit || isSaving}
-            invalid={
-              !Number.isInteger(ttrNum) || ttrNum < 1 || ttrNum <= frtNum
-            }
-            t={t}
-          />
-        </td>
-        <td className="py-3 px-4 align-top">
-          <DhmInput
-            totalMinutes={escalateNum}
-            onTotalChange={(m) => setEscalate(String(m))}
-            disabled={!canEdit || isSaving}
-            invalid={
-              !Number.isInteger(escalateNum) ||
-              escalateNum < 1 ||
-              escalateNum > ttrNum
-            }
-            t={t}
-          />
-        </td>
-        <td className="py-3 px-4 text-right align-top">
+        </div>
+
+        {/* Three duration pickers, equal-width on desktop, stack on small */}
+        <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-4">
+          <div>
+            <div className={labelCls}>{t('settingsPage.slaPanel.columns.frt')}</div>
+            <DurationPicker
+              totalMinutes={frtNum}
+              onTotalChange={(m) => setFrt(String(m))}
+              disabled={!canEdit || isSaving}
+              invalid={!Number.isInteger(frtNum) || frtNum < 1}
+              t={t}
+            />
+          </div>
+          <div>
+            <div className={labelCls}>{t('settingsPage.slaPanel.columns.ttr')}</div>
+            <DurationPicker
+              totalMinutes={ttrNum}
+              onTotalChange={(m) => setTtr(String(m))}
+              disabled={!canEdit || isSaving}
+              invalid={
+                !Number.isInteger(ttrNum) || ttrNum < 1 || ttrNum <= frtNum
+              }
+              t={t}
+            />
+          </div>
+          <div>
+            <div className={labelCls}>{t('settingsPage.slaPanel.columns.escalate')}</div>
+            <DurationPicker
+              totalMinutes={escalateNum}
+              onTotalChange={(m) => setEscalate(String(m))}
+              disabled={!canEdit || isSaving}
+              invalid={
+                !Number.isInteger(escalateNum) ||
+                escalateNum < 1 ||
+                escalateNum > ttrNum
+              }
+              t={t}
+            />
+          </div>
+        </div>
+
+        {/* Save — only when there's something to save */}
+        <div className="w-full sm:w-auto sm:pt-7 flex sm:justify-end">
           {canEdit && hasChanges && (
             <button
               onClick={() =>
@@ -184,33 +206,34 @@ function SLAPolicyRow({ policy, canEdit, isSaving, onSave, t }: {
                 })
               }
               disabled={isSaving || !isValid}
-              className="px-3 py-1.5 bg-[var(--color-primary)] text-white text-xs font-medium rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 h-10 bg-[var(--color-primary)] text-white text-xs font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
             >
+              {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               {isSaving ? t('settingsPage.slaPanel.saving') : t('settingsPage.slaPanel.save')}
             </button>
           )}
-        </td>
-      </tr>
+        </div>
+      </div>
+
       {hasChanges && !isValid && (
-        <tr>
-          <td colSpan={5} className="px-4 pb-2">
-            <p className="text-xs text-[#B91C1C]">{validationError}</p>
-          </td>
-        </tr>
+        <p className="text-xs text-[#B91C1C] mt-3 ms-[7.25rem]">
+          {validationError}
+        </p>
       )}
-    </>
+    </div>
   );
 }
 
-// Days / hours / minutes input row that emits a single total-minutes
-// value back to the parent. Splitting the input is purely cosmetic —
-// the underlying SLA policy still stores minutes — so the persisted
-// shape doesn't change and the math elsewhere stays untouched.
+// Custom duration picker — one rounded pill split into three segments
+// (days / hours / minutes). Replaces the previous DhmInput which was
+// three independently bordered number inputs sitting next to each
+// other. The single pill reads as one control, and the segment with
+// the active field gets a soft highlight so it's obvious where typing
+// goes. Each segment also has up/down chevrons that bump by 1, which
+// is the natural interaction for a picker.
 //
-// Per-field clamping: hours 0–23, minutes 0–59. Days is unbounded
-// (some support orgs run 7-day TTRs). NaN inputs collapse to 0 so a
-// partially-cleared row never poisons the total.
-function DhmInput({
+// Per-segment clamping: hours 0–23, minutes 0–59. Days is unbounded.
+function DurationPicker({
   totalMinutes,
   onTotalChange,
   disabled,
@@ -233,62 +256,58 @@ function DhmInput({
     onTotalChange(next);
   };
 
-  const inputCls = `w-14 h-9 px-2 text-sm text-center border rounded-lg focus:outline-none disabled:bg-[var(--color-surface-page)] disabled:text-[var(--color-text-secondary)] ${
+  const wrapperCls = `inline-flex items-stretch h-12 rounded-xl bg-white transition-colors ${
     invalid
-      ? "border-[#FECACA] focus:border-[#EF4444]"
-      : "border-[var(--color-border)] focus:border-[var(--color-primary)]"
-  }`;
+      ? "ring-1 ring-inset ring-[#FECACA]"
+      : "ring-1 ring-inset ring-[var(--color-border)] focus-within:ring-2 focus-within:ring-[var(--color-primary)]"
+  } ${disabled ? "opacity-60" : ""}`;
 
   return (
     <div>
-      <div className="inline-flex items-end gap-1.5">
-        <DhmField
+      <div className={wrapperCls}>
+        <DurationSegment
           value={days}
-          onChange={(v) => update(v, hours, minutes)}
           unit={t("settingsPage.slaPanel.unitDays")}
-          inputCls={inputCls}
+          onChange={(v) => update(v, hours, minutes)}
           disabled={disabled}
         />
-        <DhmField
+        <div className="self-center w-px h-7 bg-[var(--color-border-subtle)]" />
+        <DurationSegment
           value={hours}
-          onChange={(v) => update(days, Math.min(23, v), minutes)}
           unit={t("settingsPage.slaPanel.unitHours")}
           max={23}
-          inputCls={inputCls}
+          onChange={(v) => update(days, v, minutes)}
           disabled={disabled}
         />
-        <DhmField
+        <div className="self-center w-px h-7 bg-[var(--color-border-subtle)]" />
+        <DurationSegment
           value={minutes}
-          onChange={(v) => update(days, hours, Math.min(59, v))}
           unit={t("settingsPage.slaPanel.unitMinutes")}
           max={59}
-          inputCls={inputCls}
+          onChange={(v) => update(days, hours, v)}
           disabled={disabled}
         />
       </div>
-      <p className="text-[10px] text-[var(--color-text-secondary)] mt-1 h-3">
+      <p className="text-[10px] text-[var(--color-text-secondary)] mt-1.5 px-1">
         {t("settingsPage.slaPanel.totalMinutes", { count: safeTotal })}
       </p>
     </div>
   );
 }
 
-function DhmField({
+function DurationSegment({
   value,
-  onChange,
   unit,
   max,
-  inputCls,
+  onChange,
   disabled,
 }: {
   value: number;
-  onChange: (next: number) => void;
   unit: string;
   max?: number;
-  inputCls: string;
+  onChange: (next: number) => void;
   disabled: boolean;
 }) {
-  // Sanitize: digits only, strip leading zeros, optionally clamp to max.
   const sanitize = (raw: string): number => {
     const digits = raw.replace(/[^0-9]/g, "").slice(0, 4);
     if (digits === "") return 0;
@@ -296,20 +315,58 @@ function DhmField({
     if (Number.isNaN(n)) return 0;
     return max !== undefined ? Math.min(max, n) : n;
   };
+  const bump = (delta: number) => {
+    const next = value + delta;
+    if (next < 0) return;
+    onChange(max !== undefined ? Math.min(max, next) : next);
+  };
   return (
-    <div className="flex flex-col items-center">
-      <input
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        value={String(value)}
-        onChange={(e) => onChange(sanitize(e.target.value))}
-        disabled={disabled}
-        className={inputCls}
-      />
-      <span className="text-[10px] text-[var(--color-text-secondary)] mt-0.5">
-        {unit}
-      </span>
+    <div className="flex items-center gap-1 px-3 group">
+      <div className="flex flex-col items-center">
+        <input
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={String(value)}
+          onChange={(e) => onChange(sanitize(e.target.value))}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowUp") {
+              e.preventDefault();
+              bump(1);
+            } else if (e.key === "ArrowDown") {
+              e.preventDefault();
+              bump(-1);
+            }
+          }}
+          disabled={disabled}
+          className="w-9 bg-transparent text-base font-semibold text-[var(--color-text-primary)] text-center focus:outline-none disabled:text-[var(--color-text-secondary)]"
+        />
+        <span className="text-[9px] uppercase tracking-wide text-[var(--color-text-secondary)] -mt-0.5">
+          {unit}
+        </span>
+      </div>
+      {!disabled && (
+        <div className="flex flex-col opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={() => bump(1)}
+            className="p-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)]"
+            aria-label="Increase"
+          >
+            <ChevronUp className="w-3 h-3" />
+          </button>
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={() => bump(-1)}
+            className="p-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)]"
+            aria-label="Decrease"
+          >
+            <ChevronDown className="w-3 h-3" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -362,7 +419,18 @@ const SupportSettingsContent = () => {
     kbArticleIds: string[];
   }>({ title: '', bodyTemplate: '', bodyAr: '', categoryKey: '', kbArticleIds: [] });
   const [macroSaving, setMacroSaving] = useState(false);
-  const [showInactiveMacros, setShowInactiveMacros] = useState(false);
+  // 3-way status filter: "active" (default, only live macros), "all"
+  // (live + retired together, for audit), or "inactive" (only retired).
+  // Replaces the old "Show inactive" checkbox — that toggle's semantics
+  // were confusing because checking it didn't filter to inactive, it
+  // just added them to the active list.
+  const [macroStatusFilter, setMacroStatusFilter] = useState<
+    "active" | "all" | "inactive"
+  >("active");
+  // Whether the inline "Available variables" reference list is open.
+  // Collapsed by default to keep the panel clean — agents who don't
+  // need a reminder don't see the wall of {{…}} tokens.
+  const [macroVarsOpen, setMacroVarsOpen] = useState(false);
   const [macroCategoryFilter, setMacroCategoryFilter] = useState<string>('');
   const [macroSearch, setMacroSearch] = useState('');
   const [macroSubView, setMacroSubView] = useState<'library' | 'analytics'>('library');
@@ -388,8 +456,10 @@ const SupportSettingsContent = () => {
   const refreshMacros = async () => {
     setMacrosLoading(true);
     try {
+      // We need both buckets whenever the user isn't strictly looking
+      // at "active" — "all" and "inactive" both depend on inactive rows.
       const refreshed = await supportApi.getMacros({
-        includeInactive: showInactiveMacros,
+        includeInactive: macroStatusFilter !== "active",
       });
       setMacrosList(refreshed || []);
     } catch { toast.error(t("settingsPage.macrosPanel.toasts.saveFailed")); }
@@ -462,7 +532,7 @@ const SupportSettingsContent = () => {
       }).catch(() => {});
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSub, showInactiveMacros]);
+  }, [activeSub, macroStatusFilter]);
 
   useEffect(() => {
     if (activeSub !== 'macros' || macroSubView !== 'analytics') return;
@@ -479,6 +549,10 @@ const SupportSettingsContent = () => {
   const filteredMacros = useMemo(() => {
     const q = macroSearch.trim().toLowerCase();
     return macrosList.filter((m) => {
+      // Status filter — the BE fetches active+inactive when not
+      // "active"; we narrow to inactive-only when that's what the
+      // user picked.
+      if (macroStatusFilter === "inactive" && m.isActive) return false;
       if (macroCategoryFilter && (m.categoryKey || '') !== macroCategoryFilter) {
         return false;
       }
@@ -487,7 +561,7 @@ const SupportSettingsContent = () => {
       }
       return true;
     });
-  }, [macrosList, macroSearch, macroCategoryFilter]);
+  }, [macrosList, macroSearch, macroCategoryFilter, macroStatusFilter]);
 
   const isSupervisorOrAdmin = Boolean(
     user?.supportSubRole === "supervisor" ||
@@ -745,37 +819,105 @@ const SupportSettingsContent = () => {
                       </div>
                       {macroSubView === 'library' && (
                         <>
-                      <p className="text-sm text-[var(--color-text-secondary)] mb-4">{t("settingsPage.macrosPanel.description", { variables: '{{learner_name}}, {{learner_first_name}}, {{course_name}}, {{ticket_id}}, {{ticket_subject}}, {{ticket_priority}}, {{ticket_category}}, {{ticket_status}}, {{agent_name}}, {{certificate_status}}, {{webinar_join_url}}, {{payment_amount}}' })}</p>
+                      {/* Short description + collapsible variable reference.
+                          The wall of {{…}} tokens used to take three lines of
+                          panel header real estate; agents who don't need a
+                          reminder can leave it collapsed. */}
+                      <div className="mb-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="text-sm text-[var(--color-text-secondary)]">
+                            {t("settingsPage.macrosPanel.descriptionShort")}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setMacroVarsOpen((v) => !v)}
+                            className="shrink-0 inline-flex items-center gap-1 text-xs font-medium text-[var(--color-primary)] hover:underline"
+                          >
+                            {t("settingsPage.macrosPanel.viewVariables")}
+                            {macroVarsOpen ? (
+                              <ChevronUp className="w-3.5 h-3.5" />
+                            ) : (
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+                        {macroVarsOpen && (
+                          <div className="mt-2 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-page)]">
+                            <p className="text-[10px] uppercase tracking-wide font-semibold text-[var(--color-text-secondary)] mb-1.5">
+                              {t("settingsPage.macrosPanel.availableVariables")}
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {[
+                                '{{learner_name}}',
+                                '{{learner_first_name}}',
+                                '{{course_name}}',
+                                '{{ticket_id}}',
+                                '{{ticket_subject}}',
+                                '{{ticket_priority}}',
+                                '{{ticket_category}}',
+                                '{{ticket_status}}',
+                                '{{agent_name}}',
+                                '{{certificate_status}}',
+                                '{{webinar_join_url}}',
+                                '{{payment_amount}}',
+                              ].map((v) => (
+                                <code
+                                  key={v}
+                                  className="px-1.5 py-0.5 text-[10px] font-mono rounded bg-white border border-[var(--color-border)] text-[var(--color-text-primary)]"
+                                >
+                                  {v}
+                                </code>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
-                      {/* Filter strip: search + category chips + show-inactive toggle */}
+                      {/* Filter strip: search · custom category dropdown · status segmented control */}
                       <div className="flex items-center gap-2 flex-wrap mb-4">
-                        <input
-                          type="text"
-                          value={macroSearch}
-                          onChange={(e) => setMacroSearch(e.target.value)}
-                          placeholder={t("settingsPage.macrosPanel.searchPlaceholder")}
-                          className="h-8 px-3 border border-[var(--color-border)] rounded-lg text-xs focus:outline-none focus:border-[var(--color-primary)] flex-1 min-w-[180px] max-w-[280px]"
-                        />
-                        <select
-                          value={macroCategoryFilter}
-                          onChange={(e) => setMacroCategoryFilter(e.target.value)}
-                          className="h-8 px-2 border border-[var(--color-border)] rounded-lg text-xs bg-white focus:outline-none focus:border-[var(--color-primary)]"
-                        >
-                          <option value="">{t("settingsPage.macrosPanel.filterAllCategories")}</option>
-                          <option value="">— {t("settingsPage.macrosPanel.categoryGeneral")} —</option>
-                          {ticketCategories.map((c) => (
-                            <option key={c.slug} value={c.slug}>{c.nameEn}</option>
-                          ))}
-                        </select>
-                        <label className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)] cursor-pointer">
+                        <div className="relative flex-1 min-w-[180px] max-w-[280px]">
+                          <Search className="w-3.5 h-3.5 absolute start-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] pointer-events-none" />
                           <input
-                            type="checkbox"
-                            checked={showInactiveMacros}
-                            onChange={(e) => setShowInactiveMacros(e.target.checked)}
-                            className="w-3.5 h-3.5 rounded border-[var(--color-input-border)]"
+                            type="text"
+                            value={macroSearch}
+                            onChange={(e) => setMacroSearch(e.target.value)}
+                            placeholder={t("settingsPage.macrosPanel.searchPlaceholder")}
+                            className="w-full h-9 ps-8 pe-3 border border-[var(--color-border)] rounded-lg text-xs bg-white focus:outline-none focus:border-[var(--color-primary)]"
                           />
-                          {t("settingsPage.macrosPanel.showInactive")}
-                        </label>
+                        </div>
+                        <div className="min-w-[180px]">
+                          <Select
+                            size="sm"
+                            value={macroCategoryFilter}
+                            onChange={setMacroCategoryFilter}
+                            placeholder={t("settingsPage.macrosPanel.filterAllCategories")}
+                            options={[
+                              { value: '', label: t("settingsPage.macrosPanel.filterAllCategories") },
+                              ...ticketCategories.map((c) => ({ value: c.slug, label: c.nameEn })),
+                            ]}
+                          />
+                        </div>
+                        {/* 3-way status filter replaces the old "Show inactive"
+                            checkbox. The checkbox semantics were confusing
+                            (checking didn't filter, it just appended) — this
+                            mirrors how the user actually thinks about the
+                            list: which slice am I looking at right now. */}
+                        <div className="inline-flex items-center rounded-lg border border-[var(--color-border)] overflow-hidden h-9">
+                          {(['active', 'all', 'inactive'] as const).map((key) => (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => setMacroStatusFilter(key)}
+                              className={`px-3 h-full text-xs font-medium transition-colors ${
+                                macroStatusFilter === key
+                                  ? 'bg-[var(--color-primary)] text-white'
+                                  : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]'
+                              }`}
+                            >
+                              {t(`settingsPage.macrosPanel.statusFilter.${key}` as Parameters<typeof t>[0])}
+                            </button>
+                          ))}
+                        </div>
                       </div>
 
                       {showMacroForm && (
@@ -790,16 +932,16 @@ const SupportSettingsContent = () => {
                               </div>
                               <div>
                                 <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">{t("settingsPage.macrosPanel.formCategory")}</label>
-                                <select
+                                <Select
+                                  size="sm"
                                   value={macroForm.categoryKey}
-                                  onChange={(e) => setMacroForm((p) => ({ ...p, categoryKey: e.target.value }))}
-                                  className="w-full h-9 px-2 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:outline-none focus:border-[var(--color-primary)]"
-                                >
-                                  <option value="">{t("settingsPage.macrosPanel.categoryGeneral")}</option>
-                                  {ticketCategories.map((c) => (
-                                    <option key={c.slug} value={c.slug}>{c.nameEn}</option>
-                                  ))}
-                                </select>
+                                  onChange={(v) => setMacroForm((p) => ({ ...p, categoryKey: v }))}
+                                  placeholder={t("settingsPage.macrosPanel.categoryGeneral")}
+                                  options={[
+                                    { value: '', label: t("settingsPage.macrosPanel.categoryGeneral") },
+                                    ...ticketCategories.map((c) => ({ value: c.slug, label: c.nameEn })),
+                                  ]}
+                                />
                               </div>
                             </div>
                             <div>
@@ -929,7 +1071,14 @@ const SupportSettingsContent = () => {
                               ? ticketCategories.find((c) => c.slug === macro.categoryKey)?.nameEn || macro.categoryKey
                               : t("settingsPage.macrosPanel.categoryGeneral");
                             return (
-                            <div key={macro.id} className={`p-4 border rounded-lg ${macro.isActive ? 'border-[var(--color-border)]' : 'border-[var(--color-border)] bg-[var(--color-surface-page)] opacity-70'}`}>
+                            <div
+                              key={macro.id}
+                              className={`p-4 border rounded-xl transition-all hover:shadow-sm hover:border-[var(--color-primary)]/40 ${
+                                macro.isActive
+                                  ? 'border-[var(--color-border)] bg-white'
+                                  : 'border-dashed border-[var(--color-border)] bg-[var(--color-surface-page)]'
+                              }`}
+                            >
                               <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
                                 <div className="flex items-center gap-2 min-w-0">
                                   <h4 className="text-sm font-medium text-[var(--color-text-primary)] truncate">{macro.title}</h4>
@@ -995,18 +1144,27 @@ const SupportSettingsContent = () => {
                           ) : (
                             <div className="space-y-4">
                               {/* KPI strip */}
-                              <div className="grid grid-cols-3 gap-3">
-                                <div className="p-3 border border-[var(--color-border)] rounded-lg">
-                                  <div className="text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)]">{t("settingsPage.macrosPanel.analytics.totalUses")}</div>
-                                  <div className="text-xl font-semibold text-[var(--color-text-primary)] mt-1">{macroUsageStats.totalUses}</div>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="p-4 border border-[var(--color-border)] rounded-xl bg-white">
+                                  <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide font-semibold text-[var(--color-text-secondary)]">
+                                    <TrendingUp className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+                                    {t("settingsPage.macrosPanel.analytics.totalUses")}
+                                  </div>
+                                  <div className="text-2xl font-semibold text-[var(--color-text-primary)] mt-1.5">{macroUsageStats.totalUses}</div>
                                 </div>
-                                <div className="p-3 border border-[var(--color-border)] rounded-lg">
-                                  <div className="text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)]">{t("settingsPage.macrosPanel.analytics.totalMacros")}</div>
-                                  <div className="text-xl font-semibold text-[var(--color-text-primary)] mt-1">{macroUsageStats.totalMacros}</div>
+                                <div className="p-4 border border-[var(--color-border)] rounded-xl bg-white">
+                                  <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide font-semibold text-[var(--color-text-secondary)]">
+                                    <BarChart3 className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+                                    {t("settingsPage.macrosPanel.analytics.totalMacros")}
+                                  </div>
+                                  <div className="text-2xl font-semibold text-[var(--color-text-primary)] mt-1.5">{macroUsageStats.totalMacros}</div>
                                 </div>
-                                <div className="p-3 border border-[var(--color-border)] rounded-lg">
-                                  <div className="text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)]">{t("settingsPage.macrosPanel.analytics.unused")}</div>
-                                  <div className={`text-xl font-semibold mt-1 ${macroUsageStats.unusedCount > 0 ? 'text-[#B45309]' : 'text-[var(--color-text-primary)]'}`}>{macroUsageStats.unusedCount}</div>
+                                <div className={`p-4 border rounded-xl ${macroUsageStats.unusedCount > 0 ? 'border-[#FBBF24]/40 bg-[#FFFBEB]' : 'border-[var(--color-border)] bg-white'}`}>
+                                  <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide font-semibold text-[var(--color-text-secondary)]">
+                                    <AlertCircle className={`w-3.5 h-3.5 ${macroUsageStats.unusedCount > 0 ? 'text-[#B45309]' : 'text-[var(--color-text-secondary)]'}`} />
+                                    {t("settingsPage.macrosPanel.analytics.unused")}
+                                  </div>
+                                  <div className={`text-2xl font-semibold mt-1.5 ${macroUsageStats.unusedCount > 0 ? 'text-[#B45309]' : 'text-[var(--color-text-primary)]'}`}>{macroUsageStats.unusedCount}</div>
                                 </div>
                               </div>
 
@@ -1176,47 +1334,38 @@ export function SLAPoliciesPanel({ canEdit }: { canEdit: boolean }) {
           {t("settingsPage.slaPanel.noPolicies")}
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[var(--color-border)]">
-                <th className="text-left py-3 px-4 font-medium text-[var(--color-text-secondary)]">{t("settingsPage.slaPanel.columns.priority")}</th>
-                <th className="text-left py-3 px-4 font-medium text-[var(--color-text-secondary)]">{t("settingsPage.slaPanel.columns.frt")}</th>
-                <th className="text-left py-3 px-4 font-medium text-[var(--color-text-secondary)]">{t("settingsPage.slaPanel.columns.ttr")}</th>
-                <th className="text-left py-3 px-4 font-medium text-[var(--color-text-secondary)]">{t("settingsPage.slaPanel.columns.escalate")}</th>
-                <th className="text-right py-3 px-4 font-medium text-[var(--color-text-secondary)]"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {slaPolicies.map((policy) => (
-                <SLAPolicyRow
-                  key={policy.priority}
-                  policy={policy}
-                  canEdit={canEdit}
-                  isSaving={slaSaving === policy.priority}
-                  t={t as any}
-                  onSave={async (data) => {
-                    setSlaSaving(policy.priority);
-                    try {
-                      const updated = await supportApi.updateSlaPolicy(policy.priority, data);
-                      setSlaPolicies((prev) =>
-                        prev.map((p) => (p.priority === policy.priority ? updated : p)),
-                      );
-                      toast.success(t("settingsPage.slaPanel.toasts.updated"));
-                    } catch (err: any) {
-                      const message =
-                        err?.response?.data?.message ||
-                        err?.message ||
-                        t("settingsPage.slaPanel.toasts.updateFailed");
-                      toast.error(typeof message === "string" ? message : t("settingsPage.slaPanel.toasts.updateFailed"));
-                    } finally {
-                      setSlaSaving(null);
-                    }
-                  }}
-                />
-              ))}
-            </tbody>
-          </table>
+        /* Vertical stack — each priority is one row separated by a
+           hairline divider. No table borders, no per-cell box. The
+           DurationPicker pills carry their own visual edges so the
+           container can stay quiet. */
+        <div className="divide-y divide-[var(--color-border-subtle)]">
+          {slaPolicies.map((policy) => (
+            <SLAPolicyRow
+              key={policy.priority}
+              policy={policy}
+              canEdit={canEdit}
+              isSaving={slaSaving === policy.priority}
+              t={t as any}
+              onSave={async (data) => {
+                setSlaSaving(policy.priority);
+                try {
+                  const updated = await supportApi.updateSlaPolicy(policy.priority, data);
+                  setSlaPolicies((prev) =>
+                    prev.map((p) => (p.priority === policy.priority ? updated : p)),
+                  );
+                  toast.success(t("settingsPage.slaPanel.toasts.updated"));
+                } catch (err: any) {
+                  const message =
+                    err?.response?.data?.message ||
+                    err?.message ||
+                    t("settingsPage.slaPanel.toasts.updateFailed");
+                  toast.error(typeof message === "string" ? message : t("settingsPage.slaPanel.toasts.updateFailed"));
+                } finally {
+                  setSlaSaving(null);
+                }
+              }}
+            />
+          ))}
         </div>
       )}
     </div>
@@ -1823,7 +1972,22 @@ export function TicketCategoriesPanel() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
-  const [editRoles, setEditRoles] = useState<string[]>([]);
+  // Phase 2 — full edit: name (En/Ar), default priority, AND applicable
+  // roles. Built-in categories still freeze nameEn/nameAr on the BE
+  // (slug stability for existing tickets), so we mirror that in the
+  // UI by disabling those inputs when `editIsBuiltin` is true.
+  const [editForm, setEditForm] = useState<{
+    nameEn: string;
+    nameAr: string;
+    autoPriority: "high" | "medium" | "low";
+    applicableRoles: string[];
+  }>({
+    nameEn: "",
+    nameAr: "",
+    autoPriority: "medium",
+    applicableRoles: [],
+  });
+  const [editIsBuiltin, setEditIsBuiltin] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
 
   const fetchCategories = useCallback(() => {
@@ -1877,14 +2041,30 @@ export function TicketCategoriesPanel() {
     }
   }
 
-  async function saveEditRoles(slug: string) {
-    if (editRoles.length === 0) {
+  async function saveEditCategory(slug: string) {
+    if (editForm.applicableRoles.length === 0) {
       toast.error(t("settingsPage.ticketCategoriesPanel.applicableRolesRequired"));
+      return;
+    }
+    // Name is only editable on custom categories (built-ins keep their
+    // labels for existing tickets).
+    if (!editIsBuiltin && !editForm.nameEn.trim()) {
+      toast.error(t("settingsPage.ticketCategoriesPanel.nameEnRequired"));
       return;
     }
     setEditSaving(true);
     try {
-      await supportApi.updateTicketCategory(slug, { applicableRoles: editRoles });
+      const payload: Parameters<typeof supportApi.updateTicketCategory>[1] = {
+        autoPriority: editForm.autoPriority,
+        applicableRoles: editForm.applicableRoles,
+      };
+      // For custom categories include the name edits. Built-ins ignore
+      // these server-side, so we just don't send them.
+      if (!editIsBuiltin) {
+        payload.nameEn = editForm.nameEn.trim();
+        payload.nameAr = editForm.nameAr.trim() || null;
+      }
+      await supportApi.updateTicketCategory(slug, payload);
       toast.success(t("settingsPage.ticketCategoriesPanel.updated"));
       setEditingSlug(null);
       fetchCategories();
@@ -2100,11 +2280,17 @@ export function TicketCategoriesPanel() {
                       type="button"
                       onClick={() => {
                         setEditingSlug(c.slug);
-                        setEditRoles([...(c.applicableRoles ?? [])]);
+                        setEditIsBuiltin(c.builtin);
+                        setEditForm({
+                          nameEn: c.nameEn,
+                          nameAr: c.nameAr ?? "",
+                          autoPriority: c.autoPriority ?? "medium",
+                          applicableRoles: [...(c.applicableRoles ?? [])],
+                        });
                       }}
                       className="text-[11px] px-2 h-7 rounded-md border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                     >
-                      {t("settingsPage.ticketCategoriesPanel.editRoles")}
+                      {t("settingsPage.ticketCategoriesPanel.edit")}
                     </button>
                     <button
                       type="button"
@@ -2153,36 +2339,117 @@ export function TicketCategoriesPanel() {
               )}
 
               {isEditing && (
-                <div className="mt-3 p-3 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-page)]">
-                  <p className="text-[11px] text-[var(--color-text-secondary)] mb-2">
-                    {t("settingsPage.ticketCategoriesPanel.applicableRolesHint")}
-                  </p>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {APPLICABLE_ROLE_OPTIONS.map((opt) => {
-                      const active = editRoles.includes(opt.value);
-                      return (
+                <div className="mt-3 p-4 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-page)] space-y-3">
+                  {/* Names — locked for built-ins so existing tickets keep
+                      their original labels. The lock reason is shown
+                      inline so the supervisor isn't left guessing why
+                      the inputs are disabled. */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                        {t("settingsPage.ticketCategoriesPanel.nameEn")}
+                      </label>
+                      <input
+                        type="text"
+                        value={editForm.nameEn}
+                        disabled={editIsBuiltin}
+                        onChange={(e) =>
+                          setEditForm((p) => ({ ...p, nameEn: e.target.value }))
+                        }
+                        className="w-full h-9 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)] disabled:bg-[var(--color-border-subtle)] disabled:text-[var(--color-text-secondary)] disabled:cursor-not-allowed"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                        {t("settingsPage.ticketCategoriesPanel.nameAr")}
+                      </label>
+                      <input
+                        type="text"
+                        dir="rtl"
+                        value={editForm.nameAr}
+                        disabled={editIsBuiltin}
+                        onChange={(e) =>
+                          setEditForm((p) => ({ ...p, nameAr: e.target.value }))
+                        }
+                        className="w-full h-9 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)] disabled:bg-[var(--color-border-subtle)] disabled:text-[var(--color-text-secondary)] disabled:cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
+                  {editIsBuiltin && (
+                    <p className="text-[11px] text-[var(--color-text-secondary)] italic">
+                      {t("settingsPage.ticketCategoriesPanel.builtinNameFrozen")}
+                    </p>
+                  )}
+
+                  {/* Default priority */}
+                  <div>
+                    <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                      {t("settingsPage.ticketCategoriesPanel.autoPriority")}
+                    </label>
+                    <div className="flex gap-2">
+                      {(["high", "medium", "low"] as const).map((p) => (
                         <button
-                          key={opt.value}
+                          key={p}
                           type="button"
                           onClick={() =>
-                            setEditRoles(toggleRole(editRoles, opt.value))
+                            setEditForm((prev) => ({ ...prev, autoPriority: p }))
                           }
-                          className={`px-3 h-8 rounded-full text-xs font-medium border transition-colors ${
-                            active
-                              ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]"
-                              : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:border-[var(--color-text-secondary)]"
+                          className={`px-3 h-9 rounded-lg text-xs font-medium border transition-colors ${
+                            editForm.autoPriority === p
+                              ? `${priorityStyles[p]} border-current`
+                              : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border-[var(--color-border)]"
                           }`}
                         >
-                          {t(
-                            `settingsPage.ticketCategoriesPanel.${opt.tKey}` as Parameters<
-                              typeof t
-                            >[0],
-                          )}
+                          {t(`settingsPage.ticketCategoriesPanel.priorities.${p}`)}
                         </button>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex justify-end gap-2">
+
+                  {/* Applicable roles */}
+                  <div>
+                    <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                      {t("settingsPage.ticketCategoriesPanel.applicableRolesLabel")}
+                    </label>
+                    <p className="text-[11px] text-[var(--color-text-secondary)] mb-2">
+                      {t("settingsPage.ticketCategoriesPanel.applicableRolesHint")}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {APPLICABLE_ROLE_OPTIONS.map((opt) => {
+                        const active = editForm.applicableRoles.includes(
+                          opt.value,
+                        );
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() =>
+                              setEditForm((prev) => ({
+                                ...prev,
+                                applicableRoles: toggleRole(
+                                  prev.applicableRoles,
+                                  opt.value,
+                                ),
+                              }))
+                            }
+                            className={`px-3 h-8 rounded-full text-xs font-medium border transition-colors ${
+                              active
+                                ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]"
+                                : "bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:border-[var(--color-text-secondary)]"
+                            }`}
+                          >
+                            {t(
+                              `settingsPage.ticketCategoriesPanel.${opt.tKey}` as Parameters<
+                                typeof t
+                              >[0],
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-1">
                     <button
                       type="button"
                       onClick={() => setEditingSlug(null)}
@@ -2193,7 +2460,7 @@ export function TicketCategoriesPanel() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => saveEditRoles(c.slug)}
+                      onClick={() => saveEditCategory(c.slug)}
                       disabled={editSaving}
                       className="h-8 px-3 bg-[var(--color-primary)] hover:bg-[#001d5e] text-white rounded-lg text-xs flex items-center gap-1 disabled:opacity-50"
                     >

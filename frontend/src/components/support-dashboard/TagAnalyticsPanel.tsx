@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, TrendingUp, Archive } from "lucide-react";
+import { Loader2, TrendingUp, Archive, Tag as TagIcon, CheckCircle2 } from "lucide-react";
 import { supportApi } from "@/lib/api";
 
 type Analytics = Awaited<ReturnType<typeof supportApi.getTagAnalytics>>;
@@ -66,10 +66,15 @@ export default function TagAnalyticsPanel() {
     <div className="space-y-5">
       {/* KPI strip */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <KpiCard label="Total tags" value={data.totalTags} />
+        <KpiCard
+          label="Total tags"
+          value={data.totalTags}
+          icon={<TagIcon className="w-3.5 h-3.5" />}
+        />
         <KpiCard
           label="Active"
           value={data.totalTags - data.archivedTags}
+          icon={<CheckCircle2 className="w-3.5 h-3.5" />}
           accent="text-[var(--color-primary)]"
         />
         <KpiCard
@@ -153,28 +158,34 @@ export default function TagAnalyticsPanel() {
             No assignments in the last 30 days.
           </p>
         ) : (
-          <div className="px-3 py-3 rounded-lg border border-[var(--color-border-subtle)]">
-            <div className="flex items-end gap-1 h-32">
+          <div className="px-3 py-3 rounded-xl border border-[var(--color-border)] bg-white">
+            {/* h-full on the per-day column is critical — without it the
+                column collapses to 0px and the bar's % height resolves
+                to 0, giving an empty chart. */}
+            <div className="flex items-end gap-1 h-40">
               {data.trend.map((d) => {
                 const ratio = maxTrend > 0 ? d.count / maxTrend : 0;
                 return (
                   <div
                     key={d.day}
-                    className="flex-1 flex flex-col items-center justify-end gap-1 group relative"
+                    className="flex-1 h-full flex flex-col items-center justify-end gap-1 group relative"
                     title={`${d.day} — ${d.count}`}
                   >
                     <div
-                      className="w-full rounded-t bg-[var(--color-primary)]/80 group-hover:bg-[var(--color-primary)] transition-colors"
+                      className="w-full rounded-t-md bg-[var(--color-primary)]/70 group-hover:bg-[var(--color-primary)] transition-colors min-h-[2px]"
                       style={{
-                        height: `${Math.max(2, ratio * 100)}%`,
+                        height: `${Math.max(4, ratio * 100)}%`,
                       }}
                     />
                   </div>
                 );
               })}
             </div>
-            <div className="flex justify-between text-[10px] text-[var(--color-text-secondary)] mt-2">
+            <div className="flex justify-between items-center text-[10px] text-[var(--color-text-secondary)] mt-2 pt-2 border-t border-[var(--color-border-subtle)]">
               <span>{data.trend[0]?.day || ""}</span>
+              <span className="font-medium">
+                {maxTrend > 0 && `Peak: ${maxTrend}/day`}
+              </span>
               <span>{data.trend[data.trend.length - 1]?.day || ""}</span>
             </div>
           </div>
@@ -236,13 +247,13 @@ function KpiCard({
   accent?: string;
 }) {
   return (
-    <div className="px-3 py-2.5 rounded-lg border border-[var(--color-border-subtle)]">
-      <div className="text-[10px] uppercase text-[var(--color-text-secondary)] flex items-center gap-1">
+    <div className="px-4 py-3 rounded-xl border border-[var(--color-border)] bg-white">
+      <div className="text-[10px] uppercase font-semibold tracking-wide text-[var(--color-text-secondary)] flex items-center gap-1.5">
         {icon}
         {label}
       </div>
       <div
-        className={`text-xl font-semibold mt-0.5 ${
+        className={`text-2xl font-semibold mt-1.5 ${
           accent || "text-[var(--color-text-primary)]"
         }`}
       >

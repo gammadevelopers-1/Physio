@@ -4,8 +4,8 @@ import MarkTabViewed from "@/components/MarkTabViewed";
 import { SIDEBAR_TAB_KEYS } from "@/lib/api";
 
 export const metadata = {
-  title: "Looped In | Course Manager Dashboard | PhysioGuidance",
-  description: "Tickets where you have been looped in as a collaborator",
+  title: "Assisting Support | Course Manager Dashboard | PhysioGuidance",
+  description: "Tickets where Support has asked for your input",
 };
 
 export default async function ManagerLoopedInPage({

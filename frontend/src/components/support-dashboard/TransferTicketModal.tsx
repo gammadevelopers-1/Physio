@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { ArrowRightLeft, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { supportApi } from "@/lib/api";
+import Select from "@/components/admin-dashboard/Select";
 
 interface Category {
   slug: string;
@@ -181,19 +182,15 @@ export default function TransferTicketModal({
             <label className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] block mb-1.5">
               {t("toCategory")}
             </label>
-            <select
+            <Select
               value={toCategory}
-              onChange={(e) => setToCategory(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-border)] bg-white text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)]"
-            >
-              <option value="">{t("selectCategory")}</option>
-              {categoryOptions.map((c) => (
-                <option key={c.slug} value={c.slug}>
-                  {c.nameEn}
-                  {c.requiresCourse ? " ★" : ""}
-                </option>
-              ))}
-            </select>
+              onChange={setToCategory}
+              placeholder={t("selectCategory")}
+              options={categoryOptions.map((c) => ({
+                value: c.slug,
+                label: `${c.nameEn}${c.requiresCourse ? " ★" : ""}`,
+              }))}
+            />
           </div>
 
           {/* Department */}
@@ -201,18 +198,15 @@ export default function TransferTicketModal({
             <label className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] block mb-1.5">
               {t("toDepartment")}
             </label>
-            <select
+            <Select
               value={toDepartment}
-              onChange={(e) => setToDepartment(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-border)] bg-white text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)]"
-            >
-              <option value="">{t("selectDepartment")}</option>
-              {departmentOptions.map((d) => (
-                <option key={d} value={d}>
-                  {tDept(d)}
-                </option>
-              ))}
-            </select>
+              onChange={setToDepartment}
+              placeholder={t("selectDepartment")}
+              options={departmentOptions.map((d) => ({
+                value: d,
+                label: tDept(d),
+              }))}
+            />
           </div>
 
           {/* Optional note override */}

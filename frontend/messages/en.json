@@ -2663,7 +2663,7 @@
       "content": "Content",
       "reports": "Reports",
       "support": "Support",
-      "loopedIn": "Looped In",
+      "loopedIn": "Assisting Support",
       "settings": "Settings",
       "rating": "Rating",
       "profileCompletion": "Profile Completion",
@@ -4180,7 +4180,7 @@
       "nelcCompliance": "NELC Compliance",
       "reports": "Reports",
       "support": "Support",
-      "loopedIn": "Looped In",
+      "loopedIn": "Assisting Support",
       "settings": "Settings",
       "courseManager": "Course Manager",
       "nelc": "NELC",
@@ -5429,7 +5429,7 @@
       "roles": "Roles & Permissions",
       "roleRequests": "Instructor Applications",
       "support": "Support",
-      "loopedIn": "Looped In",
+      "loopedIn": "Assisting Support",
       "courses": "All Courses",
       "finance": "Finance",
       "points": "Points System",
@@ -7613,7 +7613,7 @@
       "discounts": "Discounts",
       "reports": "Reports",
       "support": "Support",
-      "loopedIn": "Looped In",
+      "loopedIn": "Assisting Support",
       "settings": "Settings",
       "financeManager": "Finance Manager",
       "revenue": "Revenue",
@@ -8050,7 +8050,7 @@
       "knowledgeBase": "Help Center",
       "trainerApplications": "Trainer Applications",
       "reports": "Reports",
-      "loopedIn": "Looped In",
+      "loopedIn": "Assisting Support",
       "settings": "Settings",
       "supportLead": "Support Lead",
       "resolved": "Resolved",
@@ -9025,6 +9025,8 @@
         "disableConfirmDescription": "“{name}” will be hidden from every role's create-ticket dropdown. Existing tickets keep their label and you can re-enable the category later.",
         "disableConfirmLabel": "Disable",
         "editRoles": "Edit roles",
+        "edit": "Edit",
+        "builtinNameFrozen": "Names are locked on built-in categories so existing tickets keep their labels. Priority and applicable dashboards are editable.",
         "applicableRolesLabel": "Available to dashboards *",
         "applicableRolesHint": "Pick which role dashboards see this category in their create-ticket dropdown. Supervisors and admins always see every category in the queue.",
         "applicableRolesRequired": "Pick at least one dashboard.",
@@ -9196,6 +9198,11 @@
           "ttr": "Resolution",
           "escalate": "Escalate After"
         },
+        "priorities": {
+          "high": "High",
+          "medium": "Medium",
+          "low": "Low"
+        },
         "saving": "Saving...",
         "save": "Save",
         "hintHours": "≈ {n}h",
@@ -9222,6 +9229,14 @@
         "title": "Reply Macros",
         "newMacro": "+ New Macro",
         "description": "Pre-built reply templates with variable substitution. Variables: {variables}",
+        "descriptionShort": "Pre-built reply templates with variable substitution.",
+        "viewVariables": "View available variables",
+        "availableVariables": "Available variables",
+        "statusFilter": {
+          "active": "Active",
+          "all": "All",
+          "inactive": "Inactive"
+        },
         "editTitle": "Edit Macro",
         "createTitle": "Create New Macro",
         "formTitle": "Title *",
@@ -9483,10 +9498,10 @@
         "transferFailed": "Could not transfer the ticket"
       },
       "loopedInInbox": {
-        "title": "Looped In",
-        "subtitle": "Tickets where you have been added as a collaborator.",
-        "emptyTitle": "Nothing looped in yet",
-        "emptyHint": "Support will loop you in when your team's input is needed on a ticket.",
+        "title": "Assisting Support",
+        "subtitle": "Tickets where Support has asked for your team's input.",
+        "emptyTitle": "Not assisting on any tickets yet",
+        "emptyHint": "Support will ping you here when your team's input is needed on a ticket.",
         "status": {
           "new": "New",
           "in_progress": "In progress",
@@ -9721,6 +9736,30 @@
           },
           "certificate": {
             "issued": "Issued"
+          },
+          "session": {
+            "scheduled": "Scheduled",
+            "in_progress": "Live",
+            "live": "Live",
+            "completed": "Completed",
+            "cancelled": "Cancelled",
+            "no_show": "No-show",
+            "missed": "Missed",
+            "attended": "Attended"
+          },
+          "intervention": {
+            "open": "Open",
+            "in_progress": "In progress",
+            "resolved": "Resolved",
+            "closed": "Closed"
+          },
+          "course_managed": {
+            "managed": "Managed"
+          },
+          "ta_assignment": {
+            "active": "Active",
+            "completed": "Completed",
+            "removed": "Removed"
           }
         }
       },
@@ -10077,7 +10116,7 @@
       "courses": "Courses",
       "sessions": "Lectures",
       "support": "Support",
-      "loopedIn": "Looped In",
+      "loopedIn": "Assisting Support",
       "settings": "Settings",
       "viewProfile": "View Profile",
       "editProfile": "Edit Profile",

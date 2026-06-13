@@ -1,17 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   X,
   Plus,
   Loader2,
   Trash2,
   Zap,
-  ChevronDown,
-  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supportApi } from "@/lib/api";
+import Select from "@/components/admin-dashboard/Select";
 
 type Rule = {
   id: string;
@@ -60,10 +59,8 @@ export default function TagRulesModal({
   const [rules, setRules] = useState<Rule[] | null>(null);
   const [pattern, setPattern] = useState("");
   const [scope, setScope] = useState<Rule["matchScope"]>("both");
-  const [scopeOpen, setScopeOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const scopeRef = useRef<HTMLDivElement>(null);
 
   async function reload() {
     try {
@@ -87,21 +84,6 @@ export default function TagRulesModal({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
-
-  // Close scope dropdown on outside click
-  useEffect(() => {
-    if (!scopeOpen) return;
-    const onClick = (e: MouseEvent) => {
-      if (
-        scopeRef.current &&
-        !scopeRef.current.contains(e.target as Node)
-      ) {
-        setScopeOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, [scopeOpen]);
 
   async function addRule() {
     const trimmed = pattern.trim();
@@ -150,7 +132,8 @@ export default function TagRulesModal({
     }
   }
 
-  const selectedScope = SCOPES.find((s) => s.value === scope) || SCOPES[0];
+  const selectedScopeHint =
+    SCOPES.find((s) => s.value === scope)?.hint ?? SCOPES[0].hint;
 
   return (
     <div
@@ -215,59 +198,12 @@ export default function TagRulesModal({
                   if (e.key === "Enter") addRule();
                 }}
               />
-              {/* Themed scope dropdown */}
-              <div ref={scopeRef} className="relative w-56">
-                <button
-                  type="button"
-                  onClick={() => setScopeOpen((v) => !v)}
-                  className="w-full h-10 px-3 flex items-center justify-between bg-white border border-[var(--color-input-border)] rounded-lg text-sm text-[var(--color-text-primary)] hover:border-[var(--color-primary)] focus:outline-none focus:border-[var(--color-primary)]"
-                >
-                  <span className="truncate text-start">
-                    {selectedScope.label}
-                  </span>
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${
-                      scopeOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                {scopeOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 py-1 overflow-hidden">
-                    {SCOPES.map((s) => (
-                      <button
-                        key={s.value}
-                        type="button"
-                        onClick={() => {
-                          setScope(s.value);
-                          setScopeOpen(false);
-                        }}
-                        className={`w-full px-3 py-2 text-start hover:bg-[var(--color-border-subtle)] flex items-start justify-between gap-2 ${
-                          s.value === scope
-                            ? "bg-[var(--color-border-subtle)]"
-                            : ""
-                        }`}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div
-                            className={`text-sm ${
-                              s.value === scope
-                                ? "text-[var(--color-primary)] font-medium"
-                                : "text-[var(--color-text-primary)]"
-                            }`}
-                          >
-                            {s.label}
-                          </div>
-                          <div className="text-[11px] text-[var(--color-text-secondary)] mt-0.5">
-                            {s.hint}
-                          </div>
-                        </div>
-                        {s.value === scope && (
-                          <Check className="w-4 h-4 text-[var(--color-primary)] shrink-0 mt-1" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
+              <div className="w-56">
+                <Select
+                  value={scope}
+                  onChange={(v) => setScope(v as Rule["matchScope"])}
+                  options={SCOPES.map((s) => ({ value: s.value, label: s.label }))}
+                />
               </div>
               <button
                 type="button"
@@ -283,6 +219,9 @@ export default function TagRulesModal({
                 Add
               </button>
             </div>
+            <p className="text-[11px] text-[var(--color-text-secondary)]">
+              {selectedScopeHint}
+            </p>
           </div>
 
           {/* List of existing rules */}

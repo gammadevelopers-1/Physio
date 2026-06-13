@@ -393,13 +393,16 @@ const TicketDetailContent = () => {
   }, [isSupervisor]);
 
   useEffect(() => {
-    // Pull macros once the ticket loads so we know its category. The
-    // backend returns both category-matched and general-purpose macros
-    // in one call — the FE then sorts category-matched to the top of
-    // the dropdown with a "Recommended" subhead.
+    // Pull every active macro and sort client-side. We previously
+    // passed `categoryKey: ticket.category` which made the backend
+    // return only macros tagged for THAT category + general ones —
+    // tickets whose category had no tagged macros saw a near-empty
+    // dropdown. Fetching the full active set + grouping locally lets
+    // agents apply any macro on any ticket, with the matching-category
+    // ones still surfaced under a "Recommended" subhead.
     if (isSupportOrAdmin && ticket?.category) {
       supportApi
-        .getMacros({ categoryKey: ticket.category })
+        .getMacros()
         .then((data) => setMacros(data || []))
         .catch(() => {});
     }
@@ -872,6 +875,7 @@ const TicketDetailContent = () => {
                       <TicketGovernanceToolbar
                         ticketId={ticket.id}
                         ticketCategory={ticket.category}
+                        courseId={ticket.courseId ?? null}
                         basePath={(() => {
                           // Re-derive basePath the same way the rest of this
                           // file does — keep behaviour identical to the
@@ -888,6 +892,10 @@ const TicketDetailContent = () => {
                             user?.roles?.includes("ADMIN") ||
                             user?.roles?.includes("SUPER_ADMIN"),
                         )}
+                        onChanged={async () => {
+                          const data = await supportApi.getTicket(ticketId);
+                          setTicket(data);
+                        }}
                       />
                       <p className="text-sm text-[var(--color-text-primary)] leading-relaxed whitespace-pre-wrap break-words">
                         <LinkifiedText text={ticket.description} />

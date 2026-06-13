@@ -127,7 +127,7 @@ export default function StudentTimelineCard({ ticketId, isGuestTicket }: Props) 
   if (isGuestTicket) return null;
 
   return (
-    <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
+    <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 overflow-hidden">
       <button
         type="button"
         onClick={() => setExpanded((p) => !p)}
@@ -196,7 +196,7 @@ export default function StudentTimelineCard({ ticketId, isGuestTicket }: Props) 
           )}
 
           {!loading && !error && filteredEvents.length > 0 && (
-            <ol className="space-y-2.5 max-h-80 overflow-y-auto pe-1">
+            <ol className="space-y-2.5 max-h-80 overflow-y-auto overflow-x-hidden pe-1">
               {filteredEvents.map((e, idx) => (
                 <TimelineRow
                   key={`${e.type}-${e.timestamp}-${idx}`}
@@ -236,19 +236,19 @@ function TimelineRow({
   }).format(new Date(event.timestamp));
 
   const body = (
-    <div className="flex items-start gap-2.5">
+    <div className="flex items-start gap-2.5 min-w-0">
       <div
         className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${meta.iconBg}`}
       >
         <Icon className={`w-3.5 h-3.5 ${meta.iconColor}`} />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-2 flex-wrap">
+        <div className="flex items-baseline gap-2 flex-wrap min-w-0">
           <span className="text-[10px] text-[var(--color-text-secondary)]">
             {dateLabel}
           </span>
           {statusLabel && (
-            <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full ${statusColor}`}>
+            <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full break-all max-w-full ${statusColor}`}>
               {statusLabel}
             </span>
           )}
@@ -361,18 +361,33 @@ function filterChipsForRole(
   ];
 }
 
+function humanizeStatus(s: string): string {
+  return s
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function statusLabelFor(event: TimelineEvent, t: ReturnType<typeof useTranslations>): string {
   if (!event.status) return '';
   // Re-use existing status translations where they exist; fall back
-  // to the raw value so we never render an empty chip.
+  // to a humanized version of the raw value so we never render the
+  // full namespaced key (next-intl's default fallback when missing).
   const key = `timeline.status.${event.type}.${event.status}`;
   try {
     const translated = t(key);
-    if (translated && translated !== key) return translated;
+    // next-intl returns the namespaced path on miss (e.g.
+    // "supportDashboard.ticketDetail.timeline.status.session.paid").
+    // Detect both forms (exact match or namespaced-path ending in the
+    // key) so we don't render the raw path inside the chip.
+    if (translated && translated !== key && !translated.endsWith(key)) {
+      return translated;
+    }
   } catch {
-    // missing key — fall through to raw
+    // missing key — fall through to humanized raw status
   }
-  return event.status;
+  return humanizeStatus(event.status);
 }
 
 function statusColorFor(event: TimelineEvent): string {

@@ -12,6 +12,7 @@ import {
   ArchiveRestore,
   AlertTriangle,
   BarChart3,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supportApi } from "@/lib/api";
@@ -29,16 +30,31 @@ type Tag = {
   createdAt: string;
 };
 
+// Two rows of swatches. The saturated row gives tags that "pop" in a
+// dense queue; the soft row keeps the existing pastel palette for
+// people who prefer subtle. The previous one-row pastel-only palette
+// was almost impossible to tell apart in the picker.
 const PRESET_COLORS = [
-  "#FEE2E2",
-  "#FED7AA",
-  "#FEF3C7",
-  "#D1FAE5",
-  "#CFFAFE",
-  "#DBEAFE",
-  "#EDE9FE",
-  "#FCE7F3",
-  "#E5E7EB",
+  // Saturated row — visible at a glance in a long ticket list
+  "#DC2626", // red
+  "#EA580C", // orange
+  "#CA8A04", // amber
+  "#16A34A", // green
+  "#0891B2", // teal
+  "#2563EB", // blue
+  "#7C3AED", // violet
+  "#DB2777", // pink
+  "#475569", // slate
+  // Soft row — pastels for low-priority / informational tags
+  "#FECACA", // red 200
+  "#FED7AA", // orange 200
+  "#FEF08A", // yellow 200
+  "#BBF7D0", // green 200
+  "#A5F3FC", // cyan 200
+  "#BFDBFE", // blue 200
+  "#DDD6FE", // violet 200
+  "#FBCFE8", // pink 200
+  "#E5E7EB", // gray 200
 ];
 
 function textForBg(hex: string): string {
@@ -366,31 +382,47 @@ export default function TagsManagerPanel() {
               placeholder="e.g. Refund"
             />
 
-            <label className="block text-[11px] font-medium text-[var(--color-text-secondary)] uppercase mb-1">
+            <label className="block text-[11px] font-medium text-[var(--color-text-secondary)] uppercase mb-1.5">
               Color
             </label>
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {PRESET_COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setColor(c)}
-                  className={`w-7 h-7 rounded-full border-2 ${
-                    color === c
-                      ? "border-[var(--color-primary)]"
-                      : "border-transparent"
-                  }`}
-                  style={{ backgroundColor: c }}
-                  aria-label={`Pick ${c}`}
-                />
-              ))}
+            <div className="grid grid-cols-9 gap-1.5 mb-2">
+              {PRESET_COLORS.map((c) => {
+                const isSelected = color.toLowerCase() === c.toLowerCase();
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setColor(c)}
+                    className={`relative w-7 h-7 rounded-full transition-transform hover:scale-110 ${
+                      isSelected
+                        ? "ring-2 ring-offset-2 ring-[var(--color-primary)] scale-110"
+                        : "ring-1 ring-inset ring-black/10"
+                    }`}
+                    style={{ backgroundColor: c }}
+                    aria-label={`Pick ${c}`}
+                    title={c}
+                  >
+                    {isSelected && (
+                      <Check
+                        className="w-3.5 h-3.5 absolute inset-0 m-auto"
+                        style={{ color: textForBg(c) }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-2 mb-3">
               <input
                 type="text"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
-                className="w-24 h-7 px-2 text-[11px] font-mono border border-[var(--color-input-border)] rounded"
+                className="w-28 h-8 px-2 text-[11px] font-mono border border-[var(--color-input-border)] rounded-lg focus:outline-none focus:border-[var(--color-primary)]"
                 placeholder="#hex"
               />
+              <span className="text-[10px] text-[var(--color-text-secondary)]">
+                or paste a hex value
+              </span>
             </div>
 
             <label className="block text-[11px] font-medium text-[var(--color-text-secondary)] uppercase mb-1">

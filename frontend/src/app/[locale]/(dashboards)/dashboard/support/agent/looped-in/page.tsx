@@ -4,7 +4,7 @@ import MarkTabViewed from "@/components/MarkTabViewed";
 import { SIDEBAR_TAB_KEYS } from "@/lib/api";
 
 export const metadata = {
-  title: "Looped In | Agent Dashboard | PhysioGuidance",
+  title: "Assisting Support | Agent Dashboard | PhysioGuidance",
 };
 
 export default async function AgentLoopedInPage({

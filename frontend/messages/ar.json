@@ -2663,7 +2663,7 @@
       "content": "المحتوى",
       "reports": "التقارير",
       "support": "الدعم الفني",
-      "loopedIn": "مشارك في",
+      "loopedIn": "مساعدة الدعم",
       "settings": "الإعدادات",
       "rating": "التقييم",
       "profileCompletion": "اكتمال الملف الشخصي",
@@ -4180,7 +4180,7 @@
       "nelcCompliance": "امتثال NELC",
       "reports": "التقارير",
       "support": "الدعم الفني",
-      "loopedIn": "مشارك في",
+      "loopedIn": "مساعدة الدعم",
       "settings": "الإعدادات",
       "courseManager": "مدير الدورات",
       "nelc": "NELC",
@@ -5429,7 +5429,7 @@
       "roles": "الأدوار والصلاحيات",
       "roleRequests": "طلبات المدربين",
       "support": "الدعم",
-      "loopedIn": "مشارك في",
+      "loopedIn": "مساعدة الدعم",
       "courses": "جميع الدورات",
       "finance": "المالية",
       "points": "نظام النقاط",
@@ -7613,7 +7613,7 @@
       "discounts": "الخصومات",
       "reports": "التقارير",
       "support": "الدعم الفني",
-      "loopedIn": "مشارك في",
+      "loopedIn": "مساعدة الدعم",
       "settings": "الإعدادات",
       "financeManager": "مدير المالية",
       "revenue": "الإيرادات",
@@ -8050,7 +8050,7 @@
       "knowledgeBase": "مركز المساعدة",
       "trainerApplications": "طلبات المدربين",
       "reports": "التقارير",
-      "loopedIn": "مشارك في",
+      "loopedIn": "مساعدة الدعم",
       "settings": "الإعدادات",
       "supportLead": "قائد الدعم",
       "resolved": "تم الحل",
@@ -9025,6 +9025,8 @@
         "disableConfirmDescription": "سيتم إخفاء فئة “{name}” من قائمة إنشاء التذاكر لجميع الأدوار. تحتفظ التذاكر الحالية بتسميتها ويمكن إعادة تفعيلها لاحقًا.",
         "disableConfirmLabel": "تعطيل",
         "editRoles": "تعديل الأدوار",
+        "edit": "تعديل",
+        "builtinNameFrozen": "أسماء الفئات المدمجة مقفلة حتى تحتفظ التذاكر الحالية بتسمياتها. الأولوية ولوحات التحكم المتاحة قابلة للتعديل.",
         "applicableRolesLabel": "متاحة للوحات التحكم *",
         "applicableRolesHint": "اختر لوحات التحكم التي ستظهر فيها هذه الفئة عند إنشاء التذاكر. يرى المشرفون والمسؤولون جميع الفئات في قائمة الانتظار دائمًا.",
         "applicableRolesRequired": "اختر لوحة تحكم واحدة على الأقل.",
@@ -9196,6 +9198,11 @@
           "ttr": "الحل",
           "escalate": "التصعيد بعد"
         },
+        "priorities": {
+          "high": "عالية",
+          "medium": "متوسطة",
+          "low": "منخفضة"
+        },
         "saving": "جارٍ الحفظ...",
         "save": "حفظ",
         "hintHours": "≈ {n} س",
@@ -9222,6 +9229,14 @@
         "title": "قوالب الردود",
         "newMacro": "+ قالب جديد",
         "description": "قوالب ردود جاهزة مع استبدال متغيرات. المتغيرات: {variables}",
+        "descriptionShort": "قوالب ردود جاهزة مع استبدال متغيرات.",
+        "viewVariables": "عرض المتغيرات المتاحة",
+        "availableVariables": "المتغيرات المتاحة",
+        "statusFilter": {
+          "active": "النشطة",
+          "all": "الكل",
+          "inactive": "غير النشطة"
+        },
         "editTitle": "تعديل القالب",
         "createTitle": "إنشاء قالب جديد",
         "formTitle": "العنوان *",
@@ -9483,10 +9498,10 @@
         "transferFailed": "تعذر تحويل التذكرة"
       },
       "loopedInInbox": {
-        "title": "مشارك في",
-        "subtitle": "التذاكر التي تمت إضافتك إليها كمشارك.",
-        "emptyTitle": "لا توجد تذاكر بعد",
-        "emptyHint": "سيقوم الدعم بإشراكك عندما يحتاج فريقك إلى الإسهام.",
+        "title": "مساعدة الدعم",
+        "subtitle": "التذاكر التي طلب الدعم فيها إسهام فريقك.",
+        "emptyTitle": "لا تساعد في أي تذاكر بعد",
+        "emptyHint": "سيرسل الدعم إشعارًا هنا عندما يحتاج فريقك إلى الإسهام في تذكرة.",
         "status": {
           "new": "جديد",
           "in_progress": "قيد المعالجة",
@@ -9721,6 +9736,30 @@
           },
           "certificate": {
             "issued": "صادرة"
+          },
+          "session": {
+            "scheduled": "مجدولة",
+            "in_progress": "جارية",
+            "live": "مباشرة",
+            "completed": "مكتملة",
+            "cancelled": "ملغاة",
+            "no_show": "لم يحضر",
+            "missed": "فاتت",
+            "attended": "حضر"
+          },
+          "intervention": {
+            "open": "مفتوحة",
+            "in_progress": "قيد المعالجة",
+            "resolved": "محلولة",
+            "closed": "مغلقة"
+          },
+          "course_managed": {
+            "managed": "مُدارة"
+          },
+          "ta_assignment": {
+            "active": "نشطة",
+            "completed": "مكتملة",
+            "removed": "أُزيلت"
           }
         }
       },
@@ -10077,7 +10116,7 @@
       "courses": "الدورات",
       "sessions": "المحاضرات",
       "support": "الدعم الفني",
-      "loopedIn": "مشارك في",
+      "loopedIn": "مساعدة الدعم",
       "settings": "الإعدادات",
       "viewProfile": "عرض الملف الشخصي",
       "editProfile": "تعديل الملف الشخصي",

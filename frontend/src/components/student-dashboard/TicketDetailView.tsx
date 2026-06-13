@@ -37,6 +37,18 @@ import AttachmentPreviewModal, {
 
 const REOPEN_GRACE_MS = 48 * 60 * 60 * 1000;
 
+// "courses" → "Courses", "technical_general" → "Technical General".
+// Used when a category slug has no matching i18n key (typical for
+// supervisor-added categories), so the chip stays readable instead of
+// rendering the raw namespaced i18n path.
+function humanizeCategorySlug(slug: string): string {
+  return slug
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function StatusBadge({
   status,
   t,
@@ -479,7 +491,22 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
                       <StatusBadge status={ticket.status} t={t} />
                       <span className="text-xs text-[var(--color-text-secondary)] inline-flex items-center gap-1">
                         <Tag className="w-3 h-3" />
-                        {t(`supportPage.category_${ticket.category}` as Parameters<typeof t>[0])}
+                        {(() => {
+                          // Categories outside the builtin set have no i18n
+                          // key — render the humanized slug instead of the
+                          // raw namespaced path.
+                          try {
+                            const v = t(
+                              `supportPage.category_${ticket.category}` as Parameters<typeof t>[0],
+                            );
+                            if (v.endsWith(`supportPage.category_${ticket.category}`)) {
+                              return humanizeCategorySlug(ticket.category);
+                            }
+                            return v;
+                          } catch {
+                            return humanizeCategorySlug(ticket.category);
+                          }
+                        })()}
                       </span>
                     </div>
                     <h1 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] mb-1">

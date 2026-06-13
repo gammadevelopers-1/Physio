@@ -1246,6 +1246,29 @@ export class SupportService implements OnModuleInit {
       }
     }
 
+    // Phase 2 — if a commenter is an active collaborator on this
+    // ticket, the FE should label them by the department they were
+    // looped in as (e.g. "Course Manager") instead of any global role
+    // they happen to have (e.g. "Agent"). This matters for multi-role
+    // users — a support agent who's also a course manager and was
+    // looped in as CM should read as CM in this ticket's thread.
+    const ticketCollabRows = await db
+      .select({
+        userId: ticketCollaborators.userId,
+        department: ticketCollaborators.department,
+      })
+      .from(ticketCollaborators)
+      .where(
+        and(
+          eq(ticketCollaborators.ticketId, ticketId),
+          isNull(ticketCollaborators.removedAt),
+        ),
+      );
+    const collabDeptByUserId = new Map<string, string>();
+    for (const row of ticketCollabRows) {
+      collabDeptByUserId.set(row.userId, row.department);
+    }
+
     // Pre-compute the guest's display name so we can overlay the
     // sentinel "Guest User" on any replies the guest left through the
     // public tracking page. Staff replies stay untouched.
@@ -1265,6 +1288,9 @@ export class SupportService implements OnModuleInit {
         userFirstName: isGuestReply && guestFirst ? guestFirst : c.userFirstName,
         userLastName: isGuestReply && guestLast ? guestLast : c.userLastName,
         userRole: c.userId ? commenterRoleMap.get(c.userId) ?? null : null,
+        collabDepartment: c.userId
+          ? collabDeptByUserId.get(c.userId) ?? null
+          : null,
         attachments: replyAttachmentsByReply.get(c.id) || [],
       };
     });
@@ -10738,8 +10764,15 @@ export class SupportService implements OnModuleInit {
       user.roles.includes(ROLE_NAMES.SUPPORT) ||
       user.roles.includes(ROLE_NAMES.ADMIN) ||
       user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+    // Phase 2 — looped-in collaborators get read access to the
+    // requester context (snapshot + cert details). Without this they
+    // can't answer Support's question without flipping back to ask.
+    const isCollab =
+      ticket.studentId !== user.id
+        ? await this.isCollaborator(ticketId, user.id)
+        : false;
 
-    if (!isSupportOrAdmin && ticket.studentId !== user.id) {
+    if (!isSupportOrAdmin && ticket.studentId !== user.id && !isCollab) {
       throw new ForbiddenException('You do not have access to this ticket');
     }
 
@@ -10748,7 +10781,11 @@ export class SupportService implements OnModuleInit {
         user.supportSubRole === 'supervisor' ||
         user.roles.includes(ROLE_NAMES.ADMIN) ||
         user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
-      if (!isSupervisorOrAdmin && ticket.assigneeId !== user.id) {
+      if (
+        !isSupervisorOrAdmin &&
+        ticket.assigneeId !== user.id &&
+        !isCollab
+      ) {
         throw new ForbiddenException('You are not assigned to this ticket');
       }
     }
@@ -11220,8 +11257,15 @@ export class SupportService implements OnModuleInit {
       user.roles.includes(ROLE_NAMES.SUPPORT) ||
       user.roles.includes(ROLE_NAMES.ADMIN) ||
       user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+    // Phase 2 — looped-in collaborators get read access to the cert
+    // panel so they can answer Support's question about CME / cert
+    // status without flipping back.
+    const isCollab =
+      ticket.studentId !== user.id
+        ? await this.isCollaborator(ticketId, user.id)
+        : false;
 
-    if (!isSupportOrAdmin && ticket.studentId !== user.id) {
+    if (!isSupportOrAdmin && ticket.studentId !== user.id && !isCollab) {
       throw new ForbiddenException('You do not have access to this ticket');
     }
 
@@ -11230,7 +11274,11 @@ export class SupportService implements OnModuleInit {
         user.supportSubRole === 'supervisor' ||
         user.roles.includes(ROLE_NAMES.ADMIN) ||
         user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
-      if (!isSupervisorOrAdmin && ticket.assigneeId !== user.id) {
+      if (
+        !isSupervisorOrAdmin &&
+        ticket.assigneeId !== user.id &&
+        !isCollab
+      ) {
         throw new ForbiddenException('You are not assigned to this ticket');
       }
     }

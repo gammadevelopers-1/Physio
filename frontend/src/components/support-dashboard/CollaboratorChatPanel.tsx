@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { Loader2, MessageSquare, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supportApi } from "@/lib/api";
+import { roleLabelForComment } from "@/components/support-shared/CollaboratorTicketView";
 
 /**
  * Support-side chat panel for talking to looped-in collaborators
@@ -32,6 +33,12 @@ type Comment = {
   userFirstName: string | null;
   userLastName: string | null;
   userRole?: "super_admin" | "admin" | "supervisor" | "agent" | "student" | null;
+  /** Phase 2 — if the commenter was looped-in on this ticket, BE
+   *  returns the dept they joined as. Takes precedence over userRole
+   *  so a multi-role person reads as the role they're acting as
+   *  (e.g. an agent looped-in as Course Manager shows "Course Manager"
+   *  not "Support"). */
+  collabDepartment?: string | null;
 };
 
 interface Props {
@@ -208,6 +215,8 @@ function Bubble({
       .map((p) => p[0]?.toUpperCase())
       .join("") || "?";
 
+  const roleLabel = roleLabelForComment(comment);
+
   return (
     <div className={`flex gap-2 ${isSelf ? "flex-row-reverse" : ""}`}>
       <div
@@ -220,10 +229,15 @@ function Bubble({
         {initials}
       </div>
       <div className={`max-w-[85%] ${isSelf ? "items-end flex flex-col" : ""}`}>
-        <div className="flex items-center gap-1.5 mb-0.5">
+        <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
           <span className="text-[11px] font-semibold text-[var(--color-text-primary)]">
-            {isSelf ? t("youLabel") : authorName}
+            {authorName}
           </span>
+          {roleLabel && (
+            <span className="text-[9px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded-full bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)]">
+              {roleLabel}
+            </span>
+          )}
           <span className="text-[10px] text-[var(--color-text-secondary)]">
             {fmt.format(new Date(comment.createdAt))}
           </span>

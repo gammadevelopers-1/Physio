@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { supportApi } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import AttachmentChip, {
   type Attachment as ChipAttachment,
 } from "@/components/support-dashboard/AttachmentChip";
@@ -24,6 +25,47 @@ import LinkifiedText from "@/components/support/LinkifiedText";
 import StudentSnapshotCard from "@/components/support-dashboard/StudentSnapshotCard";
 import CertificateDetailsCard from "@/components/support-dashboard/CertificateDetailsCard";
 import AboutThisStudentCard from "@/components/support-shared/AboutThisStudentCard";
+
+// Pretty role labels — used by the bubbles + by the support-side
+// chat panel. `collabDepartment` takes precedence over `userRole`
+// for multi-role users (e.g. a support agent looped-in as Course
+// Manager reads as "Course Manager" in this ticket's thread).
+const DEPT_LABELS: Record<string, string> = {
+  course_manager: "Course Manager",
+  finance: "Finance",
+  instructor: "Instructor",
+  ta: "Teaching Assistant",
+  admin: "Admin",
+  supervisor: "Supervisor",
+};
+const ROLE_LABELS: Record<string, string> = {
+  super_admin: "Super Admin",
+  admin: "Admin",
+  supervisor: "Supervisor",
+  agent: "Support",
+  student: "Student",
+};
+
+export function roleLabelForComment(comment: {
+  userRole?: string | null;
+  collabDepartment?: string | null;
+}): string | null {
+  if (comment.collabDepartment) {
+    return DEPT_LABELS[comment.collabDepartment] || humanize(comment.collabDepartment);
+  }
+  if (comment.userRole) {
+    return ROLE_LABELS[comment.userRole] || humanize(comment.userRole);
+  }
+  return null;
+}
+
+function humanize(slug: string): string {
+  return slug
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 /**
  * Dedicated ticket view for collaborators (looped-in roles).
@@ -53,6 +95,11 @@ type Comment = {
   userFirstName: string | null;
   userLastName: string | null;
   userRole?: "super_admin" | "admin" | "supervisor" | "agent" | "student" | null;
+  /** Phase 2 — if the commenter is an active collaborator on this
+   *  ticket, the BE returns the department they were looped-in as
+   *  (e.g. "course_manager"). Takes precedence over userRole for the
+   *  badge so a multi-role user shows as the role they're acting as. */
+  collabDepartment?: string | null;
   attachments?: ChipAttachment[];
 };
 
@@ -106,6 +153,8 @@ export default function CollaboratorTicketView({ backHref }: Props) {
   );
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const { user } = useAuth();
+  const currentUserId = user?.id || "";
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -380,7 +429,13 @@ export default function CollaboratorTicketView({ backHref }: Props) {
               </div>
             ) : (
               internalComments.map((c) => (
-                <InternalBubble key={c.id} comment={c} fmt={fmt} t={t} />
+                <InternalBubble
+                  key={c.id}
+                  comment={c}
+                  currentUserId={currentUserId}
+                  fmt={fmt}
+                  t={t}
+                />
               ))
             )}
             <div ref={chatBottomRef} />
@@ -481,18 +536,15 @@ function MetaItem({
 
 function InternalBubble({
   comment,
+  currentUserId,
   fmt,
   t,
 }: {
   comment: Comment;
+  currentUserId: string;
   fmt: Intl.DateTimeFormat;
   t: ReturnType<typeof useTranslations>;
 }) {
-  const isFromSupport = comment.isStaffReply;
-  const authorName =
-    [comment.userFirstName, comment.userLastName].filter(Boolean).join(" ") ||
-    t("collab.unknownAuthor");
-
   if (comment.isSystem) {
     return (
       <div className="flex justify-center">
@@ -503,23 +555,37 @@ function InternalBubble({
     );
   }
 
+  // Alignment by AUTHOR identity, not by isStaffReply. The previous
+  // logic put every staff comment on the left — but collaborators
+  // are staff too, so their own replies ended up on the wrong side.
+  const isSelf = comment.userId === currentUserId;
+  const authorName =
+    [comment.userFirstName, comment.userLastName].filter(Boolean).join(" ") ||
+    t("collab.unknownAuthor");
+  const roleLabel = roleLabelForComment(comment);
+
   return (
-    <div className={`flex gap-2 ${isFromSupport ? "" : "flex-row-reverse"}`}>
-      <Avatar name={authorName} tone={isFromSupport ? "support" : "self"} />
-      <div className={`max-w-[80%] ${isFromSupport ? "" : "items-end flex flex-col"}`}>
-        <div className="flex items-center gap-1.5 mb-0.5">
+    <div className={`flex gap-2 ${isSelf ? "flex-row-reverse" : ""}`}>
+      <Avatar name={authorName} tone={isSelf ? "self" : "support"} />
+      <div className={`max-w-[80%] ${isSelf ? "items-end flex flex-col" : ""}`}>
+        <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
           <span className="text-[11px] font-semibold text-[var(--color-text-primary)]">
-            {isFromSupport ? t("collab.supportLabel") : t("collab.youLabel")}
+            {authorName}
           </span>
+          {roleLabel && (
+            <span className="text-[9px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded-full bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)]">
+              {roleLabel}
+            </span>
+          )}
           <span className="text-[10px] text-[var(--color-text-secondary)]">
             {fmt.format(new Date(comment.createdAt))}
           </span>
         </div>
         <div
           className={`px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-wrap ${
-            isFromSupport
-              ? "bg-[#FFFBEB] text-[#78350F] border border-[#FDE68A] rounded-tl-sm"
-              : "bg-[var(--color-primary)] text-white rounded-tr-sm"
+            isSelf
+              ? "bg-[var(--color-primary)] text-white rounded-tr-sm"
+              : "bg-[#FFFBEB] text-[#78350F] border border-[#FDE68A] rounded-tl-sm"
           }`}
         >
           <LinkifiedText text={comment.message} />

@@ -1866,6 +1866,8 @@ export const SIDEBAR_TAB_KEYS = {
   ADMIN_USERS: 'admin:users',
   ADMIN_TRAINER_APPS: 'admin:trainer-applications',
   USER_SUPPORT: 'user:support',
+  // Phase 2 — tickets where the user is a looped-in collaborator.
+  USER_LOOPED_IN: 'user:looped-in',
 } as const;
 
 export type SidebarTabKey =
@@ -5697,6 +5699,87 @@ export const supportApi = {
       priority: string;
     }>(`/tickets/${ticketId}/escalate`, data),
 
+  // ─── Phase 2 — Ticket collaborators ────────────────────
+
+  listCollaborators: (ticketId: string) =>
+    api.get<{
+      collaborators: {
+        id: string;
+        userId: string;
+        department: string;
+        addedAt: string;
+        userName: string | null;
+        userEmail: string | null;
+        addedBy: { id: string; name: string | null } | null;
+      }[];
+    }>(`/tickets/${ticketId}/collaborators`),
+
+  addCollaborator: (
+    ticketId: string,
+    data: { userId: string; department: string },
+  ) =>
+    api.post<{ id: string; alreadyActive: boolean }>(
+      `/tickets/${ticketId}/collaborators`,
+      data,
+    ),
+
+  removeCollaborator: (ticketId: string, userId: string) =>
+    api.delete<{ ok: true; alreadyRemoved: boolean }>(
+      `/tickets/${ticketId}/collaborators/${userId}`,
+    ),
+
+  getDepartmentMembers: (
+    dept: string,
+    opts?: { courseId?: string },
+  ) => {
+    const qs = opts?.courseId ? `?courseId=${encodeURIComponent(opts.courseId)}` : '';
+    return api.get<{
+      members: {
+        id: string;
+        firstName: string | null;
+        lastName: string | null;
+        email: string;
+        courseRoleLabel?: string;
+      }[];
+    }>(`/tickets/departments/${encodeURIComponent(dept)}/members${qs}`);
+  },
+
+  transferTicket: (
+    ticketId: string,
+    data: {
+      toCategory: string;
+      toDepartment: string;
+      userId?: string;
+      noteToRequester?: string;
+    },
+  ) =>
+    api.post<{
+      ok: true;
+      toCategory: string;
+      toDepartment: string;
+      toUserId: string;
+      systemMessage: string;
+    }>(`/tickets/${ticketId}/transfer`, data),
+
+  getLoopedInTickets: (limit?: number) => {
+    const qs = limit ? `?limit=${limit}` : '';
+    return api.get<
+      {
+        id: string;
+        referenceNumber: string;
+        subject: string;
+        category: string;
+        priority: string;
+        status: string;
+        createdAt: string;
+        updatedAt: string;
+        loopedInAt: string;
+        loopedInAs: string;
+        requesterName: string | null;
+      }[]
+    >(`/tickets/looped-in${qs}`);
+  },
+
   // Knowledge Base CRUD
   getKbArticles: (params?: { category?: string; search?: string }) => {
     const searchParams = new URLSearchParams();
@@ -5768,6 +5851,8 @@ export const supportApi = {
         autoPriority: 'high' | 'medium' | 'low' | null;
         applicableRoles: string[];
         builtin: boolean;
+        requiresCourse: boolean;
+        suggestedDepartment: string | null;
       }[]
     >(`/tickets/settings/ticket-categories${qs}`, { skipAuth: true });
   },
@@ -6199,15 +6284,6 @@ export const supportApi = {
     api.post<{ success: true; targetTicketId: string }>(
       `/tickets/${sourceId}/merge`,
       { targetTicketId, note },
-    ),
-
-  transferTicket: (
-    ticketId: string,
-    data: { category: string; reason?: string; reassign?: boolean },
-  ) =>
-    api.post<{ success: true; ticketId: string; newAssigneeId: string | null }>(
-      `/tickets/${ticketId}/transfer`,
-      data,
     ),
 
   getTicketAuditLog: (ticketId: string, limit?: number) =>

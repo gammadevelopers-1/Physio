@@ -27,6 +27,7 @@ import {
   roleRequests,
   ticketHoldRequests,
   supportTeamRequests,
+  ticketCollaborators,
   ROLE_NAMES,
   GUEST_USER_ID,
   HOLD_REQUEST_STATUS,
@@ -50,6 +51,11 @@ export const SIDEBAR_TAB_KEYS = {
 
   // Student / instructor / manager / TA / finance dashboards
   USER_SUPPORT: 'user:support',
+
+  // Phase 2 — tickets where the caller is an active collaborator
+  // and a new internal reply has landed since they last viewed
+  // the "Looped In" tab.
+  USER_LOOPED_IN: 'user:looped-in',
 } as const;
 
 export type SidebarTabKey =
@@ -164,6 +170,23 @@ export class SidebarBadgesService {
       );
     }
 
+    // Phase 2 — Looped-In badge for ANY staff user (non-student).
+    // Counts tickets where the user is an active collaborator and a
+    // new internal reply has landed since they last viewed the tab.
+    const isStudentOnly =
+      !isSupport &&
+      !isAdmin &&
+      user.roles.length === 1 &&
+      user.roles[0] === ROLE_NAMES.STUDENT;
+    if (!isStudentOnly) {
+      tasks.push(
+        this.countLoopedInUnreadReplies(
+          user.id,
+          since(SIDEBAR_TAB_KEYS.USER_LOOPED_IN),
+        ).then((n) => [SIDEBAR_TAB_KEYS.USER_LOOPED_IN, n]),
+      );
+    }
+
     const results = await Promise.all(tasks);
     const out: Record<string, number> = {};
     for (const r of results) {
@@ -267,6 +290,37 @@ export class SidebarBadgesService {
         and(
           inArray(roleRequests.status, ['PENDING', 'MORE_INFO']),
           gt(roleRequests.createdAt, since),
+        ),
+      );
+    return Number(row?.value) || 0;
+  }
+
+  private async countLoopedInUnreadReplies(
+    userId: string,
+    since: Date,
+  ): Promise<number> {
+    // Phase 2 — distinct tickets where I'm an active collaborator
+    // AND an internal reply (mine OR another collaborator's) landed
+    // after I last viewed the Looped In tab. We don't filter out my
+    // own internal replies because the user-facing meaning of the
+    // badge is "something happened here you haven't seen since you
+    // last looked" — even if it was your own reply, you should be
+    // able to click through and see the current state.
+    const [row] = await db
+      .select({
+        value: sql<number>`count(distinct ${ticketCollaborators.ticketId})::int`,
+      })
+      .from(ticketCollaborators)
+      .innerJoin(
+        ticketReplies,
+        eq(ticketReplies.ticketId, ticketCollaborators.ticketId),
+      )
+      .where(
+        and(
+          eq(ticketCollaborators.userId, userId),
+          isNull(ticketCollaborators.removedAt),
+          eq(ticketReplies.isInternal, true),
+          gt(ticketReplies.createdAt, since),
         ),
       );
     return Number(row?.value) || 0;

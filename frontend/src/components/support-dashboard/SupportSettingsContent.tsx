@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import SupportSidebar from "./SupportSidebar";
 import SupportNavbar from "./SupportNavbar";
 import TagsManagerPanel from "./TagsManagerPanel";
+import ConfirmDialog from "@/components/support-shared/ConfirmDialog";
 import { ProfileSection, PreferencesInline } from "@/components/settings";
 import { profileApi } from "@/lib/api";
 import { useSecuritySettings } from "@/components/shared/useSecuritySettings";
@@ -365,6 +366,12 @@ const SupportSettingsContent = () => {
   const [macroCategoryFilter, setMacroCategoryFilter] = useState<string>('');
   const [macroSearch, setMacroSearch] = useState('');
   const [macroSubView, setMacroSubView] = useState<'library' | 'analytics'>('library');
+  // Phase 2 — pending macro-delete confirmation. Captures both id and
+  // title so the dialog can name the macro being removed.
+  const [pendingMacroDelete, setPendingMacroDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   // Categories + KB articles for the picker dropdowns. Loaded once
   // when the macros tab opens — both fit comfortably in memory and
@@ -966,13 +973,7 @@ const SupportSettingsContent = () => {
                                       });
                                       setShowMacroForm(true);
                                     }} className="text-xs text-[var(--color-primary)] hover:underline">{t("settingsPage.macrosPanel.edit")}</button>
-                                    <button onClick={async () => {
-                                      if (confirm(t("settingsPage.macrosPanel.toasts.confirmDelete"))) {
-                                        await supportApi.deleteMacro(macro.id);
-                                        await refreshMacros();
-                                        toast.success(t("settingsPage.macrosPanel.toasts.deleted"));
-                                      }
-                                    }} className="text-xs text-red-500 hover:underline">{t("settingsPage.macrosPanel.delete")}</button>
+                                    <button onClick={() => setPendingMacroDelete({ id: macro.id, title: macro.title })} className="text-xs text-red-500 hover:underline">{t("settingsPage.macrosPanel.delete")}</button>
                                   </div>
                                 )}
                               </div>
@@ -1083,6 +1084,29 @@ const SupportSettingsContent = () => {
           </div>
         </div>
       </div>
+
+      {/* Phase 2 — destructive-action confirm dialog (replaces
+          window.confirm for macro deletion). */}
+      <ConfirmDialog
+        open={!!pendingMacroDelete}
+        onOpenChange={(o) => !o && setPendingMacroDelete(null)}
+        title={t("settingsPage.macrosPanel.toasts.confirmDeleteTitle")}
+        description={
+          pendingMacroDelete
+            ? t("settingsPage.macrosPanel.toasts.confirmDeleteDescription", {
+                name: pendingMacroDelete.title,
+              })
+            : ""
+        }
+        confirmLabel={t("settingsPage.macrosPanel.delete")}
+        destructive
+        onConfirm={async () => {
+          if (!pendingMacroDelete) return;
+          await supportApi.deleteMacro(pendingMacroDelete.id);
+          await refreshMacros();
+          toast.success(t("settingsPage.macrosPanel.toasts.deleted"));
+        }}
+      />
     </>
   );
 };
@@ -1600,6 +1624,7 @@ export function BusinessHoursPanel({ canEdit }: { canEdit: boolean }) {
           </button>
         </div>
       )}
+
     </div>
   );
 }
@@ -1870,8 +1895,19 @@ export function TicketCategoriesPanel() {
     }
   }
 
-  async function removeCategory(slug: string) {
-    if (!confirm(t("settingsPage.ticketCategoriesPanel.confirmDelete", { slug }))) return;
+  // Phase 2 — confirmation state captures both slug + label so the
+  // dialog can name what's being deleted.
+  const [pendingCatDelete, setPendingCatDelete] = useState<{
+    slug: string;
+    label: string;
+    builtin: boolean;
+  } | null>(null);
+
+  function requestRemoveCategory(slug: string, label: string, builtin: boolean) {
+    setPendingCatDelete({ slug, label, builtin });
+  }
+
+  async function doRemoveCategory(slug: string) {
     try {
       await supportApi.removeTicketCategory(slug);
       toast.success(t("settingsPage.ticketCategoriesPanel.removed"));
@@ -2058,7 +2094,7 @@ export function TicketCategoriesPanel() {
                     {c.slug}
                   </p>
                 </div>
-                {!c.builtin && !isEditing && (
+                {!isEditing && (
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
@@ -2072,9 +2108,20 @@ export function TicketCategoriesPanel() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => removeCategory(c.slug)}
+                      onClick={() =>
+                        requestRemoveCategory(c.slug, c.nameEn, c.builtin)
+                      }
                       className="p-1.5 hover:bg-[#FEE2E2] rounded-md text-[#DC2626]"
-                      aria-label={t("settingsPage.ticketCategoriesPanel.removeCategory")}
+                      aria-label={t(
+                        c.builtin
+                          ? "settingsPage.ticketCategoriesPanel.disableCategory"
+                          : "settingsPage.ticketCategoriesPanel.removeCategory",
+                      )}
+                      title={t(
+                        c.builtin
+                          ? "settingsPage.ticketCategoriesPanel.disableCategory"
+                          : "settingsPage.ticketCategoriesPanel.removeCategory",
+                      )}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -2164,6 +2211,39 @@ export function TicketCategoriesPanel() {
           );
         })}
       </div>
+
+      {/* Phase 2 — confirm dialog. Built-ins are "disabled" (hidden
+          from the create form via support_config overrides), while
+          custom categories are deleted outright. The copy reflects
+          which mode applies. */}
+      <ConfirmDialog
+        open={!!pendingCatDelete}
+        onOpenChange={(o) => !o && setPendingCatDelete(null)}
+        title={t(
+          pendingCatDelete?.builtin
+            ? "settingsPage.ticketCategoriesPanel.disableConfirmTitle"
+            : "settingsPage.ticketCategoriesPanel.confirmDeleteTitle",
+        )}
+        description={
+          pendingCatDelete
+            ? t(
+                pendingCatDelete.builtin
+                  ? "settingsPage.ticketCategoriesPanel.disableConfirmDescription"
+                  : "settingsPage.ticketCategoriesPanel.confirmDeleteDescription",
+                { name: pendingCatDelete.label },
+              )
+            : ""
+        }
+        destructive
+        confirmLabel={t(
+          pendingCatDelete?.builtin
+            ? "settingsPage.ticketCategoriesPanel.disableConfirmLabel"
+            : "settingsPage.ticketCategoriesPanel.delete",
+        )}
+        onConfirm={async () => {
+          if (pendingCatDelete) await doRemoveCategory(pendingCatDelete.slug);
+        }}
+      />
     </div>
   );
 }

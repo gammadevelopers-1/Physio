@@ -38,11 +38,12 @@ const CourseManagerSupportContent = () => {
   );
 
   if (selectedTicketId) {
+    // Phase 2 — fullscreen ticket detail (no role chrome).
     return (
       <UserTicketDetail
         ticketId={selectedTicketId}
         onBack={() => setSelectedTicketId(null)}
-        renderShell={renderShell}
+        renderShell={(c) => <>{c}</>}
       />
     );
   }

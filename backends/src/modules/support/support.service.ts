@@ -60,6 +60,9 @@ import {
   SUPPORT_TEAM_REQUEST_STATUS,
   interventions,
   courseAssistants,
+  ticketCollaborators,
+  TICKET_COLLAB_DEPARTMENTS,
+  type TicketCollabDepartment,
 } from '../../database/schema';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import {
@@ -68,7 +71,6 @@ import {
   AddCommentDto,
   ListTicketsQueryDto,
   CreateTicketOnBehalfDto,
-  CreateGuestTicketDto,
   CreateMacroDto,
   UpdateMacroDto,
   CreateKbArticleDto,
@@ -457,6 +459,20 @@ export class SupportService implements OnModuleInit {
       );
     }
 
+    // Phase 2 — enforce course requirement per category. Categories
+    // flagged requiresCourse=true (refund_invoice, course_content,
+    // certificate, etc.) must carry a courseId so support has
+    // immediate context and the loop-in modal can scope course-bound
+    // depts (instructor / ta / course_manager) to the right people.
+    const allCategories = await this.listTicketCategories();
+    const categoryDef = allCategories.find((c) => c.slug === dto.category);
+    if (categoryDef?.requiresCourse && !dto.courseId) {
+      throw new BadRequestException({
+        message: 'course_required_for_category',
+        category: dto.category,
+      });
+    }
+
     // Round-robin: find agent with fewest open tickets
     const assigneeId = await this.findNextAgent();
 
@@ -762,7 +778,27 @@ export class SupportService implements OnModuleInit {
     if (query.priority) conditions.push(eq(tickets.priority, query.priority));
     if (query.category) conditions.push(eq(tickets.category, query.category));
     if (query.assigneeId) conditions.push(eq(tickets.assigneeId, query.assigneeId));
-    if (query.source) conditions.push(eq(tickets.source, query.source));
+    if (query.source) {
+      // Role-aligned source filters need to include their provenance
+      // variants. Intervention tickets filed from the instructor's
+      // at-risk panel carry `source='intervention'`, not 'instructor'
+      // — without this expansion they'd silently drop out of the
+      // instructor's Support tab even though the instructor IS the
+      // requester. Same idea applies to any future `at_risk_alert`
+      // automated tickets.
+      const SOURCE_EXPANSION: Record<string, string[]> = {
+        instructor: ['instructor', 'intervention', 'at_risk_alert'],
+        course_manager: ['course_manager'],
+        ta: ['ta'],
+        finance: ['finance'],
+      };
+      const accepted = SOURCE_EXPANSION[query.source] ?? [query.source];
+      conditions.push(
+        accepted.length === 1
+          ? eq(tickets.source, accepted[0])
+          : inArray(tickets.source, accepted),
+      );
+    }
     if (query.escalated === '1' || query.escalated === 'true') {
       conditions.push(isNotNull(tickets.escalatedAt));
     } else if (query.escalated === '0' || query.escalated === 'false') {
@@ -1036,8 +1072,19 @@ export class SupportService implements OnModuleInit {
 
     if (!ticket) throw new NotFoundException('Ticket not found');
 
-    // Access check: owner or support/admin
-    if (!isSupportOrAdmin && ticket.studentId !== user.id) {
+    // Phase 2 — collaborator admission. A user who isn't support/admin
+    // and isn't the requester may still be a looped-in collaborator,
+    // in which case they get to see both public + internal channels
+    // (but the controller hides the right-panel collab list from
+    // non-staff via the viewerRole field).
+    const isRequester = ticket.studentId === user.id;
+    const isCollab =
+      !isSupportOrAdmin && !isRequester
+        ? await this.isCollaborator(ticketId, user.id)
+        : false;
+
+    // Access check: owner, support/admin, OR active collaborator.
+    if (!isSupportOrAdmin && !isRequester && !isCollab) {
       throw new ForbiddenException('You do not have access to this ticket');
     }
 
@@ -1052,9 +1099,10 @@ export class SupportService implements OnModuleInit {
       }
     }
 
-    // Fetch comments, filtering internal notes for non-support users
+    // Fetch comments. Requesters never see internal notes; support/admin
+    // and active collaborators see both channels.
     const commentsConditions = [eq(ticketReplies.ticketId, ticketId)];
-    if (!isSupportOrAdmin) {
+    if (!isSupportOrAdmin && !isCollab) {
       commentsConditions.push(eq(ticketReplies.isInternal, false));
     }
 
@@ -1425,6 +1473,20 @@ export class SupportService implements OnModuleInit {
         ? ticket.guestEmail
         : ticket.studentEmail;
 
+    // Phase 2 — collaborators + viewer role. Requesters get an empty
+    // collab list (and the FE hides the panel based on viewerRole);
+    // support/admin + collaborators see the real list.
+    const viewerRole: 'support' | 'collaborator' | 'requester' | 'none' =
+      isSupportOrAdmin
+        ? 'support'
+        : isCollab
+        ? 'collaborator'
+        : isRequester
+        ? 'requester'
+        : 'none';
+    const collaborators =
+      viewerRole === 'requester' ? [] : await this.listCollaborators(ticketId);
+
     return {
       ...ticket,
       studentFirstName: displayStudentFirstName,
@@ -1453,6 +1515,8 @@ export class SupportService implements OnModuleInit {
       mergedFrom,
       csatReview,
       aboutUser,
+      collaborators,
+      viewerRole,
     };
   }
 
@@ -2047,9 +2111,27 @@ export class SupportService implements OnModuleInit {
 
     if (!ticket) throw new NotFoundException('Ticket not found');
 
-    // Access check — students can only comment on their own tickets
-    if (!isSupportOrAdmin && ticket.studentId !== user.id) {
+    // Phase 2 — collaborator admission. A non-support, non-requester
+    // user who is a looped-in collaborator can post replies, but ONLY
+    // on the internal channel. The visibility matrix is enforced below.
+    const isRequester = ticket.studentId === user.id;
+    const isCollab =
+      !isSupportOrAdmin && !isRequester
+        ? await this.isCollaborator(ticketId, user.id)
+        : false;
+
+    if (!isSupportOrAdmin && !isRequester && !isCollab) {
       throw new ForbiddenException('You do not have access to this ticket');
+    }
+
+    // Collaborators are pure brokered participants — they cannot post
+    // public messages. If the FE sends `isInternal=false` from a
+    // collaborator, reject loudly so we never accidentally leak their
+    // voice into the requester's channel.
+    if (isCollab && dto.isInternal === false) {
+      throw new BadRequestException(
+        'Collaborators can only post internal replies',
+      );
     }
 
     // Agent isolation: non-supervisor agents can only comment on their assigned tickets
@@ -2076,8 +2158,15 @@ export class SupportService implements OnModuleInit {
       }
     }
 
-    // Force isInternal=false for non-support users
-    const isInternal = isSupportOrAdmin ? (dto.isInternal ?? false) : false;
+    // Visibility derivation per the Phase 2 matrix:
+    //   requester       → public only (isInternal=false)
+    //   collaborator    → internal only (isInternal=true)
+    //   support/admin   → caller's choice, default public
+    const isInternal = isCollab
+      ? true
+      : isSupportOrAdmin
+        ? (dto.isInternal ?? false)
+        : false;
 
     // 48h grace check for student reopen must happen BEFORE the
     // transaction so we don't open + immediately roll back the comment
@@ -2155,7 +2244,12 @@ export class SupportService implements OnModuleInit {
           ticketId,
           userId: user.id,
           message: dto.message,
-          isStaffReply: isSupportOrAdmin,
+          // Collaborators are staff members from another dept — flag
+          // their internal replies as staff so the bubble renders on
+          // the staff side. FRT/notification logic downstream gates
+          // on (!isInternal) too, so this doesn't leak into the public
+          // channel or trip first-response timing.
+          isStaffReply: isSupportOrAdmin || isCollab,
           isInternal,
         })
         .returning();
@@ -2192,9 +2286,11 @@ export class SupportService implements OnModuleInit {
         }
       }
 
-      // Student reply on resolved/closed (within 48h grace) → reopen (ST-12, ST-13)
+      // Student reply on resolved/closed (within 48h grace) → reopen (ST-12, ST-13).
+      // Gated on isRequester so a collaborator's internal reply on a
+      // resolved/closed ticket doesn't accidentally reopen it.
       if (
-        !isSupportOrAdmin &&
+        isRequester &&
         (ticket.status === TICKET_STATUS.RESOLVED ||
           ticket.status === TICKET_STATUS.CLOSED)
       ) {
@@ -2233,7 +2329,7 @@ export class SupportService implements OnModuleInit {
           entityId: ticketId,
         });
       } else if (
-        !isSupportOrAdmin &&
+        isRequester &&
         ticket.assigneeId &&
         (await this.shouldNotifySupport(ticket.assigneeId, 'inApp'))
       ) {
@@ -2243,6 +2339,22 @@ export class SupportService implements OnModuleInit {
           type: 'ticket_reply',
           title: 'Student Replied',
           message: `Student replied to ticket ${ticket.referenceNumber}`,
+          link: `/dashboard/support/agent/tickets/${ticketId}`,
+          entityType: 'ticket',
+          entityId: ticketId,
+        });
+      } else if (
+        isCollab &&
+        ticket.assigneeId &&
+        (await this.shouldNotifySupport(ticket.assigneeId, 'inApp'))
+      ) {
+        // Collaborator posted an internal reply → notify assigned
+        // agent so they can relay to the requester if needed.
+        await this.notificationsService.create({
+          recipientId: ticket.assigneeId,
+          type: 'ticket_collab_reply',
+          title: 'Collaborator Note',
+          message: `New internal note on ticket ${ticket.referenceNumber}`,
           link: `/dashboard/support/agent/tickets/${ticketId}`,
           entityType: 'ticket',
           entityId: ticketId,
@@ -2292,7 +2404,7 @@ export class SupportService implements OnModuleInit {
           );
         }
       } else if (
-        !isSupportOrAdmin &&
+        isRequester &&
         ticket.assigneeId &&
         (await this.shouldNotifySupport(ticket.assigneeId, 'email'))
       ) {
@@ -2308,6 +2420,8 @@ export class SupportService implements OnModuleInit {
           );
         }
       }
+      // Phase 2: collaborator internal replies do not send any email
+      // (in-app notification is enough — see notification block above).
     } catch { /* non-blocking */ }
 
     // Audit log — distinguishes public replies from internal notes so
@@ -2321,7 +2435,8 @@ export class SupportService implements OnModuleInit {
       performedBy: user.id,
       metadata: {
         referenceNumber: ticket.referenceNumber,
-        isStaffReply: isSupportOrAdmin,
+        isStaffReply: isSupportOrAdmin || isCollab,
+        isCollaboratorReply: isCollab,
         replyId: comment.id,
         attachmentCount: safeReplyAttachmentUrls.length,
       },
@@ -2401,6 +2516,22 @@ export class SupportService implements OnModuleInit {
       updateData.onHoldReason = null;
     }
 
+    // Phase 2 — skip CSAT survey creation when the requester is a
+    // staff member (instructor / manager / finance / TA / support /
+    // admin). CSAT only meaningfully measures learner satisfaction;
+    // an internal ops ticket between staff teams shouldn't fire a
+    // satisfaction survey at the requester.
+    const requesterRoleNames = await db
+      .select({ name: roles.name })
+      .from(userRoles)
+      .innerJoin(roles, eq(roles.id, userRoles.roleId))
+      .where(eq(userRoles.userId, ticket.studentId));
+    const requesterIsStaff = requesterRoleNames.some(
+      (r) => r.name !== ROLE_NAMES.STUDENT,
+    );
+    const isGuestRequester = ticket.studentId === GUEST_USER_ID;
+    const skipCsat = requesterIsStaff && !isGuestRequester;
+
     // Resolving the ticket and creating the CSAT survey placeholder must
     // succeed together. Without this transaction, a crash between the
     // two writes leaves a "resolved" ticket the student never gets
@@ -2413,6 +2544,10 @@ export class SupportService implements OnModuleInit {
         .set(updateData)
         .where(eq(tickets.id, ticketId))
         .returning();
+
+      if (skipCsat) {
+        return { updated: updatedTicket, surveyId: null };
+      }
 
       // Capture the survey id so the resolution email can carry a
       // one-click CTA. onConflictDoNothing means the returning row
@@ -2699,6 +2834,25 @@ export class SupportService implements OnModuleInit {
             /* non-blocking */
           }
         }),
+      );
+    }
+
+    // Phase 2 — auto-add admin team as collaborators on first
+    // escalation so they show up on the ticket alongside the
+    // supervisor/dev-team notification. Idempotent: addCollaborator
+    // skips users already active. Best-effort; failures here don't
+    // void the escalation.
+    try {
+      for (const adminId of adminIds) {
+        if (adminId === user.id) continue; // skip the escalator
+        await this.addCollaborator(user, ticketId, {
+          userId: adminId,
+          department: TICKET_COLLAB_DEPARTMENTS.ADMIN,
+        }).catch(() => undefined);
+      }
+    } catch (e) {
+      this.logger.warn(
+        `Escalation collab auto-add failed: ${(e as Error).message}`,
       );
     }
 
@@ -4117,352 +4271,7 @@ export class SupportService implements OnModuleInit {
     };
   }
 
-  // ─── Guest Ticket (Login Issues Only) ──────────────────
 
-  async createGuestTicket(dto: CreateGuestTicketDto) {
-    // Anti-abuse: verify reCAPTCHA before doing anything else.
-    // RecaptchaService.verify() is a no-op when the server secret is
-    // unset (e.g. local dev) so this stays backwards-compatible.
-    if (dto.recaptchaToken) {
-      await this.recaptchaService.verify(dto.recaptchaToken, 'guest-ticket');
-    }
-
-    // Server-side guard: guest tickets are restricted to a small set
-    // of allowed categories. DTO covers the happy path; this catches
-    // any caller that bypasses DTO validation (e.g. a future internal
-    // call site).
-    const ALLOWED_GUEST_CATEGORIES = new Set(['login', 'trainer']);
-    if (!ALLOWED_GUEST_CATEGORIES.has(dto.category)) {
-      throw new BadRequestException(
-        'Guest tickets are only allowed for login or trainer-application issues',
-      );
-    }
-
-    // Auto-tag as 'trainer' when the guest email matches an existing
-    // trainer application. This survives the case where the applicant
-    // picked the default category by accident — agents shouldn't have
-    // to re-route those manually. If the applicant explicitly picked
-    // 'trainer' we still set it; the lookup result is the same either
-    // way.
-    let effectiveCategory = dto.category;
-    let matchedRoleRequestId: string | null = null;
-    if (dto.email) {
-      const matched = await this.roleRequestsService.findMostRecentByEmail(
-        dto.email,
-      );
-      if (matched) {
-        effectiveCategory = 'trainer';
-        matchedRoleRequestId = matched.id;
-      }
-    }
-
-    // M8: Rate-limit guest ticket creation — max 3 per email per 24h
-    if (dto.email) {
-      const TWENTY_FOUR_HOURS_AGO = new Date(
-        Date.now() - 24 * 60 * 60 * 1000,
-      );
-      const [recentCount] = await db
-        .select({ count: count() })
-        .from(tickets)
-        .where(
-          and(
-            eq(tickets.guestEmail, dto.email.toLowerCase()),
-            gte(tickets.createdAt, TWENTY_FOUR_HOURS_AGO),
-          ),
-        );
-      if ((recentCount?.count ?? 0) >= 3) {
-        throw new BadRequestException(
-          'You have reached the maximum number of tickets (3) for today. Please try again tomorrow.',
-        );
-      }
-    }
-
-    // H6: Verify sentinel guest user exists
-    const [guestUser] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.id, GUEST_USER_ID))
-      .limit(1);
-
-    if (!guestUser) {
-      throw new BadRequestException(
-        'Guest ticket system not configured. Please contact support via email.',
-      );
-    }
-
-    // Guest tickets resolve priority via the live map so admin
-    // overrides on built-in priorities take effect. Fall back to
-    // HIGH (the historical guest default) rather than MEDIUM. Use
-    // effectiveCategory so a 'trainer' auto-tag carries the right
-    // category-specific priority if admins configured one.
-    const resolvedGuest = await this.resolveCategoryPriority(effectiveCategory);
-    const autoPriority = resolvedGuest.isValidSlug
-      ? resolvedGuest.priority
-      : TICKET_PRIORITY.HIGH;
-    const assigneeId = await this.findNextAgent();
-    const trackingToken = crypto.randomUUID();
-
-    // Same multi-attachment handling as createTicket — validate each URL,
-    // dedupe, persist the first one to the legacy column for backward
-    // compat and the rest into the junction. Guest uploads land with
-    // uploadedBy = null because the sentinel guest user doesn't own
-    // the file individually.
-    const multiGuest = Array.isArray(dto.attachmentUrls)
-      ? dto.attachmentUrls
-      : [];
-    const combinedRawGuest = multiGuest
-      .map((u) => (typeof u === 'string' ? u.trim() : ''))
-      .filter(Boolean);
-    const seenGuest = new Set<string>();
-    const safeGuestAttachmentUrls: string[] = [];
-    for (const raw of combinedRawGuest) {
-      const safe = validateTicketAttachmentUrl(raw);
-      if (safe && !seenGuest.has(safe)) {
-        seenGuest.add(safe);
-        safeGuestAttachmentUrls.push(safe);
-      }
-    }
-    const firstGuestAttachmentUrl = safeGuestAttachmentUrls[0] ?? null;
-
-    const [ticket] = await db
-      .insert(tickets)
-      .values({
-        studentId: GUEST_USER_ID,
-        category: effectiveCategory,
-        priority: autoPriority,
-        subject: dto.subject,
-        description: dto.description,
-        attachmentUrl: firstGuestAttachmentUrl,
-        status: TICKET_STATUS.NEW,
-        assigneeId,
-        guestTrackingToken: trackingToken,
-        guestName: dto.name,
-        guestEmail: dto.email,
-      })
-      .returning();
-
-    // Audit the auto-tag so support can see "we routed this to trainer
-    // because the applicant's email matched role_request X". Best-effort
-    // — `log()` already swallows DB errors so no try/catch needed.
-    if (
-      matchedRoleRequestId &&
-      effectiveCategory !== dto.category &&
-      ticket?.id
-    ) {
-      await this.auditLogService.log({
-        entityType: 'support_ticket',
-        entityId: ticket.id,
-        action: 'auto_tagged_trainer',
-        performedBy: ticket.assigneeId ?? GUEST_USER_ID,
-        metadata: {
-          requestedCategory: dto.category,
-          matchedRoleRequestId,
-          matchedByEmail: dto.email,
-        },
-      });
-    }
-
-    if (safeGuestAttachmentUrls.length > 0) {
-      try {
-        await db
-          .insert(ticketAttachments)
-          .values(
-            safeGuestAttachmentUrls.map((url) => ({
-              ticketId: ticket.id,
-              url,
-              uploadedBy: null,
-            })),
-          )
-          .onConflictDoNothing();
-      } catch (err) {
-        this.logger.warn(
-          `Failed to insert guest ticket_attachments for ticket ${ticket.id}: ${err}`,
-        );
-      }
-      for (const url of safeGuestAttachmentUrls) {
-        await this.recordAttachmentScanPending(ticket.id, url);
-      }
-    }
-
-    // Notify assigned agent (respects support staff in-app master)
-    if (assigneeId && (await this.shouldNotifySupport(assigneeId, 'inApp'))) {
-      try {
-        await this.notificationsService.create({
-          recipientId: assigneeId,
-          type: 'ticket_assigned',
-          title: 'New Guest Ticket',
-          message: `Login issue from ${dto.name} (${dto.email}): "${dto.subject}"`,
-          link: `/dashboard/support/agent/tickets/${ticket.id}`,
-          entityType: 'ticket',
-          entityId: ticket.id,
-        });
-      } catch {
-        // Non-blocking
-      }
-    }
-
-    // Confirmation email to the guest with their tracking URL. Guests
-    // don't have a dashboard, and the in-browser tracking link shown
-    // on the success screen is lost the moment they close the tab.
-    // The email gives them a durable path back to reply or check
-    // status. Compute the expected-response phrasing so the email
-    // matches what authenticated learners get.
-    try {
-      const [guestSlaPolicy] = await db
-        .select()
-        .from(slaPolicies)
-        .where(eq(slaPolicies.priority, autoPriority));
-      if (guestSlaPolicy) {
-        const expected = describeExpectedResponse(
-          ticket.createdAt,
-          guestSlaPolicy.frtMinutes,
-        );
-        const trackingUrl = this.buildGuestTrackingUrl(trackingToken);
-        await this.emailService.sendTicketCreatedLearner(
-          dto.email,
-          dto.name || 'there',
-          ticket.referenceNumber,
-          expected.phrasing,
-          expected.mode,
-          trackingUrl,
-        );
-      }
-    } catch (err) {
-      // Best-effort — don't fail the request if email is misconfigured.
-      this.logger.warn(
-        `Guest confirmation email failed for ticket ${ticket.id}: ${err}`,
-      );
-    }
-
-    // Auto-tag rule engine — same as createTicket. Failures are
-    // logged + swallowed; the guest already got their tracking token.
-    try {
-      const matches = await this.matchAutoApplyTags({
-        subject: dto.subject,
-        description: dto.description,
-      });
-      if (matches.length > 0) {
-        await this.applyAutoTagsToTicket(ticket.id, GUEST_USER_ID, matches);
-      }
-    } catch (err) {
-      this.logger.warn(
-        `Auto-tag scan failed for guest ticket ${ticket.id}: ${err}`,
-      );
-    }
-
-    return { ticket, trackingToken };
-  }
-
-  async getTicketByTrackingToken(token: string) {
-    const [ticket] = await db
-      .select({
-        id: tickets.id,
-        referenceNumber: tickets.referenceNumber,
-        category: tickets.category,
-        priority: tickets.priority,
-        subject: tickets.subject,
-        description: tickets.description,
-        status: tickets.status,
-        assigneeId: tickets.assigneeId,
-        firstResponseAt: tickets.firstResponseAt,
-        slaBreachedFrt: tickets.slaBreachedFrt,
-        slaBreachedTtr: tickets.slaBreachedTtr,
-        onHoldTotalMinutes: tickets.onHoldTotalMinutes,
-        createdAt: tickets.createdAt,
-        resolvedAt: tickets.resolvedAt,
-        closedAt: tickets.closedAt,
-        guestName: tickets.guestName,
-        guestEmail: tickets.guestEmail,
-      })
-      .from(tickets)
-      .where(eq(tickets.guestTrackingToken, token));
-
-    if (!ticket) throw new NotFoundException('Ticket not found');
-
-    // Public comments only (no internal notes)
-    const comments = await db
-      .select({
-        id: ticketReplies.id,
-        message: ticketReplies.message,
-        isStaffReply: ticketReplies.isStaffReply,
-        isInternal: ticketReplies.isInternal,
-        createdAt: ticketReplies.createdAt,
-        userFirstName: users.firstName,
-        userLastName: users.lastName,
-      })
-      .from(ticketReplies)
-      .leftJoin(users, eq(ticketReplies.userId, users.id))
-      .where(
-        and(
-          eq(ticketReplies.ticketId, ticket.id),
-          eq(ticketReplies.isInternal, false),
-        ),
-      )
-      .orderBy(asc(ticketReplies.createdAt));
-
-    // SLA info
-    const [slaPolicy] = await db
-      .select()
-      .from(slaPolicies)
-      .where(eq(slaPolicies.priority, ticket.priority));
-
-    // CSAT survey — only attach for resolved/closed tickets so the
-    // tracking page can show a rating widget. For still-open tickets
-    // we return null (widget hidden).
-    let csatSurvey: {
-      id: string;
-      score: number | null;
-      submittedAt: string | null;
-      sentAt: string;
-      expired: boolean;
-      alreadySubmitted: boolean;
-    } | null = null;
-
-    if (
-      ticket.status === TICKET_STATUS.RESOLVED ||
-      ticket.status === TICKET_STATUS.CLOSED
-    ) {
-      const [survey] = await db
-        .select({
-          id: csatSurveys.id,
-          score: csatSurveys.score,
-          submittedAt: csatSurveys.submittedAt,
-          sentAt: csatSurveys.sentAt,
-        })
-        .from(csatSurveys)
-        .where(eq(csatSurveys.ticketId, ticket.id))
-        .limit(1);
-
-      if (survey) {
-        const SEVENTY_TWO_HOURS_MS = 72 * 60 * 60 * 1000;
-        const expired =
-          Date.now() - new Date(survey.sentAt).getTime() >
-          SEVENTY_TWO_HOURS_MS;
-        csatSurvey = {
-          id: survey.id,
-          score: survey.score,
-          submittedAt: survey.submittedAt
-            ? new Date(survey.submittedAt).toISOString()
-            : null,
-          sentAt: new Date(survey.sentAt).toISOString(),
-          expired,
-          alreadySubmitted: !!survey.submittedAt,
-        };
-      }
-    }
-
-    const tags = await this.getTicketTags(ticket.id);
-    const attachments = await this.getTicketAttachments(ticket.id);
-
-    return {
-      ...ticket,
-      comments,
-      slaPolicy: slaPolicy || null,
-      csatSurvey,
-      tags,
-      attachments,
-    };
-  }
 
   // Bulk attachment fetch for a single ticket. The legacy
   // `attachmentUrl` column is folded in too so old tickets created
@@ -4702,87 +4511,6 @@ export class SupportService implements OnModuleInit {
     return this.storageService.getScanStatus(bucket, filename);
   }
 
-  async addGuestReply(token: string, message: string) {
-    const [ticket] = await db
-      .select({
-        id: tickets.id,
-        referenceNumber: tickets.referenceNumber,
-        status: tickets.status,
-        assigneeId: tickets.assigneeId,
-        closedAt: tickets.closedAt,
-      })
-      .from(tickets)
-      .where(eq(tickets.guestTrackingToken, token));
-
-    if (!ticket) throw new NotFoundException('Ticket not found');
-
-    // 48h closed ticket check
-    if (ticket.status === TICKET_STATUS.CLOSED) {
-      const GRACE_PERIOD_MS = 48 * 60 * 60 * 1000;
-      const closedTime = ticket.closedAt
-        ? new Date(ticket.closedAt).getTime()
-        : 0;
-      if (Date.now() - closedTime > GRACE_PERIOD_MS) {
-        throw new BadRequestException(
-          'This ticket has been closed for more than 48 hours.',
-        );
-      }
-    }
-
-    const [comment] = await db
-      .insert(ticketReplies)
-      .values({
-        ticketId: ticket.id,
-        userId: GUEST_USER_ID,
-        message,
-        isStaffReply: false,
-        isInternal: false,
-      })
-      .returning();
-
-    // Reopen if resolved/closed
-    if (
-      ticket.status === TICKET_STATUS.RESOLVED ||
-      ticket.status === TICKET_STATUS.CLOSED
-    ) {
-      await db
-        .update(tickets)
-        .set({
-          status: TICKET_STATUS.NEW,
-          resolvedAt: null,
-          closedAt: null,
-          updatedAt: new Date(),
-        })
-        .where(eq(tickets.id, ticket.id));
-    }
-
-    // Notify agent (respects support staff in-app master)
-    if (
-      ticket.assigneeId &&
-      (await this.shouldNotifySupport(ticket.assigneeId, 'inApp'))
-    ) {
-      try {
-        await this.notificationsService.create({
-          recipientId: ticket.assigneeId,
-          type: 'ticket_reply',
-          title: 'Guest Replied',
-          message: `Guest replied to ticket ${ticket.referenceNumber}`,
-          link: `/dashboard/support/agent/tickets/${ticket.id}`,
-          entityType: 'ticket',
-          entityId: ticket.id,
-        });
-      } catch {
-        // Non-blocking
-      }
-    }
-
-    await db
-      .update(tickets)
-      .set({ updatedAt: new Date() })
-      .where(eq(tickets.id, ticket.id));
-
-    return comment;
-  }
 
   // ─── Create Ticket on Behalf (Instructor → Learner) ────
 
@@ -9675,33 +9403,52 @@ export class SupportService implements OnModuleInit {
       autoPriority: 'high' | 'medium' | 'low' | null;
       applicableRoles: string[];
       builtin: boolean;
+      requiresCourse: boolean;
+      suggestedDepartment: string | null;
     }[]
   > {
     // Default role-applicability mapping for built-ins. Each category
     // declares which customer dashboards (student / instructor /
-    // course_manager / finance / ta) should show it in the create-ticket
-    // dropdown. This replaces the legacy hardcoded slug arrays that
-    // used to live in each role wrapper. Custom categories carry their
-    // own applicableRoles, set by the supervisor when creating them.
-    const ALL: string[] = ['student', 'instructor', 'course_manager', 'finance', 'ta'];
+    // course_manager / finance / ta / admin / support) should show it
+    // in the create-ticket dropdown. Custom categories carry their own
+    // applicableRoles, set by the supervisor when creating them.
+    //
+    // Phase 2 — two extra flags per category:
+    //   * requiresCourse — if true, the FE shows + requires a course
+    //     picker. Server enforces via createTicket validation.
+    //   * suggestedDepartment — drives the Loop-in modal default and
+    //     the Transfer modal default. Hint only; support decides.
+    const ALL: string[] = [
+      'student',
+      'instructor',
+      'course_manager',
+      'finance',
+      'ta',
+      'admin',
+      'support',
+    ];
     const builtins = [
-      { slug: 'billing', nameEn: 'Billing', nameAr: 'الفواتير', autoPriority: 'medium' as const, applicableRoles: ['student', 'finance'] },
-      { slug: 'login', nameEn: 'Login', nameAr: 'تسجيل الدخول', autoPriority: 'high' as const, applicableRoles: ALL },
-      { slug: 'certificate', nameEn: 'Certificate', nameAr: 'الشهادات', autoPriority: 'medium' as const, applicableRoles: ['student', 'course_manager'] },
-      { slug: 'webinar', nameEn: 'Webinar', nameAr: 'الندوة الإلكترونية', autoPriority: 'high' as const, applicableRoles: ['student', 'instructor', 'course_manager'] },
-      { slug: 'cme', nameEn: 'CME / CPD', nameAr: 'الساعات المعتمدة', autoPriority: 'medium' as const, applicableRoles: ['student', 'course_manager'] },
-      { slug: 'content', nameEn: 'Content', nameAr: 'المحتوى', autoPriority: 'low' as const, applicableRoles: ['student', 'instructor', 'course_manager', 'ta'] },
-      { slug: 'technical', nameEn: 'Technical', nameAr: 'تقني', autoPriority: 'medium' as const, applicableRoles: ALL },
-      { slug: 'trainer', nameEn: 'Trainer Application', nameAr: 'طلب التدريب', autoPriority: 'medium' as const, applicableRoles: ['student'] },
-      { slug: 'courses', nameEn: 'Courses', nameAr: 'الدورات', autoPriority: 'medium' as const, applicableRoles: ['student', 'instructor', 'course_manager', 'ta'] },
-      { slug: 'sessions', nameEn: 'Sessions & Schedule', nameAr: 'الجلسات والمواعيد', autoPriority: 'medium' as const, applicableRoles: ['student', 'instructor', 'ta'] },
-      { slug: 'payments', nameEn: 'Payments', nameAr: 'المدفوعات', autoPriority: 'high' as const, applicableRoles: ['student', 'finance'] },
-      { slug: 'invoices', nameEn: 'Invoices', nameAr: 'الفواتير الضريبية', autoPriority: 'medium' as const, applicableRoles: ['student', 'finance'] },
-      { slug: 'refunds', nameEn: 'Refunds', nameAr: 'المبالغ المستردة', autoPriority: 'high' as const, applicableRoles: ['student', 'finance'] },
-      { slug: 'integrations', nameEn: 'Third-party Integrations', nameAr: 'تكاملات الطرف الثالث', autoPriority: 'high' as const, applicableRoles: ['course_manager', 'finance'] },
-      { slug: 'course_approvals', nameEn: 'Course Approvals', nameAr: 'اعتماد الدورات', autoPriority: 'medium' as const, applicableRoles: ['course_manager'] },
-      { slug: 'system_issues', nameEn: 'System Issues', nameAr: 'مشاكل النظام', autoPriority: 'high' as const, applicableRoles: ['instructor', 'course_manager', 'finance', 'ta'] },
-      { slug: 'other', nameEn: 'Other', nameAr: 'أخرى', autoPriority: 'low' as const, applicableRoles: ALL },
+      { slug: 'billing', nameEn: 'Billing', nameAr: 'الفواتير', autoPriority: 'medium' as const, applicableRoles: ['student', 'finance'], requiresCourse: false, suggestedDepartment: 'finance' },
+      { slug: 'login', nameEn: 'Login', nameAr: 'تسجيل الدخول', autoPriority: 'high' as const, applicableRoles: ALL, requiresCourse: false, suggestedDepartment: null },
+      { slug: 'certificate', nameEn: 'Certificate', nameAr: 'الشهادات', autoPriority: 'medium' as const, applicableRoles: ['student', 'course_manager'], requiresCourse: true, suggestedDepartment: 'course_manager' },
+      { slug: 'webinar', nameEn: 'Webinar', nameAr: 'الندوة الإلكترونية', autoPriority: 'high' as const, applicableRoles: ['student', 'instructor', 'course_manager'], requiresCourse: true, suggestedDepartment: 'instructor' },
+      { slug: 'cme', nameEn: 'CME / CPD', nameAr: 'الساعات المعتمدة', autoPriority: 'medium' as const, applicableRoles: ['student', 'course_manager'], requiresCourse: true, suggestedDepartment: 'course_manager' },
+      { slug: 'content', nameEn: 'Content', nameAr: 'المحتوى', autoPriority: 'low' as const, applicableRoles: ['student', 'instructor', 'course_manager', 'ta'], requiresCourse: true, suggestedDepartment: 'instructor' },
+      { slug: 'technical', nameEn: 'Technical', nameAr: 'تقني', autoPriority: 'medium' as const, applicableRoles: ALL, requiresCourse: false, suggestedDepartment: 'admin' },
+      { slug: 'trainer', nameEn: 'Trainer Application', nameAr: 'طلب التدريب', autoPriority: 'medium' as const, applicableRoles: ['student'], requiresCourse: false, suggestedDepartment: 'admin' },
+      { slug: 'courses', nameEn: 'Courses', nameAr: 'الدورات', autoPriority: 'medium' as const, applicableRoles: ['student', 'instructor', 'course_manager', 'ta'], requiresCourse: true, suggestedDepartment: 'course_manager' },
+      { slug: 'sessions', nameEn: 'Sessions & Schedule', nameAr: 'الجلسات والمواعيد', autoPriority: 'medium' as const, applicableRoles: ['student', 'instructor', 'ta'], requiresCourse: true, suggestedDepartment: 'instructor' },
+      { slug: 'payments', nameEn: 'Payments', nameAr: 'المدفوعات', autoPriority: 'high' as const, applicableRoles: ['student', 'finance'], requiresCourse: false, suggestedDepartment: 'finance' },
+      { slug: 'invoices', nameEn: 'Invoices', nameAr: 'الفواتير الضريبية', autoPriority: 'medium' as const, applicableRoles: ['student', 'finance'], requiresCourse: false, suggestedDepartment: 'finance' },
+      { slug: 'refunds', nameEn: 'Refunds', nameAr: 'المبالغ المستردة', autoPriority: 'high' as const, applicableRoles: ['student', 'finance'], requiresCourse: true, suggestedDepartment: 'finance' },
+      { slug: 'integrations', nameEn: 'Third-party Integrations', nameAr: 'تكاملات الطرف الثالث', autoPriority: 'high' as const, applicableRoles: ['course_manager', 'finance', 'admin'], requiresCourse: false, suggestedDepartment: 'admin' },
+      { slug: 'course_approvals', nameEn: 'Course Approvals', nameAr: 'اعتماد الدورات', autoPriority: 'medium' as const, applicableRoles: ['course_manager', 'instructor'], requiresCourse: true, suggestedDepartment: 'course_manager' },
+      { slug: 'system_issues', nameEn: 'System Issues', nameAr: 'مشاكل النظام', autoPriority: 'high' as const, applicableRoles: ['instructor', 'course_manager', 'finance', 'ta', 'admin', 'support'], requiresCourse: false, suggestedDepartment: 'admin' },
+      { slug: 'security_incident', nameEn: 'Security Incident', nameAr: 'حادثة أمنية', autoPriority: 'high' as const, applicableRoles: ['admin', 'support', 'finance'], requiresCourse: false, suggestedDepartment: 'admin' },
+      { slug: 'compliance', nameEn: 'Compliance / Governance', nameAr: 'الامتثال والحوكمة', autoPriority: 'high' as const, applicableRoles: ['admin', 'support', 'course_manager'], requiresCourse: false, suggestedDepartment: 'admin' },
+      { slug: 'kb_update_request', nameEn: 'KB / Content Update Request', nameAr: 'طلب تحديث قاعدة المعرفة', autoPriority: 'low' as const, applicableRoles: ['instructor', 'course_manager', 'finance', 'ta', 'admin', 'support'], requiresCourse: false, suggestedDepartment: 'admin' },
+      { slug: 'dept_assist', nameEn: 'Inter-department Assistance', nameAr: 'طلب مساعدة بين الأقسام', autoPriority: 'medium' as const, applicableRoles: ['instructor', 'course_manager', 'finance', 'ta', 'admin', 'support'], requiresCourse: false, suggestedDepartment: 'support' },
+      { slug: 'other', nameEn: 'Other', nameAr: 'أخرى', autoPriority: 'low' as const, applicableRoles: ALL, requiresCourse: false, suggestedDepartment: null },
     ];
 
     const [row] = await db
@@ -9710,9 +9457,52 @@ export class SupportService implements OnModuleInit {
       .where(eq(supportConfig.key, 'ticket_categories'))
       .limit(1);
 
+    // Phase 2 — built-in overrides. Supervisors can change a built-in's
+    // applicableRoles + autoPriority, or "disable" it entirely. Stored
+    // alongside the custom catalog. Slug / name / requiresCourse stay
+    // frozen on built-ins (existing tickets retain their labels).
+    const [overridesRow] = await db
+      .select({ value: supportConfig.value })
+      .from(supportConfig)
+      .where(eq(supportConfig.key, 'ticket_category_overrides'))
+      .limit(1);
+    const overridesArr = Array.isArray(overridesRow?.value)
+      ? (overridesRow!.value as any[])
+      : [];
+    const overridesBySlug = new Map<string, any>();
+    for (const o of overridesArr) {
+      if (o && typeof o.slug === 'string') overridesBySlug.set(o.slug, o);
+    }
+
     const custom = Array.isArray(row?.value) ? (row!.value as any[]) : [];
+    const builtinList = builtins
+      .map((b) => {
+        const ov = overridesBySlug.get(b.slug);
+        if (!ov) return { ...b, builtin: true, disabled: false };
+        const applicableRoles = Array.isArray(ov.applicableRoles)
+          ? ov.applicableRoles.filter(
+              (r: any): r is string => typeof r === 'string' && ALL.includes(r),
+            )
+          : b.applicableRoles;
+        const autoPriority =
+          ov.autoPriority && ['high', 'medium', 'low'].includes(ov.autoPriority)
+            ? ov.autoPriority
+            : ov.autoPriority === null
+              ? null
+              : b.autoPriority;
+        return {
+          ...b,
+          applicableRoles,
+          autoPriority,
+          builtin: true,
+          disabled: ov.disabled === true,
+        };
+      })
+      // Disabled built-ins drop out entirely.
+      .filter((b) => !b.disabled);
+
     const merged = [
-      ...builtins.map((b) => ({ ...b, builtin: true })),
+      ...builtinList.map(({ disabled: _disabled, ...b }) => b),
       ...custom.map((c: any) => {
         // Legacy custom rows pre-Fix #2 won't carry applicableRoles.
         // Default them to ALL so they stay visible everywhere — the
@@ -9732,6 +9522,16 @@ export class SupportService implements OnModuleInit {
               : null,
           applicableRoles: roles,
           builtin: false,
+          // Phase 2 — JSON-stored custom categories may not carry the
+          // new flags yet. Default to false / null so the FE shows the
+          // course field optionally and the loop-in modal has no
+          // suggested dept.
+          requiresCourse:
+            typeof c.requiresCourse === 'boolean' ? c.requiresCourse : false,
+          suggestedDepartment:
+            typeof c.suggestedDepartment === 'string'
+              ? c.suggestedDepartment
+              : null,
         };
       }),
     ];
@@ -9783,6 +9583,10 @@ export class SupportService implements OnModuleInit {
       autoPriority: input.autoPriority ?? null,
       applicableRoles,
       builtin: false,
+      // Phase 2 — new custom categories default to course-optional
+      // and no suggested department until the supervisor edits them.
+      requiresCourse: false,
+      suggestedDepartment: null,
     });
 
     await db
@@ -9814,10 +9618,57 @@ export class SupportService implements OnModuleInit {
     const existing = await this.listTicketCategories();
     const target = existing.find((c) => c.slug === slug);
     if (!target) throw new NotFoundException('Category not found');
+
+    // Phase 2 — built-in categories can have their applicableRoles +
+    // autoPriority overridden (so a supervisor can hide "Webinar"
+    // from the student dropdown without a code deploy). The override
+    // lives in support_config under `ticket_category_overrides`. Name
+    // and slug stay frozen for built-ins so existing tickets keep
+    // their labels.
     if (target.builtin) {
-      throw new BadRequestException(
-        'Built-in categories cannot be edited. Their role-applicability is set in the platform code.',
+      const applicableRoles =
+        input.applicableRoles !== undefined
+          ? this.sanitizeApplicableRoles(input.applicableRoles)
+          : target.applicableRoles;
+      if (applicableRoles.length === 0) {
+        throw new BadRequestException(
+          'At least one applicable role is required',
+        );
+      }
+      const autoPriority =
+        input.autoPriority === undefined ? target.autoPriority : input.autoPriority;
+
+      const [row] = await db
+        .select({ value: supportConfig.value })
+        .from(supportConfig)
+        .where(eq(supportConfig.key, 'ticket_category_overrides'))
+        .limit(1);
+      const current = Array.isArray(row?.value) ? (row!.value as any[]) : [];
+      const others = current.filter(
+        (o: any) => typeof o?.slug === 'string' && o.slug !== slug,
       );
+      const nextOverrides = [
+        ...others,
+        {
+          slug,
+          applicableRoles,
+          autoPriority,
+          disabled: false,
+        },
+      ];
+
+      await db
+        .insert(supportConfig)
+        .values({
+          key: 'ticket_category_overrides',
+          value: nextOverrides,
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: supportConfig.key,
+          set: { value: nextOverrides, updatedAt: new Date() },
+        });
+      return { slug };
     }
 
     const next = existing
@@ -9872,6 +9723,8 @@ export class SupportService implements OnModuleInit {
       'course_manager',
       'finance',
       'ta',
+      'admin',
+      'support',
     ]);
     if (!Array.isArray(roles)) return [];
     const seen = new Set<string>();
@@ -9890,11 +9743,39 @@ export class SupportService implements OnModuleInit {
     const existing = await this.listTicketCategories();
     const target = existing.find((c) => c.slug === slug);
     if (!target) throw new NotFoundException('Category not found');
+
+    // Phase 2 — "deleting" a built-in actually disables it: we mark
+    // it as disabled in the overrides config so it stops appearing
+    // in any role's create-ticket dropdown. The slug stays in the
+    // platform code so existing tickets retain their category label.
     if (target.builtin) {
-      throw new BadRequestException(
-        'Built-in categories cannot be deleted. Hide them at the form level if unused.',
+      const [row] = await db
+        .select({ value: supportConfig.value })
+        .from(supportConfig)
+        .where(eq(supportConfig.key, 'ticket_category_overrides'))
+        .limit(1);
+      const current = Array.isArray(row?.value) ? (row!.value as any[]) : [];
+      const others = current.filter(
+        (o: any) => typeof o?.slug === 'string' && o.slug !== slug,
       );
+      const nextOverrides = [
+        ...others,
+        { slug, applicableRoles: [], autoPriority: null, disabled: true },
+      ];
+      await db
+        .insert(supportConfig)
+        .values({
+          key: 'ticket_category_overrides',
+          value: nextOverrides,
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: supportConfig.key,
+          set: { value: nextOverrides, updatedAt: new Date() },
+        });
+      return { slug, disabledBuiltin: true };
     }
+
     const remaining = existing
       .filter((c) => !c.builtin && c.slug !== slug)
       .map(({ builtin: _builtin, ...c }) => c);
@@ -12059,99 +11940,6 @@ export class SupportService implements OnModuleInit {
     return { success: true, targetTicketId: targetId };
   }
 
-  // ─── Transfer ─────────────────────────────────────────
-  //
-  // "Transfer" here means changing the ticket's category (which routes
-  // it to a different work queue) and re-running auto-assignment so
-  // it lands with the right agent. We don't model "departments" as
-  // a separate entity because they don't exist in the data model;
-  // categories are the closest concept.
-  async transferTicket(
-    user: AuthenticatedUser,
-    ticketId: string,
-    dto: { category: string; reason?: string; reassign?: boolean },
-  ) {
-    // Validate category — same admin-extensible check as createTicket.
-    const { isValidSlug } = await this.resolveCategoryPriority(dto.category);
-    if (!isValidSlug) {
-      throw new BadRequestException(
-        `Unknown category "${dto.category}". Ask an admin to add it under Settings → Categories.`,
-      );
-    }
-
-    const [existing] = await db
-      .select({
-        id: tickets.id,
-        referenceNumber: tickets.referenceNumber,
-        studentId: tickets.studentId,
-        category: tickets.category,
-        assigneeId: tickets.assigneeId,
-        subject: tickets.subject,
-        status: tickets.status,
-      })
-      .from(tickets)
-      .where(eq(tickets.id, ticketId));
-    if (!existing) throw new NotFoundException('Ticket not found');
-
-    if (
-      existing.status === TICKET_STATUS.RESOLVED ||
-      existing.status === TICKET_STATUS.CLOSED
-    ) {
-      throw new BadRequestException(
-        'Cannot transfer a resolved or closed ticket',
-      );
-    }
-
-    if (existing.category === dto.category) {
-      throw new BadRequestException(
-        `Ticket is already in the "${dto.category}" category`,
-      );
-    }
-
-    // Find the next agent for the new category. Default to re-running
-    // auto-assignment unless the caller opts out. Pass the target
-    // category so the picker prefers agents already working that
-    // category (specialty signal).
-    const shouldReassign = dto.reassign !== false;
-    const newAssigneeId = shouldReassign
-      ? await this.findNextAgent(dto.category)
-      : existing.assigneeId;
-
-    await db
-      .update(tickets)
-      .set({
-        category: dto.category,
-        assigneeId: newAssigneeId,
-        updatedAt: new Date(),
-      })
-      .where(eq(tickets.id, ticketId));
-
-    // Internal note for the audit trail in the conversation view.
-    await db.insert(ticketReplies).values({
-      ticketId,
-      userId: user.id,
-      message: [
-        `Ticket transferred from "${existing.category}" to "${dto.category}".`,
-        dto.reason ? `Reason: ${dto.reason}` : null,
-      ]
-        .filter(Boolean)
-        .join('\n'),
-      isStaffReply: true,
-      isInternal: true,
-    });
-
-    await this.logTicketAudit('transferred', ticketId, user.id, {
-      fromCategory: existing.category,
-      toCategory: dto.category,
-      reassigned: shouldReassign,
-      previousAssigneeId: existing.assigneeId,
-      newAssigneeId,
-      reason: dto.reason || null,
-    });
-
-    return { success: true, ticketId, newAssigneeId };
-  }
-
   // ─── Attachment download log ──────────────────────────
   //
   // Recorded by the FE when a staff member clicks the attachment chip.
@@ -12437,5 +12225,821 @@ export class SupportService implements OnModuleInit {
       )
       .orderBy(asc(kbArticles.viewCount), desc(kbArticles.createdAt))
       .limit(limit);
+  }
+
+  // ──────────────────────────────────────────────────────────────────
+  //  Phase 2 — Ticket Collaborators (hub-and-spoke internal collab)
+  // ──────────────────────────────────────────────────────────────────
+
+  /**
+   * True when `userId` is an active collaborator on `ticketId`. Used by
+   * getTicketDetail / addComment / replies fetch to admit collaborators
+   * to the INTERNAL channel without giving them public-write or
+   * status-change powers.
+   */
+  async isCollaborator(ticketId: string, userId: string): Promise<boolean> {
+    if (!ticketId || !userId) return false;
+    const [row] = await db
+      .select({ id: ticketCollaborators.id })
+      .from(ticketCollaborators)
+      .where(
+        and(
+          eq(ticketCollaborators.ticketId, ticketId),
+          eq(ticketCollaborators.userId, userId),
+          isNull(ticketCollaborators.removedAt),
+        ),
+      )
+      .limit(1);
+    return !!row;
+  }
+
+  /**
+   * Return the viewer's role on a specific ticket. Used to drive UI
+   * (composer lock, banner, right-panel visibility) and access checks.
+   * Precedence: support/admin > collaborator > requester > none.
+   */
+  async getViewerRoleOnTicket(
+    user: AuthenticatedUser,
+    ticket: { id: string; studentId: string },
+  ): Promise<'support' | 'collaborator' | 'requester' | 'none'> {
+    const isSupportOrAdmin =
+      user.roles.includes(ROLE_NAMES.SUPPORT) ||
+      user.roles.includes(ROLE_NAMES.ADMIN) ||
+      user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+    if (isSupportOrAdmin) return 'support';
+    if (await this.isCollaborator(ticket.id, user.id)) return 'collaborator';
+    if (ticket.studentId === user.id) return 'requester';
+    return 'none';
+  }
+
+  /**
+   * List active collaborators on a ticket for the FE detail panel.
+   * Returns user info + department + added-by metadata. NOT filtered
+   * here — caller (controller) decides whether to surface this to
+   * the viewer (we hide it from requesters).
+   */
+  async listCollaborators(ticketId: string) {
+    const addedByUser = alias(users, 'collab_added_by');
+    const rows = await db
+      .select({
+        id: ticketCollaborators.id,
+        userId: ticketCollaborators.userId,
+        department: ticketCollaborators.department,
+        addedAt: ticketCollaborators.addedAt,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+        userEmail: users.email,
+        addedById: ticketCollaborators.addedBy,
+        addedByFirstName: addedByUser.firstName,
+        addedByLastName: addedByUser.lastName,
+      })
+      .from(ticketCollaborators)
+      .leftJoin(users, eq(ticketCollaborators.userId, users.id))
+      .leftJoin(addedByUser, eq(ticketCollaborators.addedBy, addedByUser.id))
+      .where(
+        and(
+          eq(ticketCollaborators.ticketId, ticketId),
+          isNull(ticketCollaborators.removedAt),
+        ),
+      )
+      .orderBy(asc(ticketCollaborators.addedAt));
+
+    return rows.map((r) => ({
+      id: r.id,
+      userId: r.userId,
+      department: r.department,
+      addedAt: r.addedAt,
+      userName: [r.userFirstName, r.userLastName].filter(Boolean).join(' ').trim() || null,
+      userEmail: r.userEmail,
+      addedBy: r.addedById
+        ? {
+            id: r.addedById,
+            name: [r.addedByFirstName, r.addedByLastName].filter(Boolean).join(' ').trim() || null,
+          }
+        : null,
+    }));
+  }
+
+  /**
+   * Loop in a department member as a collaborator on a ticket.
+   *
+   * Permission: only support/supervisor/admin can add collaborators.
+   * Plain agents cannot loop in for tickets they aren't assigned to —
+   * standard agent isolation applies.
+   *
+   * Idempotent: if a row already exists for (ticket, user), the
+   * existing row is re-activated (removed_at = NULL) and added_by /
+   * added_at are refreshed. This keeps the soft-delete audit clean
+   * without growing the table on re-adds.
+   *
+   * Notifies the target user via email + in-app and emits an audit
+   * entry. Returns the active row id.
+   */
+  async addCollaborator(
+    actor: AuthenticatedUser,
+    ticketId: string,
+    dto: { userId: string; department: TicketCollabDepartment | string },
+  ) {
+    const isSupportOrAdmin =
+      actor.roles.includes(ROLE_NAMES.SUPPORT) ||
+      actor.roles.includes(ROLE_NAMES.ADMIN) ||
+      actor.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+    if (!isSupportOrAdmin) {
+      throw new ForbiddenException('Only support staff can loop in collaborators');
+    }
+
+    const [ticket] = await db
+      .select({
+        id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        subject: tickets.subject,
+        assigneeId: tickets.assigneeId,
+        studentId: tickets.studentId,
+      })
+      .from(tickets)
+      .where(eq(tickets.id, ticketId));
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    // Agent isolation: non-supervisor agents must be assigned to act.
+    const isSupervisorOrAdmin =
+      actor.supportSubRole === 'supervisor' ||
+      actor.roles.includes(ROLE_NAMES.ADMIN) ||
+      actor.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+    if (!isSupervisorOrAdmin && ticket.assigneeId !== actor.id) {
+      throw new ForbiddenException('You are not assigned to this ticket');
+    }
+
+    // Validate department.
+    const validDepts: string[] = Object.values(TICKET_COLLAB_DEPARTMENTS);
+    if (!validDepts.includes(dto.department)) {
+      throw new BadRequestException(`Unknown department: ${dto.department}`);
+    }
+
+    // Requester cannot be their own collaborator.
+    if (dto.userId === ticket.studentId) {
+      throw new BadRequestException(
+        'The requester cannot be added as a collaborator',
+      );
+    }
+
+    // Verify target exists and is active.
+    const [target] = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        isActive: users.isActive,
+      })
+      .from(users)
+      .where(eq(users.id, dto.userId));
+    if (!target) throw new NotFoundException('Target user not found');
+    if (!target.isActive) {
+      throw new BadRequestException('Target user is not active');
+    }
+
+    // Idempotent upsert — preserves the row across remove/re-add.
+    const [existing] = await db
+      .select({
+        id: ticketCollaborators.id,
+        removedAt: ticketCollaborators.removedAt,
+      })
+      .from(ticketCollaborators)
+      .where(
+        and(
+          eq(ticketCollaborators.ticketId, ticketId),
+          eq(ticketCollaborators.userId, dto.userId),
+        ),
+      )
+      .limit(1);
+
+    let rowId: string;
+    if (existing) {
+      // Active row: nothing to do.
+      if (existing.removedAt === null) {
+        return { id: existing.id, alreadyActive: true };
+      }
+      // Re-activate previously removed row.
+      const [updated] = await db
+        .update(ticketCollaborators)
+        .set({
+          removedAt: null,
+          addedBy: actor.id,
+          addedAt: new Date(),
+          department: dto.department,
+        })
+        .where(eq(ticketCollaborators.id, existing.id))
+        .returning({ id: ticketCollaborators.id });
+      rowId = updated!.id;
+    } else {
+      const [inserted] = await db
+        .insert(ticketCollaborators)
+        .values({
+          ticketId,
+          userId: dto.userId,
+          department: dto.department,
+          addedBy: actor.id,
+        })
+        .returning({ id: ticketCollaborators.id });
+      rowId = inserted!.id;
+    }
+
+    // Audit (IP captured via request-context middleware from Fix #10).
+    try {
+      await this.auditLogService.log({
+        entityType: 'ticket',
+        entityId: ticketId,
+        action: 'collaborator_added',
+        performedBy: actor.id,
+        metadata: {
+          ticketId,
+          userId: dto.userId,
+          department: dto.department,
+        },
+      });
+    } catch (e) {
+      this.logger.warn(`Failed to write collaborator_added audit: ${(e as Error).message}`);
+    }
+
+    // Notify the target (email + in-app). Best-effort — don't fail the
+    // add if notify fails.
+    const targetName =
+      [target.firstName, target.lastName].filter(Boolean).join(' ').trim() ||
+      target.email;
+    try {
+      await this.notificationsService.create({
+        recipientId: dto.userId,
+        type: 'ticket_looped_in',
+        title: `You were looped into ticket ${ticket.referenceNumber}`,
+        message: ticket.subject,
+        link: `/dashboard/support/looped-in/${ticketId}`,
+        entityType: 'ticket',
+        entityId: ticketId,
+      });
+    } catch (e) {
+      this.logger.warn(`Failed to write looped-in notification: ${(e as Error).message}`);
+    }
+
+    try {
+      const emailSvc = this.emailService as unknown as {
+        sendTicketLoopedIn?: (
+          to: string,
+          name: string,
+          ref: string,
+          subject: string,
+        ) => Promise<unknown>;
+      };
+      if (target.email && typeof emailSvc.sendTicketLoopedIn === 'function') {
+        await emailSvc.sendTicketLoopedIn(
+          target.email,
+          targetName,
+          ticket.referenceNumber,
+          ticket.subject,
+        );
+      }
+    } catch (e) {
+      this.logger.warn(`Failed to send looped-in email: ${(e as Error).message}`);
+    }
+
+    return { id: rowId, alreadyActive: false };
+  }
+
+  /**
+   * Remove a collaborator. Plain support agents cannot remove
+   * collaborators added by others — only supervisor or admin can.
+   * Soft-delete via removed_at preserves the audit trail.
+   */
+  async removeCollaborator(
+    actor: AuthenticatedUser,
+    ticketId: string,
+    userId: string,
+  ) {
+    const isSupervisorOrAdmin =
+      actor.supportSubRole === 'supervisor' ||
+      actor.roles.includes(ROLE_NAMES.ADMIN) ||
+      actor.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+
+    const [row] = await db
+      .select({
+        id: ticketCollaborators.id,
+        addedBy: ticketCollaborators.addedBy,
+        removedAt: ticketCollaborators.removedAt,
+        department: ticketCollaborators.department,
+      })
+      .from(ticketCollaborators)
+      .where(
+        and(
+          eq(ticketCollaborators.ticketId, ticketId),
+          eq(ticketCollaborators.userId, userId),
+        ),
+      )
+      .limit(1);
+    if (!row) throw new NotFoundException('Collaborator not found');
+    if (row.removedAt !== null) {
+      return { ok: true, alreadyRemoved: true };
+    }
+
+    // Plain agents can only remove rows they added themselves.
+    if (!isSupervisorOrAdmin && row.addedBy !== actor.id) {
+      throw new ForbiddenException(
+        'Only supervisors / admins can remove collaborators added by others',
+      );
+    }
+
+    await db
+      .update(ticketCollaborators)
+      .set({ removedAt: new Date() })
+      .where(eq(ticketCollaborators.id, row.id));
+
+    try {
+      await this.auditLogService.log({
+        entityType: 'ticket',
+        entityId: ticketId,
+        action: 'collaborator_removed',
+        performedBy: actor.id,
+        metadata: { ticketId, userId, department: row.department },
+      });
+    } catch (e) {
+      this.logger.warn(`Failed to write collaborator_removed audit: ${(e as Error).message}`);
+    }
+
+    return { ok: true, alreadyRemoved: false };
+  }
+
+  /**
+   * Return active users in a given collaborator department.
+   *
+   * Course-bound departments (instructor / ta / course_manager) are
+   * filtered to only people tied to the supplied `courseId`. When
+   * `courseId` is absent for those departments, the returned list is
+   * empty so the FE can hide the option.
+   *
+   * Non-course-bound departments (finance / admin / supervisor) return
+   * all active members of that role.
+   *
+   * Used by:
+   *   - GET /support/departments/:dept/members?courseId=...  (loop-in modal)
+   *   - transferTicket() to auto-pick a target user when none specified
+   */
+  async getDepartmentMembers(
+    department: string,
+    opts?: { courseId?: string },
+  ): Promise<
+    { id: string; firstName: string | null; lastName: string | null; email: string; courseRoleLabel?: string }[]
+  > {
+    const courseId = opts?.courseId || null;
+
+    // Course-bound: filter to people tied to this specific course.
+    if (
+      department === TICKET_COLLAB_DEPARTMENTS.INSTRUCTOR ||
+      department === TICKET_COLLAB_DEPARTMENTS.TA ||
+      department === TICKET_COLLAB_DEPARTMENTS.COURSE_MANAGER
+    ) {
+      if (!courseId) return [];
+
+      const [course] = await db
+        .select({
+          instructorId: courses.instructorId,
+          managerId: courses.managerId,
+          title: courses.title,
+        })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .limit(1);
+      if (!course) return [];
+
+      const targets: { userId: string | null; courseRoleLabel: string }[] = [];
+
+      if (department === TICKET_COLLAB_DEPARTMENTS.INSTRUCTOR && course.instructorId) {
+        targets.push({
+          userId: course.instructorId,
+          courseRoleLabel: `Instructor of "${course.title}"`,
+        });
+      }
+      if (department === TICKET_COLLAB_DEPARTMENTS.COURSE_MANAGER && course.managerId) {
+        targets.push({
+          userId: course.managerId,
+          courseRoleLabel: `Manager of "${course.title}"`,
+        });
+      }
+      if (department === TICKET_COLLAB_DEPARTMENTS.TA) {
+        const taRows = await db
+          .select({ userId: courseAssistants.userId })
+          .from(courseAssistants)
+          .where(
+            and(
+              eq(courseAssistants.courseId, courseId),
+              eq(courseAssistants.status, 'approved'),
+            ),
+          );
+        for (const t of taRows) {
+          targets.push({
+            userId: t.userId,
+            courseRoleLabel: `TA of "${course.title}"`,
+          });
+        }
+      }
+
+      const userIds = targets
+        .map((t) => t.userId)
+        .filter((u): u is string => !!u);
+      if (userIds.length === 0) return [];
+
+      const rows = await db
+        .select({
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          isActive: users.isActive,
+        })
+        .from(users)
+        .where(and(inArray(users.id, userIds), eq(users.isActive, true)));
+
+      const byId = new Map(rows.map((r) => [r.id, r]));
+      return targets
+        .map((t) => {
+          const u = t.userId ? byId.get(t.userId) : undefined;
+          if (!u) return null;
+          return {
+            id: u.id,
+            firstName: u.firstName,
+            lastName: u.lastName,
+            email: u.email,
+            courseRoleLabel: t.courseRoleLabel,
+          };
+        })
+        .filter((x): x is NonNullable<typeof x> => x !== null);
+    }
+
+    // Non-course-bound: look up by role.
+    const roleNamesForDept = ((): string[] => {
+      switch (department) {
+        case TICKET_COLLAB_DEPARTMENTS.ADMIN:
+          return [ROLE_NAMES.ADMIN, ROLE_NAMES.SUPER_ADMIN];
+        case TICKET_COLLAB_DEPARTMENTS.FINANCE:
+          return [ROLE_NAMES.FINANCE];
+        case TICKET_COLLAB_DEPARTMENTS.SUPERVISOR:
+          // Supervisors are SUPPORT-role users with supportSubRole='supervisor'.
+          return [ROLE_NAMES.SUPPORT];
+        default:
+          return [];
+      }
+    })();
+    if (roleNamesForDept.length === 0) return [];
+
+    const rows = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        supportSubRole: userRoles.supportSubRole,
+        roleName: roles.name,
+      })
+      .from(users)
+      .innerJoin(userRoles, eq(userRoles.userId, users.id))
+      .innerJoin(roles, eq(roles.id, userRoles.roleId))
+      .where(
+        and(
+          inArray(roles.name, roleNamesForDept),
+          eq(users.isActive, true),
+        ),
+      );
+
+    // For supervisor dept, narrow to supportSubRole='supervisor'.
+    const filtered =
+      department === TICKET_COLLAB_DEPARTMENTS.SUPERVISOR
+        ? rows.filter((r) => r.supportSubRole === 'supervisor')
+        : rows;
+
+    // Dedup by user id (multi-role users).
+    const seen = new Set<string>();
+    return filtered
+      .filter((r) => {
+        if (seen.has(r.id)) return false;
+        seen.add(r.id);
+        return true;
+      })
+      .map((r) => ({
+        id: r.id,
+        firstName: r.firstName,
+        lastName: r.lastName,
+        email: r.email,
+      }));
+  }
+
+  /**
+   * Transfer a ticket to a target department.
+   *
+   * What it does:
+   *   1. Updates the ticket category to the new slug.
+   *   2. Adds (or re-activates) the target user(s) as collaborators.
+   *      If `userId` is omitted, the first eligible member of the
+   *      department is picked.
+   *   3. Posts a SYSTEM message in the public thread (greyed-out,
+   *      no Support attribution) so the requester knows the routing
+   *      changed without seeing the department user's name.
+   *   4. Emails the requester (best-effort).
+   *   5. Logs `ticket_transferred` audit.
+   *
+   * Ownership stays with Support — the assignee is NOT changed.
+   * Transfer is a re-route + loop-in gesture, not a handoff.
+   */
+  async transferTicket(
+    actor: AuthenticatedUser,
+    ticketId: string,
+    dto: {
+      toCategory: string;
+      toDepartment: TicketCollabDepartment | string;
+      userId?: string;
+      noteToRequester?: string;
+    },
+  ) {
+    const isSupportOrAdmin =
+      actor.roles.includes(ROLE_NAMES.SUPPORT) ||
+      actor.roles.includes(ROLE_NAMES.ADMIN) ||
+      actor.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+    if (!isSupportOrAdmin) {
+      throw new ForbiddenException(
+        'Only support staff can transfer tickets',
+      );
+    }
+
+    const [ticket] = await db
+      .select({
+        id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        subject: tickets.subject,
+        category: tickets.category,
+        studentId: tickets.studentId,
+        courseId: tickets.courseId,
+        assigneeId: tickets.assigneeId,
+        guestEmail: tickets.guestEmail,
+        guestName: tickets.guestName,
+        guestTrackingToken: tickets.guestTrackingToken,
+      })
+      .from(tickets)
+      .where(eq(tickets.id, ticketId))
+      .limit(1);
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    // Agent isolation.
+    const isSupervisorOrAdmin =
+      actor.supportSubRole === 'supervisor' ||
+      actor.roles.includes(ROLE_NAMES.ADMIN) ||
+      actor.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+    if (!isSupervisorOrAdmin && ticket.assigneeId !== actor.id) {
+      throw new ForbiddenException('You are not assigned to this ticket');
+    }
+
+    // Validate new category against the live catalog.
+    const validCats = await this.listTicketCategories();
+    const newCategoryRow = validCats.find((c) => c.slug === dto.toCategory);
+    if (!newCategoryRow) {
+      throw new BadRequestException(
+        `Unknown ticket category: ${dto.toCategory}`,
+      );
+    }
+
+    // Validate department.
+    const validDepts: string[] = Object.values(TICKET_COLLAB_DEPARTMENTS);
+    if (!validDepts.includes(dto.toDepartment)) {
+      throw new BadRequestException(`Unknown department: ${dto.toDepartment}`);
+    }
+
+    // Resolve target user(s) — either the explicit `userId` or the
+    // first member of the department (course-scoped for course-bound
+    // roles).
+    let targetUserId: string | null = dto.userId || null;
+    if (!targetUserId) {
+      const members = await this.getDepartmentMembers(dto.toDepartment, {
+        courseId: ticket.courseId || undefined,
+      });
+      targetUserId = members[0]?.id || null;
+    }
+    if (!targetUserId) {
+      throw new BadRequestException(
+        'No eligible member found in the target department',
+      );
+    }
+
+    // Resolve the system-message template (supervisor-editable in
+    // support_config). The supervisor's optional `noteToRequester`
+    // override wins.
+    const [templateRow] = await db
+      .select({ value: supportConfig.value })
+      .from(supportConfig)
+      .where(eq(supportConfig.key, 'transfer_message_template_en'))
+      .limit(1);
+    const defaultTemplate =
+      typeof templateRow?.value === 'string'
+        ? templateRow.value
+        : 'Your ticket has been routed to our {department} team for the {categoryLabel} matter. Support remains your point of contact.';
+
+    const friendlyDeptLabel = ((d: string) =>
+      d
+        .split('_')
+        .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+        .join(' '))(dto.toDepartment);
+
+    const systemMessage =
+      dto.noteToRequester?.trim() ||
+      defaultTemplate
+        .replace('{department}', friendlyDeptLabel)
+        .replace('{categoryLabel}', newCategoryRow.nameEn);
+
+    // Perform the update + loop-in + system message in a single
+    // transaction so a failure midway doesn't leave a half-applied
+    // transfer (e.g. category changed but no collaborator added).
+    await db.transaction(async (tx) => {
+      // 1. Update category.
+      await tx
+        .update(tickets)
+        .set({ category: dto.toCategory, updatedAt: new Date() })
+        .where(eq(tickets.id, ticketId));
+
+      // 2. Upsert collaborator row.
+      const [existing] = await tx
+        .select({
+          id: ticketCollaborators.id,
+          removedAt: ticketCollaborators.removedAt,
+        })
+        .from(ticketCollaborators)
+        .where(
+          and(
+            eq(ticketCollaborators.ticketId, ticketId),
+            eq(ticketCollaborators.userId, targetUserId!),
+          ),
+        )
+        .limit(1);
+
+      if (existing) {
+        if (existing.removedAt !== null) {
+          await tx
+            .update(ticketCollaborators)
+            .set({
+              removedAt: null,
+              addedBy: actor.id,
+              addedAt: new Date(),
+              department: dto.toDepartment,
+            })
+            .where(eq(ticketCollaborators.id, existing.id));
+        }
+      } else {
+        await tx.insert(ticketCollaborators).values({
+          ticketId,
+          userId: targetUserId!,
+          department: dto.toDepartment,
+          addedBy: actor.id,
+        });
+      }
+
+      // 3. Post the system message into the public thread.
+      await tx.insert(ticketReplies).values({
+        ticketId,
+        userId: actor.id,
+        message: systemMessage,
+        isStaffReply: false,
+        isInternal: false,
+        isSystem: true,
+      });
+    });
+
+    // 4. Audit.
+    try {
+      await this.auditLogService.log({
+        entityType: 'ticket',
+        entityId: ticketId,
+        action: 'ticket_transferred',
+        performedBy: actor.id,
+        metadata: {
+          ticketId,
+          fromCategory: ticket.category,
+          toCategory: dto.toCategory,
+          toDepartment: dto.toDepartment,
+          toUserId: targetUserId,
+        },
+      });
+    } catch (e) {
+      this.logger.warn(
+        `Failed to write ticket_transferred audit: ${(e as Error).message}`,
+      );
+    }
+
+    // 5. Notify the target user via the existing collab flow (in-app
+    // + email + audit). Skip if they were already an active collab
+    // before this transfer.
+    try {
+      await this.addCollaborator(actor, ticketId, {
+        userId: targetUserId,
+        department: dto.toDepartment,
+      });
+    } catch (e) {
+      this.logger.warn(
+        `Transfer collaborator notify failed: ${(e as Error).message}`,
+      );
+    }
+
+    // 6. Email the requester with the system message copy.
+    try {
+      let recipientEmail: string | null = null;
+      let recipientName = 'Student';
+      let trackingUrl: string | undefined;
+
+      if (ticket.guestEmail && ticket.studentId === GUEST_USER_ID) {
+        recipientEmail = ticket.guestEmail;
+        recipientName = ticket.guestName || 'there';
+        trackingUrl = ticket.guestTrackingToken
+          ? this.buildGuestTrackingUrl(ticket.guestTrackingToken)
+          : undefined;
+      } else {
+        const [requesterInfo] = await db
+          .select({ email: users.email, firstName: users.firstName })
+          .from(users)
+          .where(eq(users.id, ticket.studentId))
+          .limit(1);
+        if (requesterInfo?.email) {
+          recipientEmail = requesterInfo.email;
+          recipientName = requesterInfo.firstName || 'Student';
+        }
+      }
+
+      if (recipientEmail) {
+        await this.emailService.sendTicketReplyNotification(
+          recipientEmail,
+          recipientName,
+          'Support',
+          ticket.referenceNumber,
+          systemMessage,
+          trackingUrl,
+        );
+      }
+    } catch (e) {
+      this.logger.warn(
+        `Failed to email requester on transfer: ${(e as Error).message}`,
+      );
+    }
+
+    return {
+      ok: true,
+      toCategory: dto.toCategory,
+      toDepartment: dto.toDepartment,
+      toUserId: targetUserId,
+      systemMessage,
+    };
+  }
+
+  /**
+   * Tickets where the caller is currently a collaborator (active rows
+   * only). Powers the "Looped In" sidebar tab on every staff dashboard.
+   * Returns a compact summary suitable for list views.
+   */
+  async listTicketsInvolvedIn(user: AuthenticatedUser, opts?: { limit?: number }) {
+    const limit = Math.min(Math.max(opts?.limit ?? 50, 1), 200);
+    const rows = await db
+      .select({
+        id: tickets.id,
+        referenceNumber: tickets.referenceNumber,
+        subject: tickets.subject,
+        category: tickets.category,
+        priority: tickets.priority,
+        status: tickets.status,
+        createdAt: tickets.createdAt,
+        updatedAt: tickets.updatedAt,
+        loopedInAt: ticketCollaborators.addedAt,
+        loopedInAs: ticketCollaborators.department,
+        requesterFirstName: users.firstName,
+        requesterLastName: users.lastName,
+      })
+      .from(ticketCollaborators)
+      .innerJoin(tickets, eq(ticketCollaborators.ticketId, tickets.id))
+      .leftJoin(users, eq(tickets.studentId, users.id))
+      .where(
+        and(
+          eq(ticketCollaborators.userId, user.id),
+          isNull(ticketCollaborators.removedAt),
+        ),
+      )
+      .orderBy(desc(tickets.updatedAt))
+      .limit(limit);
+
+    return rows.map((r) => ({
+      id: r.id,
+      referenceNumber: r.referenceNumber,
+      subject: r.subject,
+      category: r.category,
+      priority: r.priority,
+      status: r.status,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+      loopedInAt: r.loopedInAt,
+      loopedInAs: r.loopedInAs,
+      requesterName:
+        [r.requesterFirstName, r.requesterLastName]
+          .filter(Boolean)
+          .join(' ')
+          .trim() || null,
+    }));
   }
 }

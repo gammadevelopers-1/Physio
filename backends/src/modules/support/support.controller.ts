@@ -31,13 +31,14 @@ import {
   ListTicketsQueryDto,
   UpdateSlaPolicyDto,
   CreateTicketOnBehalfDto,
-  CreateGuestTicketDto,
   CreateMacroDto,
   UpdateMacroDto,
   CreateKbArticleDto,
   UpdateKbArticleDto,
   RateTicketDto,
   EscalateTicketDto,
+  AddCollaboratorDto,
+  TransferTicketDto,
 } from './dto';
 
 // Date-from-query-string helper for report endpoints. Returns null
@@ -88,6 +89,22 @@ export class SupportController {
     });
   }
 
+  // ─── Looped-In Tickets (tickets where caller is a collaborator) ───
+  //
+  // Phase 2. Powers the "Looped In" sidebar tab on every staff
+  // dashboard. Returns only tickets where the caller has an active
+  // ticket_collaborators row (removed_at IS NULL).
+  @Get('looped-in')
+  async getLoopedInTickets(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('limit') limit?: string,
+  ) {
+    const parsedLimit = limit ? parseInt(limit, 10) : undefined;
+    return this.supportService.listTicketsInvolvedIn(user, {
+      limit: Number.isFinite(parsedLimit) ? parsedLimit : undefined,
+    });
+  }
+
   // ─── Rate Ticket (any requester — own resolved/closed ticket) ─
   // Role-agnostic CSAT — the requester rates their own ticket
   // regardless of platform role (student / instructor / finance /
@@ -133,46 +150,20 @@ export class SupportController {
     return this.supportService.getAgents();
   }
 
-  // ─── Guest Ticket (Login Issues Only — no auth) ────────
-
-  @Public()
-  @Throttle({ default: { limit: 3, ttl: 60_000 } }) // 3 / min / IP — abuse-prone (no auth)
-  @Post('guest')
-  async createGuestTicket(@Body() dto: CreateGuestTicketDto) {
-    return this.supportService.createGuestTicket(dto);
-  }
-
-  @Public()
-  @Throttle({ default: { limit: 30, ttl: 60_000 } }) // 30 / min / IP — guest polls for status
-  @Get('track/:trackingToken')
-  async getTicketByTrackingToken(
-    @Param('trackingToken') token: string,
-  ) {
-    return this.supportService.getTicketByTrackingToken(token);
-  }
-
-  @Public()
-  @Throttle({ default: { limit: 5, ttl: 60_000 } }) // 5 / min / IP
-  @Post('track/:trackingToken/reply')
-  async addGuestReply(
-    @Param('trackingToken') token: string,
-    @Body() body: { message: string },
-  ) {
-    const trimmed = body.message?.trim();
-    if (!trimmed) {
-      throw new BadRequestException('Message is required');
-    }
-    // Cap matches the authenticated reply DTO + ticketReplies.message
-    // column. Without this, a guest could drop a 10MB payload through
-    // the unauthenticated endpoint.
-    const MAX_REPLY_LENGTH = 5000;
-    if (trimmed.length > MAX_REPLY_LENGTH) {
-      throw new BadRequestException(
-        `Message must be ${MAX_REPLY_LENGTH} characters or fewer`,
-      );
-    }
-    return this.supportService.addGuestReply(token, trimmed);
-  }
+  // ─── Guest Ticket endpoints — retired in Phase 2 ─────────────
+  //
+  // The public ticket form was removed when Amna refocused support as
+  // the org's internal-ticketing system (every dashboard now files
+  // tickets from inside the platform). The corresponding BE endpoints
+  // (POST /tickets/guest, GET /tickets/track/:token, POST /tickets/
+  // track/:token/reply) have been deleted to drop unauthenticated
+  // attack surface. Existing guest_tickets stay in the DB for audit;
+  // they're just read-only forever from now on.
+  //
+  // Removed endpoints (Phase 2):
+  //   - POST /tickets/guest                       (createGuestTicket)
+  //   - GET  /tickets/track/:trackingToken        (getTicketByTrackingToken)
+  //   - POST /tickets/track/:trackingToken/reply  (addGuestReply)
 
   // ─── SLA Breaches + Backlog ────────────────────────────
 
@@ -1604,28 +1595,6 @@ export class SupportController {
     );
   }
 
-  // ─── Ticket transfer ───────────────────────────────────
-
-  @Post(':id/transfer')
-  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
-  async transferTicket(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() dto: { category: string; reason?: string; reassign?: boolean },
-  ) {
-    if (
-      user.supportSubRole !== 'supervisor' &&
-      !user.roles.includes('ADMIN') &&
-      !user.roles.includes('SUPER_ADMIN')
-    ) {
-      throw new ForbiddenException('Only supervisors can transfer tickets');
-    }
-    if (!dto?.category) {
-      throw new BadRequestException('category is required');
-    }
-    return this.supportService.transferTicket(user, id, dto);
-  }
-
   // ─── Audit log for a single ticket ─────────────────────
 
   @Get(':id/audit')
@@ -1832,4 +1801,91 @@ export class SupportController {
     });
   }
 
+  // ──────────────────────────────────────────────────────────────
+  //  Phase 2 — Ticket Collaborators (hub-and-spoke internal collab)
+  // ──────────────────────────────────────────────────────────────
+
+  // ─── List active collaborators on a ticket ───────────────
+  //
+  // Available to support/admin AND existing collaborators. The
+  // requester gets an empty array — `viewerRole` on the detail
+  // response is the signal the FE uses to hide the panel entirely.
+  @Get(':id/collaborators')
+  async listCollaborators(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    const isSupportOrAdmin =
+      user.roles.includes('SUPPORT' as UserRole) ||
+      user.roles.includes('ADMIN' as UserRole) ||
+      user.roles.includes('SUPER_ADMIN' as UserRole);
+    const isCollab = !isSupportOrAdmin
+      ? await this.supportService.isCollaborator(id, user.id)
+      : false;
+    if (!isSupportOrAdmin && !isCollab) {
+      return { collaborators: [] };
+    }
+    const collaborators = await this.supportService.listCollaborators(id);
+    return { collaborators };
+  }
+
+  // ─── Loop in a collaborator ──────────────────────────────
+  //
+  // Support / supervisor / admin only (service-level enforces).
+  @Post(':id/collaborators')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async addCollaborator(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: AddCollaboratorDto,
+  ) {
+    return this.supportService.addCollaborator(user, id, dto);
+  }
+
+  // ─── Remove a collaborator ───────────────────────────────
+  //
+  // Supervisor / admin can remove anyone. Plain support can only
+  // remove rows they added themselves (enforced at service layer).
+  @Delete(':id/collaborators/:userId')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async removeCollaborator(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Param('userId', new ParseUUIDPipe()) userId: string,
+  ) {
+    return this.supportService.removeCollaborator(user, id, userId);
+  }
+
+  // ─── Transfer ticket (category + dept reroute) ───────────
+  //
+  // Phase 2. Re-categorises the ticket, loops in a member of the
+  // target department, posts a system-message in the public thread,
+  // emails the requester. Support stays the assignee — no handoff.
+  @Post(':id/transfer')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async transferTicket(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: TransferTicketDto,
+  ) {
+    return this.supportService.transferTicket(user, id, dto);
+  }
+
+  // ─── Department member lookup (loop-in modal source) ─────
+  //
+  // Phase 2. Returns active users in the target department,
+  // course-scoped for instructor/ta/course_manager when `courseId`
+  // is supplied. Empty array when those depts are queried without
+  // a course (so the FE hides the option).
+  @Get('departments/:dept/members')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getDepartmentMembers(
+    @Param('dept') dept: string,
+    @Query('courseId') courseId?: string,
+  ) {
+    const members = await this.supportService.getDepartmentMembers(dept, {
+      courseId: courseId || undefined,
+    });
+    return { members };
+  }
 }

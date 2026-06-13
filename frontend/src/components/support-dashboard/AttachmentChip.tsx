@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   FileText,
@@ -7,10 +8,11 @@ import {
   Loader2,
   ShieldCheck,
   Image as ImageIcon,
-  Trash2,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { isPreviewable } from "./AttachmentPreviewModal";
+import ConfirmDialog from "@/components/support-shared/ConfirmDialog";
 
 type ScanStatus = "clean" | "pending" | "quarantined" | "unknown";
 
@@ -41,14 +43,16 @@ interface Props {
 }
 
 /**
- * Universal attachment renderer. Three modes depending on type:
+ * Universal attachment renderer. Uniform chip size (~56px tall) for
+ * every type — image, PDF, or other — so a row of attachments stays
+ * visually tidy.
  *
- *   image/* → inline thumbnail (160x160 max)
- *   application/pdf → compact "PDF card" (icon + filename + size)
- *   everything else → traditional chip (link + filename + size)
+ *   image/*           → 56x56 thumbnail + filename + size
+ *   application/pdf   → red-tinted PDF icon + filename + size
+ *   everything else   → generic file icon + filename + size
  *
  * Quarantined files render as a blocked chip with no click action,
- * regardless of mode.
+ * regardless of mime type.
  */
 export default function AttachmentChip({
   attachment,
@@ -85,32 +89,21 @@ export default function AttachmentChip({
     onDownload?.(attachment);
   };
 
-  // Chat-thread variant — type-aware rich render
-  if (inChat) {
-    if (isImage && !blocked) {
-      return (
-        <ChatImageChip
-          attachment={attachment}
-          onClick={handleClick}
-          onRemove={onRemove}
-          scan={scan}
-        />
-      );
-    }
-    if (isPdf && !blocked) {
-      return (
-        <ChatPdfChip
-          attachment={attachment}
-          onClick={handleClick}
-          onRemove={onRemove}
-          scan={scan}
-        />
-      );
-    }
-    // Other types (or quarantined) fall through to the compact chip.
+  // Chat-thread variant — uniform compact card for every type.
+  if (inChat && !blocked) {
+    return (
+      <ChatUniformChip
+        attachment={attachment}
+        isImage={isImage}
+        isPdf={isPdf}
+        onClick={handleClick}
+        onRemove={onRemove}
+        scan={scan}
+      />
+    );
   }
 
-  // Default / fallback / non-previewable chip
+  // Default / fallback / non-previewable / quarantined chip.
   return (
     <CompactChip
       attachment={attachment}
@@ -124,87 +117,84 @@ export default function AttachmentChip({
   );
 }
 
-// ─── Chat-thread image thumbnail ────────────────────────────
+// ─── Uniform chat-thread chip (240×56 across all types) ─────
 
-function ChatImageChip({
+function ChatUniformChip({
   attachment,
+  isImage,
+  isPdf,
   onClick,
   onRemove,
   scan,
 }: {
   attachment: Attachment;
-  onClick: (e: React.MouseEvent) => void;
-  onRemove?: (attachment: Attachment) => void;
-  scan: ScanStatus;
-}) {
-  return (
-    <div className="inline-block relative group">
-      <button
-        type="button"
-        onClick={(e) => onClick(e)}
-        className="block max-w-[200px] max-h-[200px] rounded-lg overflow-hidden border border-[var(--color-border)] bg-white hover:opacity-90 transition-opacity"
-      >
-        <img
-          src={attachment.url}
-          alt={attachment.filename ?? "image"}
-          className="max-w-[200px] max-h-[200px] object-cover"
-          loading="lazy"
-        />
-      </button>
-      {/* Tiny scan-status corner badge (only when not clean) */}
-      {scan !== "clean" && scan !== "unknown" && (
-        <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-white/95 border border-[var(--color-border)]">
-          {scan}
-        </span>
-      )}
-      {onRemove && (
-        <RemoveButton attachment={attachment} onRemove={onRemove} corner />
-      )}
-    </div>
-  );
-}
-
-// ─── Chat-thread PDF card ────────────────────────────────────
-
-function ChatPdfChip({
-  attachment,
-  onClick,
-  onRemove,
-  scan,
-}: {
-  attachment: Attachment;
+  isImage: boolean;
+  isPdf: boolean;
   onClick: (e: React.MouseEvent) => void;
   onRemove?: (attachment: Attachment) => void;
   scan: ScanStatus;
 }) {
   const t = useTranslations("supportDashboard.attachmentChip");
+  const label = (() => {
+    if (isImage) return "IMAGE";
+    if (isPdf) return "PDF";
+    const ext = (attachment.filename ?? attachment.url).split(".").pop();
+    return ext ? ext.toUpperCase() : "FILE";
+  })();
+
   return (
-    <div className="inline-block relative group">
+    <div className="inline-block relative group align-top">
       <button
         type="button"
         onClick={(e) => onClick(e)}
-        className="inline-flex items-center gap-3 max-w-xs px-3 py-2.5 border border-[var(--color-border)] bg-white rounded-lg hover:border-[var(--color-primary)] transition-colors text-left"
+        className="inline-flex items-center gap-3 w-[240px] h-[56px] px-2.5 py-2 border border-[var(--color-border)] bg-white rounded-lg hover:border-[var(--color-primary)] hover:shadow-sm transition-all text-start"
       >
-        <div className="w-10 h-10 rounded-lg bg-[#FEE2E2] flex items-center justify-center flex-shrink-0">
-          <FileText className="w-5 h-5 text-[#DC2626]" />
+        {/* Left tile — same 40×40 frame for every type */}
+        <div
+          className={`w-10 h-10 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center ${
+            isImage
+              ? "bg-[var(--color-bg-secondary)] border border-[var(--color-border)]"
+              : isPdf
+                ? "bg-[#FEE2E2]"
+                : "bg-[var(--color-bg-secondary)]"
+          }`}
+        >
+          {isImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={attachment.url}
+              alt={attachment.filename ?? "image"}
+              className="w-10 h-10 object-cover"
+              loading="lazy"
+            />
+          ) : isPdf ? (
+            <FileText className="w-5 h-5 text-[#DC2626]" />
+          ) : (
+            <FileText className="w-5 h-5 text-[var(--color-text-secondary)]" />
+          )}
         </div>
-        <div className="min-w-0">
-          <div className="text-xs font-semibold text-[var(--color-text-primary)] truncate">
+
+        {/* Right text block */}
+        <div className="min-w-0 flex-1">
+          <div className="text-xs font-semibold text-[var(--color-text-primary)] truncate leading-tight">
             {attachment.filename ?? t("untitled")}
           </div>
-          <div className="text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)]">
-            PDF
+          <div className="text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)] mt-0.5">
+            {label}
             {attachment.sizeBytes != null && attachment.sizeBytes > 0 && (
               <> · {formatBytes(attachment.sizeBytes)}</>
             )}
           </div>
         </div>
       </button>
+
+      {/* Scan status badge (only when not clean/unknown) */}
       {scan !== "clean" && scan !== "unknown" && (
-        <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-white border border-[var(--color-border)]">
+        <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-white/95 border border-[var(--color-border)]">
           {scan}
         </span>
       )}
+
       {onRemove && (
         <RemoveButton attachment={attachment} onRemove={onRemove} corner />
       )}
@@ -212,7 +202,7 @@ function ChatPdfChip({
   );
 }
 
-// ─── Default compact chip ───────────────────────────────────
+// ─── Default compact chip (header / fallback / quarantined) ─
 
 function CompactChip({
   attachment,
@@ -277,6 +267,8 @@ function CompactChip({
   );
 }
 
+// ─── Remove button + shadcn confirm dialog ──────────────────
+
 function RemoveButton({
   attachment,
   onRemove,
@@ -287,26 +279,39 @@ function RemoveButton({
   corner?: boolean;
 }) {
   const t = useTranslations("supportDashboard.attachmentChip");
+  const [confirming, setConfirming] = useState(false);
+
   return (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (window.confirm(t("removeConfirm"))) {
-          onRemove(attachment);
+    <>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setConfirming(true);
+        }}
+        className={
+          corner
+            ? "absolute -top-2 -end-2 w-6 h-6 rounded-full bg-white border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[#DC2626] hover:border-[#DC2626] hover:bg-white opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-sm"
+            : "p-1 text-[var(--color-text-secondary)] hover:text-[#DC2626]"
         }
-      }}
-      className={
-        corner
-          ? "absolute top-1 right-1 p-1 rounded-md bg-white/90 border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[#DC2626] opacity-0 group-hover:opacity-100 transition-opacity"
-          : "p-1 text-[var(--color-text-secondary)] hover:text-[#DC2626]"
-      }
-      aria-label={t("remove")}
-      title={t("remove")}
-    >
-      <Trash2 className="w-3 h-3" />
-    </button>
+        aria-label={t("remove")}
+        title={t("remove")}
+      >
+        <X className="w-3 h-3" />
+      </button>
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        title={t("removeConfirmTitle")}
+        description={t("removeConfirmDescription", {
+          name: attachment.filename ?? t("untitled"),
+        })}
+        confirmLabel={t("remove")}
+        destructive
+        onConfirm={() => onRemove(attachment)}
+      />
+    </>
   );
 }
 

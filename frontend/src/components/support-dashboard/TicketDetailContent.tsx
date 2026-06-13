@@ -8,8 +8,6 @@ import { supportApi, uploadFormData } from "@/lib/api";
 import { useSupportProfile } from "@/hooks/useSupportProfile";
 import { useSupportOnlineStatus } from "@/hooks/useSupportOnlineStatus";
 import { toast } from "sonner";
-import SupportNavbar from "./SupportNavbar";
-import SupportSidebar from "./SupportSidebar";
 import TicketTagPanel from "./TicketTagPanel";
 import HoldRequestModal from "./HoldRequestModal";
 import EscalateTicketModal from "./EscalateTicketModal";
@@ -26,8 +24,11 @@ import AttachmentPreviewModal, {
 } from "./AttachmentPreviewModal";
 import AttachmentAuditPanel from "./AttachmentAuditPanel";
 import StudentTimelineCard from "./StudentTimelineCard";
+import CollaboratorsPanel from "./CollaboratorsPanel";
+import TransferTicketModal from "./TransferTicketModal";
 import {
   ArrowLeft,
+  ArrowRightLeft,
   Send,
   Lock,
   Clock,
@@ -45,7 +46,17 @@ import {
   BookOpen,
   Download,
   Merge,
+  X,
 } from "lucide-react";
+
+interface TicketCategoryDef {
+  slug: string;
+  nameEn: string;
+  nameAr: string | null;
+  requiresCourse: boolean;
+  suggestedDepartment: string | null;
+  applicableRoles: string[];
+}
 
 interface TicketDetail {
   id: string;
@@ -86,6 +97,9 @@ interface TicketDetail {
     message: string;
     isStaffReply: boolean;
     isInternal: boolean;
+    /** Phase 2 — system-emitted message (e.g. transfer notice). FE
+     *  renders these greyed-out without a Support attribution. */
+    isSystem?: boolean;
     createdAt: string;
     userId: string;
     userFirstName: string | null;
@@ -101,6 +115,20 @@ interface TicketDetail {
       scannedAt?: string | null;
     }[];
   }[];
+  /** Phase 2 — looped-in departments on this ticket. Empty array
+   *  when the viewer is the requester. */
+  collaborators?: {
+    id: string;
+    userId: string;
+    department: string;
+    addedAt: string;
+    userName: string | null;
+    userEmail: string | null;
+    addedBy: { id: string; name: string | null } | null;
+  }[];
+  /** Phase 2 — viewer's role on THIS ticket (not their global role). */
+  viewerRole?: "support" | "collaborator" | "requester" | "none";
+  courseId?: string | null;
   slaPolicy: {
     frtMinutes: number;
     ttrMinutes: number;
@@ -294,6 +322,11 @@ const TicketDetailContent = () => {
   const [showReassign, setShowReassign] = useState(false);
   const [showHoldModal, setShowHoldModal] = useState(false);
   const [showEscalateModal, setShowEscalateModal] = useState(false);
+  // Phase 2 — channel toggle (Public ⇄ Internal), Transfer modal,
+  // category catalog for Transfer's category picker.
+  const [activeLane, setActiveLane] = useState<"public" | "internal">("public");
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [categoryCatalog, setCategoryCatalog] = useState<TicketCategoryDef[]>([]);
   const [isSubmittingHold, setIsSubmittingHold] = useState(false);
   const [isDecidingHold, setIsDecidingHold] = useState(false);
   const [macros, setMacros] = useState<any[]>([]);
@@ -386,6 +419,26 @@ const TicketDetailContent = () => {
       }
     }
     fetchTicket();
+
+    // Phase 2 — pull category catalog once for the Transfer modal.
+    // Best-effort: an empty list just disables transfer.
+    supportApi
+      .listTicketCategories()
+      .then((rows) =>
+        setCategoryCatalog(
+          rows.map((r) => ({
+            slug: r.slug,
+            nameEn: r.nameEn,
+            nameAr: r.nameAr,
+            requiresCourse: !!r.requiresCourse,
+            suggestedDepartment: r.suggestedDepartment ?? null,
+            applicableRoles: Array.isArray(r.applicableRoles)
+              ? r.applicableRoles
+              : [],
+          })),
+        ),
+      )
+      .catch(() => undefined);
 
     // Auto-refresh every 60 seconds for live SLA updates
     const interval = setInterval(() => {
@@ -558,26 +611,51 @@ const TicketDetailContent = () => {
 
   return (
     <>
-      <SupportNavbar profile={profile} />
+      {/* Phase 2 — fullscreen ticket detail. No SupportNavbar, no
+          SupportSidebar — this view treats the ticket as a focused
+          conversation surface. The ✕ Close button in the top bar
+          returns to the previous list. */}
       <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="hidden lg:block lg:flex-shrink-0">
-              <SupportSidebar
-                profile={profile}
-                supportSubRole={user?.supportSubRole}
-              />
-            </div>
+          <div className="flex flex-col gap-6">
 
             <div className="flex-1 min-w-0">
-              {/* Back Button */}
-              <button
-                onClick={() => router.back()}
-                className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-4"
-              >
-                <ArrowLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
-                {t("ticketDetail.backToTickets")}
-              </button>
+              {/* Top bar — Back + Close */}
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <button
+                  onClick={() => router.back()}
+                  className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                >
+                  <ArrowLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
+                  {t("ticketDetail.backToTickets")}
+                </button>
+                <button
+                  onClick={() => router.back()}
+                  className="w-9 h-9 rounded-lg border border-[var(--color-border)] bg-white hover:bg-[var(--color-bg-secondary)] flex items-center justify-center"
+                  title={t("ticketDetail.close")}
+                  aria-label={t("ticketDetail.close")}
+                >
+                  <X className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                </button>
+              </div>
+
+              {/* Cross-role banner — Phase 2. Tells the viewer which
+                  hat they're wearing on this ticket so a multi-role
+                  user (e.g. instructor who's also a course assistant
+                  on someone else's ticket) understands the implied
+                  composer-lock + visibility. */}
+              {ticket?.viewerRole === "requester" && (
+                <div className="mb-3 px-3 py-2 rounded-lg bg-sky-50 border border-sky-200 text-xs text-sky-900 flex items-center gap-2">
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  {t("ticketDetail.banner.requester")}
+                </div>
+              )}
+              {ticket?.viewerRole === "collaborator" && (
+                <div className="mb-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-2">
+                  <UserPlus className="w-3.5 h-3.5" />
+                  {t("ticketDetail.banner.collaborator")}
+                </div>
+              )}
 
               {isLoading ? (
                 <div className="flex items-center justify-center py-20">
@@ -884,6 +962,25 @@ const TicketDetailContent = () => {
                         ]
                           .filter(Boolean)
                           .join(" ");
+                        // Phase 2 — system messages (e.g. transfer
+                        // notices) render as a centered pill, not as a
+                        // chat bubble, so the requester reads them as
+                        // "platform talking" not "Support saying".
+                        if (comment.isSystem) {
+                          return (
+                            <div
+                              key={comment.id}
+                              className="flex items-center justify-center"
+                            >
+                              <div className="max-w-xl px-3 py-2 rounded-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] text-center">
+                                {comment.message}
+                                <span className="ms-2 opacity-60">
+                                  · {new Date(comment.createdAt).toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        }
                         return (
                           <div
                             key={comment.id}
@@ -1056,20 +1153,43 @@ const TicketDetailContent = () => {
                             </div>
                           )}
                           {isSupportOrAdmin && (
-                            <label className={`flex items-center gap-1.5 ${isRTL ? "mr-auto" : "ml-auto"} cursor-pointer`}>
-                              <input
-                                type="checkbox"
-                                checked={isInternal}
-                                onChange={(e) =>
-                                  setIsInternal(e.target.checked)
-                                }
-                                className="w-4 h-4 rounded border-[var(--color-input-border)]"
-                              />
-                              <Lock className="w-3.5 h-3.5 text-[#D97706]" />
-                              <span className="text-xs text-[var(--color-text-secondary)]">
-                                {t("ticketDetail.internalNote")}
-                              </span>
-                            </label>
+                            <div
+                              className={`inline-flex items-center gap-0 p-0.5 rounded-lg border ${
+                                isInternal
+                                  ? "border-amber-300 bg-amber-50"
+                                  : "border-[var(--color-border)] bg-white"
+                              } ${isRTL ? "mr-auto" : "ml-auto"}`}
+                              role="tablist"
+                              aria-label={t("ticketDetail.composer.lane")}
+                            >
+                              <button
+                                type="button"
+                                role="tab"
+                                aria-selected={!isInternal}
+                                onClick={() => setIsInternal(false)}
+                                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                                  !isInternal
+                                    ? "bg-sky-600 text-white"
+                                    : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                                }`}
+                              >
+                                {t("ticketDetail.composer.public")}
+                              </button>
+                              <button
+                                type="button"
+                                role="tab"
+                                aria-selected={isInternal}
+                                onClick={() => setIsInternal(true)}
+                                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors flex items-center gap-1 ${
+                                  isInternal
+                                    ? "bg-amber-500 text-white"
+                                    : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                                }`}
+                              >
+                                <Lock className="w-3 h-3" />
+                                {t("ticketDetail.composer.internal")}
+                              </button>
+                            </div>
                           )}
                         </div>
                         {macroPreview && (
@@ -1450,6 +1570,46 @@ const TicketDetailContent = () => {
                       />
                     )}
 
+                    {/* Phase 2 — Collaborators panel. Hidden for the
+                        requester so they keep their "Support is helping
+                        you" mental model. Collaborators see the panel
+                        but read-only (no remove, no loop-in). */}
+                    {ticket.viewerRole !== "requester" && (
+                      <CollaboratorsPanel
+                        ticketId={ticket.id}
+                        courseId={ticket.courseId ?? null}
+                        collaborators={ticket.collaborators ?? []}
+                        readOnly={ticket.viewerRole === "collaborator"}
+                        canManage={ticket.viewerRole === "support"}
+                        suggestedDepartment={
+                          categoryCatalog.find(
+                            (c) => c.slug === ticket.category,
+                          )?.suggestedDepartment ?? null
+                        }
+                        onChange={() => {
+                          supportApi
+                            .getTicket(ticket.id)
+                            .then((d) => setTicket(d))
+                            .catch(() => undefined);
+                        }}
+                      />
+                    )}
+
+                    {/* Phase 2 — Transfer button (support/admin only).
+                        Opens a modal that re-categorises + loops in the
+                        target dept + posts a system message in the
+                        public thread. */}
+                    {ticket.viewerRole === "support" && (
+                      <button
+                        type="button"
+                        onClick={() => setShowTransferModal(true)}
+                        className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-[var(--color-border)] bg-white hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors"
+                      >
+                        <ArrowRightLeft className="w-3.5 h-3.5" />
+                        {t("ticketDetail.actions.transfer")}
+                      </button>
+                    )}
+
                     {/* About this student — populated when the ticket
                         was filed about a third party (instructor →
                         support follow-up). Same data the BE prepends
@@ -1749,6 +1909,25 @@ const TicketDetailContent = () => {
           alreadyEscalated={!!ticket.escalatedAt}
           onClose={() => setShowEscalateModal(false)}
           onEscalated={async () => {
+            const data = await supportApi.getTicket(ticketId);
+            setTicket(data);
+          }}
+        />
+      )}
+
+      {/* Phase 2 — Transfer ticket modal. Support reassigns the
+          category + loops in the target department. The system
+          message lands in the public thread so the requester sees
+          they've been routed without seeing the dept user's name. */}
+      {ticket && (
+        <TransferTicketModal
+          open={showTransferModal}
+          onOpenChange={setShowTransferModal}
+          ticketId={ticket.id}
+          currentCategory={ticket.category}
+          courseId={ticket.courseId ?? null}
+          categories={categoryCatalog}
+          onTransferred={async () => {
             const data = await supportApi.getTicket(ticketId);
             setTicket(data);
           }}

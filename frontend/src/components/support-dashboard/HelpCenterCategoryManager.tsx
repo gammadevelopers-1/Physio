@@ -21,6 +21,7 @@ import {
   FileText,
   type LucideIcon,
 } from "lucide-react";
+import ConfirmDialog from "@/components/support-shared/ConfirmDialog";
 
 // Icon registry mirrors what the public support page already uses so
 // admins can pick from a curated list. Anything outside this set
@@ -56,6 +57,8 @@ export default function HelpCenterCategoryManager({ onClose, onChanged }: Props)
   });
   const [isSaving, setIsSaving] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
+  // Phase 2 — pending delete confirmation (replaces window.confirm).
+  const [pendingDelete, setPendingDelete] = useState<Category | null>(null);
 
   const fetchCategories = useCallback(async () => {
     setIsLoading(true);
@@ -125,7 +128,7 @@ export default function HelpCenterCategoryManager({ onClose, onChanged }: Props)
     }
   }
 
-  async function handleDelete(cat: Category) {
+  function handleDelete(cat: Category) {
     if (cat.articleCount > 0) {
       toast.error(
         t("kbPage.categoryManager.cannotDeleteWithArticles", {
@@ -134,9 +137,10 @@ export default function HelpCenterCategoryManager({ onClose, onChanged }: Props)
       );
       return;
     }
-    if (!confirm(t("kbPage.categoryManager.confirmDelete", { name: cat.nameEn }))) {
-      return;
-    }
+    setPendingDelete(cat);
+  }
+
+  async function doDelete(cat: Category) {
     try {
       await supportApi.deleteKbCategory(cat.id);
       toast.success(t("kbPage.categoryManager.deleted"));
@@ -361,6 +365,22 @@ export default function HelpCenterCategoryManager({ onClose, onChanged }: Props)
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(o) => !o && setPendingDelete(null)}
+        title={t("kbPage.categoryManager.confirmDeleteTitle")}
+        description={
+          pendingDelete
+            ? t("kbPage.categoryManager.confirmDelete", { name: pendingDelete.nameEn })
+            : ""
+        }
+        destructive
+        confirmLabel={t("kbPage.categoryManager.delete")}
+        onConfirm={async () => {
+          if (pendingDelete) await doDelete(pendingDelete);
+        }}
+      />
     </>
   );
 }

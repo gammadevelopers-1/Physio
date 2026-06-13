@@ -11,3 +11,5 @@ export { CreateKbArticleDto } from './create-kb-article.dto';
 export { UpdateKbArticleDto } from './update-kb-article.dto';
 export { RateTicketDto } from './rate-ticket.dto';
 export { EscalateTicketDto } from './escalate-ticket.dto';
+export { AddCollaboratorDto } from './add-collaborator.dto';
+export { TransferTicketDto } from './transfer-ticket.dto';

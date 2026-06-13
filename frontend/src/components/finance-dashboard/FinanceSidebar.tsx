@@ -15,6 +15,7 @@ import {
   Pencil,
   Wallet,
   Headphones,
+  UserPlus,
 } from "lucide-react";
 import { SIDEBAR_TAB_KEYS } from "@/lib/api";
 import SidebarBadge from "@/components/SidebarBadge";
@@ -75,6 +76,11 @@ const FinanceSidebar = ({ profile }: FinanceSidebarProps) => {
       label: t("sidebar.support"),
       href: `/${locale}/dashboard/finance/support`,
       icon: Headphones,
+    },
+    {
+      label: t("sidebar.loopedIn"),
+      href: `/${locale}/dashboard/finance/support/looped-in`,
+      icon: UserPlus,
     },
     {
       label: t("sidebar.settings"),
@@ -206,6 +212,9 @@ const FinanceSidebar = ({ profile }: FinanceSidebarProps) => {
                 )}
                 {item.href.endsWith("/support") && (
                   <SidebarBadge tabKey={SIDEBAR_TAB_KEYS.USER_SUPPORT} />
+                )}
+                {item.href.endsWith("/support/looped-in") && (
+                  <SidebarBadge tabKey={SIDEBAR_TAB_KEYS.USER_LOOPED_IN} />
                 )}
               </Link>
             );

@@ -38,11 +38,13 @@ const InstructorSupportContent = () => {
   );
 
   if (selectedTicketId) {
+    // Phase 2 — fullscreen ticket detail: pass a no-op shell so the
+    // dashboard navbar/sidebar are not rendered around the thread.
     return (
       <UserTicketDetail
         ticketId={selectedTicketId}
         onBack={() => setSelectedTicketId(null)}
-        renderShell={renderShell}
+        renderShell={(c) => <>{c}</>}
       />
     );
   }

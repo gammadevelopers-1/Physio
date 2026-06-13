@@ -148,6 +148,11 @@ export const ticketReplies = pgTable(
     message: text('message').notNull(),
     isStaffReply: boolean('is_staff_reply').notNull().default(false),
     isInternal: boolean('is_internal').notNull().default(false),
+    // Phase 2 — set TRUE for thread messages emitted by the system
+    // itself (e.g. the transfer notice). FE renders them greyed-out
+    // without a Support attribution so it's clear the platform is
+    // talking, not a real agent.
+    isSystem: boolean('is_system').notNull().default(false),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [

@@ -2523,6 +2523,8 @@
       "category": "الفئة",
       "categoryPlaceholder": "اختر فئة…",
       "relatedCourse": "الدورة المرتبطة (اختياري)",
+      "courseRequired": "تتطلب هذه الفئة تحديد دورة. اختر الدورة المعنية بهذه التذكرة.",
+      "courseRequiredHint": "مطلوبة لهذه الفئة — يحتاج الدعم لمعرفة الدورة المعنية.",
       "selectCourse": "اختر دورة…",
       "subject": "الموضوع",
       "subjectPlaceholder": "ملخص قصير للمشكلة",
@@ -2661,6 +2663,7 @@
       "content": "المحتوى",
       "reports": "التقارير",
       "support": "الدعم الفني",
+      "loopedIn": "مشارك في",
       "settings": "الإعدادات",
       "rating": "التقييم",
       "profileCompletion": "اكتمال الملف الشخصي",
@@ -4177,6 +4180,7 @@
       "nelcCompliance": "امتثال NELC",
       "reports": "التقارير",
       "support": "الدعم الفني",
+      "loopedIn": "مشارك في",
       "settings": "الإعدادات",
       "courseManager": "مدير الدورات",
       "nelc": "NELC",
@@ -5425,6 +5429,7 @@
       "roles": "الأدوار والصلاحيات",
       "roleRequests": "طلبات المدربين",
       "support": "الدعم",
+      "loopedIn": "مشارك في",
       "courses": "جميع الدورات",
       "finance": "المالية",
       "points": "نظام النقاط",
@@ -7608,6 +7613,7 @@
       "discounts": "الخصومات",
       "reports": "التقارير",
       "support": "الدعم الفني",
+      "loopedIn": "مشارك في",
       "settings": "الإعدادات",
       "financeManager": "مدير المالية",
       "revenue": "الإيرادات",
@@ -7996,6 +8002,22 @@
       "omarFahad": "عمر فهد"
     }
   },
+  "supportCommon": {
+    "confirm": {
+      "cancel": "إلغاء",
+      "confirm": "تأكيد"
+    }
+  },
+  "support": {
+    "departments": {
+      "course_manager": "إدارة الدورات",
+      "finance": "المالية",
+      "admin": "الإدارة",
+      "instructor": "المدرب",
+      "ta": "مساعد التدريس",
+      "supervisor": "المشرف"
+    }
+  },
   "supportDashboard": {
     "csatPrompt": {
       "title": "كيف كانت تجربتك؟",
@@ -8028,6 +8050,7 @@
       "knowledgeBase": "مركز المساعدة",
       "trainerApplications": "طلبات المدربين",
       "reports": "التقارير",
+      "loopedIn": "مشارك في",
       "settings": "الإعدادات",
       "supportLead": "قائد الدعم",
       "resolved": "تم الحل",
@@ -8054,7 +8077,9 @@
     "attachmentChip": {
       "untitled": "مرفق",
       "remove": "إزالة",
-      "removeConfirm": "هل تريد إزالة هذا المرفق؟ سيظل في سجل النسخ ولكن لن يظهر في القائمة النشطة."
+      "removeConfirm": "هل تريد إزالة هذا المرفق؟ سيظل في سجل النسخ ولكن لن يظهر في القائمة النشطة.",
+      "removeConfirmTitle": "إزالة المرفق؟",
+      "removeConfirmDescription": "ستتم إزالة {name} من هذه الرسالة. سيظل في سجل النسخ."
     },
     "attachmentAudit": {
       "title": "المرفقات — السجل والوصول",
@@ -8673,6 +8698,9 @@
         "created": "تم إنشاء المقال",
         "saveFailed": "تعذّر حفظ المقال",
         "confirmDelete": "هل تريد حذف هذا المقال؟ لا يمكن التراجع.",
+        "confirmDeleteTitle": "حذف المقال؟",
+        "confirmDeleteDescription": "سيتم حذف “{name}”. لا يمكن التراجع عن هذا الإجراء.",
+        "delete": "حذف",
         "deleted": "تم حذف المقال",
         "deleteFailed": "تعذّر حذف المقال",
         "imageUploadFailed": "تعذّر رفع الصورة."
@@ -8722,7 +8750,9 @@
         "saveFailed": "تعذّر حفظ الفئة",
         "deleted": "تم حذف الفئة",
         "deleteFailed": "تعذّر حذف الفئة",
-        "confirmDelete": "حذف الفئة “{name}”؟",
+        "confirmDeleteTitle": "حذف الفئة؟",
+        "confirmDelete": "سيتم حذف الفئة “{name}”. لا يمكن التراجع عن هذا الإجراء.",
+        "delete": "حذف",
         "cannotDeleteWithArticles": "لا يمكن الحذف — {count} مقال(ات) لا تزال تستخدم هذه الفئة."
       }
     },
@@ -8987,6 +9017,13 @@
         "updated": "تم تحديث الفئة",
         "updateFailed": "تعذّر تحديث الفئة",
         "confirmDelete": "هل تريد إزالة فئة \"{slug}\"؟",
+        "confirmDeleteTitle": "حذف الفئة؟",
+        "confirmDeleteDescription": "سيتم حذف فئة “{name}”. تحتفظ التذاكر الحالية بتسميتها، لكن لن تظهر الفئة في أي قائمة منسدلة لاحقًا.",
+        "delete": "حذف",
+        "disableCategory": "تعطيل",
+        "disableConfirmTitle": "تعطيل الفئة المضمنة؟",
+        "disableConfirmDescription": "سيتم إخفاء فئة “{name}” من قائمة إنشاء التذاكر لجميع الأدوار. تحتفظ التذاكر الحالية بتسميتها ويمكن إعادة تفعيلها لاحقًا.",
+        "disableConfirmLabel": "تعطيل",
         "editRoles": "تعديل الأدوار",
         "applicableRolesLabel": "متاحة للوحات التحكم *",
         "applicableRolesHint": "اختر لوحات التحكم التي ستظهر فيها هذه الفئة عند إنشاء التذاكر. يرى المشرفون والمسؤولون جميع الفئات في قائمة الانتظار دائمًا.",
@@ -8997,7 +9034,9 @@
           "instructor": "المدرّب",
           "course_manager": "مدير الدورات",
           "finance": "المالية",
-          "ta": "المساعد التعليمي"
+          "ta": "المساعد التعليمي",
+          "admin": "الإدارة",
+          "support": "الدعم"
         }
       },
       "sla": {
@@ -9246,6 +9285,8 @@
           "created": "تم إنشاء القالب",
           "saveFailed": "تعذّر حفظ القالب",
           "confirmDelete": "حذف هذا القالب؟",
+          "confirmDeleteTitle": "حذف القالب؟",
+          "confirmDeleteDescription": "سيتم حذف “{name}”. لن تتأثر الردود التي استخدمت هذا القالب مسبقًا.",
           "deleted": "تم حذف القالب",
           "deactivated": "تم تعطيل القالب",
           "reactivated": "تمت إعادة تفعيل القالب"
@@ -9384,6 +9425,79 @@
       }
     },
     "ticketDetail": {
+      "close": "إغلاق",
+      "banner": {
+        "requester": "أنت صاحب الطلب على هذه التذكرة. الردود علنية.",
+        "collaborator": "أنت مشارك على هذه التذكرة. الردود داخلية فقط."
+      },
+      "composer": {
+        "lane": "قناة الرد",
+        "public": "علني",
+        "internal": "داخلي"
+      },
+      "collaborators": {
+        "title": "الإدارات المشاركة",
+        "loopIn": "إشراك",
+        "empty": "لا توجد إدارات مشاركة بعد.",
+        "emptyHint": "استخدم \"إشراك\" لإضافة فريق المالية، أو إدارة الدورات، أو الإدارة، أو غيرها.",
+        "removeAria": "إزالة مشارك",
+        "removeConfirmTitle": "إزالة المشارك؟",
+        "removeConfirmDescription": "لن يرى {name} المستجدات الداخلية على هذه التذكرة بعد الآن.",
+        "removeConfirm": "إزالة",
+        "removedSuccess": "تم إزالة المشارك",
+        "removeFailed": "تعذرت إزالة المشارك"
+      },
+      "loopIn": {
+        "title": "إشراك إدارة",
+        "subtitle": "اختر الإدارة، ثم حدد الشخص المطلوب إشراكه.",
+        "stepDepartment": "الخطوة 1 · الإدارة",
+        "stepMember": "الخطوة 2 · العضو",
+        "pickDepartmentFirst": "اختر إدارة لعرض الأعضاء المتاحين.",
+        "loadingMembers": "جارٍ تحميل الأعضاء…",
+        "noMembers": "لا يوجد أعضاء متاحون في هذه الإدارة لهذه التذكرة.",
+        "alreadyOn": "نشط",
+        "cancel": "إلغاء",
+        "addCollaborator": "إضافة مشارك",
+        "memberFetchError": "تعذر تحميل أعضاء الإدارة",
+        "pickRequired": "اختر إدارة وعضواً",
+        "alreadyActive": "هذا العضو مشارك بالفعل في هذه التذكرة",
+        "addedSuccess": "تم إضافة المشارك",
+        "addFailed": "تعذرت إضافة المشارك"
+      },
+      "transfer": {
+        "title": "تحويل التذكرة",
+        "subtitle": "إعادة توجيه إلى تصنيف آخر وإشراك الفريق المطلوب.",
+        "toCategory": "التصنيف الجديد",
+        "selectCategory": "اختر التصنيف",
+        "toDepartment": "الإدارة المستهدفة",
+        "selectDepartment": "اختر الإدارة",
+        "noteToRequester": "ملاحظة إلى صاحب الطلب",
+        "noteOptional": "اختياري",
+        "notePlaceholder": "استبدال رسالة التوجيه الافتراضية…",
+        "noteHelp": "اتركه فارغًا لاستخدام الرسالة الافتراضية.",
+        "brokerNotice": "يظل الدعم نقطة التواصل. سيتعاون الفريق المستهدف داخليًا.",
+        "cancel": "إلغاء",
+        "confirmTransfer": "تحويل",
+        "pickBoth": "اختر تصنيفًا وإدارة",
+        "transferredSuccess": "تم تحويل التذكرة",
+        "transferFailed": "تعذر تحويل التذكرة"
+      },
+      "actions": {
+        "transfer": "تحويل"
+      },
+      "loopedInInbox": {
+        "title": "مشارك في",
+        "subtitle": "التذاكر التي تمت إضافتك إليها كمشارك.",
+        "emptyTitle": "لا توجد تذاكر بعد",
+        "emptyHint": "سيقوم الدعم بإشراكك عندما يحتاج فريقك إلى الإسهام.",
+        "status": {
+          "new": "جديد",
+          "in_progress": "قيد المعالجة",
+          "on_hold": "معلق",
+          "resolved": "تم الحل",
+          "closed": "مغلق"
+        }
+      },
       "csatReview": {
         "title": "تقييم العميل",
         "toneSatisfied": "راضٍ",
@@ -9965,6 +10079,7 @@
       "courses": "الدورات",
       "sessions": "المحاضرات",
       "support": "الدعم الفني",
+      "loopedIn": "مشارك في",
       "settings": "الإعدادات",
       "viewProfile": "عرض الملف الشخصي",
       "editProfile": "تعديل الملف الشخصي",
@@ -10214,6 +10329,14 @@
     "blogs": "المدونة"
   },
   "supportPublicPage": {
+    "guestRetired": {
+      "authedTitle": "افتح تذكرة من لوحة التحكم الخاصة بك",
+      "authedDescription": "أصبحت إدارة التذاكر تتم من داخل المنصة — توجّه إلى قسم الدعم في لوحة تحكمك لفتح تذكرة جديدة أو متابعة تذاكرك.",
+      "authedCta": "الذهاب إلى لوحة التحكم",
+      "guestTitle": "سجّل الدخول لفتح تذكرة دعم",
+      "guestDescription": "أصبحت التذاكر تُفتح من لوحة التحكم. سجّل الدخول ثم افتح تذكرة من قسم الدعم.",
+      "guestCta": "تسجيل الدخول"
+    },
     "title": "الدعم المباشر",
     "subtitle": "احصل على المساعدة في تجربتك التعليمية على PhysioGuidance",
     "heroDescription": "أرسل تذكرة دعم وسيقوم فريقنا بالرد خلال ساعات العمل.",

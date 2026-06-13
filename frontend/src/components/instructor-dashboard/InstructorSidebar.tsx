@@ -20,6 +20,7 @@ import {
   Star,
   Trash2,
   Headphones,
+  UserPlus,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { profileApi, SIDEBAR_TAB_KEYS } from "@/lib/api";
@@ -119,6 +120,11 @@ const InstructorSidebar = ({ instructor }: InstructorSidebarProps) => {
       label: t("sidebar.support"),
       href: `/${locale}/dashboard/instructor/support`,
       icon: Headphones,
+    },
+    {
+      label: t("sidebar.loopedIn"),
+      href: `/${locale}/dashboard/instructor/support/looped-in`,
+      icon: UserPlus,
     },
     {
       label: t("sidebar.settings"),
@@ -263,6 +269,9 @@ const InstructorSidebar = ({ instructor }: InstructorSidebarProps) => {
                 </span>
                 {item.href.endsWith("/support") && (
                   <SidebarBadge tabKey={SIDEBAR_TAB_KEYS.USER_SUPPORT} />
+                )}
+                {item.href.endsWith("/support/looped-in") && (
+                  <SidebarBadge tabKey={SIDEBAR_TAB_KEYS.USER_LOOPED_IN} />
                 )}
               </Link>
             );

@@ -23,6 +23,7 @@ import {
   Upload,
   Trash2,
   Headphones,
+  UserPlus,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { profileApi, courseManagerApi, SIDEBAR_TAB_KEYS } from "@/lib/api";
@@ -151,6 +152,11 @@ const CourseManagerSidebar = ({ manager, pendingReviews: pendingReviewsProp }: C
       label: t("sidebar.support"),
       href: `/${locale}/dashboard/manager/support`,
       icon: Headphones,
+    },
+    {
+      label: t("sidebar.loopedIn"),
+      href: `/${locale}/dashboard/manager/support/looped-in`,
+      icon: UserPlus,
     },
     {
       label: t("sidebar.settings"),
@@ -294,6 +300,9 @@ const CourseManagerSidebar = ({ manager, pendingReviews: pendingReviewsProp }: C
                 )}
                 {item.href.endsWith("/support") && (
                   <SidebarBadge tabKey={SIDEBAR_TAB_KEYS.USER_SUPPORT} />
+                )}
+                {item.href.endsWith("/support/looped-in") && (
+                  <SidebarBadge tabKey={SIDEBAR_TAB_KEYS.USER_LOOPED_IN} />
                 )}
               </Link>
             );

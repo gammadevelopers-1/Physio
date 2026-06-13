@@ -19,6 +19,7 @@ import {
   Trash2,
   Bell,
   GraduationCap,
+  UserPlus,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { profileApi, SIDEBAR_TAB_KEYS, type SidebarTabKey } from "@/lib/api";
@@ -161,6 +162,13 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
       href: `${basePath}/reports`,
       icon: BarChart3,
       showFor: "supervisor",
+    },
+    {
+      label: t("sidebar.loopedIn"),
+      href: `${basePath}/looped-in`,
+      icon: UserPlus,
+      showFor: "all",
+      badgeKey: SIDEBAR_TAB_KEYS.USER_LOOPED_IN,
     },
     {
       label: t("sidebar.settings"),

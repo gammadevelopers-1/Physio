@@ -24,6 +24,7 @@ import {
   Award,
   Mail,
   Headphones,
+  UserPlus,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { roleRequestsApi, profileApi, adminApi, supportApi } from "@/lib/api";
@@ -152,6 +153,11 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
       href: `/${locale}/dashboard/admin/support`,
       icon: Headphones,
       badge: pendingSupportTeamCount > 0 ? pendingSupportTeamCount : undefined,
+    },
+    {
+      label: t("sidebar.loopedIn"),
+      href: `/${locale}/dashboard/admin/support/looped-in`,
+      icon: UserPlus,
     },
 
     // Learning

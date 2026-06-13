@@ -406,7 +406,12 @@ function CreateTicketForm({
   // change. Falls back to a single "other" option if the API call
   // fails — the form must always be submittable.
   const [applicableCats, setApplicableCats] = useState<
-    { slug: string; nameEn: string; nameAr: string | null }[]
+    {
+      slug: string;
+      nameEn: string;
+      nameAr: string | null;
+      requiresCourse: boolean;
+    }[]
   >([]);
   useEffect(() => {
     let cancelled = false;
@@ -418,10 +423,20 @@ function CreateTicketForm({
           slug: c.slug,
           nameEn: c.nameEn,
           nameAr: c.nameAr,
+          requiresCourse: !!c.requiresCourse,
         }));
-        setApplicableCats(list.length > 0 ? list : [
-          { slug: "other", nameEn: "Other", nameAr: "أخرى" },
-        ]);
+        setApplicableCats(
+          list.length > 0
+            ? list
+            : [
+                {
+                  slug: "other",
+                  nameEn: "Other",
+                  nameAr: "أخرى",
+                  requiresCourse: false,
+                },
+              ],
+        );
         setCategory((current) => {
           if (current && list.some((c) => c.slug === current)) return current;
           if (
@@ -436,7 +451,12 @@ function CreateTicketForm({
       .catch(() => {
         if (!cancelled) {
           setApplicableCats([
-            { slug: "other", nameEn: "Other", nameAr: "أخرى" },
+            {
+              slug: "other",
+              nameEn: "Other",
+              nameAr: "أخرى",
+              requiresCourse: false,
+            },
           ]);
           setCategory("other");
         }
@@ -445,6 +465,11 @@ function CreateTicketForm({
       cancelled = true;
     };
   }, [source, defaultCategorySlug]);
+
+  // Phase 2 — the currently selected category's course-required flag.
+  const selectedCategoryRequiresCourse = applicableCats.find(
+    (c) => c.slug === category,
+  )?.requiresCourse ?? false;
 
   const categoryOptions = applicableCats.map((c) => {
     let label: string;
@@ -549,6 +574,13 @@ function CreateTicketForm({
       setFormError(t("form.waitForUploads"));
       return;
     }
+    // Phase 2 — categories that require a course must carry one. We
+    // catch this client-side so the user sees an inline error rather
+    // than a 400 from the server.
+    if (selectedCategoryRequiresCourse && !courseId) {
+      setFormError(t("form.courseRequired"));
+      return;
+    }
     setSubmitting(true);
     setFormError(null);
     try {
@@ -621,6 +653,9 @@ function CreateTicketForm({
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1.5">
               {t("form.relatedCourse")}
+              {selectedCategoryRequiresCourse && (
+                <span className="ms-1 text-red-600">*</span>
+              )}
             </label>
             <Select
               options={courseOptions}
@@ -628,6 +663,11 @@ function CreateTicketForm({
               onChange={setCourseId}
               placeholder={t("form.selectCourse")}
             />
+            {selectedCategoryRequiresCourse && (
+              <p className="mt-1 text-[11px] text-[var(--color-text-secondary)]">
+                {t("form.courseRequiredHint")}
+              </p>
+            )}
           </div>
         )}
 

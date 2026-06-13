@@ -2523,6 +2523,8 @@
       "category": "Category",
       "categoryPlaceholder": "Choose a category…",
       "relatedCourse": "Related course (optional)",
+      "courseRequired": "This category requires a course. Pick the course this ticket is about.",
+      "courseRequiredHint": "Required for this category — Support needs to know which course this is about.",
       "selectCourse": "Select a course…",
       "subject": "Subject",
       "subjectPlaceholder": "Short summary of the issue",
@@ -2661,6 +2663,7 @@
       "content": "Content",
       "reports": "Reports",
       "support": "Support",
+      "loopedIn": "Looped In",
       "settings": "Settings",
       "rating": "Rating",
       "profileCompletion": "Profile Completion",
@@ -4177,6 +4180,7 @@
       "nelcCompliance": "NELC Compliance",
       "reports": "Reports",
       "support": "Support",
+      "loopedIn": "Looped In",
       "settings": "Settings",
       "courseManager": "Course Manager",
       "nelc": "NELC",
@@ -5425,6 +5429,7 @@
       "roles": "Roles & Permissions",
       "roleRequests": "Instructor Applications",
       "support": "Support",
+      "loopedIn": "Looped In",
       "courses": "All Courses",
       "finance": "Finance",
       "points": "Points System",
@@ -7608,6 +7613,7 @@
       "discounts": "Discounts",
       "reports": "Reports",
       "support": "Support",
+      "loopedIn": "Looped In",
       "settings": "Settings",
       "financeManager": "Finance Manager",
       "revenue": "Revenue",
@@ -7996,6 +8002,22 @@
       "omarFahad": "Omar Fahad"
     }
   },
+  "supportCommon": {
+    "confirm": {
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    }
+  },
+  "support": {
+    "departments": {
+      "course_manager": "Course Manager",
+      "finance": "Finance",
+      "admin": "Admin",
+      "instructor": "Instructor",
+      "ta": "Teaching Assistant",
+      "supervisor": "Supervisor"
+    }
+  },
   "supportDashboard": {
     "csatPrompt": {
       "title": "How did we do?",
@@ -8028,6 +8050,7 @@
       "knowledgeBase": "Help Center",
       "trainerApplications": "Trainer Applications",
       "reports": "Reports",
+      "loopedIn": "Looped In",
       "settings": "Settings",
       "supportLead": "Support Lead",
       "resolved": "Resolved",
@@ -8054,7 +8077,9 @@
     "attachmentChip": {
       "untitled": "Attachment",
       "remove": "Remove",
-      "removeConfirm": "Remove this attachment? It will stay in the version history but will no longer appear in the active list."
+      "removeConfirm": "Remove this attachment? It will stay in the version history but will no longer appear in the active list.",
+      "removeConfirmTitle": "Remove attachment?",
+      "removeConfirmDescription": "{name} will be removed from this message. It will stay in the version history."
     },
     "attachmentAudit": {
       "title": "Attachments — history & access",
@@ -8673,6 +8698,9 @@
         "created": "Article created",
         "saveFailed": "Failed to save article",
         "confirmDelete": "Delete this article? This cannot be undone.",
+        "confirmDeleteTitle": "Delete article?",
+        "confirmDeleteDescription": "“{name}” will be deleted. This cannot be undone.",
+        "delete": "Delete",
         "deleted": "Article deleted",
         "deleteFailed": "Failed to delete article",
         "imageUploadFailed": "Image upload failed."
@@ -8722,7 +8750,9 @@
         "saveFailed": "Failed to save category",
         "deleted": "Category deleted",
         "deleteFailed": "Failed to delete category",
-        "confirmDelete": "Delete the “{name}” category?",
+        "confirmDeleteTitle": "Delete category?",
+        "confirmDelete": "The “{name}” category will be deleted. This cannot be undone.",
+        "delete": "Delete",
         "cannotDeleteWithArticles": "Cannot delete — {count} article(s) still use this category."
       }
     },
@@ -8987,6 +9017,13 @@
         "updated": "Category updated",
         "updateFailed": "Failed to update category",
         "confirmDelete": "Remove the \"{slug}\" category?",
+        "confirmDeleteTitle": "Delete category?",
+        "confirmDeleteDescription": "The “{name}” category will be deleted. Tickets that already use it keep their label, but the category will no longer appear in any dropdown.",
+        "delete": "Delete",
+        "disableCategory": "Disable",
+        "disableConfirmTitle": "Disable built-in category?",
+        "disableConfirmDescription": "“{name}” will be hidden from every role's create-ticket dropdown. Existing tickets keep their label and you can re-enable the category later.",
+        "disableConfirmLabel": "Disable",
         "editRoles": "Edit roles",
         "applicableRolesLabel": "Available to dashboards *",
         "applicableRolesHint": "Pick which role dashboards see this category in their create-ticket dropdown. Supervisors and admins always see every category in the queue.",
@@ -8997,7 +9034,9 @@
           "instructor": "Instructor",
           "course_manager": "Course Manager",
           "finance": "Finance",
-          "ta": "Teaching Assistant"
+          "ta": "Teaching Assistant",
+          "admin": "Admin",
+          "support": "Support"
         }
       },
       "sla": {
@@ -9246,6 +9285,8 @@
           "created": "Macro created",
           "saveFailed": "Failed to save macro",
           "confirmDelete": "Delete this macro?",
+          "confirmDeleteTitle": "Delete macro?",
+          "confirmDeleteDescription": "“{name}” will be deleted. Replies that already used this macro will not be affected.",
           "deleted": "Macro deleted",
           "deactivated": "Macro deactivated",
           "reactivated": "Macro reactivated"
@@ -9384,6 +9425,79 @@
       }
     },
     "ticketDetail": {
+      "close": "Close",
+      "banner": {
+        "requester": "You are the requester on this ticket. Replies are public.",
+        "collaborator": "You are a collaborator on this ticket. Replies are internal only."
+      },
+      "composer": {
+        "lane": "Reply channel",
+        "public": "Public",
+        "internal": "Internal"
+      },
+      "collaborators": {
+        "title": "Involved Departments",
+        "loopIn": "Loop in",
+        "empty": "No departments are looped in yet.",
+        "emptyHint": "Use Loop in to involve Finance, Manager, Admin, or another team on this ticket.",
+        "removeAria": "Remove collaborator",
+        "removeConfirmTitle": "Remove collaborator?",
+        "removeConfirmDescription": "{name} will no longer see internal updates on this ticket.",
+        "removeConfirm": "Remove",
+        "removedSuccess": "Collaborator removed",
+        "removeFailed": "Could not remove collaborator"
+      },
+      "loopIn": {
+        "title": "Loop in a department",
+        "subtitle": "Pick a department, then choose who to involve.",
+        "stepDepartment": "Step 1 · Department",
+        "stepMember": "Step 2 · Member",
+        "pickDepartmentFirst": "Pick a department to see available members.",
+        "loadingMembers": "Loading members…",
+        "noMembers": "No members available in this department for this ticket.",
+        "alreadyOn": "Active",
+        "cancel": "Cancel",
+        "addCollaborator": "Add collaborator",
+        "memberFetchError": "Could not load department members",
+        "pickRequired": "Pick a department and a member",
+        "alreadyActive": "Already a collaborator on this ticket",
+        "addedSuccess": "Collaborator added",
+        "addFailed": "Could not add collaborator"
+      },
+      "transfer": {
+        "title": "Transfer ticket",
+        "subtitle": "Re-route to a different category and loop in the target team.",
+        "toCategory": "New category",
+        "selectCategory": "Select category",
+        "toDepartment": "Target department",
+        "selectDepartment": "Select department",
+        "noteToRequester": "Note to requester",
+        "noteOptional": "optional",
+        "notePlaceholder": "Override the default routing message…",
+        "noteHelp": "Leave blank to use the default \"routed to our X team\" message.",
+        "brokerNotice": "Support remains the point of contact. The target team will collaborate internally.",
+        "cancel": "Cancel",
+        "confirmTransfer": "Transfer",
+        "pickBoth": "Pick both a category and a department",
+        "transferredSuccess": "Ticket transferred",
+        "transferFailed": "Could not transfer the ticket"
+      },
+      "actions": {
+        "transfer": "Transfer"
+      },
+      "loopedInInbox": {
+        "title": "Looped In",
+        "subtitle": "Tickets where you have been added as a collaborator.",
+        "emptyTitle": "Nothing looped in yet",
+        "emptyHint": "Support will loop you in when your team's input is needed on a ticket.",
+        "status": {
+          "new": "New",
+          "in_progress": "In progress",
+          "on_hold": "On hold",
+          "resolved": "Resolved",
+          "closed": "Closed"
+        }
+      },
       "csatReview": {
         "title": "Customer review",
         "toneSatisfied": "Satisfied",
@@ -9965,6 +10079,7 @@
       "courses": "Courses",
       "sessions": "Lectures",
       "support": "Support",
+      "loopedIn": "Looped In",
       "settings": "Settings",
       "viewProfile": "View Profile",
       "editProfile": "Edit Profile",
@@ -10214,6 +10329,14 @@
     "blogs": "Blog"
   },
   "supportPublicPage": {
+    "guestRetired": {
+      "authedTitle": "Open a ticket from your dashboard",
+      "authedDescription": "All ticket filing is now done inside the platform — head to your dashboard's Support section to raise a ticket or check your existing ones.",
+      "authedCta": "Go to my dashboard",
+      "guestTitle": "Sign in to open a support ticket",
+      "guestDescription": "Tickets are now raised from your dashboard. Sign in, then open one from the Support section.",
+      "guestCta": "Sign in"
+    },
     "title": "Live Support",
     "subtitle": "Get help with your PhysioGuidance learning experience",
     "heroDescription": "Submit a support ticket and our team will respond during business hours.",

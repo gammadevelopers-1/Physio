@@ -402,21 +402,35 @@ export default function SupportPageContent({
               <p className="text-sm text-gray-500">{submitTicketSubtitle}</p>
             </div>
 
-            {isAuthenticated ? (
-              <PublicTicketForm
-                preSelectedCategory={selectedCategory}
-                isAuthenticated={true}
-              />
-            ) : (
-              <PublicTicketForm
-                preSelectedCategory="login"
-                isAuthenticated={false}
-                guestLoginMode={true}
-              />
-            )}
+            {/* Phase 2 — retired the public ticket form. All ticket
+                filing is now done from inside the platform (every
+                dashboard has its own Support page). Unauthenticated
+                visitors get a sign-in CTA; authenticated visitors get
+                a direct link to their dashboard's support inbox. */}
+            <SignInToSupportCta isAuthenticated={isAuthenticated} />
           </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function SignInToSupportCta({ isAuthenticated }: { isAuthenticated: boolean }) {
+  const t = useTranslations("supportPublicPage.guestRetired");
+  return (
+    <div className="rounded-2xl border border-[var(--color-border)] bg-white px-6 py-10 text-center">
+      <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">
+        {isAuthenticated ? t("authedTitle") : t("guestTitle")}
+      </h3>
+      <p className="text-sm text-[var(--color-text-secondary)] mb-5 max-w-md mx-auto">
+        {isAuthenticated ? t("authedDescription") : t("guestDescription")}
+      </p>
+      <a
+        href={isAuthenticated ? "/dashboard" : "/auth/signin"}
+        className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90"
+      >
+        {isAuthenticated ? t("authedCta") : t("guestCta")}
+      </a>
     </div>
   );
 }

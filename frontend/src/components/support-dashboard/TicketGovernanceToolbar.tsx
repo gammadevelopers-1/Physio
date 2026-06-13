@@ -178,10 +178,16 @@ export default function TicketGovernanceToolbar({
     }
     setTransferring(true);
     try {
+      // Phase 2 — transfer is now broker-model: changes category +
+      // loops in a target department. The legacy toolbar passes the
+      // category; we default the dept to 'admin' which is the safest
+      // catch-all when no explicit dept context is available. For
+      // richer routing, use the dedicated TransferTicketModal in the
+      // ticket detail right panel.
       await supportApi.transferTicket(ticketId, {
-        category: transferCategory,
-        reason: transferReason.trim() || undefined,
-        reassign: transferReassign,
+        toCategory: transferCategory,
+        toDepartment: 'admin',
+        noteToRequester: transferReason.trim() || undefined,
       });
       toast.success(t("transfer.success"));
       setDialog(null);

@@ -25,6 +25,7 @@ import {
   X,
   User as UserIcon,
 } from "lucide-react";
+import ConfirmDialog from "@/components/support-shared/ConfirmDialog";
 
 type Category = NonNullable<Awaited<ReturnType<typeof supportApi.listKbCategories>>>[number];
 
@@ -73,6 +74,11 @@ export default function HelpCenterManager({
   const [editingArticle, setEditingArticle] = useState<any | null>(null);
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
   const [previewArticle, setPreviewArticle] = useState<any | null>(null);
+  // Phase 2 — pending KB article delete (replaces window.confirm).
+  const [pendingDeleteArticle, setPendingDeleteArticle] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   const fetchArticles = useCallback(async () => {
     setIsLoading(true);
@@ -205,8 +211,15 @@ export default function HelpCenterManager({
     setEditingArticle(article);
     setEditorOpen(true);
   }
-  async function handleDelete(id: string) {
-    if (!confirm(t("kbPage.toasts.confirmDelete"))) return;
+  function handleDelete(id: string) {
+    const article = articles.find((a) => a.id === id);
+    setPendingDeleteArticle({
+      id,
+      title: article?.titleEn || article?.titleAr || "",
+    });
+  }
+
+  async function doDeleteArticle(id: string) {
     try {
       await supportApi.deleteKbArticle(id);
       setArticles((prev) => prev.filter((a) => a.id !== id));
@@ -430,6 +443,24 @@ export default function HelpCenterManager({
           onClose={() => setPreviewArticle(null)}
         />
       )}
+
+      <ConfirmDialog
+        open={!!pendingDeleteArticle}
+        onOpenChange={(o) => !o && setPendingDeleteArticle(null)}
+        title={t("kbPage.toasts.confirmDeleteTitle")}
+        description={
+          pendingDeleteArticle
+            ? t("kbPage.toasts.confirmDeleteDescription", {
+                name: pendingDeleteArticle.title || "(untitled)",
+              })
+            : ""
+        }
+        destructive
+        confirmLabel={t("kbPage.toasts.delete")}
+        onConfirm={async () => {
+          if (pendingDeleteArticle) await doDeleteArticle(pendingDeleteArticle.id);
+        }}
+      />
     </>
   );
 }

@@ -407,6 +407,13 @@
       "when": 1781800000000,
       "tag": "0071_drop_escalation_paths",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1781900000000,
+      "tag": "0072_ticket_collaborators",
+      "breakpoints": true
     }
   ]
 }

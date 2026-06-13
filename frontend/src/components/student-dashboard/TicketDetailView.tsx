@@ -15,9 +15,6 @@ import {
   Tag,
   User,
 } from "lucide-react";
-import DashboardSidebar from "./DashboardSidebar";
-import MobileSidebar from "./MobileSidebar";
-import DashboardNavbar from "./DashboardNavbar";
 import TicketDetailSkeleton from "./TicketDetailSkeleton";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useTicketDetail } from "@/hooks/useStudentTickets";
@@ -445,17 +442,14 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
 
   return (
     <>
-      <DashboardNavbar user={userData} />
-
+      {/* Phase 2 — fullscreen chat. No DashboardNavbar / DashboardSidebar
+          / MobileSidebar on this view so the student gets the whole
+          width for the conversation; chrome reappears once they Back
+          to the inbox. Matches the manager / instructor / TA / finance
+          ticket-detail flow which already does this via renderShell. */}
       <div className="bg-[var(--color-surface-page)] min-h-screen">
-        <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="hidden lg:block lg:flex-shrink-0">
-              <DashboardSidebar user={userData} />
-            </div>
-
-            <MobileSidebar user={userData} />
-
+        <div className="max-w-[1440px] mx-auto px-4 py-6">
+          <div className="flex flex-col">
             <div className="flex-1 min-w-0">
               {/* Back button + Refresh */}
               <div className="flex items-center justify-between mb-4">

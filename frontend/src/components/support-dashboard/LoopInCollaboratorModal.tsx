@@ -53,7 +53,7 @@ export default function LoopInCollaboratorModal({
   activeUserIds,
   onAdded,
 }: Props) {
-  const t = useTranslations("ticketDetail.loopIn");
+  const t = useTranslations("supportDashboard.ticketDetail.loopIn");
   const tDept = useTranslations("support.departments");
   const [dept, setDept] = useState<string | null>(
     suggestedDepartment ?? null,

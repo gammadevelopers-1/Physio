@@ -49,7 +49,7 @@ export default function TransferTicketModal({
   categories,
   onTransferred,
 }: Props) {
-  const t = useTranslations("ticketDetail.transfer");
+  const t = useTranslations("supportDashboard.ticketDetail.transfer");
   const tDept = useTranslations("support.departments");
 
   const [toCategory, setToCategory] = useState<string>("");

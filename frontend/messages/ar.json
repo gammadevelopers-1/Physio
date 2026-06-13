@@ -9482,9 +9482,6 @@
         "transferredSuccess": "تم تحويل التذكرة",
         "transferFailed": "تعذر تحويل التذكرة"
       },
-      "actions": {
-        "transfer": "تحويل"
-      },
       "loopedInInbox": {
         "title": "مشارك في",
         "subtitle": "التذاكر التي تمت إضافتك إليها كمشارك.",
@@ -9571,6 +9568,7 @@
       },
       "actions": {
         "title": "الإجراءات",
+        "transfer": "تحويل",
         "reassign": "إعادة إسناد التذكرة",
         "resolve": "حل التذكرة",
         "close": "إغلاق التذكرة",

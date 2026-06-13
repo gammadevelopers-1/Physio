@@ -9482,9 +9482,6 @@
         "transferredSuccess": "Ticket transferred",
         "transferFailed": "Could not transfer the ticket"
       },
-      "actions": {
-        "transfer": "Transfer"
-      },
       "loopedInInbox": {
         "title": "Looped In",
         "subtitle": "Tickets where you have been added as a collaborator.",
@@ -9571,6 +9568,7 @@
       },
       "actions": {
         "title": "Actions",
+        "transfer": "Transfer",
         "reassign": "Reassign Ticket",
         "resolve": "Resolve Ticket",
         "close": "Close Ticket",

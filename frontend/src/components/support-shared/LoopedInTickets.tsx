@@ -47,7 +47,7 @@ const STATUS_TONE: Record<string, string> = {
  * page.
  */
 export default function LoopedInTickets({ detailBasePath }: Props) {
-  const t = useTranslations("ticketDetail.loopedInInbox");
+  const t = useTranslations("supportDashboard.ticketDetail.loopedInInbox");
   const tDept = useTranslations("support.departments");
   const locale = useLocale();
   const [tickets, setTickets] = useState<LoopedInTicket[]>([]);

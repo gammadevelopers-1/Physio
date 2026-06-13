@@ -53,7 +53,7 @@ export default function CollaboratorsPanel({
   suggestedDepartment,
   onChange,
 }: Props) {
-  const t = useTranslations("ticketDetail.collaborators");
+  const t = useTranslations("supportDashboard.ticketDetail.collaborators");
   const tDept = useTranslations("support.departments");
   const [loopInOpen, setLoopInOpen] = useState(false);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);

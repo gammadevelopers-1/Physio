@@ -138,15 +138,15 @@ function SLAPolicyRow({ policy, canEdit, isSaving, onSave, t }: {
   };
 
   const labelCls =
-    'text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-1.5';
+    'text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] mb-1';
 
   return (
-    <div className="py-5 first:pt-3 last:pb-3">
-      <div className="flex items-start gap-5 flex-wrap">
+    <div className="py-5 first:pt-2 last:pb-2">
+      <div className="flex items-start gap-6">
         {/* Priority anchor */}
-        <div className="w-24 flex-shrink-0 pt-2">
+        <div className="w-20 flex-shrink-0 pt-4">
           <span
-            className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ring-1 ring-inset ${
+            className={`inline-flex items-center px-2.5 py-0.5 text-xs font-semibold rounded-full ring-1 ring-inset ${
               priorityStyles[policy.priority] || ''
             }`}
           >
@@ -154,8 +154,8 @@ function SLAPolicyRow({ policy, canEdit, isSaving, onSave, t }: {
           </span>
         </div>
 
-        {/* Three duration pickers, equal-width on desktop, stack on small */}
-        <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-4">
+        {/* Three duration pickers — text-style, no inner boxes */}
+        <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-4">
           <div>
             <div className={labelCls}>{t('settingsPage.slaPanel.columns.frt')}</div>
             <DurationPicker
@@ -194,8 +194,11 @@ function SLAPolicyRow({ policy, canEdit, isSaving, onSave, t }: {
           </div>
         </div>
 
-        {/* Save — only when there's something to save */}
-        <div className="w-full sm:w-auto sm:pt-7 flex sm:justify-end">
+        {/* Save slot — reserves a fixed column at the row's right so
+            the picker grid never has to share space with the button.
+            When there's nothing to save, the column collapses to a
+            hairline width so the layout stays stable. */}
+        <div className="w-[88px] flex-shrink-0 flex justify-end items-start pt-4">
           {canEdit && hasChanges && (
             <button
               onClick={() =>
@@ -206,9 +209,9 @@ function SLAPolicyRow({ policy, canEdit, isSaving, onSave, t }: {
                 })
               }
               disabled={isSaving || !isValid}
-              className="px-4 h-10 bg-[var(--color-primary)] text-white text-xs font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
+              className="px-3 h-8 bg-[var(--color-primary)] text-white text-xs font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
             >
-              {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {isSaving && <Loader2 className="w-3 h-3 animate-spin" />}
               {isSaving ? t('settingsPage.slaPanel.saving') : t('settingsPage.slaPanel.save')}
             </button>
           )}
@@ -216,7 +219,7 @@ function SLAPolicyRow({ policy, canEdit, isSaving, onSave, t }: {
       </div>
 
       {hasChanges && !isValid && (
-        <p className="text-xs text-[#B91C1C] mt-3 ms-[7.25rem]">
+        <p className="text-xs text-[#B91C1C] mt-3 ms-[7rem]">
           {validationError}
         </p>
       )}
@@ -224,13 +227,11 @@ function SLAPolicyRow({ policy, canEdit, isSaving, onSave, t }: {
   );
 }
 
-// Custom duration picker — one rounded pill split into three segments
-// (days / hours / minutes). Replaces the previous DhmInput which was
-// three independently bordered number inputs sitting next to each
-// other. The single pill reads as one control, and the segment with
-// the active field gets a soft highlight so it's obvious where typing
-// goes. Each segment also has up/down chevrons that bump by 1, which
-// is the natural interaction for a picker.
+// Inline duration entry — reads as plain text like "1d 4h 30m". Each
+// number is a borderless inline input; the only chrome is a soft
+// underline that brightens on focus. No pills, no chevrons, no
+// per-segment boxes — that all read as "borders inside borders" and
+// the user explicitly didn't want it.
 //
 // Per-segment clamping: hours 0–23, minutes 0–59. Days is unbounded.
 function DurationPicker({
@@ -256,39 +257,38 @@ function DurationPicker({
     onTotalChange(next);
   };
 
-  const wrapperCls = `inline-flex items-stretch h-12 rounded-xl bg-white transition-colors ${
-    invalid
-      ? "ring-1 ring-inset ring-[#FECACA]"
-      : "ring-1 ring-inset ring-[var(--color-border)] focus-within:ring-2 focus-within:ring-[var(--color-primary)]"
-  } ${disabled ? "opacity-60" : ""}`;
+  const totalColor = invalid
+    ? "text-[#B91C1C]"
+    : "text-[var(--color-text-secondary)]";
 
   return (
     <div>
-      <div className={wrapperCls}>
+      <div className="inline-flex items-baseline gap-2 text-lg font-semibold text-[var(--color-text-primary)]">
         <DurationSegment
           value={days}
           unit={t("settingsPage.slaPanel.unitDays")}
           onChange={(v) => update(v, hours, minutes)}
           disabled={disabled}
+          invalid={invalid}
         />
-        <div className="self-center w-px h-7 bg-[var(--color-border-subtle)]" />
         <DurationSegment
           value={hours}
           unit={t("settingsPage.slaPanel.unitHours")}
           max={23}
           onChange={(v) => update(days, v, minutes)}
           disabled={disabled}
+          invalid={invalid}
         />
-        <div className="self-center w-px h-7 bg-[var(--color-border-subtle)]" />
         <DurationSegment
           value={minutes}
           unit={t("settingsPage.slaPanel.unitMinutes")}
           max={59}
           onChange={(v) => update(days, hours, v)}
           disabled={disabled}
+          invalid={invalid}
         />
       </div>
-      <p className="text-[10px] text-[var(--color-text-secondary)] mt-1.5 px-1">
+      <p className={`text-[10px] mt-1 ${totalColor}`}>
         {t("settingsPage.slaPanel.totalMinutes", { count: safeTotal })}
       </p>
     </div>
@@ -301,12 +301,14 @@ function DurationSegment({
   max,
   onChange,
   disabled,
+  invalid,
 }: {
   value: number;
   unit: string;
   max?: number;
   onChange: (next: number) => void;
   disabled: boolean;
+  invalid: boolean;
 }) {
   const sanitize = (raw: string): number => {
     const digits = raw.replace(/[^0-9]/g, "").slice(0, 4);
@@ -321,53 +323,33 @@ function DurationSegment({
     onChange(max !== undefined ? Math.min(max, next) : next);
   };
   return (
-    <div className="flex items-center gap-1 px-3 group">
-      <div className="flex flex-col items-center">
-        <input
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          value={String(value)}
-          onChange={(e) => onChange(sanitize(e.target.value))}
-          onKeyDown={(e) => {
-            if (e.key === "ArrowUp") {
-              e.preventDefault();
-              bump(1);
-            } else if (e.key === "ArrowDown") {
-              e.preventDefault();
-              bump(-1);
-            }
-          }}
-          disabled={disabled}
-          className="w-9 bg-transparent text-base font-semibold text-[var(--color-text-primary)] text-center focus:outline-none disabled:text-[var(--color-text-secondary)]"
-        />
-        <span className="text-[9px] uppercase tracking-wide text-[var(--color-text-secondary)] -mt-0.5">
-          {unit}
-        </span>
-      </div>
-      {!disabled && (
-        <div className="flex flex-col opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-          <button
-            type="button"
-            tabIndex={-1}
-            onClick={() => bump(1)}
-            className="p-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)]"
-            aria-label="Increase"
-          >
-            <ChevronUp className="w-3 h-3" />
-          </button>
-          <button
-            type="button"
-            tabIndex={-1}
-            onClick={() => bump(-1)}
-            className="p-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)]"
-            aria-label="Decrease"
-          >
-            <ChevronDown className="w-3 h-3" />
-          </button>
-        </div>
-      )}
-    </div>
+    <span className="inline-flex items-baseline gap-0.5">
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={String(value)}
+        onChange={(e) => onChange(sanitize(e.target.value))}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowUp") {
+            e.preventDefault();
+            bump(1);
+          } else if (e.key === "ArrowDown") {
+            e.preventDefault();
+            bump(-1);
+          }
+        }}
+        disabled={disabled}
+        className={`w-7 bg-transparent text-center tabular-nums border-b transition-colors focus:outline-none disabled:text-[var(--color-text-secondary)] ${
+          invalid
+            ? "border-[#FCA5A5] focus:border-[#EF4444]"
+            : "border-transparent hover:border-[var(--color-border)] focus:border-[var(--color-primary)]"
+        }`}
+      />
+      <span className="text-xs font-medium text-[var(--color-text-secondary)] lowercase">
+        {unit}
+      </span>
+    </span>
   );
 }
 

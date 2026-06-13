@@ -9441,6 +9441,30 @@
     },
     "ticketDetail": {
       "close": "إغلاق",
+      "backToInbox": "العودة إلى مساعدة الدعم",
+      "loadError": "تعذّر تحميل هذه التذكرة",
+      "anonymousRequester": "صاحب الطلب",
+      "requesterLabel": "صاحب الطلب",
+      "courseLabel": "الدورة",
+      "categoryLabel": "الفئة",
+      "collab": {
+        "requesterContextTitle": "محادثة صاحب الطلب",
+        "readOnly": "للقراءة فقط",
+        "noFurtherReplies": "لا توجد ردود إضافية من صاحب الطلب بعد.",
+        "talkWithSupportTitle": "التحدث مع الدعم",
+        "privateChannel": "خاص · لا يراه صاحب الطلب",
+        "startConversation": "لا توجد رسائل بعد",
+        "startConversationHint": "اكتب أدناه لمشاركة السياق مع الدعم.",
+        "replyPlaceholder": "اكتب للدعم…",
+        "sendReply": "إرسال",
+        "composerHint": "يرى هذه الرسائل الدعم والمشاركون الآخرون فقط. اضغط ⌘/Ctrl+Enter للإرسال.",
+        "supportLabel": "الدعم",
+        "youLabel": "أنت",
+        "unknownAuthor": "عضو الفريق"
+      },
+      "toasts": {
+        "sendFailed": "تعذّر إرسال الرد"
+      },
       "banner": {
         "requester": "أنت صاحب الطلب على هذه التذكرة. الردود علنية.",
         "collaborator": "أنت مشارك على هذه التذكرة. الردود داخلية فقط."
@@ -9500,6 +9524,7 @@
       "loopedInInbox": {
         "title": "مساعدة الدعم",
         "subtitle": "التذاكر التي طلب الدعم فيها إسهام فريقك.",
+        "ticketCountLabel": "{count, plural, zero {تذكرة مفتوحة} one {تذكرة مفتوحة} two {تذكرتان مفتوحتان} few {تذاكر مفتوحة} many {تذكرة مفتوحة} other {تذكرة مفتوحة}}",
         "emptyTitle": "لا تساعد في أي تذاكر بعد",
         "emptyHint": "سيرسل الدعم إشعارًا هنا عندما يحتاج فريقك إلى الإسهام في تذكرة.",
         "status": {

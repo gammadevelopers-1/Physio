@@ -23,7 +23,7 @@ export default async function AdminLoopedInPage({
     >
       <MarkTabViewed tabKey={SIDEBAR_TAB_KEYS.USER_LOOPED_IN} />
       <div className="max-w-3xl mx-auto px-4">
-        <LoopedInTickets detailBasePath={`/${locale}/dashboard/admin/support`} />
+        <LoopedInTickets detailBasePath={`/${locale}/dashboard/admin/support/tickets`} />
       </div>
     </main>
   );

@@ -9441,6 +9441,30 @@
     },
     "ticketDetail": {
       "close": "Close",
+      "backToInbox": "Back to Assisting Support",
+      "loadError": "Couldn't load this ticket",
+      "anonymousRequester": "Requester",
+      "requesterLabel": "Requester",
+      "courseLabel": "Course",
+      "categoryLabel": "Category",
+      "collab": {
+        "requesterContextTitle": "Requester's conversation",
+        "readOnly": "Read-only",
+        "noFurtherReplies": "No further replies from the requester yet.",
+        "talkWithSupportTitle": "Talk with Support",
+        "privateChannel": "Private · requester can't see this",
+        "startConversation": "No messages yet",
+        "startConversationHint": "Reply below to share context with Support.",
+        "replyPlaceholder": "Write to Support…",
+        "sendReply": "Send",
+        "composerHint": "Only Support and other looped-in collaborators see this. ⌘/Ctrl+Enter to send.",
+        "supportLabel": "Support",
+        "youLabel": "You",
+        "unknownAuthor": "Team member"
+      },
+      "toasts": {
+        "sendFailed": "Couldn't send reply"
+      },
       "banner": {
         "requester": "You are the requester on this ticket. Replies are public.",
         "collaborator": "You are a collaborator on this ticket. Replies are internal only."
@@ -9500,6 +9524,7 @@
       "loopedInInbox": {
         "title": "Assisting Support",
         "subtitle": "Tickets where Support has asked for your team's input.",
+        "ticketCountLabel": "{count, plural, one {open ticket} other {open tickets}}",
         "emptyTitle": "Not assisting on any tickets yet",
         "emptyHint": "Support will ping you here when your team's input is needed on a ticket.",
         "status": {

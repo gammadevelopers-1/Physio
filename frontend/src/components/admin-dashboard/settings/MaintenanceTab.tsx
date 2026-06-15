@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { AlertTriangle, ShieldAlert, Info, ExternalLink, Loader2 } from "lucide-react";
 import { TabShell } from "./TabShell";
 import { useSettingsCategory } from "./useSettingsCategory";
+import ScheduledMaintenanceSection from "./ScheduledMaintenanceSection";
 
 interface MaintenanceSettings extends Record<string, unknown> {
   enabled: boolean;
@@ -184,6 +185,10 @@ export default function MaintenanceTab() {
             {t("maintenance.bypassBody")}
           </p>
         </div>
+
+        {/* Scheduled maintenance — separate from the manual toggle
+            above. Cron handles activation/deactivation automatically. */}
+        <ScheduledMaintenanceSection />
       </TabShell>
 
       {/* Confirmation modal — only blocks the OFF→ON transition. */}

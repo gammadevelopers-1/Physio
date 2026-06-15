@@ -27,6 +27,7 @@ import {
   type RestoreCloneEntry,
   type RestoreClonesResponse,
 } from "@/lib/api";
+import Select from "@/components/admin-dashboard/Select";
 
 const PAGE_SIZE = 10;
 const REFRESH_INTERVAL_MS = 6_000;
@@ -549,19 +550,16 @@ export default function RestoreSandboxSection({
             <label className="block text-xs font-medium text-[var(--color-text-primary)] mb-1">
               {t("sandboxPickBackup")}
             </label>
-            <select
+            <Select
               value={selectedBackupId}
-              onChange={(e) => setSelectedBackupId(e.target.value)}
+              onChange={(val) => setSelectedBackupId(val)}
               disabled={submitting}
-              className="w-full px-3 h-10 text-sm border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-card)] text-[var(--color-text-primary)] disabled:opacity-50"
-            >
-              <option value="">{t("sandboxPickBackupPlaceholder")}</option>
-              {eligibleBackups.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {formatTs(b.createdAt, locale)} ({b.gcsObject})
-                </option>
-              ))}
-            </select>
+              placeholder={t("sandboxPickBackupPlaceholder")}
+              options={eligibleBackups.map((b) => ({
+                value: b.id,
+                label: `${formatTs(b.createdAt, locale)} (${b.gcsObject})`,
+              }))}
+            />
 
             <div className="mt-3 bg-[#FFFBEB] border border-[#FDE68A] rounded-lg p-3 flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-[#D97706] mt-0.5 flex-shrink-0" />

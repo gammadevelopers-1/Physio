@@ -7,6 +7,7 @@ import { supportApi } from "@/lib/api";
 import { useSupportProfile } from "@/hooks/useSupportProfile";
 import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
+import SupportActiveIncidentsBar from "./SupportActiveIncidentsBar";
 import SupportKPICards from "./SupportKPICards";
 import TicketsBoardWidget from "./TicketsBoardWidget";
 import SLAPerformanceWidget from "./SLAPerformanceWidget";
@@ -111,6 +112,10 @@ const SupervisorDashboardContent = () => {
                   })}
                 </p>
               </div>
+
+              {/* Active incidents strip — same component used on the
+                  agent dashboard. Hides when nothing is active. */}
+              <SupportActiveIncidentsBar />
 
               {isInitialLoading ? (
                 <SupportDashboardSkeleton />

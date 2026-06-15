@@ -455,14 +455,21 @@ const UserTicketDetail = ({
   const handlePreviewAttachment = (att: ChipAttachment) =>
     setPreviewAttachment(att);
 
-  // Resolve category label with fallback to raw slug for admin-extensible
-  // categories outside the builtin set.
+  // Resolve category label. next-intl returns the key path on miss instead
+  // of throwing, so detect that and fall back to the raw slug — admin-
+  // extensible categories outside the builtin set would otherwise render
+  // as `userSupport.category.xyz`.
   let categoryLabel = "";
   if (ticket) {
     try {
-      categoryLabel = t(
+      const translated = t(
         `category.${ticket.category}` as Parameters<typeof t>[0],
       );
+      const fullKey = `userSupport.category.${ticket.category}`;
+      categoryLabel =
+        translated && translated !== fullKey && translated !== `category.${ticket.category}`
+          ? translated
+          : ticket.category;
     } catch {
       categoryLabel = ticket.category;
     }

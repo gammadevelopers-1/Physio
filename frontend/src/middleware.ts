@@ -153,6 +153,9 @@ interface CachedLocaleSettings {
 interface CachedMaintenance {
   enabled: boolean;
   fetchedAt: number;
+  /** True only when the last value came from a successful API read.
+   *  Used to keep the gate sticky across transient API errors. */
+  trusted: boolean;
 }
 
 // Tiny in-process caches so we don't hammer the API on every request.
@@ -162,6 +165,13 @@ const TTL_MS = 60_000;
 // Maintenance refreshes faster so admins flipping the toggle off see
 // the site come back within ~30 seconds.
 const MAINT_TTL_MS = 30_000;
+// Stickiness window for the last KNOWN-true maintenance read. If the
+// API hiccups during an active maintenance window we keep enforcing it
+// for up to this long — fail-closed instead of accidentally exposing
+// the site mid-incident. After this window we re-evaluate (and if the
+// API is still down, fall open as a last resort so admins aren't
+// locked out forever by an API outage).
+const MAINT_STICKY_MS = 5 * 60_000;
 
 async function getLocaleSettings(): Promise<CachedLocaleSettings> {
   if (cached && Date.now() - cached.fetchedAt < TTL_MS) {
@@ -209,13 +219,35 @@ async function getMaintenance(): Promise<CachedMaintenance> {
       cachedMaint = {
         enabled: !!data.enabled,
         fetchedAt: Date.now(),
+        trusted: true,
       };
       return cachedMaint;
     }
-  } catch {
-    // ignore — fall open
+    console.warn(
+      `[middleware] maintenance-status non-OK: ${res.status} — falling open`,
+    );
+  } catch (e) {
+    console.warn(
+      `[middleware] maintenance-status fetch failed: ${
+        e instanceof Error ? e.message : 'unknown'
+      } — applying sticky/fail-open logic`,
+    );
   }
-  cachedMaint = { enabled: false, fetchedAt: Date.now() };
+  // Sticky fail-closed: if we last saw enabled=true via a trusted read
+  // within the stickiness window, keep enforcing maintenance. Better to
+  // wrongly keep the site down for 5 min than to wrongly open it
+  // mid-incident.
+  if (
+    cachedMaint?.trusted &&
+    cachedMaint.enabled &&
+    Date.now() - cachedMaint.fetchedAt < MAINT_STICKY_MS
+  ) {
+    // Refresh the timestamp so the TTL gate above doesn't keep us
+    // re-fetching every request during the sticky window.
+    cachedMaint = { ...cachedMaint, fetchedAt: Date.now(), trusted: false };
+    return cachedMaint;
+  }
+  cachedMaint = { enabled: false, fetchedAt: Date.now(), trusted: false };
   return cachedMaint;
 }
 

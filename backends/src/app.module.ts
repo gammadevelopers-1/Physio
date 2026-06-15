@@ -40,6 +40,7 @@ import { AdminSettingsModule } from './modules/admin-settings/admin-settings.mod
 import { TemplatesModule } from './modules/templates/templates.module';
 import { BackupsModule } from './modules/backups/backups.module';
 import { ServiceStatusModule } from './modules/service-status/service-status.module';
+import { ScheduledMaintenanceModule } from './modules/scheduled-maintenance/scheduled-maintenance.module';
 import { SidebarBadgesModule } from './modules/sidebar-badges/sidebar-badges.module';
 import { MaintenanceMiddleware } from './common/maintenance.middleware';
 import { JwtAuthGuard } from './modules/auth/guards';
@@ -144,6 +145,7 @@ import processingConfig from './config/processing.config';
     AdminSettingsModule,
     TemplatesModule,
     ServiceStatusModule,
+    ScheduledMaintenanceModule,
     SidebarBadgesModule,
   ],
   controllers: [AppController],

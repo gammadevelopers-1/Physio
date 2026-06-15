@@ -2565,10 +2565,79 @@ export type ServiceStatusIncident = {
   affectedComponents: string[];
   currentStatus: ServiceStatusIncidentStatus;
   severity: 'minor' | 'major' | 'critical';
+  audience?: 'internal' | 'end_users';
+  affectedRoles?: string[];
+  rootCause?: string | null;
+  correctiveActions?: string | null;
+  linkedResolutionStrategy?:
+    | 'soft_resolve'
+    | 'auto_close'
+    | 'leave_open'
+    | null;
   startedAt: string;
   resolvedAt: string | null;
   updates: ServiceStatusIncidentUpdate[];
+  linkedTicketsCount?: number;
 };
+
+export type IncidentBannerEntry = {
+  id: string;
+  titleEn: string;
+  titleAr: string | null;
+  severity: 'minor' | 'major' | 'critical';
+  currentStatus: ServiceStatusIncidentStatus;
+  startedAt: string;
+  latestUpdate: ServiceStatusIncidentUpdate | null;
+};
+
+export type LinkedTicketSummary = {
+  ticketId: string;
+  referenceNumber: string;
+  subject: string;
+  status: string;
+  priority: string;
+  studentId: string | null;
+  linkedAt: string;
+  studentFirstName: string | null;
+  studentLastName: string | null;
+  studentEmail?: string | null;
+};
+
+export type IncidentForTicket = {
+  incidentId: string;
+  titleEn: string;
+  titleAr: string | null;
+  severity: 'minor' | 'major' | 'critical';
+  currentStatus: ServiceStatusIncidentStatus;
+  startedAt: string;
+  resolvedAt: string | null;
+  linkedAt: string;
+};
+
+export type ActiveIncidentForLink = {
+  id: string;
+  titleEn: string;
+  titleAr: string | null;
+  severity: 'minor' | 'major' | 'critical';
+  currentStatus: ServiceStatusIncidentStatus;
+  audience?: 'internal' | 'end_users';
+  startedAt: string;
+  linkedTicketsCount?: number;
+};
+
+export type IncidentReport = {
+  incident: ServiceStatusIncident;
+  updates: ServiceStatusIncidentUpdate[];
+  linkedTickets: LinkedTicketSummary[];
+  affectedUsersCount: number;
+};
+
+export type IncidentAffectedRole =
+  | 'STUDENT'
+  | 'INSTRUCTOR'
+  | 'MANAGER'
+  | 'TEACHING_ASSISTANT'
+  | 'FINANCE';
 
 export type ServiceStatusPublicResponse = {
   overallStatus: 'operational' | 'degraded' | 'down' | 'maintenance';
@@ -2578,12 +2647,117 @@ export type ServiceStatusPublicResponse = {
   generatedAt: string;
 };
 
+export type StatusHistoryIncident = {
+  id: string;
+  titleEn: string;
+  titleAr: string | null;
+  severity: 'minor' | 'major' | 'critical';
+  affectedComponents: string[];
+  startedAt: string;
+  resolvedAt: string;
+  durationMinutes: number;
+  latestUpdate: ServiceStatusIncidentUpdate | null;
+};
+
+export type StatusHistoryResponse = {
+  incidents: StatusHistoryIncident[];
+  page: number;
+  pageSize: number;
+  total: number;
+};
+
+export type StatusPublicSummary = {
+  windowDays: number;
+  incidentCount: number;
+  avgResolutionMinutes: number;
+};
+
+export type StatusAnalytics = {
+  range: { from: string; to: string };
+  views: { total: number; uniqueSessions: number };
+  incidents: {
+    total: number;
+    resolved: number;
+    bySeverity: { minor: number; major: number; critical: number };
+  };
+  affectedUsersTotal: number;
+  resolutionMinutes: { avg: number; median: number };
+  topComponents: { component: string; count: number }[];
+  monthlyTrend: {
+    month: string;
+    minor: number;
+    major: number;
+    critical: number;
+    total: number;
+  }[];
+};
+
 export const serviceStatusApi = {
   // Public — no auth, used by /[locale]/status
   getPublic: () =>
     api.get<ServiceStatusPublicResponse>('/public/service-status', {
       skipAuth: true,
     }),
+
+  // Public — no auth, lightweight view tracker for the status page
+  recordStatusView: (incidentId?: string) =>
+    api.post<{ ok: true }>(
+      `/public/service-status/view`,
+      { incidentId },
+      { skipAuth: true },
+    ),
+
+  // Public — small "last 30 days" stats for the /status footer
+  getPublicSummary: () =>
+    api.get<StatusPublicSummary>(`/public/service-status/summary`, {
+      skipAuth: true,
+    }),
+
+  // Admin — full analytics rollup for the dashboard
+  getAnalytics: (params: { from?: string; to?: string }) => {
+    const sp = new URLSearchParams();
+    if (params.from) sp.set('from', params.from);
+    if (params.to) sp.set('to', params.to);
+    const qs = sp.toString();
+    return api.get<StatusAnalytics>(
+      `/admin/service-status/analytics${qs ? `?${qs}` : ''}`,
+    );
+  },
+
+  // Admin — CSV export URL builder (callers redirect to this so the
+  // browser handles the file download flow)
+  exportIncidentsCsvUrl: (params: { from?: string; to?: string }) => {
+    const sp = new URLSearchParams();
+    if (params.from) sp.set('from', params.from);
+    if (params.to) sp.set('to', params.to);
+    const qs = sp.toString();
+    const base =
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+    return `${base}/admin/service-status/incidents/export.csv${qs ? `?${qs}` : ''}`;
+  },
+
+  // Public — no auth, paginated archive used by /[locale]/status/history
+  getPublicHistory: (params: {
+    page?: number;
+    pageSize?: number;
+    from?: string;
+    to?: string;
+    severity?: 'minor' | 'major' | 'critical';
+    component?: string;
+  }) => {
+    const sp = new URLSearchParams();
+    if (params.page) sp.set('page', String(params.page));
+    if (params.pageSize) sp.set('pageSize', String(params.pageSize));
+    if (params.from) sp.set('from', params.from);
+    if (params.to) sp.set('to', params.to);
+    if (params.severity) sp.set('severity', params.severity);
+    if (params.component) sp.set('component', params.component);
+    const qs = sp.toString();
+    return api.get<StatusHistoryResponse>(
+      `/public/service-status/history${qs ? `?${qs}` : ''}`,
+      { skipAuth: true },
+    );
+  },
 
   // Admin
   listComponents: () =>
@@ -2625,6 +2799,8 @@ export const serviceStatusApi = {
     initialStatus: ServiceStatusIncidentStatus;
     initialMessageEn: string;
     initialMessageAr?: string;
+    audience?: 'internal' | 'end_users';
+    affectedRoles?: IncidentAffectedRole[];
   }) => api.post<ServiceStatusIncident>('/admin/service-status/incidents', data),
 
   postIncidentUpdate: (
@@ -2633,6 +2809,8 @@ export const serviceStatusApi = {
       status: ServiceStatusIncidentStatus;
       messageEn: string;
       messageAr?: string;
+      linkedResolutionStrategy?: 'soft_resolve' | 'auto_close' | 'leave_open';
+      notifyAudience?: boolean;
     },
   ) =>
     api.post<{ success: true }>(
@@ -2644,6 +2822,136 @@ export const serviceStatusApi = {
     api.delete<{ success: true }>(
       `/admin/service-status/incidents/${incidentId}`,
     ),
+
+  // ─── Post-mortem ────────────────────────────────────────────
+  getIncidentReport: (incidentId: string) =>
+    api.get<IncidentReport>(
+      `/admin/service-status/incidents/${incidentId}/report`,
+    ),
+
+  updateIncidentReport: (
+    incidentId: string,
+    data: { rootCause?: string; correctiveActions?: string },
+  ) =>
+    api.patch<{ success: true }>(
+      `/admin/service-status/incidents/${incidentId}/report`,
+      data,
+    ),
+
+  listTicketsForIncident: (incidentId: string) =>
+    api.get<LinkedTicketSummary[]>(
+      `/admin/service-status/incidents/${incidentId}/tickets`,
+    ),
+
+  // ─── Cross-dashboard banner + support-side linking ──────────
+  //
+  // These hit the authed (non-admin) routes so any logged-in user
+  // can read the banner feed, and support agents can link tickets.
+
+  listBannerIncidents: () =>
+    api.get<IncidentBannerEntry[]>(`/service-status/banner-incidents`),
+
+  listActiveForLink: () =>
+    api.get<ActiveIncidentForLink[]>(`/service-status/active-for-link`),
+
+  linkTicketToIncident: (incidentId: string, ticketId: string) =>
+    api.post<{ success: true }>(
+      `/service-status/incidents/${incidentId}/link-ticket`,
+      { ticketId },
+    ),
+
+  unlinkTicketFromIncident: (incidentId: string, ticketId: string) =>
+    api.delete<{ success: true }>(
+      `/service-status/incidents/${incidentId}/link-ticket/${ticketId}`,
+    ),
+
+  listIncidentsForTicket: (ticketId: string) =>
+    api.get<IncidentForTicket[]>(
+      `/service-status/tickets/${ticketId}/incidents`,
+    ),
+
+  // Support-scoped — same payload as the admin endpoint but reachable
+  // by support staff. Used by the SupportActiveIncidentsBar expand row.
+  listTicketsForIncidentSupport: (incidentId: string) =>
+    api.get<LinkedTicketSummary[]>(
+      `/service-status/incidents/${incidentId}/tickets`,
+    ),
+};
+
+// ===========================================
+// Scheduled Maintenance API
+// ===========================================
+export type ScheduledMaintenanceStatus =
+  | 'scheduled'
+  | 'active'
+  | 'completed'
+  | 'cancelled';
+
+export type ScheduledMaintenanceWindow = {
+  id: string;
+  titleEn: string;
+  titleAr: string | null;
+  descriptionEn: string | null;
+  descriptionAr: string | null;
+  affectedComponents: string[];
+  startAt: string;
+  endAt: string;
+  preNotificationLeadMinutes: number;
+  preNotificationSentAt: string | null;
+  status: ScheduledMaintenanceStatus;
+  createdBy: string | null;
+  createdAt: string;
+};
+
+export const scheduledMaintenanceApi = {
+  // Admin CRUD
+  list: (status?: ScheduledMaintenanceStatus) => {
+    const sp = new URLSearchParams();
+    if (status) sp.set('status', status);
+    const qs = sp.toString();
+    return api.get<ScheduledMaintenanceWindow[]>(
+      `/admin/maintenance/windows${qs ? `?${qs}` : ''}`,
+    );
+  },
+
+  nextUpcoming: () =>
+    api.get<ScheduledMaintenanceWindow | null>(
+      `/admin/maintenance/windows/next-upcoming`,
+    ),
+
+  create: (data: {
+    titleEn: string;
+    titleAr?: string;
+    descriptionEn?: string;
+    descriptionAr?: string;
+    affectedComponents?: string[];
+    startAt: string;
+    endAt: string;
+    preNotificationLeadMinutes?: number;
+  }) =>
+    api.post<ScheduledMaintenanceWindow>(`/admin/maintenance/windows`, data),
+
+  update: (
+    id: string,
+    data: Partial<{
+      titleEn: string;
+      titleAr: string;
+      descriptionEn: string;
+      descriptionAr: string;
+      affectedComponents: string[];
+      startAt: string;
+      endAt: string;
+      preNotificationLeadMinutes: number;
+    }>,
+  ) => api.patch<{ success: true }>(`/admin/maintenance/windows/${id}`, data),
+
+  cancel: (id: string) =>
+    api.delete<{ success: true }>(`/admin/maintenance/windows/${id}`),
+
+  // Authed banner read — returns the single currently-relevant
+  // window (active or within lead time), or null.
+  banner: () =>
+    api.get<ScheduledMaintenanceWindow | null>(`/maintenance/banner`),
 };
 
 // ===========================================

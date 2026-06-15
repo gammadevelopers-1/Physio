@@ -2512,6 +2512,10 @@
       "integrations": "تكاملات الطرف الثالث",
       "course_approvals": "اعتماد الدورات",
       "system_issues": "مشاكل النظام",
+      "security_incident": "حادثة أمنية",
+      "compliance": "الامتثال والحوكمة",
+      "kb_update_request": "طلب تحديث قاعدة المعرفة",
+      "dept_assist": "طلب مساعدة بين الأقسام",
       "other": "أخرى"
     },
     "sla": {
@@ -6724,7 +6728,10 @@
           "redis": "Redis / Memorystore",
           "openai": "OpenAI Whisper",
           "malwareScanner": "فاحص البرمجيات الخبيثة",
-          "cloudSqlBackup": "النسخ الاحتياطي لـ Cloud SQL"
+          "cloudSqlBackup": "النسخ الاحتياطي لـ Cloud SQL",
+          "moyasar": "ميسر",
+          "tamara": "تمارا",
+          "paytabs": "بايتابز"
         },
         "howToConnect": "تهيئة بيانات الاعتماد",
         "howToConnectBody": "تُخزَّن بيانات الاعتماد في GCP Secret Manager، ليس في هذه الواجهة. لربط تكامل مفقود، أضِف السرّ المقابل عبر gcloud ثم أعد نشر الخدمة."
@@ -7220,6 +7227,10 @@
           "integrations": "تكاملات الطرف الثالث",
           "course_approvals": "اعتماد الدورات",
           "system_issues": "مشاكل النظام",
+          "security_incident": "حادثة أمنية",
+          "compliance": "الامتثال والحوكمة",
+          "kb_update_request": "طلب تحديث قاعدة المعرفة",
+          "dept_assist": "طلب مساعدة بين الأقسام",
           "other": "أخرى"
         },
         "toasts": {
@@ -8447,6 +8458,10 @@
           "integrations": "تكاملات الطرف الثالث",
           "course_approvals": "اعتماد الدورات",
           "system_issues": "مشاكل النظام",
+          "security_incident": "حادثة أمنية",
+          "compliance": "الامتثال والحوكمة",
+          "kb_update_request": "طلب تحديث قاعدة المعرفة",
+          "dept_assist": "طلب مساعدة بين الأقسام",
           "other": "أخرى"
         },
         "priorities": {

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Wrench } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getSiteSettings } from "@/lib/strapi";
@@ -65,6 +66,43 @@ export default async function MaintenancePage({
       <MaintenanceAutoRecover locale={locale} />
 
       <div className="w-full max-w-xl">
+        {/* Locale toggle — small pill above the logo so visitors can
+            flip the page to the other language. The maintenance page is
+            the one surface that bypasses normal locale handling, so we
+            mount the switch right here. */}
+        <div className="flex justify-center mb-6">
+          <div
+            className="inline-flex items-center gap-0.5 p-0.5 rounded-full bg-[var(--color-surface-card)] border border-[var(--color-border)] shadow-sm"
+            role="group"
+            aria-label="Language"
+          >
+            <Link
+              href="/en/maintenance"
+              prefetch={false}
+              className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
+                locale === "en"
+                  ? "bg-[var(--color-primary)] text-white"
+                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+              }`}
+              aria-current={locale === "en" ? "page" : undefined}
+            >
+              EN
+            </Link>
+            <Link
+              href="/ar/maintenance"
+              prefetch={false}
+              className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
+                locale === "ar"
+                  ? "bg-[var(--color-primary)] text-white"
+                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+              }`}
+              aria-current={locale === "ar" ? "page" : undefined}
+            >
+              AR
+            </Link>
+          </div>
+        </div>
+
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <div className="relative h-14 w-14">

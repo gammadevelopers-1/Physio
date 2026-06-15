@@ -11,5 +11,8 @@ export default async function DashboardsLayout({
   const { locale } = await params;
   setRequestLocale(locale);
 
+  // Cross-dashboard IncidentBanner is mounted inside each role's
+  // Navbar (Student/Instructor/CM/TA/Finance) so it sits below the
+  // navbar bar rather than above all dashboard chrome.
   return <DashboardAuthGuard>{children}</DashboardAuthGuard>;
 }

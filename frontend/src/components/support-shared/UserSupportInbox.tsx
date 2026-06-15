@@ -207,15 +207,21 @@ function TicketRow({
   const isRTL = locale === "ar";
   const courseTitle =
     isRTL && ticket.courseTitleAr ? ticket.courseTitleAr : ticket.courseTitle;
-  // Category label — fall back to the raw slug if i18n key missing
-  // (handles admin-extensible categories outside the builtin set).
-  let categoryLabel: string;
+  // Category label. next-intl returns the key path on miss instead of
+  // throwing, so detect that and fall back to the raw slug — admin-
+  // extensible categories outside the builtin set would otherwise render
+  // as `userSupport.category.xyz`.
+  let categoryLabel: string = ticket.category;
   try {
-    categoryLabel = t(
+    const translated = t(
       `category.${ticket.category}` as Parameters<typeof t>[0],
     );
+    const fullKey = `userSupport.category.${ticket.category}`;
+    if (translated && translated !== fullKey && translated !== `category.${ticket.category}`) {
+      categoryLabel = translated;
+    }
   } catch {
-    categoryLabel = ticket.category;
+    // unreachable in next-intl
   }
   return (
     <button
@@ -472,11 +478,20 @@ function CreateTicketForm({
   )?.requiresCourse ?? false;
 
   const categoryOptions = applicableCats.map((c) => {
-    let label: string;
+    const apiLabel = isRTL && c.nameAr ? c.nameAr : c.nameEn;
+    let label = apiLabel;
     try {
-      label = t(`category.${c.slug}` as Parameters<typeof t>[0]);
+      const translated = t(`category.${c.slug}` as Parameters<typeof t>[0]);
+      // next-intl returns the raw key path (e.g. `userSupport.category.xyz`)
+      // when a key is missing instead of throwing. Detect that and fall back
+      // to the API-provided name so admin-extensible categories never show
+      // raw keys.
+      const fullKey = `userSupport.category.${c.slug}`;
+      if (translated && translated !== fullKey && translated !== `category.${c.slug}`) {
+        label = translated;
+      }
     } catch {
-      label = isRTL && c.nameAr ? c.nameAr : c.nameEn;
+      // truly unreachable in next-intl, but kept for safety
     }
     return { value: c.slug, label };
   });

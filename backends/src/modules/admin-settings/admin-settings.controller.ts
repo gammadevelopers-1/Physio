@@ -165,6 +165,24 @@ export class AdminSettingsController {
         description:
           'Automated daily Cloud SQL backup + 7-day PITR (managed at infra layer)',
       },
+      // ─── Payment gateways ─────────────────────────────────
+      // env-key presence only — surfaces "needs config" before
+      // anyone tries to charge. Real ping checks can come later.
+      moyasar: {
+        configured: has('MOYASAR_API_KEY'),
+        required: false,
+        description: 'Moyasar — Saudi card / Apple Pay / mada gateway',
+      },
+      tamara: {
+        configured: has('TAMARA_API_TOKEN') && has('TAMARA_NOTIFICATION_TOKEN'),
+        required: false,
+        description: 'Tamara — Buy-now-pay-later instalments',
+      },
+      paytabs: {
+        configured: has('PAYTABS_PROFILE_ID') && has('PAYTABS_SERVER_KEY'),
+        required: false,
+        description: 'PayTabs — multi-currency payment gateway',
+      },
     };
   }
 }

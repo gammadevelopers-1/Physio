@@ -9,6 +9,7 @@ import { useSupportProfile } from "@/hooks/useSupportProfile";
 import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
 import SupportDashboardSkeleton from "./SupportDashboardSkeleton";
+import SupportActiveIncidentsBar from "./SupportActiveIncidentsBar";
 import {
   Inbox,
   Clock,
@@ -298,6 +299,11 @@ const AgentDashboardContent = () => {
                   <span className="hidden sm:inline">{t("myTicketsPage.refresh")}</span>
                 </button>
               </div>
+
+              {/* Active incidents strip — visible to all support
+                  staff regardless of audience. Empty array → component
+                  renders null, no chrome cost. */}
+              <SupportActiveIncidentsBar />
 
               {/* Initial-load skeleton — only shown on the very first
                   fetch (silent refreshes use isRefreshing and keep the

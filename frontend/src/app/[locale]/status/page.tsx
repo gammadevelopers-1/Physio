@@ -1,5 +1,14 @@
+import Link from "next/link";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { CheckCircle2, AlertCircle, AlertTriangle, Wrench } from "lucide-react";
+import {
+  CheckCircle2,
+  AlertCircle,
+  AlertTriangle,
+  Wrench,
+  History,
+  Clock,
+} from "lucide-react";
+import StatusPageViewTracker from "./StatusPageViewTracker";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
@@ -77,6 +86,24 @@ async function fetchStatus(): Promise<StatusPayload | null> {
   }
 }
 
+type PublicSummary = {
+  windowDays: number;
+  incidentCount: number;
+  avgResolutionMinutes: number;
+};
+
+async function fetchSummary(): Promise<PublicSummary | null> {
+  try {
+    const res = await fetch(`${API_URL}/public/service-status/summary`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as PublicSummary;
+  } catch {
+    return null;
+  }
+}
+
 export default async function StatusPage({
   params,
 }: {
@@ -87,7 +114,7 @@ export default async function StatusPage({
   const t = await getTranslations("statusPage");
   const isRTL = locale === "ar";
 
-  const data = await fetchStatus();
+  const [data, summary] = await Promise.all([fetchStatus(), fetchSummary()]);
 
   if (!data) {
     return (
@@ -157,13 +184,62 @@ export default async function StatusPage({
           </section>
         )}
 
+        {/* Public transparency stats */}
+        {summary && summary.incidentCount > 0 && (
+          <div className="mt-10 bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-4 flex items-center justify-around gap-3 text-center">
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)]">
+                {isRTL ? `آخر ${summary.windowDays} يوم` : `Last ${summary.windowDays} days`}
+              </p>
+              <p className="text-lg font-bold text-[var(--color-text-primary)] mt-0.5">
+                {summary.incidentCount}
+              </p>
+              <p className="text-[10px] text-[var(--color-text-secondary)]">
+                {isRTL ? "حوادث" : summary.incidentCount === 1 ? "incident" : "incidents"}
+              </p>
+            </div>
+            <div className="h-10 w-px bg-[var(--color-border)]" />
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-[var(--color-text-secondary)] flex items-center justify-center gap-1">
+                <Clock className="w-2.5 h-2.5" />
+                {isRTL ? "متوسط وقت الحل" : "Avg resolution time"}
+              </p>
+              <p className="text-lg font-bold text-[var(--color-text-primary)] mt-0.5">
+                {fmtMinutes(summary.avgResolutionMinutes, isRTL)}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Footer */}
-        <p className="text-center text-[10px] text-[var(--color-text-secondary)] mt-10">
-          {t("generatedAt", { time: new Date(data.generatedAt).toLocaleString(locale === "ar" ? "ar-SA" : "en-US") })}
-        </p>
+        <div className="mt-8 flex flex-col items-center gap-3">
+          <Link
+            href={`/${locale}/status/history`}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-primary)] hover:underline"
+          >
+            <History className="w-3.5 h-3.5" />
+            {locale === "ar" ? "عرض الأرشيف الكامل" : "View full history"}
+          </Link>
+          <p className="text-[10px] text-[var(--color-text-secondary)]">
+            {t("generatedAt", { time: new Date(data.generatedAt).toLocaleString(locale === "ar" ? "ar-SA" : "en-US") })}
+          </p>
+        </div>
+
+        {/* Fire-and-forget view tracker (cookie-deduped server-side) */}
+        <StatusPageViewTracker />
       </div>
     </div>
   );
+}
+
+function fmtMinutes(min: number, isAr: boolean): string {
+  if (min < 1) return isAr ? "< 1 دقيقة" : "< 1 min";
+  if (min < 60) return isAr ? `${min} دقيقة` : `${min} min`;
+  const hours = min / 60;
+  if (hours < 24)
+    return isAr ? `${hours.toFixed(1)} ساعة` : `${hours.toFixed(1)} h`;
+  const days = hours / 24;
+  return isAr ? `${days.toFixed(1)} يوم` : `${days.toFixed(1)} d`;
 }
 
 function OverallStatusBanner({

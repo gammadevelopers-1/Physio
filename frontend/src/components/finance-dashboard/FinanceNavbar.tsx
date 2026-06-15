@@ -25,6 +25,8 @@ import { useAuth } from "@/contexts";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
+import IncidentBanner from "@/components/shared/IncidentBanner";
+import ScheduledMaintenanceBanner from "@/components/shared/ScheduledMaintenanceBanner";
 
 interface FinanceProfile {
   name: string;
@@ -103,6 +105,7 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
   };
 
   return (
+    <>
     <nav className="sticky top-0 z-50 w-full bg-[var(--color-navbar-bg)] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] px-4 py-3 lg:px-16 lg:py-5">
       <div className="flex items-center justify-between w-full">
         {/* Logo + Nav Links */}
@@ -317,6 +320,9 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
         </div>
       )}
     </nav>
+    <ScheduledMaintenanceBanner />
+    <IncidentBanner />
+    </>
   );
 };
 

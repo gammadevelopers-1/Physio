@@ -86,7 +86,16 @@ export class MaintenanceMiddleware implements NestMiddleware {
   }
 
   async use(req: Request, res: Response, next: NextFunction): Promise<void> {
-    if (BYPASS_PREFIXES.some((p) => req.path.startsWith(p))) {
+    // NestJS strips the `setGlobalPrefix('api')` from `req.path` before
+    // this middleware sees it, so `/api/public/...` arrives as just
+    // `/public/...`. Use `req.originalUrl` which keeps the full path,
+    // and check against both forms so future refactors that mount the
+    // middleware differently still match.
+    const fullPath = req.originalUrl.split('?')[0];
+    const matchesBypass = BYPASS_PREFIXES.some(
+      (p) => fullPath.startsWith(p) || req.path.startsWith(p),
+    );
+    if (matchesBypass) {
       return next();
     }
 

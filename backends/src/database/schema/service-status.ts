@@ -95,6 +95,32 @@ export const serviceStatusIncidents = pgTable(
       .notNull()
       .default('investigating'),
     severity: varchar('severity', { length: 20 }).notNull().default('minor'),
+    // 'internal' (ops/dev only) vs 'end_users' (shown in the
+    // cross-dashboard banner + triggers notifications). Default
+    // 'internal' so the existing manual incident flow doesn't
+    // accidentally fire a banner.
+    audience: varchar('audience', { length: 20 })
+      .notNull()
+      .default('internal'),
+    // Which role dashboards see the banner / get notified. Postgres
+    // text[] of role names ('STUDENT', 'INSTRUCTOR', 'MANAGER', 'TA',
+    // 'FINANCE'). Admin + Support never appear here.
+    affectedRoles: text('affected_roles')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    // Post-mortem fields, edited from the admin tab once an incident
+    // is resolved. Optional — many minor incidents won't need them.
+    rootCause: text('root_cause'),
+    correctiveActions: text('corrective_actions'),
+    // Captured when the admin resolves an incident with linked
+    // tickets — drives what we do with those tickets:
+    //   soft_resolve: system reply + transition to ON_HOLD
+    //   auto_close:   system reply + transition to RESOLVED
+    //   leave_open:   system reply only
+    linkedResolutionStrategy: varchar('linked_resolution_strategy', {
+      length: 20,
+    }),
     startedAt: timestamp('started_at').notNull().defaultNow(),
     resolvedAt: timestamp('resolved_at'),
     createdBy: uuid('created_by').references(() => users.id, {
@@ -112,6 +138,14 @@ export const serviceStatusIncidents = pgTable(
     check(
       'service_status_incidents_severity_check',
       sql`${table.severity} IN ('minor', 'major', 'critical')`,
+    ),
+    check(
+      'service_status_incidents_audience_check',
+      sql`${table.audience} IN ('internal', 'end_users')`,
+    ),
+    check(
+      'service_status_incidents_strategy_check',
+      sql`${table.linkedResolutionStrategy} IS NULL OR ${table.linkedResolutionStrategy} IN ('soft_resolve', 'auto_close', 'leave_open')`,
     ),
   ],
 );
@@ -213,3 +247,33 @@ export const INCIDENT_SEVERITY = {
 
 export type IncidentSeverity =
   (typeof INCIDENT_SEVERITY)[keyof typeof INCIDENT_SEVERITY];
+
+export const INCIDENT_AUDIENCE = {
+  INTERNAL: 'internal',
+  END_USERS: 'end_users',
+} as const;
+
+export type IncidentAudience =
+  (typeof INCIDENT_AUDIENCE)[keyof typeof INCIDENT_AUDIENCE];
+
+export const INCIDENT_LINKED_RESOLUTION_STRATEGY = {
+  SOFT_RESOLVE: 'soft_resolve',
+  AUTO_CLOSE: 'auto_close',
+  LEAVE_OPEN: 'leave_open',
+} as const;
+
+export type IncidentLinkedResolutionStrategy =
+  (typeof INCIDENT_LINKED_RESOLUTION_STRATEGY)[keyof typeof INCIDENT_LINKED_RESOLUTION_STRATEGY];
+
+// Roles that can appear in service_status_incidents.affected_roles —
+// the dashboards that show the cross-dashboard banner. Admin and
+// Support are excluded by design (they manage the incident).
+export const INCIDENT_AFFECTED_ROLES = [
+  'STUDENT',
+  'INSTRUCTOR',
+  'MANAGER',
+  'TEACHING_ASSISTANT',
+  'FINANCE',
+] as const;
+
+export type IncidentAffectedRole = (typeof INCIDENT_AFFECTED_ROLES)[number];

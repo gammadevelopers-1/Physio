@@ -27,6 +27,7 @@ import StudentTimelineCard from "./StudentTimelineCard";
 import CollaboratorsPanel from "./CollaboratorsPanel";
 import CollaboratorChatPanel from "./CollaboratorChatPanel";
 import TransferTicketModal from "./TransferTicketModal";
+import TicketIncidentLinker from "./TicketIncidentLinker";
 import {
   ArrowLeft,
   ArrowRightLeft,
@@ -1629,6 +1630,15 @@ const TicketDetailContent = () => {
                           }}
                         />
                       )}
+
+                    {/* Phase 3 — Ticket↔Incident link. Lets the agent
+                        attach this ticket to an active service-status
+                        incident so the requester gets a system reply
+                        (and optionally auto-resolve) when the admin
+                        marks the incident resolved. */}
+                    {ticket.viewerRole === "support" && (
+                      <TicketIncidentLinker ticketId={ticket.id} />
+                    )}
 
                     {/* Phase 2 — Transfer button (support/admin only).
                         Opens a modal that re-categorises + loops in the

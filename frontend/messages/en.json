@@ -2512,6 +2512,10 @@
       "integrations": "Third-party Integrations",
       "course_approvals": "Course Approvals",
       "system_issues": "System Issues",
+      "security_incident": "Security Incident",
+      "compliance": "Compliance / Governance",
+      "kb_update_request": "KB / Content Update Request",
+      "dept_assist": "Inter-department Assistance",
       "other": "Other"
     },
     "sla": {
@@ -6724,7 +6728,10 @@
           "redis": "Redis / Memorystore",
           "openai": "OpenAI Whisper",
           "malwareScanner": "Malware Scanner",
-          "cloudSqlBackup": "Cloud SQL Backup"
+          "cloudSqlBackup": "Cloud SQL Backup",
+          "moyasar": "Moyasar",
+          "tamara": "Tamara",
+          "paytabs": "PayTabs"
         },
         "howToConnect": "Configuring credentials",
         "howToConnectBody": "Credentials are stored in GCP Secret Manager, not in this UI. To connect a missing integration, add the corresponding secret via gcloud and redeploy the backend."
@@ -7220,6 +7227,10 @@
           "integrations": "Third-party Integrations",
           "course_approvals": "Course Approvals",
           "system_issues": "System Issues",
+          "security_incident": "Security Incident",
+          "compliance": "Compliance / Governance",
+          "kb_update_request": "KB / Content Update Request",
+          "dept_assist": "Inter-department Assistance",
           "other": "Other"
         },
         "toasts": {
@@ -8447,6 +8458,10 @@
           "integrations": "Third-party Integrations",
           "course_approvals": "Course Approvals",
           "system_issues": "System Issues",
+          "security_incident": "Security Incident",
+          "compliance": "Compliance / Governance",
+          "kb_update_request": "KB / Content Update Request",
+          "dept_assist": "Inter-department Assistance",
           "other": "Other"
         },
         "priorities": {

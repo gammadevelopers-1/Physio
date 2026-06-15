@@ -27,6 +27,8 @@ import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import NotificationBell from "@/components/shared/NotificationBell";
+import IncidentBanner from "@/components/shared/IncidentBanner";
+import ScheduledMaintenanceBanner from "@/components/shared/ScheduledMaintenanceBanner";
 import { STUDENT_NOTIFICATION_TYPES } from "@/components/shared/notification-types";
 import { RoleSwitcherDropdownItems, RoleSwitcherMobileSection } from "@/components/shared/RoleSwitcher";
 
@@ -114,6 +116,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
   };
 
   return (
+    <>
     <nav className="sticky top-0 z-50 w-full bg-[var(--color-navbar-bg)] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] px-4 py-3 lg:px-16 lg:py-5">
       <div className="flex items-center justify-between w-full">
         {/* Logo + Nav Links */}
@@ -321,6 +324,9 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
         </div>
       )}
     </nav>
+    <ScheduledMaintenanceBanner />
+    <IncidentBanner />
+    </>
   );
 };
 

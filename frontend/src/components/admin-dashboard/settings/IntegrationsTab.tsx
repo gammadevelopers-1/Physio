@@ -18,6 +18,8 @@ import {
   AlertCircle,
   ChevronDown,
   Settings2,
+  CreditCard,
+  Wallet,
 } from "lucide-react";
 import { adminSettingsApi } from "@/lib/api";
 import { TabShell } from "./TabShell";
@@ -39,6 +41,9 @@ const ROW_META: Record<string, { icon: React.ElementType; labelKey: string }> = 
   openai: { icon: Sparkles, labelKey: "openai" },
   malwareScanner: { icon: ShieldAlert, labelKey: "malwareScanner" },
   cloudSqlBackup: { icon: HardDrive, labelKey: "cloudSqlBackup" },
+  moyasar: { icon: CreditCard, labelKey: "moyasar" },
+  tamara: { icon: Wallet, labelKey: "tamara" },
+  paytabs: { icon: CreditCard, labelKey: "paytabs" },
 };
 
 export default function IntegrationsTab() {

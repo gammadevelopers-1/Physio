@@ -16,6 +16,7 @@ import {
   courseMaterials,
   courseAssistants,
   enrollments,
+  payments,
   sessions,
   courseRatings,
   instructorRatings,
@@ -1378,6 +1379,25 @@ export class CoursesService {
     if (!isGlobalAdmin(user) && existing.status !== COURSE_STATUS.DRAFT) {
       throw new BadRequestException(
         'Only draft courses can be deleted',
+      );
+    }
+
+    // Block delete when there are pending or paid payments — the finance
+    // team needs the row for chargeback/refund reconciliation. Hard-delete
+    // would orphan invoices and break the audit trail.
+    const [activePayments] = await db
+      .select({ count: count() })
+      .from(payments)
+      .where(
+        and(
+          eq(payments.courseId, courseId),
+          inArray(payments.status, ['pending', 'paid']),
+        ),
+      );
+
+    if (Number(activePayments?.count || 0) > 0) {
+      throw new BadRequestException(
+        'Cannot delete course with active or pending payments',
       );
     }
 

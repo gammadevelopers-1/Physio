@@ -399,7 +399,9 @@ export interface CourseDetailResponse {
   thumbnail: string | null;
   maxEnrollment: number | null;
   cmeHours: number | null;
-  isCmeAccredited: boolean;
+  isCmeAccredited: boolean | null;
+  price: number | string | null;
+  enrollmentDeadline: string | null;
   startDate: string | null;
   endDate: string | null;
   cohort: string | null;

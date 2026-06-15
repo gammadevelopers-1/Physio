@@ -16,7 +16,7 @@ export const auditLogs = pgTable(
     entityType: varchar('entity_type', { length: 50 }).notNull(), // 'session', 'material', 'report', etc.
     entityId: uuid('entity_id').notNull(),
     action: varchar('action', { length: 50 }).notNull(), // 'created', 'started', 'ended', 'cancelled', etc.
-    performedBy: uuid('performed_by').notNull().references(() => users.id),
+    performedBy: uuid('performed_by').references(() => users.id),
     metadata: jsonb('metadata').$type<Record<string, unknown>>(),
     ipAddress: varchar('ip_address', { length: 45 }),
     createdAt: timestamp('created_at').defaultNow().notNull(),

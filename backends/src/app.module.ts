@@ -1,6 +1,7 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bullmq';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
@@ -43,19 +44,20 @@ import { ServiceStatusModule } from './modules/service-status/service-status.mod
 import { SidebarBadgesModule } from './modules/sidebar-badges/sidebar-badges.module';
 import { MaintenanceMiddleware } from './common/maintenance.middleware';
 import { JwtAuthGuard } from './modules/auth/guards';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import storageConfig from './config/storage.config';
 import zoomConfig from './config/zoom.config';
 import processingConfig from './config/processing.config';
+import paymentsConfig from './config/payments.config';
 
 @Module({
   imports: [
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, storageConfig, zoomConfig, processingConfig],
+      load: [appConfig, databaseConfig, storageConfig, zoomConfig, processingConfig, paymentsConfig],
       envFilePath: [
         `.env.${process.env.NODE_ENV || 'local'}`,
         '.env.local',

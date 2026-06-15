@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations, useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   CreditCard,
@@ -53,6 +54,7 @@ const FinanceRightSidebar = ({
 }: FinanceRightSidebarProps) => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
+  const router = useRouter();
   const isRTL = locale === "ar";
 
   const transactionIcons = {
@@ -76,10 +78,10 @@ const FinanceRightSidebar = ({
   return (
     <div className="w-full lg:w-[300px] lg:flex-shrink-0 space-y-4">
       {/* Recent Transactions */}
-      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
+      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
         <div className="flex items-center gap-2 mb-4">
-          <CreditCard className="w-4 h-4 text-[var(--color-primary)]" />
-          <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
+          <CreditCard className="w-4 h-4 text-[#a37f49]" />
+          <h3 className="text-[15px] font-semibold text-[#111827]">
             {t("transactionFeed.title")}
           </h3>
         </div>
@@ -100,13 +102,13 @@ const FinanceRightSidebar = ({
                   <Icon className={`w-3.5 h-3.5 ${config.iconColor}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] text-[var(--color-text-secondary)]">
-                    <span className="font-medium text-[var(--color-text-primary)]">
+                  <p className="text-[13px] text-[#374151]">
+                    <span className="font-medium text-[#111827]">
                       {tx.customer}
                     </span>{" "}
                     {t(`transactionFeed.${tx.type}`)}
                   </p>
-                  <p className="text-[11px] text-[var(--color-text-secondary)]">{tx.time}</p>
+                  <p className="text-[11px] text-[#9CA3AF]">{tx.time}</p>
                 </div>
                 <span
                   className={`text-[13px] font-semibold flex-shrink-0 ${
@@ -114,7 +116,7 @@ const FinanceRightSidebar = ({
                       ? "text-[#16A34A]"
                       : tx.type === "refund"
                         ? "text-[#DC2626]"
-                        : "text-[var(--color-text-secondary)]"
+                        : "text-[#6B7280]"
                   }`}
                 >
                   {tx.type === "income" ? "+" : tx.type === "refund" ? "-" : ""}
@@ -128,7 +130,7 @@ const FinanceRightSidebar = ({
         <div className="mt-3 pt-3 border-t border-[#F3F4F6] text-center">
           <Link
             href={`/${locale}/dashboard/finance/payments`}
-            className="text-[13px] font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline"
+            className="text-[13px] font-medium text-[#a37f49] hover:text-[#6b4e24] hover:underline"
           >
             {t("transactionFeed.viewAll")}
           </Link>
@@ -136,10 +138,10 @@ const FinanceRightSidebar = ({
       </div>
 
       {/* Financial Alerts */}
-      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
+      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
         <div className="flex items-center gap-2 mb-4">
           <AlertTriangle className="w-4 h-4 text-[#EA580C]" />
-          <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
+          <h3 className="text-[15px] font-semibold text-[#111827]">
             {t("financialAlerts.title")}
           </h3>
         </div>
@@ -165,10 +167,10 @@ const FinanceRightSidebar = ({
                 <AlertTriangle className="w-4 h-4 text-[#EA580C] flex-shrink-0 mt-0.5" />
               )}
               <div>
-                <p className="text-[12px] font-medium text-[var(--color-text-secondary)]">
+                <p className="text-[12px] font-medium text-[#111827]">
                   {alert.title}
                 </p>
-                <p className="text-[11px] text-[var(--color-text-secondary)]">
+                <p className="text-[11px] text-[#4B5563]">
                   {alert.description}
                 </p>
               </div>
@@ -178,15 +180,15 @@ const FinanceRightSidebar = ({
       </div>
 
       {/* Active Coupons */}
-      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
+      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Tag className="w-4 h-4 text-[var(--color-primary)]" />
-            <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
+            <Tag className="w-4 h-4 text-[#a37f49]" />
+            <h3 className="text-[15px] font-semibold text-[#111827]">
               {t("discounts.title")}
             </h3>
           </div>
-          <button className="text-[12px] font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline">
+          <button className="text-[12px] font-medium text-[#a37f49] hover:text-[#6b4e24] hover:underline">
             {t("discounts.createCoupon")}
           </button>
         </div>
@@ -195,13 +197,13 @@ const FinanceRightSidebar = ({
           {coupons.map((coupon) => (
             <div
               key={coupon.id}
-              className="flex items-center justify-between p-2.5 bg-[var(--color-surface-page)] rounded-lg border border-[#F3F4F6]"
+              className="flex items-center justify-between p-2.5 bg-[#F9FAFB] rounded-lg border border-[#F3F4F6]"
             >
               <div>
-                <p className="text-[13px] font-medium text-[var(--color-text-secondary)]">
+                <p className="text-[13px] font-medium text-[#111827]">
                   {coupon.code}
                 </p>
-                <p className="text-[11px] text-[var(--color-text-secondary)]">
+                <p className="text-[11px] text-[#6B7280]">
                   {coupon.discount} -{" "}
                   {t("discounts.usage", {
                     used: coupon.used,
@@ -213,7 +215,7 @@ const FinanceRightSidebar = ({
                 className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
                   coupon.status === "active"
                     ? "bg-[#DCFCE7] text-[#16A34A]"
-                    : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
+                    : "bg-[#F3F4F6] text-[#6B7280]"
                 }`}
               >
                 {t(`discounts.${coupon.status}`)}
@@ -224,28 +226,40 @@ const FinanceRightSidebar = ({
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
+      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Zap className="w-4 h-4 text-[var(--color-primary)]" />
-          <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
+          <Zap className="w-4 h-4 text-[#a37f49]" />
+          <h3 className="text-[15px] font-semibold text-[#111827]">
             {t("quickActions.title")}
           </h3>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
+          <button
+            onClick={() => router.push(`/${locale}/dashboard/finance/invoices`)}
+            className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors"
+          >
             <FileText className="w-3.5 h-3.5" />
             {t("quickActions.createInvoice")}
           </button>
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
+          <button
+            onClick={() => router.push(`/${locale}/dashboard/finance/reports`)}
+            className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors"
+          >
             <BarChart3 className="w-3.5 h-3.5" />
             {t("quickActions.exportReport")}
           </button>
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
+          <button
+            onClick={() => router.push(`/${locale}/dashboard/finance/discounts`)}
+            className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors"
+          >
             <Tag className="w-3.5 h-3.5" />
             {t("quickActions.addCoupon")}
           </button>
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
+          <button
+            onClick={() => router.push(`/${locale}/dashboard/finance/refunds`)}
+            className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors"
+          >
             <RotateCcw className="w-3.5 h-3.5" />
             {t("quickActions.processRefund")}
           </button>

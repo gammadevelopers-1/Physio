@@ -6,8 +6,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { profileApi } from "@/lib/api";
+import { profileApi, SIDEBAR_TAB_KEYS } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import SidebarBadge from "@/components/SidebarBadge";
 import {
   LayoutDashboard,
   CreditCard,
@@ -21,6 +22,8 @@ import {
   Wallet,
   Upload,
   Trash2,
+  Headphones,
+  UserPlus,
 } from "lucide-react";
 
 interface FinanceProfile {
@@ -122,6 +125,16 @@ const FinanceSidebar = ({ profile, pendingRefundCount = 0 }: FinanceSidebarProps
       label: t("sidebar.auditLog"),
       href: `/${locale}/dashboard/finance/audit-log`,
       icon: Shield,
+    },
+    {
+      label: t("sidebar.support"),
+      href: `/${locale}/dashboard/finance/support`,
+      icon: Headphones,
+    },
+    {
+      label: t("sidebar.loopedIn"),
+      href: `/${locale}/dashboard/finance/support/looped-in`,
+      icon: UserPlus,
     },
     {
       label: t("sidebar.settings"),
@@ -286,6 +299,12 @@ const FinanceSidebar = ({ profile, pendingRefundCount = 0 }: FinanceSidebarProps
                   <span className="bg-[#EF4444] text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
                     {item.badge}
                   </span>
+                )}
+                {item.href.endsWith("/support") && (
+                  <SidebarBadge tabKey={SIDEBAR_TAB_KEYS.USER_SUPPORT} />
+                )}
+                {item.href.endsWith("/support/looped-in") && (
+                  <SidebarBadge tabKey={SIDEBAR_TAB_KEYS.USER_LOOPED_IN} />
                 )}
               </Link>
             );

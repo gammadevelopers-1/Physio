@@ -1360,6 +1360,19 @@ export class StudentService {
       });
     }
 
+    // 1c. Block self-enrollment for paid courses — they must go through
+    // the /checkout flow (paymentApi.initiate → gateway redirect → webhook
+    // → enrollment). The free-enrollment endpoint never creates a paid
+    // enrollment, even if the caller forges the request.
+    const coursePrice = Number(course.price || 0);
+    if (coursePrice > 0) {
+      throw new BadRequestException({
+        code: 'PAYMENT_REQUIRED',
+        message:
+          'This course requires payment. Please complete the checkout process to enroll.',
+      });
+    }
+
     // 2. Capacity enforcement (self-paced is unlimited unless a cap is set)
     const isSelfPaced = course.deliveryType === 'self-paced';
     let effectiveMax: number | null;

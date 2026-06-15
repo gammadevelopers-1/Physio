@@ -1,0 +1,129 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  Req,
+  Res,
+  DefaultValuePipe,
+  ParseIntPipe,
+} from '@nestjs/common';
+import { Request, Response } from 'express';
+import { RefundService } from '../services/refund.service';
+import { CreateRefundDto } from '../dto/create-refund.dto';
+import { ApproveRefundDto } from '../dto/approve-refund.dto';
+import { RejectRefundDto } from '../dto/reject-refund.dto';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
+
+@Controller('refunds')
+export class RefundsController {
+  constructor(private readonly refundService: RefundService) {}
+
+  @Post()
+  @Roles('STUDENT', 'FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async requestRefund(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateRefundDto,
+    @Req() req: Request,
+  ) {
+    const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
+    // Finance/Admin can initiate refunds on behalf of learners
+    const isAdmin =
+      user.roles.includes('FINANCE') ||
+      user.roles.includes('ADMIN') ||
+      user.roles.includes('SUPER_ADMIN');
+    const requesterId = isAdmin ? (dto as any).userId || user.id : user.id;
+    return this.refundService.requestRefund(requesterId, dto, ipAddress);
+  }
+
+  @Get('my-refunds')
+  @Roles('STUDENT')
+  async getMyRefunds(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    return this.refundService.getMyRefunds(user.id, page, limit);
+  }
+
+  @Get('export')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async exportRefunds(
+    @Res() res: Response,
+    @Query('status') status?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    const csv = await this.refundService.exportRefundsCsv(
+      status,
+      startDate,
+      endDate,
+    );
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="refunds-export-${new Date().toISOString().slice(0, 10)}.csv"`,
+    );
+    res.send(csv);
+  }
+
+  @Get()
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getAllRefunds(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.refundService.getAllRefunds(
+      page,
+      limit,
+      status,
+      search,
+      startDate,
+      endDate,
+    );
+  }
+
+  @Get(':id')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getRefundById(@Param('id') id: string) {
+    return this.refundService.getRefundById(id);
+  }
+
+  @Patch(':id/approve')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async approveRefund(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ApproveRefundDto,
+    @Req() req: Request,
+  ) {
+    const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
+    return this.refundService.approveRefund(
+      id,
+      user.id,
+      ipAddress,
+      dto.approvalNote,
+    );
+  }
+
+  @Patch(':id/reject')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async rejectRefund(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: RejectRefundDto,
+    @Req() req: Request,
+  ) {
+    const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
+    return this.refundService.rejectRefund(id, user.id, dto, ipAddress);
+  }
+}

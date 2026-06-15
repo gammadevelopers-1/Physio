@@ -34,7 +34,9 @@ export interface SessionRow {
 export interface FailedLoginRow {
   id: string;
   attemptedEmail: string | null;
-  performedById: string;
+  // performedBy is now nullable (audit-logs.service converts 'system' to null
+  // since the column is a UUID FK to users — only real users can be FKs).
+  performedById: string | null;
   ipAddress: string | null;
   createdAt: string;
   metadata: Record<string, unknown> | null;

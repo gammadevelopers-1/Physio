@@ -181,6 +181,7 @@
     "liveSupport": "الدعم المباشر",
     "feedback": "الملاحظات",
     "faq": "الأسئلة الشائعة",
+    "refundPolicy": "سياسة الاسترداد",
     "copyright": "فيزيو جايدنس، 2025"
   },
   "bottomNav": {
@@ -207,7 +208,8 @@
     "contactUs": "اتصل بنا",
     "liveSupport": "الدعم المباشر",
     "feedback": "الملاحظات",
-    "faq": "الأسئلة الشائعة"
+    "faq": "الأسئلة الشائعة",
+    "refundPolicy": "سياسة الاسترداد"
   },
   "aboutPage": {
     "hero": {
@@ -325,7 +327,9 @@
       "forgotPassword": "نسيت كلمة السر؟",
       "rememberMe": "تذكر لمدة 30 يومًا",
       "login": "تسجيل الدخول",
-      "signInWithGoogle": "قم بتسجيل الدخول باستخدام جوجل"
+      "signInWithGoogle": "قم بتسجيل الدخول باستخدام جوجل",
+      "networkError": "تعذر الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.",
+      "genericError": "حدث خطأ. يرجى المحاولة مرة أخرى."
     },
     "footer": {
       "noAccount": "ليس لديك حساب؟",
@@ -1021,7 +1025,9 @@
       "interestFree": "أو 4 دفعات بدون فوائد.",
       "shariahCompliant": "متوافق مع الشريعة الإسلامية.",
       "learnMore": "معرفة المزيد",
-      "securePayment": "الدفع الآمن من خلال"
+      "securePayment": "الدفع الآمن من خلال",
+      "inCart": "في السلة",
+      "addedToCart": "تمت الإضافة إلى السلة!"
     },
     "schedule": "الجدول الزمني",
     "contents": "المحتويات",
@@ -1070,6 +1076,25 @@
       "redeemSuccess": "تم فتح الدورة بالنقاط! تحقق من لوحة التحكم."
     }
   },
+  "cartPage": {
+    "title": "سلة التسوق",
+    "breadcrumb": {
+      "home": "الرئيسية",
+      "cart": "السلة"
+    },
+    "itemCount": "{count} عناصر في سلتك",
+    "removeItem": "إزالة",
+    "proceedToCheckout": "متابعة الدفع",
+    "emptyTitle": "سلتك فارغة",
+    "emptyDescription": "تصفح دوراتنا وأضفها إلى سلتك",
+    "browseCourses": "تصفح الدورات",
+    "checkoutNote": "يتم دفع كل دورة على حدة",
+    "price": "السعر",
+    "deliveryType": "النوع",
+    "cmeHours": "ساعات التعليم الطبي المستمر",
+    "startDate": "تاريخ البدء",
+    "instructor": "المدرب"
+  },
   "checkoutPage": {
     "breadcrumb": {
       "courses": "الدورات",
@@ -1099,7 +1124,10 @@
       "title": "قسط",
       "subtitle": "جميع المعاملات آمنة ومشفرة",
       "creditCard": "بطاقة إئتمان",
+      "moyasar": "ميسر",
       "tabby": "ادفع لاحقًا مع Tabby",
+      "tamara": "تمارا - ٣ دفعات",
+      "selectGateway": "اختر طريقة الدفع",
       "cardNumber": "رقم البطاقة",
       "expiry": "انتهاء الصلاحية",
       "cvc": "رمز التحقق من البطاقة",
@@ -1107,7 +1135,23 @@
       "saveInfo": "احفظ معلوماتي لإجراء عملية دفع أسرع باستخدام حساب المتجر",
       "secureEncrypted": "آمنة ومشفرة",
       "payNow": "ادفع الان",
+      "processing": "جاري المعالجة...",
       "securePaymentThrough": "الدفع الآمن من خلال"
+    },
+    "discount": {
+      "title": "رمز الخصم",
+      "placeholder": "أدخل رمز الخصم",
+      "apply": "تطبيق",
+      "applied": "تم تطبيق الخصم:",
+      "subtotal": "المجموع الفرعي",
+      "discountLabel": "الخصم",
+      "total": "المجموع"
+    },
+    "errors": {
+      "courseNotFound": "لم يتم العثور على الدورة",
+      "selectCourse": "يرجى تحديد دورة للشراء",
+      "browseCourses": "تصفح الدورات",
+      "paymentFailed": "فشل بدء الدفع. يرجى المحاولة مرة أخرى."
     }
   },
   "blogsPage": {
@@ -2045,9 +2089,35 @@
       "statusPaid": "مدفوع",
       "statusPending": "قيد الانتظار",
       "statusCancelled": "ملغي",
+      "statusRefunded": "مسترد",
+      "statusRefundPending": "استرداد قيد المراجعة",
       "moreOptions": "المزيد من الخيارات",
       "viewInvoice": "عرض الفاتورة",
-      "downloadInvoice": "تحميل الفاتورة"
+      "downloadInvoice": "تحميل الفاتورة",
+      "requestRefund": "طلب استرداد",
+      "pdfGenerating": "جاري إنشاء الفاتورة. سيتم إرسالها إلى بريدك الإلكتروني قريباً."
+    },
+    "refund": {
+      "title": "طلب استرداد",
+      "invoice": "الفاتورة",
+      "amount": "المبلغ",
+      "reasonLabel": "لماذا تريد استرداد المبلغ؟",
+      "selectReason": "يرجى اختيار سبب",
+      "reasons": {
+        "course_issue": "مشكلة في محتوى الدورة",
+        "personal": "أسباب شخصية",
+        "technical": "مشاكل تقنية",
+        "duplicate": "دفع مكرر",
+        "other": "سبب آخر"
+      },
+      "notesLabel": "ملاحظات إضافية (اختياري)",
+      "notesPlaceholder": "قدم أي تفاصيل إضافية...",
+      "cancel": "إلغاء",
+      "submit": "إرسال الطلب",
+      "submitError": "فشل في إرسال طلب الاسترداد. يرجى المحاولة مرة أخرى.",
+      "successTitle": "تم طلب الاسترداد",
+      "successMessage": "تم تقديم طلب الاسترداد. سيقوم فريق المالية بمراجعته قريباً.",
+      "close": "إغلاق"
     },
     "myPoints": {
       "title": "نقاطي",
@@ -3129,7 +3199,18 @@
         "document": "مستند",
         "quiz": "اختبار",
         "mixed": "مختلط"
-      }
+      },
+      "pricingTitle": "تسعير الدورة",
+      "pricingFree": "مجانية",
+      "pricingPaid": "مدفوعة",
+      "priceLabel": "السعر (ريال سعودي)",
+      "pricePlaceholder": "مثال: 500.00",
+      "priceRequired": "السعر مطلوب للدورات المدفوعة",
+      "enrollmentDeadlineLabel": "الموعد النهائي للتسجيل",
+      "cmeHoursLabel": "ساعات التعليم الطبي المستمر",
+      "cmeAccreditedLabel": "معتمد للتعليم الطبي المستمر",
+      "cmeAccreditedDesc": "اعتماد التعليم الطبي المستمر لهذه الدورة",
+      "reviewPricing": "التسعير"
     },
     "sessionsPage": {
       "title": "المحاضرات",
@@ -4523,6 +4604,19 @@
       "wcagCompliantDesc": "محتوى الدورة يستوفي إرشادات الوصول WCAG 2.1.",
       "cmeHours": "ساعات التطوير المهني المستمر (CME/CPD)",
       "cmeHoursHint": "عدد ساعات التعليم الطبي المستمر لهذه الدورة (مطلوب لاعتماد الهيئة السعودية)",
+      "minimumHours": "الحد الأدنى لساعات التدريب",
+      "pricingTitle": "تسعير الدورة",
+      "pricingDescription": "حدد ما إذا كانت هذه الدورة مجانية أو تتطلب دفعاً",
+      "pricingFree": "مجانية",
+      "pricingPaid": "مدفوعة",
+      "priceLabel": "السعر (ريال سعودي)",
+      "pricePlaceholder": "مثال: 500.00",
+      "priceRequired": "السعر مطلوب للدورات المدفوعة",
+      "priceMinError": "يجب أن يكون السعر أكبر من 0",
+      "enrollmentDeadlineLabel": "الموعد النهائي للتسجيل",
+      "cmeHoursLabel": "ساعات التعليم الطبي المستمر",
+      "cmeAccreditedLabel": "معتمد للتعليم الطبي المستمر",
+      "cmeAccreditedDesc": "هذه الدورة معتمدة للتعليم الطبي المستمر",
       "reviewTitle": "مراجعة وإنشاء",
       "reviewDescription": "راجع جميع تفاصيل الدورة قبل الإنشاء. يمكنك التعديل بعد الإنشاء.",
       "instructorAssignment": "تعيين المدرب",
@@ -7614,6 +7708,7 @@
       "reports": "التقارير",
       "support": "الدعم الفني",
       "loopedIn": "مساعدة الدعم",
+      "auditLog": "سجل المراجعة",
       "settings": "الإعدادات",
       "financeManager": "مدير المالية",
       "revenue": "الإيرادات",
@@ -7635,6 +7730,13 @@
       "totalPending": "ر.س {amount} معلق",
       "thisMonth": "هذا الشهر"
     },
+    "dateFilter": {
+      "today": "اليوم",
+      "7d": "7 أيام",
+      "30d": "30 يوم",
+      "3m": "3 أشهر",
+      "custom": "مخصص"
+    },
     "revenueSummary": {
       "title": "ملخص الإيرادات",
       "viewDetails": "عرض التفاصيل",
@@ -7648,17 +7750,27 @@
         "month": "30 يوم",
         "quarter": "90 يوم",
         "year": "سنة"
-      }
+      },
+      "aov": "متوسط قيمة الطلب",
+      "vsPrevious": "مقارنة بالفترة السابقة",
+      "bnplSplit": "BNPL مقابل المباشر",
+      "bnpl": "BNPL",
+      "direct": "مباشر",
+      "noData": "لا توجد بيانات لهذه الفترة"
     },
     "paymentsTable": {
       "title": "المدفوعات والفواتير الأخيرة",
       "export": "تصدير",
+      "exportCsv": "تصدير CSV",
+      "exportPdf": "تصدير PDF",
       "searchPlaceholder": "بحث في الفواتير...",
+      "noResults": "لا توجد معاملات للفلاتر المحددة.",
       "filters": {
         "allStatus": "جميع الحالات",
         "paid": "مدفوع",
         "pending": "معلق",
         "failed": "فشل",
+        "refunded": "مُسترد",
         "allGateways": "جميع البوابات"
       },
       "columns": {
@@ -7681,7 +7793,46 @@
         "view": "عرض",
         "download": "تحميل",
         "resend": "إعادة إرسال",
-        "refund": "استرداد"
+        "refund": "استرداد",
+        "resendSuccess": "تم إرسال الفاتورة بنجاح",
+        "resendError": "فشل إرسال الفاتورة",
+        "downloadError": "فشل تحميل PDF"
+      },
+      "errorCodes": {
+        "CARD_DECLINED": "البطاقة مرفوضة",
+        "INSUFFICIENT_FUNDS": "رصيد غير كافٍ",
+        "EXPIRED_CARD": "بطاقة منتهية الصلاحية",
+        "GATEWAY_TIMEOUT": "انتهاء مهلة البوابة",
+        "INVALID_CARD": "بطاقة غير صالحة",
+        "AUTHENTICATION_FAILED": "فشل المصادقة",
+        "PROCESSING_ERROR": "خطأ في المعالجة",
+        "CURRENCY_NOT_SUPPORTED": "العملة غير مدعومة",
+        "AMOUNT_LIMIT_EXCEEDED": "تجاوز حد المبلغ"
+      },
+      "transactionDetail": {
+        "title": "تفاصيل المعاملة",
+        "paymentId": "معرّف الدفع",
+        "errorCode": "رمز الخطأ",
+        "failureReason": "سبب الفشل",
+        "gatewayTxId": "معرّف معاملة البوابة",
+        "paymentMethod": "طريقة الدفع",
+        "close": "إغلاق"
+      },
+      "refundModal": {
+        "title": "طلب استرداد",
+        "reason": "السبب",
+        "note": "ملاحظة (اختياري)",
+        "submit": "إرسال طلب الاسترداد",
+        "cancel": "إلغاء",
+        "success": "تم تقديم طلب الاسترداد",
+        "error": "فشل تقديم طلب الاسترداد",
+        "reasons": {
+          "policy": "طلب بموجب السياسة",
+          "cancelled": "الدورة ملغاة",
+          "duplicate": "دفع مكرر",
+          "technical": "خطأ تقني",
+          "other": "أخرى"
+        }
       },
       "pagination": {
         "showing": "عرض {from}-{to} من {total}",
@@ -7695,6 +7846,8 @@
       "approve": "الموافقة",
       "reject": "الرفض",
       "deduction": "الخصم: {amount}",
+      "approveSuccess": "تمت الموافقة على الاسترداد بنجاح",
+      "rejectSuccess": "تم رفض الاسترداد",
       "reasons": {
         "personal": "أسباب شخصية",
         "courseIssue": "مشكلة في الدورة",
@@ -7760,7 +7913,9 @@
         "issued": "صادرة",
         "paid": "مدفوعة",
         "overdue": "متأخرة",
-        "draft": "مسودة"
+        "draft": "مسودة",
+        "refunded": "مستردة",
+        "cancelled": "ملغاة"
       },
       "stats": {
         "totalInvoices": "إجمالي الفواتير",
@@ -7774,6 +7929,11 @@
         "days30": "31-60 يوم",
         "days60": "61-90 يوم",
         "overdue90": "أكثر من 90 يوم"
+      },
+      "filters": {
+        "startDate": "من",
+        "endDate": "إلى",
+        "clearDates": "مسح التواريخ"
       }
     },
     "refundsPage": {
@@ -7782,7 +7942,12 @@
       "tabs": {
         "pending": "معلقة",
         "approved": "موافق عليها",
-        "rejected": "مرفوضة"
+        "rejected": "مرفوضة",
+        "processed": "مُعالجة"
+      },
+      "statusLabels": {
+        "processing": "قيد المعالجة",
+        "completed": "مكتملة"
       },
       "stats": {
         "totalRefunds": "إجمالي الاستردادات",
@@ -7791,15 +7956,63 @@
         "refundRate": "معدل الاسترداد"
       },
       "deductionRules": "قواعد الخصم",
+      "tamaraRule": "تمارا (الدفع الآجل): خصم 10% رسوم معالجة تلقائيًا",
+      "tabbyRule": "تابي (الدفع الآجل): خصم رسوم المعالجة حسب اتفاقية التاجر",
       "bnplFees": "رسوم الدفع الآجل: {percent}%",
       "adminFee": "رسوم إدارية: ر.س {amount}",
       "addNote": "إضافة ملاحظة",
-      "notePlaceholder": "أدخل سبب الرفض أو الملاحظات..."
+      "notePlaceholder": "أدخل سبب الرفض أو الملاحظات...",
+      "rejectTitle": "رفض الاسترداد",
+      "rejectionNoteLabel": "يرجى تقديم سبب لرفض طلب الاسترداد. هذه الملاحظة إلزامية.",
+      "noteRequired": "سبب الرفض مطلوب",
+      "cancel": "إلغاء",
+      "close": "إغلاق",
+      "approveSuccess": "تمت الموافقة على الاسترداد بنجاح",
+      "rejectSuccess": "تم رفض الاسترداد",
+      "noRefunds": "لا توجد استردادات",
+      "searchPlaceholder": "البحث بالاسم أو البريد أو الدورة...",
+      "export": "تصدير",
+      "exportSuccess": "بدأ التصدير",
+      "exportError": "فشل التصدير",
+      "viewDetail": "عرض",
+      "retryGateway": "إعادة المحاولة",
+      "showing": "عرض",
+      "of": "من",
+      "detail": {
+        "refundId": "رقم الاسترداد",
+        "requester": "مقدم الطلب",
+        "course": "الدورة",
+        "reason": "السبب",
+        "originalAmount": "المبلغ الأصلي",
+        "deduction": "الخصم",
+        "refundAmount": "مبلغ الاسترداد",
+        "gateway": "بوابة الدفع",
+        "status": "الحالة",
+        "timeline": "الجدول الزمني",
+        "requested": "تم الطلب",
+        "approvedAt": "تمت الموافقة",
+        "completedAt": "اكتمل",
+        "rejectedAt": "تم الرفض",
+        "rejectionReason": "سبب الرفض"
+      },
+      "detailTitle": "تفاصيل الاسترداد"
     },
     "discountsPage": {
       "title": "إدارة الخصومات والقسائم",
       "subtitle": "إنشاء وإدارة القسائم، تتبع تحليلات الاستخدام",
       "createCoupon": "إنشاء قسيمة",
+      "editCoupon": "تعديل الخصم",
+      "createSuccess": "تم إنشاء الخصم بنجاح",
+      "editSuccess": "تم تحديث الخصم بنجاح",
+      "deleteSuccess": "تم حذف الخصم",
+      "searchPlaceholder": "البحث برمز القسيمة...",
+      "bulkGenerate": "إنشاء مجموعة",
+      "export": "تصدير CSV",
+      "exportSuccess": "تم تحميل التصدير بنجاح",
+      "exportError": "فشل التصدير",
+      "totalSaved": "ر.س {amount} وُفِّر",
+      "showing": "عرض",
+      "of": "من",
       "tabs": {
         "active": "نشطة",
         "expired": "منتهية",
@@ -7812,6 +8025,10 @@
         "revenueLift": "زيادة الإيرادات",
         "avgDiscount": "متوسط الخصم"
       },
+      "toggle": {
+        "enable": "تفعيل",
+        "disable": "تعطيل"
+      },
       "form": {
         "code": "رمز القسيمة",
         "codePlaceholder": "مثال: PHYSIO25",
@@ -7822,17 +8039,35 @@
         "usageLimit": "حد الاستخدام",
         "expiryDate": "تاريخ الانتهاء",
         "minOrder": "الحد الأدنى للطلب (ر.س)",
+        "courses": "الدورات المطبقة",
+        "allCourses": "جميع الدورات",
         "create": "إنشاء القسيمة",
+        "save": "حفظ التغييرات",
         "cancel": "إلغاء"
       },
       "actions": {
         "edit": "تعديل",
         "delete": "حذف"
       },
+      "noCoupons": "لا توجد أكواد خصم",
+      "bulk": {
+        "title": "إنشاء قسائم مجمعة",
+        "prefix": "بادئة الرمز",
+        "prefixPlaceholder": "مثال: HEALTH",
+        "count": "عدد الرموز",
+        "preview": "معاينة: {prefix}-XXXXXX",
+        "generate": "إنشاء {count} رمز",
+        "success": "تم إنشاء {count} رمز خصم"
+      },
       "analytics": {
         "title": "تحليلات الاستخدام",
         "totalUsage": "إجمالي الاستخدام",
+        "totalSavings": "إجمالي التوفير",
+        "avgPerUse": "متوسط الخصم/استخدام",
         "revenueLift": "زيادة الإيرادات",
+        "topCoupons": "أفضل القسائم أداءً",
+        "conversions": "استخدام",
+        "saved": "وُفِّر",
         "cannibalization": "تأثير سلبي"
       }
     },
@@ -7842,15 +8077,20 @@
       "generateReport": "إنشاء تقرير",
       "exportExcel": "تصدير Excel",
       "exportPdf": "تصدير PDF",
+      "exportSuccess": "تم تصدير التقرير بنجاح",
+      "exportError": "فشل تصدير التقرير",
+      "loading": "جارٍ تحميل بيانات التقرير...",
       "reportTypes": {
-        "revenue": "تقرير الإيرادات",
-        "revenueDesc": "الإيرادات حسب الدورة والمدرب والفترة",
-        "payments": "تقرير المدفوعات",
-        "paymentsDesc": "المدفوعات حسب البوابة والحالة",
-        "refunds": "تقرير الاستردادات",
-        "refundsDesc": "اتجاهات الاسترداد والأسباب والتحليلات",
-        "summary": "الملخص التنفيذي",
-        "summaryDesc": "نظرة مالية عامة عالية المستوى"
+        "profitByCourse": "الربحية حسب الدورة",
+        "profitByCourseDesc": "الإيرادات والاستردادات وصافي الربح ونسبة الهامش لكل دورة",
+        "profitByInstructor": "الربحية حسب المدرب",
+        "profitByInstructorDesc": "الإيرادات المولدة وعدد الدورات وصافي المساهمة لكل مدرب",
+        "profitByDelivery": "حسب نوع التقديم",
+        "profitByDeliveryDesc": "مقارنة الربحية: حضوري مقابل مباشر (Zoom) مقابل مدمج",
+        "invoiceAging": "تقادم الفواتير",
+        "invoiceAgingDesc": "الفواتير المستحقة مجمعة حسب العمر (0-30 يوم، 31-60 يوم، 61-90 يوم، 90+ يوم)",
+        "chargeback": "معدل رد المبالغ",
+        "chargebackDesc": "تحليل رد المبالغ حسب الدورة وبوابة الدفع"
       },
       "filters": {
         "period": "الفترة",
@@ -7859,29 +8099,102 @@
         "thisQuarter": "هذا الربع",
         "thisYear": "هذا العام",
         "custom": "نطاق مخصص",
+        "startDate": "تاريخ البداية",
+        "endDate": "تاريخ النهاية",
         "groupBy": "تجميع حسب",
         "byCourse": "حسب الدورة",
         "byInstructor": "حسب المدرب",
         "byGateway": "حسب البوابة",
-        "byStatus": "حسب الحالة"
+        "byDelivery": "حسب نوع التقديم"
       },
       "columns": {
+        "course": "الدورة",
+        "instructor": "المدرب",
+        "deliveryType": "نوع التقديم",
+        "revenue": "الإيرادات",
+        "refunds": "الاستردادات",
+        "netProfit": "صافي الربح",
+        "margin": "نسبة الهامش",
+        "enrollments": "التسجيلات",
+        "courses": "الدورات",
+        "gateway": "البوابة",
+        "count": "العدد",
+        "amount": "المبلغ",
+        "rate": "المعدل",
         "transactions": "المعاملات",
-        "growth": "النمو"
-      }
+        "growth": "النمو",
+        "platformFee": "رسوم المنصة",
+        "netPayout": "صافي الدفع"
+      },
+      "aging": {
+        "current": "0-30 يوم",
+        "thirtyDay": "31-60 يوم",
+        "sixtyDay": "61-90 يوم",
+        "ninetyPlus": "90+ يوم",
+        "paid": "مدفوعة",
+        "total": "إجمالي المستحقات",
+        "invoices": "فواتير"
+      },
+      "chargeback": {
+        "totalTransactions": "إجمالي المعاملات",
+        "chargebackCount": "عدد رد المبالغ",
+        "chargebackAmount": "مبلغ رد المبالغ",
+        "chargebackRate": "معدل رد المبالغ",
+        "breakdown": "التفصيل حسب الدورة والبوابة",
+        "noCases": "لا توجد حالات رد مبالغ"
+      },
+      "delivery": {
+        "zoom": "مباشر (Zoom)",
+        "onsite": "حضوري",
+        "blended": "مدمج",
+        "unknown": "غير محدد"
+      },
+      "summary": {
+        "totalRevenue": "إجمالي الإيرادات",
+        "totalRefunds": "إجمالي الاستردادات",
+        "netRevenue": "صافي الإيرادات",
+        "avgMargin": "متوسط الهامش"
+      },
+      "noData": "لا توجد بيانات تقارير متاحة بعد",
+      "noResults": "لا توجد بيانات للفلاتر المحددة",
+      "exportHint": "اختر نوع التقرير وانقر إنشاء لعرض البيانات المالية"
     },
     "navbar": {
       "toggleMenu": "تبديل القائمة",
-      "closeMenu": "إغلاق القائمة"
+      "closeMenu": "إغلاق القائمة",
+      "notifications": "الإشعارات",
+      "search": "بحث"
     },
     "settingsPage": {
       "title": "إعدادات المالية",
       "subtitle": "تكوين بوابات الدفع والعملة والضرائب وسياسات الاسترداد",
+      "personalSecurity": "إعدادات الأمان الشخصية",
       "tabs": {
+        "profile": "الملف الشخصي",
         "gateways": "بوابات الدفع",
         "currency": "العملة",
         "tax": "تكوين الضرائب",
         "refundPolicy": "سياسة الاسترداد"
+      },
+      "profile": {
+        "personalInfo": "المعلومات الشخصية",
+        "firstName": "الاسم الأول",
+        "lastName": "اسم العائلة",
+        "email": "البريد الإلكتروني",
+        "phone": "الهاتف",
+        "uploadPhoto": "تحميل صورة",
+        "removePhoto": "إزالة الصورة",
+        "saveChanges": "حفظ التغييرات",
+        "saved": "تم تحديث الملف الشخصي بنجاح",
+        "avatarError": "فشل في تحديث صورة الملف الشخصي",
+        "changePassword": "تغيير كلمة المرور",
+        "currentPassword": "كلمة المرور الحالية",
+        "newPassword": "كلمة المرور الجديدة",
+        "passwordHint": "6 أحرف على الأقل. سيتم تسجيل خروجك بعد التغيير.",
+        "updatePassword": "تحديث كلمة المرور",
+        "passwordChanged": "تم تغيير كلمة المرور بنجاح. يرجى تسجيل الدخول مرة أخرى.",
+        "passwordRequired": "كلا حقلي كلمة المرور مطلوبان",
+        "passwordMinLength": "كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل"
       },
       "gateways": {
         "title": "تكوين بوابات الدفع",
@@ -7921,7 +8234,9 @@
         "adminFee": "رسوم المعالجة الإدارية (ر.س)",
         "autoApproveBelow": "الموافقة التلقائية أقل من (ر.س)",
         "save": "حفظ السياسة"
-      }
+      },
+      "saved": "تم حفظ الإعدادات بنجاح",
+      "saveError": "فشل في حفظ الإعدادات"
     },
     "courses": {
       "aclsTraining": "تدريب دعم الحياة القلبي المتقدم",
@@ -8000,6 +8315,43 @@
       "khalidHassan": "خالد حسن",
       "laylaNoor": "ليلى نور",
       "omarFahad": "عمر فهد"
+    },
+    "auditLog": {
+      "title": "سجل المراجعة",
+      "subtitle": "سجل غير قابل للتعديل لجميع الأحداث المالية — متوافق مع المركز الوطني للتعلم الإلكتروني",
+      "filters": {
+        "entityType": "نوع الكيان",
+        "action": "الإجراء",
+        "startDate": "تاريخ البداية",
+        "endDate": "تاريخ النهاية",
+        "search": "البحث بمعرف الكيان أو الإجراء...",
+        "clearFilters": "مسح الفلاتر",
+        "allEntityTypes": "جميع أنواع الكيانات",
+        "allActions": "جميع الإجراءات"
+      },
+      "export": {
+        "csv": "تصدير CSV",
+        "pdf": "تصدير PDF",
+        "success": "تم تحميل التصدير بنجاح",
+        "error": "فشل تصدير سجلات المراجعة"
+      },
+      "table": {
+        "timestamp": "التوقيت",
+        "entityType": "نوع الكيان",
+        "entityId": "معرف الكيان",
+        "action": "الإجراء",
+        "performedBy": "بواسطة",
+        "ipAddress": "عنوان IP",
+        "metadata": "التفاصيل",
+        "system": "النظام",
+        "noResults": "لم يتم العثور على سجلات مراجعة",
+        "loading": "جاري تحميل سجلات المراجعة..."
+      },
+      "pagination": {
+        "showing": "عرض {from}-{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      }
     }
   },
   "supportCommon": {
@@ -10574,5 +10926,52 @@
         "technical": "تقني"
       }
     }
+  },
+  "paymentCallback": {
+    "processingTitle": "جاري معالجة الدفع",
+    "processingMessage": "يرجى الانتظار بينما نؤكد عملية الدفع. قد يستغرق ذلك بضع لحظات.",
+    "timeoutTitle": "يستغرق وقتاً أطول من المتوقع",
+    "timeoutMessage": "لا يزال يتم معالجة الدفع. يمكنك المحاولة مرة أخرى أو التواصل مع الدعم.",
+    "tryAgain": "التحقق مرة أخرى",
+    "errorTitle": "حدث خطأ",
+    "backToCourses": "العودة للدورات"
+  },
+  "paymentSuccess": {
+    "title": "تم الدفع بنجاح!",
+    "subtitle": "تم تأكيد الدفع وأنت الآن مسجل في الدورة.",
+    "paymentId": "رقم الدفع",
+    "amount": "المبلغ",
+    "gateway": "طريقة الدفع",
+    "status": "الحالة",
+    "paid": "مدفوع",
+    "goToDashboard": "الذهاب إلى لوحة التحكم",
+    "downloadInvoice": "تحميل الفاتورة",
+    "browseCourses": "تصفح المزيد من الدورات"
+  },
+  "paymentFailed": {
+    "title": "فشل الدفع",
+    "subtitle": "للأسف، لم يتم معالجة الدفع.",
+    "message": "لم تكتمل عملية الدفع. قد يكون ذلك بسبب عدم كفاية الرصيد أو رفض البطاقة أو مشكلة مؤقتة مع مزود الدفع. لم يتم خصم أي مبلغ من حسابك.",
+    "tryAgain": "حاول مرة أخرى",
+    "browseCourses": "تصفح الدورات",
+    "errors": {
+      "cardDeclined": "تم رفض بطاقتك. يرجى تجربة طريقة دفع أخرى.",
+      "insufficientFunds": "رصيد غير كافٍ. يرجى التحقق من رصيد حسابك.",
+      "expiredCard": "انتهت صلاحية بطاقتك. يرجى استخدام بطاقة أخرى.",
+      "gatewayTimeout": "انتهت مهلة بوابة الدفع. يرجى المحاولة مرة أخرى."
+    }
+  },
+  "verifyInvoice": {
+    "verifying": "جارٍ التحقق من الفاتورة...",
+    "notFound": "لم يتم العثور على الفاتورة",
+    "notFoundDesc": "لم يتم العثور على رقم الفاتورة المقدم في سجلاتنا.",
+    "verified": "تم التحقق من الفاتورة",
+    "verifiedDesc": "هذه الفاتورة أصلية وصادرة من شركة رؤيا المستقبل للتدريب الصحي.",
+    "invoiceNumber": "رقم الفاتورة",
+    "status": "الحالة",
+    "paid": "مدفوعة",
+    "pending": "قيد الانتظار",
+    "amount": "المبلغ",
+    "issuedDate": "تاريخ الإصدار"
   }
 }

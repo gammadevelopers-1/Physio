@@ -297,6 +297,7 @@ export class StorageService {
   }
 
   /**
+<<<<<<< HEAD
    * Read the malware-scan verdict produced by the Eventarc-triggered
    * scanner ([infra/malware-scanner/main.js](infra/malware-scanner/main.js)).
    *
@@ -373,6 +374,31 @@ export class StorageService {
     }
     const arrayBuffer = await response.arrayBuffer();
     return Buffer.from(arrayBuffer);
+  }
+
+  /**
+   * Get a file's contents as a Buffer (by bucket + filename).
+   * Used by the invoice service to embed assets in generated PDFs.
+   */
+  async getFileBuffer(
+    bucket: 'public' | 'private' | 'trainers',
+    filename: string,
+  ): Promise<Buffer | null> {
+    if (this.useLocal) {
+      const filePath = this.getLocalFilePath(bucket, filename);
+      if (!filePath) return null;
+      return fs.readFileSync(filePath);
+    }
+
+    const stream = await this.getFileStream(bucket, filename);
+    if (!stream) return null;
+
+    const chunks: Buffer[] = [];
+    return new Promise((resolve, reject) => {
+      stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+      stream.on('end', () => resolve(Buffer.concat(chunks)));
+      stream.on('error', reject);
+    });
   }
 
   // ── Private helpers ──

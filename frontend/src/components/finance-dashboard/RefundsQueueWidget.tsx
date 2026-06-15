@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { RotateCcw, Check, X, AlertCircle } from "lucide-react";
+import { RotateCcw, Check, X, AlertCircle, Loader2 } from "lucide-react";
 
 interface RefundItem {
   id: string;
@@ -15,27 +16,30 @@ interface RefundItem {
 
 interface RefundsQueueWidgetProps {
   refunds: RefundItem[];
+  onApprove?: (refundId: string) => Promise<void>;
+  onReject?: (refundId: string) => void;
 }
 
-const RefundsQueueWidget = ({ refunds }: RefundsQueueWidgetProps) => {
+const RefundsQueueWidget = ({ refunds, onApprove, onReject }: RefundsQueueWidgetProps) => {
+  const [processingId, setProcessingId] = useState<string | null>(null);
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
 
   return (
-    <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
+    <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-[#F3F4F6]">
         <div className="flex items-center gap-2">
           <RotateCcw className="w-5 h-5 text-[#EA580C]" />
-          <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
+          <h3 className="text-base font-semibold text-[#111827]">
             {t("refundsQueue.title")}
           </h3>
           <span className="bg-[#EF4444] text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
             {refunds.length}
           </span>
         </div>
-        <button className="text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline">
+        <button className="text-sm font-medium text-[#a37f49] hover:text-[#6b4e24] hover:underline">
           {t("refundsQueue.viewAll")}
         </button>
       </div>
@@ -44,7 +48,7 @@ const RefundsQueueWidget = ({ refunds }: RefundsQueueWidgetProps) => {
       <div className="p-5 space-y-3">
         {refunds.map((refund) => (
           <div key={refund.id}>
-            <div className="flex items-center gap-3 p-3.5 bg-[var(--color-surface-page)] rounded-xl border border-[#F3F4F6]">
+            <div className="flex items-center gap-3 p-3.5 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
               {/* Icon */}
               <div className="w-10 h-10 rounded-full bg-[#FFEDD5] flex items-center justify-center flex-shrink-0">
                 <RotateCcw className="w-4 h-4 text-[#EA580C]" />
@@ -52,21 +56,21 @@ const RefundsQueueWidget = ({ refunds }: RefundsQueueWidgetProps) => {
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-medium text-[var(--color-text-secondary)]">
+                <p className="text-[13px] font-medium text-[#111827]">
                   {refund.customer}
                 </p>
-                <p className="text-[11px] text-[var(--color-text-secondary)] truncate">
+                <p className="text-[11px] text-[#6B7280] truncate">
                   {refund.course} - {refund.reason}
                 </p>
               </div>
 
               {/* Amount */}
               <div className={`${isRTL ? "text-left" : "text-right"} flex-shrink-0`}>
-                <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
+                <p className="text-sm font-semibold text-[#111827]">
                   {refund.refundAmount}
                 </p>
                 {refund.originalAmount !== refund.refundAmount && (
-                  <p className="text-[11px] text-[var(--color-text-secondary)] line-through">
+                  <p className="text-[11px] text-[#9CA3AF] line-through">
                     {refund.originalAmount}
                   </p>
                 )}
@@ -82,11 +86,27 @@ const RefundsQueueWidget = ({ refunds }: RefundsQueueWidgetProps) => {
                 </div>
               )}
               <div className="flex gap-2 w-full">
-                <button className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-[#16A34A] text-white text-[11px] font-medium rounded-md hover:bg-[#15803D] transition-colors">
-                  <Check className="w-3 h-3" />
+                <button
+                  onClick={async () => {
+                    if (!onApprove) return;
+                    setProcessingId(refund.id);
+                    try { await onApprove(refund.id); } finally { setProcessingId(null); }
+                  }}
+                  disabled={processingId === refund.id}
+                  className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-[#16A34A] text-white text-[11px] font-medium rounded-md hover:bg-[#15803D] transition-colors disabled:opacity-50"
+                >
+                  {processingId === refund.id ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Check className="w-3 h-3" />
+                  )}
                   {t("refundsQueue.approve")}
                 </button>
-                <button className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-[var(--color-surface-card)] text-[#DC2626] text-[11px] font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEE2E2] transition-colors">
+                <button
+                  onClick={() => onReject?.(refund.id)}
+                  disabled={processingId === refund.id}
+                  className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-white text-[#DC2626] text-[11px] font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEE2E2] transition-colors disabled:opacity-50"
+                >
                   <X className="w-3 h-3" />
                   {t("refundsQueue.reject")}
                 </button>

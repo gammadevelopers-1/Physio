@@ -5,6 +5,7 @@ import {
   numeric,
   timestamp,
   jsonb,
+  text,
   index,
   check,
 } from 'drizzle-orm/pg-core';
@@ -13,44 +14,52 @@ import { users } from './users';
 import { courses } from './courses';
 import { enrollments } from './enrollments';
 
-/**
- * Payment records for paid courses. Today the platform only writes
- * "placeholder" rows from the checkout endpoint — when the real payment
- * provider (Stripe / HyperPay / etc.) is integrated, only the provider +
- * providerRef + status fields change. The shape stays the same so the
- * upcoming finance dashboard can read against this table from day one.
- */
 export const payments = pgTable(
   'payments',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id),
-    courseId: uuid('course_id')
-      .notNull()
-      .references(() => courses.id),
     enrollmentId: uuid('enrollment_id').references(() => enrollments.id, {
       onDelete: 'set null',
     }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    courseId: uuid('course_id')
+      .notNull()
+      .references(() => courses.id, { onDelete: 'cascade' }),
+    gateway: varchar('gateway', { length: 20 }).notNull(),
+    gatewayChargeId: varchar('gateway_charge_id', { length: 255 }),
+    paymentMethod: varchar('payment_method', { length: 20 }),
     amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
     currency: varchar('currency', { length: 3 }).notNull().default('SAR'),
-    status: varchar('status', { length: 20 }).notNull().default('completed'),
-    provider: varchar('provider', { length: 50 }).notNull().default('placeholder'),
-    providerRef: varchar('provider_ref', { length: 255 }),
-    metadata: jsonb('metadata').$type<Record<string, unknown>>(),
+    status: varchar('status', { length: 30 }).notNull().default('pending'),
+    gatewayResponse: jsonb('gateway_response'),
+    errorCode: varchar('error_code', { length: 50 }),
+    paidAt: timestamp('paid_at'),
+    failedAt: timestamp('failed_at'),
+    failureReason: text('failure_reason'),
+    metadata: jsonb('metadata'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => [
     index('payments_user_id_idx').on(table.userId),
     index('payments_course_id_idx').on(table.courseId),
-    index('payments_enrollment_id_idx').on(table.enrollmentId),
     index('payments_status_idx').on(table.status),
+    index('payments_gateway_idx').on(table.gateway),
     index('payments_created_at_idx').on(table.createdAt),
+    index('payments_gateway_charge_id_idx').on(table.gatewayChargeId),
+    check(
+      'payments_gateway_check',
+      sql`${table.gateway} IN ('tap', 'moyasar', 'tamara', 'tabby', 'mock')`,
+    ),
     check(
       'payments_status_check',
-      sql`${table.status} IN ('pending', 'completed', 'failed', 'refunded')`,
+      sql`${table.status} IN ('pending', 'processing', 'paid', 'failed', 'refunded', 'partially_refunded', 'chargeback')`,
+    ),
+    check(
+      'payments_method_check',
+      sql`${table.paymentMethod} IS NULL OR ${table.paymentMethod} IN ('card', 'mada', 'apple_pay', 'bnpl')`,
     ),
   ],
 );
@@ -75,15 +84,34 @@ export type NewPayment = typeof payments.$inferInsert;
 
 export const PAYMENT_STATUS = {
   PENDING: 'pending',
-  COMPLETED: 'completed',
+  PROCESSING: 'processing',
+  PAID: 'paid',
   FAILED: 'failed',
   REFUNDED: 'refunded',
+  PARTIALLY_REFUNDED: 'partially_refunded',
+  CHARGEBACK: 'chargeback',
 } as const;
 
-export type PaymentStatus = (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
+export type PaymentStatus =
+  (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
 
-export const PAYMENT_PROVIDER = {
-  PLACEHOLDER: 'placeholder',
-  STRIPE: 'stripe',
-  HYPERPAY: 'hyperpay',
+export const PAYMENT_GATEWAY = {
+  TAP: 'tap',
+  MOYASAR: 'moyasar',
+  TAMARA: 'tamara',
+  TABBY: 'tabby',
+  MOCK: 'mock',
 } as const;
+
+export type PaymentGatewayType =
+  (typeof PAYMENT_GATEWAY)[keyof typeof PAYMENT_GATEWAY];
+
+export const PAYMENT_METHOD = {
+  CARD: 'card',
+  MADA: 'mada',
+  APPLE_PAY: 'apple_pay',
+  BNPL: 'bnpl',
+} as const;
+
+export type PaymentMethodType =
+  (typeof PAYMENT_METHOD)[keyof typeof PAYMENT_METHOD];

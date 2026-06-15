@@ -103,7 +103,7 @@ const FinanceKPICards = ({ data }: FinanceKPICardsProps) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+    <div role="region" aria-label="Finance KPI cards" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
       {kpiCards.map((card) => {
         const Icon = card.icon;
         return (

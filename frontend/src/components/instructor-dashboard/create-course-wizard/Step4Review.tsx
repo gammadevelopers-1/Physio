@@ -127,6 +127,68 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
         </dl>
       </div>
 
+      {/* Pricing & CME */}
+      <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-semibold text-[#1F2937]">
+            {t("reviewPricing")}
+          </h3>
+          <button
+            type="button"
+            onClick={() => goToStep(2)}
+            className="inline-flex items-center gap-1 text-sm text-[#3B82F6] hover:text-[#2563EB]"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+            {t("editStep")}
+          </button>
+        </div>
+        <dl className="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-3 text-sm">
+          <div>
+            <dt className="text-[#6B7280]">{t("pricingTitle")}</dt>
+            <dd className="font-medium text-[#1F2937]">
+              <span
+                className={`inline-block px-2 py-0.5 text-xs rounded-full ${
+                  state.pricingType === "free"
+                    ? "bg-green-50 text-green-700"
+                    : "bg-blue-50 text-blue-700"
+                }`}
+              >
+                {state.pricingType === "free" ? t("pricingFree") : t("pricingPaid")}
+              </span>
+            </dd>
+          </div>
+          {state.pricingType === "paid" && state.price && (
+            <div>
+              <dt className="text-[#6B7280]">{t("priceLabel")}</dt>
+              <dd className="font-medium text-[#1F2937]">
+                {Number(state.price).toFixed(2)} SAR
+              </dd>
+            </div>
+          )}
+          {state.enrollmentDeadline && (
+            <div>
+              <dt className="text-[#6B7280]">{t("enrollmentDeadlineLabel")}</dt>
+              <dd className="font-medium text-[#1F2937]">
+                {new Date(state.enrollmentDeadline).toLocaleString()}
+              </dd>
+            </div>
+          )}
+          {state.cmeHours && (
+            <div>
+              <dt className="text-[#6B7280]">{t("cmeHoursLabel")}</dt>
+              <dd className="font-medium text-[#1F2937]">{state.cmeHours}</dd>
+            </div>
+          )}
+          <div>
+            <span
+              className={`px-2 py-1 text-xs rounded-full ${state.isCmeAccredited ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}
+            >
+              {state.isCmeAccredited ? "\u2713" : "\u2717"} {t("cmeAccreditedLabel")}
+            </span>
+          </div>
+        </dl>
+      </div>
+
       {/* Modules */}
       <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-6">
         <div className="flex items-center justify-between mb-3">

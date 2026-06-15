@@ -119,6 +119,11 @@ export * from './course-redemption-settings';
 // Sidebar alert badges — per-user last-viewed timestamps per tab
 export * from './sidebar-views';
 
+// Extended payment schemas (invoices/refunds/discounts)
+export * from './invoices';
+export * from './refunds';
+export * from './discount-codes';
+
 // Health check (can remove later)
 import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';
 

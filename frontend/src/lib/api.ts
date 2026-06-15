@@ -1632,7 +1632,7 @@ export const instructorApi = {
     api.get<CourseSessionsResponse>(`/sessions?courseId=${courseId}&limit=50`),
 
   // Course creation
-  createCourse: (data: { title: string; titleAr?: string; description?: string; descriptionAr?: string; deliveryType: string; thumbnail?: string; maxEnrollment?: number; startDate?: string; endDate?: string; cohort?: string }) =>
+  createCourse: (data: { title: string; titleAr?: string; description?: string; descriptionAr?: string; deliveryType: string; thumbnail?: string; maxEnrollment?: number; startDate?: string; endDate?: string; cohort?: string; price?: number; enrollmentDeadline?: string; cmeHours?: number; isCmeAccredited?: boolean }) =>
     api.post<CourseDetailResponse>('/courses', data),
 
   // Course update & delete
@@ -6666,6 +6666,518 @@ export const supportApi = {
       '/tickets/config/retention',
       { days },
     ),
+};
+
+// ===========================================
+// Payment API
+// ===========================================
+
+export const paymentApi = {
+  initiate: (data: {
+    courseId: string;
+    gateway: string;
+    paymentMethod: string;
+    discountCode?: string;
+    locale?: string;
+  }) => api.post<{ paymentId: string; redirectUrl: string; amount: number; currency: string }>('/payments/initiate', data),
+
+  verify: (paymentId: string) =>
+    api.post<{ status: string; paymentId: string; amount?: string; currency?: string; gateway?: string; paidAt?: string; failureReason?: string }>(`/payments/verify/${paymentId}`),
+
+  getMyPayments: (page = 1, limit = 10) =>
+    api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/payments/my-payments?page=${page}&limit=${limit}`),
+
+  getAll: (page = 1, limit = 10, filters?: { status?: string; search?: string; startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters?.status && filters.status !== 'all') sp.set('status', filters.status);
+    if (filters?.search) sp.set('search', filters.search);
+    if (filters?.startDate) sp.set('startDate', filters.startDate);
+    if (filters?.endDate) sp.set('endDate', filters.endDate);
+    return api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/payments?${sp.toString()}`);
+  },
+};
+
+// ===========================================
+// Invoice API
+// ===========================================
+
+export const invoiceApi = {
+  getMyInvoices: (page = 1, limit = 10) =>
+    api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/invoices/my-invoices?page=${page}&limit=${limit}`),
+
+  getAll: (page = 1, limit = 10, filters?: { status?: string; startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters?.status && filters.status !== 'all') sp.set('status', filters.status);
+    if (filters?.startDate) sp.set('startDate', filters.startDate);
+    if (filters?.endDate) sp.set('endDate', filters.endDate);
+    return api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/invoices?${sp.toString()}`);
+  },
+
+  getPdfUrl: (invoiceId: string) =>
+    api.get<{ url: string; invoiceNumber: string }>(`/invoices/${invoiceId}/pdf`),
+
+  resend: (invoiceId: string) =>
+    api.post<{ sent: boolean }>(`/invoices/${invoiceId}/resend`),
+};
+
+// ===========================================
+// Refund API
+// ===========================================
+
+export const refundApi = {
+  request: (data: { paymentId: string; reason: string; reasonNote?: string }) =>
+    api.post<any>('/refunds', data),
+
+  getAll: (page = 1, limit = 10, filters?: { status?: string; search?: string; startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters?.status && filters.status !== 'all') sp.set('status', filters.status);
+    if (filters?.search) sp.set('search', filters.search);
+    if (filters?.startDate) sp.set('startDate', filters.startDate);
+    if (filters?.endDate) sp.set('endDate', filters.endDate);
+    return api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/refunds?${sp.toString()}`);
+  },
+
+  getById: (refundId: string) =>
+    api.get<any>(`/refunds/${refundId}`),
+
+  approve: (refundId: string, approvalNote?: string) =>
+    api.patch<{ status: string }>(`/refunds/${refundId}/approve`, approvalNote ? { approvalNote } : {}),
+
+  reject: (refundId: string, rejectionNote: string) =>
+    api.patch<{ status: string }>(`/refunds/${refundId}/reject`, { rejectionNote }),
+
+  export: async (params?: { status?: string; startDate?: string; endDate?: string }) => {
+    const token = getAccessToken();
+    const sp = new URLSearchParams();
+    if (params?.status) sp.set('status', params.status);
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+
+    const res = await fetch(`${API_URL}/refunds/export${qs ? `?${qs}` : ''}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error('Export failed');
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `refunds-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
+};
+
+// ===========================================
+// Finance API
+// ===========================================
+
+export const financeApi = {
+  getSummary: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<any>(`/finance/summary${qs ? `?${qs}` : ''}`);
+  },
+
+  getRevenueBySource: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<any[]>(`/finance/revenue-by-source${qs ? `?${qs}` : ''}`);
+  },
+
+  getPaymentStatus: () =>
+    api.get<any[]>('/finance/payment-status'),
+
+  getRefundRate: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<any>(`/finance/refund-rate${qs ? `?${qs}` : ''}`);
+  },
+
+  getInvoiceAging: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<{
+      current: { count: number; amount: number };
+      thirtyDay: { count: number; amount: number };
+      sixtyDay: { count: number; amount: number };
+      ninetyPlus: { count: number; amount: number };
+      paid: { count: number; amount: number };
+    }>(`/finance/invoice-aging${qs ? `?${qs}` : ''}`);
+  },
+
+  getRevenueTrend: (params?: { period?: 'day' | 'week' | 'month'; startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.period) sp.set('period', params.period);
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<Array<{ period: string; revenue: number; count: number }>>(`/finance/revenue-trend${qs ? `?${qs}` : ''}`);
+  },
+
+  getTopCourses: (params?: { limit?: number; startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.limit) sp.set('limit', String(params.limit));
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<Array<{ courseId: string; title: string; titleAr: string | null; revenue: number; count: number }>>(`/finance/top-courses${qs ? `?${qs}` : ''}`);
+  },
+
+  exportCsv: async (params?: { startDate?: string; endDate?: string; status?: string; reportType?: string; locale?: string }) => {
+    const token = getAccessToken();
+    const query = new URLSearchParams();
+    if (params?.startDate) query.set('startDate', params.startDate);
+    if (params?.endDate) query.set('endDate', params.endDate);
+    if (params?.status) query.set('status', params.status);
+    if (params?.reportType) query.set('reportType', params.reportType);
+    if (params?.locale) query.set('locale', params.locale);
+    const qs = query.toString();
+
+    const res = await fetch(`${API_URL}/finance/export${qs ? `?${qs}` : ''}`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    if (!res.ok) throw new Error('Export failed');
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `finance-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
+
+  exportPdf: async (params?: { startDate?: string; endDate?: string; status?: string; reportType?: string; locale?: string }) => {
+    const token = getAccessToken();
+    const query = new URLSearchParams({ format: 'pdf' });
+    if (params?.startDate) query.set('startDate', params.startDate);
+    if (params?.endDate) query.set('endDate', params.endDate);
+    if (params?.status) query.set('status', params.status);
+    if (params?.reportType) query.set('reportType', params.reportType);
+    if (params?.locale) query.set('locale', params.locale);
+
+    const res = await fetch(`${API_URL}/finance/export?${query.toString()}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error('Export failed');
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `finance-export-${new Date().toISOString().slice(0, 10)}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
+
+  exportExcel: async (params?: { startDate?: string; endDate?: string; reportType?: string; locale?: string }) => {
+    const token = getAccessToken();
+    const query = new URLSearchParams({ format: 'xlsx' });
+    if (params?.startDate) query.set('startDate', params.startDate);
+    if (params?.endDate) query.set('endDate', params.endDate);
+    if (params?.reportType) query.set('reportType', params.reportType);
+    if (params?.locale) query.set('locale', params.locale);
+
+    const res = await fetch(`${API_URL}/finance/export?${query.toString()}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error('Export failed');
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `finance-report-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
+
+  getRevenueByCourse: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<Array<{
+      courseId: string;
+      title: string;
+      titleAr: string | null;
+      revenue: number;
+      refundAmount: number;
+      netRevenue: number;
+      marginPercent: number;
+      enrollmentCount: number;
+    }>>(`/finance/revenue-by-course${qs ? `?${qs}` : ''}`);
+  },
+
+  getRevenueByInstructor: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<Array<{
+      instructorId: string | null;
+      instructorName: string;
+      courseCount: number;
+      revenue: number;
+      refundAmount: number;
+      netRevenue: number;
+      platformFee: number;
+      netPayout: number;
+      enrollmentCount: number;
+    }>>(`/finance/revenue-by-instructor${qs ? `?${qs}` : ''}`);
+  },
+
+  getRevenueByDeliveryType: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<Array<{
+      deliveryType: string;
+      revenue: number;
+      refundAmount: number;
+      netRevenue: number;
+      marginPercent: number;
+      enrollmentCount: number;
+      courseCount: number;
+    }>>(`/finance/revenue-by-delivery-type${qs ? `?${qs}` : ''}`);
+  },
+
+  getChargebackRate: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<{
+      chargebackCount: number;
+      chargebackAmount: number;
+      totalTransactions: number;
+      chargebackRate: string;
+      breakdown: Array<{
+        courseId: string;
+        courseTitle: string;
+        gateway: string;
+        chargebackCount: number;
+        chargebackAmount: number;
+      }>;
+    }>(`/finance/chargeback-rate${qs ? `?${qs}` : ''}`);
+  },
+
+  // ── Audit Log ──
+
+  getAuditLogs: (params?: {
+    entityType?: string;
+    action?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const sp = new URLSearchParams();
+    if (params?.entityType) sp.set('entityType', params.entityType);
+    if (params?.action) sp.set('action', params.action);
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    if (params?.search) sp.set('search', params.search);
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return api.get<{
+      data: Array<{
+        id: string;
+        entityType: string;
+        entityId: string;
+        action: string;
+        performedBy: string | null;
+        metadata: Record<string, unknown> | null;
+        ipAddress: string | null;
+        createdAt: string;
+        performerFirstName: string | null;
+        performerLastName: string | null;
+        performerEmail: string | null;
+      }>;
+      total: number;
+      page: number;
+      limit: number;
+    }>(`/audit-logs/finance${qs ? `?${qs}` : ''}`);
+  },
+
+  getAuditLogFilters: () => {
+    return api.get<{ entityTypes: string[]; actions: string[] }>('/audit-logs/finance/filters');
+  },
+
+  exportAuditLogsCsv: async (params?: {
+    entityType?: string;
+    action?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+  }) => {
+    const token = getAccessToken();
+    const query = new URLSearchParams({ format: 'csv' });
+    if (params?.entityType) query.set('entityType', params.entityType);
+    if (params?.action) query.set('action', params.action);
+    if (params?.startDate) query.set('startDate', params.startDate);
+    if (params?.endDate) query.set('endDate', params.endDate);
+    if (params?.search) query.set('search', params.search);
+
+    const res = await fetch(`${API_URL}/audit-logs/finance/export?${query.toString()}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error('Export failed');
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audit-trail-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
+
+  exportAuditLogsPdf: async (params?: {
+    entityType?: string;
+    action?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+  }) => {
+    const token = getAccessToken();
+    const query = new URLSearchParams({ format: 'pdf' });
+    if (params?.entityType) query.set('entityType', params.entityType);
+    if (params?.action) query.set('action', params.action);
+    if (params?.startDate) query.set('startDate', params.startDate);
+    if (params?.endDate) query.set('endDate', params.endDate);
+    if (params?.search) query.set('search', params.search);
+
+    const res = await fetch(`${API_URL}/audit-logs/finance/export?${query.toString()}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error('Export failed');
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audit-trail-${new Date().toISOString().slice(0, 10)}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
+};
+
+// ===========================================
+// Discount API
+// ===========================================
+
+export const discountApi = {
+  validate: (code: string, courseId: string) =>
+    api.post<{ valid: boolean; discountAmount: number; discountId: string | null; error?: string }>('/discounts/validate', { code, courseId }),
+
+  getAll: (page = 1, limit = 10, filters?: { status?: string; search?: string; startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters?.status && filters.status !== 'all') sp.set('status', filters.status);
+    if (filters?.search) sp.set('search', filters.search);
+    if (filters?.startDate) sp.set('startDate', filters.startDate);
+    if (filters?.endDate) sp.set('endDate', filters.endDate);
+    return api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/discounts?${sp.toString()}`);
+  },
+
+  getById: (id: string) => api.get<any>(`/discounts/${id}`),
+
+  getAnalytics: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<{
+      totalSavings: number;
+      avgDiscountPerUse: number;
+      totalRedemptions: number;
+      revenueLift: { withCoupon: number; withoutCoupon: number; liftPercentage: number };
+      cannibalization: { totalCouponUsers: number; repeatBuyerCount: number; rate: number };
+      topCoupons: Array<{ id: string; code: string; type: string; value: number; isActive: boolean; conversions: number; totalSaved: number }>;
+    }>(`/discounts/analytics${qs ? `?${qs}` : ''}`);
+  },
+
+  create: (data: {
+    code: string;
+    type: string;
+    value: number;
+    maxUses?: number;
+    minOrderAmount?: number;
+    courseIds?: string[];
+    validFrom?: string;
+    validUntil?: string;
+  }) => api.post<any>('/discounts', data),
+
+  bulkGenerate: (data: {
+    prefix: string;
+    count: number;
+    type: string;
+    value: number;
+    maxUses?: number;
+    minOrderAmount?: number;
+    courseIds?: string[];
+    validFrom?: string;
+    validUntil?: string;
+  }) => api.post<{ created: number; codes: string[] }>('/discounts/bulk', data),
+
+  update: (id: string, data: any) =>
+    api.patch<any>(`/discounts/${id}`, data),
+
+  delete: (id: string) =>
+    api.delete<{ deleted: boolean }>(`/discounts/${id}`),
+
+  export: async (params?: { status?: string; search?: string; startDate?: string; endDate?: string }) => {
+    const token = getAccessToken();
+    const sp = new URLSearchParams();
+    if (params?.status) sp.set('status', params.status);
+    if (params?.search) sp.set('search', params.search);
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+
+    const res = await fetch(`${API_URL}/discounts/export${qs ? `?${qs}` : ''}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error('Export failed');
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `discounts-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
 };
 
 export default api;

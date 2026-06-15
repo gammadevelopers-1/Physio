@@ -171,6 +171,33 @@ import { TemplateResolverService } from '../templates/template-resolver.service'
 import { findTemplateMeta } from '../templates/template-registry';
 import { AdminSettingsService } from '../admin-settings/admin-settings.service';
 
+// Payment-related template imports (from haseeb/payment-integration merge)
+import {
+  getPaymentConfirmationHtml,
+  getPaymentConfirmationText,
+} from './templates/payment-confirmation.template';
+import {
+  getPaymentFailedHtml,
+  getPaymentFailedText,
+} from './templates/payment-failed.template';
+import {
+  getRefundRequestedHtml,
+  getRefundRequestedText,
+  getRefundApprovedHtml,
+  getRefundApprovedText,
+  getRefundRejectedHtml,
+  getRefundRejectedText,
+  getRefundCompletedHtml,
+  getRefundCompletedText,
+} from './templates/refund-notification.template';
+// `eq`, `db`, `users` already imported at the top of this file.
+import {
+  payments,
+  invoices,
+  refunds,
+  courses,
+} from '../../database/schema';
+
 /**
  * Admin-toggleable categories. `account` is intentionally absent —
  * OTP, password reset, and set-password emails are always allowed
@@ -1924,6 +1951,255 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
         `Failed to send hold decision email to ${to}`,
         error,
       );
+    }
+  }
+  // ─── Payment Email Methods ──────────────────────────────
+
+  private async getUserData(userId: string) {
+    const [user] = await db
+      .select({
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    return user;
+  }
+
+  async sendPaymentConfirmation(
+    userId: string,
+    paymentId: string,
+    pdfAttachment?: { buffer: Buffer; filename: string },
+  ): Promise<void> {
+    try {
+      const user = await this.getUserData(userId);
+      if (!user) return;
+
+      const [payment] = await db
+        .select()
+        .from(payments)
+        .where(eq(payments.id, paymentId))
+        .limit(1);
+      if (!payment) return;
+
+      const [course] = await db
+        .select({ title: courses.title })
+        .from(courses)
+        .where(eq(courses.id, payment.courseId))
+        .limit(1);
+
+      const [invoice] = await db
+        .select({ invoiceNumber: invoices.invoiceNumber })
+        .from(invoices)
+        .where(eq(invoices.paymentId, paymentId))
+        .limit(1);
+
+      const studentName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Student';
+      const params = {
+        studentName,
+        courseName: course?.title || 'Course',
+        amount: String(payment.amount),
+        currency: payment.currency,
+        invoiceNumber: invoice?.invoiceNumber || 'N/A',
+        gateway: payment.gateway,
+        transactionId: payment.gatewayChargeId || 'N/A',
+      };
+
+      await this.send({
+        to: user.email,
+        subject: `Payment Confirmed - ${course?.title || 'Course'}`,
+        html: getPaymentConfirmationHtml(params),
+        text: getPaymentConfirmationText(params),
+        ...(pdfAttachment && {
+          attachments: [
+            {
+              filename: pdfAttachment.filename,
+              content: pdfAttachment.buffer,
+            },
+          ],
+        }),
+      });
+      this.logger.log(`Payment confirmation email sent to ${user.email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send payment confirmation email`, error);
+    }
+  }
+
+  async sendPaymentFailed(userId: string, paymentId: string): Promise<void> {
+    try {
+      const user = await this.getUserData(userId);
+      if (!user) return;
+
+      const [payment] = await db
+        .select()
+        .from(payments)
+        .where(eq(payments.id, paymentId))
+        .limit(1);
+      if (!payment) return;
+
+      const [course] = await db
+        .select({ title: courses.title })
+        .from(courses)
+        .where(eq(courses.id, payment.courseId))
+        .limit(1);
+
+      const studentName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Student';
+      const params = {
+        studentName,
+        courseName: course?.title || 'Course',
+        amount: String(payment.amount),
+        currency: payment.currency,
+      };
+
+      await this.send({
+        to: user.email,
+        subject: `Payment Failed - ${course?.title || 'Course'}`,
+        html: getPaymentFailedHtml(params),
+        text: getPaymentFailedText(params),
+      });
+      this.logger.log(`Payment failed email sent to ${user.email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send payment failed email`, error);
+    }
+  }
+
+  async sendRefundRequested(
+    userId: string,
+    refundId: string,
+  ): Promise<void> {
+    try {
+      const user = await this.getUserData(userId);
+      if (!user) return;
+
+      const [refund] = await db
+        .select()
+        .from(refunds)
+        .where(eq(refunds.id, refundId))
+        .limit(1);
+      if (!refund) return;
+
+      const studentName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Student';
+
+      await this.send({
+        to: user.email,
+        subject: 'Refund Request Received - PhysioGuidance',
+        html: getRefundRequestedHtml({
+          studentName,
+          amount: String(refund.refundAmount),
+          currency: 'SAR',
+        }),
+        text: getRefundRequestedText({
+          studentName,
+          amount: String(refund.refundAmount),
+          currency: 'SAR',
+        }),
+      });
+      this.logger.log(`Refund requested email sent to ${user.email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send refund requested email`, error);
+    }
+  }
+
+  async sendRefundApproved(
+    userId: string,
+    refundId: string,
+  ): Promise<void> {
+    try {
+      const user = await this.getUserData(userId);
+      if (!user) return;
+
+      const [refund] = await db
+        .select()
+        .from(refunds)
+        .where(eq(refunds.id, refundId))
+        .limit(1);
+      if (!refund) return;
+
+      const studentName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Student';
+
+      await this.send({
+        to: user.email,
+        subject: 'Refund Approved - PhysioGuidance',
+        html: getRefundApprovedHtml({
+          studentName,
+          amount: String(refund.refundAmount),
+          currency: 'SAR',
+        }),
+        text: getRefundApprovedText({
+          studentName,
+          amount: String(refund.refundAmount),
+          currency: 'SAR',
+        }),
+      });
+      this.logger.log(`Refund approved email sent to ${user.email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send refund approved email`, error);
+    }
+  }
+
+  async sendRefundRejected(
+    userId: string,
+    refundId: string,
+    rejectionNote: string,
+  ): Promise<void> {
+    try {
+      const user = await this.getUserData(userId);
+      if (!user) return;
+
+      const studentName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Student';
+
+      await this.send({
+        to: user.email,
+        subject: 'Refund Request Update - PhysioGuidance',
+        html: getRefundRejectedHtml({ studentName, rejectionNote }),
+        text: getRefundRejectedText({ studentName, rejectionNote }),
+      });
+      this.logger.log(`Refund rejected email sent to ${user.email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send refund rejected email`, error);
+    }
+  }
+
+  async sendRefundCompleted(
+    userId: string,
+    refundId: string,
+  ): Promise<void> {
+    try {
+      const user = await this.getUserData(userId);
+      if (!user) return;
+
+      const [refund] = await db
+        .select()
+        .from(refunds)
+        .where(eq(refunds.id, refundId))
+        .limit(1);
+      if (!refund) return;
+
+      const studentName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Student';
+
+      await this.send({
+        to: user.email,
+        subject: 'Refund Completed - PhysioGuidance',
+        html: getRefundCompletedHtml({
+          studentName,
+          originalAmount: String(refund.originalAmount),
+          deductionAmount: String(refund.deductionAmount),
+          refundAmount: String(refund.refundAmount),
+          currency: 'SAR',
+        }),
+        text: getRefundCompletedText({
+          studentName,
+          originalAmount: String(refund.originalAmount),
+          deductionAmount: String(refund.deductionAmount),
+          refundAmount: String(refund.refundAmount),
+          currency: 'SAR',
+        }),
+      });
+      this.logger.log(`Refund completed email sent to ${user.email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send refund completed email`, error);
     }
   }
 }

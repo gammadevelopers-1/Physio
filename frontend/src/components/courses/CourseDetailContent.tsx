@@ -540,10 +540,10 @@ const CourseDetailContent = ({
     }
   };
 
-  // Paid-course Buy Now → opens the checkout modal (placeholder payment),
-  // but ONLY for Webinar Courses. Other paid course types still hit the
-  // original "contact us" message until the real payment provider is
-  // wired — otherwise the placeholder would let students enrol for free.
+  // Paid-course Buy Now → redirect to the unified /checkout page which
+  // handles gateway selection (Moyasar/Tap/Tamara/Tabby), discount codes
+  // and the real payment redirect. Free / placeholder enrollment paths
+  // remain on this page (handled by `handlePay` below).
   const openCheckout = () => {
     if (!apiCourse) return;
     if (!isAuthenticated) {
@@ -554,12 +554,7 @@ const CourseDetailContent = ({
       alert(t("enrollment.contactMessage"));
       return;
     }
-    if (apiCourse.deliveryType !== "webinar") {
-      alert(t("enrollment.contactMessage"));
-      return;
-    }
-    setEnrollResult(null);
-    setCheckoutOpen(true);
+    router.push(`/${locale}/checkout?courseId=${apiCourse.id}`);
   };
 
   const handlePay = async () => {

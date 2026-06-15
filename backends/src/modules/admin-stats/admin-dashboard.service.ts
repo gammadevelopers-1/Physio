@@ -490,17 +490,17 @@ export class AdminDashboardService {
           ),
         db
           .select({
-            provider: payments.provider,
+            provider: payments.gateway,
             total: sql<string>`coalesce(sum(${payments.amount}), 0)::text`,
           })
           .from(payments)
           .where(
             and(
-              eq(payments.status, 'completed'),
+              eq(payments.status, 'paid'),
               gte(payments.createdAt, startOfMonth),
             ),
           )
-          .groupBy(payments.provider),
+          .groupBy(payments.gateway),
         db
           .select({ value: count() })
           .from(payments)

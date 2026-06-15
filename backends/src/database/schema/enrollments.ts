@@ -38,7 +38,7 @@ export const enrollments = pgTable(
     index('enrollments_status_idx').on(table.status),
     check(
       'enrollments_status_check',
-      sql`${table.status} IN ('active', 'completed', 'dropped', 'suspended')`,
+      sql`${table.status} IN ('pending_payment', 'active', 'completed', 'dropped', 'suspended')`,
     ),
     check(
       'enrollments_progress_check',
@@ -62,6 +62,7 @@ export type Enrollment = typeof enrollments.$inferSelect;
 export type NewEnrollment = typeof enrollments.$inferInsert;
 
 export const ENROLLMENT_STATUS = {
+  PENDING_PAYMENT: 'pending_payment',
   ACTIVE: 'active',
   COMPLETED: 'completed',
   DROPPED: 'dropped',

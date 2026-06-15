@@ -6634,6 +6634,8 @@ export const financeApi = {
       revenue: number;
       refundAmount: number;
       netRevenue: number;
+      platformFee: number;
+      netPayout: number;
       enrollmentCount: number;
     }>>(`/finance/revenue-by-instructor${qs ? `?${qs}` : ''}`);
   },

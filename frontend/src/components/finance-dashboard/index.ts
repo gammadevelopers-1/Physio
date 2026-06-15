@@ -14,3 +14,4 @@ export { default as DiscountsContent } from "./DiscountsContent";
 export { default as FinanceReportsContent } from "./FinanceReportsContent";
 export { default as FinanceSettingsContent } from "./FinanceSettingsContent";
 export { default as AuditLogContent } from "./AuditLogContent";
+export { default as FinanceSupportContent } from "./FinanceSupportContent";

@@ -190,10 +190,8 @@ import {
   getRefundCompletedHtml,
   getRefundCompletedText,
 } from './templates/refund-notification.template';
-import { eq } from 'drizzle-orm';
-import { db } from '../../database';
+// `eq`, `db`, `users` already imported at the top of this file.
 import {
-  users,
   payments,
   invoices,
   refunds,

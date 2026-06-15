@@ -16,43 +16,47 @@ ALTER TABLE payments ADD COLUMN IF NOT EXISTS paid_at TIMESTAMP;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS failed_at TIMESTAMP;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS failure_reason TEXT;
 
--- 1b. Backfill gateway from provider for any existing rows.
+-- 1b. Drop old check constraints FIRST so subsequent UPDATEs can move data
+-- into the new vocabulary ('paid', 'mock', etc.) without violating the
+-- pre-migration enum ('pending', 'completed', 'failed', 'refunded').
+ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_status_check;
+
+-- 1c. Backfill gateway from provider for any existing rows.
 -- Legacy values: 'placeholder' / 'stripe' / 'hyperpay' → all become 'mock'
 -- so they pass the new check constraint. They were never real payments.
 UPDATE payments SET gateway = 'mock'
   WHERE gateway IS NULL;
 
--- 1c. Backfill gateway_charge_id from provider_ref.
+-- 1d. Backfill gateway_charge_id from provider_ref.
 UPDATE payments SET gateway_charge_id = provider_ref
   WHERE gateway_charge_id IS NULL AND provider_ref IS NOT NULL;
 
--- 1d. Remap status values: 'completed' (legacy) → 'paid' (new vocabulary).
+-- 1e. Remap status values: 'completed' (legacy) → 'paid' (new vocabulary).
 UPDATE payments SET status = 'paid' WHERE status = 'completed';
 
--- 1e. Backfill paid_at for migrated 'paid' rows so finance reports work.
+-- 1f. Backfill paid_at for migrated 'paid' rows so finance reports work.
 UPDATE payments SET paid_at = updated_at
   WHERE status = 'paid' AND paid_at IS NULL;
 
--- 1f. Now make gateway NOT NULL (all rows are backfilled).
+-- 1g. Now make gateway NOT NULL (all rows are backfilled).
 ALTER TABLE payments ALTER COLUMN gateway SET NOT NULL;
 
--- 1g. Drop the legacy provider columns.
+-- 1h. Drop the legacy provider columns (data already copied to gateway/gateway_charge_id).
 ALTER TABLE payments DROP COLUMN IF EXISTS provider;
 ALTER TABLE payments DROP COLUMN IF EXISTS provider_ref;
 
--- 1h. Change status default from 'completed' to 'pending' (new flow starts pending).
+-- 1i. Change status default from 'completed' to 'pending' (new flow starts pending).
 ALTER TABLE payments ALTER COLUMN status SET DEFAULT 'pending';
 
--- 1i. Replace status check constraint with the expanded enum.
-ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_status_check;
+-- 1j. Add the NEW status check constraint with the expanded enum.
 ALTER TABLE payments ADD CONSTRAINT payments_status_check
   CHECK (status IN ('pending', 'processing', 'paid', 'failed', 'refunded', 'partially_refunded', 'chargeback'));
 
--- 1j. Add gateway check constraint.
+-- 1k. Add gateway check constraint.
 ALTER TABLE payments ADD CONSTRAINT payments_gateway_check
   CHECK (gateway IN ('tap', 'moyasar', 'tamara', 'tabby', 'mock'));
 
--- 1k. Add payment_method check constraint.
+-- 1l. Add payment_method check constraint.
 ALTER TABLE payments ADD CONSTRAINT payments_method_check
   CHECK (payment_method IS NULL OR payment_method IN ('card', 'mada', 'apple_pay', 'bnpl'));
 

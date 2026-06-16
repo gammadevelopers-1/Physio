@@ -180,6 +180,28 @@ else
     log_warning "OPENAI_API_KEY secret not found — transcription disabled"
 fi
 
+# Moyasar payment gateway — attach both test + live key sets (whichever exist in
+# Secret Manager). MOYASAR_MODE (env var) selects the active set at runtime.
+for _MS in MOYASAR_SECRET_KEY_TEST MOYASAR_PUBLISHABLE_KEY_TEST MOYASAR_WEBHOOK_SECRET_TEST \
+           MOYASAR_SECRET_KEY_LIVE MOYASAR_PUBLISHABLE_KEY_LIVE MOYASAR_WEBHOOK_SECRET_LIVE; do
+    if gcloud secrets describe "$_MS" &>/dev/null 2>&1; then
+        SECRETS="${SECRETS},${_MS}=${_MS}:latest"
+        log_info "Moyasar secret found: $_MS"
+    fi
+done
+# Preserve the current MOYASAR_MODE across deploys so a routine code deploy never
+# silently flips prod between sandbox and live. Override: MOYASAR_MODE=live bash deploy.sh
+# Toggle (no rebuild): gcloud run services update ${BACKEND_SERVICE_NAME} \
+#   --region=${GCP_REGION} --update-env-vars MOYASAR_MODE=live   (or =test)
+if [ -z "${MOYASAR_MODE:-}" ]; then
+    MOYASAR_MODE=$(gcloud run services describe ${BACKEND_SERVICE_NAME} --region=${GCP_REGION} \
+        --format="yaml(spec.template.spec.containers[0].env)" 2>/dev/null \
+        | grep -A1 "name: MOYASAR_MODE\$" | grep 'value:' | head -1 | awk '{print $2}')
+    MOYASAR_MODE="${MOYASAR_MODE:-test}"
+fi
+ENV_VARS="${ENV_VARS}||MOYASAR_MODE=${MOYASAR_MODE}"
+log_info "Moyasar mode: ${MOYASAR_MODE}"
+
 if gcloud sql instances describe ${DB_INSTANCE_NAME} &>/dev/null; then
     log_info "Connecting to Cloud SQL: ${DB_INSTANCE_NAME}"
     gcloud run deploy ${BACKEND_SERVICE_NAME} \

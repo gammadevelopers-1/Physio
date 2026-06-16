@@ -14,13 +14,40 @@ export default registerAs('payments', () => ({
     apiUrl: process.env.TAP_API_URL || 'https://api.tap.company/v2',
   },
 
-  // Moyasar
-  moyasar: {
-    secretKey: process.env.MOYASAR_SECRET_KEY || '',
-    publishableKey: process.env.MOYASAR_PUBLISHABLE_KEY || '',
-    webhookSecret: process.env.MOYASAR_WEBHOOK_SECRET || '',
-    apiUrl: process.env.MOYASAR_API_URL || 'https://api.moyasar.com/v1',
-  },
+  // Moyasar — MOYASAR_MODE selects the test vs live key set (defaults to
+  // 'test'). Production sets MOYASAR_MODE=live plus the *_LIVE vars in its
+  // secret store. The same API URL serves both; the key prefix decides the
+  // environment. Legacy unsuffixed vars are honoured as a fallback.
+  moyasar: (() => {
+    const live = (process.env.MOYASAR_MODE || 'test').toLowerCase() === 'live';
+    const pick = (liveVal?: string, testVal?: string) =>
+      live ? liveVal : testVal;
+    return {
+      mode: live ? 'live' : 'test',
+      secretKey:
+        pick(
+          process.env.MOYASAR_SECRET_KEY_LIVE,
+          process.env.MOYASAR_SECRET_KEY_TEST,
+        ) ||
+        process.env.MOYASAR_SECRET_KEY ||
+        '',
+      publishableKey:
+        pick(
+          process.env.MOYASAR_PUBLISHABLE_KEY_LIVE,
+          process.env.MOYASAR_PUBLISHABLE_KEY_TEST,
+        ) ||
+        process.env.MOYASAR_PUBLISHABLE_KEY ||
+        '',
+      webhookSecret:
+        pick(
+          process.env.MOYASAR_WEBHOOK_SECRET_LIVE,
+          process.env.MOYASAR_WEBHOOK_SECRET_TEST,
+        ) ||
+        process.env.MOYASAR_WEBHOOK_SECRET ||
+        '',
+      apiUrl: process.env.MOYASAR_API_URL || 'https://api.moyasar.com/v1',
+    };
+  })(),
 
   // Tamara (BNPL)
   tamara: {

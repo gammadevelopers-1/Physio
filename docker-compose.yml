@@ -51,6 +51,10 @@ services:
     container_name: physio-backend
     ports:
       - "8080:8080"
+    # Gitignored local secrets (e.g. Moyasar sandbox keys). Must exist for the
+    # backend to start; copy from teammates / secret store as needed.
+    env_file:
+      - ./backends/.env.local
     environment:
       - NODE_ENV=development
       - PORT=8080

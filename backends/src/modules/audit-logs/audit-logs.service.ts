@@ -1,9 +1,23 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { db } from '../../database';
 import { auditLogs, users } from '../../database/schema';
-import { eq, and, desc, count, gte, lte, or, ilike, sql } from 'drizzle-orm';
+import { eq, and, desc, count, gte, lte, or, ilike, sql, inArray } from 'drizzle-orm';
 import * as PDFDocument from 'pdfkit';
 import { RequestContextService } from '../../common/request-context.service';
+
+/**
+ * Entity types written by the finance modules (payments, refunds, invoices,
+ * discounts, and payment-gateway webhooks). The finance audit log + its
+ * filters/exports are scoped to these so a Finance user sees only finance
+ * activity. Admins (findAllAdmin) remain unscoped and see every log.
+ */
+const FINANCE_AUDIT_ENTITY_TYPES = [
+  'payment',
+  'refund',
+  'invoice',
+  'discount_code',
+  'webhook',
+];
 
 export interface AdminAuditLogFilters {
   entityType?: string;
@@ -253,7 +267,10 @@ export class AuditLogService {
     limit = 20,
   ) {
     const offset = (page - 1) * limit;
-    const conditions: any[] = [];
+    // Base scope: finance users only ever see finance-related audit entries.
+    const conditions: any[] = [
+      inArray(auditLogs.entityType, FINANCE_AUDIT_ENTITY_TYPES),
+    ];
 
     if (filters.entityType) {
       conditions.push(eq(auditLogs.entityType, filters.entityType));
@@ -321,11 +338,13 @@ export class AuditLogService {
     const entityTypes = await db
       .selectDistinct({ entityType: auditLogs.entityType })
       .from(auditLogs)
+      .where(inArray(auditLogs.entityType, FINANCE_AUDIT_ENTITY_TYPES))
       .orderBy(auditLogs.entityType);
 
     const actions = await db
       .selectDistinct({ action: auditLogs.action })
       .from(auditLogs)
+      .where(inArray(auditLogs.entityType, FINANCE_AUDIT_ENTITY_TYPES))
       .orderBy(auditLogs.action);
 
     return {
@@ -363,8 +382,10 @@ export class AuditLogService {
     },
     userId?: string,
   ): Promise<string> {
-    // Fetch all matching rows (no pagination)
-    const conditions: any[] = [];
+    // Fetch all matching rows (no pagination) — scoped to finance entity types
+    const conditions: any[] = [
+      inArray(auditLogs.entityType, FINANCE_AUDIT_ENTITY_TYPES),
+    ];
     if (filters.entityType) conditions.push(eq(auditLogs.entityType, filters.entityType));
     if (filters.action) conditions.push(eq(auditLogs.action, filters.action));
     if (filters.startDate) conditions.push(gte(auditLogs.createdAt, new Date(filters.startDate)));
@@ -446,8 +467,10 @@ export class AuditLogService {
     },
     userId?: string,
   ): Promise<Buffer> {
-    // Fetch all matching rows
-    const conditions: any[] = [];
+    // Fetch all matching rows — scoped to finance entity types
+    const conditions: any[] = [
+      inArray(auditLogs.entityType, FINANCE_AUDIT_ENTITY_TYPES),
+    ];
     if (filters.entityType) conditions.push(eq(auditLogs.entityType, filters.entityType));
     if (filters.action) conditions.push(eq(auditLogs.action, filters.action));
     if (filters.startDate) conditions.push(gte(auditLogs.createdAt, new Date(filters.startDate)));

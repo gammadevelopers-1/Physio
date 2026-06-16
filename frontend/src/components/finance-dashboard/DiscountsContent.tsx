@@ -241,7 +241,7 @@ const DiscountsContent = () => {
 
   const statusStyles: Record<string, string> = {
     active: "bg-[#DCFCE7] text-[#16A34A]",
-    expired: "bg-[#F3F4F6] text-[#6B7280]",
+    expired: "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]",
     disabled: "bg-[#FEE2E2] text-[#DC2626]",
   };
 
@@ -385,7 +385,7 @@ const DiscountsContent = () => {
     <>
       <FinanceNavbar profile={profile} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -408,14 +408,14 @@ const DiscountsContent = () => {
                 <div className="flex items-center gap-2 flex-wrap">
                   <button
                     onClick={handleExport}
-                    className="flex items-center gap-1.5 px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] hover:bg-[#F3F4F6] transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors"
                   >
                     <Download className="w-4 h-4" />
                     {t("discountsPage.export") || "Export CSV"}
                   </button>
                   <button
                     onClick={() => setShowBulkModal(true)}
-                    className="flex items-center gap-1.5 px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] hover:bg-[#F3F4F6] transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors"
                   >
                     <Layers className="w-4 h-4" />
                     {t("discountsPage.bulkGenerate") || "Bulk Generate"}
@@ -435,13 +435,13 @@ const DiscountsContent = () => {
                 {stats.map((stat, index) => {
                   const Icon = stat.icon;
                   return (
-                    <div key={index} className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex items-start gap-3">
+                    <div key={index} className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3">
                       <div className={`w-10 h-10 ${stat.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
                         <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                       </div>
                       <div>
-                        <p className="text-xs text-[#6B7280] font-medium">{stat.label}</p>
-                        <p className="text-xl font-bold text-[#111827]">{stat.value}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)] font-medium">{stat.label}</p>
+                        <p className="text-xl font-bold text-[var(--color-text-primary)]">{stat.value}</p>
                       </div>
                     </div>
                   );
@@ -449,18 +449,18 @@ const DiscountsContent = () => {
               </div>
 
               {/* Coupons List */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden mb-6">
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden mb-6">
                 {/* Tabs + Search */}
-                <div className="px-5 py-4 border-b border-[#F3F4F6] flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
-                  <div className="flex gap-1 bg-[#F3F4F6] rounded-lg p-0.5 w-fit">
+                <div className="px-5 py-4 border-b border-[var(--color-border-subtle)] flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+                  <div className="flex gap-1 bg-[var(--color-surface-page)] rounded-lg p-0.5 w-fit">
                     {tabs.map((tab) => (
                       <button
                         key={tab.key}
                         onClick={() => handleTabChange(tab.key)}
                         className={`px-4 py-1.5 text-[13px] font-medium rounded-md transition-colors ${
                           activeTab === tab.key
-                            ? "bg-white text-[#111827] shadow-sm"
-                            : "text-[#6B7280] hover:text-[#374151]"
+                            ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
+                            : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                         }`}
                       >
                         {tab.label}
@@ -468,13 +468,13 @@ const DiscountsContent = () => {
                     ))}
                   </div>
                   <div className="relative">
-                    <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`} />
+                    <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`} />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => handleSearchChange(e.target.value)}
                       placeholder={t("discountsPage.searchPlaceholder") || "Search by code..."}
-                      className={`w-full sm:w-56 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+                      className={`w-full sm:w-56 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
                     />
                   </div>
                 </div>
@@ -486,24 +486,24 @@ const DiscountsContent = () => {
                       <Loader2 className="w-6 h-6 text-[#B8860B] animate-spin" />
                     </div>
                   ) : coupons.length === 0 ? (
-                    <p className="text-center text-[#6B7280] py-8">{t("discountsPage.noCoupons") || "No discount codes found"}</p>
+                    <p className="text-center text-[var(--color-text-secondary)] py-8">{t("discountsPage.noCoupons") || "No discount codes found"}</p>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {coupons.map((coupon) => (
-                        <div key={coupon.id} className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6] relative">
+                        <div key={coupon.id} className="p-4 bg-[var(--color-surface-page)] rounded-xl border border-[var(--color-border-subtle)] relative">
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-2">
-                              <div className="w-10 h-10 bg-[#FDF6EC] rounded-lg flex items-center justify-center">
-                                <Tag className="w-5 h-5 text-[#a37f49]" />
+                              <div className="w-10 h-10 bg-[var(--color-surface-page)] rounded-lg flex items-center justify-center">
+                                <Tag className="w-5 h-5 text-[var(--color-primary)]" />
                               </div>
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <p className="text-sm font-bold text-[#111827] font-mono">{coupon.code}</p>
-                                  <button onClick={() => handleCopyCode(coupon.code)} className="text-[#9CA3AF] hover:text-[#6B7280]">
+                                  <p className="text-sm font-bold text-[var(--color-text-primary)] font-mono">{coupon.code}</p>
+                                  <button onClick={() => handleCopyCode(coupon.code)} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]">
                                     <Copy className="w-3.5 h-3.5" />
                                   </button>
                                 </div>
-                                <p className="text-[12px] text-[#6B7280]">
+                                <p className="text-[12px] text-[var(--color-text-secondary)]">
                                   {coupon.type === "percentage"
                                     ? t("discounts.off", { amount: coupon.value })
                                     : t("discounts.fixedOff", { amount: coupon.value })}
@@ -519,7 +519,7 @@ const DiscountsContent = () => {
                               <button
                                 onClick={() => handleToggle(coupon)}
                                 title={coupon.isActive ? (t("discountsPage.toggle.disable") || "Disable") : (t("discountsPage.toggle.enable") || "Enable")}
-                                className="text-[#9CA3AF] hover:text-[#6B7280]"
+                                className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                               >
                                 {coupon.isActive ? (
                                   <ToggleRight className="w-5 h-5 text-[#16A34A]" />
@@ -530,15 +530,15 @@ const DiscountsContent = () => {
                               <div className="relative">
                                 <button
                                   onClick={() => setOpenActionId(openActionId === coupon.id ? null : coupon.id)}
-                                  className="w-6 h-6 flex items-center justify-center text-[#9CA3AF] hover:text-[#6B7280]"
+                                  className="w-6 h-6 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)]"
                                 >
                                   <MoreVertical className="w-4 h-4" />
                                 </button>
                                 {openActionId === coupon.id && (
-                                  <div className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[120px] z-20 ${isRTL ? "left-0" : "right-0"}`}>
+                                  <div className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[120px] z-20 ${isRTL ? "left-0" : "right-0"}`}>
                                     <button
                                       onClick={() => handleEdit(coupon)}
-                                      className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[#374151] hover:bg-[#F3F4F6]"
+                                      className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]"
                                     >
                                       <Pencil className="w-3.5 h-3.5" />
                                       {t("discountsPage.actions.edit") || "Edit"}
@@ -559,13 +559,13 @@ const DiscountsContent = () => {
                           {/* Usage Bar */}
                           {coupon.usageLimit > 0 && (
                             <div className="mb-2">
-                              <div className="flex items-center justify-between text-[11px] text-[#6B7280] mb-1">
+                              <div className="flex items-center justify-between text-[11px] text-[var(--color-text-secondary)] mb-1">
                                 <span>{t("discounts.usage", { used: coupon.usedCount, limit: coupon.usageLimit })}</span>
                                 <span>{Math.round((coupon.usedCount / coupon.usageLimit) * 100)}%</span>
                               </div>
-                              <div className="h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                              <div className="h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
                                 <div
-                                  className="h-full bg-[#a37f49] rounded-full"
+                                  className="h-full bg-[var(--color-primary)] rounded-full"
                                   style={{ width: `${Math.min((coupon.usedCount / coupon.usageLimit) * 100, 100)}%` }}
                                 />
                               </div>
@@ -573,7 +573,7 @@ const DiscountsContent = () => {
                           )}
 
                           {/* Footer */}
-                          <div className="flex items-center gap-3 text-[11px] text-[#9CA3AF] flex-wrap">
+                          <div className="flex items-center gap-3 text-[11px] text-[var(--color-text-secondary)] flex-wrap">
                             <span className="flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
                               {coupon.expiryDate}
@@ -595,7 +595,7 @@ const DiscountsContent = () => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="px-5 py-3 border-t border-[#F3F4F6] flex items-center justify-between text-sm text-[#6B7280]">
+                  <div className="px-5 py-3 border-t border-[var(--color-border-subtle)] flex items-center justify-between text-sm text-[var(--color-text-secondary)]">
                     <span>
                       {t("discountsPage.showing") || "Showing"} {(page - 1) * limit + 1}-{Math.min(page * limit, total)} {t("discountsPage.of") || "of"} {total}
                     </span>
@@ -603,7 +603,7 @@ const DiscountsContent = () => {
                       <button
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={page <= 1}
-                        className="p-1.5 rounded-md hover:bg-[#F3F4F6] disabled:opacity-30"
+                        className="p-1.5 rounded-md hover:bg-[var(--color-surface-page)] disabled:opacity-30"
                       >
                         {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                       </button>
@@ -611,7 +611,7 @@ const DiscountsContent = () => {
                       <button
                         onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                         disabled={page >= totalPages}
-                        className="p-1.5 rounded-md hover:bg-[#F3F4F6] disabled:opacity-30"
+                        className="p-1.5 rounded-md hover:bg-[var(--color-surface-page)] disabled:opacity-30"
                       >
                         {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                       </button>
@@ -621,25 +621,25 @@ const DiscountsContent = () => {
               </div>
 
               {/* Usage Analytics */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
                 <div className="flex items-center gap-2 mb-4">
-                  <BarChart3 className="w-5 h-5 text-[#a37f49]" />
-                  <h3 className="text-base font-semibold text-[#111827]">{t("discountsPage.analytics.title")}</h3>
+                  <BarChart3 className="w-5 h-5 text-[var(--color-primary)]" />
+                  <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{t("discountsPage.analytics.title")}</h3>
                 </div>
 
                 {/* Summary cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                  <div className="p-4 bg-[#F9FAFB] rounded-xl text-center">
-                    <p className="text-2xl font-bold text-[#111827]">
+                  <div className="p-4 bg-[var(--color-surface-page)] rounded-xl text-center">
+                    <p className="text-2xl font-bold text-[var(--color-text-primary)]">
                       SAR {analytics ? analytics.totalSavings.toFixed(0) : "..."}
                     </p>
-                    <p className="text-[12px] text-[#6B7280]">{t("discountsPage.analytics.totalSavings") || "Total Savings"}</p>
+                    <p className="text-[12px] text-[var(--color-text-secondary)]">{t("discountsPage.analytics.totalSavings") || "Total Savings"}</p>
                   </div>
                   <div className="p-4 bg-[#DCFCE7] rounded-xl text-center">
                     <p className="text-2xl font-bold text-[#16A34A]">
                       {analytics ? analytics.totalRedemptions : "..."}
                     </p>
-                    <p className="text-[12px] text-[#a37f49]">{t("discountsPage.stats.totalRedemptions")}</p>
+                    <p className="text-[12px] text-[var(--color-primary)]">{t("discountsPage.stats.totalRedemptions")}</p>
                   </div>
                   <div className="p-4 bg-[#FEF9C3] rounded-xl text-center">
                     <p className="text-2xl font-bold text-[#CA8A04]">
@@ -652,17 +652,17 @@ const DiscountsContent = () => {
                 {/* Top Coupons Performance */}
                 {analytics && analytics.topCoupons.length > 0 && (
                   <div>
-                    <h4 className="text-sm font-semibold text-[#374151] mb-3">
+                    <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
                       {t("discountsPage.analytics.topCoupons") || "Top Performing Coupons"}
                     </h4>
                     <div className="space-y-2">
                       {analytics.topCoupons.filter(c => c.conversions > 0).slice(0, 5).map((coupon) => (
                         <div key={coupon.id} className="flex items-center gap-3">
-                          <span className="text-[12px] font-mono font-bold text-[#111827] w-28 truncate">{coupon.code}</span>
+                          <span className="text-[12px] font-mono font-bold text-[var(--color-text-primary)] w-28 truncate">{coupon.code}</span>
                           <div className="flex-1">
-                            <div className="h-5 bg-[#F3F4F6] rounded-full overflow-hidden">
+                            <div className="h-5 bg-[var(--color-surface-page)] rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-[#a37f49] rounded-full flex items-center justify-end px-2"
+                                className="h-full bg-[var(--color-primary)] rounded-full flex items-center justify-end px-2"
                                 style={{ width: `${Math.max((coupon.totalSaved / maxTopSaved) * 100, 10)}%` }}
                               >
                                 <span className="text-[10px] text-white font-medium whitespace-nowrap">
@@ -671,13 +671,13 @@ const DiscountsContent = () => {
                               </div>
                             </div>
                           </div>
-                          <span className="text-[11px] text-[#6B7280] w-20 text-right">
+                          <span className="text-[11px] text-[var(--color-text-secondary)] w-20 text-right">
                             {coupon.conversions} {t("discountsPage.analytics.conversions") || "uses"}
                           </span>
                         </div>
                       ))}
                       {analytics.topCoupons.filter(c => c.conversions > 0).length === 0 && (
-                        <p className="text-[12px] text-[#9CA3AF] text-center py-2">
+                        <p className="text-[12px] text-[var(--color-text-secondary)] text-center py-2">
                           {t("discountsPage.noCoupons") || "No usage data yet"}
                         </p>
                       )}
@@ -693,105 +693,105 @@ const DiscountsContent = () => {
       {/* Create/Edit Coupon Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-[var(--color-surface-card)] rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-[#111827]">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {editingId ? (t("discountsPage.editCoupon") || "Edit Discount") : t("discountsPage.createCoupon")}
               </h3>
-              <button onClick={closeModal} className="text-[#6B7280] hover:text-[#374151]">
+              <button onClick={closeModal} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.code")}</label>
+                <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{t("discountsPage.form.code")}</label>
                 <input
                   type="text"
                   value={formCode}
                   onChange={(e) => setFormCode(e.target.value.toUpperCase())}
                   placeholder={t("discountsPage.form.codePlaceholder")}
-                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.type")}</label>
+                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{t("discountsPage.form.type")}</label>
                   <select
                     value={formType}
                     onChange={(e) => setFormType(e.target.value as "percentage" | "fixed")}
-                    className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                    className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                   >
                     <option value="percentage">{t("discountsPage.form.percentage")}</option>
                     <option value="fixed">{t("discountsPage.form.fixedAmount")}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">{formType === "percentage" ? "%" : `${t("kpi.sar")}`}</label>
+                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{formType === "percentage" ? "%" : `${t("kpi.sar")}`}</label>
                   <input
                     type="number"
                     value={formValue}
                     onChange={(e) => setFormValue(e.target.value)}
                     placeholder={formType === "percentage" ? "25" : "50"}
-                    className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                    className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.usageLimit")}</label>
+                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{t("discountsPage.form.usageLimit")}</label>
                   <input
                     type="number"
                     value={formLimit}
                     onChange={(e) => setFormLimit(e.target.value)}
                     placeholder="100"
-                    className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                    className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.expiryDate")}</label>
+                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{t("discountsPage.form.expiryDate")}</label>
                   <input
                     type="date"
                     value={formExpiry}
                     onChange={(e) => setFormExpiry(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                    className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.minOrder")}</label>
+                <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{t("discountsPage.form.minOrder")}</label>
                 <input
                   type="number"
                   value={formMinOrder}
                   onChange={(e) => setFormMinOrder(e.target.value)}
                   placeholder="0"
-                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                 />
               </div>
 
               {/* Course Selector */}
               {courses.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">
+                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
                     {t("discountsPage.form.courses") || "Applicable Courses"}
                   </label>
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => setShowCourseDropdown(!showCourseDropdown)}
-                      className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-left focus:outline-none focus:border-[#a37f49] bg-white"
+                      className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-left focus:outline-none focus:border-[var(--color-primary)] bg-[var(--color-surface-card)]"
                     >
                       {formCourseIds.length === 0
                         ? (t("discountsPage.form.allCourses") || "All Courses")
                         : `${formCourseIds.length} course${formCourseIds.length > 1 ? "s" : ""} selected`}
                     </button>
                     {showCourseDropdown && (
-                      <div className="absolute z-30 top-full mt-1 w-full bg-white border border-[#E5E7EB] rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      <div className="absolute z-30 top-full mt-1 w-full bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg max-h-48 overflow-y-auto">
                         <button
                           type="button"
                           onClick={() => { setFormCourseIds([]); setShowCourseDropdown(false); }}
-                          className="flex items-center gap-2 w-full px-3 py-2 text-[12px] text-[#374151] hover:bg-[#F3F4F6] border-b border-[#F3F4F6]"
+                          className="flex items-center gap-2 w-full px-3 py-2 text-[12px] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] border-b border-[var(--color-border-subtle)]"
                         >
-                          <span className={`w-4 h-4 rounded border flex items-center justify-center ${formCourseIds.length === 0 ? "bg-[#a37f49] border-[#a37f49]" : "border-[#D1D5DB]"}`}>
+                          <span className={`w-4 h-4 rounded border flex items-center justify-center ${formCourseIds.length === 0 ? "bg-[var(--color-primary)] border-[var(--color-primary)]" : "border-[var(--color-border)]"}`}>
                             {formCourseIds.length === 0 && <Check className="w-3 h-3 text-white" />}
                           </span>
                           {t("discountsPage.form.allCourses") || "All Courses"}
@@ -801,9 +801,9 @@ const DiscountsContent = () => {
                             key={course.id}
                             type="button"
                             onClick={() => toggleCourseSelection(course.id)}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-[12px] text-[#374151] hover:bg-[#F3F4F6]"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-[12px] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]"
                           >
-                            <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${formCourseIds.includes(course.id) ? "bg-[#a37f49] border-[#a37f49]" : "border-[#D1D5DB]"}`}>
+                            <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${formCourseIds.includes(course.id) ? "bg-[var(--color-primary)] border-[var(--color-primary)]" : "border-[var(--color-border)]"}`}>
                               {formCourseIds.includes(course.id) && <Check className="w-3 h-3 text-white" />}
                             </span>
                             <span className="truncate">{course.title}</span>
@@ -818,7 +818,7 @@ const DiscountsContent = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={closeModal}
-                className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
+                className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]"
               >
                 {t("discountsPage.form.cancel")}
               </button>
@@ -838,18 +838,18 @@ const DiscountsContent = () => {
       {/* Bulk Generate Modal */}
       {showBulkModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6">
+          <div className="bg-[var(--color-surface-card)] rounded-2xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-[#111827]">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {t("discountsPage.bulk.title") || "Bulk Generate Coupons"}
               </h3>
-              <button onClick={() => setShowBulkModal(false)} className="text-[#6B7280] hover:text-[#374151]">
+              <button onClick={() => setShowBulkModal(false)} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">
+                <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
                   {t("discountsPage.bulk.prefix") || "Code Prefix"}
                 </label>
                 <input
@@ -857,17 +857,17 @@ const DiscountsContent = () => {
                   value={bulkPrefix}
                   onChange={(e) => setBulkPrefix(e.target.value.toUpperCase())}
                   placeholder={t("discountsPage.bulk.prefixPlaceholder") || "e.g., HEALTH"}
-                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                 />
                 {bulkPrefix && (
-                  <p className="text-[11px] text-[#6B7280] mt-1">
+                  <p className="text-[11px] text-[var(--color-text-secondary)] mt-1">
                     {t("discountsPage.bulk.preview", { prefix: bulkPrefix }) || `Preview: ${bulkPrefix}-XXXXXX`}
                   </p>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">
+                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
                     {t("discountsPage.bulk.count") || "Number of Codes"}
                   </label>
                   <input
@@ -876,15 +876,15 @@ const DiscountsContent = () => {
                     onChange={(e) => setBulkCount(e.target.value)}
                     min="1"
                     max="100"
-                    className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                    className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.type")}</label>
+                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{t("discountsPage.form.type")}</label>
                   <select
                     value={bulkType}
                     onChange={(e) => setBulkType(e.target.value as "percentage" | "fixed")}
-                    className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                    className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                   >
                     <option value="percentage">{t("discountsPage.form.percentage")}</option>
                     <option value="fixed">{t("discountsPage.form.fixedAmount")}</option>
@@ -893,40 +893,40 @@ const DiscountsContent = () => {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">{bulkType === "percentage" ? "%" : "SAR"}</label>
+                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{bulkType === "percentage" ? "%" : "SAR"}</label>
                   <input
                     type="number"
                     value={bulkValue}
                     onChange={(e) => setBulkValue(e.target.value)}
                     placeholder={bulkType === "percentage" ? "25" : "50"}
-                    className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                    className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.usageLimit")}</label>
+                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{t("discountsPage.form.usageLimit")}</label>
                   <input
                     type="number"
                     value={bulkLimit}
                     onChange={(e) => setBulkLimit(e.target.value)}
                     placeholder="1"
-                    className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                    className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.expiryDate")}</label>
+                <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{t("discountsPage.form.expiryDate")}</label>
                 <input
                   type="date"
                   value={bulkExpiry}
                   onChange={(e) => setBulkExpiry(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                 />
               </div>
             </div>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowBulkModal(false)}
-                className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
+                className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]"
               >
                 {t("discountsPage.form.cancel")}
               </button>

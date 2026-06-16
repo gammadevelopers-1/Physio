@@ -186,34 +186,34 @@ const RevenueSummaryWidget = ({
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
+    <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-[#F3F4F6]">
+      <div className="px-5 py-4 border-b border-[var(--color-border-subtle)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-[#a37f49]" />
-            <h3 className="text-base font-semibold text-[#111827]">
+            <TrendingUp className="w-5 h-5 text-[var(--color-primary)]" />
+            <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
               {t("revenueSummary.title")}
             </h3>
           </div>
           <div className="flex items-center gap-2">
             {/* Time Filter Tabs */}
-            <div className="flex bg-[#F3F4F6] rounded-lg p-0.5">
+            <div className="flex bg-[var(--color-surface-page)] rounded-lg p-0.5">
               {timeFilters.map((filter) => (
                 <button
                   key={filter.key}
                   onClick={() => setTimeFilter(filter.key)}
                   className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                     timeFilter === filter.key
-                      ? "bg-white text-[#111827] shadow-sm"
-                      : "text-[#6B7280] hover:text-[#374151]"
+                      ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
+                      : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                   }`}
                 >
                   {filter.label}
                 </button>
               ))}
             </div>
-            <button className="text-sm font-medium text-[#a37f49] hover:text-[#6b4e24] hover:underline">
+            <button className="text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline">
               {t("revenueSummary.viewDetails")}
             </button>
           </div>
@@ -223,10 +223,10 @@ const RevenueSummaryWidget = ({
         {summaryData && (
           <div className={`flex items-center gap-4 mt-2 ${isRTL ? "flex-row-reverse" : ""}`}>
             <div>
-              <span className="text-xs text-[#6B7280]">
+              <span className="text-xs text-[var(--color-text-secondary)]">
                 {t("revenueSummary.aov")}
               </span>
-              <span className={`text-sm font-semibold text-[#111827] ${isRTL ? "mr-1" : "ml-1"}`}>
+              <span className={`text-sm font-semibold text-[var(--color-text-primary)] ${isRTL ? "mr-1" : "ml-1"}`}>
                 {t("kpi.sar")}{" "}
                 {Number(summaryData.averageOrderValue).toLocaleString()}
               </span>
@@ -255,12 +255,12 @@ const RevenueSummaryWidget = ({
         {/* Revenue Line Chart */}
         <div className="mb-5">
           {trendLoading ? (
-            <div className="h-[200px] bg-[#F9FAFB] rounded-xl flex items-center justify-center">
-              <Loader2 className="w-5 h-5 text-[#a37f49] animate-spin" />
+            <div className="h-[200px] bg-[var(--color-surface-page)] rounded-xl flex items-center justify-center">
+              <Loader2 className="w-5 h-5 text-[var(--color-primary)] animate-spin" />
             </div>
           ) : !hasData ? (
-            <div className="h-[200px] bg-[#F9FAFB] rounded-xl flex items-center justify-center">
-              <p className="text-sm text-[#9CA3AF]">
+            <div className="h-[200px] bg-[var(--color-surface-page)] rounded-xl flex items-center justify-center">
+              <p className="text-sm text-[var(--color-text-secondary)]">
                 {t("revenueSummary.noData")}
               </p>
             </div>
@@ -342,7 +342,7 @@ const RevenueSummaryWidget = ({
                   ))}
                 </svg>
               </div>
-              <div className="flex justify-between mt-2 text-xs text-[#6B7280] px-1">
+              <div className="flex justify-between mt-2 text-xs text-[var(--color-text-secondary)] px-1">
                 {chartLabels.map((label, index) => (
                   <span key={index} className="text-center">
                     {label}
@@ -355,8 +355,8 @@ const RevenueSummaryWidget = ({
 
         {/* BNPL vs Direct split */}
         {data.gateways.length > 0 && (
-          <div className="mb-4 bg-[#F9FAFB] rounded-xl p-4">
-            <h4 className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider mb-3">
+          <div className="mb-4 bg-[var(--color-surface-page)] rounded-xl p-4">
+            <h4 className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
               {t("revenueSummary.bnplSplit")}
             </h4>
             <div className={`flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
@@ -365,11 +365,11 @@ const RevenueSummaryWidget = ({
                   <span className="text-[#8B5CF6] font-medium">
                     {t("revenueSummary.bnpl")}
                   </span>
-                  <span className="text-[#111827] font-semibold">
+                  <span className="text-[var(--color-text-primary)] font-semibold">
                     {bnplPct}%
                   </span>
                 </div>
-                <div className="h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                <div className="h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-[#8B5CF6] rounded-full"
                     style={{ width: `${bnplPct}%` }}
@@ -381,11 +381,11 @@ const RevenueSummaryWidget = ({
                   <span className="text-[#3B82F6] font-medium">
                     {t("revenueSummary.direct")}
                   </span>
-                  <span className="text-[#111827] font-semibold">
+                  <span className="text-[var(--color-text-primary)] font-semibold">
                     {directPct}%
                   </span>
                 </div>
-                <div className="h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                <div className="h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-[#3B82F6] rounded-full"
                     style={{ width: `${directPct}%` }}
@@ -399,19 +399,19 @@ const RevenueSummaryWidget = ({
         {/* Breakdown Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Gateway Breakdown */}
-          <div className="bg-[#F9FAFB] rounded-xl p-4">
-            <h4 className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider mb-3">
+          <div className="bg-[var(--color-surface-page)] rounded-xl p-4">
+            <h4 className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
               {t("revenueSummary.byGateway")}
             </h4>
             {data.gateways.length === 0 ? (
-              <p className="text-[13px] text-[#9CA3AF] text-center py-2">
+              <p className="text-[13px] text-[var(--color-text-secondary)] text-center py-2">
                 {t("revenueSummary.noData")}
               </p>
             ) : (
               data.gateways.map((gateway, index) => (
                 <div key={index} className="mb-3 last:mb-0">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="flex items-center gap-2 text-[13px] text-[#4B5563]">
+                    <span className="flex items-center gap-2 text-[13px] text-[var(--color-text-secondary)]">
                       {index === 0 ? (
                         <CreditCard className="w-3.5 h-3.5 text-[#3B82F6]" />
                       ) : (
@@ -419,11 +419,11 @@ const RevenueSummaryWidget = ({
                       )}
                       {gateway.name}
                     </span>
-                    <span className="text-[13px] font-semibold text-[#111827]">
+                    <span className="text-[13px] font-semibold text-[var(--color-text-primary)]">
                       {gateway.percentage}%
                     </span>
                   </div>
-                  <div className="h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full ${gateway.color}`}
                       style={{ width: `${gateway.percentage}%` }}
@@ -435,13 +435,13 @@ const RevenueSummaryWidget = ({
           </div>
 
           {/* Top Courses */}
-          <div className="bg-[#F9FAFB] rounded-xl p-4">
-            <h4 className="text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider mb-3">
+          <div className="bg-[var(--color-surface-page)] rounded-xl p-4">
+            <h4 className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
               {t("revenueSummary.topCourses")}
             </h4>
             <div className="space-y-2.5">
               {data.topCourses.length === 0 ? (
-                <p className="text-[13px] text-[#9CA3AF] text-center py-2">
+                <p className="text-[13px] text-[var(--color-text-secondary)] text-center py-2">
                   {t("revenueSummary.noData")}
                 </p>
               ) : (
@@ -450,10 +450,10 @@ const RevenueSummaryWidget = ({
                     key={index}
                     className="flex items-center justify-between py-1"
                   >
-                    <span className="text-[13px] text-[#4B5563] truncate max-w-[60%]">
+                    <span className="text-[13px] text-[var(--color-text-secondary)] truncate max-w-[60%]">
                       {course.name}
                     </span>
-                    <span className="text-[13px] font-semibold text-[#111827]">
+                    <span className="text-[13px] font-semibold text-[var(--color-text-primary)]">
                       {course.revenue}
                     </span>
                   </div>

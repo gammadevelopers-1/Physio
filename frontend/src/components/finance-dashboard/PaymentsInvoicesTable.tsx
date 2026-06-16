@@ -167,12 +167,12 @@ const PaymentsInvoicesTable = ({
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-5 py-4 border-b border-[#F3F4F6] gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-5 py-4 border-b border-[var(--color-border-subtle)] gap-3">
           <div className="flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-[#a37f49]" />
-            <h3 className="text-base font-semibold text-[#111827]">
+            <CreditCard className="w-5 h-5 text-[var(--color-primary)]" />
+            <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
               {t("paymentsTable.title")}
             </h3>
           </div>
@@ -189,11 +189,11 @@ const PaymentsInvoicesTable = ({
               </button>
               {showExportMenu && (
                 <div
-                  className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[140px] z-20 ${isRTL ? "left-0" : "right-0"}`}
+                  className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-20 ${isRTL ? "left-0" : "right-0"}`}
                 >
                   <button
                     onClick={() => { onExport?.(); setShowExportMenu(false); }}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                    className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     {t("paymentsTable.exportCsv")}
@@ -201,7 +201,7 @@ const PaymentsInvoicesTable = ({
                   {onExportPdf && (
                     <button
                       onClick={() => { onExportPdf(); setShowExportMenu(false); }}
-                      className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                      className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors"
                     >
                       <FileDown className="w-3.5 h-3.5" />
                       {t("paymentsTable.exportPdf")}
@@ -214,12 +214,12 @@ const PaymentsInvoicesTable = ({
         </div>
 
         {/* Filters */}
-        <div className="px-5 py-3 border-b border-[#F3F4F6]">
+        <div className="px-5 py-3 border-b border-[var(--color-border-subtle)]">
           <div className="flex flex-col sm:flex-row gap-3">
             <select
               value={effectiveStatus}
               onChange={(e) => handleStatusChange(e.target.value)}
-              className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#a37f49] focus:ring-1 focus:ring-[#a37f49]/20"
+              className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
             >
               <option value="all">{t("paymentsTable.filters.allStatus")}</option>
               <option value="paid">{t("paymentsTable.filters.paid")}</option>
@@ -230,7 +230,7 @@ const PaymentsInvoicesTable = ({
             <select
               value={gatewayFilter}
               onChange={(e) => setGatewayFilter(e.target.value)}
-              className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#a37f49] focus:ring-1 focus:ring-[#a37f49]/20"
+              className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
             >
               <option value="all">{t("paymentsTable.filters.allGateways")}</option>
               <option value="Tap">{t("gateways.tap")}</option>
@@ -240,14 +240,14 @@ const PaymentsInvoicesTable = ({
             </select>
             <div className="flex-1 relative">
               <Search
-                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
               />
               <input
                 type="text"
                 value={effectiveSearch}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder={t("paymentsTable.searchPlaceholder")}
-                className={`w-full py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49] focus:ring-1 focus:ring-[#a37f49]/20 ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+                className={`w-full py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20 ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
               />
             </div>
           </div>
@@ -257,26 +257,26 @@ const PaymentsInvoicesTable = ({
         <div className="overflow-x-auto">
           <table className="w-full" aria-label="Payments and invoices">
             <thead>
-              <tr className="border-b border-[#E5E7EB]">
-                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+              <tr className="border-b border-[var(--color-border)]">
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                   {t("paymentsTable.columns.invoice")}
                 </th>
-                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                   {t("paymentsTable.columns.date")}
                 </th>
-                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                   {t("paymentsTable.columns.customer")}
                 </th>
-                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>
                   {t("paymentsTable.columns.course")}
                 </th>
-                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                   {t("paymentsTable.columns.amount")}
                 </th>
-                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase hidden lg:table-cell ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden lg:table-cell ${isRTL ? "text-right" : "text-left"}`}>
                   {t("paymentsTable.columns.gateway")}
                 </th>
-                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                   {t("paymentsTable.columns.status")}
                 </th>
                 <th scope="col" className="py-3 px-4 w-10"></th>
@@ -286,33 +286,33 @@ const PaymentsInvoicesTable = ({
               {filteredTransactions.map((tx) => (
                 <tr
                   key={tx.id}
-                  className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB] transition-colors"
+                  className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)] transition-colors"
                 >
                   <td className="py-3 px-4">
-                    <span className="text-[13px] font-medium text-[#a37f49]">
+                    <span className="text-[13px] font-medium text-[var(--color-primary)]">
                       {tx.invoiceNumber}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-[13px] text-[#4B5563]">
+                  <td className="py-3 px-4 text-[13px] text-[var(--color-text-secondary)]">
                     {tx.date}
                   </td>
-                  <td className="py-3 px-4 text-[13px] text-[#374151] font-medium">
+                  <td className="py-3 px-4 text-[13px] text-[var(--color-text-primary)] font-medium">
                     {tx.customer}
                   </td>
-                  <td className="py-3 px-4 text-[13px] text-[#4B5563] hidden md:table-cell">
+                  <td className="py-3 px-4 text-[13px] text-[var(--color-text-secondary)] hidden md:table-cell">
                     {tx.course}
                   </td>
-                  <td className="py-3 px-4 text-[13px] font-semibold text-[#111827]">
+                  <td className="py-3 px-4 text-[13px] font-semibold text-[var(--color-text-primary)]">
                     {tx.amount}
                   </td>
                   <td className="py-3 px-4 hidden lg:table-cell">
-                    <span className={`inline-flex px-2 py-0.5 rounded-md text-[11px] font-medium ${gatewayStyles[tx.gateway] || "bg-[#F3F4F6] text-[#6B7280]"}`}>
+                    <span className={`inline-flex px-2 py-0.5 rounded-md text-[11px] font-medium ${gatewayStyles[tx.gateway] || "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]"}`}>
                       {tx.gateway}
                     </span>
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex flex-col gap-1">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${statusStyles[tx.status] || "bg-[#F3F4F6] text-[#6B7280]"}`}>
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${statusStyles[tx.status] || "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]"}`}>
                         {t(`paymentsTable.statuses.${tx.status}`)}
                       </span>
                       {tx.status === "failed" && tx.errorCode && (
@@ -330,17 +330,17 @@ const PaymentsInvoicesTable = ({
                           setOpenActionId(openActionId === tx.id ? null : tx.id)
                         }
                         aria-label="Actions"
-                        className="w-7 h-7 flex items-center justify-center border border-[#E5E7EB] rounded-md hover:bg-[#F9FAFB] text-[#6B7280] hover:text-[#374151] transition-colors"
+                        className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
                       >
                         <MoreVertical className="w-3.5 h-3.5" />
                       </button>
                       {openActionId === tx.id && (
                         <div
-                          className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[150px] z-20 ${isRTL ? "left-0" : "right-0"}`}
+                          className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[150px] z-20 ${isRTL ? "left-0" : "right-0"}`}
                         >
                           <button
                             onClick={() => { setSelectedTx(tx); setOpenActionId(null); }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors"
                           >
                             <Eye className="w-3.5 h-3.5" />
                             {t("paymentsTable.actions.view")}
@@ -348,7 +348,7 @@ const PaymentsInvoicesTable = ({
                           {tx.invoiceId && (
                             <button
                               onClick={() => { handleDownload(tx); setOpenActionId(null); }}
-                              className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                              className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors"
                             >
                               <Download className="w-3.5 h-3.5" />
                               {t("paymentsTable.actions.download")}
@@ -357,7 +357,7 @@ const PaymentsInvoicesTable = ({
                           {tx.invoiceId && (
                             <button
                               onClick={() => { handleResend(tx); setOpenActionId(null); }}
-                              className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                              className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors"
                             >
                               <Send className="w-3.5 h-3.5" />
                               {t("paymentsTable.actions.resend")}
@@ -380,7 +380,7 @@ const PaymentsInvoicesTable = ({
               ))}
               {filteredTransactions.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-[13px] text-[#9CA3AF]">
+                  <td colSpan={8} className="py-12 text-center text-[13px] text-[var(--color-text-secondary)]">
                     {t("paymentsTable.noResults")}
                   </td>
                 </tr>
@@ -391,8 +391,8 @@ const PaymentsInvoicesTable = ({
 
         {/* Pagination */}
         {showPagination && (
-          <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3 border-t border-[#F3F4F6] gap-3">
-            <p className="text-[13px] text-[#6B7280]">
+          <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3 border-t border-[var(--color-border-subtle)] gap-3">
+            <p className="text-[13px] text-[var(--color-text-secondary)]">
               {totalCount !== undefined && currentPage !== undefined
                 ? t("paymentsTable.pagination.showing", {
                     from: totalCount === 0 ? 0 : (currentPage - 1) * transactions.length + 1,
@@ -410,7 +410,7 @@ const PaymentsInvoicesTable = ({
                 onClick={() => onPageChange?.(Math.max(1, (currentPage ?? 1) - 1))}
                 disabled={!onPageChange || !currentPage || currentPage <= 1}
                 aria-label="Previous page"
-                className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-40 disabled:cursor-default"
+                className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-40 disabled:cursor-default"
               >
                 <ChevronLeft className="w-4 h-4" />
                 {t("paymentsTable.pagination.previous")}
@@ -419,7 +419,7 @@ const PaymentsInvoicesTable = ({
                 onClick={() => onPageChange?.((currentPage ?? 1) + 1)}
                 disabled={!onPageChange || !currentPage || currentPage >= (totalPages ?? 1)}
                 aria-label="Next page"
-                className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-40 disabled:cursor-default"
+                className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-40 disabled:cursor-default"
               >
                 {t("paymentsTable.pagination.next")}
                 <ChevronRight className="w-4 h-4" />
@@ -436,16 +436,16 @@ const PaymentsInvoicesTable = ({
           onClick={() => setSelectedTx(null)}
         >
           <div
-            className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6"
+            className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl max-w-md w-full p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-base font-semibold text-[#111827]">
+              <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                 {t("paymentsTable.transactionDetail.title")}
               </h3>
               <button
                 onClick={() => setSelectedTx(null)}
-                className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[#F9FAFB] text-[#6B7280]"
+                className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -469,9 +469,9 @@ const PaymentsInvoicesTable = ({
                   key={label}
                   className={`flex justify-between gap-3 ${isRTL ? "flex-row-reverse" : ""}`}
                 >
-                  <dt className="text-[#6B7280] font-medium flex-shrink-0">{label}</dt>
+                  <dt className="text-[var(--color-text-secondary)] font-medium flex-shrink-0">{label}</dt>
                   <dd
-                    className={`text-[#111827] ${isRTL ? "text-left" : "text-right"} break-all ${mono ? "font-mono text-[11px]" : ""} ${error ? "text-[#DC2626] bg-[#FEF2F2] px-1.5 py-0.5 rounded" : ""}`}
+                    className={`text-[var(--color-text-primary)] ${isRTL ? "text-left" : "text-right"} break-all ${mono ? "font-mono text-[11px]" : ""} ${error ? "text-[#DC2626] bg-[#FEF2F2] px-1.5 py-0.5 rounded" : ""}`}
                   >
                     {value}
                   </dd>
@@ -489,32 +489,32 @@ const PaymentsInvoicesTable = ({
           onClick={() => setRefundTx(null)}
         >
           <div
-            className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6"
+            className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl max-w-sm w-full p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-[#111827]">
+              <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                 {t("paymentsTable.refundModal.title")}
               </h3>
               <button
                 onClick={() => setRefundTx(null)}
-                className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[#F9FAFB] text-[#6B7280]"
+                className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-[13px] text-[#6B7280] mb-4">
+            <p className="text-[13px] text-[var(--color-text-secondary)] mb-4">
               {refundTx.customer} — {refundTx.amount}
             </p>
             <div className="space-y-3">
               <div>
-                <label className="block text-[12px] font-medium text-[#374151] mb-1">
+                <label className="block text-[12px] font-medium text-[var(--color-text-primary)] mb-1">
                   {t("paymentsTable.refundModal.reason")}
                 </label>
                 <select
                   value={refundReason}
                   onChange={(e) => setRefundReason(e.target.value)}
-                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49] bg-white"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] bg-[var(--color-surface-card)]"
                 >
                   <option value="policy">{t("paymentsTable.refundModal.reasons.policy")}</option>
                   <option value="cancelled">{t("paymentsTable.refundModal.reasons.cancelled")}</option>
@@ -524,21 +524,21 @@ const PaymentsInvoicesTable = ({
                 </select>
               </div>
               <div>
-                <label className="block text-[12px] font-medium text-[#374151] mb-1">
+                <label className="block text-[12px] font-medium text-[var(--color-text-primary)] mb-1">
                   {t("paymentsTable.refundModal.note")}
                 </label>
                 <textarea
                   value={refundNote}
                   onChange={(e) => setRefundNote(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49] resize-none"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] resize-none"
                 />
               </div>
             </div>
             <div className="flex gap-2 mt-4">
               <button
                 onClick={() => setRefundTx(null)}
-                className="flex-1 px-4 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                className="flex-1 px-4 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors"
               >
                 {t("paymentsTable.refundModal.cancel")}
               </button>

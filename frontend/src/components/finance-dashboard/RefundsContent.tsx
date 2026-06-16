@@ -360,7 +360,7 @@ const RefundsContent = () => {
     <>
       <FinanceNavbar profile={profile} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -384,24 +384,24 @@ const RefundsContent = () => {
                 <div className="relative">
                   <button
                     onClick={() => setShowExportMenu(!showExportMenu)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#374151] bg-white border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
                   >
                     <FileDown className="w-4 h-4" />
                     {t("refundsPage.export") || "Export"}
                     <ChevronDown className="w-3 h-3" />
                   </button>
                   {showExportMenu && (
-                    <div className="absolute right-0 mt-1 w-44 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10">
+                    <div className="absolute right-0 mt-1 w-44 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg shadow-lg z-10">
                       <button
                         onClick={handleExportCsv}
-                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors"
                       >
                         <FileText className="w-4 h-4" />
                         {t("paymentsTable.exportCsv") || "Export CSV"}
                       </button>
                       <button
                         onClick={handleExportPdf}
-                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors"
                       >
                         <FileDown className="w-4 h-4" />
                         {t("paymentsTable.exportPdf") || "Export PDF"}
@@ -418,7 +418,7 @@ const RefundsContent = () => {
                   return (
                     <div
                       key={index}
-                      className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex items-start gap-3"
+                      className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3"
                     >
                       <div
                         className={`w-10 h-10 ${stat.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}
@@ -426,10 +426,10 @@ const RefundsContent = () => {
                         <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                       </div>
                       <div>
-                        <p className="text-xs text-[#6B7280] font-medium">
+                        <p className="text-xs text-[var(--color-text-secondary)] font-medium">
                           {stat.label}
                         </p>
-                        <p className="text-xl font-bold text-[#111827]">
+                        <p className="text-xl font-bold text-[var(--color-text-primary)]">
                           {loading ? "..." : stat.value}
                         </p>
                       </div>
@@ -459,27 +459,27 @@ const RefundsContent = () => {
               </div>
 
               {/* Main Card */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
                 {/* Tabs + Search */}
-                <div className="px-5 py-4 border-b border-[#F3F4F6]">
+                <div className="px-5 py-4 border-b border-[var(--color-border-subtle)]">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex gap-1 bg-[#F3F4F6] rounded-lg p-0.5 w-fit">
+                    <div className="flex gap-1 bg-[var(--color-surface-page)] rounded-lg p-0.5 w-fit">
                       {tabs.map((tab) => (
                         <button
                           key={tab.key}
                           onClick={() => setActiveTab(tab.key)}
                           className={`px-4 py-1.5 text-[13px] font-medium rounded-md transition-colors flex items-center gap-2 ${
                             activeTab === tab.key
-                              ? "bg-white text-[#111827] shadow-sm"
-                              : "text-[#6B7280] hover:text-[#374151]"
+                              ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
+                              : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                           }`}
                         >
                           {tab.label}
                           <span
                             className={`text-[11px] px-1.5 py-0.5 rounded-full ${
                               activeTab === tab.key
-                                ? "bg-[#a37f49] text-white"
-                                : "bg-[#E5E7EB] text-[#6B7280]"
+                                ? "bg-[var(--color-primary)] text-white"
+                                : "bg-[var(--color-border)] text-[var(--color-text-secondary)]"
                             }`}
                           >
                             {tab.count}
@@ -488,7 +488,7 @@ const RefundsContent = () => {
                       ))}
                     </div>
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
                       <input
                         type="text"
                         placeholder={
@@ -496,7 +496,7 @@ const RefundsContent = () => {
                           "Search by name, email, or course..."
                         }
                         onChange={(e) => handleSearchChange(e.target.value)}
-                        className="pl-9 pr-3 py-2 text-sm border border-[#E5E7EB] rounded-lg w-full sm:w-64 focus:outline-none focus:border-[#a37f49]"
+                        className="pl-9 pr-3 py-2 text-sm border border-[var(--color-border)] rounded-lg w-full sm:w-64 focus:outline-none focus:border-[var(--color-primary)]"
                       />
                     </div>
                   </div>
@@ -509,14 +509,14 @@ const RefundsContent = () => {
                       <Loader2 className="w-6 h-6 text-[#B8860B] animate-spin" />
                     </div>
                   ) : refunds.length === 0 ? (
-                    <p className="text-center text-[#6B7280] py-8">
+                    <p className="text-center text-[var(--color-text-secondary)] py-8">
                       {t("refundsPage.noRefunds") || "No refunds found"}
                     </p>
                   ) : (
                     refunds.map((refund) => (
                       <div
                         key={refund.id}
-                        className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]"
+                        className="p-4 bg-[var(--color-surface-page)] rounded-xl border border-[var(--color-border-subtle)]"
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                           <div className="flex items-center gap-3">
@@ -524,10 +524,10 @@ const RefundsContent = () => {
                               <RotateCcw className="w-4 h-4 text-[#EA580C]" />
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-[#111827]">
+                              <p className="text-sm font-medium text-[var(--color-text-primary)]">
                                 {refund.customer}
                               </p>
-                              <p className="text-[12px] text-[#6B7280]">
+                              <p className="text-[12px] text-[var(--color-text-secondary)]">
                                 {locale === "ar" ? refund.courseAr : refund.course}{" "}
                                 &middot; {getReasonLabel(refund.reason)}
                               </p>
@@ -537,17 +537,17 @@ const RefundsContent = () => {
                             <div
                               className={`${isRTL ? "text-left" : "text-right"}`}
                             >
-                              <p className="text-sm font-semibold text-[#111827]">
+                              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                                 {formatAmount(refund.refundAmount)}
                               </p>
                               {refund.deductionAmount > 0 && (
-                                <p className="text-[11px] text-[#9CA3AF] line-through">
+                                <p className="text-[11px] text-[var(--color-text-secondary)] line-through">
                                   {formatAmount(refund.originalAmount)}
                                 </p>
                               )}
                             </div>
                             <span
-                              className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${statusStyles[refund.status] || "bg-[#F3F4F6] text-[#6B7280]"}`}
+                              className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${statusStyles[refund.status] || "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]"}`}
                             >
                               {statusLabels[refund.status] || refund.status}
                             </span>
@@ -555,11 +555,11 @@ const RefundsContent = () => {
                         </div>
 
                         {/* Deduction + Date + Actions */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[12px] text-[#6B7280]">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[12px] text-[var(--color-text-secondary)]">
                           <div className="flex items-center gap-3 flex-wrap">
                             <span>{formatDate(refund.date)}</span>
                             {refund.gateway && (
-                              <span className="px-1.5 py-0.5 bg-[#F3F4F6] rounded text-[11px] font-medium uppercase">
+                              <span className="px-1.5 py-0.5 bg-[var(--color-surface-page)] rounded text-[11px] font-medium uppercase">
                                 {refund.gateway}
                               </span>
                             )}
@@ -582,7 +582,7 @@ const RefundsContent = () => {
                             {/* View detail */}
                             <button
                               onClick={() => setDetailRefund(refund)}
-                              className="flex items-center gap-1 px-3 py-1.5 text-[#374151] text-[12px] font-medium rounded-md border border-[#E5E7EB] hover:bg-[#F3F4F6] transition-colors"
+                              className="flex items-center gap-1 px-3 py-1.5 text-[var(--color-text-primary)] text-[12px] font-medium rounded-md border border-[var(--color-border)] hover:bg-[var(--color-surface-page)] transition-colors"
                             >
                               <Eye className="w-3 h-3" />
                               {t("refundsPage.viewDetail") || "View"}
@@ -606,7 +606,7 @@ const RefundsContent = () => {
                                 <button
                                   onClick={() => handleReject(refund.id)}
                                   disabled={processing === refund.id}
-                                  className="flex items-center gap-1 px-3 py-1.5 bg-white text-[#DC2626] text-[12px] font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEE2E2] transition-colors disabled:opacity-50"
+                                  className="flex items-center gap-1 px-3 py-1.5 bg-[var(--color-surface-card)] text-[#DC2626] text-[12px] font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEE2E2] transition-colors disabled:opacity-50"
                                 >
                                   <X className="w-3 h-3" />
                                   {t("refundsQueue.reject")}
@@ -638,8 +638,8 @@ const RefundsContent = () => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-between px-5 py-3 border-t border-[#F3F4F6]">
-                    <p className="text-[12px] text-[#6B7280]">
+                  <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--color-border-subtle)]">
+                    <p className="text-[12px] text-[var(--color-text-secondary)]">
                       {t("refundsPage.showing") || "Showing"} {refunds.length}{" "}
                       {t("refundsPage.of") || "of"} {total}
                     </p>
@@ -647,7 +647,7 @@ const RefundsContent = () => {
                       <button
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={page <= 1}
-                        className="p-1.5 rounded-md border border-[#E5E7EB] hover:bg-[#F9FAFB] disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="p-1.5 rounded-md border border-[var(--color-border)] hover:bg-[var(--color-surface-page)] disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {isRTL ? (
                           <ChevronRight className="w-4 h-4" />
@@ -655,7 +655,7 @@ const RefundsContent = () => {
                           <ChevronLeft className="w-4 h-4" />
                         )}
                       </button>
-                      <span className="text-sm text-[#374151] px-2">
+                      <span className="text-sm text-[var(--color-text-primary)] px-2">
                         {page} / {totalPages}
                       </span>
                       <button
@@ -663,7 +663,7 @@ const RefundsContent = () => {
                           setPage((p) => Math.min(totalPages, p + 1))
                         }
                         disabled={page >= totalPages}
-                        className="p-1.5 rounded-md border border-[#E5E7EB] hover:bg-[#F9FAFB] disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="p-1.5 rounded-md border border-[var(--color-border)] hover:bg-[var(--color-surface-page)] disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {isRTL ? (
                           <ChevronLeft className="w-4 h-4" />
@@ -691,13 +691,13 @@ const RefundsContent = () => {
           }}
         >
           <div
-            className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6"
+            className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl w-full max-w-md mx-4 p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold text-[#111827] mb-1">
+            <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-1">
               {t("refundsPage.rejectTitle") || "Reject Refund"}
             </h3>
-            <p className="text-sm text-[#6B7280] mb-4">
+            <p className="text-sm text-[var(--color-text-secondary)] mb-4">
               {t("refundsPage.rejectionNoteLabel") ||
                 "Provide a reason for rejecting this refund request."}
             </p>
@@ -712,10 +712,10 @@ const RefundsContent = () => {
                 "Enter rejection reason or notes..."
               }
               rows={3}
-              className={`w-full px-3 py-2 border rounded-lg text-sm text-[#374151] focus:outline-none resize-none ${
+              className={`w-full px-3 py-2 border rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none resize-none ${
                 rejectionError
                   ? "border-[#DC2626] focus:border-[#DC2626]"
-                  : "border-[#E5E7EB] focus:border-[#a37f49]"
+                  : "border-[var(--color-border)] focus:border-[var(--color-primary)]"
               }`}
             />
             {rejectionError && (
@@ -731,7 +731,7 @@ const RefundsContent = () => {
                   setRejectionNote("");
                   setRejectionError(false);
                 }}
-                className="px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
               >
                 {t("refundsPage.cancel") || "Cancel"}
               </button>
@@ -755,72 +755,72 @@ const RefundsContent = () => {
           onClick={() => setDetailRefund(null)}
         >
           <div
-            className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[80vh] overflow-y-auto"
+            className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[80vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-[#111827]">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {t("refundsPage.detailTitle") || "Refund Details"}
               </h3>
               <button
                 onClick={() => setDetailRefund(null)}
-                className="p-1 rounded-md hover:bg-[#F3F4F6]"
+                className="p-1 rounded-md hover:bg-[var(--color-surface-page)]"
               >
-                <X className="w-5 h-5 text-[#6B7280]" />
+                <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
               </button>
             </div>
 
             <dl className="space-y-3">
-              <div className="flex justify-between py-2 border-b border-[#F3F4F6]">
-                <dt className="text-sm text-[#6B7280]">
+              <div className="flex justify-between py-2 border-b border-[var(--color-border-subtle)]">
+                <dt className="text-sm text-[var(--color-text-secondary)]">
                   {t("refundsPage.detail.refundId") || "Refund ID"}
                 </dt>
-                <dd className="text-sm font-mono text-[#111827]">
+                <dd className="text-sm font-mono text-[var(--color-text-primary)]">
                   {detailRefund.id.slice(0, 8)}...
                 </dd>
               </div>
-              <div className="flex justify-between py-2 border-b border-[#F3F4F6]">
-                <dt className="text-sm text-[#6B7280]">
+              <div className="flex justify-between py-2 border-b border-[var(--color-border-subtle)]">
+                <dt className="text-sm text-[var(--color-text-secondary)]">
                   {t("refundsPage.detail.requester") || "Requester"}
                 </dt>
-                <dd className="text-sm text-[#111827]">
+                <dd className="text-sm text-[var(--color-text-primary)]">
                   {detailRefund.customer}
-                  <span className="block text-[11px] text-[#9CA3AF]">
+                  <span className="block text-[11px] text-[var(--color-text-secondary)]">
                     {detailRefund.customerEmail}
                   </span>
                 </dd>
               </div>
-              <div className="flex justify-between py-2 border-b border-[#F3F4F6]">
-                <dt className="text-sm text-[#6B7280]">
+              <div className="flex justify-between py-2 border-b border-[var(--color-border-subtle)]">
+                <dt className="text-sm text-[var(--color-text-secondary)]">
                   {t("refundsPage.detail.course") || "Course"}
                 </dt>
-                <dd className="text-sm text-[#111827]">
+                <dd className="text-sm text-[var(--color-text-primary)]">
                   {locale === "ar" ? detailRefund.courseAr : detailRefund.course}
                 </dd>
               </div>
-              <div className="flex justify-between py-2 border-b border-[#F3F4F6]">
-                <dt className="text-sm text-[#6B7280]">
+              <div className="flex justify-between py-2 border-b border-[var(--color-border-subtle)]">
+                <dt className="text-sm text-[var(--color-text-secondary)]">
                   {t("refundsPage.detail.reason") || "Reason"}
                 </dt>
-                <dd className="text-sm text-[#111827]">
+                <dd className="text-sm text-[var(--color-text-primary)]">
                   {getReasonLabel(detailRefund.reason)}
                   {detailRefund.reasonNote && (
-                    <span className="block text-[11px] text-[#9CA3AF] mt-0.5">
+                    <span className="block text-[11px] text-[var(--color-text-secondary)] mt-0.5">
                       {detailRefund.reasonNote}
                     </span>
                   )}
                 </dd>
               </div>
-              <div className="flex justify-between py-2 border-b border-[#F3F4F6]">
-                <dt className="text-sm text-[#6B7280]">
+              <div className="flex justify-between py-2 border-b border-[var(--color-border-subtle)]">
+                <dt className="text-sm text-[var(--color-text-secondary)]">
                   {t("refundsPage.detail.originalAmount") || "Original Amount"}
                 </dt>
-                <dd className="text-sm text-[#111827]">
+                <dd className="text-sm text-[var(--color-text-primary)]">
                   {formatAmount(detailRefund.originalAmount)}
                 </dd>
               </div>
               {detailRefund.deductionAmount > 0 && (
-                <div className="flex justify-between py-2 border-b border-[#F3F4F6]">
+                <div className="flex justify-between py-2 border-b border-[var(--color-border-subtle)]">
                   <dt className="text-sm text-[#D97706]">
                     {t("refundsPage.detail.deduction") || "Deduction"}
                   </dt>
@@ -834,31 +834,31 @@ const RefundsContent = () => {
                   </dd>
                 </div>
               )}
-              <div className="flex justify-between py-2 border-b border-[#F3F4F6]">
-                <dt className="text-sm font-semibold text-[#111827]">
+              <div className="flex justify-between py-2 border-b border-[var(--color-border-subtle)]">
+                <dt className="text-sm font-semibold text-[var(--color-text-primary)]">
                   {t("refundsPage.detail.refundAmount") || "Refund Amount"}
                 </dt>
-                <dd className="text-sm font-semibold text-[#111827]">
+                <dd className="text-sm font-semibold text-[var(--color-text-primary)]">
                   {formatAmount(detailRefund.refundAmount)}
                 </dd>
               </div>
               {detailRefund.gateway && (
-                <div className="flex justify-between py-2 border-b border-[#F3F4F6]">
-                  <dt className="text-sm text-[#6B7280]">
+                <div className="flex justify-between py-2 border-b border-[var(--color-border-subtle)]">
+                  <dt className="text-sm text-[var(--color-text-secondary)]">
                     {t("refundsPage.detail.gateway") || "Gateway"}
                   </dt>
-                  <dd className="text-sm text-[#111827] uppercase">
+                  <dd className="text-sm text-[var(--color-text-primary)] uppercase">
                     {detailRefund.gateway}
                   </dd>
                 </div>
               )}
-              <div className="flex justify-between py-2 border-b border-[#F3F4F6]">
-                <dt className="text-sm text-[#6B7280]">
+              <div className="flex justify-between py-2 border-b border-[var(--color-border-subtle)]">
+                <dt className="text-sm text-[var(--color-text-secondary)]">
                   {t("refundsPage.detail.status") || "Status"}
                 </dt>
                 <dd>
                   <span
-                    className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${statusStyles[detailRefund.status] || "bg-[#F3F4F6] text-[#6B7280]"}`}
+                    className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${statusStyles[detailRefund.status] || "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]"}`}
                   >
                     {statusLabels[detailRefund.status] || detailRefund.status}
                   </span>
@@ -867,26 +867,26 @@ const RefundsContent = () => {
 
               {/* Audit Timeline */}
               <div className="pt-3">
-                <h4 className="text-sm font-semibold text-[#111827] mb-2">
+                <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">
                   {t("refundsPage.detail.timeline") || "Timeline"}
                 </h4>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-[12px]">
                     <div className="w-2 h-2 rounded-full bg-[#CA8A04]" />
-                    <span className="text-[#6B7280]">
+                    <span className="text-[var(--color-text-secondary)]">
                       {t("refundsPage.detail.requested") || "Requested"}:
                     </span>
-                    <span className="text-[#374151]">
+                    <span className="text-[var(--color-text-primary)]">
                       {formatDate(detailRefund.date)}
                     </span>
                   </div>
                   {detailRefund.approvedAt && (
                     <div className="flex items-center gap-2 text-[12px]">
                       <div className="w-2 h-2 rounded-full bg-[#16A34A]" />
-                      <span className="text-[#6B7280]">
+                      <span className="text-[var(--color-text-secondary)]">
                         {t("refundsPage.detail.approvedAt") || "Approved"}:
                       </span>
-                      <span className="text-[#374151]">
+                      <span className="text-[var(--color-text-primary)]">
                         {formatDate(detailRefund.approvedAt)}
                       </span>
                     </div>
@@ -894,10 +894,10 @@ const RefundsContent = () => {
                   {detailRefund.completedAt && (
                     <div className="flex items-center gap-2 text-[12px]">
                       <div className="w-2 h-2 rounded-full bg-[#065F46]" />
-                      <span className="text-[#6B7280]">
+                      <span className="text-[var(--color-text-secondary)]">
                         {t("refundsPage.detail.completedAt") || "Completed"}:
                       </span>
-                      <span className="text-[#374151]">
+                      <span className="text-[var(--color-text-primary)]">
                         {formatDate(detailRefund.completedAt)}
                       </span>
                     </div>
@@ -905,10 +905,10 @@ const RefundsContent = () => {
                   {detailRefund.rejectedAt && (
                     <div className="flex items-center gap-2 text-[12px]">
                       <div className="w-2 h-2 rounded-full bg-[#DC2626]" />
-                      <span className="text-[#6B7280]">
+                      <span className="text-[var(--color-text-secondary)]">
                         {t("refundsPage.detail.rejectedAt") || "Rejected"}:
                       </span>
-                      <span className="text-[#374151]">
+                      <span className="text-[var(--color-text-primary)]">
                         {formatDate(detailRefund.rejectedAt)}
                       </span>
                     </div>
@@ -930,7 +930,7 @@ const RefundsContent = () => {
             <div className="mt-5 flex justify-end">
               <button
                 onClick={() => setDetailRefund(null)}
-                className="px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
               >
                 {t("refundsPage.close") || "Close"}
               </button>

@@ -331,8 +331,8 @@ const FinanceReportsContent = () => {
     if (loading) {
       return (
         <div className="flex flex-col items-center justify-center py-16">
-          <Loader2 className="w-8 h-8 text-[#a37f49] animate-spin mb-3" />
-          <p className="text-sm text-[#6B7280]">{t("reportsPage.loading")}</p>
+          <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin mb-3" />
+          <p className="text-sm text-[var(--color-text-secondary)]">{t("reportsPage.loading")}</p>
         </div>
       );
     }
@@ -340,9 +340,9 @@ const FinanceReportsContent = () => {
     if (!generated) {
       return (
         <div className="flex flex-col items-center justify-center py-16 px-5">
-          <BarChart3 className="w-12 h-12 text-[#D1D5DB] mb-4" />
-          <p className="text-sm text-[#6B7280] text-center">{t("reportsPage.noData")}</p>
-          <p className="text-xs text-[#9CA3AF] text-center mt-1">{t("reportsPage.exportHint")}</p>
+          <BarChart3 className="w-12 h-12 text-[var(--color-text-secondary)] mb-4" />
+          <p className="text-sm text-[var(--color-text-secondary)] text-center">{t("reportsPage.noData")}</p>
+          <p className="text-xs text-[var(--color-text-secondary)] text-center mt-1">{t("reportsPage.exportHint")}</p>
         </div>
       );
     }
@@ -369,42 +369,42 @@ const FinanceReportsContent = () => {
       <div className="overflow-x-auto">
         <table className="w-full text-sm" aria-label="Course profit report">
           <thead>
-            <tr className="border-b border-[#F3F4F6]">
-              <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[#374151]`}>
+            <tr className="border-b border-[var(--color-border-subtle)]">
+              <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[var(--color-text-primary)]`}>
                 {t("reportsPage.columns.course")}
               </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
                 {t("reportsPage.columns.revenue")}
               </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
                 {t("reportsPage.columns.refunds")}
               </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
                 {t("reportsPage.columns.netProfit")}
               </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
                 {t("reportsPage.columns.margin")}
               </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
                 {t("reportsPage.columns.enrollments")}
               </th>
             </tr>
           </thead>
           <tbody>
             {courseData.map((row) => (
-              <tr key={row.courseId} className="border-b border-[#F9FAFB] hover:bg-[#F9FAFB] transition-colors">
-                <td className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-medium text-[#111827]`}>
+              <tr key={row.courseId} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)] transition-colors">
+                <td className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-medium text-[var(--color-text-primary)]`}>
                   {isRTL && row.titleAr ? row.titleAr : row.title}
                 </td>
-                <td className="px-4 py-3 text-right text-[#111827]">{formatSAR(row.revenue)}</td>
+                <td className="px-4 py-3 text-right text-[var(--color-text-primary)]">{formatSAR(row.revenue)}</td>
                 <td className="px-4 py-3 text-right text-[#DC2626]">
                   {row.refundAmount > 0 ? `-${formatSAR(row.refundAmount)}` : formatSAR(0)}
                 </td>
-                <td className="px-4 py-3 text-right font-medium text-[#111827]">{formatSAR(row.netRevenue)}</td>
+                <td className="px-4 py-3 text-right font-medium text-[var(--color-text-primary)]">{formatSAR(row.netRevenue)}</td>
                 <td className="px-4 py-3 text-right">
                   <MarginBadge value={row.marginPercent} />
                 </td>
-                <td className="px-4 py-3 text-right text-[#6B7280]">{row.enrollmentCount}</td>
+                <td className="px-4 py-3 text-right text-[var(--color-text-secondary)]">{row.enrollmentCount}</td>
               </tr>
             ))}
           </tbody>
@@ -421,29 +421,29 @@ const FinanceReportsContent = () => {
       <div className="overflow-x-auto">
         <table className="w-full text-sm" aria-label="Instructor profit report">
           <thead>
-            <tr className="border-b border-[#F3F4F6]">
-              <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[#374151]`}>
+            <tr className="border-b border-[var(--color-border-subtle)]">
+              <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[var(--color-text-primary)]`}>
                 {t("reportsPage.columns.instructor")}
               </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
                 {t("reportsPage.columns.courses")}
               </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
                 {t("reportsPage.columns.revenue")}
               </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
                 {t("reportsPage.columns.refunds")}
               </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
                 {t("reportsPage.columns.netProfit")}
               </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
                 {t("reportsPage.columns.platformFee")}
               </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
                 {t("reportsPage.columns.netPayout")}
               </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
                 {t("reportsPage.columns.enrollments")}
               </th>
             </tr>
@@ -452,19 +452,19 @@ const FinanceReportsContent = () => {
             {instructorData.map((row, idx) => {
               const margin = row.revenue > 0 ? ((row.netRevenue / row.revenue) * 100) : 0;
               return (
-                <tr key={row.instructorId || idx} className="border-b border-[#F9FAFB] hover:bg-[#F9FAFB] transition-colors">
-                  <td className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-medium text-[#111827]`}>
+                <tr key={row.instructorId || idx} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)] transition-colors">
+                  <td className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-medium text-[var(--color-text-primary)]`}>
                     {row.instructorName || "—"}
                   </td>
-                  <td className="px-4 py-3 text-right text-[#6B7280]">{row.courseCount}</td>
-                  <td className="px-4 py-3 text-right text-[#111827]">{formatSAR(row.revenue)}</td>
+                  <td className="px-4 py-3 text-right text-[var(--color-text-secondary)]">{row.courseCount}</td>
+                  <td className="px-4 py-3 text-right text-[var(--color-text-primary)]">{formatSAR(row.revenue)}</td>
                   <td className="px-4 py-3 text-right text-[#DC2626]">
                     {row.refundAmount > 0 ? `-${formatSAR(row.refundAmount)}` : formatSAR(0)}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-[#111827]">{formatSAR(row.netRevenue)}</td>
+                  <td className="px-4 py-3 text-right font-medium text-[var(--color-text-primary)]">{formatSAR(row.netRevenue)}</td>
                   <td className="px-4 py-3 text-right text-[#EA580C]">{formatSAR(row.platformFee)}</td>
                   <td className="px-4 py-3 text-right font-medium text-[#16A34A]">{formatSAR(row.netPayout)}</td>
-                  <td className="px-4 py-3 text-right text-[#6B7280]">{row.enrollmentCount}</td>
+                  <td className="px-4 py-3 text-right text-[var(--color-text-secondary)]">{row.enrollmentCount}</td>
                 </tr>
               );
             })}
@@ -489,25 +489,25 @@ const FinanceReportsContent = () => {
             const pct = totalRevenue > 0 ? (row.revenue / totalRevenue) * 100 : 0;
             const margin = row.revenue > 0 ? ((row.netRevenue / row.revenue) * 100) : 0;
             return (
-              <div key={row.deliveryType} className="bg-[#F9FAFB] rounded-xl p-4">
+              <div key={row.deliveryType} className="bg-[var(--color-surface-page)] rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold text-[#111827]">{deliveryLabel(row.deliveryType)}</span>
-                  <span className="text-xs text-[#6B7280]">{pct.toFixed(1)}%</span>
+                  <span className="text-sm font-semibold text-[var(--color-text-primary)]">{deliveryLabel(row.deliveryType)}</span>
+                  <span className="text-xs text-[var(--color-text-secondary)]">{pct.toFixed(1)}%</span>
                 </div>
-                <div className="w-full bg-[#E5E7EB] rounded-full h-2 mb-3">
+                <div className="w-full bg-[var(--color-border)] rounded-full h-2 mb-3">
                   <div
-                    className="bg-[#a37f49] h-2 rounded-full transition-all"
+                    className="bg-[var(--color-primary)] h-2 rounded-full transition-all"
                     style={{ width: `${Math.min(pct, 100)}%` }}
                   />
                 </div>
-                <div className="space-y-1 text-xs text-[#6B7280]">
+                <div className="space-y-1 text-xs text-[var(--color-text-secondary)]">
                   <div className="flex justify-between">
                     <span>{t("reportsPage.columns.revenue")}</span>
-                    <span className="font-medium text-[#111827]">{formatSAR(row.revenue)}</span>
+                    <span className="font-medium text-[var(--color-text-primary)]">{formatSAR(row.revenue)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>{t("reportsPage.columns.netProfit")}</span>
-                    <span className="font-medium text-[#111827]">{formatSAR(row.netRevenue)}</span>
+                    <span className="font-medium text-[var(--color-text-primary)]">{formatSAR(row.netRevenue)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>{t("reportsPage.columns.margin")}</span>
@@ -531,30 +531,30 @@ const FinanceReportsContent = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-sm" aria-label="Delivery type report">
             <thead>
-              <tr className="border-b border-[#F3F4F6]">
-                <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[#374151]`}>
+              <tr className="border-b border-[var(--color-border-subtle)]">
+                <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[var(--color-text-primary)]`}>
                   {t("reportsPage.columns.deliveryType")}
                 </th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">{t("reportsPage.columns.revenue")}</th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">{t("reportsPage.columns.refunds")}</th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">{t("reportsPage.columns.netProfit")}</th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">{t("reportsPage.columns.courses")}</th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">{t("reportsPage.columns.enrollments")}</th>
+                <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">{t("reportsPage.columns.revenue")}</th>
+                <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">{t("reportsPage.columns.refunds")}</th>
+                <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">{t("reportsPage.columns.netProfit")}</th>
+                <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">{t("reportsPage.columns.courses")}</th>
+                <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">{t("reportsPage.columns.enrollments")}</th>
               </tr>
             </thead>
             <tbody>
               {deliveryData.map((row) => (
-                <tr key={row.deliveryType} className="border-b border-[#F9FAFB] hover:bg-[#F9FAFB] transition-colors">
-                  <td className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-medium text-[#111827]`}>
+                <tr key={row.deliveryType} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)] transition-colors">
+                  <td className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-medium text-[var(--color-text-primary)]`}>
                     {deliveryLabel(row.deliveryType)}
                   </td>
-                  <td className="px-4 py-3 text-right text-[#111827]">{formatSAR(row.revenue)}</td>
+                  <td className="px-4 py-3 text-right text-[var(--color-text-primary)]">{formatSAR(row.revenue)}</td>
                   <td className="px-4 py-3 text-right text-[#DC2626]">
                     {row.refundAmount > 0 ? `-${formatSAR(row.refundAmount)}` : formatSAR(0)}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-[#111827]">{formatSAR(row.netRevenue)}</td>
-                  <td className="px-4 py-3 text-right text-[#6B7280]">{row.courseCount}</td>
-                  <td className="px-4 py-3 text-right text-[#6B7280]">{row.enrollmentCount}</td>
+                  <td className="px-4 py-3 text-right font-medium text-[var(--color-text-primary)]">{formatSAR(row.netRevenue)}</td>
+                  <td className="px-4 py-3 text-right text-[var(--color-text-secondary)]">{row.courseCount}</td>
+                  <td className="px-4 py-3 text-right text-[var(--color-text-secondary)]">{row.enrollmentCount}</td>
                 </tr>
               ))}
             </tbody>
@@ -605,7 +605,7 @@ const FinanceReportsContent = () => {
         {/* Visual bar */}
         {totalOutstandingCount > 0 && (
           <div className="px-5">
-            <p className="text-xs text-[#6B7280] mb-2">
+            <p className="text-xs text-[var(--color-text-secondary)] mb-2">
               {t("reportsPage.aging.total")}: {totalOutstandingCount} {t("reportsPage.aging.invoices")} — {formatSAR(totalOutstandingAmount)}
             </p>
             <div className="flex h-4 rounded-full overflow-hidden">
@@ -623,7 +623,7 @@ const FinanceReportsContent = () => {
             </div>
             <div className="flex gap-4 mt-2">
               {buckets.map((b) => (
-                <div key={b.key} className="flex items-center gap-1.5 text-xs text-[#6B7280]">
+                <div key={b.key} className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
                   <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: b.color }} />
                   {b.label}
                 </div>
@@ -668,38 +668,38 @@ const FinanceReportsContent = () => {
 
         {/* Breakdown table */}
         <div className="px-5">
-          <h4 className="text-sm font-semibold text-[#111827] mb-3">
+          <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
             {t("reportsPage.chargeback.breakdown")}
           </h4>
         </div>
         {chargebackData.breakdown.length === 0 ? (
-          <p className="px-5 pb-4 text-sm text-[#6B7280]">{t("reportsPage.chargeback.noCases")}</p>
+          <p className="px-5 pb-4 text-sm text-[var(--color-text-secondary)]">{t("reportsPage.chargeback.noCases")}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm" aria-label="Chargeback report">
               <thead>
-                <tr className="border-b border-[#F3F4F6]">
-                  <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[#374151]`}>
+                <tr className="border-b border-[var(--color-border-subtle)]">
+                  <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[var(--color-text-primary)]`}>
                     {t("reportsPage.columns.course")}
                   </th>
-                  <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[#374151]`}>
+                  <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[var(--color-text-primary)]`}>
                     {t("reportsPage.columns.gateway")}
                   </th>
-                  <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
+                  <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
                     {t("reportsPage.columns.count")}
                   </th>
-                  <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
+                  <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
                     {t("reportsPage.columns.amount")}
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {chargebackData.breakdown.map((row, idx) => (
-                  <tr key={idx} className="border-b border-[#F9FAFB] hover:bg-[#F9FAFB] transition-colors">
-                    <td className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-medium text-[#111827]`}>
+                  <tr key={idx} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)] transition-colors">
+                    <td className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-medium text-[var(--color-text-primary)]`}>
                       {row.courseTitle}
                     </td>
-                    <td className={`px-4 py-3 text-${isRTL ? "right" : "left"} text-[#6B7280] capitalize`}>
+                    <td className={`px-4 py-3 text-${isRTL ? "right" : "left"} text-[var(--color-text-secondary)] capitalize`}>
                       {row.gateway}
                     </td>
                     <td className="px-4 py-3 text-right text-[#DC2626] font-medium">{row.chargebackCount}</td>
@@ -718,7 +718,7 @@ const FinanceReportsContent = () => {
     <>
       <FinanceNavbar profile={profile} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -741,14 +741,14 @@ const FinanceReportsContent = () => {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={handleExportExcel}
-                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
                   >
                     <FileSpreadsheet className="w-4 h-4" />
                     {t("reportsPage.exportExcel")}
                   </button>
                   <button
                     onClick={handleExportPdf}
-                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
                   >
                     <Download className="w-4 h-4" />
                     {t("reportsPage.exportPdf")}
@@ -770,35 +770,35 @@ const FinanceReportsContent = () => {
                       }}
                       className={`p-4 rounded-xl border text-${isRTL ? "right" : "left"} transition-all ${
                         isSelected
-                          ? "bg-[#FDF6EC] border-[#a37f49] ring-1 ring-[#a37f49]"
-                          : "bg-white border-[#E5E7EB] hover:border-[#D1D5DB]"
+                          ? "bg-[var(--color-surface-page)] border-[var(--color-primary)] ring-1 ring-[var(--color-primary)]"
+                          : "bg-[var(--color-surface-card)] border-[var(--color-border)] hover:border-[var(--color-border)]"
                       }`}
                     >
                       <div className={`w-9 h-9 ${report.iconBg} rounded-lg flex items-center justify-center mb-2.5`}>
                         <Icon className={`w-4.5 h-4.5 ${report.iconColor}`} />
                       </div>
-                      <p className={`text-[13px] font-semibold leading-tight ${isSelected ? "text-[#a37f49]" : "text-[#111827]"}`}>
+                      <p className={`text-[13px] font-semibold leading-tight ${isSelected ? "text-[var(--color-primary)]" : "text-[var(--color-text-primary)]"}`}>
                         {t(report.titleKey)}
                       </p>
-                      <p className="text-[11px] text-[#6B7280] mt-0.5 leading-tight">{t(report.descKey)}</p>
+                      <p className="text-[11px] text-[var(--color-text-secondary)] mt-0.5 leading-tight">{t(report.descKey)}</p>
                     </button>
                   );
                 })}
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5 mb-6">
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 mb-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <Filter className="w-4 h-4 text-[#6B7280]" />
-                  <h3 className="text-sm font-semibold text-[#111827]">{t("reportsPage.filters.period")}</h3>
+                  <Filter className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                  <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{t("reportsPage.filters.period")}</h3>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
                   <div>
-                    <label className="block text-[12px] text-[#6B7280] mb-1">{t("reportsPage.filters.period")}</label>
+                    <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">{t("reportsPage.filters.period")}</label>
                     <select
                       value={period}
                       onChange={(e) => setPeriod(e.target.value as PeriodKey)}
-                      className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#a37f49]"
+                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)]"
                     >
                       <option value="thisMonth">{t("reportsPage.filters.thisMonth")}</option>
                       <option value="lastMonth">{t("reportsPage.filters.lastMonth")}</option>
@@ -810,21 +810,21 @@ const FinanceReportsContent = () => {
                   {period === "custom" && (
                     <>
                       <div>
-                        <label className="block text-[12px] text-[#6B7280] mb-1">{t("reportsPage.filters.startDate")}</label>
+                        <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">{t("reportsPage.filters.startDate")}</label>
                         <input
                           type="date"
                           value={customStart}
                           onChange={(e) => setCustomStart(e.target.value)}
-                          className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#a37f49]"
+                          className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)]"
                         />
                       </div>
                       <div>
-                        <label className="block text-[12px] text-[#6B7280] mb-1">{t("reportsPage.filters.endDate")}</label>
+                        <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">{t("reportsPage.filters.endDate")}</label>
                         <input
                           type="date"
                           value={customEnd}
                           onChange={(e) => setCustomEnd(e.target.value)}
-                          className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#a37f49]"
+                          className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)]"
                         />
                       </div>
                     </>
@@ -849,22 +849,22 @@ const FinanceReportsContent = () => {
               {/* Summary Stats (for profitability reports) */}
               {generated && summaryStats && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                    <p className="text-xs text-[#6B7280]">{t("reportsPage.summary.totalRevenue")}</p>
-                    <p className="text-lg font-bold text-[#111827] mt-1">{formatSAR(summaryStats.totalRev)}</p>
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
+                    <p className="text-xs text-[var(--color-text-secondary)]">{t("reportsPage.summary.totalRevenue")}</p>
+                    <p className="text-lg font-bold text-[var(--color-text-primary)] mt-1">{formatSAR(summaryStats.totalRev)}</p>
                   </div>
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                    <p className="text-xs text-[#6B7280]">{t("reportsPage.summary.totalRefunds")}</p>
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
+                    <p className="text-xs text-[var(--color-text-secondary)]">{t("reportsPage.summary.totalRefunds")}</p>
                     <p className="text-lg font-bold text-[#DC2626] mt-1">{formatSAR(summaryStats.totalRef)}</p>
                   </div>
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                    <p className="text-xs text-[#6B7280]">{t("reportsPage.summary.netRevenue")}</p>
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
+                    <p className="text-xs text-[var(--color-text-secondary)]">{t("reportsPage.summary.netRevenue")}</p>
                     <p className="text-lg font-bold text-[#16A34A] mt-1">{formatSAR(summaryStats.netRev)}</p>
                   </div>
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                    <p className="text-xs text-[#6B7280]">{t("reportsPage.summary.avgMargin")}</p>
+                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
+                    <p className="text-xs text-[var(--color-text-secondary)]">{t("reportsPage.summary.avgMargin")}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <p className="text-lg font-bold text-[#111827]">{summaryStats.avgMargin.toFixed(1)}%</p>
+                      <p className="text-lg font-bold text-[var(--color-text-primary)]">{summaryStats.avgMargin.toFixed(1)}%</p>
                       {summaryStats.avgMargin >= 70 ? (
                         <TrendingUp className="w-4 h-4 text-[#16A34A]" />
                       ) : (
@@ -876,9 +876,9 @@ const FinanceReportsContent = () => {
               )}
 
               {/* Report Results */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
-                <div className="px-5 py-4 border-b border-[#F3F4F6]">
-                  <h3 className="text-base font-semibold text-[#111827]">
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
+                <div className="px-5 py-4 border-b border-[var(--color-border-subtle)]">
+                  <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
                     {t(reportTypes.find((r) => r.key === selectedReport)?.titleKey || "")}
                   </h3>
                 </div>
@@ -912,8 +912,8 @@ function MarginBadge({ value }: { value: number }) {
 
 function StatCard({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div className="bg-[#F9FAFB] rounded-xl p-4">
-      <p className="text-xs text-[#6B7280]">{label}</p>
+    <div className="bg-[var(--color-surface-page)] rounded-xl p-4">
+      <p className="text-xs text-[var(--color-text-secondary)]">{label}</p>
       <p className="text-xl font-bold mt-1" style={{ color }}>{value}</p>
     </div>
   );
@@ -923,8 +923,8 @@ function EmptyState() {
   const t = useTranslations("financeDashboard");
   return (
     <div className="flex flex-col items-center justify-center py-12">
-      <BarChart3 className="w-10 h-10 text-[#D1D5DB] mb-3" />
-      <p className="text-sm text-[#6B7280]">{t("reportsPage.noResults")}</p>
+      <BarChart3 className="w-10 h-10 text-[var(--color-text-secondary)] mb-3" />
+      <p className="text-sm text-[var(--color-text-secondary)]">{t("reportsPage.noResults")}</p>
     </div>
   );
 }

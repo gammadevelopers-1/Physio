@@ -291,7 +291,7 @@ const FinanceSettingsContent = () => {
     <>
       <FinanceNavbar profile={profile} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -311,7 +311,7 @@ const FinanceSettingsContent = () => {
                 </p>
                 <Link
                   href={`/${locale}/dashboard/settings/security`}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#a37f49] bg-[#a37f49]/10 hover:bg-[#a37f49]/20 rounded-lg transition-colors mt-3"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--color-primary)] bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 rounded-lg transition-colors mt-3"
                 >
                   <Shield className="w-4 h-4" />
                   {t("settingsPage.personalSecurity")}
@@ -319,10 +319,10 @@ const FinanceSettingsContent = () => {
               </div>
 
               {/* Settings Card */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
                 {/* Tabs */}
                 <div className="px-5 overflow-x-auto">
-                  <div className="flex flex-wrap border-b border-[#E5E7EB]">
+                  <div className="flex flex-wrap border-b border-[var(--color-border)]">
                     {tabs.map((tab) => {
                       const Icon = tab.icon;
                       return (
@@ -331,14 +331,14 @@ const FinanceSettingsContent = () => {
                           onClick={() => setActiveTab(tab.key)}
                           className={`px-3 py-2.5 text-xs sm:text-sm font-medium relative transition-colors whitespace-nowrap flex items-center gap-1 ${
                             activeTab === tab.key
-                              ? "text-[#a37f49]"
-                              : "text-[#6B7280] hover:text-[#374151]"
+                              ? "text-[var(--color-primary)]"
+                              : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                           }`}
                         >
                           <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           {tab.label}
                           {activeTab === tab.key && (
-                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#a37f49] rounded-t" />
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-primary)] rounded-t" />
                           )}
                         </button>
                       );
@@ -366,7 +366,7 @@ const FinanceSettingsContent = () => {
                               />
                             </div>
                           ) : (
-                            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#a37f49] to-[#6b4e24] flex items-center justify-center text-2xl font-bold text-white">
+                            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] flex items-center justify-center text-2xl font-bold text-white">
                               {initials}
                             </div>
                           )}
@@ -380,22 +380,22 @@ const FinanceSettingsContent = () => {
                           <div ref={avatarMenuRef}>
                             <button
                               onClick={() => setAvatarMenuOpen((v) => !v)}
-                              className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#a37f49] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-[#8a6a3d] transition-colors`}
+                              className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[var(--color-primary)] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-[var(--color-primary-dark)] transition-colors`}
                             >
                               <Pencil className="w-3.5 h-3.5 text-white" />
                             </button>
                             {avatarMenuOpen && (
                               <div
-                                className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 z-50 min-w-[160px]`}
+                                className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`}
                               >
                                 <button
                                   onClick={() => {
                                     avatarInputRef.current?.click();
                                     setAvatarMenuOpen(false);
                                   }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors cursor-pointer"
                                 >
-                                  <Upload className="w-4 h-4 text-[#4B5563]" />
+                                  <Upload className="w-4 h-4 text-[var(--color-text-secondary)]" />
                                   {t("settingsPage.profile.uploadPhoto")}
                                 </button>
                                 {user?.avatar && (
@@ -415,10 +415,10 @@ const FinanceSettingsContent = () => {
                           </div>
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-[#1F2937]">
+                          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                             {profileData.firstName} {profileData.lastName}
                           </h3>
-                          <p className="text-sm text-[#6B7280]">
+                          <p className="text-sm text-[var(--color-text-secondary)]">
                             {profileData.email}
                           </p>
                         </div>
@@ -426,14 +426,14 @@ const FinanceSettingsContent = () => {
 
                       {/* Personal Information */}
                       <div>
-                        <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
+                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">
                           {t("settingsPage.profile.personalInfo")}
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label
                               htmlFor="finance-first-name"
-                              className="block text-sm font-medium text-[#374151] mb-1.5"
+                              className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5"
                             >
                               {t("settingsPage.profile.firstName")}
                             </label>
@@ -447,13 +447,13 @@ const FinanceSettingsContent = () => {
                                   firstName: e.target.value,
                                 })
                               }
-                              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#a37f49]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                             />
                           </div>
                           <div>
                             <label
                               htmlFor="finance-last-name"
-                              className="block text-sm font-medium text-[#374151] mb-1.5"
+                              className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5"
                             >
                               {t("settingsPage.profile.lastName")}
                             </label>
@@ -467,39 +467,39 @@ const FinanceSettingsContent = () => {
                                   lastName: e.target.value,
                                 })
                               }
-                              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#a37f49]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                             />
                           </div>
                           <div>
                             <label
                               htmlFor="finance-email"
-                              className="block text-sm font-medium text-[#374151] mb-1.5"
+                              className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5"
                             >
                               {t("settingsPage.profile.email")}
                             </label>
                             <div className="relative">
                               <Mail
-                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
                                 id="finance-email"
                                 type="email"
                                 value={profileData.email}
                                 readOnly
-                                className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] cursor-not-allowed ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                               />
                             </div>
                           </div>
                           <div>
                             <label
                               htmlFor="finance-phone"
-                              className="block text-sm font-medium text-[#374151] mb-1.5"
+                              className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5"
                             >
                               {t("settingsPage.profile.phone")}
                             </label>
                             <div className="relative">
                               <Phone
-                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
                                 id="finance-phone"
@@ -511,7 +511,7 @@ const FinanceSettingsContent = () => {
                                     phone: e.target.value,
                                   })
                                 }
-                                className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#a37f49] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                               />
                             </div>
                           </div>
@@ -535,24 +535,24 @@ const FinanceSettingsContent = () => {
                       </div>
 
                       {/* Divider */}
-                      <hr className="border-[#E5E7EB]" />
+                      <hr className="border-[var(--color-border)]" />
 
                       {/* Change Password Section */}
                       <div>
-                        <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
+                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4">
                           {t("settingsPage.profile.changePassword")}
                         </h4>
                         <div className="space-y-4 max-w-md">
                           <div>
                             <label
                               htmlFor="finance-current-password"
-                              className="block text-sm font-medium text-[#374151] mb-1.5"
+                              className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5"
                             >
                               {t("settingsPage.profile.currentPassword")}
                             </label>
                             <div className="relative">
                               <Key
-                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
                                 id="finance-current-password"
@@ -564,14 +564,14 @@ const FinanceSettingsContent = () => {
                                   setCurrentPassword(e.target.value)
                                 }
                                 placeholder="••••••••"
-                                className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#a37f49] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                               />
                               <button
                                 type="button"
                                 onClick={() =>
                                   setShowCurrentPassword(!showCurrentPassword)
                                 }
-                                className={`absolute top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B7280] ${isRTL ? "left-3" : "right-3"}`}
+                                className={`absolute top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] ${isRTL ? "left-3" : "right-3"}`}
                               >
                                 {showCurrentPassword ? (
                                   <EyeOff className="w-4 h-4" />
@@ -584,13 +584,13 @@ const FinanceSettingsContent = () => {
                           <div>
                             <label
                               htmlFor="finance-new-password"
-                              className="block text-sm font-medium text-[#374151] mb-1.5"
+                              className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5"
                             >
                               {t("settingsPage.profile.newPassword")}
                             </label>
                             <div className="relative">
                               <Key
-                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
+                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
                                 id="finance-new-password"
@@ -600,14 +600,14 @@ const FinanceSettingsContent = () => {
                                   setNewPassword(e.target.value)
                                 }
                                 placeholder="••••••••"
-                                className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#a37f49] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                               />
                               <button
                                 type="button"
                                 onClick={() =>
                                   setShowNewPassword(!showNewPassword)
                                 }
-                                className={`absolute top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B7280] ${isRTL ? "left-3" : "right-3"}`}
+                                className={`absolute top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-secondary)] ${isRTL ? "left-3" : "right-3"}`}
                               >
                                 {showNewPassword ? (
                                   <EyeOff className="w-4 h-4" />
@@ -616,7 +616,7 @@ const FinanceSettingsContent = () => {
                                 )}
                               </button>
                             </div>
-                            <p className="text-xs text-[#9CA3AF] mt-1">
+                            <p className="text-xs text-[var(--color-text-secondary)] mt-1">
                               {t("settingsPage.profile.passwordHint")}
                             </p>
                           </div>
@@ -640,7 +640,7 @@ const FinanceSettingsContent = () => {
                   {/* Payment Gateways */}
                   {activeTab === "gateways" && (
                     <div>
-                      <h3 className="text-base font-semibold text-[#111827] mb-4">
+                      <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("settingsPage.gateways.title")}
                       </h3>
                       <div className="space-y-4">
@@ -649,7 +649,7 @@ const FinanceSettingsContent = () => {
                           return (
                             <div
                               key={gw.key}
-                              className="p-5 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]"
+                              className="p-5 bg-[var(--color-surface-page)] rounded-xl border border-[var(--color-border-subtle)]"
                             >
                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                                 <div className="flex items-center gap-3">
@@ -659,7 +659,7 @@ const FinanceSettingsContent = () => {
                                     <CreditCard className="w-5 h-5 text-white" />
                                   </div>
                                   <div>
-                                    <p className="text-sm font-semibold text-[#111827]">
+                                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                                       {gw.name}
                                     </p>
                                     <div className="flex items-center gap-2 mt-0.5">
@@ -697,45 +697,45 @@ const FinanceSettingsContent = () => {
                                       [gw.key]: !prev[gw.key],
                                     }))
                                   }
-                                  className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${enabled ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
+                                  className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${enabled ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                                 >
                                   <div
-                                    className={`w-5 h-5 bg-white rounded-full shadow transition-all ${enabled ? "ms-auto" : ""}`}
+                                    className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${enabled ? "ms-auto" : ""}`}
                                   />
                                 </button>
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
-                                  <label className="block text-[12px] text-[#6B7280] mb-1">
+                                  <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">
                                     {t("settingsPage.gateways.apiKey")}
                                   </label>
                                   <input
                                     type="password"
                                     defaultValue="sk_live_••••••••••••"
                                     readOnly
-                                    className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] bg-white"
+                                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] bg-[var(--color-surface-card)]"
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-[12px] text-[#6B7280] mb-1">
+                                  <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">
                                     {t("settingsPage.gateways.secretKey")}
                                   </label>
                                   <input
                                     type="password"
                                     defaultValue="pk_live_••••••••••••"
                                     readOnly
-                                    className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] bg-white"
+                                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] bg-[var(--color-surface-card)]"
                                   />
                                 </div>
                                 <div>
-                                  <label className="block text-[12px] text-[#6B7280] mb-1">
+                                  <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">
                                     {t("settingsPage.gateways.merchantId")}
                                   </label>
                                   <input
                                     type="text"
                                     defaultValue="MID-12345678"
                                     readOnly
-                                    className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] bg-white"
+                                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] bg-[var(--color-surface-card)]"
                                   />
                                 </div>
                               </div>
@@ -758,34 +758,34 @@ const FinanceSettingsContent = () => {
                   {/* Currency Settings */}
                   {activeTab === "currency" && (
                     <div>
-                      <h3 className="text-base font-semibold text-[#111827] mb-4">
+                      <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("settingsPage.currency.title")}
                       </h3>
                       <div className="max-w-md space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">
+                          <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
                             {t("settingsPage.currency.primaryCurrency")}
                           </label>
-                          <select className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]">
+                          <select className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
                             <option>
                               {t("settingsPage.currency.sar")}
                             </option>
                           </select>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">
+                          <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
                             {t("settingsPage.currency.displayFormat")}
                           </label>
-                          <select className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]">
+                          <select className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
                             <option>{t("currencyFormats.sarFirst")}</option>
                             <option>{t("currencyFormats.sarLast")}</option>
                           </select>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">
+                          <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
                             {t("settingsPage.currency.decimalPlaces")}
                           </label>
-                          <select className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]">
+                          <select className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
                             <option>2</option>
                             <option>0</option>
                           </select>
@@ -804,60 +804,60 @@ const FinanceSettingsContent = () => {
                   {/* Tax Configuration */}
                   {activeTab === "tax" && (
                     <div>
-                      <h3 className="text-base font-semibold text-[#111827] mb-4">
+                      <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("settingsPage.tax.title")}
                       </h3>
                       <div className="max-w-md space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
+                        <div className="flex items-center justify-between p-4 bg-[var(--color-surface-page)] rounded-xl border border-[var(--color-border-subtle)]">
                           <div>
-                            <p className="text-sm font-medium text-[#111827]">
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">
                               {t("settingsPage.tax.vatEnabled")}
                             </p>
                           </div>
                           <button
                             onClick={() => setVatEnabled(!vatEnabled)}
-                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${vatEnabled ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${vatEnabled ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                           >
                             <div
-                              className={`w-5 h-5 bg-white rounded-full shadow transition-all ${vatEnabled ? "ms-auto" : ""}`}
+                              className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${vatEnabled ? "ms-auto" : ""}`}
                             />
                           </button>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">
+                          <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
                             {t("settingsPage.tax.vatRate")}
                           </label>
                           <input
                             type="number"
                             value={vatRate}
                             onChange={(e) => setVatRate(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
-                        <div className="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
+                        <div className="flex items-center justify-between p-4 bg-[var(--color-surface-page)] rounded-xl border border-[var(--color-border-subtle)]">
                           <div>
-                            <p className="text-sm font-medium text-[#111827]">
+                            <p className="text-sm font-medium text-[var(--color-text-primary)]">
                               {t("settingsPage.tax.taxInclusive")}
                             </p>
                           </div>
                           <button
                             onClick={() => setTaxInclusive(!taxInclusive)}
-                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${taxInclusive ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${taxInclusive ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                           >
                             <div
-                              className={`w-5 h-5 bg-white rounded-full shadow transition-all ${taxInclusive ? "ms-auto" : ""}`}
+                              className={`w-5 h-5 bg-[var(--color-surface-card)] rounded-full shadow transition-all ${taxInclusive ? "ms-auto" : ""}`}
                             />
                           </button>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">
+                          <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
                             {t("settingsPage.tax.taxNumber")}
                           </label>
                           <input
                             type="text"
                             value={taxNumber}
                             onChange={(e) => setTaxNumber(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <button
@@ -881,12 +881,12 @@ const FinanceSettingsContent = () => {
                   {/* Refund Policy */}
                   {activeTab === "refundPolicy" && (
                     <div>
-                      <h3 className="text-base font-semibold text-[#111827] mb-4">
+                      <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">
                         {t("settingsPage.refundPolicy.title")}
                       </h3>
                       <div className="max-w-md space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">
+                          <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
                             {t("settingsPage.refundPolicy.fullRefundDays")}
                           </label>
                           <input
@@ -895,11 +895,11 @@ const FinanceSettingsContent = () => {
                             onChange={(e) =>
                               setFullRefundDays(e.target.value)
                             }
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">
+                          <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
                             {t(
                               "settingsPage.refundPolicy.partialRefundDays",
                             )}
@@ -910,11 +910,11 @@ const FinanceSettingsContent = () => {
                             onChange={(e) =>
                               setPartialRefundDays(e.target.value)
                             }
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">
+                          <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
                             {t(
                               "settingsPage.refundPolicy.partialRefundPercent",
                             )}
@@ -925,11 +925,11 @@ const FinanceSettingsContent = () => {
                             onChange={(e) =>
                               setPartialRefundPercent(e.target.value)
                             }
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">
+                          <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
                             {t("settingsPage.refundPolicy.bnplDeduction")}
                           </label>
                           <input
@@ -938,22 +938,22 @@ const FinanceSettingsContent = () => {
                             onChange={(e) =>
                               setBnplDeduction(e.target.value)
                             }
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">
+                          <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
                             {t("settingsPage.refundPolicy.adminFee")}
                           </label>
                           <input
                             type="number"
                             value={adminFee}
                             onChange={(e) => setAdminFee(e.target.value)}
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1">
+                          <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
                             {t(
                               "settingsPage.refundPolicy.autoApproveBelow",
                             )}
@@ -964,7 +964,7 @@ const FinanceSettingsContent = () => {
                             onChange={(e) =>
                               setAutoApproveBelow(e.target.value)
                             }
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
                         <button

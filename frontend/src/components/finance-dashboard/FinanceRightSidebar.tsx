@@ -78,10 +78,10 @@ const FinanceRightSidebar = ({
   return (
     <div className="w-full lg:w-[300px] lg:flex-shrink-0 space-y-4">
       {/* Recent Transactions */}
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
-          <CreditCard className="w-4 h-4 text-[#a37f49]" />
-          <h3 className="text-[15px] font-semibold text-[#111827]">
+          <CreditCard className="w-4 h-4 text-[var(--color-primary)]" />
+          <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
             {t("transactionFeed.title")}
           </h3>
         </div>
@@ -94,7 +94,7 @@ const FinanceRightSidebar = ({
             return (
               <div
                 key={tx.id}
-                className="flex items-center gap-2.5 py-2.5 border-b border-[#F3F4F6] last:border-b-0"
+                className="flex items-center gap-2.5 py-2.5 border-b border-[var(--color-border-subtle)] last:border-b-0"
               >
                 <div
                   className={`w-8 h-8 rounded-full ${config.bg} flex items-center justify-center flex-shrink-0`}
@@ -102,13 +102,13 @@ const FinanceRightSidebar = ({
                   <Icon className={`w-3.5 h-3.5 ${config.iconColor}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] text-[#374151]">
-                    <span className="font-medium text-[#111827]">
+                  <p className="text-[13px] text-[var(--color-text-primary)]">
+                    <span className="font-medium text-[var(--color-text-primary)]">
                       {tx.customer}
                     </span>{" "}
                     {t(`transactionFeed.${tx.type}`)}
                   </p>
-                  <p className="text-[11px] text-[#9CA3AF]">{tx.time}</p>
+                  <p className="text-[11px] text-[var(--color-text-secondary)]">{tx.time}</p>
                 </div>
                 <span
                   className={`text-[13px] font-semibold flex-shrink-0 ${
@@ -116,7 +116,7 @@ const FinanceRightSidebar = ({
                       ? "text-[#16A34A]"
                       : tx.type === "refund"
                         ? "text-[#DC2626]"
-                        : "text-[#6B7280]"
+                        : "text-[var(--color-text-secondary)]"
                   }`}
                 >
                   {tx.type === "income" ? "+" : tx.type === "refund" ? "-" : ""}
@@ -127,10 +127,10 @@ const FinanceRightSidebar = ({
           })}
         </div>
 
-        <div className="mt-3 pt-3 border-t border-[#F3F4F6] text-center">
+        <div className="mt-3 pt-3 border-t border-[var(--color-border-subtle)] text-center">
           <Link
             href={`/${locale}/dashboard/finance/payments`}
-            className="text-[13px] font-medium text-[#a37f49] hover:text-[#6b4e24] hover:underline"
+            className="text-[13px] font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline"
           >
             {t("transactionFeed.viewAll")}
           </Link>
@@ -138,10 +138,10 @@ const FinanceRightSidebar = ({
       </div>
 
       {/* Financial Alerts */}
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
           <AlertTriangle className="w-4 h-4 text-[#EA580C]" />
-          <h3 className="text-[15px] font-semibold text-[#111827]">
+          <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
             {t("financialAlerts.title")}
           </h3>
         </div>
@@ -167,10 +167,10 @@ const FinanceRightSidebar = ({
                 <AlertTriangle className="w-4 h-4 text-[#EA580C] flex-shrink-0 mt-0.5" />
               )}
               <div>
-                <p className="text-[12px] font-medium text-[#111827]">
+                <p className="text-[12px] font-medium text-[var(--color-text-primary)]">
                   {alert.title}
                 </p>
-                <p className="text-[11px] text-[#4B5563]">
+                <p className="text-[11px] text-[var(--color-text-secondary)]">
                   {alert.description}
                 </p>
               </div>
@@ -180,15 +180,15 @@ const FinanceRightSidebar = ({
       </div>
 
       {/* Active Coupons */}
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Tag className="w-4 h-4 text-[#a37f49]" />
-            <h3 className="text-[15px] font-semibold text-[#111827]">
+            <Tag className="w-4 h-4 text-[var(--color-primary)]" />
+            <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
               {t("discounts.title")}
             </h3>
           </div>
-          <button className="text-[12px] font-medium text-[#a37f49] hover:text-[#6b4e24] hover:underline">
+          <button className="text-[12px] font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] hover:underline">
             {t("discounts.createCoupon")}
           </button>
         </div>
@@ -197,13 +197,13 @@ const FinanceRightSidebar = ({
           {coupons.map((coupon) => (
             <div
               key={coupon.id}
-              className="flex items-center justify-between p-2.5 bg-[#F9FAFB] rounded-lg border border-[#F3F4F6]"
+              className="flex items-center justify-between p-2.5 bg-[var(--color-surface-page)] rounded-lg border border-[var(--color-border-subtle)]"
             >
               <div>
-                <p className="text-[13px] font-medium text-[#111827]">
+                <p className="text-[13px] font-medium text-[var(--color-text-primary)]">
                   {coupon.code}
                 </p>
-                <p className="text-[11px] text-[#6B7280]">
+                <p className="text-[11px] text-[var(--color-text-secondary)]">
                   {coupon.discount} -{" "}
                   {t("discounts.usage", {
                     used: coupon.used,
@@ -215,7 +215,7 @@ const FinanceRightSidebar = ({
                 className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
                   coupon.status === "active"
                     ? "bg-[#DCFCE7] text-[#16A34A]"
-                    : "bg-[#F3F4F6] text-[#6B7280]"
+                    : "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]"
                 }`}
               >
                 {t(`discounts.${coupon.status}`)}
@@ -226,10 +226,10 @@ const FinanceRightSidebar = ({
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Zap className="w-4 h-4 text-[#a37f49]" />
-          <h3 className="text-[15px] font-semibold text-[#111827]">
+          <Zap className="w-4 h-4 text-[var(--color-primary)]" />
+          <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">
             {t("quickActions.title")}
           </h3>
         </div>
@@ -237,28 +237,28 @@ const FinanceRightSidebar = ({
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => router.push(`/${locale}/dashboard/finance/invoices`)}
-            className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors"
+            className="flex items-center justify-center gap-1.5 p-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors"
           >
             <FileText className="w-3.5 h-3.5" />
             {t("quickActions.createInvoice")}
           </button>
           <button
             onClick={() => router.push(`/${locale}/dashboard/finance/reports`)}
-            className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors"
+            className="flex items-center justify-center gap-1.5 p-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors"
           >
             <BarChart3 className="w-3.5 h-3.5" />
             {t("quickActions.exportReport")}
           </button>
           <button
             onClick={() => router.push(`/${locale}/dashboard/finance/discounts`)}
-            className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors"
+            className="flex items-center justify-center gap-1.5 p-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors"
           >
             <Tag className="w-3.5 h-3.5" />
             {t("quickActions.addCoupon")}
           </button>
           <button
             onClick={() => router.push(`/${locale}/dashboard/finance/refunds`)}
-            className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors"
+            className="flex items-center justify-center gap-1.5 p-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             {t("quickActions.processRefund")}

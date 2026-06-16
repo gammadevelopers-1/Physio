@@ -107,8 +107,8 @@ const InvoicesContent = () => {
     issued: "bg-[#EFF6FF] text-[#3B82F6]",
     paid: "bg-[#DCFCE7] text-[#16A34A]",
     overdue: "bg-[#FEE2E2] text-[#DC2626]",
-    draft: "bg-[#F3F4F6] text-[#6B7280]",
-    cancelled: "bg-[#F3F4F6] text-[#6B7280]",
+    draft: "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]",
+    cancelled: "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]",
   };
 
   const tabs = [
@@ -157,7 +157,7 @@ const InvoicesContent = () => {
     <>
       <FinanceNavbar profile={profile} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -188,13 +188,13 @@ const InvoicesContent = () => {
                 {stats.map((stat, index) => {
                   const Icon = stat.icon;
                   return (
-                    <div key={index} className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex items-start gap-3">
+                    <div key={index} className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3">
                       <div className={`w-10 h-10 ${stat.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
                         <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                       </div>
                       <div>
-                        <p className="text-xs text-[#6B7280] font-medium">{stat.label}</p>
-                        <p className="text-xl font-bold text-[#111827]">{loading ? "..." : stat.value}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)] font-medium">{stat.label}</p>
+                        <p className="text-xl font-bold text-[var(--color-text-primary)]">{loading ? "..." : stat.value}</p>
                       </div>
                     </div>
                   );
@@ -202,20 +202,20 @@ const InvoicesContent = () => {
               </div>
 
               {/* Invoices Table */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden mb-6">
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden mb-6">
                 {/* Tabs + Search */}
-                <div className="px-5 py-4 border-b border-[#F3F4F6]">
+                <div className="px-5 py-4 border-b border-[var(--color-border-subtle)]">
                   <div className="flex flex-col gap-3">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                      <div className="flex gap-1 bg-[#F3F4F6] rounded-lg p-0.5">
+                      <div className="flex gap-1 bg-[var(--color-surface-page)] rounded-lg p-0.5">
                         {tabs.map((tab) => (
                           <button
                             key={tab.key}
                             onClick={() => { setActiveTab(tab.key); setPage(1); }}
                             className={`px-3 py-1.5 text-[13px] font-medium rounded-md transition-colors ${
                               activeTab === tab.key
-                                ? "bg-white text-[#111827] shadow-sm"
-                                : "text-[#6B7280] hover:text-[#374151]"
+                                ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
+                                : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                             }`}
                           >
                             {tab.label}
@@ -223,39 +223,39 @@ const InvoicesContent = () => {
                         ))}
                       </div>
                       <div className="relative w-full sm:w-auto">
-                        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`} />
+                        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${isRTL ? "right-3" : "left-3"}`} />
                         <input
                           type="text"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           placeholder={t("paymentsTable.searchPlaceholder")}
-                          className={`w-full sm:w-[260px] py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+                          className={`w-full sm:w-[260px] py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
                         />
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="flex items-center gap-2">
-                        <label className="text-[12px] text-[#6B7280]">{t("invoicesPage.filters.startDate")}</label>
+                        <label className="text-[12px] text-[var(--color-text-secondary)]">{t("invoicesPage.filters.startDate")}</label>
                         <input
                           type="date"
                           value={startDate}
                           onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
-                          className="px-2.5 py-1.5 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#a37f49]"
+                          className="px-2.5 py-1.5 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)]"
                         />
                       </div>
                       <div className="flex items-center gap-2">
-                        <label className="text-[12px] text-[#6B7280]">{t("invoicesPage.filters.endDate")}</label>
+                        <label className="text-[12px] text-[var(--color-text-secondary)]">{t("invoicesPage.filters.endDate")}</label>
                         <input
                           type="date"
                           value={endDate}
                           onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
-                          className="px-2.5 py-1.5 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#a37f49]"
+                          className="px-2.5 py-1.5 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)]"
                         />
                       </div>
                       {(startDate || endDate) && (
                         <button
                           onClick={() => { setStartDate(""); setEndDate(""); setPage(1); }}
-                          className="text-[12px] text-[#a37f49] hover:text-[#6b4e24] font-medium hover:underline"
+                          className="text-[12px] text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] font-medium hover:underline"
                         >
                           {t("invoicesPage.filters.clearDates")}
                         </button>
@@ -274,26 +274,26 @@ const InvoicesContent = () => {
                     <div className="overflow-x-auto">
                       <table className="w-full" aria-label="Invoices">
                         <thead>
-                          <tr className="border-b border-[#E5E7EB]">
-                            <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.invoice")}</th>
-                            <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.date")}</th>
-                            <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.customer")}</th>
-                            <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.course")}</th>
-                            <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.amount")}</th>
-                            <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.status")}</th>
+                          <tr className="border-b border-[var(--color-border)]">
+                            <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.invoice")}</th>
+                            <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.date")}</th>
+                            <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.customer")}</th>
+                            <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.course")}</th>
+                            <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.amount")}</th>
+                            <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.status")}</th>
                             <th scope="col" className="py-3 px-4 w-10"></th>
                           </tr>
                         </thead>
                         <tbody>
                           {filteredInvoices.map((inv) => (
-                            <tr key={inv.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB] transition-colors">
+                            <tr key={inv.id} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)] transition-colors">
                               <td className="py-3 px-4">
-                                <span className="text-[13px] font-medium text-[#a37f49]">{inv.invoiceNumber}</span>
+                                <span className="text-[13px] font-medium text-[var(--color-primary)]">{inv.invoiceNumber}</span>
                               </td>
-                              <td className="py-3 px-4 text-[13px] text-[#4B5563]">{inv.date}</td>
-                              <td className="py-3 px-4 text-[13px] text-[#374151] font-medium">{inv.customer}</td>
-                              <td className="py-3 px-4 text-[13px] text-[#4B5563] hidden md:table-cell">{inv.course}</td>
-                              <td className="py-3 px-4 text-[13px] font-semibold text-[#111827]">{inv.amount}</td>
+                              <td className="py-3 px-4 text-[13px] text-[var(--color-text-secondary)]">{inv.date}</td>
+                              <td className="py-3 px-4 text-[13px] text-[var(--color-text-primary)] font-medium">{inv.customer}</td>
+                              <td className="py-3 px-4 text-[13px] text-[var(--color-text-secondary)] hidden md:table-cell">{inv.course}</td>
+                              <td className="py-3 px-4 text-[13px] font-semibold text-[var(--color-text-primary)]">{inv.amount}</td>
                               <td className="py-3 px-4">
                                 <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${statusStyles[inv.status] || statusStyles.draft}`}>
                                   {t(`invoicesPage.statuses.${inv.status}`)}
@@ -304,22 +304,22 @@ const InvoicesContent = () => {
                                   <button
                                     onClick={() => setOpenActionId(openActionId === inv.id ? null : inv.id)}
                                     aria-label="Actions"
-                                    className="w-7 h-7 flex items-center justify-center border border-[#E5E7EB] rounded-md hover:bg-[#F9FAFB] text-[#6B7280]"
+                                    className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]"
                                   >
                                     <MoreVertical className="w-3.5 h-3.5" />
                                   </button>
                                   {openActionId === inv.id && (
-                                    <div className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[140px] z-20 ${isRTL ? "left-0" : "right-0"}`}>
+                                    <div className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-20 ${isRTL ? "left-0" : "right-0"}`}>
                                       <button
                                         onClick={() => handleDownloadPdf(inv.id)}
-                                        className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB]"
+                                        className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]"
                                       >
                                         <Download className="w-3.5 h-3.5" />
                                         {t("invoicesPage.downloadPdf")}
                                       </button>
                                       <button
                                         onClick={() => handleResendEmail(inv.id)}
-                                        className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB]"
+                                        className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]"
                                       >
                                         <Send className="w-3.5 h-3.5" />
                                         {t("invoicesPage.resendEmail")}
@@ -335,8 +335,8 @@ const InvoicesContent = () => {
                     </div>
 
                     {/* Pagination */}
-                    <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3 border-t border-[#F3F4F6] gap-3">
-                      <p className="text-[13px] text-[#6B7280]">
+                    <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3 border-t border-[var(--color-border-subtle)] gap-3">
+                      <p className="text-[13px] text-[var(--color-text-secondary)]">
                         {t("paymentsTable.pagination.showing", { from: 1, to: filteredInvoices.length, total: totalCount })}
                       </p>
                       <div className="flex items-center gap-2">
@@ -344,7 +344,7 @@ const InvoicesContent = () => {
                           onClick={() => setPage((p) => Math.max(1, p - 1))}
                           disabled={page <= 1}
                           aria-label="Previous page"
-                          className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50"
+                          className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] disabled:opacity-50"
                         >
                           <ChevronLeft className="w-4 h-4" />
                           {t("paymentsTable.pagination.previous")}
@@ -353,7 +353,7 @@ const InvoicesContent = () => {
                           onClick={() => setPage((p) => p + 1)}
                           disabled={page >= totalCount / 50}
                           aria-label="Next page"
-                          className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50"
+                          className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] disabled:opacity-50"
                         >
                           {t("paymentsTable.pagination.next")}
                           <ChevronRight className="w-4 h-4" />
@@ -365,20 +365,20 @@ const InvoicesContent = () => {
               </div>
 
               {/* Aging Report */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <Clock className="w-5 h-5 text-[#EA580C]" />
-                  <h3 className="text-base font-semibold text-[#111827]">{t("invoicesPage.agingReport")}</h3>
+                  <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{t("invoicesPage.agingReport")}</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {agingData.map((item, index) => (
-                    <div key={index} className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
+                    <div key={index} className="p-4 bg-[var(--color-surface-page)] rounded-xl border border-[var(--color-border-subtle)]">
                       <div className="flex items-center gap-2 mb-2">
                         <div className={`w-2.5 h-2.5 rounded-full ${item.color}`} />
-                        <p className="text-[12px] text-[#6B7280] font-medium">{item.label}</p>
+                        <p className="text-[12px] text-[var(--color-text-secondary)] font-medium">{item.label}</p>
                       </div>
-                      <p className="text-lg font-bold text-[#111827]">{item.count} {t("invoicesLabel")}</p>
-                      <p className="text-[13px] text-[#6B7280]">{item.amount}</p>
+                      <p className="text-lg font-bold text-[var(--color-text-primary)]">{item.count} {t("invoicesLabel")}</p>
+                      <p className="text-[13px] text-[var(--color-text-secondary)]">{item.amount}</p>
                     </div>
                   ))}
                 </div>

@@ -78,16 +78,16 @@ const DateRangeFilter = ({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Calendar className="w-4 h-4 text-[#6B7280] flex-shrink-0" />
-      <div className="flex bg-[#F3F4F6] rounded-lg p-0.5">
+      <Calendar className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
+      <div className="flex bg-[var(--color-surface-page)] rounded-lg p-0.5">
         {presets.map((preset) => (
           <button
             key={preset.key}
             onClick={() => handlePreset(preset.key)}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
               activePreset === preset.key
-                ? "bg-[#a37f49] text-white shadow-sm"
-                : "text-[#6B7280] hover:text-[#374151]"
+                ? "bg-[var(--color-primary)] text-white shadow-sm"
+                : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
             }`}
           >
             {preset.label}
@@ -105,9 +105,9 @@ const DateRangeFilter = ({
               setCustomStart(e.target.value);
               handleCustomChange(e.target.value, customEnd);
             }}
-            className="px-2 py-1 text-xs border border-[#E5E7EB] rounded-lg focus:outline-none focus:border-[#a37f49] text-[#374151]"
+            className="px-2 py-1 text-xs border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--color-primary)] text-[var(--color-text-primary)]"
           />
-          <span className="text-xs text-[#6B7280]">–</span>
+          <span className="text-xs text-[var(--color-text-secondary)]">–</span>
           <input
             type="date"
             value={customEnd}
@@ -116,7 +116,7 @@ const DateRangeFilter = ({
               setCustomEnd(e.target.value);
               handleCustomChange(customStart, e.target.value);
             }}
-            className="px-2 py-1 text-xs border border-[#E5E7EB] rounded-lg focus:outline-none focus:border-[#a37f49] text-[#374151]"
+            className="px-2 py-1 text-xs border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--color-primary)] text-[var(--color-text-primary)]"
           />
         </div>
       )}

@@ -132,7 +132,7 @@ const PaymentsContent = () => {
     <>
       <FinanceNavbar profile={profile} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -162,16 +162,16 @@ const PaymentsContent = () => {
                   return (
                     <div
                       key={index}
-                      className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex items-start gap-3"
+                      className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3"
                     >
                       <div className={`w-10 h-10 ${stat.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
                         <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                       </div>
                       <div>
-                        <p className="text-xs text-[#6B7280] font-medium">
+                        <p className="text-xs text-[var(--color-text-secondary)] font-medium">
                           {stat.label}
                         </p>
-                        <p className="text-xl font-bold text-[#111827]">
+                        <p className="text-xl font-bold text-[var(--color-text-primary)]">
                           {loading ? "..." : stat.value}
                         </p>
                       </div>
@@ -182,7 +182,7 @@ const PaymentsContent = () => {
 
               {/* All Payments Table */}
               {loading && transactions.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-[#E5E7EB] p-12 flex items-center justify-center">
+                <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-12 flex items-center justify-center">
                   <Loader2 className="w-6 h-6 text-[#B8860B] animate-spin" />
                 </div>
               ) : (

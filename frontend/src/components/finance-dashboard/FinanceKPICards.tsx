@@ -109,7 +109,7 @@ const FinanceKPICards = ({ data }: FinanceKPICardsProps) => {
         return (
           <div
             key={card.id}
-            className="bg-[var(--surface-intense)] rounded-xl border border-[var(--color-border)] p-4 flex flex-col gap-3 hover:shadow-md transition-all cursor-pointer"
+            className="bg-[var(--surface-intense)] rounded-xl border border-[var(--color-border)] p-4 flex flex-col gap-3"
           >
             <div className="flex items-start justify-between">
               <div

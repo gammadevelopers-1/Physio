@@ -259,7 +259,7 @@ const FinanceDashboardContent = () => {
       <FinanceNavbar profile={profile} />
 
       {/* Main Container */}
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
@@ -321,11 +321,11 @@ const FinanceDashboardContent = () => {
       {/* Rejection Modal */}
       {rejectingRefundId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
-            <h3 className="text-lg font-semibold text-[#111827] mb-1">
+          <div className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+            <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-1">
               {t("refundsPage.rejectTitle") || "Reject Refund"}
             </h3>
-            <p className="text-sm text-[#6B7280] mb-4">
+            <p className="text-sm text-[var(--color-text-secondary)] mb-4">
               {t("refundsPage.rejectionNoteLabel") || "Provide a reason for rejecting this refund request."}
             </p>
             <textarea
@@ -333,12 +333,12 @@ const FinanceDashboardContent = () => {
               onChange={(e) => setRejectionNote(e.target.value)}
               placeholder={t("refundsPage.notePlaceholder") || "Enter rejection reason or notes..."}
               rows={3}
-              className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:border-[#a37f49] resize-none"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] resize-none"
             />
             <div className="flex justify-end gap-2 mt-4">
               <button
                 onClick={() => { setRejectingRefundId(null); setRejectionNote(""); }}
-                className="px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
               >
                 {t("refundsPage.cancel") || "Cancel"}
               </button>

@@ -53,3 +53,5 @@ next-env.d.ts
 Thumbs.db
 
 graphify-out
+# Local-only compose override (points frontend at prod Strapi)
+docker-compose.override.yml

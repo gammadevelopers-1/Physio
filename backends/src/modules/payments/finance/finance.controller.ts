@@ -1,11 +1,13 @@
-import { Controller, Get, Query, Res } from '@nestjs/common';
+import { Controller, Get, Query, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import { FinanceService } from '../services/finance.service';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
+import { JwtAuthGuard, RolesGuard } from '../../auth/guards';
 
 @Controller('finance')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class FinanceController {
   constructor(private readonly financeService: FinanceService) {}
 

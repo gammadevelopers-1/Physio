@@ -10,6 +10,7 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
   ForbiddenException,
+  UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
@@ -21,8 +22,10 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 
 @Controller('payments')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class PaymentsController {
   constructor(
     private readonly paymentsService: PaymentsService,

@@ -10,6 +10,7 @@ import {
   Res,
   DefaultValuePipe,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { DiscountService } from '../services/discount.service';
@@ -20,8 +21,10 @@ import { BulkDiscountDto } from '../dto/bulk-discount.dto';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
+import { JwtAuthGuard, RolesGuard } from '../../auth/guards';
 
 @Controller('discounts')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class DiscountsController {
   constructor(private readonly discountService: DiscountService) {}
 

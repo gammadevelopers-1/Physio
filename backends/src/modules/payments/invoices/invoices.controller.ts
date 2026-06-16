@@ -7,6 +7,7 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { InvoiceService } from '../services/invoice.service';
 import { EmailService } from '../../email/email.service';
@@ -14,8 +15,10 @@ import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { Public } from '../../auth/decorators/public.decorator';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
+import { JwtAuthGuard, RolesGuard } from '../../auth/guards';
 
 @Controller('invoices')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class InvoicesController {
   constructor(
     private readonly invoiceService: InvoiceService,

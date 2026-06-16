@@ -10,6 +10,7 @@ import {
   Res,
   DefaultValuePipe,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { RefundService } from '../services/refund.service';
@@ -19,8 +20,10 @@ import { RejectRefundDto } from '../dto/reject-refund.dto';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
+import { JwtAuthGuard, RolesGuard } from '../../auth/guards';
 
 @Controller('refunds')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class RefundsController {
   constructor(private readonly refundService: RefundService) {}
 

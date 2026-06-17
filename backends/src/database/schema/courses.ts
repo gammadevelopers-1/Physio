@@ -32,6 +32,15 @@ export const courses = pgTable(
     thumbnail: varchar('thumbnail', { length: 500 }),
     maxEnrollment: integer('max_enrollment'),
     price: numeric('price', { precision: 10, scale: 2 }).default('0'),
+    // Course-level sale (no coupon needed). `price` stays the canonical original
+    // price; the effective price is derived. salePercent 1..100 (100 = free).
+    // Optional window — null start = already active, null end = until cleared.
+    salePercent: integer('sale_percent'),
+    saleStartsAt: timestamp('sale_starts_at'),
+    saleEndsAt: timestamp('sale_ends_at'),
+    // Finance-manager toggle: may a coupon ALSO be applied on top of this sale?
+    // false (default) = sale OR coupon (mutually exclusive); true = stack.
+    saleAllowsCoupon: boolean('sale_allows_coupon').notNull().default(false),
     cmeHours: integer('cme_hours').default(0),
     enrollmentDeadline: timestamp('enrollment_deadline'),
     isCmeAccredited: boolean('is_cme_accredited').default(false),

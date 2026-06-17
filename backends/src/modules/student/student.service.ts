@@ -33,6 +33,7 @@ import {
 } from '../../database/schema';
 import { csatSurveys } from '../../database/schema/surveys';
 import { recomputeEnrollmentProgress } from '../enrollments/progress.helper';
+import { getEffectivePrice } from '../courses/pricing.util';
 import { decryptPII } from '../../common/crypto';
 import type { SubmissionAnswer } from '../../database/schema/submissions';
 import { computeEffectiveScore } from '../../common/score-policy';
@@ -1364,7 +1365,9 @@ export class StudentService {
     // the /checkout flow (paymentApi.initiate → gateway redirect → webhook
     // → enrollment). The free-enrollment endpoint never creates a paid
     // enrollment, even if the caller forges the request.
-    const coursePrice = Number(course.price || 0);
+    // Use the SALE-adjusted price: a 100%-off sale makes a paid course free, so
+    // it can be enrolled here without payment.
+    const coursePrice = getEffectivePrice(course).effectivePrice;
     if (coursePrice > 0) {
       throw new BadRequestException({
         code: 'PAYMENT_REQUIRED',

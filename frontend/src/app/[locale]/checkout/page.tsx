@@ -16,6 +16,11 @@ interface CourseData {
   titleAr: string | null;
   description: string | null;
   price: string;
+  // Course-level sale (no coupon needed). effectivePrice is what we charge.
+  effectivePrice?: number;
+  onSale?: boolean;
+  salePercent?: number | null;
+  saleAllowsCoupon?: boolean;
   deliveryType: string;
   startDate: string | null;
   cmeHours: number;
@@ -73,9 +78,17 @@ export default function CheckoutPage() {
     fetchCourse();
   }, [courseId]);
 
-  const coursePrice = Number(course?.price || 0);
+  const originalPrice = Number(course?.price || 0);
+  const onSale = course?.onSale ?? false;
+  const salePercent = course?.salePercent ?? null;
+  const effectivePrice = course?.effectivePrice ?? originalPrice;
+  const saleAllowsCoupon = course?.saleAllowsCoupon ?? false;
+  // A coupon may only be entered when there's no active sale, or the finance
+  // manager explicitly allowed stacking a coupon on top of the sale.
+  const couponAllowed = !onSale || saleAllowsCoupon;
+  const saleDiscount = onSale ? Math.max(0, originalPrice - effectivePrice) : 0;
   const discountAmount = discountResult?.valid ? discountResult.discountAmount : 0;
-  const totalAmount = Math.max(0, coursePrice - discountAmount);
+  const totalAmount = Math.max(0, effectivePrice - discountAmount);
 
   const handleValidateDiscount = async () => {
     if (!discountCode.trim() || !courseId) return;
@@ -241,6 +254,7 @@ export default function CheckoutPage() {
             </div>
 
             {/* Discount Code Card */}
+            {couponAllowed ? (
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-[var(--on-surface-default)] mb-3">
                 {t("discount.title")}
@@ -282,6 +296,16 @@ export default function CheckoutPage() {
                 </p>
               )}
             </div>
+            ) : (
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 className="text-lg font-semibold text-[var(--on-surface-default)] mb-3">
+                  {t("discount.title")}
+                </h2>
+                <p className="text-sm text-[var(--on-surface-variant)]">
+                  {t("discount.notAvailableOnSale")}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Right Column - Payment */}
@@ -395,8 +419,18 @@ export default function CheckoutPage() {
               <div className="border-t border-[#e5e5e5] pt-4 mb-4">
                 <div className="flex justify-between mb-2">
                   <span className="text-sm text-[var(--on-surface-variant)]">{t("discount.subtotal")}</span>
-                  <span className="text-sm font-medium">SAR {coursePrice.toFixed(2)}</span>
+                  <span className="text-sm font-medium">SAR {originalPrice.toFixed(2)}</span>
                 </div>
+                {saleDiscount > 0 && (
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm text-green-600">
+                      {salePercent
+                        ? t("discount.saleLabel", { percent: salePercent })
+                        : t("discount.saleLabelGeneric")}
+                    </span>
+                    <span className="text-sm font-medium text-green-600">- SAR {saleDiscount.toFixed(2)}</span>
+                  </div>
+                )}
                 {discountAmount > 0 && (
                   <div className="flex justify-between mb-2">
                     <span className="text-sm text-green-600">{t("discount.discountLabel")}</span>

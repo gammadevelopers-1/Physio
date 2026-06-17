@@ -46,6 +46,7 @@ import { AdminSettingsService } from '../admin-settings/admin-settings.service';
 import { SessionsService } from '../sessions/sessions.service';
 import { toArabicIndic } from '../../common/platform-locale';
 import { sanitizeRichText } from '../../common/sanitize-html';
+import { getEffectivePrice } from './pricing.util';
 
 @Injectable()
 export class CoursesService {
@@ -153,6 +154,19 @@ export class CoursesService {
       }
     }
 
+    // Validate sale window order up-front so a bad range returns a clean 400
+    // instead of tripping the DB CHECK (courses_sale_window_order) as a 500.
+    if (
+      dto.saleStartsAt &&
+      dto.saleEndsAt &&
+      new Date(dto.saleEndsAt) <= new Date(dto.saleStartsAt)
+    ) {
+      throw new BadRequestException({
+        code: 'SALE_WINDOW_ORDER',
+        message: 'Sale end must be after the sale start',
+      });
+    }
+
     // Auto-set managerId based on role
     let managerId: string | null = null;
     if (isManager(user)) {
@@ -174,6 +188,10 @@ export class CoursesService {
         thumbnail: dto.thumbnail,
         maxEnrollment: dto.maxEnrollment,
         price: dto.price !== undefined ? dto.price.toString() : undefined,
+        salePercent: dto.salePercent ?? null,
+        saleStartsAt: dto.saleStartsAt ? new Date(dto.saleStartsAt) : null,
+        saleEndsAt: dto.saleEndsAt ? new Date(dto.saleEndsAt) : null,
+        saleAllowsCoupon: dto.saleAllowsCoupon ?? false,
         cmeHours: dto.cmeHours,
         enrollmentDeadline: dto.enrollmentDeadline
           ? this.parseEnrollmentDeadline(dto.enrollmentDeadline)
@@ -483,6 +501,10 @@ export class CoursesService {
         thumbnail: courses.thumbnail,
         maxEnrollment: courses.maxEnrollment,
         price: courses.price,
+        salePercent: courses.salePercent,
+        saleStartsAt: courses.saleStartsAt,
+        saleEndsAt: courses.saleEndsAt,
+        saleAllowsCoupon: courses.saleAllowsCoupon,
         cmeHours: courses.cmeHours,
         enrollmentDeadline: courses.enrollmentDeadline,
         isCmeAccredited: courses.isCmeAccredited,
@@ -542,11 +564,19 @@ export class CoursesService {
         availabilityStatus = 'open';
       }
 
+      const sale = getEffectivePrice(c, now);
       return {
         ...c,
         totalHours: Math.round((c.totalHours / 60) * 10) / 10,
         avgRating: Number(Number(c.avgRating || 0).toFixed(1)),
-        price: c.price ? Number(c.price) : 0,
+        price: sale.originalPrice,
+        effectivePrice: sale.effectivePrice,
+        onSale: sale.onSale,
+        salePercent: sale.onSale ? sale.salePercent : null,
+        saleAllowsCoupon: sale.saleAllowsCoupon,
+        // Don't expose the raw sale window publicly (leaks future-sale schedule).
+        saleStartsAt: undefined,
+        saleEndsAt: undefined,
         remainingSeats,
         isFull,
         availabilityStatus,
@@ -667,6 +697,10 @@ export class CoursesService {
         thumbnail: courses.thumbnail,
         maxEnrollment: courses.maxEnrollment,
         price: courses.price,
+        salePercent: courses.salePercent,
+        saleStartsAt: courses.saleStartsAt,
+        saleEndsAt: courses.saleEndsAt,
+        saleAllowsCoupon: courses.saleAllowsCoupon,
         cmeHours: courses.cmeHours,
         enrollmentDeadline: courses.enrollmentDeadline,
         isCmeAccredited: courses.isCmeAccredited,
@@ -772,11 +806,19 @@ export class CoursesService {
         availabilityStatus = 'open';
       }
 
+      const sale = getEffectivePrice(c, now);
       return {
         ...c,
         totalHours: Math.round((c.totalHours / 60) * 10) / 10,
         avgRating: Number(Number(c.avgRating || 0).toFixed(1)),
-        price: c.price ? Number(c.price) : 0,
+        price: sale.originalPrice,
+        effectivePrice: sale.effectivePrice,
+        onSale: sale.onSale,
+        salePercent: sale.onSale ? sale.salePercent : null,
+        saleAllowsCoupon: sale.saleAllowsCoupon,
+        // Don't expose the raw sale window publicly (leaks future-sale schedule).
+        saleStartsAt: undefined,
+        saleEndsAt: undefined,
         remainingSeats,
         isFull,
         availabilityStatus,
@@ -802,6 +844,10 @@ export class CoursesService {
         thumbnail: courses.thumbnail,
         maxEnrollment: courses.maxEnrollment,
         price: courses.price,
+        salePercent: courses.salePercent,
+        saleStartsAt: courses.saleStartsAt,
+        saleEndsAt: courses.saleEndsAt,
+        saleAllowsCoupon: courses.saleAllowsCoupon,
         cmeHours: courses.cmeHours,
         enrollmentDeadline: courses.enrollmentDeadline,
         isCmeAccredited: courses.isCmeAccredited,
@@ -1111,11 +1157,19 @@ export class CoursesService {
       totalRatings: Number(instructorTotalRatings || 0),
     };
 
+    const sale = getEffectivePrice(rest);
     return {
       ...rest,
       totalHours: Math.round((rest.totalHours / 60) * 10) / 10,
       avgRating: Number(Number(rest.avgRating || 0).toFixed(1)),
-      price: rest.price ? Number(rest.price) : 0,
+      price: sale.originalPrice,
+      effectivePrice: sale.effectivePrice,
+      onSale: sale.onSale,
+      salePercent: sale.onSale ? sale.salePercent : null,
+      saleAllowsCoupon: sale.saleAllowsCoupon,
+      // Don't expose the raw sale window publicly (leaks future-sale schedule).
+      saleStartsAt: undefined,
+      saleEndsAt: undefined,
       remainingSeats,
       isFull,
       availabilityStatus,
@@ -1288,7 +1342,9 @@ export class CoursesService {
       }
     }
 
-    const { price, enrollmentDeadline, ...restDto } = dto;
+    // Pull out fields needing transform; salePercent + saleAllowsCoupon stay in
+    // restDto (drizzle accepts number/boolean/null directly, incl. null-to-clear).
+    const { price, enrollmentDeadline, saleStartsAt, saleEndsAt, ...restDto } = dto;
     const updateData: Record<string, any> = {
       ...restDto,
       updatedAt: new Date(),
@@ -1298,6 +1354,33 @@ export class CoursesService {
     }
     if (enrollmentDeadline !== undefined) {
       updateData.enrollmentDeadline = this.parseEnrollmentDeadline(enrollmentDeadline);
+    }
+    // Sale window dates arrive as ISO strings; convert to Date, or null to clear.
+    if (saleStartsAt !== undefined) {
+      updateData.saleStartsAt = saleStartsAt ? new Date(saleStartsAt) : null;
+    }
+    if (saleEndsAt !== undefined) {
+      updateData.saleEndsAt = saleEndsAt ? new Date(saleEndsAt) : null;
+    }
+    // Validate the RESULTING window order (merge incoming with existing) so a
+    // bad range returns a clean 400 instead of tripping the DB CHECK as a 500.
+    const finalSaleStart =
+      saleStartsAt !== undefined
+        ? saleStartsAt
+          ? new Date(saleStartsAt)
+          : null
+        : (existing as { saleStartsAt?: Date | null }).saleStartsAt ?? null;
+    const finalSaleEnd =
+      saleEndsAt !== undefined
+        ? saleEndsAt
+          ? new Date(saleEndsAt)
+          : null
+        : (existing as { saleEndsAt?: Date | null }).saleEndsAt ?? null;
+    if (finalSaleStart && finalSaleEnd && finalSaleEnd <= finalSaleStart) {
+      throw new BadRequestException({
+        code: 'SALE_WINDOW_ORDER',
+        message: 'Sale end must be after the sale start',
+      });
     }
     // Sanitize rich-text fields on update too (same reason as create —
     // these are HTML rendered by other surfaces). Only touches the
@@ -4434,6 +4517,10 @@ export class CoursesService {
         thumbnail: courses.thumbnail,
         maxEnrollment: courses.maxEnrollment,
         price: courses.price,
+        salePercent: courses.salePercent,
+        saleStartsAt: courses.saleStartsAt,
+        saleEndsAt: courses.saleEndsAt,
+        saleAllowsCoupon: courses.saleAllowsCoupon,
         cmeHours: courses.cmeHours,
         enrollmentDeadline: courses.enrollmentDeadline,
         isCmeAccredited: courses.isCmeAccredited,
@@ -4499,11 +4586,19 @@ export class CoursesService {
       } else {
         availabilityStatus = 'open';
       }
+      const sale = getEffectivePrice(c, now);
       return {
         ...c,
         totalHours: Math.round((c.totalHours / 60) * 10) / 10,
         avgRating: Number(Number(c.avgRating || 0).toFixed(1)),
-        price: c.price ? Number(c.price) : 0,
+        price: sale.originalPrice,
+        effectivePrice: sale.effectivePrice,
+        onSale: sale.onSale,
+        salePercent: sale.onSale ? sale.salePercent : null,
+        saleAllowsCoupon: sale.saleAllowsCoupon,
+        // Don't expose the raw sale window publicly (leaks future-sale schedule).
+        saleStartsAt: undefined,
+        saleEndsAt: undefined,
         remainingSeats,
         isFull,
         availabilityStatus,

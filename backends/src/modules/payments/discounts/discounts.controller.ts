@@ -39,8 +39,10 @@ export class DiscountsController {
     const { courses } = await import('../../../database/schema');
     const { eq } = await import('drizzle-orm');
 
+    const { getEffectivePrice } = await import('../../courses/pricing.util');
+
     const [course] = await db
-      .select({ price: courses.price })
+      .select()
       .from(courses)
       .where(eq(courses.id, dto.courseId))
       .limit(1);
@@ -49,11 +51,24 @@ export class DiscountsController {
       return { valid: false, error: 'Course not found' };
     }
 
+    // Mirror checkout exactly: coupon applies to the SALE price, and is rejected
+    // on a sale unless the finance manager enabled stacking for this course.
+    const sale = getEffectivePrice(course);
+    if (sale.onSale && !sale.saleAllowsCoupon) {
+      return {
+        valid: false,
+        discountAmount: 0,
+        discountId: null,
+        error:
+          'This course is on sale; coupon codes cannot be combined with the sale.',
+      };
+    }
+
     return this.discountService.validateDiscount(
       dto.code,
       dto.courseId,
       user.id,
-      Number(course.price || 0),
+      sale.effectivePrice,
     );
   }
 

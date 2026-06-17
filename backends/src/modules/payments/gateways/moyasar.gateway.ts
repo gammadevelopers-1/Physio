@@ -53,7 +53,8 @@ export class MoyasarGateway extends BaseGateway implements PaymentGateway {
         // the customer is stranded on Moyasar's hosted "Invoice Paid" page.
         callback_url: params.redirectUrl,
         success_url: params.redirectUrl,
-        back_url: params.redirectUrl,
+        // "Back"/cancel returns the buyer to checkout, not the processing page.
+        back_url: params.cancelUrl || params.redirectUrl,
         metadata: params.metadata,
       }),
     });

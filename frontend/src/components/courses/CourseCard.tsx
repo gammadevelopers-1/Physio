@@ -65,7 +65,10 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
         : null;
 
   const price = course.price ?? 0;
-  const isFree = price === 0;
+  const onSale = course.onSale ?? false;
+  const salePercent = course.salePercent ?? null;
+  const effectivePrice = course.effectivePrice ?? price;
+  const isFree = effectivePrice === 0;
 
   const isEnded = course.availabilityStatus === "completed";
   const isFull = course.availabilityStatus === "full";
@@ -220,9 +223,21 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
 
         {/* Footer: price + CTA */}
         <div className={`flex items-center justify-between pt-2 ${isRTL ? "flex-row-reverse" : ""}`}>
-          <span className="text-[var(--color-primary)] font-bold text-[15px]">
-            {isFree ? t("card.free") : `${price} SAR`}
-          </span>
+          {onSale && !isFree ? (
+            <span className={`flex items-baseline gap-1.5 ${isRTL ? "flex-row-reverse" : ""}`}>
+              <span className="text-[var(--color-primary)] font-bold text-[15px]">{effectivePrice} SAR</span>
+              <span className="text-[var(--color-text-secondary)] text-[13px] line-through">{price} SAR</span>
+              {salePercent ? (
+                <span className="text-[11px] font-bold text-white bg-red-600 rounded px-1.5 py-0.5">
+                  {t("card.percentOff", { percent: salePercent })}
+                </span>
+              ) : null}
+            </span>
+          ) : (
+            <span className="text-[var(--color-primary)] font-bold text-[15px]">
+              {isFree ? t("card.free") : `${effectivePrice} SAR`}
+            </span>
+          )}
           <span
             className={`inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
           >

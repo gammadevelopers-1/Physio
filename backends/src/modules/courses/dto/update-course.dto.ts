@@ -10,6 +10,8 @@ import {
   Min,
   IsDateString,
   ValidateNested,
+  Max,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
@@ -60,6 +62,28 @@ export class UpdateCourseDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   price?: number;
+
+  // Course-level sale. null clears the field (turn the sale off).
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  salePercent?: number | null;
+
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsDateString()
+  saleStartsAt?: string | null;
+
+  @IsOptional()
+  @ValidateIf((_, v) => v !== null)
+  @IsDateString()
+  saleEndsAt?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  saleAllowsCoupon?: boolean;
 
   @IsOptional()
   @IsInt()

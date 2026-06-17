@@ -14,6 +14,10 @@ export interface CartItem {
   title: string;
   titleAr: string | null;
   price: number;
+  // Course-level sale (no coupon needed). effectivePrice is the price to charge.
+  effectivePrice?: number;
+  onSale?: boolean;
+  salePercent?: number | null;
   thumbnail: string | null;
   deliveryType: string;
   startDate: string | null;

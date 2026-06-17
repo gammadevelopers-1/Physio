@@ -3282,6 +3282,11 @@ export interface CreateCourseManagerData {
   notices?: string;
   noticesAr?: string;
   price?: number;
+  // Course-level sale (no coupon needed). salePercent 1..100; null clears it.
+  salePercent?: number | null;
+  saleStartsAt?: string | null;
+  saleEndsAt?: string | null;
+  saleAllowsCoupon?: boolean;
   venue?: string;
   venueAr?: string;
   enrollmentDeadline?: string;

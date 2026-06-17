@@ -25,6 +25,7 @@ import { InvoiceService } from './services/invoice.service';
 import { EmailService } from '../email/email.service';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { classifyCourse, getNelcMaxEnrollment } from '../courses/nelc-config';
+import { getEffectivePrice } from '../courses/pricing.util';
 import { PaymentGatewayError } from './gateways/payment-gateway.error';
 
 @Injectable()
@@ -57,7 +58,11 @@ export class PaymentsService {
       throw new NotFoundException('Course not found or not available');
     }
 
-    const coursePrice = Number(course.price || 0);
+    // Course-level sale: charge the sale-adjusted price. A 100% sale makes the
+    // effective price 0, which routes here to the free-enroll endpoint (same as
+    // a genuinely free course).
+    const sale = getEffectivePrice(course);
+    const coursePrice = sale.effectivePrice;
     if (coursePrice <= 0) {
       throw new BadRequestException(
         'This course is free. Use the enroll endpoint instead.',
@@ -109,6 +114,14 @@ export class PaymentsService {
     let discountAmount = 0;
     let discountId: string | null = null;
     if (dto.discountCode) {
+      // Sale + coupon are mutually exclusive unless the finance manager enabled
+      // stacking for this course. When stacking IS allowed, the coupon applies
+      // on top of the already-reduced sale price (coursePrice = sale price).
+      if (sale.onSale && !sale.saleAllowsCoupon) {
+        throw new BadRequestException(
+          'This course is on sale; coupon codes cannot be combined with the sale.',
+        );
+      }
       const discountResult = await this.discountService.validateDiscount(
         dto.discountCode,
         dto.courseId,
@@ -216,6 +229,11 @@ export class PaymentsService {
           status: PAYMENT_STATUS.PENDING,
           metadata: {
             subtotal,
+            originalPrice: sale.originalPrice,
+            salePercent: sale.onSale ? sale.salePercent : null,
+            saleDiscountAmount: sale.onSale
+              ? Math.round((sale.originalPrice - sale.effectivePrice) * 100) / 100
+              : 0,
             discountAmount,
             discountId,
             discountCode: dto.discountCode || null,
@@ -234,6 +252,13 @@ export class PaymentsService {
     const webhookBaseUrl = this.configService.get<string>(
       'payments.webhookBaseUrl',
     );
+    // Where the gateway's "Back"/cancel button should return the buyer: the
+    // checkout page they came from (loads the course via ?courseId=), NOT the
+    // post-payment callback page (which shows a "processing" spinner).
+    const frontendBase =
+      (callbackUrl || '').replace(/\/payment\/callback.*$/, '') ||
+      'https://physioguidance.org';
+    const cancelUrl = `${frontendBase}/${dto.locale || 'en'}/checkout?courseId=${dto.courseId}`;
 
     const [userData] = await db
       .select({
@@ -256,6 +281,7 @@ export class PaymentsService {
         customerEmail: userData?.email || user.email,
         customerPhone: userData?.phone || undefined,
         redirectUrl: `${callbackUrl}?gateway=${dto.gateway}&payment_id=${result.payment.id}`,
+        cancelUrl,
         webhookUrl: `${webhookBaseUrl}/${dto.gateway}`,
         metadata: {
           paymentId: result.payment.id,

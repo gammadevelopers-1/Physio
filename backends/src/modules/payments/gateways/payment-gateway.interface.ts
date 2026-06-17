@@ -13,6 +13,9 @@ export interface CreateChargeParams {
   customerEmail: string;
   customerPhone?: string;
   redirectUrl: string;
+  /** Where to send the buyer if they click "Back"/cancel on the gateway's
+   *  hosted page — should be the checkout page, NOT the post-payment callback. */
+  cancelUrl?: string;
   webhookUrl: string;
   metadata: {
     paymentId: string;

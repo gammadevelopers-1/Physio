@@ -510,7 +510,11 @@ const CourseDetailContent = ({
 
   // Derive pricing/capacity from API data
   const apiPrice = apiCourse?.price ?? 0;
-  const apiIsFree = apiPrice === 0;
+  // Course-level sale: effectivePrice is what the student actually pays.
+  const apiOnSale = (apiCourse as { onSale?: boolean })?.onSale ?? false;
+  const apiSalePercent = (apiCourse as { salePercent?: number | null })?.salePercent ?? null;
+  const apiEffectivePrice = (apiCourse as { effectivePrice?: number })?.effectivePrice ?? apiPrice;
+  const apiIsFree = apiEffectivePrice === 0;
   const apiIsFull = apiCourse?.isFull ?? false;
   const apiRemainingSeats = apiCourse?.remainingSeats ?? null;
   const apiCmeAccredited = apiCourse?.isCmeAccredited ?? false;
@@ -1607,6 +1611,19 @@ const CourseDetailContent = ({
                       <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
                         {apiIsFree ? (
                           <span className="text-2xl font-bold text-[#16A34A]">{t("pricingCard.free")}</span>
+                        ) : apiOnSale ? (
+                          <div className={`flex items-center gap-2 flex-wrap ${isRTL ? "flex-row-reverse" : ""}`}>
+                            <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                              <Image src="/icons/rayal-icon.svg" alt="SAR" width={22} height={24} />
+                              <span className="text-3xl font-bold text-[var(--color-text-primary)]">{apiEffectivePrice}</span>
+                            </div>
+                            <span className="text-lg text-[var(--color-text-secondary)] line-through">{apiPrice}</span>
+                            {apiSalePercent ? (
+                              <span className="text-xs font-bold text-white bg-red-600 rounded px-2 py-1">
+                                {t("pricingCard.percentOff", { percent: apiSalePercent })}
+                              </span>
+                            ) : null}
+                          </div>
                         ) : (
                           <>
                             <Image src="/icons/rayal-icon.svg" alt="SAR" width={22} height={24} />
@@ -1888,6 +1905,19 @@ const CourseDetailContent = ({
               <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
                 {apiIsFree ? (
                   <span className="text-xl font-bold text-[#16A34A]">{t("pricingCard.free")}</span>
+                ) : apiOnSale ? (
+                  <div className={`flex items-center gap-2 flex-wrap ${isRTL ? "flex-row-reverse" : ""}`}>
+                    <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                      <Image src="/icons/rayal-icon.svg" alt="SAR" width={18} height={20} />
+                      <span className="text-2xl font-bold text-[var(--color-text-primary)]">{apiEffectivePrice}</span>
+                    </div>
+                    <span className="text-base text-[var(--color-text-secondary)] line-through">{apiPrice}</span>
+                    {apiSalePercent ? (
+                      <span className="text-[11px] font-bold text-white bg-red-600 rounded px-2 py-1">
+                        {t("pricingCard.percentOff", { percent: apiSalePercent })}
+                      </span>
+                    ) : null}
+                  </div>
                 ) : (
                   <>
                     <Image src="/icons/rayal-icon.svg" alt="SAR" width={18} height={20} />
@@ -2223,8 +2253,13 @@ const CourseDetailContent = ({
                 <span className="text-sm text-[var(--color-text-secondary)]">
                   {isRTL ? "المبلغ المستحق" : "Amount due"}
                 </span>
-                <span className="text-lg font-bold text-[var(--color-text-primary)]">
-                  {Number(apiCourse.price ?? 0).toFixed(2)} SAR
+                <span className="text-lg font-bold text-[var(--color-text-primary)] flex items-center gap-2">
+                  {apiOnSale && (
+                    <span className="text-sm font-normal text-[var(--color-text-secondary)] line-through">
+                      {Number(apiCourse.price ?? 0).toFixed(2)}
+                    </span>
+                  )}
+                  {Number(apiEffectivePrice).toFixed(2)} SAR
                 </span>
               </div>
 
@@ -2274,7 +2309,7 @@ const CourseDetailContent = ({
                 className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-60"
               >
                 {checkoutLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                {isRTL ? "دفع" : "Pay"} {Number(apiCourse.price ?? 0).toFixed(2)} SAR
+                {isRTL ? "دفع" : "Pay"} {Number(apiEffectivePrice).toFixed(2)} SAR
               </button>
             </div>
           </div>

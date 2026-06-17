@@ -336,6 +336,13 @@ export interface InstructorCourse {
   createdAt: string;
   updatedAt: string;
   price: number;
+  // Course-level sale (no coupon needed)
+  salePercent?: number | null;
+  saleStartsAt?: string | null;
+  saleEndsAt?: string | null;
+  saleAllowsCoupon?: boolean;
+  effectivePrice?: number;
+  onSale?: boolean;
   enrolledCount: number;
   completionRate: number;
   totalSessions: number;
@@ -401,6 +408,13 @@ export interface CourseDetailResponse {
   cmeHours: number | null;
   isCmeAccredited: boolean | null;
   price: number | string | null;
+  // Course-level sale (no coupon needed)
+  salePercent?: number | null;
+  saleStartsAt?: string | null;
+  saleEndsAt?: string | null;
+  saleAllowsCoupon?: boolean;
+  effectivePrice?: number;
+  onSale?: boolean;
   enrollmentDeadline: string | null;
   startDate: string | null;
   endDate: string | null;
@@ -796,6 +810,11 @@ export interface PublicCourse {
   totalRatings: number;
   instructorName: string;
   price: number;
+  // Course-level sale (no coupon needed). effectivePrice is the price to charge.
+  effectivePrice: number;
+  onSale: boolean;
+  salePercent: number | null;
+  saleAllowsCoupon: boolean;
   cmeHours: number;
   isCmeAccredited: boolean;
   enrollmentDeadline: string | null;

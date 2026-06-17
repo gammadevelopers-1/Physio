@@ -177,9 +177,20 @@ export default function CartPage() {
 
                         {/* Price + Checkout Button */}
                         <div className="flex items-center justify-between">
-                          <span className="text-lg font-bold text-[#1F2937]">
-                            SAR {item.price.toLocaleString()}
-                          </span>
+                          {item.onSale && item.effectivePrice != null ? (
+                            <span className="flex items-baseline gap-2">
+                              <span className="text-lg font-bold text-[#1F2937]">
+                                SAR {item.effectivePrice.toLocaleString()}
+                              </span>
+                              <span className="text-sm text-[#9CA3AF] line-through">
+                                SAR {item.price.toLocaleString()}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-lg font-bold text-[#1F2937]">
+                              SAR {item.price.toLocaleString()}
+                            </span>
+                          )}
                           <Link
                             href={`/${locale}/checkout?courseId=${item.id}`}
                             aria-label={`${t("proceedToCheckout")} - ${getTitle(item)}`}

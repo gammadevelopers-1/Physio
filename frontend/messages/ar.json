@@ -957,6 +957,7 @@
     },
     "card": {
       "viewDetails": "عرض التفاصيل",
+      "percentOff": "خصم {percent}٪",
       "liveOnline": "العيش على الانترنت",
       "hoursUnit": "ساعات",
       "tbd": "يُحدد لاحقاً",
@@ -1018,6 +1019,7 @@
     "registrationNote": "يتم التسجيل فقط إذا كان الفصل يضم 4 مشاركين أو أكثر. سيتم دمج الفصول التي تضم أقل من 4 مشاركين مع الفصل التالي المتاح وسيتم إعلامك مسبقًا.",
     "pricingCard": {
       "buyNow": "اشترِ الآن",
+      "percentOff": "خصم {percent}٪",
       "addToCart": "أضف إلى السلة",
       "free": "مجاني",
       "asLowAs": "مقسطة مثل",
@@ -1145,6 +1147,9 @@
       "applied": "تم تطبيق الخصم:",
       "subtotal": "المجموع الفرعي",
       "discountLabel": "الخصم",
+      "saleLabel": "تخفيض ({percent}٪ خصم)",
+      "saleLabelGeneric": "تخفيض",
+      "notAvailableOnSale": "لا يمكن استخدام أكواد الخصم مع هذا التخفيض.",
       "total": "المجموع"
     },
     "errors": {
@@ -4570,6 +4575,13 @@
       "moveUp": "تحريك لأعلى",
       "moveDown": "تحريك لأسفل",
       "priceLabel": "السعر (ريال)",
+      "saleSectionTitle": "تخفيض (بدون كود)",
+      "saleSectionHint": "حدد نسبة خصم على السعر. يدفع الطلاب السعر المخفّض تلقائيًا دون الحاجة إلى كود. اترك النسبة فارغة لإلغاء التخفيض.",
+      "salePercentLabel": "نسبة التخفيض (٪ خصم)",
+      "salePercentHint": "من 1 إلى 100. النسبة 100٪ تجعل الدورة مجانية.",
+      "saleAllowsCouponLabel": "السماح أيضًا باستخدام كود خصم مع هذا التخفيض",
+      "saleStartsAtLabel": "يبدأ التخفيض",
+      "saleEndsAtLabel": "ينتهي التخفيض",
       "enrollmentDeadlineLabel": "الموعد النهائي للتسجيل",
       "languageLabel": "اللغة",
       "languageEn": "الإنجليزية",

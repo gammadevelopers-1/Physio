@@ -957,6 +957,7 @@
     },
     "card": {
       "viewDetails": "View Details",
+      "percentOff": "{percent}% off",
       "liveOnline": "Live Online",
       "hoursUnit": "Hours",
       "tbd": "TBD",
@@ -1018,6 +1019,7 @@
     "registrationNote": "Registration is confirmed only if the class has 4 or more participants. Classes with fewer than 4 participants will be merged with the next available class and you will be notified in advance.",
     "pricingCard": {
       "buyNow": "Buy Now",
+      "percentOff": "{percent}% off",
       "addToCart": "Add to cart",
       "free": "Free",
       "asLowAs": "As low as",
@@ -1145,6 +1147,9 @@
       "applied": "Discount applied:",
       "subtotal": "Subtotal",
       "discountLabel": "Discount",
+      "saleLabel": "Sale ({percent}% off)",
+      "saleLabelGeneric": "Sale",
+      "notAvailableOnSale": "Coupon codes can't be combined with this sale.",
       "total": "Total"
     },
     "errors": {
@@ -4570,6 +4575,13 @@
       "moveUp": "Move up",
       "moveDown": "Move down",
       "priceLabel": "Price (SAR)",
+      "saleSectionTitle": "Sale (no coupon required)",
+      "saleSectionHint": "Set a percentage off the price. Students pay the discounted price automatically — no code needed. Leave the percent empty for no sale.",
+      "salePercentLabel": "Sale percentage (% off)",
+      "salePercentHint": "1–100. 100% makes the course free.",
+      "saleAllowsCouponLabel": "Also allow a coupon code on top of this sale",
+      "saleStartsAtLabel": "Sale starts",
+      "saleEndsAtLabel": "Sale ends",
       "enrollmentDeadlineLabel": "Enrollment Deadline",
       "languageLabel": "Language",
       "languageEn": "English",

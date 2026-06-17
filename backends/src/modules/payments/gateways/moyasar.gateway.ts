@@ -93,7 +93,10 @@ export class MoyasarGateway extends BaseGateway implements PaymentGateway {
   }
 
   processWebhook(body: any): WebhookResult {
-    const chargeId = body.data?.id || body.id;
+    // We key payments by the Moyasar INVOICE id (stored as gatewayChargeId).
+    // A payment webhook references its invoice via data.invoice_id; fall back to
+    // data.id for non-invoice events.
+    const chargeId = body.data?.invoice_id || body.data?.id || body.id;
     let status: 'paid' | 'failed' | 'refunded' = 'failed';
 
     const eventType = body.type || body.status;
@@ -142,7 +145,10 @@ export class MoyasarGateway extends BaseGateway implements PaymentGateway {
   }
 
   async getCharge(chargeId: string): Promise<any> {
-    const response = await this.fetchWithTimeout(`${this.apiUrl}/payments/${chargeId}`, {
+    // gatewayChargeId is a Moyasar INVOICE id (we create invoices), so query the
+    // invoice endpoint — GET /payments/{id} would 404 with an invoice id. The
+    // invoice carries a `status` of 'paid' once settled.
+    const response = await this.fetchWithTimeout(`${this.apiUrl}/invoices/${chargeId}`, {
       headers: {
         Authorization: this.getAuthHeader(),
       },

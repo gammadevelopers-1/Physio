@@ -14,6 +14,10 @@ export default function PaymentCallbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("payment_id") || searchParams.get("paymentId");
+  // Moyasar redirects back with ITS ids (no payment_id): invoice_id == our
+  // gatewayChargeId; fall back to id. Used to resolve our payment when
+  // payment_id isn't present in the return URL.
+  const chargeId = searchParams.get("invoice_id") || searchParams.get("id");
 
   const [status, setStatus] = useState<string>("processing");
   const [error, setError] = useState<string | null>(null);
@@ -21,26 +25,32 @@ export default function PaymentCallbackPage() {
   const maxPolls = 20; // 60 seconds max (20 × 3s)
 
   useEffect(() => {
-    if (!paymentId) {
-      setError("No payment ID provided");
+    if (!paymentId && !chargeId) {
+      setError("No payment reference provided");
       return;
     }
 
     const pollInterval = setInterval(async () => {
       try {
         pollCount.current += 1;
-        const result = await paymentApi.verify(paymentId);
+        const result = paymentId
+          ? await paymentApi.verify(paymentId)
+          : await paymentApi.verifyByCharge(chargeId as string);
+
+        // The backend returns OUR payment id (the return URL may only carry the
+        // gateway's invoice id), so use it for the success/failed pages.
+        const ourId = result.paymentId || paymentId || "";
 
         if (result.status === "paid") {
           clearInterval(pollInterval);
-          router.replace(`/${locale}/payment/success?paymentId=${paymentId}`);
+          router.replace(`/${locale}/payment/success?paymentId=${ourId}`);
         } else if (result.status === "failed") {
           clearInterval(pollInterval);
           const errorParam = result.failureReason
             ? `&error=${encodeURIComponent(result.failureReason)}`
             : "";
           router.replace(
-            `/${locale}/payment/failed?paymentId=${paymentId}${errorParam}`,
+            `/${locale}/payment/failed?paymentId=${ourId}${errorParam}`,
           );
         } else if (pollCount.current >= maxPolls) {
           clearInterval(pollInterval);
@@ -56,7 +66,7 @@ export default function PaymentCallbackPage() {
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [paymentId, locale, router]);
+  }, [paymentId, chargeId, locale, router]);
 
   return (
     <div className="min-h-screen bg-[#EEF3F7] flex flex-col">

@@ -73,6 +73,17 @@ export class PaymentsController {
     return this.paymentsService.verifyPayment(id, user);
   }
 
+  // Verify by the gateway's charge/invoice id (Moyasar redirects back with the
+  // invoice id, not our payment_id).
+  @Post('verify-charge/:chargeId')
+  @Throttle({ default: { ttl: 60000, limit: 20 } })
+  async verifyPaymentByCharge(
+    @Param('chargeId') chargeId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.paymentsService.verifyPaymentByCharge(chargeId, user);
+  }
+
   @Get('gateways/health')
   @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async getGatewayHealth() {

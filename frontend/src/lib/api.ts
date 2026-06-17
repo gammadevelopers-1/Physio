@@ -6684,6 +6684,11 @@ export const paymentApi = {
   verify: (paymentId: string) =>
     api.post<{ status: string; paymentId: string; amount?: string; currency?: string; gateway?: string; paidAt?: string; failureReason?: string }>(`/payments/verify/${paymentId}`),
 
+  // Verify by the gateway's charge/invoice id (Moyasar redirects back with the
+  // invoice id, not our payment_id). Returns our payment id in the response.
+  verifyByCharge: (chargeId: string) =>
+    api.post<{ status: string; paymentId: string; amount?: string; currency?: string; gateway?: string; paidAt?: string; failureReason?: string }>(`/payments/verify-charge/${chargeId}`),
+
   getMyPayments: (page = 1, limit = 10) =>
     api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/payments/my-payments?page=${page}&limit=${limit}`),
 

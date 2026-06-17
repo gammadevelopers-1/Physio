@@ -595,6 +595,31 @@ export class PaymentsService {
     };
   }
 
+  /**
+   * Verify a payment when we only have the gateway's charge/invoice id rather
+   * than our payment id — e.g. Moyasar redirects the buyer back with the Moyasar
+   * invoice id (= our gatewayChargeId), not our payment_id. Resolves our payment
+   * then reuses verifyPayment so completion/enrolment/email all run identically.
+   */
+  async verifyPaymentByCharge(chargeId: string, user: AuthenticatedUser) {
+    const [payment] = await db
+      .select({ id: payments.id })
+      .from(payments)
+      .where(
+        and(
+          eq(payments.gatewayChargeId, chargeId),
+          eq(payments.userId, user.id),
+        ),
+      )
+      .limit(1);
+
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    return this.verifyPayment(payment.id, user);
+  }
+
   async getMyPayments(
     userId: string,
     page: number = 1,

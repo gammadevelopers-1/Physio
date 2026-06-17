@@ -106,6 +106,24 @@ export default function CourseSalesModal({
     }
   };
 
+  const fmtDate = (iso: string) =>
+    new Date(iso).toLocaleString(isRTL ? "ar-SA" : "en-US", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+
+  // A course has a percent set but isn't live right now — say exactly why.
+  const inactiveReason = (c: CourseSaleItem): string => {
+    const now = Date.now();
+    const pct = c.salePercent ?? 0;
+    if (c.saleStartsAt && now < new Date(c.saleStartsAt).getTime())
+      return t("discountsPage.sales.startsOn", { percent: pct, date: fmtDate(c.saleStartsAt) });
+    if (c.saleEndsAt && now >= new Date(c.saleEndsAt).getTime())
+      return t("discountsPage.sales.endedOn", { percent: pct, date: fmtDate(c.saleEndsAt) });
+    if (c.price <= 0) return t("discountsPage.sales.freeNoEffect");
+    return t("discountsPage.sales.inactive", { percent: pct });
+  };
+
   if (!open) return null;
 
   return (
@@ -176,6 +194,9 @@ export default function CourseSalesModal({
                     <div className="flex items-center flex-wrap gap-2 mt-1 text-xs">
                       {c.onSale ? (
                         <>
+                          <span className="px-1.5 py-0.5 rounded bg-green-600 text-white font-bold">
+                            {t("discountsPage.sales.liveBadge")}
+                          </span>
                           <span className="font-semibold text-[var(--color-primary)]">
                             SAR {c.effectivePrice}
                           </span>
@@ -185,10 +206,15 @@ export default function CourseSalesModal({
                           <span className="px-1.5 py-0.5 rounded bg-red-600 text-white font-bold">
                             {t("discountsPage.sales.percentOff", { percent: c.salePercent ?? 0 })}
                           </span>
+                          {c.saleEndsAt && (
+                            <span className="text-[var(--color-text-secondary)]">
+                              · {t("discountsPage.sales.endsOn", { date: fmtDate(c.saleEndsAt) })}
+                            </span>
+                          )}
                         </>
                       ) : c.salePercent ? (
-                        <span className="text-[var(--color-text-secondary)]">
-                          {t("discountsPage.sales.scheduledOrInactive", { percent: c.salePercent })}
+                        <span className="text-amber-600 font-medium">
+                          {inactiveReason(c)}
                         </span>
                       ) : (
                         <span className="text-[var(--color-text-secondary)]">
@@ -263,6 +289,9 @@ export default function CourseSalesModal({
                         onChange={setEndsAt}
                       />
                     </div>
+                    <p className="sm:col-span-2 text-[11px] text-[var(--color-text-secondary)] -mt-1">
+                      {t("discountsPage.sales.immediateHint")}
+                    </p>
                     <div className="sm:col-span-2 flex items-center justify-between gap-2 pt-1">
                       {c.salePercent ? (
                         <button

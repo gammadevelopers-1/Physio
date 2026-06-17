@@ -10960,6 +10960,8 @@
     "status": "Status",
     "paid": "Paid",
     "goToDashboard": "Go to My Dashboard",
+    "goToMyCourses": "Go to My Courses",
+    "redirecting": "Taking you to your courses…",
     "downloadInvoice": "Download Invoice",
     "browseCourses": "Browse More Courses"
   },

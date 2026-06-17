@@ -10960,6 +10960,8 @@
     "status": "الحالة",
     "paid": "مدفوع",
     "goToDashboard": "الذهاب إلى لوحة التحكم",
+    "goToMyCourses": "الذهاب إلى دوراتي",
+    "redirecting": "جاري نقلك إلى دوراتك…",
     "downloadInvoice": "تحميل الفاتورة",
     "browseCourses": "تصفح المزيد من الدورات"
   },

@@ -55,6 +55,16 @@ export default function PaymentSuccessPage() {
       .finally(() => setLoading(false));
   }, [paymentId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // After a confirmed payment, take the buyer to their courses (the one they
+  // just bought is now unlocked there) — mirroring how real course platforms behave.
+  useEffect(() => {
+    if (payment?.status !== "paid") return;
+    const timer = setTimeout(() => {
+      router.replace(`/${locale}/dashboard/student/courses`);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [payment?.status]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleDownloadInvoice = async () => {
     if (!paymentId) return;
     setDownloading(true);
@@ -159,13 +169,18 @@ export default function PaymentSuccessPage() {
 
               <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => router.push(`/${locale}/dashboard/student`)}
-                  aria-label={t("goToDashboard")}
+                  onClick={() => router.push(`/${locale}/dashboard/student/courses`)}
+                  aria-label={t("goToMyCourses")}
                   className="w-full h-12 btn-gold rounded-xl text-white font-medium flex items-center justify-center gap-2 focus-ring"
                 >
-                  {t("goToDashboard")}
+                  {t("goToMyCourses")}
                   <Arrow className="w-4 h-4" aria-hidden="true" />
                 </button>
+                {payment?.status === "paid" && (
+                  <p className="text-xs text-[#737373]" aria-live="polite">
+                    {t("redirecting")}
+                  </p>
+                )}
                 <button
                   onClick={handleDownloadInvoice}
                   disabled={downloading}

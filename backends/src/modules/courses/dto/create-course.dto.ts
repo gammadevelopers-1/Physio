@@ -10,7 +10,6 @@ import {
   IsArray,
   MaxLength,
   Min,
-  Max,
   IsDateString,
   ValidateNested,
 } from 'class-validator';
@@ -97,25 +96,8 @@ export class CreateCourseDto {
   @Min(0)
   price?: number;
 
-  // Course-level sale: percent off (1..100; 100 = free), optional window, and
-  // whether a coupon may stack on top of it.
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  salePercent?: number;
-
-  @IsOptional()
-  @IsDateString()
-  saleStartsAt?: string;
-
-  @IsOptional()
-  @IsDateString()
-  saleEndsAt?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  saleAllowsCoupon?: boolean;
+  // NOTE: course-level sales are managed by the finance dashboard, not here.
+  // See SetCourseSaleDto + DiscountsController (course-sales routes).
 
   @IsOptional()
   @IsInt()

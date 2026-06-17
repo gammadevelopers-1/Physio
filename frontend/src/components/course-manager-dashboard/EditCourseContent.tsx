@@ -91,11 +91,6 @@ const EditCourseContent = ({ courseId, role = "manager" }: EditCourseContentProp
 
   // Pricing & venue
   const [price, setPrice] = useState("");
-  // Course-level sale (no coupon needed)
-  const [salePercent, setSalePercent] = useState("");
-  const [saleStartsAt, setSaleStartsAt] = useState("");
-  const [saleEndsAt, setSaleEndsAt] = useState("");
-  const [saleAllowsCoupon, setSaleAllowsCoupon] = useState(false);
   const [cmeHours, setCmeHours] = useState("");
   const [venue, setVenue] = useState("");
   const [venueAr, setVenueAr] = useState("");
@@ -181,23 +176,6 @@ const EditCourseContent = ({ courseId, role = "manager" }: EditCourseContentProp
 
         // Pricing & venue
         setPrice((courseData as any).price?.toString() || "");
-        // Course-level sale: load percent + Riyadh-local window for the pickers.
-        setSalePercent(
-          (courseData as any).salePercent != null
-            ? String((courseData as any).salePercent)
-            : "",
-        );
-        setSaleStartsAt(
-          (courseData as any).saleStartsAt
-            ? toRiyadhLocal((courseData as any).saleStartsAt)
-            : "",
-        );
-        setSaleEndsAt(
-          (courseData as any).saleEndsAt
-            ? toRiyadhLocal((courseData as any).saleEndsAt)
-            : "",
-        );
-        setSaleAllowsCoupon(!!(courseData as any).saleAllowsCoupon);
         setCmeHours(courseData.cmeHours != null ? courseData.cmeHours.toString() : "");
         setVenue((courseData as any).venue || "");
         setVenueAr((courseData as any).venueAr || "");
@@ -360,12 +338,6 @@ const EditCourseContent = ({ courseId, role = "manager" }: EditCourseContentProp
       if (venue.trim()) payload.venue = venue.trim();
       if (venueAr.trim()) payload.venueAr = venueAr.trim();
       if (price) payload.price = Number(price);
-      // Course-level sale. Empty percent clears the sale (null). Window dates
-      // use Riyadh-local → UTC, same as the enrollment deadline.
-      payload.salePercent = salePercent ? Number(salePercent) : null;
-      payload.saleStartsAt = saleStartsAt ? fromRiyadhLocal(saleStartsAt) : null;
-      payload.saleEndsAt = saleEndsAt ? fromRiyadhLocal(saleEndsAt) : null;
-      payload.saleAllowsCoupon = saleAllowsCoupon;
       if (cmeHours) {
         payload.cmeHours = Number(cmeHours);
         payload.isCmeAccredited = true;
@@ -1297,73 +1269,6 @@ const EditCourseContent = ({ courseId, role = "manager" }: EditCourseContentProp
                         min={0}
                         className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
                       />
-                    </div>
-                    {/* Course-level sale (no coupon needed) */}
-                    <div className="md:col-span-2 border-t border-[var(--color-border)] pt-4 mt-2">
-                      <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1">
-                        {t("createCourse.saleSectionTitle")}
-                      </h4>
-                      <p className="text-xs text-[var(--color-text-secondary)] mb-3">
-                        {t("createCourse.saleSectionHint")}
-                      </p>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label htmlFor="edit-sale-percent" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                            {t("createCourse.salePercentLabel")}
-                          </label>
-                          <input
-                            id="edit-sale-percent"
-                            type="number"
-                            value={salePercent}
-                            onChange={(e) => setSalePercent(e.target.value)}
-                            placeholder="0"
-                            min={1}
-                            max={100}
-                            className="w-full px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-input-focus)]"
-                          />
-                          <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                            {t("createCourse.salePercentHint")}
-                          </p>
-                        </div>
-                        <div className="flex items-start gap-2 md:pt-7">
-                          <input
-                            id="edit-sale-allows-coupon"
-                            type="checkbox"
-                            checked={saleAllowsCoupon}
-                            onChange={(e) => setSaleAllowsCoupon(e.target.checked)}
-                            className="mt-0.5 w-4 h-4"
-                          />
-                          <label htmlFor="edit-sale-allows-coupon" className="text-sm text-[var(--color-text-secondary)]">
-                            {t("createCourse.saleAllowsCouponLabel")}
-                          </label>
-                        </div>
-                        <div>
-                          <label htmlFor="edit-sale-starts-at" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                            {t("createCourse.saleStartsAtLabel")}
-                            <span className="ms-1 text-xs text-[var(--color-text-secondary)] font-normal">
-                              ({locale === "ar" ? "بتوقيت الرياض" : "Riyadh time"})
-                            </span>
-                          </label>
-                          <DateTimePicker
-                            id="edit-sale-starts-at"
-                            value={saleStartsAt}
-                            onChange={setSaleStartsAt}
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="edit-sale-ends-at" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                            {t("createCourse.saleEndsAtLabel")}
-                            <span className="ms-1 text-xs text-[var(--color-text-secondary)] font-normal">
-                              ({locale === "ar" ? "بتوقيت الرياض" : "Riyadh time"})
-                            </span>
-                          </label>
-                          <DateTimePicker
-                            id="edit-sale-ends-at"
-                            value={saleEndsAt}
-                            onChange={setSaleEndsAt}
-                          />
-                        </div>
-                      </div>
                     </div>
                     <div>
                       <label htmlFor="edit-cme-hours" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">

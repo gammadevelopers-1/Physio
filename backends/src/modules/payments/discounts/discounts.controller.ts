@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Patch,
   Delete,
   Body,
@@ -18,6 +19,7 @@ import { CreateDiscountDto } from '../dto/create-discount.dto';
 import { UpdateDiscountDto } from '../dto/update-discount.dto';
 import { ValidateDiscountDto } from '../dto/validate-discount.dto';
 import { BulkDiscountDto } from '../dto/bulk-discount.dto';
+import { SetCourseSaleDto } from '../dto/set-course-sale.dto';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
@@ -70,6 +72,24 @@ export class DiscountsController {
       user.id,
       sale.effectivePrice,
     );
+  }
+
+  // ── Course-level sales (finance-managed; no coupon required) ──────────────
+  // Declared before the generic @Get(':id') so 'course-sales' isn't captured.
+  @Get('course-sales')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async listCourseSales(@Query('search') search?: string) {
+    return this.discountService.listCourseSales(search);
+  }
+
+  @Put('course-sales/:courseId')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async setCourseSale(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('courseId') courseId: string,
+    @Body() dto: SetCourseSaleDto,
+  ) {
+    return this.discountService.setCourseSale(courseId, dto, user.id);
   }
 
   @Get('analytics')

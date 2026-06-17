@@ -31,6 +31,7 @@ import {
 import { discountApi } from "@/lib/api";
 import { toast } from "sonner";
 import { useFinanceProfile } from "@/hooks/useFinanceProfile";
+import CourseSalesModal from "./CourseSalesModal";
 
 interface Coupon {
   id: string;
@@ -84,6 +85,7 @@ const DiscountsContent = () => {
   const [activeTab, setActiveTab] = useState("active");
   const [showModal, setShowModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
+  const [showSalesModal, setShowSalesModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [openActionId, setOpenActionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -434,6 +436,13 @@ const DiscountsContent = () => {
                   >
                     <Layers className="w-4 h-4" />
                     {t("discountsPage.bulkGenerate") || "Bulk Generate"}
+                  </button>
+                  <button
+                    onClick={() => setShowSalesModal(true)}
+                    className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors"
+                  >
+                    <Percent className="w-4 h-4" />
+                    {t("discountsPage.sales.openButton") || "Course Sales"}
                   </button>
                   <button
                     onClick={() => { setEditingId(null); resetForm(); setShowModal(true); }}
@@ -992,6 +1001,12 @@ const DiscountsContent = () => {
           </div>
         </div>
       )}
+
+      {/* Course Sales (no coupon required) — finance-managed */}
+      <CourseSalesModal
+        open={showSalesModal}
+        onClose={() => setShowSalesModal(false)}
+      />
     </>
   );
 };

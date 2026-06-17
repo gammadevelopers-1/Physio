@@ -10,8 +10,6 @@ import {
   Min,
   IsDateString,
   ValidateNested,
-  Max,
-  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
@@ -63,27 +61,8 @@ export class UpdateCourseDto {
   @Min(0)
   price?: number;
 
-  // Course-level sale. null clears the field (turn the sale off).
-  @IsOptional()
-  @ValidateIf((_, v) => v !== null)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  salePercent?: number | null;
-
-  @IsOptional()
-  @ValidateIf((_, v) => v !== null)
-  @IsDateString()
-  saleStartsAt?: string | null;
-
-  @IsOptional()
-  @ValidateIf((_, v) => v !== null)
-  @IsDateString()
-  saleEndsAt?: string | null;
-
-  @IsOptional()
-  @IsBoolean()
-  saleAllowsCoupon?: boolean;
+  // NOTE: course-level sales are managed by the finance dashboard, not here.
+  // See SetCourseSaleDto + DiscountsController (course-sales routes).
 
   @IsOptional()
   @IsInt()

@@ -7105,6 +7105,21 @@ export const financeApi = {
 // Discount API
 // ===========================================
 
+export interface CourseSaleItem {
+  id: string;
+  title: string;
+  titleAr: string | null;
+  thumbnail: string | null;
+  status: string;
+  price: number;
+  effectivePrice: number;
+  onSale: boolean;
+  salePercent: number | null;
+  saleStartsAt: string | null;
+  saleEndsAt: string | null;
+  saleAllowsCoupon: boolean;
+}
+
 export const discountApi = {
   validate: (code: string, courseId: string) =>
     api.post<{ valid: boolean; discountAmount: number; discountId: string | null; error?: string }>('/discounts/validate', { code, courseId }),
@@ -7177,6 +7192,24 @@ export const discountApi = {
 
   delete: (id: string) =>
     api.delete<{ deleted: boolean }>(`/discounts/${id}`),
+
+  // Course-level sales (no coupon required) — finance-managed.
+  listCourseSales: (search?: string) => {
+    const sp = new URLSearchParams();
+    if (search) sp.set('search', search);
+    const qs = sp.toString();
+    return api.get<CourseSaleItem[]>(`/discounts/course-sales${qs ? `?${qs}` : ''}`);
+  },
+
+  setCourseSale: (
+    courseId: string,
+    data: {
+      salePercent?: number | null;
+      saleStartsAt?: string | null;
+      saleEndsAt?: string | null;
+      saleAllowsCoupon?: boolean;
+    },
+  ) => api.put<CourseSaleItem>(`/discounts/course-sales/${courseId}`, data),
 
   export: async (params?: { status?: string; search?: string; startDate?: string; endDate?: string }) => {
     const token = getAccessToken();

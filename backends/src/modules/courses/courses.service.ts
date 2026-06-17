@@ -154,19 +154,6 @@ export class CoursesService {
       }
     }
 
-    // Validate sale window order up-front so a bad range returns a clean 400
-    // instead of tripping the DB CHECK (courses_sale_window_order) as a 500.
-    if (
-      dto.saleStartsAt &&
-      dto.saleEndsAt &&
-      new Date(dto.saleEndsAt) <= new Date(dto.saleStartsAt)
-    ) {
-      throw new BadRequestException({
-        code: 'SALE_WINDOW_ORDER',
-        message: 'Sale end must be after the sale start',
-      });
-    }
-
     // Auto-set managerId based on role
     let managerId: string | null = null;
     if (isManager(user)) {
@@ -188,10 +175,6 @@ export class CoursesService {
         thumbnail: dto.thumbnail,
         maxEnrollment: dto.maxEnrollment,
         price: dto.price !== undefined ? dto.price.toString() : undefined,
-        salePercent: dto.salePercent ?? null,
-        saleStartsAt: dto.saleStartsAt ? new Date(dto.saleStartsAt) : null,
-        saleEndsAt: dto.saleEndsAt ? new Date(dto.saleEndsAt) : null,
-        saleAllowsCoupon: dto.saleAllowsCoupon ?? false,
         cmeHours: dto.cmeHours,
         enrollmentDeadline: dto.enrollmentDeadline
           ? this.parseEnrollmentDeadline(dto.enrollmentDeadline)
@@ -1342,9 +1325,9 @@ export class CoursesService {
       }
     }
 
-    // Pull out fields needing transform; salePercent + saleAllowsCoupon stay in
-    // restDto (drizzle accepts number/boolean/null directly, incl. null-to-clear).
-    const { price, enrollmentDeadline, saleStartsAt, saleEndsAt, ...restDto } = dto;
+    // Pull out fields needing transform. (Course-level sales are managed by the
+    // finance dashboard — not writable through the course editor.)
+    const { price, enrollmentDeadline, ...restDto } = dto;
     const updateData: Record<string, any> = {
       ...restDto,
       updatedAt: new Date(),
@@ -1354,33 +1337,6 @@ export class CoursesService {
     }
     if (enrollmentDeadline !== undefined) {
       updateData.enrollmentDeadline = this.parseEnrollmentDeadline(enrollmentDeadline);
-    }
-    // Sale window dates arrive as ISO strings; convert to Date, or null to clear.
-    if (saleStartsAt !== undefined) {
-      updateData.saleStartsAt = saleStartsAt ? new Date(saleStartsAt) : null;
-    }
-    if (saleEndsAt !== undefined) {
-      updateData.saleEndsAt = saleEndsAt ? new Date(saleEndsAt) : null;
-    }
-    // Validate the RESULTING window order (merge incoming with existing) so a
-    // bad range returns a clean 400 instead of tripping the DB CHECK as a 500.
-    const finalSaleStart =
-      saleStartsAt !== undefined
-        ? saleStartsAt
-          ? new Date(saleStartsAt)
-          : null
-        : (existing as { saleStartsAt?: Date | null }).saleStartsAt ?? null;
-    const finalSaleEnd =
-      saleEndsAt !== undefined
-        ? saleEndsAt
-          ? new Date(saleEndsAt)
-          : null
-        : (existing as { saleEndsAt?: Date | null }).saleEndsAt ?? null;
-    if (finalSaleStart && finalSaleEnd && finalSaleEnd <= finalSaleStart) {
-      throw new BadRequestException({
-        code: 'SALE_WINDOW_ORDER',
-        message: 'Sale end must be after the sale start',
-      });
     }
     // Sanitize rich-text fields on update too (same reason as create —
     // these are HTML rendered by other surfaces). Only touches the

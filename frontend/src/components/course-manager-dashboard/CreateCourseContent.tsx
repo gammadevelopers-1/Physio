@@ -193,11 +193,6 @@ const CreateCourseContent = () => {
   const [nelcReviewLink, setNelcReviewLink] = useState("");
   const [nelcReviewLinkError, setNelcReviewLinkError] = useState<string | null>(null);
   const [price, setPrice] = useState("");
-  // Course-level sale (no coupon needed)
-  const [salePercent, setSalePercent] = useState("");
-  const [saleStartsAt, setSaleStartsAt] = useState("");
-  const [saleEndsAt, setSaleEndsAt] = useState("");
-  const [saleAllowsCoupon, setSaleAllowsCoupon] = useState(false);
   const [venue, setVenue] = useState("");
   const [venueAr, setVenueAr] = useState("");
   const [enrollmentDeadline, setEnrollmentDeadline] = useState("");
@@ -423,12 +418,6 @@ const CreateCourseContent = () => {
       if (venue.trim()) payload.venue = venue.trim();
       if (venueAr.trim()) payload.venueAr = venueAr.trim();
       if (price) payload.price = Number(price);
-      // Course-level sale (optional). Window dates use Riyadh-local → UTC,
-      // same as the enrollment deadline.
-      if (salePercent) payload.salePercent = Number(salePercent);
-      if (saleStartsAt) payload.saleStartsAt = fromRiyadhLocal(saleStartsAt);
-      if (saleEndsAt) payload.saleEndsAt = fromRiyadhLocal(saleEndsAt);
-      payload.saleAllowsCoupon = saleAllowsCoupon;
       // Convert the picker's local "YYYY-MM-DDTHH:mm" Riyadh string to a
       // proper UTC ISO so the backend's `new Date()` parses the exact
       // moment intended (otherwise it would treat the value as the
@@ -1224,73 +1213,6 @@ const CreateCourseContent = () => {
                           min={0}
                           className={inputClass}
                         />
-                      </div>
-                      {/* Course-level sale (no coupon needed) */}
-                      <div className="md:col-span-2 border-t border-[var(--color-border)] pt-4 mt-2">
-                        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1">
-                          {t("createCourse.saleSectionTitle")}
-                        </h4>
-                        <p className="text-xs text-[var(--color-text-secondary)] mb-3">
-                          {t("createCourse.saleSectionHint")}
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label htmlFor="sale-percent" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                              {t("createCourse.salePercentLabel")}
-                            </label>
-                            <input
-                              id="sale-percent"
-                              type="number"
-                              value={salePercent}
-                              onChange={(e) => setSalePercent(e.target.value)}
-                              placeholder="0"
-                              min={1}
-                              max={100}
-                              className={inputClass}
-                            />
-                            <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                              {t("createCourse.salePercentHint")}
-                            </p>
-                          </div>
-                          <div className="flex items-start gap-2 md:pt-7">
-                            <input
-                              id="sale-allows-coupon"
-                              type="checkbox"
-                              checked={saleAllowsCoupon}
-                              onChange={(e) => setSaleAllowsCoupon(e.target.checked)}
-                              className="mt-0.5 w-4 h-4"
-                            />
-                            <label htmlFor="sale-allows-coupon" className="text-sm text-[var(--color-text-secondary)]">
-                              {t("createCourse.saleAllowsCouponLabel")}
-                            </label>
-                          </div>
-                          <div>
-                            <label htmlFor="sale-starts-at" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                              {t("createCourse.saleStartsAtLabel")}
-                              <span className="ms-1 text-xs text-[var(--color-text-secondary)] font-normal">
-                                ({locale === "ar" ? "بتوقيت الرياض" : "Riyadh time"})
-                              </span>
-                            </label>
-                            <DateTimePicker
-                              id="sale-starts-at"
-                              value={saleStartsAt}
-                              onChange={setSaleStartsAt}
-                            />
-                          </div>
-                          <div>
-                            <label htmlFor="sale-ends-at" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                              {t("createCourse.saleEndsAtLabel")}
-                              <span className="ms-1 text-xs text-[var(--color-text-secondary)] font-normal">
-                                ({locale === "ar" ? "بتوقيت الرياض" : "Riyadh time"})
-                              </span>
-                            </label>
-                            <DateTimePicker
-                              id="sale-ends-at"
-                              value={saleEndsAt}
-                              onChange={setSaleEndsAt}
-                            />
-                          </div>
-                        </div>
                       </div>
                       <div>
                         <label htmlFor="enrollment-deadline" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">

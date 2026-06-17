@@ -11,17 +11,140 @@ import {
   discountUsage,
   invoices,
   users,
+  courses,
 } from '../../../database/schema';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { CreateDiscountDto } from '../dto/create-discount.dto';
 import { UpdateDiscountDto } from '../dto/update-discount.dto';
 import { BulkDiscountDto } from '../dto/bulk-discount.dto';
+import { SetCourseSaleDto } from '../dto/set-course-sale.dto';
+import { getEffectivePrice } from '../../courses/pricing.util';
 
 @Injectable()
 export class DiscountService {
   private readonly logger = new Logger(DiscountService.name);
 
   constructor(private readonly auditLogService: AuditLogService) {}
+
+  // ── Course-level sales (finance-managed; no coupon required) ──────────────
+  // Sales live on the course row but are owned by the finance dashboard, not
+  // the course editor. List + set/clear here, audited like other finance ops.
+
+  async listCourseSales(search?: string) {
+    const conditions = [isNull(courses.deletedAt)];
+    if (search && search.trim()) {
+      const q = `%${search.trim()}%`;
+      conditions.push(or(ilike(courses.title, q), ilike(courses.titleAr, q))!);
+    }
+    const rows = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        titleAr: courses.titleAr,
+        thumbnail: courses.thumbnail,
+        status: courses.status,
+        price: courses.price,
+        salePercent: courses.salePercent,
+        saleStartsAt: courses.saleStartsAt,
+        saleEndsAt: courses.saleEndsAt,
+        saleAllowsCoupon: courses.saleAllowsCoupon,
+      })
+      .from(courses)
+      .where(and(...conditions))
+      .orderBy(desc(courses.createdAt));
+
+    const now = new Date();
+    return rows.map((c) => {
+      const sale = getEffectivePrice(c, now);
+      return {
+        id: c.id,
+        title: c.title,
+        titleAr: c.titleAr,
+        thumbnail: c.thumbnail,
+        status: c.status,
+        price: sale.originalPrice,
+        effectivePrice: sale.effectivePrice,
+        onSale: sale.onSale,
+        salePercent: c.salePercent,
+        saleStartsAt: c.saleStartsAt ? c.saleStartsAt.toISOString() : null,
+        saleEndsAt: c.saleEndsAt ? c.saleEndsAt.toISOString() : null,
+        saleAllowsCoupon: c.saleAllowsCoupon,
+      };
+    });
+  }
+
+  async setCourseSale(courseId: string, dto: SetCourseSaleDto, userId: string) {
+    const [course] = await db
+      .select()
+      .from(courses)
+      .where(and(eq(courses.id, courseId), isNull(courses.deletedAt)))
+      .limit(1);
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    // Only provided fields change; null clears. (whitelist strips by name, so a
+    // null value still reaches us here.)
+    const updateData: Record<string, any> = { updatedAt: new Date() };
+    if (dto.salePercent !== undefined) updateData.salePercent = dto.salePercent;
+    if (dto.saleStartsAt !== undefined)
+      updateData.saleStartsAt = dto.saleStartsAt ? new Date(dto.saleStartsAt) : null;
+    if (dto.saleEndsAt !== undefined)
+      updateData.saleEndsAt = dto.saleEndsAt ? new Date(dto.saleEndsAt) : null;
+    if (dto.saleAllowsCoupon !== undefined)
+      updateData.saleAllowsCoupon = dto.saleAllowsCoupon;
+
+    // Validate the RESULTING window order (merge incoming with existing) so a
+    // bad range returns a clean 400 instead of tripping the DB CHECK as a 500.
+    const finalStart =
+      updateData.saleStartsAt !== undefined
+        ? updateData.saleStartsAt
+        : course.saleStartsAt;
+    const finalEnd =
+      updateData.saleEndsAt !== undefined
+        ? updateData.saleEndsAt
+        : course.saleEndsAt;
+    if (finalStart && finalEnd && new Date(finalEnd) <= new Date(finalStart)) {
+      throw new BadRequestException('Sale end must be after the sale start');
+    }
+
+    const [updated] = await db
+      .update(courses)
+      .set(updateData)
+      .where(eq(courses.id, courseId))
+      .returning();
+
+    await this.auditLogService.log({
+      entityType: 'course',
+      entityId: courseId,
+      action: 'course_sale_updated',
+      performedBy: userId,
+      metadata: {
+        salePercent: updated.salePercent,
+        saleStartsAt: updated.saleStartsAt,
+        saleEndsAt: updated.saleEndsAt,
+        saleAllowsCoupon: updated.saleAllowsCoupon,
+      },
+    });
+
+    const sale = getEffectivePrice(updated);
+    return {
+      id: updated.id,
+      title: updated.title,
+      titleAr: updated.titleAr,
+      thumbnail: updated.thumbnail,
+      status: updated.status,
+      price: sale.originalPrice,
+      effectivePrice: sale.effectivePrice,
+      onSale: sale.onSale,
+      salePercent: updated.salePercent,
+      saleStartsAt: updated.saleStartsAt
+        ? updated.saleStartsAt.toISOString()
+        : null,
+      saleEndsAt: updated.saleEndsAt ? updated.saleEndsAt.toISOString() : null,
+      saleAllowsCoupon: updated.saleAllowsCoupon,
+    };
+  }
 
   async validateDiscount(
     code: string,

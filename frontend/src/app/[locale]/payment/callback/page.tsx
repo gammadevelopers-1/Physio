@@ -18,6 +18,12 @@ export default function PaymentCallbackPage() {
   // gatewayChargeId; fall back to id. Used to resolve our payment when
   // payment_id isn't present in the return URL.
   const chargeId = searchParams.get("invoice_id") || searchParams.get("id");
+  // The gateway reports the outcome directly in the redirect URL. Our webhook
+  // completes the payment server-side, so we honour this status for the final
+  // redirect even when the cross-origin verify() call below can't authenticate
+  // (after a gateway redirect the in-memory access token is gone and the CSRF
+  // cookie set on api.* can't be read by the storefront origin).
+  const gatewayStatus = searchParams.get("status");
 
   const [status, setStatus] = useState<string>("processing");
   const [error, setError] = useState<string | null>(null);
@@ -25,11 +31,33 @@ export default function PaymentCallbackPage() {
   const maxPolls = 20; // 60 seconds max (20 × 3s)
 
   useEffect(() => {
-    if (!paymentId && !chargeId) {
+    if (!paymentId && !chargeId && !gatewayStatus) {
       setError("No payment reference provided");
       return;
     }
 
+    const goToCourses = () =>
+      router.replace(`/${locale}/dashboard/student/courses`);
+    const goToFailed = (reason?: string) => {
+      const params = new URLSearchParams();
+      if (paymentId) params.set("paymentId", paymentId);
+      if (reason) params.set("error", reason);
+      const qs = params.toString();
+      router.replace(`/${locale}/payment/failed${qs ? `?${qs}` : ""}`);
+    };
+
+    // Primary path: the gateway tells us the outcome in the redirect and our
+    // webhook completes the payment server-side. So honour gatewayStatus after a
+    // short grace period (lets the webhook finish) — this works even though the
+    // cross-origin verify() call below can't authenticate after the redirect.
+    const graceTimer = setTimeout(() => {
+      if (gatewayStatus === "paid") goToCourses();
+      else if (gatewayStatus === "failed" || gatewayStatus === "cancelled") goToFailed();
+      else setStatus("timeout");
+    }, 4000);
+
+    // Best-effort fast-path: if verify() does succeed (same-origin / token
+    // present), redirect immediately instead of waiting for the grace timer.
     const pollInterval = setInterval(async () => {
       try {
         pollCount.current += 1;
@@ -37,27 +65,21 @@ export default function PaymentCallbackPage() {
           ? await paymentApi.verify(paymentId)
           : await paymentApi.verifyByCharge(chargeId as string);
 
-        // The backend returns OUR payment id (the return URL may only carry the
-        // gateway's invoice id), so use it for the success/failed pages.
-        const ourId = result.paymentId || paymentId || "";
-
         if (result.status === "paid") {
           clearInterval(pollInterval);
-          router.replace(`/${locale}/payment/success?paymentId=${ourId}`);
+          clearTimeout(graceTimer);
+          goToCourses();
         } else if (result.status === "failed") {
           clearInterval(pollInterval);
-          const errorParam = result.failureReason
-            ? `&error=${encodeURIComponent(result.failureReason)}`
-            : "";
-          router.replace(
-            `/${locale}/payment/failed?paymentId=${ourId}${errorParam}`,
-          );
+          clearTimeout(graceTimer);
+          goToFailed(result.failureReason);
         } else if (pollCount.current >= maxPolls) {
           clearInterval(pollInterval);
           setStatus("timeout");
         }
       } catch {
-        // Keep polling on network errors
+        // verify() can't authenticate cross-origin here — the grace timer above
+        // handles the redirect from the gateway status, so just keep trying.
         if (pollCount.current >= maxPolls) {
           clearInterval(pollInterval);
           setStatus("timeout");
@@ -65,8 +87,11 @@ export default function PaymentCallbackPage() {
       }
     }, 3000);
 
-    return () => clearInterval(pollInterval);
-  }, [paymentId, chargeId, locale, router]);
+    return () => {
+      clearInterval(pollInterval);
+      clearTimeout(graceTimer);
+    };
+  }, [paymentId, chargeId, gatewayStatus, locale, router]);
 
   return (
     <div className="min-h-screen bg-[#EEF3F7] flex flex-col">

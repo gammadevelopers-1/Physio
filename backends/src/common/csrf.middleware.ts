@@ -52,6 +52,12 @@ const TOKEN_BYTES = 24;
 //     flow without adding real defense.
 const BYPASS_PREFIXES = [
   '/api/zoom/webhook',
+  // Payment gateway webhooks (Moyasar / Tap / Tamara / Tabby) hit
+  // /api/webhooks/:gateway. They are sent server-to-server with no CSRF
+  // cookie and are authenticated by verifyWebhook() (shared secret / HMAC),
+  // so CSRF must not block them. (The legacy '/api/payments/webhook' below is
+  // kept harmlessly; the live route is '/api/webhooks/*'.)
+  '/api/webhooks',
   '/api/payments/webhook',
   '/api/auth/',
   '/api/storage/upload',

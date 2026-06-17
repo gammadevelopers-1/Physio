@@ -7125,11 +7125,23 @@ export const discountApi = {
     }>(`/discounts/analytics${qs ? `?${qs}` : ''}`);
   },
 
+  getCampaignReport: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<Array<{ campaign: string; codeCount: number; totalRedemptions: number; totalSaved: number }>>(
+      `/discounts/campaigns/report${qs ? `?${qs}` : ''}`,
+    );
+  },
+
   create: (data: {
     code: string;
     type: string;
     value: number;
     maxUses?: number;
+    maxUsesPerUser?: number;
+    campaign?: string;
     minOrderAmount?: number;
     courseIds?: string[];
     validFrom?: string;
@@ -7142,6 +7154,8 @@ export const discountApi = {
     type: string;
     value: number;
     maxUses?: number;
+    maxUsesPerUser?: number;
+    campaign?: string;
     minOrderAmount?: number;
     courseIds?: string[];
     validFrom?: string;

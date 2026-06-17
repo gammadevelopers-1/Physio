@@ -22,12 +22,17 @@ export const discountCodes = pgTable(
     type: varchar('type', { length: 20 }).notNull(),
     value: numeric('value', { precision: 10, scale: 2 }).notNull(),
     maxUses: integer('max_uses'),
+    // Per-user redemption cap. NULL = unlimited per user; default 1 preserves
+    // the previous hardcoded "one use per user" behaviour.
+    maxUsesPerUser: integer('max_uses_per_user').default(1),
     currentUses: integer('current_uses').notNull().default(0),
     minOrderAmount: numeric('min_order_amount', { precision: 10, scale: 2 }),
     applicableCourses: uuid('applicable_courses').array().notNull().default(sql`'{}'::uuid[]`),
     validFrom: timestamp('valid_from'),
     validUntil: timestamp('valid_until'),
     isActive: boolean('is_active').notNull().default(true),
+    // Optional grouping label for promotional campaigns (e.g. "Ramadan 2026").
+    campaign: varchar('campaign', { length: 100 }),
     createdBy: uuid('created_by')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
@@ -37,6 +42,7 @@ export const discountCodes = pgTable(
   (table) => [
     uniqueIndex('discount_codes_code_unique').on(table.code),
     index('discount_codes_is_active_idx').on(table.isActive),
+    index('discount_codes_campaign_idx').on(table.campaign),
     check(
       'discount_codes_type_check',
       sql`${table.type} IN ('percentage', 'fixed')`,

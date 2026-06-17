@@ -9,6 +9,7 @@ import {
   IsBoolean,
   IsInt,
   Min,
+  MaxLength,
 } from 'class-validator';
 
 export class UpdateDiscountDto {
@@ -29,6 +30,16 @@ export class UpdateDiscountDto {
   @IsInt()
   @Min(1)
   maxUses?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  maxUsesPerUser?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  campaign?: string;
 
   @IsOptional()
   @IsNumber()

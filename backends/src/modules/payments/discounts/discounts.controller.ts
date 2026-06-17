@@ -66,6 +66,15 @@ export class DiscountsController {
     return this.discountService.getAnalytics(startDate, endDate);
   }
 
+  @Get('campaigns/report')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getCampaignReport(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.discountService.getCampaignReport(startDate, endDate);
+  }
+
   @Get('export')
   @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async exportCsv(

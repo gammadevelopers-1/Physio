@@ -8,6 +8,7 @@ import {
   IsDateString,
   IsInt,
   Min,
+  MaxLength,
 } from 'class-validator';
 
 export class CreateDiscountDto {
@@ -25,6 +26,18 @@ export class CreateDiscountDto {
   @IsInt()
   @Min(1)
   maxUses?: number;
+
+  // Per-user redemption cap. Omit for the default (1 use per user).
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  maxUsesPerUser?: number;
+
+  // Optional promotional-campaign grouping label.
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  campaign?: string;
 
   @IsOptional()
   @IsNumber()

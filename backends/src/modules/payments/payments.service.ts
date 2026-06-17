@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { eq, and, desc, count, sql, inArray, or, ilike, gte, lte } from 'drizzle-orm';
+import { eq, and, ne, desc, count, sql, inArray, or, ilike, gte, lte } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   payments,
@@ -412,18 +412,29 @@ export class PaymentsService {
       return; // Already processed or doesn't exist
     }
 
+    // Single-winner status flip: exactly one concurrent caller flips
+    // pending -> paid, so duplicate webhooks can't double-process the order.
+    let won = false;
     await db.transaction(async (tx) => {
-      // Update payment status
-      await tx
+      const flipped = await tx
         .update(payments)
         .set({
           status: PAYMENT_STATUS.PAID,
           paidAt: new Date(),
           updatedAt: new Date(),
         })
-        .where(eq(payments.id, paymentId));
+        .where(
+          and(
+            eq(payments.id, paymentId),
+            ne(payments.status, PAYMENT_STATUS.PAID),
+          ),
+        )
+        .returning({ id: payments.id });
 
-      // Activate enrollment
+      if (flipped.length === 0) return; // another caller already processed it
+      won = true;
+
+      // Activate enrollment (atomic with the status flip)
       if (payment.enrollmentId) {
         await tx
           .update(enrollments)
@@ -435,15 +446,24 @@ export class PaymentsService {
       }
     });
 
-    // Record discount usage if applicable
+    if (!won) return; // lost the race — don't double-record usage / audit
+
+    // Record discount usage if applicable. recordUsage is itself atomic +
+    // idempotent; guard it so a usage hiccup can't abort an already-paid order.
     const metadata = payment.metadata as any;
     if (metadata?.discountId && metadata?.discountCode) {
-      await this.discountService.recordUsage(
-        metadata.discountId,
-        payment.userId,
-        payment.id,
-        metadata.discountAmount || 0,
-      );
+      try {
+        await this.discountService.recordUsage(
+          metadata.discountId,
+          payment.userId,
+          payment.id,
+          metadata.discountAmount || 0,
+        );
+      } catch (err) {
+        this.logger.error(
+          `Discount usage recording failed for payment ${paymentId}: ${(err as Error).message}`,
+        );
+      }
     }
 
     // Audit log

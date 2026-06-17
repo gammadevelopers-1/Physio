@@ -9,6 +9,7 @@ import {
   IsInt,
   Min,
   Max,
+  MaxLength,
 } from 'class-validator';
 
 export class BulkDiscountDto {
@@ -31,6 +32,16 @@ export class BulkDiscountDto {
   @IsInt()
   @Min(1)
   maxUses?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  maxUsesPerUser?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  campaign?: string;
 
   @IsOptional()
   @IsNumber()

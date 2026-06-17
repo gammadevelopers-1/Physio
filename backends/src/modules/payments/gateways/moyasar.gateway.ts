@@ -47,7 +47,13 @@ export class MoyasarGateway extends BaseGateway implements PaymentGateway {
         amount: amountInHalalah,
         currency: params.currency,
         description: params.description,
+        // callback_url is Moyasar's server-side notification target. To redirect
+        // the buyer's BROWSER back to our app after payment, Moyasar invoices use
+        // success_url (on success) and back_url (on cancel/back) — without these
+        // the customer is stranded on Moyasar's hosted "Invoice Paid" page.
         callback_url: params.redirectUrl,
+        success_url: params.redirectUrl,
+        back_url: params.redirectUrl,
         metadata: params.metadata,
       }),
     });

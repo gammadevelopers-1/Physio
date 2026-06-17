@@ -8048,6 +8048,8 @@
         "fixedAmount": "Fixed Amount (SAR)",
         "courseSpecific": "Course Specific",
         "usageLimit": "Usage Limit",
+        "perUserLimit": "Per-user Limit",
+        "campaign": "Campaign",
         "expiryDate": "Expiry Date",
         "minOrder": "Minimum Order (SAR)",
         "courses": "Applicable Courses",

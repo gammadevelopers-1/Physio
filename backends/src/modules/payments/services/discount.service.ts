@@ -4,7 +4,7 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
-import { eq, and, desc, count, sql, ilike, or, gte, lte, isNull, gt, lt } from 'drizzle-orm';
+import { eq, and, desc, count, sql, ilike, or, gte, lte, isNull, gt, lt, inArray, isNotNull } from 'drizzle-orm';
 import { db } from '../../../database';
 import {
   discountCodes,
@@ -84,20 +84,29 @@ export class DiscountService {
       };
     }
 
-    // Check if user already used this code
-    const [existingUsage] = await db
-      .select()
-      .from(discountUsage)
-      .where(
-        and(
-          eq(discountUsage.discountId, discount.id),
-          eq(discountUsage.userId, userId),
-        ),
-      )
-      .limit(1);
-
-    if (existingUsage) {
-      return { valid: false, discountAmount: 0, discountId: null, error: 'You have already used this discount code' };
+    // Check per-user usage limit (configurable; NULL column = unlimited per user)
+    if (
+      discount.maxUsesPerUser !== null &&
+      discount.maxUsesPerUser !== undefined
+    ) {
+      const [{ used }] = await db
+        .select({ used: count() })
+        .from(discountUsage)
+        .where(
+          and(
+            eq(discountUsage.discountId, discount.id),
+            eq(discountUsage.userId, userId),
+          ),
+        );
+      if (Number(used) >= discount.maxUsesPerUser) {
+        return {
+          valid: false,
+          discountAmount: 0,
+          discountId: null,
+          error:
+            'You have already used this discount code the maximum number of times',
+        };
+      }
     }
 
     // Calculate discount amount
@@ -108,8 +117,9 @@ export class DiscountService {
       discountAmount = Number(discount.value);
     }
 
-    // Cap at course price
-    discountAmount = Math.min(discountAmount, coursePrice);
+    // Cap at course price, then round to 2 decimals so the SAME value flows into
+    // the VAT base, the persisted invoice, and amountSaved (no ~0.01 SAR drift).
+    discountAmount = Math.round(Math.min(discountAmount, coursePrice) * 100) / 100;
 
     return {
       valid: true,
@@ -124,32 +134,77 @@ export class DiscountService {
     paymentId: string,
     amountSaved: number,
   ) {
-    // Atomic conditional increment — prevents maxUses race condition
-    const result = await db
-      .update(discountCodes)
-      .set({
-        currentUses: sql`${discountCodes.currentUses} + 1`,
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(discountCodes.id, discountId),
-          sql`(${discountCodes.maxUses} IS NULL OR ${discountCodes.currentUses} < ${discountCodes.maxUses})`,
-        ),
-      )
-      .returning({ id: discountCodes.id });
+    await db.transaction(async (tx) => {
+      // Lock the coupon row so concurrent redemptions serialise on it — enforces
+      // BOTH the global and per-user caps atomically (fixes the race where two
+      // concurrent checkouts by the same user both slip past the validate check).
+      const [discount] = await tx
+        .select()
+        .from(discountCodes)
+        .where(eq(discountCodes.id, discountId))
+        .for('update')
+        .limit(1);
 
-    if (result.length === 0) {
-      throw new BadRequestException(
-        'Discount code has reached its maximum usage limit',
-      );
-    }
+      if (!discount) {
+        throw new BadRequestException('Discount code not found');
+      }
 
-    await db.insert(discountUsage).values({
-      discountId,
-      userId,
-      paymentId,
-      amountSaved: amountSaved.toFixed(2),
+      // Idempotency: a duplicate webhook for the SAME payment must not
+      // double-count (the unique index also guards this).
+      const [already] = await tx
+        .select({ id: discountUsage.id })
+        .from(discountUsage)
+        .where(
+          and(
+            eq(discountUsage.discountId, discountId),
+            eq(discountUsage.paymentId, paymentId),
+          ),
+        )
+        .limit(1);
+      if (already) return;
+
+      // Global usage cap
+      if (discount.maxUses !== null && discount.currentUses >= discount.maxUses) {
+        throw new BadRequestException(
+          'Discount code has reached its maximum usage limit',
+        );
+      }
+
+      // Per-user usage cap (NULL = unlimited per user)
+      if (
+        discount.maxUsesPerUser !== null &&
+        discount.maxUsesPerUser !== undefined
+      ) {
+        const [{ used }] = await tx
+          .select({ used: count() })
+          .from(discountUsage)
+          .where(
+            and(
+              eq(discountUsage.discountId, discountId),
+              eq(discountUsage.userId, userId),
+            ),
+          );
+        if (Number(used) >= discount.maxUsesPerUser) {
+          throw new BadRequestException(
+            'You have already used this discount code the maximum number of times',
+          );
+        }
+      }
+
+      // Record usage + bump the global counter atomically inside the tx.
+      await tx.insert(discountUsage).values({
+        discountId,
+        userId,
+        paymentId,
+        amountSaved: amountSaved.toFixed(2),
+      });
+      await tx
+        .update(discountCodes)
+        .set({
+          currentUses: sql`${discountCodes.currentUses} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(eq(discountCodes.id, discountId));
     });
 
     await this.auditLogService.log({
@@ -162,6 +217,10 @@ export class DiscountService {
   }
 
   async create(dto: CreateDiscountDto, userId: string) {
+    if (dto.type === 'percentage' && dto.value > 100) {
+      throw new BadRequestException('Percentage discount cannot exceed 100%');
+    }
+
     // Check for existing code
     const [existing] = await db
       .select()
@@ -180,6 +239,8 @@ export class DiscountService {
         type: dto.type,
         value: dto.value.toFixed(2),
         maxUses: dto.maxUses || null,
+        maxUsesPerUser: dto.maxUsesPerUser ?? 1,
+        campaign: dto.campaign?.trim() || null,
         minOrderAmount: dto.minOrderAmount
           ? dto.minOrderAmount.toFixed(2)
           : null,
@@ -212,11 +273,22 @@ export class DiscountService {
       throw new NotFoundException('Discount code not found');
     }
 
+    // Percentage cap, evaluated against the effective (post-update) type/value.
+    const effectiveType = dto.type ?? existing.type;
+    const effectiveValue = dto.value ?? Number(existing.value);
+    if (effectiveType === 'percentage' && effectiveValue > 100) {
+      throw new BadRequestException('Percentage discount cannot exceed 100%');
+    }
+
     const updateData: any = { updatedAt: new Date() };
     if (dto.code !== undefined) updateData.code = dto.code.toUpperCase();
     if (dto.type !== undefined) updateData.type = dto.type;
     if (dto.value !== undefined) updateData.value = dto.value.toFixed(2);
     if (dto.maxUses !== undefined) updateData.maxUses = dto.maxUses;
+    if (dto.maxUsesPerUser !== undefined)
+      updateData.maxUsesPerUser = dto.maxUsesPerUser;
+    if (dto.campaign !== undefined)
+      updateData.campaign = dto.campaign?.trim() || null;
     if (dto.minOrderAmount !== undefined)
       updateData.minOrderAmount = dto.minOrderAmount?.toFixed(2) || null;
     if (dto.courseIds !== undefined) updateData.applicableCourses = dto.courseIds;
@@ -340,6 +412,8 @@ export class DiscountService {
         currentUses: discountCodes.currentUses,
         minOrderAmount: discountCodes.minOrderAmount,
         applicableCourses: discountCodes.applicableCourses,
+        campaign: discountCodes.campaign,
+        maxUsesPerUser: discountCodes.maxUsesPerUser,
         validFrom: discountCodes.validFrom,
         validUntil: discountCodes.validUntil,
         isActive: discountCodes.isActive,
@@ -399,7 +473,11 @@ export class DiscountService {
     const avgDiscountPerUse = totalRedemptions > 0 ? totalSavings / totalRedemptions : 0;
 
     // Revenue lift: compare invoices with discount vs without
-    const withCouponConditions = [gt(invoices.discountAmount, sql`0`), ...invoiceDateConditions];
+    const withCouponConditions = [
+      gt(invoices.discountAmount, sql`0`),
+      sql`${invoices.status} NOT IN ('refunded', 'cancelled')`,
+      ...invoiceDateConditions,
+    ];
     const [withCouponResult] = await db
       .select({
         total: sql<string>`COALESCE(SUM(${invoices.totalAmount}), 0)`,
@@ -410,6 +488,7 @@ export class DiscountService {
 
     const withoutCouponConditions = [
       or(eq(invoices.discountAmount, sql`0`), isNull(invoices.discountAmount)),
+      sql`${invoices.status} NOT IN ('refunded', 'cancelled')`,
       ...invoiceDateConditions,
     ];
     const [withoutCouponResult] = await db
@@ -511,24 +590,79 @@ export class DiscountService {
     };
   }
 
+  /**
+   * Per-campaign rollup for promotional-campaign reporting. Includes disabled
+   * codes so historical campaign totals are not silently dropped.
+   */
+  async getCampaignReport(startDate?: string, endDate?: string) {
+    const joinConds: any[] = [eq(discountCodes.id, discountUsage.discountId)];
+    if (startDate) joinConds.push(gte(discountUsage.usedAt, new Date(startDate)));
+    if (endDate) joinConds.push(lte(discountUsage.usedAt, new Date(endDate)));
+
+    const rows = await db
+      .select({
+        campaign: discountCodes.campaign,
+        codeCount: sql<string>`COUNT(DISTINCT ${discountCodes.id})`,
+        totalRedemptions: count(discountUsage.id),
+        totalSaved: sql<string>`COALESCE(SUM(${discountUsage.amountSaved}), 0)`,
+      })
+      .from(discountCodes)
+      .leftJoin(discountUsage, and(...joinConds))
+      .where(isNotNull(discountCodes.campaign))
+      .groupBy(discountCodes.campaign)
+      .orderBy(desc(sql`COALESCE(SUM(${discountUsage.amountSaved}), 0)`));
+
+    return rows.map((r) => ({
+      campaign: r.campaign,
+      codeCount: Number(r.codeCount),
+      totalRedemptions: Number(r.totalRedemptions),
+      totalSaved: Number(r.totalSaved),
+    }));
+  }
+
   async bulkGenerate(dto: BulkDiscountDto, userId: string) {
-    const codes: string[] = [];
+    if (dto.type === 'percentage' && dto.value > 100) {
+      throw new BadRequestException('Percentage discount cannot exceed 100%');
+    }
+
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     const prefix = dto.prefix.toUpperCase();
-
-    for (let i = 0; i < dto.count; i++) {
+    const gen = () => {
       let suffix = '';
       for (let j = 0; j < 6; j++) {
         suffix += chars.charAt(Math.floor(Math.random() * chars.length));
       }
-      codes.push(`${prefix}-${suffix}`);
+      return `${prefix}-${suffix}`;
+    };
+
+    // Generate in-batch-unique codes (Set), then drop any that already exist in
+    // the DB — so a single collision can't crash the whole batch.
+    const wanted = new Set<string>();
+    let guard = 0;
+    while (wanted.size < dto.count && guard < dto.count * 50) {
+      wanted.add(gen());
+      guard++;
+    }
+    let candidates = Array.from(wanted);
+    if (candidates.length > 0) {
+      const existingRows = await db
+        .select({ code: discountCodes.code })
+        .from(discountCodes)
+        .where(inArray(discountCodes.code, candidates));
+      const taken = new Set(existingRows.map((r) => r.code));
+      candidates = candidates.filter((c) => !taken.has(c));
     }
 
-    const values = codes.map((code) => ({
+    const values = candidates.map((code) => ({
       code,
       type: dto.type,
       value: dto.value.toFixed(2),
-      maxUses: dto.maxUses || null,
+      // Bulk codes are unique single-distribution codes: default to one use each
+      // unless overridden (so a leaked code isn't unlimited-use).
+      maxUses: dto.maxUses ?? 1,
+      maxUsesPerUser: dto.maxUsesPerUser ?? 1,
+      // Group the batch under its campaign (falls back to the prefix).
+      campaign: dto.campaign?.trim() || prefix,
       minOrderAmount: dto.minOrderAmount
         ? dto.minOrderAmount.toFixed(2)
         : null,
@@ -538,10 +672,14 @@ export class DiscountService {
       createdBy: userId,
     }));
 
-    const created = await db
-      .insert(discountCodes)
-      .values(values)
-      .returning({ id: discountCodes.id, code: discountCodes.code });
+    // onConflictDoNothing makes any residual race a no-op rather than a 500.
+    const created = values.length
+      ? await db
+          .insert(discountCodes)
+          .values(values)
+          .onConflictDoNothing({ target: discountCodes.code })
+          .returning({ id: discountCodes.id, code: discountCodes.code })
+      : [];
 
     await this.auditLogService.log({
       entityType: 'discount_code',
@@ -591,8 +729,10 @@ export class DiscountService {
         type: discountCodes.type,
         value: discountCodes.value,
         maxUses: discountCodes.maxUses,
+        maxUsesPerUser: discountCodes.maxUsesPerUser,
         currentUses: discountCodes.currentUses,
         minOrderAmount: discountCodes.minOrderAmount,
+        campaign: discountCodes.campaign,
         isActive: discountCodes.isActive,
         validFrom: discountCodes.validFrom,
         validUntil: discountCodes.validUntil,
@@ -613,8 +753,16 @@ export class DiscountService {
     lines.push(`# Platform Version: 1.0.0`);
     lines.push('');
 
+    // CSV cell escaper: quote when needed + neutralise spreadsheet formula injection.
+    const esc = (v: unknown) => {
+      let s = v === null || v === undefined ? '' : String(v);
+      if (/^[=+\-@]/.test(s)) s = `'${s}`;
+      if (/[",\n]/.test(s)) s = `"${s.replace(/"/g, '""')}"`;
+      return s;
+    };
+
     // CSV header
-    lines.push('Code,Type,Value,MaxUses,CurrentUses,TotalSaved,MinOrder,Status,ValidFrom,ValidUntil,CreatedAt');
+    lines.push('Code,Type,Value,MaxUses,PerUserLimit,CurrentUses,TotalSaved,MinOrder,Campaign,Status,ValidFrom,ValidUntil,CreatedAt');
 
     for (const d of discounts) {
       const now = new Date();
@@ -628,14 +776,16 @@ export class DiscountService {
         d.type,
         d.value,
         d.maxUses ?? 'unlimited',
+        d.maxUsesPerUser ?? 'unlimited',
         d.currentUses,
         d.totalSaved,
         d.minOrderAmount || '0',
+        d.campaign || '-',
         computedStatus,
         d.validFrom ? new Date(d.validFrom).toISOString().slice(0, 10) : '-',
         d.validUntil ? new Date(d.validUntil).toISOString().slice(0, 10) : '-',
         new Date(d.createdAt).toISOString().slice(0, 10),
-      ].join(','));
+      ].map(esc).join(','));
     }
 
     return lines.join('\n');
@@ -664,6 +814,8 @@ export class DiscountService {
         applicableCourses: discountCodes.applicableCourses,
         validFrom: discountCodes.validFrom,
         validUntil: discountCodes.validUntil,
+        campaign: discountCodes.campaign,
+        maxUsesPerUser: discountCodes.maxUsesPerUser,
         isActive: discountCodes.isActive,
         createdBy: discountCodes.createdBy,
         createdAt: discountCodes.createdAt,

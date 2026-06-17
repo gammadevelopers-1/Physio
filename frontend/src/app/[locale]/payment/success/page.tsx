@@ -8,7 +8,6 @@ import { CheckCircle, Download, ArrowRight, ArrowLeft, Loader2 } from "lucide-re
 import { useTranslations, useLocale } from "next-intl";
 import { toast } from "sonner";
 import { paymentApi, invoiceApi } from "@/lib/api";
-import { useCart } from "@/contexts/CartContext";
 
 interface PaymentDetails {
   status: string;
@@ -27,7 +26,6 @@ export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("paymentId");
 
-  const { removeItem } = useCart();
   const [payment, setPayment] = useState<PaymentDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
@@ -42,11 +40,10 @@ export default function PaymentSuccessPage() {
       .verify(paymentId)
       .then((data) => {
         setPayment(data);
-        // Remove purchased course from cart
+        // Clear the checkout marker after a confirmed purchase. (No global cart
+        // is mounted, so there's nothing to remove from a cart here.)
         try {
-          const courseId = sessionStorage.getItem("checkout_courseId");
-          if (courseId && data?.status === "paid") {
-            removeItem(courseId);
+          if (data?.status === "paid") {
             sessionStorage.removeItem("checkout_courseId");
           }
         } catch {}

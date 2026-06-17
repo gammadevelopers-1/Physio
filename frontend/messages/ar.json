@@ -8048,6 +8048,8 @@
         "fixedAmount": "مبلغ ثابت (ر.س)",
         "courseSpecific": "خاص بدورة معينة",
         "usageLimit": "حد الاستخدام",
+        "perUserLimit": "حد الاستخدام لكل مستخدم",
+        "campaign": "الحملة",
         "expiryDate": "تاريخ الانتهاء",
         "minOrder": "الحد الأدنى للطلب (ر.س)",
         "courses": "الدورات المطبقة",

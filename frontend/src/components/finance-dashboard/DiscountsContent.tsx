@@ -47,6 +47,8 @@ interface Coupon {
   totalSaved: number;
   isActive: boolean;
   applicableCourses: string[];
+  perUserLimit?: number;
+  campaign?: string | null;
 }
 
 interface Analytics {
@@ -102,6 +104,8 @@ const DiscountsContent = () => {
   const [formType, setFormType] = useState<"percentage" | "fixed">("percentage");
   const [formValue, setFormValue] = useState("");
   const [formLimit, setFormLimit] = useState("");
+  const [formPerUser, setFormPerUser] = useState("");
+  const [formCampaign, setFormCampaign] = useState("");
   const [formExpiry, setFormExpiry] = useState("");
   const [formMinOrder, setFormMinOrder] = useState("");
   const [formCourseIds, setFormCourseIds] = useState<string[]>([]);
@@ -112,6 +116,7 @@ const DiscountsContent = () => {
   const [bulkType, setBulkType] = useState<"percentage" | "fixed">("percentage");
   const [bulkValue, setBulkValue] = useState("");
   const [bulkLimit, setBulkLimit] = useState("");
+  const [bulkCampaign, setBulkCampaign] = useState("");
   const [bulkExpiry, setBulkExpiry] = useState("");
   const [bulkSaving, setBulkSaving] = useState(false);
 
@@ -146,6 +151,8 @@ const DiscountsContent = () => {
           totalSaved: Number(d.totalSaved || 0),
           isActive: d.isActive,
           applicableCourses: d.applicableCourses || [],
+          perUserLimit: d.maxUsesPerUser ?? undefined,
+          campaign: d.campaign ?? null,
         };
       });
       setCoupons(mapped);
@@ -268,6 +275,8 @@ const DiscountsContent = () => {
         type: formType,
         value: Number(formValue),
         maxUses: formLimit ? Number(formLimit) : undefined,
+        maxUsesPerUser: formPerUser ? Number(formPerUser) : undefined,
+        campaign: formCampaign.trim() || undefined,
         validUntil: formExpiry || undefined,
         minOrderAmount: formMinOrder ? Number(formMinOrder) : undefined,
         courseIds: formCourseIds.length > 0 ? formCourseIds : undefined,
@@ -299,6 +308,7 @@ const DiscountsContent = () => {
         type: bulkType,
         value: Number(bulkValue),
         maxUses: bulkLimit ? Number(bulkLimit) : undefined,
+        campaign: bulkCampaign.trim() || undefined,
         validUntil: bulkExpiry || undefined,
       });
       toast.success(t("discountsPage.bulk.success", { count: result.created }) || `${result.created} discount codes created`);
@@ -307,6 +317,7 @@ const DiscountsContent = () => {
       setBulkCount("10");
       setBulkValue("");
       setBulkLimit("");
+      setBulkCampaign("");
       setBulkExpiry("");
       await fetchData();
       await fetchAnalytics();
@@ -337,6 +348,8 @@ const DiscountsContent = () => {
     setFormExpiry(coupon.validUntilRaw ? coupon.validUntilRaw.slice(0, 10) : "");
     setFormMinOrder(coupon.minOrder ? String(coupon.minOrder) : "");
     setFormCourseIds(coupon.applicableCourses || []);
+    setFormPerUser(coupon.perUserLimit ? String(coupon.perUserLimit) : "");
+    setFormCampaign(coupon.campaign || "");
     setShowModal(true);
     setOpenActionId(null);
   };
@@ -364,6 +377,8 @@ const DiscountsContent = () => {
     setFormLimit("");
     setFormExpiry("");
     setFormMinOrder("");
+    setFormPerUser("");
+    setFormCampaign("");
     setFormCourseIds([]);
     setShowCourseDropdown(false);
   };
@@ -757,6 +772,30 @@ const DiscountsContent = () => {
                   />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{t("discountsPage.form.perUserLimit") || "Per-user limit"}</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formPerUser}
+                    onChange={(e) => setFormPerUser(e.target.value)}
+                    placeholder="1"
+                    className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{t("discountsPage.form.campaign") || "Campaign"}</label>
+                  <input
+                    type="text"
+                    value={formCampaign}
+                    onChange={(e) => setFormCampaign(e.target.value)}
+                    placeholder="Summer 2026"
+                    maxLength={100}
+                    className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                  />
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{t("discountsPage.form.minOrder")}</label>
                 <input
@@ -919,6 +958,17 @@ const DiscountsContent = () => {
                   type="date"
                   value={bulkExpiry}
                   onChange={(e) => setBulkExpiry(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{t("discountsPage.form.campaign") || "Campaign"}</label>
+                <input
+                  type="text"
+                  value={bulkCampaign}
+                  onChange={(e) => setBulkCampaign(e.target.value)}
+                  placeholder="Summer 2026"
+                  maxLength={100}
                   className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                 />
               </div>

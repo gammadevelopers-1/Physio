@@ -189,6 +189,11 @@ import {
   getBankTransferRejectedText,
 } from './templates/bank-transfer-rejected.template';
 import {
+  getTamaraStuckAlertHtml,
+  getTamaraStuckAlertText,
+  type TamaraStuckSeverity,
+} from './templates/tamara-stuck-alert.template';
+import {
   getRefundRequestedHtml,
   getRefundRequestedText,
   getRefundApprovedHtml,
@@ -204,6 +209,8 @@ import {
   invoices,
   refunds,
   courses,
+  roles,
+  userRoles,
 } from '../../database/schema';
 
 /**
@@ -2182,6 +2189,126 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
     } catch (error) {
       this.logger.error(`Failed to send bank transfer rejection email`, error);
     }
+  }
+
+  /**
+   * Send the Tamara stuck-payment alert to FINANCE + ADMIN + SUPER_ADMIN.
+   * Caller is the cron retry service when a payment crosses 24h/48h/60h
+   * thresholds in the Tamara authorise-window. severity controls copy +
+   * recipient set:
+   *   - warning  (24h): finance team only
+   *   - urgent   (48h): finance + admin
+   *   - critical (60h): finance + admin + super_admin
+   */
+  async sendTamaraStuckAlert(
+    paymentId: string,
+    severity: TamaraStuckSeverity,
+    context: {
+      hoursStuck: number;
+      hoursUntilExpiry: number;
+      attempts: number;
+      lastError: string | null;
+    },
+  ): Promise<void> {
+    try {
+      const [payment] = await db
+        .select()
+        .from(payments)
+        .where(eq(payments.id, paymentId))
+        .limit(1);
+      if (!payment) return;
+
+      const buyer = await this.getUserData(payment.userId);
+      if (!buyer) return;
+
+      // Pick recipient role names by severity. We resolve role → user emails
+      // dynamically rather than hard-coding addresses so onboarding a new
+      // finance hire doesn't require an env-var change.
+      const roleNames =
+        severity === 'critical'
+          ? ['FINANCE', 'ADMIN', 'SUPER_ADMIN']
+          : severity === 'urgent'
+            ? ['FINANCE', 'ADMIN']
+            : ['FINANCE'];
+
+      const recipients = await this.resolveEmailsByRoleNames(roleNames);
+      if (recipients.length === 0) {
+        this.logger.warn(
+          `No recipients found for Tamara stuck alert (severity=${severity}, roles=${roleNames.join(',')})`,
+        );
+        return;
+      }
+
+      const appBase = process.env.FRONTEND_URL || 'https://physioguidance.org';
+      const dashboardUrl = `${appBase}/en/dashboard/finance/payments?paymentId=${paymentId}`;
+
+      const params = {
+        severity,
+        paymentId: payment.id,
+        gatewayChargeId: payment.gatewayChargeId || '(none)',
+        buyerName:
+          `${buyer.firstName || ''} ${buyer.lastName || ''}`.trim() ||
+          buyer.email,
+        buyerEmail: buyer.email,
+        amount: String(payment.amount),
+        hoursStuck: context.hoursStuck,
+        hoursUntilExpiry: context.hoursUntilExpiry,
+        attempts: context.attempts,
+        lastError: context.lastError,
+        dashboardUrl,
+      };
+
+      const subjectPrefix =
+        severity === 'critical'
+          ? '[CRITICAL]'
+          : severity === 'urgent'
+            ? '[URGENT]'
+            : '[WARNING]';
+
+      // Tamara stuck alerts are operational, not toggleable — send to BCC
+      // (each recipient gets one email, doesn't see the others' addresses).
+      await this.send({
+        to: recipients,
+        subject: `${subjectPrefix} Tamara payment stuck ${context.hoursStuck}h — ${buyer.email}`,
+        html: getTamaraStuckAlertHtml(params),
+        text: getTamaraStuckAlertText(params),
+      });
+      this.logger.log(
+        `Tamara stuck alert (${severity}) sent for payment ${paymentId} to ${recipients.length} recipient(s)`,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to send Tamara stuck alert`, error);
+    }
+  }
+
+  /**
+   * Resolve role names → email addresses of users currently holding any
+   * of those roles. Excludes soft-deleted accounts. Used by the Tamara
+   * stuck-payment alert escalation.
+   */
+  private async resolveEmailsByRoleNames(roleNames: string[]): Promise<string[]> {
+    if (roleNames.length === 0) return [];
+
+    const roleRows = await db
+      .select({ id: roles.id })
+      .from(roles)
+      .where(inArray(roles.name, roleNames));
+    if (roleRows.length === 0) return [];
+
+    const userIdRows = await db
+      .selectDistinct({ userId: userRoles.userId })
+      .from(userRoles)
+      .where(inArray(userRoles.roleId, roleRows.map((r) => r.id)));
+    if (userIdRows.length === 0) return [];
+
+    const emailRows = await db
+      .select({ email: users.email })
+      .from(users)
+      .where(inArray(users.id, userIdRows.map((r) => r.userId)));
+
+    return emailRows
+      .map((r) => r.email)
+      .filter((e): e is string => Boolean(e) && !e.startsWith('deleted-'));
   }
 
   async sendRefundRequested(

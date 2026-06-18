@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { eq, and, lt, sql } from 'drizzle-orm';
+import { eq, and, lt, ne, or, isNull, sql } from 'drizzle-orm';
 import { db } from '../../../database';
 import {
   payments,
@@ -25,13 +25,28 @@ export class PaymentCleanupService {
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
     try {
+      // Skip Tamara payments where the buyer reached the gateway
+      // (gatewayChargeId is set) — TamaraRetryService owns their lifecycle
+      // for up to 60 hours while we authorise+capture asynchronously.
+      // Expiring them prematurely here would mark them as failed before
+      // the retry queue gets a chance, and Tamara would still refund the
+      // buyer at 72h — leaving us with a payment row that says 'failed'
+      // and a Tamara order that says 'expired' for the same reason.
       const stalePayments = await db
-        .select({ id: payments.id, enrollmentId: payments.enrollmentId })
+        .select({
+          id: payments.id,
+          enrollmentId: payments.enrollmentId,
+          gateway: payments.gateway,
+        })
         .from(payments)
         .where(
           and(
             eq(payments.status, PAYMENT_STATUS.PENDING),
             lt(payments.createdAt, twoHoursAgo),
+            or(
+              ne(payments.gateway, 'tamara'),
+              isNull(payments.gatewayChargeId),
+            ),
           ),
         )
         .limit(100);

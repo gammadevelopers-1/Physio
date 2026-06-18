@@ -17,6 +17,7 @@ import { RefundService } from './services/refund.service';
 import { DiscountService } from './services/discount.service';
 import { FinanceService } from './services/finance.service';
 import { PaymentCleanupService } from './services/payment-cleanup.service';
+import { TamaraRetryService } from './services/tamara-retry.service';
 import { BankTransferService } from './bank-transfer/bank-transfer.service';
 
 // Gateways
@@ -69,6 +70,7 @@ import { EmailModule } from '../email/email.module';
     TabbyGateway,
     BankTransferGateway,
     PaymentCleanupService,
+    TamaraRetryService,
     // Webhook processor only when Redis is available
     ...(process.env.REDIS_HOST ? [WebhookProcessor] : []),
   ],

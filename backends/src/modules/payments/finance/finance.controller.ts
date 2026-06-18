@@ -1,6 +1,9 @@
-import { Controller, Get, Query, Res, UseGuards } from '@nestjs/common';
-import { Response } from 'express';
+import { Controller, Get, Post, Param, Query, Res, UseGuards } from '@nestjs/common';
+import { Response, Request } from 'express';
+import { Req } from '@nestjs/common';
 import { FinanceService } from '../services/finance.service';
+import { TamaraRetryService } from '../services/tamara-retry.service';
+import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
@@ -9,7 +12,36 @@ import { JwtAuthGuard, RolesGuard } from '../../auth/guards';
 @Controller('finance')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class FinanceController {
-  constructor(private readonly financeService: FinanceService) {}
+  constructor(
+    private readonly financeService: FinanceService,
+    private readonly tamaraRetryService: TamaraRetryService,
+    private readonly auditLogService: AuditLogService,
+  ) {}
+
+  /**
+   * Manually retry the Authorise + Capture flow for a stuck Tamara payment.
+   * Shown on the finance dashboard as a "Retry Capture" button when a Tamara
+   * payment has been pending for too long. Wrapped in audit logging so the
+   * action is attributable.
+   */
+  @Post('tamara/retry/:paymentId')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async retryTamaraCapture(
+    @Param('paymentId') paymentId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
+  ) {
+    const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
+    await this.auditLogService.log({
+      entityType: 'payment',
+      entityId: paymentId,
+      action: 'tamara_retry_manual',
+      performedBy: user.id,
+      ipAddress,
+      metadata: { triggeredBy: user.email },
+    });
+    return this.tamaraRetryService.retryOne(paymentId, user.id);
+  }
 
   @Get('summary')
   @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')

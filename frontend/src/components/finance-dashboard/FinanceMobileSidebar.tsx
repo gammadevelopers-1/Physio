@@ -40,9 +40,14 @@ interface FinanceProfile {
 interface FinanceMobileSidebarProps {
   profile: FinanceProfile;
   pendingRefundCount?: number;
+  pendingBankTransferCount?: number;
 }
 
-const FinanceMobileSidebar = ({ profile, pendingRefundCount = 0 }: FinanceMobileSidebarProps) => {
+const FinanceMobileSidebar = ({
+  profile,
+  pendingRefundCount = 0,
+  pendingBankTransferCount = 0,
+}: FinanceMobileSidebarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const locale = useLocale();
   const pathname = usePathname();
@@ -118,6 +123,7 @@ const FinanceMobileSidebar = ({ profile, pendingRefundCount = 0 }: FinanceMobile
       label: t("sidebar.bankTransfers"),
       href: `/${locale}/dashboard/finance/bank-transfers`,
       icon: Building2,
+      badge: pendingBankTransferCount > 0 ? pendingBankTransferCount : undefined,
     },
     {
       label: t("sidebar.discounts"),

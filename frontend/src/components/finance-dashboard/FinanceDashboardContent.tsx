@@ -12,7 +12,13 @@ import PaymentsInvoicesTable from "./PaymentsInvoicesTable";
 import RefundsQueueWidget from "./RefundsQueueWidget";
 import FinanceRightSidebar from "./FinanceRightSidebar";
 import DateRangeFilter from "./DateRangeFilter";
-import { financeApi, paymentApi, refundApi, discountApi } from "@/lib/api";
+import {
+  financeApi,
+  paymentApi,
+  refundApi,
+  discountApi,
+  financeBankTransferApi,
+} from "@/lib/api";
 import { useFinanceProfile } from "@/hooks/useFinanceProfile";
 
 function getDefaultDateRange() {
@@ -53,10 +59,20 @@ const FinanceDashboardContent = () => {
   const [alerts, setAlerts] = useState<any[]>([]);
   const [coupons, setCoupons] = useState<any[]>([]);
   const [pendingRefundCount, setPendingRefundCount] = useState(0);
+  const [pendingBankTransferCount, setPendingBankTransferCount] = useState(0);
 
   const fetchAll = useCallback(async () => {
     try {
-      const [summaryRes, revenueRes, paymentsRes, refundsRes, refundRateRes, discountsRes, topCoursesRes] = await Promise.allSettled([
+      const [
+        summaryRes,
+        revenueRes,
+        paymentsRes,
+        refundsRes,
+        refundRateRes,
+        discountsRes,
+        topCoursesRes,
+        bankTransferQueueRes,
+      ] = await Promise.allSettled([
         financeApi.getSummary({ startDate: dateRange.startDate, endDate: dateRange.endDate }),
         financeApi.getRevenueBySource({ startDate: dateRange.startDate, endDate: dateRange.endDate }),
         paymentApi.getAll(1, 5),
@@ -64,7 +80,15 @@ const FinanceDashboardContent = () => {
         financeApi.getRefundRate({ startDate: dateRange.startDate, endDate: dateRange.endDate }),
         discountApi.getAll(1, 4),
         financeApi.getTopCourses({ limit: 5, startDate: dateRange.startDate, endDate: dateRange.endDate }),
+        // Cheap 1-row query just to read pagination.total for the sidebar badge.
+        financeBankTransferApi.listQueue({ status: "pending", page: 1, limit: 1 }),
       ]);
+
+      if (bankTransferQueueRes.status === "fulfilled") {
+        setPendingBankTransferCount(
+          bankTransferQueueRes.value?.pagination?.total ?? 0,
+        );
+      }
 
         // KPI Data
         if (summaryRes.status === "fulfilled") {
@@ -264,11 +288,19 @@ const FinanceDashboardContent = () => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <FinanceSidebar profile={profile} pendingRefundCount={pendingRefundCount} />
+              <FinanceSidebar
+                profile={profile}
+                pendingRefundCount={pendingRefundCount}
+                pendingBankTransferCount={pendingBankTransferCount}
+              />
             </div>
 
             {/* Mobile Sidebar */}
-            <FinanceMobileSidebar profile={profile} pendingRefundCount={pendingRefundCount} />
+            <FinanceMobileSidebar
+              profile={profile}
+              pendingRefundCount={pendingRefundCount}
+              pendingBankTransferCount={pendingBankTransferCount}
+            />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">

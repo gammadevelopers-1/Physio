@@ -138,9 +138,15 @@ export default function BankTransferQueueContent() {
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
-              <FinanceSidebar profile={profile} pendingRefundCount={tabCounts.pending} />
+              <FinanceSidebar
+                profile={profile}
+                pendingBankTransferCount={tabCounts.pending}
+              />
             </div>
-            <FinanceMobileSidebar profile={profile} pendingRefundCount={tabCounts.pending} />
+            <FinanceMobileSidebar
+              profile={profile}
+              pendingBankTransferCount={tabCounts.pending}
+            />
 
             <div className="flex-1 min-w-0">
               {/* Header */}

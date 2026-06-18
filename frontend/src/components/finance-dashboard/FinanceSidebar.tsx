@@ -39,9 +39,14 @@ interface FinanceProfile {
 interface FinanceSidebarProps {
   profile: FinanceProfile;
   pendingRefundCount?: number;
+  pendingBankTransferCount?: number;
 }
 
-const FinanceSidebar = ({ profile, pendingRefundCount = 0 }: FinanceSidebarProps) => {
+const FinanceSidebar = ({
+  profile,
+  pendingRefundCount = 0,
+  pendingBankTransferCount = 0,
+}: FinanceSidebarProps) => {
   const locale = useLocale();
   const pathname = usePathname();
   const router = useRouter();
@@ -116,6 +121,7 @@ const FinanceSidebar = ({ profile, pendingRefundCount = 0 }: FinanceSidebarProps
       label: t("sidebar.bankTransfers"),
       href: `/${locale}/dashboard/finance/bank-transfers`,
       icon: Building2,
+      badge: pendingBankTransferCount > 0 ? pendingBankTransferCount : undefined,
     },
     {
       label: t("sidebar.discounts"),

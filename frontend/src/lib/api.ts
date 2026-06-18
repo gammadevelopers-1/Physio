@@ -6960,6 +6960,21 @@ export const financeApi = {
   getPaymentStatus: () =>
     api.get<any[]>('/finance/payment-status'),
 
+  /**
+   * Manually retry the Authorise + Capture flow for a stuck Tamara payment.
+   * Used by the "Retry Capture" button on the finance payments table when
+   * a Tamara payment has been pending for too long (the automatic 10-min
+   * cron is also retrying in the background; this is the human-triggered
+   * variant). Returns the same action union the cron version returns so
+   * the UI can toast accordingly.
+   */
+  retryTamaraCapture: (paymentId: string) =>
+    api.post<{
+      paymentId: string;
+      action: 'paid' | 'failed' | 'refunded' | 'retried' | 'no_op';
+      detail: string;
+    }>(`/finance/tamara/retry/${paymentId}`),
+
   getRefundRate: (params?: { startDate?: string; endDate?: string }) => {
     const sp = new URLSearchParams();
     if (params?.startDate) sp.set('startDate', params.startDate);

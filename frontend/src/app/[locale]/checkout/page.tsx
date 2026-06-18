@@ -585,7 +585,7 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* Tabby */}
+                  {/* Tabby — Pay in 4 */}
                   <div
                     role="radio"
                     aria-checked={gateway === "tabby"}
@@ -594,16 +594,25 @@ export default function CheckoutPage() {
                     className={`cursor-pointer transition-colors border rounded-xl focus-visible:ring-2 focus-visible:ring-[#005bd3] focus-visible:ring-offset-2 outline-none ${gateway === "tabby" ? "border-[#005bd3]" : "border-[#e5e5e5]"}`}
                     onClick={() => handleGatewayChange("tabby")}
                   >
-                    <div className={`flex items-center justify-between p-[14px] ${gateway === "tabby" ? "bg-[#e5edf4]" : "bg-white"} rounded-xl`}>
-                      <div className="flex items-center gap-[11px]">
-                        <div className={`w-[18px] h-[18px] rounded-full flex items-center justify-center ${gateway === "tabby" ? "bg-white border-[6px] border-[#005bd3]" : "border-2 border-[#d5d7da] bg-white"}`} aria-hidden="true" />
-                        <span className="font-medium text-[var(--on-surface-default)]">{t("payment.tabby")}</span>
+                    <div className={`flex flex-col gap-2 p-[14px] ${gateway === "tabby" ? "bg-[#e5edf4]" : "bg-white"} rounded-xl`}>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-[11px]">
+                          <div className={`w-[18px] h-[18px] rounded-full flex items-center justify-center ${gateway === "tabby" ? "bg-white border-[6px] border-[#005bd3]" : "border-2 border-[#d5d7da] bg-white"}`} aria-hidden="true" />
+                          <span className="font-medium text-[var(--on-surface-default)]">{t("payment.tabby")}</span>
+                        </div>
+                        <Image src="/checkout_cart/tabby.svg" alt="Tabby" width={60} height={24} className="object-contain" />
                       </div>
-                      <Image src="/checkout_cart/tabby.svg" alt="Tabby" width={60} height={24} className="object-contain" />
+                      {total > 0 && (
+                        <p className={`text-xs ${isRTL ? "pr-7" : "pl-7"} text-[var(--on-surface-variant)]`}>
+                          {t("payment.tabbyInstallmentPreview", {
+                            monthly: (total / 4).toFixed(2),
+                          })}
+                        </p>
+                      )}
                     </div>
                   </div>
 
-                  {/* Tamara */}
+                  {/* Tamara — 3 monthly instalments, interest-free */}
                   <div
                     role="radio"
                     aria-checked={gateway === "tamara"}
@@ -612,11 +621,21 @@ export default function CheckoutPage() {
                     className={`cursor-pointer transition-colors border rounded-xl focus-visible:ring-2 focus-visible:ring-[#005bd3] focus-visible:ring-offset-2 outline-none ${gateway === "tamara" ? "border-[#005bd3]" : "border-[#e5e5e5]"}`}
                     onClick={() => handleGatewayChange("tamara")}
                   >
-                    <div className={`flex items-center justify-between p-[14px] ${gateway === "tamara" ? "bg-[#e5edf4]" : "bg-white"} rounded-xl`}>
-                      <div className="flex items-center gap-[11px]">
-                        <div className={`w-[18px] h-[18px] rounded-full flex items-center justify-center ${gateway === "tamara" ? "bg-white border-[6px] border-[#005bd3]" : "border-2 border-[#d5d7da] bg-white"}`} aria-hidden="true" />
-                        <span className="font-medium text-[var(--on-surface-default)]">{t("payment.tamara")}</span>
+                    <div className={`flex flex-col gap-2 p-[14px] ${gateway === "tamara" ? "bg-[#e5edf4]" : "bg-white"} rounded-xl`}>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-[11px]">
+                          <div className={`w-[18px] h-[18px] rounded-full flex items-center justify-center ${gateway === "tamara" ? "bg-white border-[6px] border-[#005bd3]" : "border-2 border-[#d5d7da] bg-white"}`} aria-hidden="true" />
+                          <span className="font-medium text-[var(--on-surface-default)]">{t("payment.tamara")}</span>
+                        </div>
+                        <Image src="/checkout_cart/tamara.svg" alt="Tamara" width={70} height={24} className="object-contain" />
                       </div>
+                      {total > 0 && (
+                        <p className={`text-xs ${isRTL ? "pr-7" : "pl-7"} text-[var(--on-surface-variant)]`}>
+                          {t("payment.tamaraInstallmentPreview", {
+                            monthly: (total / 3).toFixed(2),
+                          })}
+                        </p>
+                      )}
                     </div>
                   </div>
 

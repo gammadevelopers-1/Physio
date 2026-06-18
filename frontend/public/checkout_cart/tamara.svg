@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Tamara brand-color text placeholder. Tamara's official merchant kit
+  contains the proper logo SVG (https://files.tamara.co/public/merchant/
+  merchant-kit-10102025/tamara-merchant-kit-en.pdf) — replace this file
+  with that asset once downloaded.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 32" width="120" height="32" role="img" aria-label="Tamara">
+  <text x="60" y="22" font-family="DM Sans, Inter, Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="#3F1B5F" text-anchor="middle">tamara</text>
+</svg>

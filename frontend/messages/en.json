@@ -1251,7 +1251,9 @@
       "secureEncrypted": "Secure and encrypted",
       "payNow": "Pay Now",
       "processing": "Processing...",
-      "securePaymentThrough": "Secure payment through"
+      "securePaymentThrough": "Secure payment through",
+      "tabbyInstallmentPreview": "4 interest-free payments of SAR {monthly}",
+      "tamaraInstallmentPreview": "3 interest-free monthly payments of SAR {monthly}"
     },
     "discount": {
       "title": "Discount Code",
@@ -8019,7 +8021,13 @@
         "refund": "Refund",
         "resendSuccess": "Invoice sent successfully",
         "resendError": "Failed to send invoice",
-        "downloadError": "Failed to download PDF"
+        "downloadError": "Failed to download PDF",
+        "tamaraRetry": "Retry Tamara capture",
+        "tamaraRetrying": "Retrying…",
+        "tamaraRetryPaid": "Captured — payment is now paid.",
+        "tamaraRetryTerminal": "Tamara order resolved: {detail}",
+        "tamaraRetryStillFailing": "Capture still failing: {detail}",
+        "tamaraRetryError": "Retry request failed. Please try again."
       },
       "errorCodes": {
         "CARD_DECLINED": "Card Declined",

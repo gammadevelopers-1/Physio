@@ -1251,7 +1251,9 @@
       "secureEncrypted": "آمنة ومشفرة",
       "payNow": "ادفع الان",
       "processing": "جاري المعالجة...",
-      "securePaymentThrough": "الدفع الآمن من خلال"
+      "securePaymentThrough": "الدفع الآمن من خلال",
+      "tabbyInstallmentPreview": "٤ دفعات بدون فوائد، كل دفعة {monthly} ر.س.",
+      "tamaraInstallmentPreview": "٣ دفعات شهرية بدون فوائد، كل دفعة {monthly} ر.س."
     },
     "discount": {
       "title": "رمز الخصم",
@@ -8019,7 +8021,13 @@
         "refund": "استرداد",
         "resendSuccess": "تم إرسال الفاتورة بنجاح",
         "resendError": "فشل إرسال الفاتورة",
-        "downloadError": "فشل تحميل PDF"
+        "downloadError": "فشل تحميل PDF",
+        "tamaraRetry": "إعادة محاولة تحصيل تمارا",
+        "tamaraRetrying": "جارٍ إعادة المحاولة…",
+        "tamaraRetryPaid": "تم التحصيل — أصبحت الدفعة مكتملة.",
+        "tamaraRetryTerminal": "تم حل طلب تمارا: {detail}",
+        "tamaraRetryStillFailing": "لا يزال التحصيل يفشل: {detail}",
+        "tamaraRetryError": "فشل طلب إعادة المحاولة. حاول مرة أخرى."
       },
       "errorCodes": {
         "CARD_DECLINED": "البطاقة مرفوضة",

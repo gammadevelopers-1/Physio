@@ -38,24 +38,52 @@ export default function PaymentSuccessPage() {
       return;
     }
 
-    paymentApi
-      .verify(paymentId)
-      .then((data) => {
+    let cancelled = false;
+    // Tamara orders briefly sit in PENDING after redirect while our webhook
+    // handler does authorise+capture (usually <2s). Poll once a second for
+    // up to ~30s so buyers don't see a stuck spinner on the rare race where
+    // the redirect arrives before the webhook processes.
+    const MAX_POLL_ATTEMPTS = 30;
+    const POLL_INTERVAL_MS = 1000;
+
+    const checkAndMaybePoll = async (attempt: number) => {
+      try {
+        const data = await paymentApi.verify(paymentId);
+        if (cancelled) return;
         setPayment(data);
-        // Clear cart + checkout markers after a confirmed purchase. Both
-        // "paid" (live gateways) and "awaiting_approval" (bank transfer
-        // pending finance review) count as cart-consumed — the buyer
-        // shouldn't see the same items waiting for them on /cart.
-        try {
-          if (data?.status === "paid" || data?.status === "awaiting_approval") {
+
+        if (data?.status === 'paid' || data?.status === 'awaiting_approval') {
+          // Terminal success — clear cart + checkout markers. Both "paid"
+          // (live gateways) and "awaiting_approval" (bank transfer pending
+          // review) count as cart-consumed.
+          try {
             clearCart();
-            sessionStorage.removeItem("checkout_courseId");
-            sessionStorage.removeItem("checkout_paymentId");
-          }
-        } catch {}
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+            sessionStorage.removeItem('checkout_courseId');
+            sessionStorage.removeItem('checkout_paymentId');
+          } catch {}
+          setLoading(false);
+          return;
+        }
+
+        if (
+          (data?.status === 'pending' || data?.status === 'processing') &&
+          attempt < MAX_POLL_ATTEMPTS
+        ) {
+          setTimeout(() => checkAndMaybePoll(attempt + 1), POLL_INTERVAL_MS);
+          return;
+        }
+
+        // Terminal failure or polling exhausted — show whatever we last saw.
+        setLoading(false);
+      } catch {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    checkAndMaybePoll(0);
+    return () => {
+      cancelled = true;
+    };
   }, [paymentId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // After a confirmed payment, take the buyer to their courses (the one they

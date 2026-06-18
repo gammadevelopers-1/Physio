@@ -19,7 +19,7 @@ import {
   FileText,
   FileDown,
 } from "lucide-react";
-import { invoiceApi, refundApi } from "@/lib/api";
+import { invoiceApi, refundApi, financeApi } from "@/lib/api";
 
 interface Transaction {
   id: string;
@@ -85,6 +85,9 @@ const PaymentsInvoicesTable = ({
   const [refundReason, setRefundReason] = useState("policy");
   const [refundNote, setRefundNote] = useState("");
   const [refundLoading, setRefundLoading] = useState(false);
+  // Track which Tamara payment is currently mid-retry so we can disable the
+  // button + show a spinner. One in flight at a time per row.
+  const [retryingTamaraId, setRetryingTamaraId] = useState<string | null>(null);
 
   // Export dropdown
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -146,6 +149,43 @@ const PaymentsInvoicesTable = ({
       toast.success(t("paymentsTable.actions.resendSuccess"));
     } catch {
       toast.error(t("paymentsTable.actions.resendError"));
+    }
+  };
+
+  /**
+   * Manually trigger the Tamara Authorise + Capture flow for a stuck payment.
+   * The cron retry job is already attempting this every 10 minutes — this
+   * button just lets finance fire it on demand. Toast reflects the outcome
+   * (paid / failed / no-op / still-retrying) so they know what happened
+   * without having to refresh the list.
+   */
+  const handleRetryTamara = async (tx: Transaction) => {
+    if (retryingTamaraId) return;
+    setRetryingTamaraId(tx.id);
+    try {
+      const result = await financeApi.retryTamaraCapture(tx.id);
+      if (result.action === 'paid') {
+        toast.success(t('paymentsTable.actions.tamaraRetryPaid'));
+      } else if (result.action === 'failed' || result.action === 'refunded') {
+        toast.warning(
+          t('paymentsTable.actions.tamaraRetryTerminal', { detail: result.detail }),
+        );
+      } else if (result.action === 'no_op') {
+        toast.info(result.detail);
+      } else {
+        // 'retried' — capture still failing, will keep auto-retrying
+        toast.error(
+          t('paymentsTable.actions.tamaraRetryStillFailing', {
+            detail: result.detail.slice(0, 80),
+          }),
+        );
+      }
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t('paymentsTable.actions.tamaraRetryError'),
+      );
+    } finally {
+      setRetryingTamaraId(null);
     }
   };
 
@@ -370,6 +410,22 @@ const PaymentsInvoicesTable = ({
                             >
                               <RotateCcw className="w-3.5 h-3.5" />
                               {t("paymentsTable.actions.refund")}
+                            </button>
+                          )}
+                          {/* Manual retry of Authorise + Capture for Tamara
+                              orders stuck in pending. Backend cron is
+                              also retrying every 10 min — this is the
+                              human-triggered override. */}
+                          {tx.gateway === "Tamara" && tx.status === "pending" && (
+                            <button
+                              onClick={() => { handleRetryTamara(tx); setOpenActionId(null); }}
+                              disabled={retryingTamaraId === tx.id}
+                              className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#7C3AED] hover:bg-[#EDE9FE] transition-colors disabled:opacity-60"
+                            >
+                              <RotateCcw className={`w-3.5 h-3.5 ${retryingTamaraId === tx.id ? "animate-spin" : ""}`} />
+                              {retryingTamaraId === tx.id
+                                ? t("paymentsTable.actions.tamaraRetrying")
+                                : t("paymentsTable.actions.tamaraRetry")}
                             </button>
                           )}
                         </div>

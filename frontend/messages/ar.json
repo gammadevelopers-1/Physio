@@ -1202,8 +1202,19 @@
     "breadcrumb": {
       "courses": "الدورات",
       "courseName": "دعم الحياة القلب والأوعية الدموية المتقدم",
-      "buyNow": "اشتري الآن"
+      "buyNow": "اشتري الآن",
+      "cart": "السلة",
+      "checkout": "الدفع"
     },
+    "orderTitle": "الطلب ({count, plural, =1 {عنصر واحد} =2 {عنصران} other {# عناصر}})",
+    "editOrder": "تعديل",
+    "removeItem": "إزالة",
+    "buyerDetails": "بيانات المشتري",
+    "editProfile": "تعديل الملف الشخصي",
+    "buyerName": "الاسم",
+    "buyerEmail": "البريد الإلكتروني",
+    "buyerPhone": "رقم الجوال",
+    "vatLabel": "ضريبة القيمة المضافة (15٪)",
     "profile": {
       "title": "الملف الكامل",
       "alert": "املأ جميع معلومات الملف الشخصي المطلوبة",
@@ -1258,7 +1269,10 @@
       "courseNotFound": "لم يتم العثور على الدورة",
       "selectCourse": "يرجى تحديد دورة للشراء",
       "browseCourses": "تصفح الدورات",
-      "paymentFailed": "فشل بدء الدفع. يرجى المحاولة مرة أخرى."
+      "paymentFailed": "فشل بدء الدفع. يرجى المحاولة مرة أخرى.",
+      "emptyCart": "سلتك فارغة",
+      "emptyCartHint": "أضف دورة واحدة على الأقل قبل إتمام الدفع.",
+      "goToCart": "اذهب للسلة"
     }
   },
   "blogsPage": {

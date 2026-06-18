@@ -6679,7 +6679,9 @@ export const supportApi = {
 
 export const paymentApi = {
   initiate: (data: {
-    courseId: string;
+    // One element for express buys; multiple for cart checkout. Backend
+    // validates 1..20 and de-duplicates.
+    courseIds: string[];
     gateway: string;
     paymentMethod: string;
     discountCode?: string;

@@ -8,6 +8,7 @@ import { CheckCircle, Download, ArrowRight, ArrowLeft, Loader2, Clock } from "lu
 import { useTranslations, useLocale } from "next-intl";
 import { toast } from "sonner";
 import { paymentApi, invoiceApi } from "@/lib/api";
+import { useCart } from "@/contexts/CartContext";
 
 interface PaymentDetails {
   status: string;
@@ -29,6 +30,7 @@ export default function PaymentSuccessPage() {
   const [payment, setPayment] = useState<PaymentDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
+  const { clearCart } = useCart();
 
   useEffect(() => {
     if (!paymentId) {
@@ -40,11 +42,15 @@ export default function PaymentSuccessPage() {
       .verify(paymentId)
       .then((data) => {
         setPayment(data);
-        // Clear the checkout marker after a confirmed purchase. (No global cart
-        // is mounted, so there's nothing to remove from a cart here.)
+        // Clear cart + checkout markers after a confirmed purchase. Both
+        // "paid" (live gateways) and "awaiting_approval" (bank transfer
+        // pending finance review) count as cart-consumed — the buyer
+        // shouldn't see the same items waiting for them on /cart.
         try {
-          if (data?.status === "paid") {
+          if (data?.status === "paid" || data?.status === "awaiting_approval") {
+            clearCart();
             sessionStorage.removeItem("checkout_courseId");
+            sessionStorage.removeItem("checkout_paymentId");
           }
         } catch {}
       })

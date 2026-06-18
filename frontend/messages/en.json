@@ -1202,8 +1202,19 @@
     "breadcrumb": {
       "courses": "Courses",
       "courseName": "Advanced Cardiovascular Life Support",
-      "buyNow": "Buy now"
+      "buyNow": "Buy now",
+      "cart": "Cart",
+      "checkout": "Checkout"
     },
+    "orderTitle": "Order ({count, plural, =1 {1 item} other {# items}})",
+    "editOrder": "Edit",
+    "removeItem": "Remove",
+    "buyerDetails": "Buyer details",
+    "editProfile": "Edit profile",
+    "buyerName": "Name",
+    "buyerEmail": "Email",
+    "buyerPhone": "Phone",
+    "vatLabel": "VAT (15%)",
     "profile": {
       "title": "Complete profile",
       "alert": "Fill all required profile information",
@@ -1258,7 +1269,10 @@
       "courseNotFound": "Course not found",
       "selectCourse": "Please select a course to purchase",
       "browseCourses": "Browse Courses",
-      "paymentFailed": "Payment initiation failed. Please try again."
+      "paymentFailed": "Payment initiation failed. Please try again.",
+      "emptyCart": "Your cart is empty",
+      "emptyCartHint": "Add at least one course before checking out.",
+      "goToCart": "Go to Cart"
     }
   },
   "blogsPage": {

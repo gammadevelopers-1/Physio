@@ -181,6 +181,10 @@ import {
   getPaymentFailedText,
 } from './templates/payment-failed.template';
 import {
+  getBankTransferReceivedHtml,
+  getBankTransferReceivedText,
+} from './templates/bank-transfer-received.template';
+import {
   getRefundRequestedHtml,
   getRefundRequestedText,
   getRefundApprovedHtml,
@@ -2062,6 +2066,50 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
       this.logger.log(`Payment failed email sent to ${user.email}`);
     } catch (error) {
       this.logger.error(`Failed to send payment failed email`, error);
+    }
+  }
+
+  async sendBankTransferReceived(
+    userId: string,
+    paymentId: string,
+  ): Promise<void> {
+    try {
+      const user = await this.getUserData(userId);
+      if (!user) return;
+
+      const [payment] = await db
+        .select()
+        .from(payments)
+        .where(eq(payments.id, paymentId))
+        .limit(1);
+      if (!payment) return;
+
+      const [course] = await db
+        .select({ title: courses.title })
+        .from(courses)
+        .where(eq(courses.id, payment.courseId))
+        .limit(1);
+
+      const studentName =
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Student';
+      const params = {
+        studentName,
+        courseName: course?.title || 'Course',
+        amount: String(payment.amount),
+        currency: payment.currency,
+        paymentId: payment.id,
+        uploadedAt: new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC',
+      };
+
+      await this.send({
+        to: user.email,
+        subject: `Bank transfer receipt received - ${course?.title || 'Course'}`,
+        html: getBankTransferReceivedHtml(params),
+        text: getBankTransferReceivedText(params),
+      });
+      this.logger.log(`Bank transfer receipt acknowledgement sent to ${user.email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send bank transfer receipt email`, error);
     }
   }
 

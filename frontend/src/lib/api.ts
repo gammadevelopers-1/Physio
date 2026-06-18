@@ -6708,6 +6708,82 @@ export const paymentApi = {
 };
 
 // ===========================================
+// Bank Transfer API
+// ===========================================
+
+export interface BankTransferDetails {
+  bankNameEn: string;
+  bankNameAr: string;
+  beneficiaryEn: string;
+  beneficiaryAr: string;
+  accountNumber: string;
+  iban: string;
+  swiftCode: string;
+  instructionsEn: string;
+  instructionsAr: string;
+}
+
+export interface BankTransferReceiptSummary {
+  id: string;
+  fileName: string;
+  scanStatus: 'pending' | 'clean' | 'infected' | 'error';
+  reviewStatus: 'pending' | 'approved' | 'rejected';
+  reviewerNote: string | null;
+  uploadedAt: string;
+}
+
+export interface BankTransferPayment {
+  payment: {
+    id: string;
+    courseId: string;
+    amount: string;
+    currency: string;
+    status: string;
+    gateway: string;
+    metadata: Record<string, unknown> | null;
+    createdAt: string;
+  };
+  course: { id: string; title: string } | null;
+  activeReceipt: BankTransferReceiptSummary | null;
+}
+
+export const bankTransferApi = {
+  getDetails: () => api.get<BankTransferDetails>('/payments/bank-transfer/details'),
+
+  getPayment: (paymentId: string) =>
+    api.get<BankTransferPayment>(`/payments/bank-transfer/${paymentId}`),
+
+  uploadReceipt: (
+    paymentId: string,
+    file: File,
+    refundInfo: {
+      refundAccountHolder: string;
+      refundIban: string;
+      refundBankName: string;
+      refundNationalId?: string;
+    },
+  ) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('refundAccountHolder', refundInfo.refundAccountHolder);
+    fd.append('refundIban', refundInfo.refundIban);
+    fd.append('refundBankName', refundInfo.refundBankName);
+    if (refundInfo.refundNationalId) {
+      fd.append('refundNationalId', refundInfo.refundNationalId);
+    }
+    return uploadFormData<{ receiptId: string; paymentStatus: string; scanStatus: string }>(
+      `/payments/bank-transfer/${paymentId}/receipts`,
+      fd,
+    );
+  },
+
+  getReceiptDownloadUrl: (receiptId: string) =>
+    api.get<{ url: string; fileName: string }>(
+      `/payments/bank-transfer/receipts/${receiptId}/download`,
+    ),
+};
+
+// ===========================================
 // Invoice API
 // ===========================================
 

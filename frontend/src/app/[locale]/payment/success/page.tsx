@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { CheckCircle, Download, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+import { CheckCircle, Download, ArrowRight, ArrowLeft, Loader2, Clock } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { toast } from "sonner";
 import { paymentApi, invoiceApi } from "@/lib/api";
@@ -112,17 +112,35 @@ export default function PaymentSuccessPage() {
             </div>
           ) : (
             <>
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="w-10 h-10 text-green-600" />
-              </div>
+              {payment?.status === "awaiting_approval" ? (
+                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Clock className="w-10 h-10 text-blue-600" />
+                </div>
+              ) : (
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="w-10 h-10 text-green-600" />
+                </div>
+              )}
 
               <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">
-                {t("title")}
+                {payment?.status === "awaiting_approval"
+                  ? t("pendingReviewTitle")
+                  : t("title")}
               </h1>
-              <p className="text-[#737373] mb-6">{t("subtitle")}</p>
+              <p className="text-[#737373] mb-6">
+                {payment?.status === "awaiting_approval"
+                  ? t("pendingReviewSubtitle")
+                  : t("subtitle")}
+              </p>
 
               {payment && (
-                <div className="bg-[#f0fdf4] border border-green-200 rounded-xl p-5 mb-6 text-left">
+                <div
+                  className={`${
+                    payment.status === "awaiting_approval"
+                      ? "bg-[#EFF6FF] border-blue-200"
+                      : "bg-[#f0fdf4] border-green-200"
+                  } border rounded-xl p-5 mb-6 text-left`}
+                >
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-sm text-[#737373]">
@@ -148,7 +166,9 @@ export default function PaymentSuccessPage() {
                           {t("gateway")}
                         </span>
                         <span className="text-sm font-medium text-[#1a1a1a] capitalize">
-                          {payment.gateway}
+                          {payment.gateway === "bank_transfer"
+                            ? t("bankTransfer")
+                            : payment.gateway}
                         </span>
                       </div>
                     )}
@@ -156,8 +176,16 @@ export default function PaymentSuccessPage() {
                       <span className="text-sm text-[#737373]">
                         {t("status")}
                       </span>
-                      <span className="text-sm font-medium text-green-600">
-                        {t("paid")}
+                      <span
+                        className={`text-sm font-medium ${
+                          payment.status === "awaiting_approval"
+                            ? "text-blue-600"
+                            : "text-green-600"
+                        }`}
+                      >
+                        {payment.status === "awaiting_approval"
+                          ? t("awaitingApproval")
+                          : t("paid")}
                       </span>
                     </div>
                   </div>
@@ -178,19 +206,21 @@ export default function PaymentSuccessPage() {
                     {t("redirecting")}
                   </p>
                 )}
-                <button
-                  onClick={handleDownloadInvoice}
-                  disabled={downloading}
-                  aria-label={t("downloadInvoice")}
-                  className="w-full h-12 border border-[#d9d9d9] rounded-xl text-[#1a1a1a] font-medium flex items-center justify-center gap-2 hover:bg-gray-50 transition focus-ring disabled:opacity-50"
-                >
-                  {downloading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                  ) : (
-                    <Download className="w-4 h-4" aria-hidden="true" />
-                  )}
-                  {t("downloadInvoice")}
-                </button>
+                {payment?.status !== "awaiting_approval" && (
+                  <button
+                    onClick={handleDownloadInvoice}
+                    disabled={downloading}
+                    aria-label={t("downloadInvoice")}
+                    className="w-full h-12 border border-[#d9d9d9] rounded-xl text-[#1a1a1a] font-medium flex items-center justify-center gap-2 hover:bg-gray-50 transition focus-ring disabled:opacity-50"
+                  >
+                    {downloading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Download className="w-4 h-4" aria-hidden="true" />
+                    )}
+                    {t("downloadInvoice")}
+                  </button>
+                )}
                 <button
                   onClick={() => router.push(`/${locale}/courses`)}
                   aria-label={t("browseCourses")}

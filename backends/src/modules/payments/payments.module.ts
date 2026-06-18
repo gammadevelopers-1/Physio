@@ -8,6 +8,7 @@ import { InvoicesController } from './invoices/invoices.controller';
 import { RefundsController } from './refunds/refunds.controller';
 import { DiscountsController } from './discounts/discounts.controller';
 import { FinanceController } from './finance/finance.controller';
+import { BankTransferController } from './bank-transfer/bank-transfer.controller';
 
 // Services
 import { PaymentsService } from './payments.service';
@@ -16,6 +17,7 @@ import { RefundService } from './services/refund.service';
 import { DiscountService } from './services/discount.service';
 import { FinanceService } from './services/finance.service';
 import { PaymentCleanupService } from './services/payment-cleanup.service';
+import { BankTransferService } from './bank-transfer/bank-transfer.service';
 
 // Gateways
 import { GatewayFactory } from './gateways/gateway.factory';
@@ -51,6 +53,7 @@ import { EmailModule } from '../email/email.module';
     RefundsController,
     DiscountsController,
     FinanceController,
+    BankTransferController,
   ],
   providers: [
     PaymentsService,
@@ -58,6 +61,7 @@ import { EmailModule } from '../email/email.module';
     RefundService,
     DiscountService,
     FinanceService,
+    BankTransferService,
     GatewayFactory,
     MockGateway,
     MoyasarGateway,

@@ -389,6 +389,28 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Bank Transfer (out-of-band — buyer is redirected to the
+                    receipt upload page after pressing Pay Now). */}
+                <div
+                  role="radio"
+                  aria-checked={gateway === "bank_transfer"}
+                  tabIndex={0}
+                  onKeyDown={(e) => handleGatewayKeyDown(e, "bank_transfer")}
+                  className={`cursor-pointer transition-colors border rounded-xl focus-visible:ring-2 focus-visible:ring-[#005bd3] focus-visible:ring-offset-2 outline-none ${
+                    gateway === "bank_transfer" ? "border-[#005bd3]" : "border-[#e5e5e5]"
+                  }`}
+                  onClick={() => handleGatewayChange("bank_transfer")}
+                >
+                  <div className={`flex items-center justify-between p-[14px] ${gateway === "bank_transfer" ? "bg-[#e5edf4]" : "bg-white"} rounded-xl`}>
+                    <div className="flex items-center gap-[11px]">
+                      <div className={`w-[18px] h-[18px] rounded-full flex items-center justify-center ${gateway === "bank_transfer" ? "bg-white border-[6px] border-[#005bd3]" : "border-2 border-[#d5d7da] bg-white"}`} aria-hidden="true" />
+                      <span className="font-medium text-[var(--on-surface-default)]">
+                        {t("payment.bankTransfer")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Order Summary */}

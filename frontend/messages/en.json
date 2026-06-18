@@ -4,6 +4,88 @@
     "subtitle": "The platform is undergoing scheduled maintenance.",
     "autoRecoverHint": "This page will refresh automatically when we're back online."
   },
+  "bankTransfer": {
+    "pageTitle": "Bank Transfer Payment",
+    "breadcrumb": "Bank Transfer",
+    "course": "Course",
+    "loadError": "We couldn't load this payment. The link may have expired.",
+    "errorTitle": "Payment not available",
+    "backToCourses": "Back to courses",
+    "submit": "Confirm and submit",
+    "submitting": "Uploading…",
+    "terms": "By submitting, you agree to our <link>terms and conditions</link>.",
+    "summary": {
+      "title": "Application Summary",
+      "sale": "Sale discount",
+      "discount": "Coupon discount",
+      "beforeTax": "Subtotal (before VAT)",
+      "vat": "VAT (15%)",
+      "amountDue": "Amount due",
+      "secure": "Secure & encrypted"
+    },
+    "payment": {
+      "title": "Payment Method",
+      "subtitle": "Choose how you'd like to pay. For bank transfer, deposit the amount externally and upload your receipt below.",
+      "method": "Payment method"
+    },
+    "method": {
+      "creditCard": "Credit Card",
+      "bankTransfer": "Bank Transfer",
+      "switchBack": "Switch"
+    },
+    "bankDetails": {
+      "title": "Deposit to our account",
+      "bankName": "Bank",
+      "beneficiaryEn": "Beneficiary's name (English)",
+      "beneficiaryAr": "Beneficiary's name (Arabic)",
+      "accountNumber": "Account number",
+      "iban": "IBAN",
+      "swift": "SWIFT / BIC",
+      "amount": "Amount to transfer"
+    },
+    "upload": {
+      "title": "Upload your transfer receipt",
+      "cta": "Drag and drop your receipt here, or click to browse",
+      "limits": "PDF, JPG, JPEG, or PNG · Max 15.63 MB"
+    },
+    "file": {
+      "invalidType": "Unsupported file type. Use PDF, JPG, JPEG, or PNG.",
+      "tooLarge": "File is too large. Maximum size is 15.63 MB.",
+      "preview": "Preview",
+      "remove": "Remove"
+    },
+    "refund": {
+      "title": "Your bank account (for any future refunds)",
+      "subtitle": "Saudi Arabia law requires us to keep these details on file. We only use this account if a refund is ever issued.",
+      "accountHolder": "Account holder name",
+      "bank": "Your bank",
+      "bankPlaceholder": "Select your bank",
+      "bankOther": "Bank name",
+      "bankOtherPlaceholder": "Type your bank's full name",
+      "iban": "IBAN",
+      "ibanHint": "Saudi IBANs start with SA and are 24 characters long.",
+      "nationalId": "National ID / Iqama",
+      "nationalIdHint": "Optional. Helps us verify if a refund is needed."
+    },
+    "errors": {
+      "fileRequired": "Please attach your receipt before continuing.",
+      "accountHolderRequired": "Please enter the account holder's name.",
+      "ibanInvalid": "IBAN must be a valid Saudi IBAN: SA + 22 digits.",
+      "bankRequired": "Please select or enter your bank.",
+      "nationalIdInvalid": "National ID / Iqama should be 10–15 digits.",
+      "uploadFailed": "Upload failed. Please try again."
+    },
+    "success": {
+      "uploaded": "Receipt received. Our finance team will review it within 1 business day."
+    },
+    "activeReceipt": {
+      "pendingTitle": "Your receipt is under review",
+      "pendingBody": "Our finance team is reviewing your payment. You'll be notified by email as soon as it's approved. You can upload a new receipt below if you need to replace this one.",
+      "rejectedTitle": "Your previous receipt was rejected",
+      "rejectedFallback": "Please upload a new receipt.",
+      "uploadedAt": "Uploaded: {when}"
+    }
+  },
   "statusPage": {
     "loadError": {
       "title": "Couldn't load service status",
@@ -1129,6 +1211,7 @@
       "moyasar": "Moyasar",
       "tabby": "Pay later with Tabby",
       "tamara": "Tamara - 3 Installments",
+      "bankTransfer": "Bank Transfer",
       "selectGateway": "Select payment method",
       "cardNumber": "Card Number",
       "expiry": "Expiry",
@@ -11002,11 +11085,15 @@
   "paymentSuccess": {
     "title": "Payment Successful!",
     "subtitle": "Your payment has been confirmed and you are now enrolled in the course.",
+    "pendingReviewTitle": "Receipt received — under review",
+    "pendingReviewSubtitle": "Our finance team will review your transfer within 1 business day. You'll get an email as soon as your enrollment is active.",
     "paymentId": "Payment ID",
     "amount": "Amount",
     "gateway": "Payment Method",
+    "bankTransfer": "Bank Transfer",
     "status": "Status",
     "paid": "Paid",
+    "awaitingApproval": "Awaiting approval",
     "goToDashboard": "Go to My Dashboard",
     "goToMyCourses": "Go to My Courses",
     "redirecting": "Taking you to your courses…",

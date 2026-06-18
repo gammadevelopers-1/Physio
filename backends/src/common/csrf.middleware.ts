@@ -114,6 +114,15 @@ export function csrfMiddleware(
     (req.headers[CSRF_HEADER_NAME] as string | undefined) ||
     (req.headers[CSRF_HEADER_NAME.toUpperCase()] as string | undefined);
 
+  // If neither cookie nor header is set, this is NOT a CSRF attack — a real
+  // CSRF would carry the victim's cookie attached automatically by the
+  // browser. This happens when the frontend's Bearer token is briefly
+  // unavailable (e.g. on a token-refresh race after page reload). Let the
+  // request through so the auth guard returns 401, which triggers the
+  // frontend's refresh-and-retry flow. Returning 403 here freezes those
+  // requests because the frontend only retries on 401.
+  if (!cookieToken && !headerToken) return next();
+
   if (!cookieToken || !headerToken || cookieToken !== headerToken) {
     res.status(403).json({
       statusCode: 403,

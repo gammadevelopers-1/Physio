@@ -6666,7 +6666,10 @@ export const paymentApi = {
     // validates 1..20 and de-duplicates.
     courseIds: string[];
     gateway: string;
-    paymentMethod: string;
+    // Optional: send only for card-family gateways. Bank transfer leaves
+    // this off entirely because the DB CHECK constraint on payment_method
+    // doesn't include 'bank_transfer' (the value lives in `gateway`).
+    paymentMethod?: string;
     discountCode?: string;
     locale?: string;
   }) => api.post<{ paymentId: string; redirectUrl: string; amount: number; currency: string }>('/payments/initiate', data),

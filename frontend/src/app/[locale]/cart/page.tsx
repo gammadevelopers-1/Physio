@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useCart, CartItem } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import NonStudentEnrollmentNotice from "@/components/courses/NonStudentEnrollmentNotice";
 import {
   ShoppingCart,
   Trash2,
@@ -16,19 +19,36 @@ import {
   Clock,
   Award,
   User,
+  Lock,
 } from "lucide-react";
+
+// VAT shown on the cart page is informational only — final tax + gateway
+// rounding happen on the checkout/payment server. Keep this in sync with
+// PaymentsService VAT_RATE on the backend.
+const VAT_RATE = 0.15;
+
+const lineFor = (item: CartItem) =>
+  item.effectivePrice != null ? item.effectivePrice : item.price;
 
 export default function CartPage() {
   const t = useTranslations("cartPage");
   const locale = useLocale();
+  const router = useRouter();
   const isRTL = locale === "ar";
-  const { items, removeItem, itemCount } = useCart();
+  const { items, removeItem, clearCart, itemCount } = useCart();
+  const { user, isAuthenticated } = useAuth();
   const [mounted, setMounted] = useState(false);
 
   const Arrow = isRTL ? ArrowLeft : ArrowRight;
   const Chevron = isRTL ? ChevronLeft : ChevronRight;
 
-  // Prevent hydration mismatch
+  // Non-students see the same inline notice as the course detail page.
+  // The backend's @Roles('STUDENT') on /payments/initiate is the real wall;
+  // this just stops them from getting to the checkout button at all.
+  const isStudent = isAuthenticated && user?.activeRole === "STUDENT";
+  const showNonStudentNotice = isAuthenticated && !isStudent;
+
+  // Prevent hydration mismatch — cart lives in localStorage.
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -36,6 +56,33 @@ export default function CartPage() {
   const getTitle = (item: CartItem) => {
     if (isRTL && item.titleAr) return item.titleAr;
     return item.title;
+  };
+
+  // Cart totals — all numbers shown to the buyer before the gateway redirect.
+  const totals = useMemo(() => {
+    const subtotal = items.reduce((sum, it) => sum + lineFor(it), 0);
+    const originalSubtotal = items.reduce((sum, it) => sum + it.price, 0);
+    const saleDiscount = Math.max(0, originalSubtotal - subtotal);
+    const vat = subtotal * VAT_RATE;
+    const total = subtotal + vat;
+    return {
+      subtotal: Math.round(subtotal * 100) / 100,
+      saleDiscount: Math.round(saleDiscount * 100) / 100,
+      vat: Math.round(vat * 100) / 100,
+      total: Math.round(total * 100) / 100,
+    };
+  }, [items]);
+
+  const handleProceedToCheckout = () => {
+    if (!isAuthenticated) {
+      // Cart survives signup via localStorage — land them on /cart after.
+      router.push(
+        `/${locale}/signup?redirect=${encodeURIComponent(`/${locale}/cart`)}`,
+      );
+      return;
+    }
+    if (!isStudent) return; // defensive — button is hidden when notice shows
+    router.push(`/${locale}/checkout`);
   };
 
   return (
@@ -47,7 +94,10 @@ export default function CartPage() {
           dir={isRTL ? "rtl" : "ltr"}
         >
           {/* Breadcrumb */}
-          <nav aria-label={isRTL ? "مسار التنقل" : "Breadcrumb"} className="flex items-center gap-2 text-sm text-[#6B7280] mb-6">
+          <nav
+            aria-label={isRTL ? "مسار التنقل" : "Breadcrumb"}
+            className="flex items-center gap-2 text-sm text-[#6B7280] mb-6"
+          >
             <Link
               href={`/${locale}`}
               className="hover:text-[#1F2937] transition-colors"
@@ -75,6 +125,17 @@ export default function CartPage() {
             )}
           </div>
 
+          {/* Non-student notice — appears above the cart contents if the
+              signed-in user can't actually purchase */}
+          {mounted && items.length > 0 && showNonStudentNotice && (
+            <div className="mb-6">
+              <NonStudentEnrollmentNotice
+                roleLabel={user?.activeRole || ""}
+                canSwitchToStudent={(user?.roles || []).includes("STUDENT")}
+              />
+            </div>
+          )}
+
           {/* Cart Content */}
           {!mounted ? (
             <div className="flex items-center justify-center py-20">
@@ -101,121 +162,194 @@ export default function CartPage() {
               </Link>
             </div>
           ) : (
-            /* Cart Items */
-            <div className="space-y-6">
-              {/* Info Note */}
-              <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-xl px-4 py-3 text-sm text-[#92400E]">
-                {t("checkoutNote")}
-              </div>
+            /* Two-column layout: items on the left, summary sticky on the right */
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+              {/* Items column */}
+              <div className="space-y-4">
+                {items.map((item) => {
+                  const onSale = item.onSale && item.effectivePrice != null;
+                  return (
+                    <div
+                      key={item.id}
+                      role="article"
+                      aria-label={getTitle(item)}
+                      className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden hover:shadow-sm transition-shadow"
+                    >
+                      <div className="flex flex-col sm:flex-row">
+                        {/* Thumbnail */}
+                        <div className="sm:w-40 sm:flex-shrink-0">
+                          {item.thumbnail ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={
+                                item.thumbnail.startsWith("http")
+                                  ? item.thumbnail
+                                  : `${process.env.NEXT_PUBLIC_API_URL?.replace("/api", "")}${item.thumbnail}`
+                              }
+                              alt={getTitle(item)}
+                              className="w-full h-32 sm:h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-32 sm:h-full bg-[#F3F4F6] flex items-center justify-center">
+                              <ShoppingCart className="w-8 h-8 text-[#D1D5DB]" />
+                            </div>
+                          )}
+                        </div>
 
-              {/* Items Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {items.map((item) => (
-                  <div
-                    key={item.id}
-                    role="article"
-                    aria-label={getTitle(item)}
-                    className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden hover:shadow-md transition-shadow"
-                  >
-                    {/* Card Content */}
-                    <div className="flex flex-col sm:flex-row">
-                      {/* Thumbnail */}
-                      <div className="sm:w-40 sm:flex-shrink-0">
-                        {item.thumbnail ? (
-                          <img
-                            src={
-                              item.thumbnail.startsWith("http")
-                                ? item.thumbnail
-                                : `${process.env.NEXT_PUBLIC_API_URL?.replace("/api", "")}${item.thumbnail}`
-                            }
-                            alt={getTitle(item)}
-                            className="w-full h-32 sm:h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-32 sm:h-full bg-[#F3F4F6] flex items-center justify-center">
-                            <ShoppingCart className="w-8 h-8 text-[#D1D5DB]" />
+                        {/* Info */}
+                        <div className="flex-1 p-4">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <h3 className="text-sm font-semibold text-[#1F2937] line-clamp-2">
+                              {getTitle(item)}
+                            </h3>
+                            <button
+                              type="button"
+                              onClick={() => removeItem(item.id)}
+                              className="flex-shrink-0 p-1.5 text-[#9CA3AF] hover:text-[#DC2626] hover:bg-[#FEE2E2] rounded-lg transition-colors"
+                              aria-label={t("removeItem")}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
-                        )}
-                      </div>
 
-                      {/* Info */}
-                      <div className="flex-1 p-4">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <h3 className="text-sm font-semibold text-[#1F2937] line-clamp-2">
-                            {getTitle(item)}
-                          </h3>
-                          <button
-                            onClick={() => removeItem(item.id)}
-                            className="flex-shrink-0 p-1.5 text-[#9CA3AF] hover:text-[#DC2626] hover:bg-[#FEE2E2] rounded-lg transition-colors"
-                            aria-label={t("removeItem")}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-
-                        {/* Meta Info */}
-                        <div className="flex flex-wrap items-center gap-3 text-xs text-[#6B7280] mb-3">
-                          {item.deliveryType && (
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3.5 h-3.5" />
-                              {item.deliveryType}
-                            </span>
-                          )}
-                          {item.cmeHours > 0 && (
-                            <span className="flex items-center gap-1 text-[#92400E]">
-                              <Award className="w-3.5 h-3.5" />
-                              {item.cmeHours} CME
-                            </span>
-                          )}
-                          {item.instructorName && (
-                            <span className="flex items-center gap-1">
-                              <User className="w-3.5 h-3.5" />
-                              {item.instructorName}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Price + Checkout Button */}
-                        <div className="flex items-center justify-between">
-                          {item.onSale && item.effectivePrice != null ? (
-                            <span className="flex items-baseline gap-2">
-                              <span className="text-lg font-bold text-[#1F2937]">
-                                SAR {item.effectivePrice.toLocaleString()}
+                          {/* Meta Info */}
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-[#6B7280] mb-3">
+                            {item.deliveryType && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5" />
+                                {item.deliveryType}
                               </span>
-                              <span className="text-sm text-[#9CA3AF] line-through">
+                            )}
+                            {item.cmeHours > 0 && (
+                              <span className="flex items-center gap-1 text-[#92400E]">
+                                <Award className="w-3.5 h-3.5" />
+                                {item.cmeHours} CME
+                              </span>
+                            )}
+                            {item.instructorName && (
+                              <span className="flex items-center gap-1">
+                                <User className="w-3.5 h-3.5" />
+                                {item.instructorName}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Price */}
+                          <div className="flex items-baseline gap-2">
+                            {onSale ? (
+                              <>
+                                <span className="text-lg font-bold text-[#1F2937]">
+                                  SAR {item.effectivePrice!.toLocaleString()}
+                                </span>
+                                <span className="text-sm text-[#9CA3AF] line-through">
+                                  SAR {item.price.toLocaleString()}
+                                </span>
+                                {item.salePercent != null && (
+                                  <span className="text-xs font-semibold text-[#15803D] bg-[#DCFCE7] px-2 py-0.5 rounded-full">
+                                    -{item.salePercent}%
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              <span className="text-lg font-bold text-[#1F2937]">
                                 SAR {item.price.toLocaleString()}
                               </span>
-                            </span>
-                          ) : (
-                            <span className="text-lg font-bold text-[#1F2937]">
-                              SAR {item.price.toLocaleString()}
-                            </span>
-                          )}
-                          <Link
-                            href={`/${locale}/checkout?courseId=${item.id}`}
-                            aria-label={`${t("proceedToCheckout")} - ${getTitle(item)}`}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 btn-gold text-white rounded-lg text-sm font-medium focus-ring"
-                          >
-                            {t("proceedToCheckout")}
-                            <Arrow className="w-3.5 h-3.5" />
-                          </Link>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+
+                {/* Continue shopping + clear cart */}
+                <div className="flex items-center justify-between pt-2">
+                  <Link
+                    href={`/${locale}/courses`}
+                    className="inline-flex items-center gap-2 text-sm text-[#B8860B] hover:text-[#96700A] font-medium transition-colors"
+                  >
+                    {Arrow === ArrowLeft ? <Arrow className="w-4 h-4" /> : null}
+                    {t("continueShopping")}
+                    {Arrow === ArrowRight ? <Arrow className="w-4 h-4" /> : null}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={clearCart}
+                    className="text-sm text-[#6B7280] hover:text-[#DC2626] transition-colors"
+                  >
+                    {t("clearCart")}
+                  </button>
+                </div>
               </div>
 
-              {/* Browse More */}
-              <div className="text-center pt-4">
-                <Link
-                  href={`/${locale}/courses`}
-                  className="inline-flex items-center gap-2 text-sm text-[#B8860B] hover:text-[#96700A] font-medium transition-colors"
-                >
-                  {t("browseCourses")}
-                  <Arrow className="w-4 h-4" />
-                </Link>
-              </div>
+              {/* Summary column (sticky on desktop, inline on mobile) */}
+              <aside
+                aria-label={t("orderSummary")}
+                className="lg:sticky lg:top-24 lg:self-start"
+              >
+                <div className="bg-white rounded-xl border border-[#E5E7EB] p-5 space-y-4">
+                  <h2 className="text-base font-semibold text-[#1F2937]">
+                    {t("orderSummary")}
+                  </h2>
+
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#6B7280]">
+                        {t("subtotalLabel", { count: itemCount })}
+                      </span>
+                      <span className="font-medium text-[#1F2937]">
+                        SAR {totals.subtotal.toFixed(2)}
+                      </span>
+                    </div>
+                    {totals.saleDiscount > 0 && (
+                      <div className="flex items-center justify-between text-[#15803D]">
+                        <span>{t("saleDiscountLabel")}</span>
+                        <span className="font-medium">
+                          - SAR {totals.saleDiscount.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#6B7280]">{t("vatLabel")}</span>
+                      <span className="font-medium text-[#1F2937]">
+                        SAR {totals.vat.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-[#E5E7EB]" />
+
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-sm font-semibold text-[#1F2937]">
+                      {t("totalLabel")}
+                    </span>
+                    <span className="text-xl font-bold text-[#1F2937]">
+                      SAR {totals.total.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-[#9CA3AF] leading-snug">
+                    {t("vatDisclaimer")}
+                  </p>
+
+                  {/* Proceed CTA — hidden for non-students who see the notice above */}
+                  {!showNonStudentNotice && (
+                    <button
+                      type="button"
+                      onClick={handleProceedToCheckout}
+                      className="w-full h-12 btn-gold text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 focus-ring"
+                    >
+                      {t("proceedToCheckout")}
+                      <Arrow className="w-4 h-4" />
+                    </button>
+                  )}
+
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-[#6B7280]">
+                    <Lock className="w-3.5 h-3.5" />
+                    {t("secureNote")}
+                  </div>
+                </div>
+              </aside>
             </div>
           )}
         </div>

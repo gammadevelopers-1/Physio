@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
@@ -16,7 +16,7 @@ import BottomNav from "./BottomNav";
 import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import { UserMenu } from "./UserMenu";
-import { useAuth } from "@/contexts";
+import { useAuth, useCart } from "@/contexts";
 import { usePlatformLocale } from "@/contexts/PlatformLocaleContext";
 import { usePlatformGeneral } from "@/contexts/PlatformGeneralContext";
 import { profileApi } from "@/lib/api";
@@ -39,9 +39,18 @@ const Navbar = ({ siteSettings, navLinks = [], footerLinks }: NavbarProps) => {
   const pathname = usePathname();
   const isRTL = locale === "ar";
   const { isAuthenticated, isLoading } = useAuth();
+  const { itemCount: cartCount } = useCart();
   const { allowedLanguages } = usePlatformLocale();
   const platformGeneral = usePlatformGeneral();
   const showLocaleToggle = allowedLanguages.length > 1;
+
+  // Hide the cart count badge until after first client paint — the count
+  // lives in localStorage, so server render is always 0 and showing the
+  // badge before hydration flashes "0" before the real number.
+  const [cartReady, setCartReady] = useState(false);
+  useEffect(() => {
+    setCartReady(true);
+  }, []);
 
   // Logo comes strictly from Strapi — if empty, the site name text is shown instead.
   // Site name prefers the admin's Settings → General → Platform Name (per locale),
@@ -133,10 +142,16 @@ const Navbar = ({ siteSettings, navLinks = [], footerLinks }: NavbarProps) => {
 
           {/* Cart Icon - Hidden on mobile/tablet */}
           <Link
-            href={`/${locale}/checkout`}
-            className="hidden lg:flex items-center justify-center text-[var(--color-icon)] hover:text-[var(--color-primary)] transition-colors"
+            href={`/${locale}/cart`}
+            aria-label={t("cart") + (cartReady && cartCount > 0 ? ` (${cartCount})` : "")}
+            className="relative hidden lg:flex items-center justify-center text-[var(--color-icon)] hover:text-[var(--color-primary)] transition-colors"
           >
             <ShoppingCart className="w-5 h-5" strokeWidth={1.67} />
+            {cartReady && cartCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-[#DC2626] text-white text-[11px] font-semibold rounded-full flex items-center justify-center leading-none">
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            )}
           </Link>
 
           {/* User Menu or Get Started Button - Hidden on mobile/tablet */}
@@ -199,10 +214,17 @@ const Navbar = ({ siteSettings, navLinks = [], footerLinks }: NavbarProps) => {
                 </Link>
               )}
               <Link
-                href={`/${locale}/checkout`}
-                className="flex items-center justify-center text-[var(--color-icon)] hover:text-[var(--color-primary)] transition-colors"
+                href={`/${locale}/cart`}
+                aria-label={t("cart") + (cartReady && cartCount > 0 ? ` (${cartCount})` : "")}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="relative flex items-center justify-center text-[var(--color-icon)] hover:text-[var(--color-primary)] transition-colors"
               >
                 <ShoppingCart className="w-5 h-5" strokeWidth={1.67} />
+                {cartReady && cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-[#DC2626] text-white text-[11px] font-semibold rounded-full flex items-center justify-center leading-none">
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </span>
+                )}
               </Link>
             </div>
 

@@ -77,6 +77,15 @@ else
     log_warning "NEXT_PUBLIC_RECAPTCHA_SITE_KEY not in Secret Manager — captcha widget will not render"
 fi
 
+# BNPL promo widget public keys — non-sensitive, baked into the JS bundle
+# at build time (Next.js NEXT_PUBLIC_*). Override per env if going live.
+TABBY_PUBLIC_KEY_FE="${NEXT_PUBLIC_TABBY_PUBLIC_KEY:-pk_test_019e2e71-0358-6bb2-e50b-73334f9ec199}"
+TABBY_MERCHANT_CODE_FE="${NEXT_PUBLIC_TABBY_MERCHANT_CODE:-PHYS}"
+TAMARA_PUBLIC_KEY_FE="${NEXT_PUBLIC_TAMARA_PUBLIC_KEY:-b810ee56-42c0-48a3-a247-f96b98588535}"
+log_info "NEXT_PUBLIC_TABBY_PUBLIC_KEY  = ${TABBY_PUBLIC_KEY_FE:0:18}…"
+log_info "NEXT_PUBLIC_TABBY_MERCHANT_CODE = ${TABBY_MERCHANT_CODE_FE}"
+log_info "NEXT_PUBLIC_TAMARA_PUBLIC_KEY = ${TAMARA_PUBLIC_KEY_FE:0:8}…"
+
 # Step 4: Build Docker image
 if [ "$SKIP_BUILD" = false ]; then
     log_step "Building Docker image..."
@@ -87,6 +96,9 @@ if [ "$SKIP_BUILD" = false ]; then
         --build-arg NEXT_PUBLIC_API_URL="${BACKEND_URL}/api" \
         --build-arg NEXT_PUBLIC_STRAPI_URL="${STRAPI_URL}" \
         --build-arg NEXT_PUBLIC_RECAPTCHA_SITE_KEY="${RECAPTCHA_SITE_KEY}" \
+        --build-arg NEXT_PUBLIC_TABBY_PUBLIC_KEY="${TABBY_PUBLIC_KEY_FE}" \
+        --build-arg NEXT_PUBLIC_TABBY_MERCHANT_CODE="${TABBY_MERCHANT_CODE_FE}" \
+        --build-arg NEXT_PUBLIC_TAMARA_PUBLIC_KEY="${TAMARA_PUBLIC_KEY_FE}" \
         -t ${IMAGE_TAG} \
         -t ${IMAGE_LATEST} \
         .

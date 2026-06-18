@@ -369,6 +369,7 @@ export class PaymentsService {
         lastName: users.lastName,
         email: users.email,
         phone: users.phone,
+        createdAt: users.createdAt,
       })
       .from(users)
       .where(eq(users.id, user.id))
@@ -392,6 +393,9 @@ export class PaymentsService {
         customerName: `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim(),
         customerEmail: userData?.email || user.email,
         customerPhone: userData?.phone || undefined,
+        customerRegisteredSince: userData?.createdAt
+          ? new Date(userData.createdAt).toISOString()
+          : undefined,
         redirectUrl: `${callbackUrl}?gateway=${dto.gateway}&payment_id=${result.payment.id}`,
         cancelUrl,
         webhookUrl: `${webhookBaseUrl}/${dto.gateway}`,

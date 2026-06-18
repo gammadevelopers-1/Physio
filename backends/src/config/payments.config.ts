@@ -55,6 +55,9 @@ export default registerAs('payments', () => ({
     publicKey: process.env.TABBY_PUBLIC_KEY || '',
     webhookSecret: process.env.TABBY_WEBHOOK_SECRET || '',
     apiUrl: process.env.TABBY_API_URL || 'https://api.tabby.ai/api/v2',
+    // Merchant code Tabby assigns per merchant (e.g. "PHYS"). Required in
+    // every checkout request — old hardcoded 'physioguidance' value 404s.
+    merchantCode: process.env.TABBY_MERCHANT_CODE || '',
   },
 
   // Refund deduction rates (per merchant agreement — override via env)

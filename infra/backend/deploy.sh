@@ -207,6 +207,36 @@ fi
 ENV_VARS="${ENV_VARS}||MOYASAR_MODE=${MOYASAR_MODE}"
 log_info "Moyasar mode: ${MOYASAR_MODE}"
 
+# Tamara BNPL — JWT API token + webhook notification token + public key.
+# Sandbox URL stays default; switch to https://api.tamara.co for live.
+for _TM in TAMARA_API_TOKEN TAMARA_NOTIFICATION_TOKEN TAMARA_PUBLIC_KEY; do
+    if gcloud secrets describe "$_TM" &>/dev/null 2>&1; then
+        SECRETS="${SECRETS},${_TM}=${_TM}:latest"
+        log_info "Tamara secret found: $_TM"
+    fi
+done
+# Tamara API URL — sandbox by default; override per env if going live.
+TAMARA_API_URL="${TAMARA_API_URL:-https://api-sandbox.tamara.co}"
+ENV_VARS="${ENV_VARS}||TAMARA_API_URL=${TAMARA_API_URL}"
+log_info "Tamara API URL: ${TAMARA_API_URL}"
+
+# Tabby BNPL — secret key + webhook secret are sensitive; public key +
+# merchant code are non-sensitive (also shipped to browser via frontend
+# NEXT_PUBLIC_* vars) but kept here for backend signing of API requests.
+for _TB in TABBY_SECRET_KEY TABBY_WEBHOOK_SECRET; do
+    if gcloud secrets describe "$_TB" &>/dev/null 2>&1; then
+        SECRETS="${SECRETS},${_TB}=${_TB}:latest"
+        log_info "Tabby secret found: $_TB"
+    fi
+done
+# Tabby non-sensitive config — public key + merchant code as env vars.
+# Override per env (TABBY_MERCHANT_CODE=PHYS bash deploy.sh) for live keys.
+TABBY_API_URL="${TABBY_API_URL:-https://api.tabby.ai/api/v2}"
+TABBY_MERCHANT_CODE="${TABBY_MERCHANT_CODE:-PHYS}"
+TABBY_PUBLIC_KEY="${TABBY_PUBLIC_KEY:-pk_test_019e2e71-0358-6bb2-e50b-73334f9ec199}"
+ENV_VARS="${ENV_VARS}||TABBY_API_URL=${TABBY_API_URL}||TABBY_MERCHANT_CODE=${TABBY_MERCHANT_CODE}||TABBY_PUBLIC_KEY=${TABBY_PUBLIC_KEY}"
+log_info "Tabby merchant code: ${TABBY_MERCHANT_CODE}"
+
 if gcloud sql instances describe ${DB_INSTANCE_NAME} &>/dev/null; then
     log_info "Connecting to Cloud SQL: ${DB_INSTANCE_NAME}"
     gcloud run deploy ${BACKEND_SERVICE_NAME} \

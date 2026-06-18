@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 import { useCart, CartItem } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import NonStudentEnrollmentNotice from "@/components/courses/NonStudentEnrollmentNotice";
+import BnplPromoWidgets from "@/components/courses/BnplPromoWidgets";
 import {
   ShoppingCart,
   Trash2,
@@ -331,6 +332,15 @@ export default function CartPage() {
                   <p className="text-[11px] text-[#9CA3AF] leading-snug">
                     {t("vatDisclaimer")}
                   </p>
+
+                  {/* BNPL widgets — installment preview on the cart total */}
+                  {!showNonStudentNotice && (
+                    <BnplPromoWidgets
+                      price={totals.total}
+                      currency="SAR"
+                      source="cart"
+                    />
+                  )}
 
                   {/* Proceed CTA — hidden for non-students who see the notice above */}
                   {!showNonStudentNotice && (

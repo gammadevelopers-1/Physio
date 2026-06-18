@@ -33,6 +33,7 @@ import { useFavourites } from "@/contexts/FavouritesContext";
 import { useCart } from "@/contexts/CartContext";
 import { studentApi, publicApi, pointsApi, ApiError } from "@/lib/api";
 import NonStudentEnrollmentNotice from "./NonStudentEnrollmentNotice";
+import BnplPromoWidgets from "./BnplPromoWidgets";
 import { formatDuration } from "@/lib/utils";
 import { getCityLabel } from "@/lib/saudi-cities";
 import { Loader2 } from "lucide-react";
@@ -1743,6 +1744,12 @@ const CourseDetailContent = ({
                     ) : (
                       /* PAID COURSE — Amazon-style: Buy Now (express) + Add to Cart */
                       <>
+                        <BnplPromoWidgets
+                          price={apiEffectivePrice}
+                          currency="SAR"
+                          source="product"
+                          className="mb-3"
+                        />
                         <button
                           onClick={handleBuyNow}
                           className="w-full h-12 btn-gold rounded-xl text-white font-medium mb-3 flex items-center justify-center gap-2"
@@ -2071,6 +2078,12 @@ const CourseDetailContent = ({
               </div>
             ) : (
               <>
+                <BnplPromoWidgets
+                  price={apiEffectivePrice}
+                  currency="SAR"
+                  source="product"
+                  className="mb-2"
+                />
                 <button
                   onClick={handleBuyNow}
                   className="w-full h-10 btn-gold rounded-xl text-white text-sm font-medium mb-2 flex items-center justify-center gap-2"

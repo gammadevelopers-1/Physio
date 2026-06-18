@@ -26,6 +26,7 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
   private readonly publicKey: string;
   private readonly webhookSecret: string;
   private readonly apiUrl: string;
+  private readonly merchantCode: string;
 
   constructor(private readonly configService: ConfigService) {
     super();
@@ -33,6 +34,7 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
     this.publicKey = this.configService.get<string>('payments.tabby.publicKey', '');
     this.webhookSecret = this.configService.get<string>('payments.tabby.webhookSecret', '');
     this.apiUrl = this.configService.get<string>('payments.tabby.apiUrl', 'https://api.tabby.ai/api/v2');
+    this.merchantCode = this.configService.get<string>('payments.tabby.merchantCode', '');
   }
 
   getInstallmentOptions(amount: number, currency: string): InstallmentOption[] {
@@ -42,6 +44,14 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
   }
 
   async createCharge(params: CreateChargeParams): Promise<ChargeResult> {
+    if (!this.merchantCode) {
+      throw new PaymentGatewayError(
+        'tabby',
+        'TABBY_MERCHANT_CODE is not configured',
+        'gateway_error',
+      );
+    }
+
     const body = {
       payment: {
         amount: params.amount.toFixed(2),
@@ -63,8 +73,12 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
             },
           ],
         },
+        // Real registration timestamp feeds Tabby's risk model; passing
+        // "now" (the old default) made every buyer look brand-new and
+        // hurt approvals for established customers.
         buyer_history: {
-          registered_since: new Date().toISOString(),
+          registered_since:
+            params.customerRegisteredSince || new Date().toISOString(),
           loyalty_level: 0,
         },
         shipping_address: {
@@ -75,7 +89,7 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
         meta: params.metadata,
       },
       lang: params.locale || 'en',
-      merchant_code: 'physioguidance',
+      merchant_code: this.merchantCode,
       // success goes to our /payment/callback handler. cancel + failure both
       // send the buyer back to the checkout page (params.cancelUrl) so they
       // can pick a different gateway or retry — without that fallback the
@@ -125,10 +139,33 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
   }
 
   verifyWebhook(headers: Record<string, string>, body: any): boolean {
-    if (!this.webhookSecret) return false;
+    // Sandbox / pre-portal-configuration mode: when no webhook secret is
+    // set we accept the webhook (Tabby's portal issues this after the
+    // integration is approved). In production with NODE_ENV=production we
+    // refuse to skip verification — a missing secret then is a config bug,
+    // not a sandbox affordance.
+    if (!this.webhookSecret) {
+      if (process.env.NODE_ENV === 'production') {
+        this.logger.error(
+          'TABBY_WEBHOOK_SECRET missing in production — rejecting webhook',
+        );
+        return false;
+      }
+      this.logger.warn(
+        'TABBY_WEBHOOK_SECRET missing (non-prod) — webhook accepted without signature check',
+      );
+      return true;
+    }
 
+    // Tabby's docs name the header X-Tabby-Signature. The legacy
+    // X-Tabby-Hmac-SHA256 fallback covers older portal configurations
+    // some merchants still have. Headers come through Express lower-cased
+    // so check both casings to be safe.
     const signature =
-      headers['x-tabby-hmac-sha256'] || headers['X-Tabby-Hmac-SHA256'];
+      headers['x-tabby-signature'] ||
+      headers['X-Tabby-Signature'] ||
+      headers['x-tabby-hmac-sha256'] ||
+      headers['X-Tabby-Hmac-SHA256'];
     if (!signature) return false;
 
     const bodyStr = typeof body === 'string' ? body : JSON.stringify(body);
@@ -141,15 +178,58 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
 
   async processWebhook(body: any): Promise<WebhookResult> {
     const chargeId = body.id || body.payment?.id;
-    let status: 'paid' | 'failed' | 'refunded' = 'failed';
+    const status = (body.status || '').toUpperCase();
 
-    if (body.status === 'AUTHORIZED' || body.status === 'CLOSED') {
-      status = 'paid';
-    } else if (body.status === 'REFUNDED') {
-      status = 'refunded';
+    // Successful outcomes
+    if (status === 'AUTHORIZED' || status === 'CLOSED') {
+      return { chargeId, status: 'paid', rawData: body };
     }
 
-    return { chargeId, status, rawData: body };
+    if (status === 'REFUNDED') {
+      return { chargeId, status: 'refunded', rawData: body };
+    }
+
+    // Terminal failures — map to distinct errorCodes so the audit log and
+    // dashboard can show buyers a sensible reason instead of a generic
+    // "payment failed". Mirrors what Tamara does post-T1.
+    if (status === 'REJECTED') {
+      return {
+        chargeId,
+        status: 'failed',
+        errorCode: body.rejection_reason || 'rejected',
+        rawData: body,
+      };
+    }
+
+    if (status === 'EXPIRED') {
+      return {
+        chargeId,
+        status: 'failed',
+        errorCode: 'session_expired',
+        rawData: body,
+      };
+    }
+
+    if (status === 'CANCELLED' || status === 'CANCELED') {
+      return {
+        chargeId,
+        status: 'failed',
+        errorCode: 'cancelled',
+        rawData: body,
+      };
+    }
+
+    // CREATED / unknown — non-terminal. Controller silently drops 'pending'.
+    if (status === 'CREATED' || status === '') {
+      return { chargeId, status: 'pending', rawData: body };
+    }
+
+    return {
+      chargeId,
+      status: 'failed',
+      errorCode: `unknown_status_${status.toLowerCase()}`,
+      rawData: body,
+    };
   }
 
   async refund(params: RefundParams): Promise<RefundResult> {
@@ -215,7 +295,7 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
     const start = Date.now();
     try {
       const res = await this.fetchWithTimeout(
-        `${this.apiUrl}/merchants/physioguidance`,
+        `${this.apiUrl}/merchants/${this.merchantCode || 'unknown'}`,
         { headers: { Authorization: `Bearer ${this.secretKey}` } },
         5000,
       );

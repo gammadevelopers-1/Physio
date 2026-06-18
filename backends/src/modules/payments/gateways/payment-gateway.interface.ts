@@ -12,6 +12,10 @@ export interface CreateChargeParams {
   customerName: string;
   customerEmail: string;
   customerPhone?: string;
+  /** ISO timestamp of when the buyer first registered. BNPL gateways
+   *  (Tabby in particular) feed this into their risk model — passing
+   *  "now" hurts approval rates for established customers. */
+  customerRegisteredSince?: string;
   redirectUrl: string;
   /** Where to send the buyer if they click "Back"/cancel on the gateway's
    *  hosted page — should be the checkout page, NOT the post-payment callback. */

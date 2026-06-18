@@ -2,10 +2,10 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PaymentGateway, GatewayHealthResult } from './payment-gateway.interface';
 import { MockGateway } from './mock.gateway';
-import { TapGateway } from './tap.gateway';
 import { MoyasarGateway } from './moyasar.gateway';
 import { TamaraGateway } from './tamara.gateway';
 import { TabbyGateway } from './tabby.gateway';
+import { BankTransferGateway } from './bank-transfer.gateway';
 
 @Injectable()
 export class GatewayFactory {
@@ -15,25 +15,25 @@ export class GatewayFactory {
   constructor(
     private readonly configService: ConfigService,
     private readonly mockGateway: MockGateway,
-    private readonly tapGateway: TapGateway,
     private readonly moyasarGateway: MoyasarGateway,
     private readonly tamaraGateway: TamaraGateway,
     private readonly tabbyGateway: TabbyGateway,
+    private readonly bankTransferGateway: BankTransferGateway,
   ) {
     this.registerGateways();
   }
 
   private registerGateways(): void {
-    // Mock gateway always available
+    // Mock gateway always available (dev/staging fallback).
     this.gateways.set('mock', this.mockGateway);
     this.logger.log('Registered MockGateway');
 
-    // Register real gateways when credentials exist
-    if (this.configService.get<string>('payments.tap.secretKey')) {
-      this.gateways.set('tap', this.tapGateway);
-      this.logger.log('Registered TapGateway');
-    }
+    // Bank Transfer is always available — no credentials needed; finance
+    // configures bank account info via system_settings.
+    this.gateways.set('bank_transfer', this.bankTransferGateway);
+    this.logger.log('Registered BankTransferGateway');
 
+    // Register API-driven gateways only when credentials exist.
     if (this.configService.get<string>('payments.moyasar.secretKey')) {
       this.gateways.set('moyasar', this.moyasarGateway);
       this.logger.log('Registered MoyasarGateway');

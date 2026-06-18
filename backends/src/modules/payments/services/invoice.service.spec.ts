@@ -119,7 +119,7 @@ const INVOICE_NUMBER = 'INV-2025-00001';
 
 const mockPayment: any = {
   id: PAYMENT_ID, userId: USER_ID, courseId: COURSE_ID,
-  gateway: 'tap', gatewayChargeId: 'ch_001', paymentMethod: 'card',
+  gateway: 'moyasar', gatewayChargeId: 'ch_001', paymentMethod: 'card',
   amount: '500.00', paidAt: new Date('2025-01-15'),
   metadata: { subtotal: 450, discountAmount: 50, taxAmount: 0, discountCode: 'SAVE50' },
 };
@@ -240,7 +240,7 @@ describe('InvoiceService', () => {
       expect(result.dueDate).toBeTruthy();
     });
 
-    it('sets null dueDate for non-BNPL gateway (tap)', async () => {
+    it('sets null dueDate for non-BNPL gateway (moyasar)', async () => {
       setupGenerateMocks();
       const result = await service.generateInvoice(PAYMENT_ID);
       expect(result.dueDate).toBeNull();

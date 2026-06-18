@@ -6,6 +6,7 @@ import {
   timestamp,
   jsonb,
   text,
+  integer,
   index,
   check,
 } from 'drizzle-orm/pg-core';
@@ -51,20 +52,20 @@ export const payments = pgTable(
     index('payments_gateway_charge_id_idx').on(table.gatewayChargeId),
     check(
       'payments_gateway_check',
-      sql`${table.gateway} IN ('tap', 'moyasar', 'tamara', 'tabby', 'mock')`,
+      sql`${table.gateway} IN ('moyasar', 'tamara', 'tabby', 'bank_transfer', 'mock')`,
     ),
     check(
       'payments_status_check',
-      sql`${table.status} IN ('pending', 'processing', 'paid', 'failed', 'refunded', 'partially_refunded', 'chargeback')`,
+      sql`${table.status} IN ('pending', 'processing', 'awaiting_approval', 'paid', 'failed', 'refunded', 'partially_refunded', 'chargeback')`,
     ),
     check(
       'payments_method_check',
-      sql`${table.paymentMethod} IS NULL OR ${table.paymentMethod} IN ('card', 'mada', 'apple_pay', 'bnpl')`,
+      sql`${table.paymentMethod} IS NULL OR ${table.paymentMethod} IN ('card', 'mada', 'apple_pay', 'bnpl', 'bank_transfer')`,
     ),
   ],
 );
 
-export const paymentsRelations = relations(payments, ({ one }) => ({
+export const paymentsRelations = relations(payments, ({ one, many }) => ({
   user: one(users, {
     fields: [payments.userId],
     references: [users.id],
@@ -77,6 +78,7 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
     fields: [payments.enrollmentId],
     references: [enrollments.id],
   }),
+  receipts: many(paymentReceipts),
 }));
 
 export type Payment = typeof payments.$inferSelect;
@@ -85,6 +87,7 @@ export type NewPayment = typeof payments.$inferInsert;
 export const PAYMENT_STATUS = {
   PENDING: 'pending',
   PROCESSING: 'processing',
+  AWAITING_APPROVAL: 'awaiting_approval',
   PAID: 'paid',
   FAILED: 'failed',
   REFUNDED: 'refunded',
@@ -96,10 +99,10 @@ export type PaymentStatus =
   (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
 
 export const PAYMENT_GATEWAY = {
-  TAP: 'tap',
   MOYASAR: 'moyasar',
   TAMARA: 'tamara',
   TABBY: 'tabby',
+  BANK_TRANSFER: 'bank_transfer',
   MOCK: 'mock',
 } as const;
 
@@ -111,7 +114,107 @@ export const PAYMENT_METHOD = {
   MADA: 'mada',
   APPLE_PAY: 'apple_pay',
   BNPL: 'bnpl',
+  BANK_TRANSFER: 'bank_transfer',
 } as const;
 
 export type PaymentMethodType =
   (typeof PAYMENT_METHOD)[keyof typeof PAYMENT_METHOD];
+
+// ─── payment_receipts: bank transfer proof uploads ─────────────────────────
+
+export const paymentReceipts = pgTable(
+  'payment_receipts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    paymentId: uuid('payment_id')
+      .notNull()
+      .references(() => payments.id, { onDelete: 'cascade' }),
+    uploadedBy: uuid('uploaded_by')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    // File (stored in private GCS bucket)
+    fileName: varchar('file_name', { length: 255 }).notNull(),
+    mimeType: varchar('mime_type', { length: 100 }).notNull(),
+    fileSizeBytes: integer('file_size_bytes').notNull(),
+    gcsObjectPath: text('gcs_object_path').notNull(),
+
+    // Malware scan
+    scanStatus: varchar('scan_status', { length: 20 }).notNull().default('pending'),
+    scanEngine: varchar('scan_engine', { length: 50 }),
+    scanCompletedAt: timestamp('scan_completed_at'),
+    scanMeta: jsonb('scan_meta'),
+
+    // Finance review
+    reviewStatus: varchar('review_status', { length: 20 }).notNull().default('pending'),
+    reviewedBy: uuid('reviewed_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    reviewedAt: timestamp('reviewed_at'),
+    reviewerNote: text('reviewer_note'),
+    financeInternalNote: text('finance_internal_note'),
+
+    // Student refund info (KSA, snapshot at upload time)
+    refundAccountHolder: varchar('refund_account_holder', { length: 255 }).notNull(),
+    refundIban: varchar('refund_iban', { length: 34 }).notNull(),
+    refundBankName: varchar('refund_bank_name', { length: 255 }).notNull(),
+    refundNationalId: varchar('refund_national_id', { length: 20 }),
+
+    // Re-upload chain
+    replacedById: uuid('replaced_by_id'),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('payment_receipts_payment_id_idx').on(table.paymentId),
+    index('payment_receipts_review_status_idx').on(table.reviewStatus),
+    index('payment_receipts_scan_status_idx').on(table.scanStatus),
+    index('payment_receipts_uploaded_by_idx').on(table.uploadedBy),
+    check(
+      'payment_receipts_scan_status_check',
+      sql`${table.scanStatus} IN ('pending', 'clean', 'infected', 'error')`,
+    ),
+    check(
+      'payment_receipts_review_status_check',
+      sql`${table.reviewStatus} IN ('pending', 'approved', 'rejected')`,
+    ),
+  ],
+);
+
+export const paymentReceiptsRelations = relations(paymentReceipts, ({ one }) => ({
+  payment: one(payments, {
+    fields: [paymentReceipts.paymentId],
+    references: [payments.id],
+  }),
+  uploader: one(users, {
+    fields: [paymentReceipts.uploadedBy],
+    references: [users.id],
+  }),
+  reviewer: one(users, {
+    fields: [paymentReceipts.reviewedBy],
+    references: [users.id],
+  }),
+}));
+
+export type PaymentReceipt = typeof paymentReceipts.$inferSelect;
+export type NewPaymentReceipt = typeof paymentReceipts.$inferInsert;
+
+export const RECEIPT_SCAN_STATUS = {
+  PENDING: 'pending',
+  CLEAN: 'clean',
+  INFECTED: 'infected',
+  ERROR: 'error',
+} as const;
+
+export type ReceiptScanStatus =
+  (typeof RECEIPT_SCAN_STATUS)[keyof typeof RECEIPT_SCAN_STATUS];
+
+export const RECEIPT_REVIEW_STATUS = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+} as const;
+
+export type ReceiptReviewStatus =
+  (typeof RECEIPT_REVIEW_STATUS)[keyof typeof RECEIPT_REVIEW_STATUS];

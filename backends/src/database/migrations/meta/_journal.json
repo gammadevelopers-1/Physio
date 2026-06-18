@@ -470,6 +470,13 @@
       "when": 1782700000000,
       "tag": "0080_add_course_sale",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1782800000000,
+      "tag": "0081_bank_transfer",
+      "breakpoints": true
     }
   ]
 }

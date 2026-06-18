@@ -39,8 +39,8 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true);
 
   // Payment gateway selection
-  const [gateway, setGateway] = useState<"tap" | "moyasar" | "tabby" | "tamara" | "mock">("tap");
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "mada" | "apple_pay" | "bnpl">("card");
+  const [gateway, setGateway] = useState<"moyasar" | "tabby" | "tamara" | "bank_transfer" | "mock">("moyasar");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "mada" | "apple_pay" | "bnpl" | "bank_transfer">("card");
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -141,6 +141,8 @@ export default function CheckoutPage() {
     setGateway(gw);
     if (gw === "tabby" || gw === "tamara") {
       setPaymentMethod("bnpl");
+    } else if (gw === "bank_transfer") {
+      setPaymentMethod("bank_transfer");
     } else {
       setPaymentMethod("card");
     }
@@ -320,32 +322,6 @@ export default function CheckoutPage() {
 
               {/* Gateway Selection */}
               <div role="radiogroup" aria-label={t("payment.selectGateway")} className="flex flex-col gap-3 mb-4">
-                {/* Card Payment (Tap) */}
-                <div
-                  role="radio"
-                  aria-checked={gateway === "tap"}
-                  tabIndex={0}
-                  onKeyDown={(e) => handleGatewayKeyDown(e, "tap")}
-                  className={`cursor-pointer transition-colors border rounded-xl focus-visible:ring-2 focus-visible:ring-[#005bd3] focus-visible:ring-offset-2 outline-none ${
-                    gateway === "tap" ? "border-[#005bd3]" : "border-[#e5e5e5]"
-                  }`}
-                  onClick={() => handleGatewayChange("tap")}
-                >
-                  <div className={`flex items-center justify-between p-[14px] ${gateway === "tap" ? "bg-[#e5edf4]" : "bg-white"} rounded-xl`}>
-                    <div className="flex items-center gap-[11px]">
-                      <div className={`w-[18px] h-[18px] rounded-full flex items-center justify-center ${gateway === "tap" ? "bg-white border-[6px] border-[#005bd3]" : "border-2 border-[#d5d7da] bg-white"}`} aria-hidden="true" />
-                      <span className="font-medium text-[var(--on-surface-default)]">
-                        {t("payment.creditCard")}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-[11px]">
-                      <Image src="/checkout_cart/mada.svg.svg" alt="Mada" width={30} height={10} className="object-contain" />
-                      <Image src="/checkout_cart/visa.svg.svg" alt="Visa" width={30} height={18} className="object-contain" />
-                      <Image src="/checkout_cart/mastercard.svg.svg" alt="Mastercard" width={30} height={18} className="object-contain" />
-                    </div>
-                  </div>
-                </div>
-
                 {/* Moyasar */}
                 <div
                   role="radio"

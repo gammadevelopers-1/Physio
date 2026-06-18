@@ -29,7 +29,7 @@ interface Transaction {
   customer: string;
   course: string;
   amount: string;
-  gateway: "Tap" | "Moyasar" | "Tamara" | "Tabby";
+  gateway: "Moyasar" | "Tamara" | "Tabby" | "BankTransfer";
   status: "paid" | "pending" | "failed" | "refunded";
   errorCode?: string | null;
   failureReason?: string | null;
@@ -116,10 +116,10 @@ const PaymentsInvoicesTable = ({
   });
 
   const gatewayStyles: Record<string, string> = {
-    Tap: "bg-[#EFF6FF] text-[#3B82F6]",
     Moyasar: "bg-[#CFFAFE] text-[#0891B2]",
     Tamara: "bg-[#EDE9FE] text-[#8B5CF6]",
     Tabby: "bg-[#FEF3C7] text-[#D97706]",
+    BankTransfer: "bg-[#E0E7FF] text-[#4338CA]",
   };
 
   const statusStyles: Record<string, string> = {
@@ -233,10 +233,10 @@ const PaymentsInvoicesTable = ({
               className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
             >
               <option value="all">{t("paymentsTable.filters.allGateways")}</option>
-              <option value="Tap">{t("gateways.tap")}</option>
               <option value="Moyasar">{t("gateways.moyasar")}</option>
               <option value="Tamara">{t("gateways.tamara")}</option>
               <option value="Tabby">{t("gateways.tabby")}</option>
+              <option value="BankTransfer">{t("gateways.bankTransfer")}</option>
             </select>
             <div className="flex-1 relative">
               <Search

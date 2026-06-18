@@ -4,10 +4,10 @@ export class InitiatePaymentDto {
   @IsUUID()
   courseId: string;
 
-  @IsIn(['tap', 'moyasar', 'tamara', 'tabby', 'mock'])
+  @IsIn(['moyasar', 'tamara', 'tabby', 'bank_transfer', 'mock'])
   gateway: string;
 
-  @IsIn(['card', 'mada', 'apple_pay', 'bnpl'])
+  @IsIn(['card', 'mada', 'apple_pay', 'bnpl', 'bank_transfer'])
   paymentMethod: string;
 
   @IsOptional()

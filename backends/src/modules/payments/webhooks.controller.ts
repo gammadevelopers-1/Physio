@@ -79,11 +79,7 @@ export class WebhooksController {
   private isStaleWebhook(gateway: string, body: any): boolean {
     let webhookTime: number | null = null;
 
-    if (gateway === 'tap' && body.created) {
-      webhookTime = typeof body.created === 'number'
-        ? body.created
-        : new Date(body.created).getTime();
-    } else if (gateway === 'moyasar' && body.created_at) {
+    if (gateway === 'moyasar' && body.created_at) {
       webhookTime = new Date(body.created_at).getTime();
     } else if ((gateway === 'tamara' || gateway === 'tabby') && (body.timestamp || body.created_at)) {
       webhookTime = new Date(body.timestamp || body.created_at).getTime();

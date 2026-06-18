@@ -42,10 +42,10 @@ export class RefundService {
   ) {
     const tabbyRate = this.configService.get<number>('payments.tabbyRefundDeductionRate') ?? 0.1;
     this.deductionRates = {
-      tap: 0,
       moyasar: 0,
       tamara: 0.1,
       tabby: tabbyRate,
+      bank_transfer: 0,
       mock: 0,
     };
   }

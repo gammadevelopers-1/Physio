@@ -6,14 +6,6 @@ export default registerAs('payments', () => ({
   webhookBaseUrl:
     process.env.PAYMENT_WEBHOOK_BASE_URL || 'http://localhost:8080/api/webhooks',
 
-  // Tap Payments
-  tap: {
-    secretKey: process.env.TAP_SECRET_KEY || '',
-    publicKey: process.env.TAP_PUBLIC_KEY || '',
-    webhookSecret: process.env.TAP_WEBHOOK_SECRET || '',
-    apiUrl: process.env.TAP_API_URL || 'https://api.tap.company/v2',
-  },
-
   // Moyasar — MOYASAR_MODE selects the test vs live key set (defaults to
   // 'test'). Production sets MOYASAR_MODE=live plus the *_LIVE vars in its
   // secret store. The same API URL serves both; the key prefix decides the

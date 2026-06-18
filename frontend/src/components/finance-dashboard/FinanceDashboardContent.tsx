@@ -97,10 +97,10 @@ const FinanceDashboardContent = () => {
           const sources = revenueRes.value || [];
           const total = sources.reduce((sum: number, s: any) => sum + (s.totalRevenue || 0), 0);
           const gatewayColors: Record<string, string> = {
-            tap: "bg-[#3B82F6]",
             moyasar: "bg-[#8B5CF6]",
             tamara: "bg-[#22C55E]",
             tabby: "bg-[#F59E0B]",
+            bank_transfer: "bg-[#4338CA]",
             mock: "bg-[#6B7280]",
           };
           setRevenueData((prev) => ({

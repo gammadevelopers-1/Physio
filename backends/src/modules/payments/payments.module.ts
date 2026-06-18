@@ -20,10 +20,10 @@ import { PaymentCleanupService } from './services/payment-cleanup.service';
 // Gateways
 import { GatewayFactory } from './gateways/gateway.factory';
 import { MockGateway } from './gateways/mock.gateway';
-import { TapGateway } from './gateways/tap.gateway';
 import { MoyasarGateway } from './gateways/moyasar.gateway';
 import { TamaraGateway } from './gateways/tamara.gateway';
 import { TabbyGateway } from './gateways/tabby.gateway';
+import { BankTransferGateway } from './gateways/bank-transfer.gateway';
 
 // Processors
 import { WebhookProcessor } from './processors/webhook.processor';
@@ -60,10 +60,10 @@ import { EmailModule } from '../email/email.module';
     FinanceService,
     GatewayFactory,
     MockGateway,
-    TapGateway,
     MoyasarGateway,
     TamaraGateway,
     TabbyGateway,
+    BankTransferGateway,
     PaymentCleanupService,
     // Webhook processor only when Redis is available
     ...(process.env.REDIS_HOST ? [WebhookProcessor] : []),

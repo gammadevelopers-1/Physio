@@ -170,10 +170,10 @@ const FinanceSettingsContent = () => {
   const [gatewayEnabled, setGatewayEnabled] = useState<
     Record<string, boolean>
   >({
-    tap: true,
     moyasar: true,
     tamara: true,
     tabby: false,
+    bank_transfer: true,
   });
 
   // Tax toggle states
@@ -262,12 +262,6 @@ const FinanceSettingsContent = () => {
 
   const gateways = [
     {
-      key: "tap",
-      name: t("settingsPage.gateways.tap"),
-      mode: "live",
-      color: "bg-[#3B82F6]",
-    },
-    {
       key: "moyasar",
       name: t("settingsPage.gateways.moyasar"),
       mode: "live",
@@ -284,6 +278,12 @@ const FinanceSettingsContent = () => {
       name: t("settingsPage.gateways.tabby"),
       mode: "test",
       color: "bg-[#D97706]",
+    },
+    {
+      key: "bank_transfer",
+      name: t("settingsPage.gateways.bankTransfer"),
+      mode: "live",
+      color: "bg-[#4338CA]",
     },
   ];
 

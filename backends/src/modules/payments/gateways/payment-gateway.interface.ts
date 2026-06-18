@@ -54,7 +54,7 @@ export interface WebhookResult {
 }
 
 export interface PaymentGateway {
-  readonly name: 'tap' | 'moyasar' | 'tamara' | 'tabby' | 'mock';
+  readonly name: 'moyasar' | 'tamara' | 'tabby' | 'bank_transfer' | 'mock';
 
   createCharge(params: CreateChargeParams): Promise<ChargeResult>;
 

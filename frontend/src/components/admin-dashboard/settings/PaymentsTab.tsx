@@ -16,19 +16,27 @@ import Select from "../Select";
 import { TabShell } from "./TabShell";
 import { useSettingsCategory } from "./useSettingsCategory";
 
-type Gateway = "moyasar" | "tap" | "tamara" | "bank_transfer";
+type Gateway = "moyasar" | "tamara" | "tabby" | "bank_transfer";
 
 interface PaymentsSettings extends Record<string, unknown> {
   gateway: Gateway;
   testMode: boolean;
   currency: "SAR" | "USD" | "AED";
   moyasar: { publishableKey: string; secretKeyRef: string | null };
-  tap: { publishableKey: string; secretKeyRef: string | null };
   tamara: { merchantToken: string; secretKeyRef: string | null };
+  tabby: { publicKey: string; secretKeyRef: string | null };
   bankTransfer: {
-    bankName: string;
-    accountHolder: string;
+    // Legacy single-locale fields — kept for backward compat with prior data.
+    bankName?: string;
+    accountHolder?: string;
+    // New bilingual fields (preferred — what the public checkout reads).
+    bankNameEn: string;
+    bankNameAr: string;
+    beneficiaryEn: string;
+    beneficiaryAr: string;
+    accountNumber: string;
     iban: string;
+    swiftCode: string;
     instructionsEn: string;
     instructionsAr: string;
   };
@@ -43,12 +51,16 @@ const FALLBACK: PaymentsSettings = {
   testMode: true,
   currency: "SAR",
   moyasar: { publishableKey: "", secretKeyRef: null },
-  tap: { publishableKey: "", secretKeyRef: null },
   tamara: { merchantToken: "", secretKeyRef: null },
+  tabby: { publicKey: "", secretKeyRef: null },
   bankTransfer: {
-    bankName: "",
-    accountHolder: "",
+    bankNameEn: "",
+    bankNameAr: "",
+    beneficiaryEn: "",
+    beneficiaryAr: "",
+    accountNumber: "",
     iban: "",
+    swiftCode: "",
     instructionsEn: "",
     instructionsAr: "",
   },
@@ -60,8 +72,8 @@ const FALLBACK: PaymentsSettings = {
 
 const GATEWAYS: { id: Gateway; icon: React.ElementType }[] = [
   { id: "moyasar", icon: CreditCard },
-  { id: "tap", icon: CreditCard },
   { id: "tamara", icon: CreditCard },
+  { id: "tabby", icon: CreditCard },
   { id: "bank_transfer", icon: Building2 },
 ];
 
@@ -89,6 +101,15 @@ export default function PaymentsTab() {
       toast.error(t("payments.copyFailed"));
     }
   };
+
+  const updateBankField = (
+    key: keyof PaymentsSettings["bankTransfer"],
+    value: string,
+  ) =>
+    setDraft((d) => ({
+      ...d,
+      bankTransfer: { ...d.bankTransfer, [key]: value },
+    }));
 
   return (
     <TabShell
@@ -242,29 +263,6 @@ export default function PaymentsTab() {
             </>
           )}
 
-          {draft.gateway === "tap" && (
-            <>
-              <CredField
-                label={t("payments.publishableKey")}
-                value={draft.tap.publishableKey}
-                onChange={(v) =>
-                  setDraft((d) => ({ ...d, tap: { ...d.tap, publishableKey: v } }))
-                }
-                helpText={t("payments.publishableKeyHelp")}
-              />
-              <SecretRefField
-                label={t("payments.secretKey")}
-                value={draft.tap.secretKeyRef}
-                show={!!showSecretFields["tap"]}
-                onToggle={() => setShowSecretFields((p) => ({ ...p, tap: !p.tap }))}
-                onChange={(v) =>
-                  setDraft((d) => ({ ...d, tap: { ...d.tap, secretKeyRef: v } }))
-                }
-                helpText={t("payments.secretKeyHelp")}
-              />
-            </>
-          )}
-
           {draft.gateway === "tamara" && (
             <>
               <CredField
@@ -295,53 +293,130 @@ export default function PaymentsTab() {
               />
             </>
           )}
+
+          {draft.gateway === "tabby" && (
+            <>
+              <CredField
+                label={t("payments.publicKey")}
+                value={draft.tabby.publicKey}
+                onChange={(v) =>
+                  setDraft((d) => ({ ...d, tabby: { ...d.tabby, publicKey: v } }))
+                }
+                helpText={t("payments.publicKeyHelp")}
+              />
+              <SecretRefField
+                label={t("payments.secretKey")}
+                value={draft.tabby.secretKeyRef}
+                show={!!showSecretFields["tabby"]}
+                onToggle={() => setShowSecretFields((p) => ({ ...p, tabby: !p.tabby }))}
+                onChange={(v) =>
+                  setDraft((d) => ({ ...d, tabby: { ...d.tabby, secretKeyRef: v } }))
+                }
+                helpText={t("payments.secretKeyHelp")}
+              />
+            </>
+          )}
         </div>
       )}
 
-      {/* Bank transfer config */}
+      {/* Bank transfer config — shown to students on the public checkout page */}
       {draft.gateway === "bank_transfer" && (
         <div className="border border-[var(--color-border)] rounded-lg p-4 space-y-4">
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
-            {t("payments.bankTransferDetails")}
-          </h3>
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+              {t("payments.bankTransferDetails")}
+            </h3>
+            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+              {t("payments.bankTransferHelp")}
+            </p>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
-                {t("payments.bankName")}
+                {t("payments.bankNameEn")}
               </label>
               <input
                 type="text"
-                value={draft.bankTransfer.bankName}
-                onChange={(e) =>
-                  setDraft((d) => ({
-                    ...d,
-                    bankTransfer: { ...d.bankTransfer, bankName: e.target.value },
-                  }))
-                }
+                value={draft.bankTransfer.bankNameEn}
+                onChange={(e) => updateBankField("bankNameEn", e.target.value)}
+                placeholder="e.g. Al Rajhi Bank"
                 className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
-                {t("payments.accountHolder")}
+                {t("payments.bankNameAr")}
               </label>
               <input
                 type="text"
-                value={draft.bankTransfer.accountHolder}
-                onChange={(e) =>
-                  setDraft((d) => ({
-                    ...d,
-                    bankTransfer: {
-                      ...d.bankTransfer,
-                      accountHolder: e.target.value,
-                    },
-                  }))
-                }
+                value={draft.bankTransfer.bankNameAr}
+                onChange={(e) => updateBankField("bankNameAr", e.target.value)}
+                placeholder="مثال: مصرف الراجحي"
+                dir="rtl"
                 className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
               />
             </div>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
+                {t("payments.beneficiaryEn")}
+              </label>
+              <input
+                type="text"
+                value={draft.bankTransfer.beneficiaryEn}
+                onChange={(e) => updateBankField("beneficiaryEn", e.target.value)}
+                placeholder="e.g. Qdrah Co"
+                className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
+                {t("payments.beneficiaryAr")}
+              </label>
+              <input
+                type="text"
+                value={draft.bankTransfer.beneficiaryAr}
+                onChange={(e) => updateBankField("beneficiaryAr", e.target.value)}
+                placeholder="مثال: شركة القدرة التقنية"
+                dir="rtl"
+                className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
+                {t("payments.accountNumber")}
+              </label>
+              <input
+                type="text"
+                value={draft.bankTransfer.accountNumber}
+                onChange={(e) => updateBankField("accountNumber", e.target.value)}
+                placeholder="e.g. 362608011111129"
+                className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm font-mono focus:outline-none focus:border-[var(--color-primary)]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
+                {t("payments.swiftCode")}{" "}
+                <span className="text-xs text-[var(--color-text-secondary)] font-normal">
+                  ({t("payments.optional")})
+                </span>
+              </label>
+              <input
+                type="text"
+                value={draft.bankTransfer.swiftCode}
+                onChange={(e) => updateBankField("swiftCode", e.target.value)}
+                placeholder="e.g. RJHISARI"
+                className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm font-mono uppercase focus:outline-none focus:border-[var(--color-primary)]"
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
               {t("payments.iban")}
@@ -349,16 +424,15 @@ export default function PaymentsTab() {
             <input
               type="text"
               value={draft.bankTransfer.iban}
-              onChange={(e) =>
-                setDraft((d) => ({
-                  ...d,
-                  bankTransfer: { ...d.bankTransfer, iban: e.target.value },
-                }))
-              }
+              onChange={(e) => updateBankField("iban", e.target.value)}
               placeholder="SA00 0000 0000 0000 0000 0000"
               className="w-full h-10 px-3 border border-[var(--color-input-border)] rounded-lg text-sm font-mono focus:outline-none focus:border-[var(--color-primary)]"
             />
+            <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+              {t("payments.ibanHelp")}
+            </p>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
@@ -366,16 +440,9 @@ export default function PaymentsTab() {
               </label>
               <textarea
                 value={draft.bankTransfer.instructionsEn}
-                onChange={(e) =>
-                  setDraft((d) => ({
-                    ...d,
-                    bankTransfer: {
-                      ...d.bankTransfer,
-                      instructionsEn: e.target.value,
-                    },
-                  }))
-                }
+                onChange={(e) => updateBankField("instructionsEn", e.target.value)}
                 rows={4}
+                placeholder="e.g. After transferring, upload the receipt below. Approval typically takes 1 business day."
                 className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
               />
             </div>
@@ -385,15 +452,7 @@ export default function PaymentsTab() {
               </label>
               <textarea
                 value={draft.bankTransfer.instructionsAr}
-                onChange={(e) =>
-                  setDraft((d) => ({
-                    ...d,
-                    bankTransfer: {
-                      ...d.bankTransfer,
-                      instructionsAr: e.target.value,
-                    },
-                  }))
-                }
+                onChange={(e) => updateBankField("instructionsAr", e.target.value)}
                 rows={4}
                 dir="rtl"
                 className="w-full px-3 py-2 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"

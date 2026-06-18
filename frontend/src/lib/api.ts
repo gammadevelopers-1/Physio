@@ -6784,6 +6784,100 @@ export const bankTransferApi = {
 };
 
 // ===========================================
+// Finance — Bank Transfer Queue API
+// ===========================================
+
+export interface BankTransferQueueItem {
+  receiptId: string;
+  uploadedAt: string;
+  scanStatus: 'pending' | 'clean' | 'infected' | 'error';
+  reviewStatus: 'pending' | 'approved' | 'rejected';
+  reviewedAt: string | null;
+  fileName: string;
+  fileSizeBytes: number;
+  payment: {
+    id: string;
+    amount: string;
+    currency: string;
+    status: string;
+    createdAt: string;
+  };
+  student: { id: string; name: string; email: string };
+  course: { id: string; title: string };
+}
+
+export interface BankTransferReceiptDetail {
+  receipt: {
+    id: string;
+    uploadedAt: string;
+    fileName: string;
+    mimeType: string;
+    fileSizeBytes: number;
+    scanStatus: 'pending' | 'clean' | 'infected' | 'error';
+    scanCompletedAt: string | null;
+    reviewStatus: 'pending' | 'approved' | 'rejected';
+    reviewedBy: string | null;
+    reviewedAt: string | null;
+    reviewerNote: string | null;
+    financeInternalNote: string | null;
+    refundInfo: {
+      accountHolder: string;
+      iban: string;
+      bankName: string;
+      nationalId: string | null;
+    };
+    downloadUrl: string;
+  };
+  payment: {
+    id: string;
+    amount: string;
+    currency: string;
+    status: string;
+    createdAt: string;
+    gateway: string;
+    metadata: Record<string, unknown> | null;
+  };
+  student: { id: string; name: string; email: string };
+  course: { id: string; title: string };
+}
+
+export const financeBankTransferApi = {
+  listQueue: (opts: {
+    status?: 'pending' | 'approved' | 'rejected' | 'all';
+    search?: string;
+    page?: number;
+    limit?: number;
+  } = {}) => {
+    const sp = new URLSearchParams();
+    sp.set('status', opts.status || 'pending');
+    if (opts.search) sp.set('search', opts.search);
+    sp.set('page', String(opts.page || 1));
+    sp.set('limit', String(opts.limit || 10));
+    return api.get<{
+      data: BankTransferQueueItem[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }>(`/payments/bank-transfer/queue/list?${sp.toString()}`);
+  },
+
+  getReceipt: (receiptId: string) =>
+    api.get<BankTransferReceiptDetail>(
+      `/payments/bank-transfer/queue/receipts/${receiptId}`,
+    ),
+
+  approve: (receiptId: string, opts: { internalNote?: string } = {}) =>
+    api.patch<{ receiptId: string; paymentId: string; paymentStatus: string }>(
+      `/payments/bank-transfer/queue/receipts/${receiptId}/approve`,
+      opts,
+    ),
+
+  reject: (receiptId: string, body: { reviewerNote: string; internalNote?: string }) =>
+    api.patch<{ receiptId: string; paymentId: string; paymentStatus: string }>(
+      `/payments/bank-transfer/queue/receipts/${receiptId}/reject`,
+      body,
+    ),
+};
+
+// ===========================================
 // Invoice API
 // ===========================================
 

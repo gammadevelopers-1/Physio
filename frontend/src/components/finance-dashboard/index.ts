@@ -15,3 +15,4 @@ export { default as FinanceReportsContent } from "./FinanceReportsContent";
 export { default as FinanceSettingsContent } from "./FinanceSettingsContent";
 export { default as AuditLogContent } from "./AuditLogContent";
 export { default as FinanceSupportContent } from "./FinanceSupportContent";
+export { default as BankTransferQueueContent } from "./BankTransferQueueContent";

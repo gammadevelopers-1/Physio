@@ -185,6 +185,10 @@ import {
   getBankTransferReceivedText,
 } from './templates/bank-transfer-received.template';
 import {
+  getBankTransferRejectedHtml,
+  getBankTransferRejectedText,
+} from './templates/bank-transfer-rejected.template';
+import {
   getRefundRequestedHtml,
   getRefundRequestedText,
   getRefundApprovedHtml,
@@ -2110,6 +2114,55 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
       this.logger.log(`Bank transfer receipt acknowledgement sent to ${user.email}`);
     } catch (error) {
       this.logger.error(`Failed to send bank transfer receipt email`, error);
+    }
+  }
+
+  async sendBankTransferRejected(
+    paymentId: string,
+    reviewerNote: string,
+  ): Promise<void> {
+    try {
+      const [payment] = await db
+        .select()
+        .from(payments)
+        .where(eq(payments.id, paymentId))
+        .limit(1);
+      if (!payment) return;
+
+      const user = await this.getUserData(payment.userId);
+      if (!user) return;
+
+      const [course] = await db
+        .select({ title: courses.title })
+        .from(courses)
+        .where(eq(courses.id, payment.courseId))
+        .limit(1);
+
+      const studentName =
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Student';
+      const appBase =
+        process.env.FRONTEND_URL || 'https://physioguidance.org';
+      const uploadUrl = `${appBase}/en/payment/bank-transfer/${paymentId}`;
+
+      const params = {
+        studentName,
+        courseName: course?.title || 'Course',
+        amount: String(payment.amount),
+        currency: payment.currency,
+        paymentId: payment.id,
+        reviewerNote,
+        uploadUrl,
+      };
+
+      await this.send({
+        to: user.email,
+        subject: `Bank transfer receipt could not be approved - ${course?.title || 'Course'}`,
+        html: getBankTransferRejectedHtml(params),
+        text: getBankTransferRejectedText(params),
+      });
+      this.logger.log(`Bank transfer rejection email sent to ${user.email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send bank transfer rejection email`, error);
     }
   }
 

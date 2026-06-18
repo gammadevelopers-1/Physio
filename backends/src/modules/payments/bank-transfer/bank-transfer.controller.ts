@@ -1,9 +1,13 @@
 import {
   Controller,
   Post,
+  Patch,
   Get,
   Param,
   Body,
+  Query,
+  DefaultValuePipe,
+  ParseIntPipe,
   UseGuards,
   UseInterceptors,
   UploadedFile,
@@ -17,6 +21,7 @@ import { Request } from 'express';
 import { BankTransferService } from './bank-transfer.service';
 import { CreateReceiptDto } from './dto/create-receipt.dto';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { Roles } from '../../auth/decorators/roles.decorator';
 import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
 import { JwtAuthGuard, RolesGuard } from '../../auth/guards';
 
@@ -116,5 +121,82 @@ export class BankTransferController {
     }
 
     return this.bankTransferService.getReceiptDownloadUrl(receiptId);
+  }
+
+  // ─── Finance review queue ────────────────────────────────────────────
+
+  /**
+   * Paginated list of receipts for the finance review queue. Defaults to
+   * pending; finance can filter to approved/rejected/all for audit. Search
+   * looks up student name/email/payment id.
+   */
+  @Get('queue/list')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async listQueue(
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit = 10,
+  ) {
+    const allowed = ['pending', 'approved', 'rejected', 'all'] as const;
+    const normalizedStatus = (allowed as readonly string[]).includes(status || '')
+      ? (status as 'pending' | 'approved' | 'rejected' | 'all')
+      : 'pending';
+    return this.bankTransferService.listFinanceQueue({
+      status: normalizedStatus,
+      search,
+      page,
+      limit,
+    });
+  }
+
+  /**
+   * Full receipt context for the review modal — refund info snapshot,
+   * fresh signed download URL, student + course context.
+   */
+  @Get('queue/receipts/:receiptId')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getReceiptDetail(@Param('receiptId') receiptId: string) {
+    return this.bankTransferService.getReceiptForReview(receiptId);
+  }
+
+  /**
+   * Approve a pending receipt: payment → paid, enrollment activated,
+   * invoice generated, confirmation email sent. Optional internal note
+   * stays private to finance (never shown to the buyer).
+   */
+  @Patch('queue/receipts/:receiptId/approve')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async approveReceipt(
+    @Param('receiptId') receiptId: string,
+    @Body() body: { internalNote?: string } = {},
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
+  ) {
+    const ipAddress =
+      req.ip ||
+      (req.connection as { remoteAddress?: string } | undefined)?.remoteAddress ||
+      'unknown';
+    return this.bankTransferService.approveReceipt(receiptId, user, body, ipAddress);
+  }
+
+  /**
+   * Reject a pending receipt: payment rolls back to pending so the student
+   * can re-upload. `reviewerNote` is required (>=5 chars) and shown to the
+   * student verbatim in the rejection email + the bank-transfer page.
+   */
+  @Patch('queue/receipts/:receiptId/reject')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async rejectReceipt(
+    @Param('receiptId') receiptId: string,
+    @Body() body: { reviewerNote: string; internalNote?: string },
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
+  ) {
+    const ipAddress =
+      req.ip ||
+      (req.connection as { remoteAddress?: string } | undefined)?.remoteAddress ||
+      'unknown';
+    return this.bankTransferService.rejectReceipt(receiptId, user, body, ipAddress);
   }
 }

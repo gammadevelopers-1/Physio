@@ -4,16 +4,20 @@ import {
   BadRequestException,
   NotFoundException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
-import { eq, and, isNull, desc } from 'drizzle-orm';
+import { eq, and, isNull, desc, count, ilike, or, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { db } from '../../../database';
 import {
   payments,
   paymentReceipts,
   courses,
+  users,
+  enrollments,
   systemSettings,
   PAYMENT_STATUS,
+  ENROLLMENT_STATUS,
   RECEIPT_SCAN_STATUS,
   RECEIPT_REVIEW_STATUS,
   type PaymentReceipt,
@@ -22,6 +26,7 @@ import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
 import { StorageService } from '../../storage/storage.service';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { EmailService } from '../../email/email.service';
+import { InvoiceService } from '../services/invoice.service';
 import { CreateReceiptDto } from './dto/create-receipt.dto';
 
 const ALLOWED_MIME_TYPES = [
@@ -65,6 +70,7 @@ export class BankTransferService {
     private readonly storageService: StorageService,
     private readonly auditLogService: AuditLogService,
     private readonly emailService: EmailService,
+    private readonly invoiceService: InvoiceService,
   ) {}
 
   /**
@@ -315,6 +321,437 @@ export class BankTransferService {
       .where(eq(paymentReceipts.id, receiptId))
       .limit(1);
     return receipt || null;
+  }
+
+  // ─── Finance review (queue + approve + reject) ──────────────────────
+
+  /**
+   * Paginated list of receipts for the finance review queue. Shows only the
+   * active receipt per payment (replaced ones are hidden) plus enriched
+   * fields the queue UI needs: student name/email, course title, payment
+   * amount + age. Filters by review status; supports search on student
+   * name/email/payment id.
+   */
+  async listFinanceQueue(opts: {
+    status?: 'pending' | 'approved' | 'rejected' | 'all';
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const status = opts.status || 'pending';
+    const page = Math.max(1, opts.page || 1);
+    const limit = Math.min(50, Math.max(1, opts.limit || 10));
+    const offset = (page - 1) * limit;
+
+    const conditions = [isNull(paymentReceipts.replacedById)];
+    if (status !== 'all') {
+      conditions.push(eq(paymentReceipts.reviewStatus, status));
+    }
+    if (opts.search?.trim()) {
+      const s = `%${opts.search.trim()}%`;
+      conditions.push(
+        or(
+          ilike(users.firstName, s),
+          ilike(users.lastName, s),
+          ilike(users.email, s),
+          ilike(paymentReceipts.paymentId, s),
+        )!,
+      );
+    }
+
+    const whereExpr = and(...conditions);
+
+    const rows = await db
+      .select({
+        receiptId: paymentReceipts.id,
+        receiptCreatedAt: paymentReceipts.createdAt,
+        receiptScanStatus: paymentReceipts.scanStatus,
+        receiptReviewStatus: paymentReceipts.reviewStatus,
+        receiptReviewedAt: paymentReceipts.reviewedAt,
+        receiptFileName: paymentReceipts.fileName,
+        receiptFileSize: paymentReceipts.fileSizeBytes,
+        paymentId: payments.id,
+        paymentAmount: payments.amount,
+        paymentCurrency: payments.currency,
+        paymentStatus: payments.status,
+        paymentCreatedAt: payments.createdAt,
+        userId: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        userEmail: users.email,
+        courseId: courses.id,
+        courseTitle: courses.title,
+      })
+      .from(paymentReceipts)
+      .innerJoin(payments, eq(payments.id, paymentReceipts.paymentId))
+      .innerJoin(users, eq(users.id, payments.userId))
+      .innerJoin(courses, eq(courses.id, payments.courseId))
+      .where(whereExpr)
+      .orderBy(desc(paymentReceipts.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const [{ value: total }] = await db
+      .select({ value: count() })
+      .from(paymentReceipts)
+      .innerJoin(payments, eq(payments.id, paymentReceipts.paymentId))
+      .innerJoin(users, eq(users.id, payments.userId))
+      .where(whereExpr);
+
+    return {
+      data: rows.map((r) => ({
+        receiptId: r.receiptId,
+        uploadedAt: r.receiptCreatedAt,
+        scanStatus: r.receiptScanStatus,
+        reviewStatus: r.receiptReviewStatus,
+        reviewedAt: r.receiptReviewedAt,
+        fileName: r.receiptFileName,
+        fileSizeBytes: r.receiptFileSize,
+        payment: {
+          id: r.paymentId,
+          amount: r.paymentAmount,
+          currency: r.paymentCurrency,
+          status: r.paymentStatus,
+          createdAt: r.paymentCreatedAt,
+        },
+        student: {
+          id: r.userId,
+          name: `${r.firstName || ''} ${r.lastName || ''}`.trim() || r.userEmail,
+          email: r.userEmail,
+        },
+        course: { id: r.courseId, title: r.courseTitle },
+      })),
+      pagination: {
+        page,
+        limit,
+        total: Number(total),
+        totalPages: Math.ceil(Number(total) / limit) || 1,
+      },
+    };
+  }
+
+  /**
+   * Full receipt detail for the review modal. Includes refund-info snapshot,
+   * a fresh signed URL for previewing the file inline, plus the student +
+   * course context. Used only by the review modal; the list endpoint
+   * deliberately keeps refund fields out.
+   */
+  async getReceiptForReview(receiptId: string) {
+    const [row] = await db
+      .select({
+        receipt: paymentReceipts,
+        payment: payments,
+        userId: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        userEmail: users.email,
+        courseId: courses.id,
+        courseTitle: courses.title,
+      })
+      .from(paymentReceipts)
+      .innerJoin(payments, eq(payments.id, paymentReceipts.paymentId))
+      .innerJoin(users, eq(users.id, payments.userId))
+      .innerJoin(courses, eq(courses.id, payments.courseId))
+      .where(eq(paymentReceipts.id, receiptId))
+      .limit(1);
+
+    if (!row) {
+      throw new NotFoundException('Receipt not found');
+    }
+
+    const downloadUrl = await this.storageService.getSignedUrl(
+      'private',
+      row.receipt.gcsObjectPath,
+    );
+
+    return {
+      receipt: {
+        id: row.receipt.id,
+        uploadedAt: row.receipt.createdAt,
+        fileName: row.receipt.fileName,
+        mimeType: row.receipt.mimeType,
+        fileSizeBytes: row.receipt.fileSizeBytes,
+        scanStatus: row.receipt.scanStatus,
+        scanCompletedAt: row.receipt.scanCompletedAt,
+        reviewStatus: row.receipt.reviewStatus,
+        reviewedBy: row.receipt.reviewedBy,
+        reviewedAt: row.receipt.reviewedAt,
+        reviewerNote: row.receipt.reviewerNote,
+        financeInternalNote: row.receipt.financeInternalNote,
+        refundInfo: {
+          accountHolder: row.receipt.refundAccountHolder,
+          iban: row.receipt.refundIban,
+          bankName: row.receipt.refundBankName,
+          nationalId: row.receipt.refundNationalId,
+        },
+        downloadUrl,
+      },
+      payment: row.payment,
+      student: {
+        id: row.userId,
+        name:
+          `${row.firstName || ''} ${row.lastName || ''}`.trim() || row.userEmail,
+        email: row.userEmail,
+      },
+      course: { id: row.courseId, title: row.courseTitle },
+    };
+  }
+
+  /**
+   * Finance approves a receipt: flip review_status → approved, flip payment
+   * to PAID + activate enrollment in one transaction (matches the same
+   * post-payment dance other gateways trigger via webhook), then generate
+   * the invoice and email the buyer.
+   *
+   * Optimistic lock: the receipt-status UPDATE filters on review_status =
+   * 'pending', so double-clicks throw ConflictException instead of
+   * double-approving.
+   */
+  async approveReceipt(
+    receiptId: string,
+    financeUser: AuthenticatedUser,
+    opts: { internalNote?: string } = {},
+    ipAddress?: string,
+  ) {
+    const [receipt] = await db
+      .select()
+      .from(paymentReceipts)
+      .where(eq(paymentReceipts.id, receiptId))
+      .limit(1);
+
+    if (!receipt) {
+      throw new NotFoundException('Receipt not found');
+    }
+    if (receipt.scanStatus === RECEIPT_SCAN_STATUS.INFECTED) {
+      throw new BadRequestException(
+        'Cannot approve a receipt flagged as infected by the malware scanner',
+      );
+    }
+    if (receipt.scanStatus === RECEIPT_SCAN_STATUS.PENDING) {
+      throw new BadRequestException(
+        'Malware scan has not completed yet — wait a moment and try again',
+      );
+    }
+    if (receipt.replacedById) {
+      throw new BadRequestException(
+        'This receipt has been superseded by a newer upload',
+      );
+    }
+
+    const result = await db.transaction(async (tx) => {
+      // Optimistic lock: only the first concurrent caller succeeds.
+      const updated = await tx
+        .update(paymentReceipts)
+        .set({
+          reviewStatus: RECEIPT_REVIEW_STATUS.APPROVED,
+          reviewedBy: financeUser.id,
+          reviewedAt: new Date(),
+          financeInternalNote: opts.internalNote || receipt.financeInternalNote,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(paymentReceipts.id, receiptId),
+            eq(paymentReceipts.reviewStatus, RECEIPT_REVIEW_STATUS.PENDING),
+          ),
+        )
+        .returning({ id: paymentReceipts.id });
+
+      if (updated.length === 0) {
+        throw new ConflictException(
+          'This receipt has already been actioned by another reviewer',
+        );
+      }
+
+      // Flip the payment to PAID + activate enrollment. Mirrors the
+      // canonical post-payment dance in PaymentsService.processPaymentSuccess.
+      const [payment] = await tx
+        .update(payments)
+        .set({
+          status: PAYMENT_STATUS.PAID,
+          paidAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(payments.id, receipt.paymentId),
+            sql`${payments.status} != ${PAYMENT_STATUS.PAID}`,
+          ),
+        )
+        .returning();
+
+      if (payment?.enrollmentId) {
+        await tx
+          .update(enrollments)
+          .set({ status: ENROLLMENT_STATUS.ACTIVE, enrolledAt: new Date() })
+          .where(eq(enrollments.id, payment.enrollmentId));
+      }
+
+      return payment;
+    });
+
+    if (!result) {
+      // Payment was already paid (race with another path). Receipt flip stands.
+      this.logger.warn(
+        `Receipt ${receiptId} approved but payment was already paid; no enrollment change`,
+      );
+    }
+
+    await this.auditLogService.log({
+      entityType: 'payment',
+      entityId: receipt.paymentId,
+      action: 'bank_transfer_approved',
+      performedBy: financeUser.id,
+      ipAddress,
+      metadata: { receiptId, internalNote: opts.internalNote || null },
+    });
+
+    // Fire-and-forget: generate invoice + send confirmation email outside the
+    // transaction (both can block on network IO). All failures are logged but
+    // don't roll back the approval — the payment is paid either way.
+    void this.completeApprovalAsync(receipt.paymentId);
+
+    return {
+      receiptId,
+      paymentId: receipt.paymentId,
+      paymentStatus: PAYMENT_STATUS.PAID,
+    };
+  }
+
+  private async completeApprovalAsync(paymentId: string): Promise<void> {
+    try {
+      await this.invoiceService.generateInvoice(paymentId);
+    } catch (err) {
+      this.logger.error(
+        `Invoice generation failed for bank-transfer payment ${paymentId}: ${(err as Error).message}`,
+      );
+    }
+
+    let pdf: { buffer: Buffer; filename: string } | undefined;
+    try {
+      const buf = await this.invoiceService.getInvoicePdfBuffer(paymentId);
+      if (buf) pdf = buf;
+    } catch {
+      /* non-fatal — email goes out without the attachment */
+    }
+
+    const userId = await this.getUserIdForPayment(paymentId);
+    if (!userId) {
+      this.logger.warn(`Cannot send approval email: payment ${paymentId} has no user`);
+      return;
+    }
+
+    try {
+      await this.emailService.sendPaymentConfirmation(userId, paymentId, pdf);
+    } catch (err) {
+      this.logger.error(
+        `Bank-transfer approval confirmation email failed for payment ${paymentId}: ${(err as Error).message}`,
+      );
+    }
+  }
+
+  /**
+   * Finance rejects a receipt: marks it rejected with a reviewer note that
+   * the student sees on re-upload. The payment goes back to PENDING (not
+   * FAILED) so the student can fix the issue and re-upload without starting
+   * a brand-new checkout — the bank-transfer page handles the re-upload UX.
+   *
+   * Reviewer note is required and shown to the student verbatim. Internal
+   * note (optional) stays private to finance.
+   */
+  async rejectReceipt(
+    receiptId: string,
+    financeUser: AuthenticatedUser,
+    opts: { reviewerNote: string; internalNote?: string },
+    ipAddress?: string,
+  ) {
+    if (!opts.reviewerNote?.trim() || opts.reviewerNote.trim().length < 5) {
+      throw new BadRequestException(
+        'Rejection requires a note (at least 5 characters) explaining why — the student will see this',
+      );
+    }
+
+    const [receipt] = await db
+      .select()
+      .from(paymentReceipts)
+      .where(eq(paymentReceipts.id, receiptId))
+      .limit(1);
+
+    if (!receipt) {
+      throw new NotFoundException('Receipt not found');
+    }
+    if (receipt.replacedById) {
+      throw new BadRequestException(
+        'This receipt has been superseded by a newer upload',
+      );
+    }
+
+    await db.transaction(async (tx) => {
+      const updated = await tx
+        .update(paymentReceipts)
+        .set({
+          reviewStatus: RECEIPT_REVIEW_STATUS.REJECTED,
+          reviewedBy: financeUser.id,
+          reviewedAt: new Date(),
+          reviewerNote: opts.reviewerNote.trim(),
+          financeInternalNote: opts.internalNote || receipt.financeInternalNote,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(paymentReceipts.id, receiptId),
+            eq(paymentReceipts.reviewStatus, RECEIPT_REVIEW_STATUS.PENDING),
+          ),
+        )
+        .returning({ id: paymentReceipts.id });
+
+      if (updated.length === 0) {
+        throw new ConflictException(
+          'This receipt has already been actioned by another reviewer',
+        );
+      }
+
+      // Roll payment back to PENDING so the student can upload a replacement
+      // (the bank-transfer page allows uploads on any non-finalized status).
+      await tx
+        .update(payments)
+        .set({ status: PAYMENT_STATUS.PENDING, updatedAt: new Date() })
+        .where(eq(payments.id, receipt.paymentId));
+    });
+
+    await this.auditLogService.log({
+      entityType: 'payment',
+      entityId: receipt.paymentId,
+      action: 'bank_transfer_rejected',
+      performedBy: financeUser.id,
+      ipAddress,
+      metadata: {
+        receiptId,
+        reviewerNote: opts.reviewerNote.trim(),
+        internalNote: opts.internalNote || null,
+      },
+    });
+
+    void this.emailService
+      .sendBankTransferRejected(receipt.paymentId, opts.reviewerNote.trim())
+      .catch((err) =>
+        this.logger.error(`Bank-transfer rejection email failed: ${err.message}`),
+      );
+
+    return {
+      receiptId,
+      paymentId: receipt.paymentId,
+      paymentStatus: PAYMENT_STATUS.PENDING,
+    };
+  }
+
+  private async getUserIdForPayment(paymentId: string): Promise<string | null> {
+    const [row] = await db
+      .select({ userId: payments.userId })
+      .from(payments)
+      .where(eq(payments.id, paymentId))
+      .limit(1);
+    return row?.userId || null;
   }
 
   // ─── Internals ──────────────────────────────────────────────────────

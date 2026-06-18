@@ -7814,6 +7814,7 @@
       "payments": "Payments",
       "invoices": "Invoices",
       "refunds": "Refunds",
+      "bankTransfers": "Bank Transfers",
       "discounts": "Discounts",
       "reports": "Reports",
       "support": "Support",
@@ -7827,6 +7828,85 @@
       "viewProfile": "View Profile",
       "editProfile": "Edit Profile",
       "logout": "Logout"
+    },
+    "bankTransferQueue": {
+      "title": "Bank Transfers",
+      "subtitle": "Review uploaded receipts and approve or reject student bank transfer payments.",
+      "refresh": "Refresh",
+      "review": "Review",
+      "searchPlaceholder": "Search by student, email, or payment ID",
+      "showing": "Showing {from}–{to} of {total}",
+      "tabs": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "all": "All"
+      },
+      "col": {
+        "student": "Student",
+        "course": "Course",
+        "amount": "Amount",
+        "uploaded": "Uploaded",
+        "scan": "Scan",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "empty": {
+        "title": "Nothing to review",
+        "body": "No bank transfer receipts match the current filters."
+      },
+      "scan": {
+        "pending": "Scanning",
+        "clean": "Clean",
+        "infected": "Infected",
+        "error": "Scan error"
+      },
+      "review": {
+        "pending": "Pending review",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "actions": {
+        "approveSuccess": "Payment approved — student notified and enrolled.",
+        "approveFailed": "Could not approve the receipt. Please try again.",
+        "rejectSuccess": "Receipt rejected — student notified with your note.",
+        "rejectFailed": "Could not reject the receipt. Please try again.",
+        "noteRequired": "Please write a note (at least 5 characters) for the student."
+      },
+      "modal": {
+        "title": "Review bank transfer receipt",
+        "close": "Close",
+        "cancel": "Cancel",
+        "back": "Back",
+        "receipt": "Receipt",
+        "openInNewTab": "Open in new tab",
+        "previewUnavailable": "Preview not available — open the file in a new tab.",
+        "payment": "Payment",
+        "student": "Student",
+        "course": "Course",
+        "amount": "Amount",
+        "uploadedAt": "Uploaded at",
+        "paymentId": "Payment ID",
+        "refundInfo": "Student's bank account (for refunds)",
+        "accountHolder": "Account holder",
+        "iban": "IBAN",
+        "bank": "Bank",
+        "nationalId": "National ID / Iqama",
+        "internalNote": "Internal note (optional)",
+        "internalNotePlaceholder": "Private notes for the finance team. Never shown to the student.",
+        "internalNoteHint": "Saved to the audit log. Use it to record context for other reviewers.",
+        "rejectTitle": "Reason for rejection",
+        "rejectNotePlaceholder": "Explain why you're rejecting this receipt. The student will see this verbatim and use it to upload a corrected receipt.",
+        "rejectNoteHint": "Required. Minimum 5 characters. Shown to the student in their rejection email.",
+        "approve": "Approve & enroll student",
+        "reject": "Reject…",
+        "confirmReject": "Confirm rejection",
+        "reviewerNote": "Reviewer note",
+        "approvedNotice": "This receipt has been approved.",
+        "rejectedNotice": "This receipt has been rejected.",
+        "infectedWarning": "This file was flagged by the malware scanner. Approval is blocked. Ask the student to re-upload from a clean source.",
+        "scanPending": "The malware scan hasn't completed yet. Approval is temporarily disabled — refresh in a moment."
+      }
     },
     "kpi": {
       "revenueMTD": "Revenue (MTD)",

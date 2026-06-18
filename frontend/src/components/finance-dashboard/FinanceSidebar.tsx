@@ -24,6 +24,7 @@ import {
   Trash2,
   Headphones,
   UserPlus,
+  Building2,
 } from "lucide-react";
 
 interface FinanceProfile {
@@ -110,6 +111,11 @@ const FinanceSidebar = ({ profile, pendingRefundCount = 0 }: FinanceSidebarProps
       href: `/${locale}/dashboard/finance/refunds`,
       icon: RotateCcw,
       badge: pendingRefundCount > 0 ? pendingRefundCount : undefined,
+    },
+    {
+      label: t("sidebar.bankTransfers"),
+      href: `/${locale}/dashboard/finance/bank-transfers`,
+      icon: Building2,
     },
     {
       label: t("sidebar.discounts"),

@@ -82,7 +82,7 @@ export class BankTransferGateway extends BaseGateway implements PaymentGateway {
     return true;
   }
 
-  processWebhook(_body: any): WebhookResult {
+  async processWebhook(_body: any): Promise<WebhookResult> {
     throw new Error(
       'Bank transfers do not use webhooks — approval happens via the finance dashboard',
     );

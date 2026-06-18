@@ -64,7 +64,14 @@ export interface PaymentGateway {
 
   verifyWebhook(headers: Record<string, string>, body: any): boolean;
 
-  processWebhook(body: any): WebhookResult;
+  /**
+   * Process an inbound webhook body into a normalized result the controller can
+   * route. Async because some gateways (notably Tamara) MUST make follow-up API
+   * calls before they can answer "was the payment captured?" — see Tamara's
+   * Approved → Authorise → Capture lifecycle. Pure gateways (Moyasar) implement
+   * this as a synchronous body parse wrapped in `async`.
+   */
+  processWebhook(body: any): Promise<WebhookResult>;
 
   refund(params: RefundParams): Promise<RefundResult>;
 

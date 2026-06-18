@@ -732,9 +732,14 @@ export class PaymentsService {
       if (payment.gatewayChargeId) {
         try {
           const gateway = this.gatewayFactory.getGateway(payment.gateway);
-          const charge = await gateway.getCharge(payment.gatewayChargeId);
+          // Use the gateway's normalized status mapping rather than raw
+          // status strings — different providers return wildly different
+          // shapes (Moyasar: 'paid', Tabby: 'CAPTURED', Tamara:
+          // 'fully_captured'), and the previous string check only matched
+          // Moyasar/Tabby — Tamara polls never converted to success.
+          const normalized = await gateway.getPaymentStatus(payment.gatewayChargeId);
 
-          if (charge?.status === 'paid' || charge?.status === 'CAPTURED') {
+          if (normalized === 'paid') {
             await this.processPaymentSuccess(paymentId);
 
             // Generate invoice + send confirmation email (same as webhook path)

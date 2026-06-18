@@ -116,8 +116,10 @@ export class WebhooksController {
       throw new UnauthorizedException('Invalid webhook signature');
     }
 
-    // 3. Extract charge info
-    const webhookResult = gateway.processWebhook(body);
+    // 3. Extract charge info. Some gateways (Tamara) make follow-up API
+    //    calls inside processWebhook to authorise + capture the order
+    //    before answering 'paid', so this is async.
+    const webhookResult = await gateway.processWebhook(body);
 
     // 4. Skip non-terminal statuses (e.g. Tap INITIATED / IN_PROGRESS)
     if (webhookResult.status === 'pending') {

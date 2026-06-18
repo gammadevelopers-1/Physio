@@ -15,6 +15,29 @@ import {
 import { BaseGateway } from './base.gateway';
 import { PaymentGatewayError } from './payment-gateway.error';
 
+/**
+ * TamaraGateway — KSA BNPL (3 monthly instalments, interest-free).
+ *
+ * Tamara's order lifecycle is multi-step and unforgiving:
+ *
+ *   buyer pays first instalment on Tamara
+ *     ↓ webhook: order_approved
+ *   merchant calls POST /orders/{id}/authorise         ← we MUST do this
+ *     ↓ webhook: order_authorised
+ *   merchant calls POST /payments/capture              ← we MUST do this
+ *     ↓ webhook: order_captured
+ *   money settles to merchant bank.
+ *
+ * If we don't authorise within 72 hours, Tamara auto-cancels and refunds the
+ * buyer. The current implementation calls authorise + capture inline on the
+ * order_approved webhook so the entire round-trip completes in ~2 seconds.
+ * If those API calls fail, we DON'T return 'paid' to the webhook controller
+ * — the payment stays in 'pending' status, Tamara's built-in webhook retry
+ * fires the same order_approved event again, and we retry inline.
+ *
+ * Phase T2 will add a BullMQ retry queue + daily cron sweep + finance email
+ * alerts for the 1% case where Tamara's own retries also fail.
+ */
 @Injectable()
 export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
   readonly name = 'tamara' as const;
@@ -80,10 +103,15 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
         city: 'Riyadh',
         line1: 'Digital Delivery',
       },
+      // success → our /payment/callback handler. failure + cancel both send
+      // the buyer back to the checkout page so they can pick a different
+      // gateway or retry — the previous .replace('status=paid', ...) was
+      // a no-op (the redirect URL has no status=paid substring) and every
+      // outcome silently landed on the success spinner.
       merchant_url: {
         success: params.redirectUrl,
-        failure: params.redirectUrl.replace('status=paid', 'status=failed'),
-        cancel: params.redirectUrl.replace('status=paid', 'status=cancelled'),
+        failure: params.cancelUrl || params.redirectUrl,
+        cancel: params.cancelUrl || params.redirectUrl,
         notification: params.webhookUrl,
       },
       metadata: params.metadata,
@@ -122,26 +150,219 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
   verifyWebhook(headers: Record<string, string>, _body: any): boolean {
     if (!this.notificationToken) return false;
 
+    // Headers are normalized to lowercase by Node's http parser, but accept
+    // the original-case variant defensively too.
     const token =
       headers['notification-token'] || headers['Notification-Token'];
     return token === this.notificationToken;
   }
 
-  processWebhook(body: any): WebhookResult {
+  /**
+   * Map an inbound Tamara webhook to a normalized result.
+   *
+   * For the critical `order_approved` event we synchronously call Authorise +
+   * Capture against Tamara's API before answering "paid". If either call fails,
+   * we return `pending` — Tamara will re-fire the same webhook a few times
+   * (their built-in retry), and our webhook controller's dedup map only blocks
+   * the same gateway+chargeId combination during the in-memory TTL, so the
+   * next Tamara retry after that window will re-enter this method and try
+   * again. Phase T2 adds a longer-tailed retry queue for the edge case where
+   * Tamara also gives up.
+   */
+  async processWebhook(body: any): Promise<WebhookResult> {
     const chargeId = body.order_id || body.data?.order_id;
-    let status: 'paid' | 'failed' | 'refunded' = 'failed';
-
     const eventType = body.event_type || body.type;
-    if (
-      eventType === 'order_approved' ||
-      eventType === 'order_captured'
-    ) {
-      status = 'paid';
-    } else if (eventType === 'order_refunded') {
-      status = 'refunded';
+
+    this.logger.log(
+      `Tamara webhook event=${eventType} order=${chargeId}`,
+    );
+
+    // Terminal-failure events: order auto-cancelled or declined by Tamara.
+    // Map each to a distinct error code so finance can tell at-a-glance why
+    // the order died without digging into the raw webhook payload.
+    if (eventType === 'order_declined') {
+      return {
+        chargeId,
+        status: 'failed',
+        errorCode: 'order_declined',
+        rawData: body,
+      };
+    }
+    if (eventType === 'order_expired') {
+      // The 72-hour Authorise window passed without us calling Authorise.
+      // Tamara has already refunded the buyer. We just mark our payment failed.
+      return {
+        chargeId,
+        status: 'failed',
+        errorCode: 'authorise_window_expired',
+        rawData: body,
+      };
+    }
+    if (eventType === 'order_canceled' || eventType === 'order_cancelled') {
+      return {
+        chargeId,
+        status: 'failed',
+        errorCode: 'order_cancelled',
+        rawData: body,
+      };
+    }
+    if (eventType === 'order_refunded') {
+      return { chargeId, status: 'refunded', rawData: body };
     }
 
-    return { chargeId, status, rawData: body };
+    // Already-captured event: Tamara fires this after our Capture call
+    // succeeds. By the time it arrives our payment row is already PAID
+    // (we flipped it in the order_approved path below), so the webhook
+    // processor's idempotency guard makes this a no-op. Still respond
+    // 'paid' for symmetry.
+    if (eventType === 'order_captured') {
+      return { chargeId, status: 'paid', rawData: body };
+    }
+
+    // Approved is the event that triggers the multi-step settlement. Run
+    // Authorise → Capture inline so the entire flow completes before we
+    // respond 'paid' to the webhook controller.
+    if (eventType === 'order_approved' || eventType === 'order_authorised') {
+      const totalAmount = body.total_amount?.amount;
+      const totalCurrency = body.total_amount?.currency || 'SAR';
+      if (!chargeId || totalAmount == null) {
+        this.logger.error(
+          `Tamara ${eventType} webhook missing order_id / total_amount: ${JSON.stringify(body)}`,
+        );
+        return { chargeId, status: 'failed', errorCode: 'malformed_webhook', rawData: body };
+      }
+
+      // Step 1: Authorise (idempotent on Tamara's side — calling twice
+      // returns the existing authorisation, not an error). Skip if the
+      // webhook is order_authorised — we already passed this step.
+      if (eventType === 'order_approved') {
+        try {
+          await this.authoriseOrder(chargeId);
+          this.logger.log(`Tamara order ${chargeId} authorised`);
+        } catch (err) {
+          this.logger.error(
+            `Tamara authorise failed for ${chargeId}: ${(err as Error).message}`,
+          );
+          // DO NOT mark paid. Return 'pending' so the webhook controller's
+          // "non-terminal status" branch skips the success flow entirely.
+          // Tamara will retry the webhook on its own schedule.
+          return {
+            chargeId,
+            status: 'pending',
+            errorCode: 'authorise_failed',
+            rawData: body,
+          };
+        }
+      }
+
+      // Step 2: Capture (also idempotent — Tamara returns the existing
+      // capture record if we call it twice on the same order).
+      try {
+        await this.captureOrder(chargeId, Number(totalAmount), totalCurrency);
+        this.logger.log(
+          `Tamara order ${chargeId} captured for ${totalAmount} ${totalCurrency}`,
+        );
+      } catch (err) {
+        this.logger.error(
+          `Tamara capture failed for ${chargeId}: ${(err as Error).message}`,
+        );
+        return {
+          chargeId,
+          status: 'pending',
+          errorCode: 'capture_failed',
+          rawData: body,
+        };
+      }
+
+      // Both steps succeeded. Now it's genuinely paid.
+      return { chargeId, status: 'paid', rawData: body };
+    }
+
+    // Unknown event — log + return failed so it doesn't silently enroll
+    // anyone. Tamara docs list ~10 events; any future additions show up here.
+    this.logger.warn(
+      `Tamara webhook with unhandled event_type=${eventType}, order=${chargeId}`,
+    );
+    return {
+      chargeId,
+      status: 'failed',
+      errorCode: 'unknown_event',
+      rawData: body,
+    };
+  }
+
+  /**
+   * Tell Tamara we (the merchant) confirm this order — moves it from
+   * Approved → Authorised. Must be called within 72h of order_approved or
+   * Tamara auto-cancels and refunds the buyer.
+   *
+   * Tamara docs: POST /orders/{order_id}/authorise
+   */
+  async authoriseOrder(orderId: string): Promise<void> {
+    const response = await this.fetchWithRetry(
+      `${this.apiUrl}/orders/${orderId}/authorise`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.apiToken}`,
+          'Content-Type': 'application/json',
+        },
+        // Tamara accepts an empty body for authorise.
+        body: JSON.stringify({}),
+      },
+    );
+
+    // 409 = already authorised. That's a SUCCESS for our purposes — we just
+    // want the order in the authorised state, regardless of who got it there.
+    if (response.status === 409) {
+      this.logger.log(`Tamara order ${orderId} was already authorised (409)`);
+      return;
+    }
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new PaymentGatewayError(
+        'tamara',
+        data.message || `Authorise failed with HTTP ${response.status}`,
+        this.normalizeErrorCode(data.error_code || data.message),
+        data,
+      );
+    }
+  }
+
+  /**
+   * Tell Tamara to settle the funds to our merchant account. Must be called
+   * after Authorise. Tamara holds an authorised-but-not-captured order for
+   * ~30 days before auto-releasing.
+   *
+   * Tamara docs: POST /payments/capture
+   */
+  async captureOrder(
+    orderId: string,
+    amount: number,
+    currency: string,
+  ): Promise<void> {
+    const response = await this.fetchWithRetry(`${this.apiUrl}/payments/capture`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.apiToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        order_id: orderId,
+        total_amount: { amount, currency },
+      }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new PaymentGatewayError(
+        'tamara',
+        data.message || `Capture failed with HTTP ${response.status}`,
+        this.normalizeErrorCode(data.error_code || data.message),
+        data,
+      );
+    }
   }
 
   async refund(params: RefundParams): Promise<RefundResult> {
@@ -198,12 +419,28 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
   async getPaymentStatus(chargeId: string): Promise<NormalizedPaymentStatus> {
     const data = await this.getCharge(chargeId);
     switch (data.status) {
-      case 'approved': case 'captured': case 'fully_captured': return 'paid';
-      case 'pending_customer_action': case 'pending': return 'pending';
-      case 'declined': case 'expired': return 'failed';
-      case 'refunded': case 'fully_refunded': return 'refunded';
-      case 'cancelled': return 'cancelled';
-      default: return 'unknown';
+      // 'approved' means buyer paid 1st instalment but merchant hasn't
+      // Authorised yet — funds are not ours. Only 'captured' / 'fully_captured'
+      // count as paid.
+      case 'captured':
+      case 'fully_captured':
+        return 'paid';
+      case 'authorised':
+      case 'approved':
+      case 'pending_customer_action':
+      case 'pending':
+        return 'pending';
+      case 'declined':
+      case 'expired':
+        return 'failed';
+      case 'refunded':
+      case 'fully_refunded':
+        return 'refunded';
+      case 'cancelled':
+      case 'canceled':
+        return 'cancelled';
+      default:
+        return 'unknown';
     }
   }
 

@@ -166,25 +166,25 @@ describe('MockGateway', () => {
 
   // ── processWebhook ────────────────────────────────────────────────────────────
   describe('processWebhook()', () => {
-    it('reads chargeId from charge_id field', () => {
-      const result = gateway.processWebhook({ charge_id: 'mock_chg_1', status: 'paid' });
+    it('reads chargeId from charge_id field', async () => {
+      const result = await gateway.processWebhook({ charge_id: 'mock_chg_1', status: 'paid' });
       expect(result.chargeId).toBe('mock_chg_1');
       expect(result.status).toBe('paid');
     });
 
-    it('reads chargeId from chargeId field (fallback)', () => {
-      const result = gateway.processWebhook({ chargeId: 'mock_chg_2', status: 'failed' });
+    it('reads chargeId from chargeId field (fallback)', async () => {
+      const result = await gateway.processWebhook({ chargeId: 'mock_chg_2', status: 'failed' });
       expect(result.chargeId).toBe('mock_chg_2');
     });
 
-    it('defaults status to "paid" if missing', () => {
-      const result = gateway.processWebhook({ charge_id: 'mock_chg_3' });
+    it('defaults status to "paid" if missing', async () => {
+      const result = await gateway.processWebhook({ charge_id: 'mock_chg_3' });
       expect(result.status).toBe('paid');
     });
 
-    it('passes through "failed" and "refunded" statuses', () => {
-      expect(gateway.processWebhook({ charge_id: 'x', status: 'failed' }).status).toBe('failed');
-      expect(gateway.processWebhook({ charge_id: 'x', status: 'refunded' }).status).toBe('refunded');
+    it('passes through "failed" and "refunded" statuses', async () => {
+      expect((await gateway.processWebhook({ charge_id: 'x', status: 'failed' })).status).toBe('failed');
+      expect((await gateway.processWebhook({ charge_id: 'x', status: 'refunded' })).status).toBe('refunded');
     });
   });
 

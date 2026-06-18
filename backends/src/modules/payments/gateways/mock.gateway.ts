@@ -85,7 +85,7 @@ export class MockGateway extends BaseGateway implements PaymentGateway {
     return true;
   }
 
-  processWebhook(body: any): WebhookResult {
+  async processWebhook(body: any): Promise<WebhookResult> {
     return {
       chargeId: body.charge_id || body.chargeId,
       status: body.status || 'paid',

@@ -76,10 +76,15 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
       },
       lang: params.locale || 'en',
       merchant_code: 'physioguidance',
+      // success goes to our /payment/callback handler. cancel + failure both
+      // send the buyer back to the checkout page (params.cancelUrl) so they
+      // can pick a different gateway or retry — without that fallback the
+      // old code's string-replace was a no-op (the redirect URL has no
+      // status=paid substring) and every outcome landed on the success spinner.
       merchant_urls: {
         success: params.redirectUrl,
-        cancel: params.redirectUrl.replace('status=paid', 'status=cancelled'),
-        failure: params.redirectUrl.replace('status=paid', 'status=failed'),
+        cancel: params.cancelUrl || params.redirectUrl,
+        failure: params.cancelUrl || params.redirectUrl,
       },
     };
 
@@ -134,7 +139,7 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
     return signature === expectedSignature;
   }
 
-  processWebhook(body: any): WebhookResult {
+  async processWebhook(body: any): Promise<WebhookResult> {
     const chargeId = body.id || body.payment?.id;
     let status: 'paid' | 'failed' | 'refunded' = 'failed';
 

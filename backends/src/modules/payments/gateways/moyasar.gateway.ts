@@ -93,7 +93,7 @@ export class MoyasarGateway extends BaseGateway implements PaymentGateway {
     return token === this.webhookSecret;
   }
 
-  processWebhook(body: any): WebhookResult {
+  async processWebhook(body: any): Promise<WebhookResult> {
     // We key payments by the Moyasar INVOICE id (stored as gatewayChargeId).
     // A payment webhook references its invoice via data.invoice_id; fall back to
     // data.id for non-invoice events.

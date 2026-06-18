@@ -1,9 +1,10 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { eq, and, desc, count, sql, gte, lte } from 'drizzle-orm';
+import { eq, and, desc, count, sql, gte, lte, inArray } from 'drizzle-orm';
 import { db } from '../../../database';
 import {
   invoices,
   payments,
+  paymentItems,
   courses,
   users,
   refunds,
@@ -43,13 +44,33 @@ export class InvoiceService {
       .where(eq(users.id, payment.userId))
       .limit(1);
 
-    const [course] = await db
+    // Multi-line carts: load all line items + their courses for the snapshot.
+    // Legacy single-course payments have no payment_items rows; fall back to
+    // payments.courseId so old invoices keep generating identically.
+    const items = await db
+      .select({
+        courseId: paymentItems.courseId,
+        unitPrice: paymentItems.unitPrice,
+        salePrice: paymentItems.salePrice,
+        lineDiscount: paymentItems.discountAmount,
+        lineTotal: paymentItems.lineTotal,
+      })
+      .from(paymentItems)
+      .where(eq(paymentItems.paymentId, paymentId));
+
+    const lineCourseIds =
+      items.length > 0 ? items.map((i) => i.courseId) : [payment.courseId];
+
+    const lineCourses = await db
       .select()
       .from(courses)
-      .where(eq(courses.id, payment.courseId))
-      .limit(1);
+      .where(inArray(courses.id, lineCourseIds));
+    const courseById = new Map(lineCourses.map((c) => [c.id, c]));
 
-    if (!userData || !course) {
+    // Primary course for the invoice's top-level course column (legacy field
+    // on the invoices table). For multi-line, use the first line course.
+    const primaryCourse = courseById.get(payment.courseId) || lineCourses[0];
+    if (!userData || !primaryCourse) {
       throw new NotFoundException('User or course not found');
     }
 
@@ -66,23 +87,51 @@ export class InvoiceService {
       ? new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
       : null;
 
-    // Build metadata snapshot for the invoice
+    // Build the line items snapshot — one row per cart course for multi-line
+    // payments, one row for legacy single-course payments.
+    const lineItemsSnapshot =
+      items.length > 0
+        ? items.map((it) => {
+            const c = courseById.get(it.courseId);
+            return {
+              courseId: it.courseId,
+              description: c?.title || 'Course',
+              descriptionAr: c?.titleAr || null,
+              deliveryType: c?.deliveryType || null,
+              unitPrice: Number(it.unitPrice),
+              salePrice: Number(it.salePrice),
+              discount: Number(it.lineDiscount),
+              amount: Number(it.lineTotal),
+            };
+          })
+        : [
+            {
+              courseId: primaryCourse.id,
+              description: primaryCourse.title,
+              descriptionAr: primaryCourse.titleAr || null,
+              deliveryType: primaryCourse.deliveryType || null,
+              unitPrice: subtotal,
+              salePrice: subtotal,
+              discount: 0,
+              amount: subtotal,
+            },
+          ];
+
     const invoiceMetadata = {
       buyer: {
         name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
         email: userData.email,
         nationalId: (userData as any).nationalId || null,
       },
+      // Kept for backwards-compat with any reader that uses .course; first line.
       course: {
-        title: course.title,
-        titleAr: course.titleAr || null,
-        deliveryType: course.deliveryType || null,
-        startDate: course.startDate || null,
-        endDate: course.endDate || null,
+        title: primaryCourse.title,
+        titleAr: primaryCourse.titleAr || null,
+        deliveryType: primaryCourse.deliveryType || null,
+        startDate: primaryCourse.startDate || null,
+        endDate: primaryCourse.endDate || null,
       },
-      lineItems: [
-        { description: course.title, amount: subtotal },
-      ],
+      lineItems: lineItemsSnapshot,
       discount:
         discountAmount > 0
           ? { code: paymentMeta?.discountCode || null, amount: discountAmount }
@@ -150,7 +199,8 @@ export class InvoiceService {
         invoice,
         payment,
         userData,
-        course,
+        primaryCourse,
+        lineItemsSnapshot,
       );
 
       // Upload to storage (path used as key for signed URL generation)
@@ -190,6 +240,12 @@ export class InvoiceService {
     payment: any,
     userData: any,
     course: any,
+    lineItems?: Array<{
+      description: string;
+      descriptionAr: string | null;
+      deliveryType: string | null;
+      amount: number;
+    }>,
   ): Promise<Buffer> {
     return new Promise(async (resolve, reject) => {
       try {
@@ -272,22 +328,42 @@ export class InvoiceService {
         doc.font('Helvetica').text('Amount', 450, tableTop, { align: 'right' });
         doc.moveTo(50, tableTop + 15).lineTo(545, tableTop + 15).stroke();
 
-        // Course line item
-        let y = tableTop + 25;
-        doc.font('Helvetica').fontSize(10).text(course.title || 'Course', 50, y);
-        if (course.titleAr) {
-          doc.font('NotoArabic').text(course.titleAr, 50, y + 15, ws);
-          y += 15;
-        }
-        if (course.deliveryType) {
-          doc.font('Helvetica').fontSize(9).text(`Delivery: ${course.deliveryType}`, 50, y + 15);
-          doc.fontSize(10);
-          y += 15;
-        }
-        doc.font('Helvetica').fontSize(10)
-          .text(`SAR ${Number(invoice.subtotal).toFixed(2)}`, 450, tableTop + 25, { align: 'right' });
+        // Render line items. Multi-line carts pass the full list; legacy
+        // single-course invoices fall back to a one-row synthesis from
+        // the primary course + subtotal.
+        const itemsToRender =
+          lineItems && lineItems.length > 0
+            ? lineItems
+            : [
+                {
+                  description: course.title || 'Course',
+                  descriptionAr: course.titleAr || null,
+                  deliveryType: course.deliveryType || null,
+                  amount: Number(invoice.subtotal),
+                },
+              ];
 
-        y += 25;
+        let y = tableTop + 25;
+        for (const item of itemsToRender) {
+          const rowTop = y;
+          doc.font('Helvetica').fontSize(10).text(item.description, 50, y, { width: 380 });
+          let rowExtra = 0;
+          if (item.descriptionAr) {
+            doc.font('NotoArabic').text(item.descriptionAr, 50, y + 15, ws);
+            rowExtra += 15;
+          }
+          if (item.deliveryType) {
+            doc.font('Helvetica').fontSize(9)
+              .text(`Delivery: ${item.deliveryType}`, 50, y + 15 + rowExtra);
+            doc.fontSize(10);
+            rowExtra += 15;
+          }
+          doc.font('Helvetica').fontSize(10)
+            .text(`SAR ${Number(item.amount).toFixed(2)}`, 450, rowTop, { align: 'right' });
+          y += 25 + rowExtra;
+        }
+        // Light divider between items and the totals block.
+        doc.moveTo(50, y - 5).lineTo(545, y - 5).strokeColor('#e5e5e5').stroke().strokeColor('#000');
 
         // Discount
         if (Number(invoice.discountAmount) > 0) {
@@ -367,7 +443,18 @@ export class InvoiceService {
         const [course] = await db.select().from(courses).where(eq(courses.id, invoice.courseId)).limit(1);
 
         if (payment && userData && course) {
-          const pdfBuffer = await this.generatePdf(invoice, payment, userData, course);
+          // Re-hydrate the line items snapshot saved at invoice creation time
+          // so the regenerated PDF matches the original (don't re-read live
+          // courses — a renamed course would silently rewrite a paid invoice).
+          const meta = (invoice.metadata as any) || {};
+          const persistedLineItems = Array.isArray(meta.lineItems) ? meta.lineItems : undefined;
+          const pdfBuffer = await this.generatePdf(
+            invoice,
+            payment,
+            userData,
+            course,
+            persistedLineItems,
+          );
           const filename = `invoices/${invoice.invoiceNumber}.pdf`;
           await this.storageService.uploadPrivate(pdfBuffer, filename, 'application/pdf');
           await db

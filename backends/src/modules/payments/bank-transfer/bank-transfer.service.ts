@@ -6,11 +6,12 @@ import {
   ForbiddenException,
   ConflictException,
 } from '@nestjs/common';
-import { eq, and, isNull, desc, count, ilike, or, sql } from 'drizzle-orm';
+import { eq, and, isNull, desc, count, ilike, or, sql, inArray } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { db } from '../../../database';
 import {
   payments,
+  paymentItems,
   paymentReceipts,
   courses,
   users,
@@ -580,11 +581,26 @@ export class BankTransferService {
         )
         .returning();
 
-      if (payment?.enrollmentId) {
+      // Activate enrollments — multi-line carts pull from payment_items,
+      // legacy single-line payments fall back to payment.enrollmentId.
+      const lineEnrollmentRows = await tx
+        .select({ enrollmentId: paymentItems.enrollmentId })
+        .from(paymentItems)
+        .where(eq(paymentItems.paymentId, receipt.paymentId));
+
+      const enrollmentIdsToActivate = lineEnrollmentRows
+        .map((r) => r.enrollmentId)
+        .filter((id): id is string => Boolean(id));
+
+      if (enrollmentIdsToActivate.length === 0 && payment?.enrollmentId) {
+        enrollmentIdsToActivate.push(payment.enrollmentId);
+      }
+
+      if (enrollmentIdsToActivate.length > 0) {
         await tx
           .update(enrollments)
           .set({ status: ENROLLMENT_STATUS.ACTIVE, enrolledAt: new Date() })
-          .where(eq(enrollments.id, payment.enrollmentId));
+          .where(inArray(enrollments.id, enrollmentIdsToActivate));
       }
 
       return payment;

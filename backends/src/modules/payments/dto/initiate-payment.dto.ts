@@ -1,8 +1,22 @@
-import { IsUUID, IsIn, IsOptional, IsString } from 'class-validator';
+import {
+  IsUUID,
+  IsIn,
+  IsOptional,
+  IsString,
+  IsArray,
+  ArrayMinSize,
+  ArrayMaxSize,
+} from 'class-validator';
 
 export class InitiatePaymentDto {
-  @IsUUID()
-  courseId: string;
+  // Multi-course cart: one payment, many line items. Sent as an array even
+  // for a single-course express purchase so the backend has a single shape
+  // to validate.
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(20)
+  @IsUUID('all', { each: true })
+  courseIds: string[];
 
   @IsIn(['moyasar', 'tamara', 'tabby', 'bank_transfer', 'mock'])
   gateway: string;

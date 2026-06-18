@@ -21,6 +21,10 @@ export interface CreateChargeParams {
     paymentId: string;
     enrollmentId: string;
     courseId: string;
+    /** All courses in a cart-checkout. Single-course express buys send a
+     *  one-element array. Stored on the gateway so refund / dispute lookups
+     *  can recover the full purchase set. */
+    courseIds?: string[];
     userId: string;
   };
   locale?: 'ar' | 'en';

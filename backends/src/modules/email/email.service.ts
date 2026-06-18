@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { db } from '../../database';
 import { users } from '../../database/schema';
 import { userPreferences } from '../../database/schema/user-preferences';
@@ -1992,11 +1992,20 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
         .limit(1);
       if (!payment) return;
 
-      const [course] = await db
-        .select({ title: courses.title })
+      // Multi-line carts: resolve all course titles from payment_items. Legacy
+      // single-course payments fall back to payments.courseId.
+      const cartCourseIds = ((payment.metadata as any)?.courseIds as string[] | undefined) || [
+        payment.courseId,
+      ];
+
+      const courseRows = await db
+        .select({ id: courses.id, title: courses.title })
         .from(courses)
-        .where(eq(courses.id, payment.courseId))
-        .limit(1);
+        .where(inArray(courses.id, cartCourseIds));
+
+      // Preserve cart order in the displayed list.
+      const titleById = new Map(courseRows.map((c) => [c.id, c.title]));
+      const orderedTitles = cartCourseIds.map((id) => titleById.get(id) || 'Course');
 
       const [invoice] = await db
         .select({ invoiceNumber: invoices.invoiceNumber })
@@ -2005,9 +2014,18 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
         .limit(1);
 
       const studentName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Student';
+
+      // Single-course payments keep the original "Payment Confirmed - {Course}"
+      // subject so existing email filters / SLAs are unaffected. Multi-course
+      // carts use "Payment Confirmed - N courses".
+      const courseName =
+        orderedTitles.length === 1
+          ? orderedTitles[0]
+          : `${orderedTitles.length} courses`;
+
       const params = {
         studentName,
-        courseName: course?.title || 'Course',
+        courseName,
         amount: String(payment.amount),
         currency: payment.currency,
         invoiceNumber: invoice?.invoiceNumber || 'N/A',
@@ -2017,7 +2035,7 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
 
       await this.send({
         to: user.email,
-        subject: `Payment Confirmed - ${course?.title || 'Course'}`,
+        subject: `Payment Confirmed - ${courseName}`,
         html: getPaymentConfirmationHtml(params),
         text: getPaymentConfirmationText(params),
         ...(pdfAttachment && {

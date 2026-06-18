@@ -9,6 +9,7 @@ import { eq, and, ne, desc, count, sql, inArray, or, ilike, gte, lte } from 'dri
 import { db } from '../../database';
 import {
   payments,
+  paymentItems,
   courses,
   enrollments,
   users,
@@ -42,91 +43,131 @@ export class PaymentsService {
   ) {}
 
   async initiatePayment(user: AuthenticatedUser, dto: InitiatePaymentDto, ipAddress?: string) {
-    // 1. Validate course exists, is active, and has a price
-    const [course] = await db
+    // De-duplicate courseIds defensively — UI shouldn't send duplicates, but a
+    // duplicate would crash the unique-per-payment constraint mid-transaction.
+    const courseIds = Array.from(new Set(dto.courseIds));
+    if (courseIds.length === 0) {
+      throw new BadRequestException('At least one course is required');
+    }
+
+    // 1. Load all courses (active only) preserving cart order.
+    const courseRows = await db
       .select()
       .from(courses)
       .where(
         and(
-          eq(courses.id, dto.courseId),
+          inArray(courses.id, courseIds),
           eq(courses.status, COURSE_STATUS.ACTIVE),
         ),
-      )
-      .limit(1);
+      );
 
-    if (!course) {
-      throw new NotFoundException('Course not found or not available');
-    }
-
-    // Course-level sale: charge the sale-adjusted price. A 100% sale makes the
-    // effective price 0, which routes here to the free-enroll endpoint (same as
-    // a genuinely free course).
-    const sale = getEffectivePrice(course);
-    const coursePrice = sale.effectivePrice;
-    if (coursePrice <= 0) {
-      throw new BadRequestException(
-        'This course is free. Use the enroll endpoint instead.',
+    if (courseRows.length !== courseIds.length) {
+      const found = new Set(courseRows.map((c) => c.id));
+      const missing = courseIds.filter((id) => !found.has(id));
+      throw new NotFoundException(
+        `Course(s) not available: ${missing.join(', ')}`,
       );
     }
 
-    // 2. Check max enrollment
-    if (course.maxEnrollment) {
-      const [countResult] = await db
-        .select({ count: count() })
-        .from(enrollments)
-        .where(
-          and(
-            eq(enrollments.courseId, dto.courseId),
-            eq(enrollments.status, 'active'),
-          ),
+    // Preserve cart order in the line items.
+    const courseById = new Map(courseRows.map((c) => [c.id, c]));
+    const orderedCourses = courseIds.map((id) => courseById.get(id)!);
+
+    // 2. Per-course validation: must be paid, must not be at capacity.
+    const lines = orderedCourses.map((course) => {
+      const sale = getEffectivePrice(course);
+      const salePrice = sale.effectivePrice;
+      if (salePrice <= 0) {
+        throw new BadRequestException(
+          `Course "${course.title}" is free — use the free-enroll flow instead.`,
         );
-      const currentCount = Number(countResult?.count || 0);
-      if (currentCount >= course.maxEnrollment) {
-        throw new BadRequestException('This course is full');
+      }
+      return { course, sale, salePrice };
+    });
+
+    for (const { course } of lines) {
+      if (course.maxEnrollment) {
+        const [countResult] = await db
+          .select({ count: count() })
+          .from(enrollments)
+          .where(
+            and(
+              eq(enrollments.courseId, course.id),
+              eq(enrollments.status, 'active'),
+            ),
+          );
+        if (Number(countResult?.count || 0) >= course.maxEnrollment) {
+          throw new BadRequestException(`Course "${course.title}" is full`);
+        }
       }
     }
 
-    // 3. Validate discount code if provided (before transaction — read-only validation)
-    // 4. NELC per-learner enrollment limit check
-    const classification = classifyCourse(course.startDate, course.endDate);
-    const nelcMaxPerLearner = getNelcMaxEnrollment(classification);
+    // 3. NELC per-learner limit check — must factor in the COMPLETE cart.
+    //    We sum the learner's existing enrollments by classification plus the
+    //    cart-by-classification, then enforce per-class limits.
+    const cartByClassification = lines.reduce(
+      (acc, { course }) => {
+        const cls = classifyCourse(course.startDate, course.endDate);
+        acc[cls] = (acc[cls] || 0) + 1;
+        return acc;
+      },
+      {} as Record<'short' | 'long', number>,
+    );
 
-    const [learnerEnrollmentCount] = await db
-      .select({ count: count() })
-      .from(enrollments)
-      .innerJoin(courses, eq(enrollments.courseId, courses.id))
-      .where(
-        and(
-          eq(enrollments.studentId, user.id),
-          inArray(enrollments.status, ['active', 'pending_payment']),
-          classification === 'long'
-            ? sql`(${courses.endDate}::date - ${courses.startDate}::date) > 5`
-            : sql`(${courses.endDate}::date - ${courses.startDate}::date) <= 5 OR ${courses.startDate} IS NULL OR ${courses.endDate} IS NULL`,
-        ),
-      );
+    for (const cls of ['short', 'long'] as const) {
+      const cartCount = cartByClassification[cls] || 0;
+      if (cartCount === 0) continue;
+      const max = getNelcMaxEnrollment(cls);
 
-    if (Number(learnerEnrollmentCount?.count || 0) >= nelcMaxPerLearner) {
-      throw new BadRequestException(
-        `NELC limit reached: you may enroll in at most ${nelcMaxPerLearner} ${classification} courses`,
-      );
+      const [existing] = await db
+        .select({ count: count() })
+        .from(enrollments)
+        .innerJoin(courses, eq(enrollments.courseId, courses.id))
+        .where(
+          and(
+            eq(enrollments.studentId, user.id),
+            inArray(enrollments.status, ['active', 'pending_payment']),
+            cls === 'long'
+              ? sql`(${courses.endDate}::date - ${courses.startDate}::date) > 5`
+              : sql`(${courses.endDate}::date - ${courses.startDate}::date) <= 5 OR ${courses.startDate} IS NULL OR ${courses.endDate} IS NULL`,
+          ),
+        );
+
+      const totalAfter = Number(existing?.count || 0) + cartCount;
+      if (totalAfter > max) {
+        throw new BadRequestException(
+          `NELC limit reached: you may enroll in at most ${max} ${cls} courses. ` +
+            `You currently have ${existing?.count || 0} and this order would add ${cartCount}.`,
+        );
+      }
     }
 
+    // 4. Compute the cart subtotal from the sale-adjusted prices.
+    const subtotal =
+      Math.round(lines.reduce((s, l) => s + l.salePrice, 0) * 100) / 100;
+
+    // 5. Discount code — applied once, cart-wide, against the subtotal.
+    //    For V1 a course-restricted discount uses the FIRST cart course as
+    //    its qualifying line (the discount service is course-keyed).
     let discountAmount = 0;
     let discountId: string | null = null;
     if (dto.discountCode) {
-      // Sale + coupon are mutually exclusive unless the finance manager enabled
-      // stacking for this course. When stacking IS allowed, the coupon applies
-      // on top of the already-reduced sale price (coursePrice = sale price).
-      if (sale.onSale && !sale.saleAllowsCoupon) {
+      // Sale + coupon are mutually exclusive UNLESS every sale-on course in
+      // the cart explicitly allows coupon stacking. One holdout disqualifies
+      // the whole cart from coupon use — clearer than partial allocations.
+      const saleHoldout = lines.find(
+        (l) => l.sale.onSale && !l.sale.saleAllowsCoupon,
+      );
+      if (saleHoldout) {
         throw new BadRequestException(
-          'This course is on sale; coupon codes cannot be combined with the sale.',
+          `Course "${saleHoldout.course.title}" is on sale; coupon codes cannot be combined with the sale.`,
         );
       }
       const discountResult = await this.discountService.validateDiscount(
         dto.discountCode,
-        dto.courseId,
+        lines[0].course.id,
         user.id,
-        coursePrice,
+        subtotal,
       );
       if (!discountResult.valid) {
         throw new BadRequestException(
@@ -137,8 +178,7 @@ export class PaymentsService {
       discountId = discountResult.discountId;
     }
 
-    // 5. Calculate totals (Saudi Arabia VAT = 15%)
-    const subtotal = coursePrice;
+    // 6. Calculate totals (Saudi Arabia VAT = 15%)
     const VAT_RATE = 0.15;
     const taxableAmount = Math.max(0, subtotal - discountAmount);
     const taxAmount = Math.round(taxableAmount * VAT_RATE * 100) / 100;
@@ -146,33 +186,45 @@ export class PaymentsService {
 
     if (totalAmount <= 0) {
       throw new BadRequestException(
-        'Total amount is zero after discount. This course is effectively free.',
+        'Total amount is zero after discount. This order is effectively free.',
       );
     }
 
-    // 6. Get the gateway adapter
+    // 7. Pre-compute line items for the insert (line discounts stay 0 — the
+    //    cart-wide discount lives on the payment, NOT split across lines).
+    const lineInserts = lines.map((l) => ({
+      courseId: l.course.id,
+      unitPrice: Number(l.course.price),
+      salePrice: l.salePrice,
+      lineDiscount: 0,
+      lineTotal: l.salePrice,
+    }));
+
     const gateway = this.gatewayFactory.getGateway(dto.gateway);
 
-    // 7. Atomic transaction: create enrollment + payment (with FOR UPDATE lock)
+    // 8. Atomic transaction: per-course enrollment handling + payment + items.
     const result = await db.transaction(async (tx) => {
-      // Lock existing enrollment row to prevent concurrent duplicates
-      const existingRows = await tx.execute(
-        sql`SELECT id, status FROM enrollments
-            WHERE course_id = ${dto.courseId} AND student_id = ${user.id}
-            FOR UPDATE LIMIT 1`,
-      );
-      const existing = existingRows.rows?.[0] as
-        | { id: string; status: string }
-        | undefined;
+      const enrollmentIds: string[] = [];
 
-      if (existing) {
-        if (existing.status === 'active') {
+      for (const { course } of lines) {
+        const existingRows = await tx.execute(
+          sql`SELECT id, status FROM enrollments
+              WHERE course_id = ${course.id} AND student_id = ${user.id}
+              FOR UPDATE LIMIT 1`,
+        );
+        const existing = existingRows.rows?.[0] as
+          | { id: string; status: string }
+          | undefined;
+
+        if (existing && existing.status === 'active') {
           throw new BadRequestException(
-            'You are already enrolled in this course',
+            `You are already enrolled in "${course.title}"`,
           );
         }
-        if (existing.status === ENROLLMENT_STATUS.PENDING_PAYMENT) {
-          // Cancel any stale pending payments so the user can start fresh
+
+        if (existing && existing.status === ENROLLMENT_STATUS.PENDING_PAYMENT) {
+          // Cancel stale pending payments for THIS enrollment so the new
+          // cart payment cleanly supersedes the abandoned attempt.
           await tx
             .update(payments)
             .set({
@@ -187,41 +239,75 @@ export class PaymentsService {
                 eq(payments.status, PAYMENT_STATUS.PENDING),
               ),
             );
+          // Also cancel stale pending cart-payments where this course was a line.
+          await tx.execute(
+            sql`UPDATE payments
+                SET status = ${PAYMENT_STATUS.FAILED},
+                    failed_at = NOW(),
+                    failure_reason = 'Superseded by new payment attempt',
+                    updated_at = NOW()
+                WHERE status = ${PAYMENT_STATUS.PENDING}
+                  AND id IN (
+                    SELECT payment_id FROM payment_items
+                    WHERE enrollment_id = ${existing.id}
+                  )`,
+          );
+          enrollmentIds.push(existing.id);
+          continue;
         }
-      }
 
-      // Create or reuse enrollment
-      let enrollmentId: string;
+        if (existing && existing.status === 'dropped') {
+          await tx
+            .update(enrollments)
+            .set({ status: ENROLLMENT_STATUS.PENDING_PAYMENT })
+            .where(eq(enrollments.id, existing.id));
+          enrollmentIds.push(existing.id);
+          continue;
+        }
 
-      if (existing && existing.status === ENROLLMENT_STATUS.PENDING_PAYMENT) {
-        enrollmentId = existing.id;
-      } else if (existing && existing.status === 'dropped') {
-        // Reactivate dropped enrollment as pending_payment
-        await tx
-          .update(enrollments)
-          .set({ status: ENROLLMENT_STATUS.PENDING_PAYMENT })
-          .where(eq(enrollments.id, existing.id));
-        enrollmentId = existing.id;
-      } else {
-        // Create new enrollment with pending_payment status
-        const [newEnrollment] = await tx
+        // Brand-new enrollment.
+        const [created] = await tx
           .insert(enrollments)
           .values({
-            courseId: dto.courseId,
+            courseId: course.id,
             studentId: user.id,
             status: ENROLLMENT_STATUS.PENDING_PAYMENT,
           })
           .returning({ id: enrollments.id });
-        enrollmentId = newEnrollment.id;
+        enrollmentIds.push(created.id);
       }
 
-      // Create payment record
+      // 8a. Build per-line sale-discount snapshot for the payment metadata.
+      const saleDiscountTotal =
+        Math.round(
+          lines.reduce(
+            (s, l) =>
+              s + (l.sale.onSale ? l.sale.originalPrice - l.sale.effectivePrice : 0),
+            0,
+          ) * 100,
+        ) / 100;
+
+      const originalSubtotal =
+        Math.round(
+          lines.reduce((s, l) => s + Number(l.course.price), 0) * 100,
+        ) / 100;
+
+      // 8b. Single payments row. For multi-line carts:
+      //   - course_id = first cart course (preserves the legacy NOT NULL column
+      //     and keeps single-course finance-dashboard joins working)
+      //   - enrollment_id = NULL (line enrollments live in payment_items)
+      // For genuine single-course carts (cart length 1), enrollment_id is set
+      // so behavior matches the legacy single-course payment exactly.
+      const primaryCourseId = lines[0].course.id;
+      const primaryEnrollmentId = enrollmentIds[0];
+      const isMultiLine = lines.length > 1;
+
       const [payment] = await tx
         .insert(payments)
         .values({
-          enrollmentId,
+          enrollmentId: isMultiLine ? null : primaryEnrollmentId,
           userId: user.id,
-          courseId: dto.courseId,
+          courseId: primaryCourseId,
           gateway: dto.gateway,
           paymentMethod: dto.paymentMethod,
           amount: totalAmount.toFixed(2),
@@ -229,36 +315,53 @@ export class PaymentsService {
           status: PAYMENT_STATUS.PENDING,
           metadata: {
             subtotal,
-            originalPrice: sale.originalPrice,
-            salePercent: sale.onSale ? sale.salePercent : null,
-            saleDiscountAmount: sale.onSale
-              ? Math.round((sale.originalPrice - sale.effectivePrice) * 100) / 100
-              : 0,
+            originalPrice: originalSubtotal,
+            salePercent: null,
+            saleDiscountAmount: saleDiscountTotal,
             discountAmount,
             discountId,
             discountCode: dto.discountCode || null,
             taxAmount,
+            // Multi-course cart marker — downstream code (invoice generation,
+            // refund splits, finance dashboards) checks this to know whether
+            // to render line items or fall back to payments.course_id.
+            isCart: isMultiLine,
+            courseIds: lines.map((l) => l.course.id),
           },
         })
         .returning();
 
-      return { enrollmentId, payment };
+      // 8c. Insert one payment_items row per cart course.
+      await tx.insert(paymentItems).values(
+        lineInserts.map((li, idx) => ({
+          paymentId: payment.id,
+          courseId: li.courseId,
+          enrollmentId: enrollmentIds[idx],
+          unitPrice: li.unitPrice.toFixed(2),
+          salePrice: li.salePrice.toFixed(2),
+          discountAmount: li.lineDiscount.toFixed(2),
+          lineTotal: li.lineTotal.toFixed(2),
+        })),
+      );
+
+      return { payment, enrollmentIds };
     });
 
-    // 8. Create charge via gateway
-    const callbackUrl = this.configService.get<string>(
-      'payments.callbackUrl',
-    );
+    // 9. Create charge via gateway
+    const callbackUrl = this.configService.get<string>('payments.callbackUrl');
     const webhookBaseUrl = this.configService.get<string>(
       'payments.webhookBaseUrl',
     );
-    // Where the gateway's "Back"/cancel button should return the buyer: the
-    // checkout page they came from (loads the course via ?courseId=), NOT the
-    // post-payment callback page (which shows a "processing" spinner).
+    // Where the gateway's "Back"/cancel button should return the buyer.
+    // Multi-line cart → /checkout (reads from cart context); single course →
+    // /checkout?courseId=… so the legacy express path still works.
     const frontendBase =
       (callbackUrl || '').replace(/\/payment\/callback.*$/, '') ||
       'https://physioguidance.org';
-    const cancelUrl = `${frontendBase}/${dto.locale || 'en'}/checkout?courseId=${dto.courseId}`;
+    const cancelUrl =
+      lines.length === 1
+        ? `${frontendBase}/${dto.locale || 'en'}/checkout?expressCourseId=${lines[0].course.id}`
+        : `${frontendBase}/${dto.locale || 'en'}/checkout`;
 
     const [userData] = await db
       .select({
@@ -271,12 +374,21 @@ export class PaymentsService {
       .where(eq(users.id, user.id))
       .limit(1);
 
+    // Gateway description: single course → its title; multi → "N courses
+    // (first title +N more)" so the buyer sees something recognisable on the
+    // gateway page.
+    const description =
+      lines.length === 1
+        ? `Enrollment: ${lines[0].course.title}`
+        : `${lines.length} courses: ${lines[0].course.title}` +
+          (lines.length > 1 ? ` (+${lines.length - 1} more)` : '');
+
     let chargeResult: Awaited<ReturnType<typeof gateway.createCharge>>;
     try {
       chargeResult = await gateway.createCharge({
         amount: totalAmount,
         currency: 'SAR',
-        description: `Enrollment: ${course.title}`,
+        description,
         customerName: `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim(),
         customerEmail: userData?.email || user.email,
         customerPhone: userData?.phone || undefined,
@@ -285,8 +397,9 @@ export class PaymentsService {
         webhookUrl: `${webhookBaseUrl}/${dto.gateway}`,
         metadata: {
           paymentId: result.payment.id,
-          enrollmentId: result.enrollmentId,
-          courseId: dto.courseId,
+          enrollmentId: result.enrollmentIds[0],
+          courseId: lines[0].course.id,
+          courseIds: lines.map((l) => l.course.id),
           userId: user.id,
         },
         locale: (dto.locale as 'ar' | 'en') || 'en',
@@ -297,13 +410,17 @@ export class PaymentsService {
         this.logger.error(
           `Gateway error [${err.gateway}]: ${err.originalMessage} (${err.normalizedCode})`,
         );
-        await this.processPaymentFailure(result.payment.id, err.originalMessage, err.normalizedCode);
+        await this.processPaymentFailure(
+          result.payment.id,
+          err.originalMessage,
+          err.normalizedCode,
+        );
         throw new BadRequestException(`Payment failed: ${err.originalMessage}`);
       }
       throw err;
     }
 
-    // 9. Store gateway charge ID
+    // 10. Store gateway charge ID
     await db
       .update(payments)
       .set({
@@ -313,7 +430,7 @@ export class PaymentsService {
       })
       .where(eq(payments.id, result.payment.id));
 
-    // 10. Audit log
+    // 11. Audit log
     await this.auditLogService.log({
       entityType: 'payment',
       entityId: result.payment.id,
@@ -321,15 +438,16 @@ export class PaymentsService {
       performedBy: user.id,
       ipAddress,
       metadata: {
-        courseId: dto.courseId,
+        courseIds: lines.map((l) => l.course.id),
         gateway: dto.gateway,
         amount: totalAmount,
         chargeId: chargeResult.chargeId,
+        itemCount: lines.length,
       },
     });
 
     this.logger.log(
-      `Payment initiated: ${result.payment.id} for course ${dto.courseId} via ${dto.gateway}`,
+      `Payment initiated: ${result.payment.id} for ${lines.length} course(s) via ${dto.gateway}`,
     );
 
     return {
@@ -460,15 +578,33 @@ export class PaymentsService {
       if (flipped.length === 0) return; // another caller already processed it
       won = true;
 
-      // Activate enrollment (atomic with the status flip)
-      if (payment.enrollmentId) {
+      // Activate enrollments atomically with the status flip.
+      //
+      // Multi-line payments: read all line enrollments from payment_items.
+      // Legacy single-line payments: fall back to payments.enrollmentId.
+      const lineEnrollmentRows = await tx
+        .select({ enrollmentId: paymentItems.enrollmentId })
+        .from(paymentItems)
+        .where(eq(paymentItems.paymentId, paymentId));
+
+      const enrollmentIdsToActivate = lineEnrollmentRows
+        .map((r) => r.enrollmentId)
+        .filter((id): id is string => Boolean(id));
+
+      // Backwards-compat: pre-multi-line payments stored the enrollment id
+      // directly on the payment row.
+      if (enrollmentIdsToActivate.length === 0 && payment.enrollmentId) {
+        enrollmentIdsToActivate.push(payment.enrollmentId);
+      }
+
+      if (enrollmentIdsToActivate.length > 0) {
         await tx
           .update(enrollments)
           .set({
             status: 'active',
             enrolledAt: new Date(),
           })
-          .where(eq(enrollments.id, payment.enrollmentId));
+          .where(inArray(enrollments.id, enrollmentIdsToActivate));
       }
     });
 
@@ -493,6 +629,7 @@ export class PaymentsService {
     }
 
     // Audit log
+    const cartCourseIds = (payment.metadata as any)?.courseIds as string[] | undefined;
     await this.auditLogService.log({
       entityType: 'payment',
       entityId: paymentId,
@@ -503,6 +640,8 @@ export class PaymentsService {
         gateway: payment.gateway,
         amount: payment.amount,
         courseId: payment.courseId,
+        courseIds: cartCourseIds || [payment.courseId],
+        itemCount: cartCourseIds?.length || 1,
       },
     });
   }
@@ -534,14 +673,28 @@ export class PaymentsService {
         })
         .where(eq(payments.id, paymentId));
 
-      // Mark pending enrollment as dropped (preserves history for audit)
-      if (payment.enrollmentId) {
+      // Mark pending enrollments as dropped (preserves history for audit).
+      // Multi-line: collect from payment_items; legacy: fall back to payment row.
+      const lineEnrollmentRows = await tx
+        .select({ enrollmentId: paymentItems.enrollmentId })
+        .from(paymentItems)
+        .where(eq(paymentItems.paymentId, paymentId));
+
+      const enrollmentIdsToDrop = lineEnrollmentRows
+        .map((r) => r.enrollmentId)
+        .filter((id): id is string => Boolean(id));
+
+      if (enrollmentIdsToDrop.length === 0 && payment.enrollmentId) {
+        enrollmentIdsToDrop.push(payment.enrollmentId);
+      }
+
+      if (enrollmentIdsToDrop.length > 0) {
         await tx
           .update(enrollments)
           .set({ status: ENROLLMENT_STATUS.DROPPED })
           .where(
             and(
-              eq(enrollments.id, payment.enrollmentId),
+              inArray(enrollments.id, enrollmentIdsToDrop),
               eq(enrollments.status, ENROLLMENT_STATUS.PENDING_PAYMENT),
             ),
           );

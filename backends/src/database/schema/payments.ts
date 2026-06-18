@@ -79,6 +79,7 @@ export const paymentsRelations = relations(payments, ({ one, many }) => ({
     references: [enrollments.id],
   }),
   receipts: many(paymentReceipts),
+  items: many(paymentItems),
 }));
 
 export type Payment = typeof payments.$inferSelect;
@@ -218,3 +219,65 @@ export const RECEIPT_REVIEW_STATUS = {
 
 export type ReceiptReviewStatus =
   (typeof RECEIPT_REVIEW_STATUS)[keyof typeof RECEIPT_REVIEW_STATUS];
+
+// ─── payment_items: per-course line items inside a payment ───────────────
+//
+// A cart-checkout produces ONE payments row with N payment_items rows. After
+// successful payment, each line is linked to the enrollment it created so
+// per-line refunds remain possible. Legacy single-course payments may have
+// zero payment_items rows — readers fall back to payments.course_id.
+
+export const paymentItems = pgTable(
+  'payment_items',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    paymentId: uuid('payment_id')
+      .notNull()
+      .references(() => payments.id, { onDelete: 'cascade' }),
+    courseId: uuid('course_id')
+      .notNull()
+      .references(() => courses.id),
+    enrollmentId: uuid('enrollment_id').references(() => enrollments.id, {
+      onDelete: 'set null',
+    }),
+
+    // Pricing snapshots — invoices must remain immutable even if course
+    // prices change later.
+    unitPrice: numeric('unit_price', { precision: 10, scale: 2 }).notNull(),
+    salePrice: numeric('sale_price', { precision: 10, scale: 2 }).notNull(),
+    discountAmount: numeric('discount_amount', { precision: 10, scale: 2 })
+      .notNull()
+      .default('0'),
+    lineTotal: numeric('line_total', { precision: 10, scale: 2 }).notNull(),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('idx_payment_items_payment').on(table.paymentId),
+    index('idx_payment_items_course').on(table.courseId),
+    index('idx_payment_items_enrollment').on(table.enrollmentId),
+    check('payment_items_unit_price_check', sql`${table.unitPrice} >= 0`),
+    check('payment_items_sale_price_check', sql`${table.salePrice} >= 0`),
+    check('payment_items_discount_check', sql`${table.discountAmount} >= 0`),
+    check('payment_items_line_total_check', sql`${table.lineTotal} >= 0`),
+  ],
+);
+
+export const paymentItemsRelations = relations(paymentItems, ({ one }) => ({
+  payment: one(payments, {
+    fields: [paymentItems.paymentId],
+    references: [payments.id],
+  }),
+  course: one(courses, {
+    fields: [paymentItems.courseId],
+    references: [courses.id],
+  }),
+  enrollment: one(enrollments, {
+    fields: [paymentItems.enrollmentId],
+    references: [enrollments.id],
+  }),
+}));
+
+export type PaymentItem = typeof paymentItems.$inferSelect;
+export type NewPaymentItem = typeof paymentItems.$inferInsert;

@@ -23,13 +23,16 @@ import {
   Award,
   AlertTriangle,
   X,
+  Zap,
 } from "lucide-react";
 import { CourseCard, MobileCourseCard } from "@/components/courses";
 import { PublicCourse } from "@/types/instructor-dashboard";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFavourites } from "@/contexts/FavouritesContext";
+import { useCart } from "@/contexts/CartContext";
 import { studentApi, publicApi, pointsApi, ApiError } from "@/lib/api";
+import NonStudentEnrollmentNotice from "./NonStudentEnrollmentNotice";
 import { formatDuration } from "@/lib/utils";
 import { getCityLabel } from "@/lib/saudi-cities";
 import { Loader2 } from "lucide-react";
@@ -440,11 +443,6 @@ const CourseDetailContent = ({
     success: boolean;
     message: string;
   } | null>(null);
-  // Checkout modal — opens for paid courses when the user clicks Buy Now
-  // (placeholder payment for now; real provider integration drops in later).
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-
   // Points redemption — populated once on mount when the user is logged in.
   // null = not eligible / not loaded; object = redeemable for points.
   const [redeemInfo, setRedeemInfo] = useState<{
@@ -544,43 +542,74 @@ const CourseDetailContent = ({
     }
   };
 
-  // Paid-course Buy Now → redirect to the unified /checkout page which
-  // handles gateway selection (Moyasar/Tap/Tamara/Tabby), discount codes
-  // and the real payment redirect. Free / placeholder enrollment paths
-  // remain on this page (handled by `handlePay` below).
-  const openCheckout = () => {
+  // Cart state for the new Amazon-style detail-page CTAs. localStorage-backed
+  // so a guest's cart survives the signup redirect and lands intact on /cart.
+  const { addItem, isInCart } = useCart();
+  const courseInCart = apiCourse ? isInCart(apiCourse.id) : false;
+
+  // PRIMARY: "Buy Now" — express checkout. Skips the cart entirely and jumps
+  // straight to the checkout page with just this course. The user's existing
+  // cart is left untouched so abandoning the express flow doesn't lose it.
+  const handleBuyNow = () => {
     if (!apiCourse) return;
+    // Guest → signup with redirect=/checkout?expressCourseId=... so they land
+    // on the checkout page after signup, not back on the course page.
     if (!isAuthenticated) {
-      handleGuestRedirect();
+      const next = `/${locale}/checkout?expressCourseId=${apiCourse.id}`;
+      router.push(`/${locale}/signup?redirect=${encodeURIComponent(next)}`);
       return;
     }
-    if (!isStudent) {
-      alert(t("enrollment.contactMessage"));
-      return;
-    }
-    router.push(`/${locale}/checkout?courseId=${apiCourse.id}`);
+    // Non-students never see this button (the NonStudentEnrollmentNotice
+    // replaces it). Defensive guard against URL-hack callers.
+    if (!isStudent) return;
+    router.push(`/${locale}/checkout?expressCourseId=${apiCourse.id}`);
   };
 
-  const handlePay = async () => {
+  // SECONDARY: "Add to Cart" — adds to the localStorage cart and flips the
+  // button to "Go to Cart". User can keep browsing and add more.
+  const handleAddToCart = () => {
     if (!apiCourse) return;
-    setCheckoutLoading(true);
-    try {
-      await studentApi.checkoutCourse(apiCourse.id);
-      setCheckoutOpen(false);
-      setEnrollResult({ success: true, message: t("enrollment.success") });
-      router.push(`/${locale}/dashboard/student/courses/${apiCourse.id}`);
-    } catch (err) {
-      const message =
-        err instanceof ApiError && err.code === "ENROLLMENT_DEADLINE_PASSED"
-          ? t("enrollment.deadlinePassed")
-          : err instanceof Error
-            ? err.message
-            : t("enrollment.error");
-      setEnrollResult({ success: false, message });
-    } finally {
-      setCheckoutLoading(false);
+    if (!isAuthenticated) {
+      // Guests can add to cart too — the cart survives signup. Redirect them
+      // to signup landing on /cart so they pick up where they left off.
+      addItem({
+        id: apiCourse.id,
+        title: apiCourse.title,
+        titleAr: apiCourse.titleAr || null,
+        price: Number(apiCourse.price ?? 0),
+        effectivePrice: Number(apiEffectivePrice),
+        onSale: apiOnSale,
+        salePercent: apiSalePercent ?? null,
+        thumbnail: apiCourse.thumbnail || null,
+        deliveryType: apiCourse.deliveryType || "",
+        startDate: apiCourse.startDate || null,
+        cmeHours: apiCourse.cmeHours || 0,
+        instructorName: apiCourse.instructorName || "",
+        addedAt: new Date().toISOString(),
+      });
+      router.push(`/${locale}/signup?redirect=${encodeURIComponent(`/${locale}/cart`)}`);
+      return;
     }
+    if (!isStudent) return; // non-students don't see this button
+    addItem({
+      id: apiCourse.id,
+      title: apiCourse.title,
+      titleAr: apiCourse.titleAr || null,
+      price: Number(apiCourse.price ?? 0),
+      effectivePrice: Number(apiEffectivePrice),
+      onSale: apiOnSale,
+      salePercent: apiSalePercent ?? null,
+      thumbnail: apiCourse.thumbnail || null,
+      deliveryType: apiCourse.deliveryType || "",
+      startDate: apiCourse.startDate || null,
+      cmeHours: apiCourse.cmeHours || 0,
+      instructorName: apiCourse.instructorName || "",
+      addedAt: new Date().toISOString(),
+    });
   };
+
+  // Once added, the secondary button flips to "Go to Cart".
+  const goToCart = () => router.push(`/${locale}/cart`);
 
   // Fetch redeem eligibility once when the course + auth state are ready.
   // Skipped for guests, non-students, and free courses (no need to redeem).
@@ -1703,22 +1732,41 @@ const CourseDetailContent = ({
                           </p>
                         )}
                       </div>
+                    ) : !isStudent && isAuthenticated ? (
+                      /* PAID COURSE, non-student — replace CTA with notice */
+                      <div className="mb-3">
+                        <NonStudentEnrollmentNotice
+                          roleLabel={user?.activeRole || ""}
+                          canSwitchToStudent={(user?.roles || []).includes("STUDENT")}
+                        />
+                      </div>
                     ) : (
-                      /* PAID COURSE — Buy Now opens the checkout modal */
+                      /* PAID COURSE — Amazon-style: Buy Now (express) + Add to Cart */
                       <>
                         <button
-                          onClick={openCheckout}
-                          className="w-full h-12 btn-gold rounded-xl text-white font-medium mb-3"
+                          onClick={handleBuyNow}
+                          className="w-full h-12 btn-gold rounded-xl text-white font-medium mb-3 flex items-center justify-center gap-2"
                         >
+                          <Zap className="w-4 h-4" aria-hidden="true" />
                           {t("pricingCard.buyNow")}
                         </button>
-                        <button
-                          onClick={openCheckout}
-                          className="w-full h-12 bg-[var(--color-text-primary)] rounded-xl text-white font-medium flex items-center justify-center gap-2 mb-3"
-                        >
-                          {t("pricingCard.addToCart")}
-                          <ShoppingCart className="w-4 h-4" />
-                        </button>
+                        {courseInCart ? (
+                          <button
+                            onClick={goToCart}
+                            className="w-full h-12 bg-[var(--color-text-primary)] rounded-xl text-white font-medium flex items-center justify-center gap-2 mb-3"
+                          >
+                            <Check className="w-4 h-4" aria-hidden="true" />
+                            {t("pricingCard.inCartGoToCart")}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleAddToCart}
+                            className="w-full h-12 bg-[var(--color-text-primary)] rounded-xl text-white font-medium flex items-center justify-center gap-2 mb-3"
+                          >
+                            <ShoppingCart className="w-4 h-4" aria-hidden="true" />
+                            {t("pricingCard.addToCart")}
+                          </button>
+                        )}
                         {redeemInfo && (
                           <div className="mb-3">
                             <button
@@ -2014,21 +2062,39 @@ const CourseDetailContent = ({
                   </p>
                 )}
               </div>
+            ) : !isStudent && isAuthenticated ? (
+              <div className="mb-2">
+                <NonStudentEnrollmentNotice
+                  roleLabel={user?.activeRole || ""}
+                  canSwitchToStudent={(user?.roles || []).includes("STUDENT")}
+                />
+              </div>
             ) : (
               <>
                 <button
-                  onClick={openCheckout}
-                  className="w-full h-10 btn-gold rounded-xl text-white text-sm font-medium mb-2"
+                  onClick={handleBuyNow}
+                  className="w-full h-10 btn-gold rounded-xl text-white text-sm font-medium mb-2 flex items-center justify-center gap-2"
                 >
+                  <Zap className="w-4 h-4" aria-hidden="true" />
                   {t("pricingCard.buyNow")}
                 </button>
-                <button
-                  onClick={openCheckout}
-                  className="w-full h-10 bg-[var(--color-text-primary)] rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2 mb-2"
-                >
-                  {t("pricingCard.addToCart")}
-                  <ShoppingCart className="w-4 h-4" />
-                </button>
+                {courseInCart ? (
+                  <button
+                    onClick={goToCart}
+                    className="w-full h-10 bg-[var(--color-text-primary)] rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2 mb-2"
+                  >
+                    <Check className="w-4 h-4" aria-hidden="true" />
+                    {t("pricingCard.inCartGoToCart")}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleAddToCart}
+                    className="w-full h-10 bg-[var(--color-text-primary)] rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2 mb-2"
+                  >
+                    <ShoppingCart className="w-4 h-4" aria-hidden="true" />
+                    {t("pricingCard.addToCart")}
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -2214,107 +2280,6 @@ const CourseDetailContent = ({
         />
       )}
 
-      {/* Checkout Modal — placeholder payment flow for paid courses */}
-      {checkoutOpen && apiCourse && user && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className={`bg-[var(--color-surface-card)] rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl ${isRTL ? "text-right" : "text-left"}`} dir={isRTL ? "rtl" : "ltr"}>
-            <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
-              <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
-                {isRTL ? "إتمام الدفع" : "Checkout"}
-              </h2>
-              <button
-                onClick={() => !checkoutLoading && setCheckoutOpen(false)}
-                disabled={checkoutLoading}
-                className="p-2 hover:bg-[var(--color-border-subtle)] rounded-lg transition-colors disabled:opacity-50"
-                aria-label={isRTL ? "إغلاق" : "Close"}
-              >
-                <X className="w-5 h-5 text-[var(--color-text-secondary)]" />
-              </button>
-            </div>
-
-            <div className="p-4 space-y-4">
-              {/* Course summary */}
-              <div className="flex items-start gap-3 p-3 bg-[var(--color-border-subtle)] rounded-lg">
-                {apiCourse.thumbnail && (
-                  <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
-                    <Image src={apiCourse.thumbnail} alt={apiCourse.title} fill className="object-cover" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
-                    {isRTL && apiCourse.titleAr ? apiCourse.titleAr : apiCourse.title}
-                  </p>
-                  <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{getDeliveryLabel()}</p>
-                </div>
-              </div>
-
-              {/* Price line */}
-              <div className="flex items-center justify-between p-3 border border-[var(--color-border)] rounded-lg">
-                <span className="text-sm text-[var(--color-text-secondary)]">
-                  {isRTL ? "المبلغ المستحق" : "Amount due"}
-                </span>
-                <span className="text-lg font-bold text-[var(--color-text-primary)] flex items-center gap-2">
-                  {apiOnSale && (
-                    <span className="text-sm font-normal text-[var(--color-text-secondary)] line-through">
-                      {Number(apiCourse.price ?? 0).toFixed(2)}
-                    </span>
-                  )}
-                  {Number(apiEffectivePrice).toFixed(2)} SAR
-                </span>
-              </div>
-
-              {/* Profile confirm */}
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">
-                  {isRTL ? "بيانات المتدرب" : "Trainee details"}
-                </p>
-                <div className="grid grid-cols-1 gap-2 text-sm">
-                  <div className="flex justify-between gap-3">
-                    <span className="text-[var(--color-text-secondary)]">{isRTL ? "الاسم" : "Name"}</span>
-                    <span className="text-[var(--color-text-primary)] font-medium">{[user.firstName, user.lastName].filter(Boolean).join(" ") || "—"}</span>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <span className="text-[var(--color-text-secondary)]">{isRTL ? "البريد الإلكتروني" : "Email"}</span>
-                    <span className="text-[var(--color-text-primary)] font-medium break-all">{user.email}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Placeholder payment notice */}
-              <div className="flex items-start gap-2 p-3 bg-[#FFFBEB] border border-[#FDE68A] rounded-lg">
-                <AlertTriangle className="w-4 h-4 text-[#D97706] flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-[#92400E] leading-snug">
-                  {isRTL
-                    ? "بوابة الدفع قيد التكامل. سيتم تأكيد التسجيل تلقائيًا بعد الضغط على \"دفع\"، وسيتم استبدال هذه الخطوة بمزود الدفع الفعلي قريبًا."
-                    : 'Payment gateway is pending integration. Clicking "Pay" will confirm your enrollment immediately — this step will be replaced by the real payment provider soon.'}
-                </p>
-              </div>
-
-              {enrollResult && !enrollResult.success && (
-                <p className="text-xs text-[#DC2626]">{enrollResult.message}</p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-3 p-4 border-t border-[var(--color-border)]">
-              <button
-                onClick={() => setCheckoutOpen(false)}
-                disabled={checkoutLoading}
-                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors disabled:opacity-50"
-              >
-                {isRTL ? "إلغاء" : "Cancel"}
-              </button>
-              <button
-                onClick={handlePay}
-                disabled={checkoutLoading}
-                className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-60"
-              >
-                {checkoutLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                {isRTL ? "دفع" : "Pay"} {Number(apiEffectivePrice).toFixed(2)} SAR
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

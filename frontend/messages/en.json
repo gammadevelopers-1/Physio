@@ -1103,6 +1103,7 @@
       "buyNow": "Buy Now",
       "percentOff": "{percent}% off",
       "addToCart": "Add to cart",
+      "inCartGoToCart": "In cart — Go to cart",
       "free": "Free",
       "asLowAs": "As low as",
       "perMonth": "/month",
@@ -1112,6 +1113,15 @@
       "securePayment": "Secure payment through",
       "inCart": "In Cart",
       "addedToCart": "Added to cart!"
+    },
+    "nonStudentNotice": {
+      "title": "Available for student accounts",
+      "body": "You're signed in as {role}. To enroll your team in this course, please contact us.",
+      "contactCta": "Contact Us",
+      "switchToStudent": "Switch to Student",
+      "switching": "Switching…",
+      "switchedToast": "Switched to Student role",
+      "switchError": "Could not switch role"
     },
     "schedule": "Schedule",
     "contents": "Contents",

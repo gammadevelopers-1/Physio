@@ -1103,6 +1103,7 @@
       "buyNow": "اشترِ الآن",
       "percentOff": "خصم {percent}٪",
       "addToCart": "أضف إلى السلة",
+      "inCartGoToCart": "في السلة — اذهب للسلة",
       "free": "مجاني",
       "asLowAs": "مقسطة مثل",
       "perMonth": "/شهر",
@@ -1112,6 +1113,15 @@
       "securePayment": "الدفع الآمن من خلال",
       "inCart": "في السلة",
       "addedToCart": "تمت الإضافة إلى السلة!"
+    },
+    "nonStudentNotice": {
+      "title": "متاح لحسابات الطلاب",
+      "body": "أنت مسجل الدخول بصفتك {role}. لتسجيل فريقك في هذه الدورة، يرجى التواصل معنا.",
+      "contactCta": "تواصل معنا",
+      "switchToStudent": "التبديل إلى حساب طالب",
+      "switching": "جارٍ التبديل…",
+      "switchedToast": "تم التبديل إلى حساب طالب",
+      "switchError": "تعذر تبديل الدور"
     },
     "schedule": "الجدول الزمني",
     "contents": "المحتويات",

@@ -2,7 +2,7 @@
 
 import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
-import { AuthProvider } from '@/contexts';
+import { AuthProvider, CartProvider } from '@/contexts';
 import { CalendarProvider } from '@/contexts/CalendarContext';
 import { FavouritesProvider } from '@/contexts/FavouritesContext';
 import { PlatformLocaleProvider } from '@/contexts/PlatformLocaleContext';
@@ -23,7 +23,9 @@ export function ClientProviders({ children, platformLocale, platformGeneral }: C
         <PlatformGeneralProvider initial={platformGeneral}>
           <CalendarProvider>
             <FavouritesProvider>
-              {children}
+              <CartProvider>
+                {children}
+              </CartProvider>
             </FavouritesProvider>
           </CalendarProvider>
         </PlatformGeneralProvider>

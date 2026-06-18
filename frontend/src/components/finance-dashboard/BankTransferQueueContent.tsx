@@ -456,15 +456,15 @@ function ReviewBadge({
   const map: Record<typeof status, { tone: string; label: string }> = {
     pending: {
       tone: "bg-blue-100 text-blue-800",
-      label: t("bankTransferQueue.review.pending"),
+      label: t("bankTransferQueue.reviewStatus.pending"),
     },
     approved: {
       tone: "bg-green-100 text-green-800",
-      label: t("bankTransferQueue.review.approved"),
+      label: t("bankTransferQueue.reviewStatus.approved"),
     },
     rejected: {
       tone: "bg-red-100 text-red-800",
-      label: t("bankTransferQueue.review.rejected"),
+      label: t("bankTransferQueue.reviewStatus.rejected"),
     },
   };
   const { tone, label } = map[status];

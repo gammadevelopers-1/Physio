@@ -7896,7 +7896,7 @@
         "infected": "ملف خبيث",
         "error": "خطأ في الفحص"
       },
-      "review": {
+      "reviewStatus": {
         "pending": "قيد المراجعة",
         "approved": "مقبولة",
         "rejected": "مرفوضة"

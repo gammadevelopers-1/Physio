@@ -22,7 +22,7 @@ const NonStudentEnrollmentNotice = ({
   canSwitchToStudent,
   supportEmail = "enroll@physioguidance.org",
 }: NonStudentEnrollmentNoticeProps) => {
-  const t = useTranslations("nonStudentNotice");
+  const t = useTranslations("courseDetailPage.nonStudentNotice");
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { refreshUser } = useAuth();

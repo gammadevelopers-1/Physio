@@ -7896,7 +7896,7 @@
         "infected": "Infected",
         "error": "Scan error"
       },
-      "review": {
+      "reviewStatus": {
         "pending": "Pending review",
         "approved": "Approved",
         "rejected": "Rejected"

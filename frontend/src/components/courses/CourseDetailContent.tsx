@@ -647,8 +647,9 @@ const CourseDetailContent = ({
   // Only runs for signed-in students; guests + non-students get the regular
   // browse flow. 'loading' avoids briefly flashing the wrong CTA state.
   const [enrolledState, setEnrolledState] = useState<
-    "loading" | "enrolled" | "not-enrolled" | "skip"
+    "loading" | "enrolled" | "pending-payment" | "not-enrolled" | "skip"
   >("skip");
+  const [pendingPaymentId, setPendingPaymentId] = useState<string | null>(null);
   useEffect(() => {
     if (!apiCourse?.id) return;
     if (!isAuthenticated || !isStudent) {
@@ -662,7 +663,19 @@ const CourseDetailContent = ({
       .then((res) => {
         if (cancelled) return;
         const entry = res.byId?.[apiCourse.id];
-        setEnrolledState(entry?.isEnrolled ? "enrolled" : "not-enrolled");
+        if (entry?.isEnrolled) {
+          setEnrolledState("enrolled");
+          setPendingPaymentId(null);
+        } else if (entry?.pendingBankTransferPaymentId) {
+          // Bank-transfer kicked off but finance hasn't actioned it. Send
+          // them back to the existing payment instead of letting them start
+          // a duplicate one.
+          setEnrolledState("pending-payment");
+          setPendingPaymentId(entry.pendingBankTransferPaymentId);
+        } else {
+          setEnrolledState("not-enrolled");
+          setPendingPaymentId(null);
+        }
       })
       .catch(() => {
         if (cancelled) return;
@@ -670,6 +683,7 @@ const CourseDetailContent = ({
         // blocking the buyer. The server still rejects an INSERT for an
         // already-enrolled course as the safety net.
         setEnrolledState("not-enrolled");
+        setPendingPaymentId(null);
       });
     return () => {
       cancelled = true;
@@ -1805,6 +1819,32 @@ const CourseDetailContent = ({
                           <ChevronIcon className="w-4 h-4" aria-hidden="true" />
                         </button>
                       </div>
+                    ) : enrolledState === "pending-payment" && pendingPaymentId ? (
+                      /* BANK TRANSFER PENDING — receipt uploaded but not yet
+                         actioned by finance. Block the buy paths so the student
+                         can't double-pay for the same course. */
+                      <div className="mb-3 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Clock className="w-5 h-5 text-[var(--color-primary)]" />
+                          <span className="text-sm font-semibold text-[var(--color-text-primary)]">
+                            {t("pricingCard.pendingPaymentTitle")}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[var(--color-text-secondary)] mb-3">
+                          {t("pricingCard.pendingPaymentBody")}
+                        </p>
+                        <button
+                          onClick={() =>
+                            router.push(
+                              `/${locale}/payment/bank-transfer/${pendingPaymentId}`,
+                            )
+                          }
+                          className="w-full h-12 btn-gold rounded-xl text-white font-medium flex items-center justify-center gap-2"
+                        >
+                          {t("pricingCard.viewPendingPayment")}
+                          <ChevronIcon className="w-4 h-4" aria-hidden="true" />
+                        </button>
+                      </div>
                     ) : (
                       /* PAID COURSE — Amazon-style: Buy Now (express) + Add to Cart */
                       <>
@@ -2162,6 +2202,29 @@ const CourseDetailContent = ({
                   className="w-full h-10 btn-gold rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2"
                 >
                   {t("pricingCard.goToMyCourse")}
+                  <ChevronIcon className="w-4 h-4" aria-hidden="true" />
+                </button>
+              </div>
+            ) : enrolledState === "pending-payment" && pendingPaymentId ? (
+              <div className="mb-2 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] p-3">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Clock className="w-4 h-4 text-[var(--color-primary)]" />
+                  <span className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    {t("pricingCard.pendingPaymentTitle")}
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--color-text-secondary)] mb-2.5">
+                  {t("pricingCard.pendingPaymentBody")}
+                </p>
+                <button
+                  onClick={() =>
+                    router.push(
+                      `/${locale}/payment/bank-transfer/${pendingPaymentId}`,
+                    )
+                  }
+                  className="w-full h-10 btn-gold rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2"
+                >
+                  {t("pricingCard.viewPendingPayment")}
                   <ChevronIcon className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>

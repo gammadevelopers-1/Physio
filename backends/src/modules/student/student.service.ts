@@ -30,6 +30,9 @@ import {
   courseRatings,
   webinarRegistrations,
   moduleCompletions,
+  payments,
+  paymentItems,
+  PAYMENT_STATUS,
 } from '../../database/schema';
 import { csatSurveys } from '../../database/schema/surveys';
 import { recomputeEnrollmentProgress } from '../enrollments/progress.helper';
@@ -78,6 +81,11 @@ export interface EnrollmentStatusEntry {
   isEnrolled: boolean;
   enrollmentId: string | null;
   status: 'active' | 'completed' | 'expired' | null;
+  // Bank-transfer payment that the student has already kicked off for this
+  // course but that hasn't been actioned by finance yet. When set, the FE
+  // should hide buy/add-to-cart and link the user to /payment/bank-transfer/<id>
+  // so they can monitor or replace their receipt instead of paying twice.
+  pendingBankTransferPaymentId?: string | null;
 }
 
 @Injectable()
@@ -627,15 +635,66 @@ export class StudentService {
 
     const byId: Record<string, EnrollmentStatusEntry> = {};
     for (const id of unique) {
-      byId[id] = { isEnrolled: false, enrollmentId: null, status: null };
+      byId[id] = {
+        isEnrolled: false,
+        enrollmentId: null,
+        status: null,
+        pendingBankTransferPaymentId: null,
+      };
     }
     for (const row of rows) {
       byId[row.courseId] = {
         isEnrolled: true,
         enrollmentId: row.id,
         status: row.status as 'active' | 'completed' | 'expired',
+        pendingBankTransferPaymentId: null,
       };
     }
+
+    // Find any in-flight bank-transfer payment for these courses so the FE
+    // can block a duplicate buy attempt. We look at both single-course
+    // payments (payments.courseId) and multi-line carts (payment_items).
+    // "Pending" here = the student initiated checkout but finance hasn't
+    // actioned the receipt yet — covers PENDING and AWAITING_APPROVAL.
+    const pendingStatuses = [
+      PAYMENT_STATUS.PENDING,
+      PAYMENT_STATUS.AWAITING_APPROVAL,
+    ] as string[];
+
+    const singleLine = await db
+      .select({ id: payments.id, courseId: payments.courseId })
+      .from(payments)
+      .where(
+        and(
+          eq(payments.userId, studentId),
+          eq(payments.gateway, 'bank_transfer'),
+          inArray(payments.status, pendingStatuses as any),
+          inArray(payments.courseId, unique),
+        ),
+      );
+
+    const multiLine = await db
+      .select({ id: payments.id, courseId: paymentItems.courseId })
+      .from(paymentItems)
+      .innerJoin(payments, eq(payments.id, paymentItems.paymentId))
+      .where(
+        and(
+          eq(payments.userId, studentId),
+          eq(payments.gateway, 'bank_transfer'),
+          inArray(payments.status, pendingStatuses as any),
+          inArray(paymentItems.courseId, unique),
+        ),
+      );
+
+    // First write wins per course — both sources may overlap; either id is
+    // fine since they all point to the same blocking payment.
+    for (const row of [...singleLine, ...multiLine]) {
+      const existing = byId[row.courseId];
+      if (existing && !existing.pendingBankTransferPaymentId) {
+        existing.pendingBankTransferPaymentId = row.id;
+      }
+    }
+
     return { byId };
   }
 

@@ -3,6 +3,7 @@ import {
   Logger,
   BadRequestException,
   NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { eq, and, ne, desc, count, sql, inArray, or, ilike, gte, lte } from 'drizzle-orm';
@@ -72,6 +73,51 @@ export class PaymentsService {
     // Preserve cart order in the line items.
     const courseById = new Map(courseRows.map((c) => [c.id, c]));
     const orderedCourses = courseIds.map((id) => courseById.get(id)!);
+
+    // Reject if the student already has an in-flight bank-transfer payment
+    // for any course in this cart. Without this guard they could pay twice for
+    // the same course while the first receipt is still under review.
+    // "In flight" = PENDING (no receipt yet) or AWAITING_APPROVAL (receipt
+    // uploaded, finance hasn't actioned it). Approved or failed payments
+    // don't block — those are the "retry after rejection" path.
+    const inFlightSingle = await db
+      .select({ id: payments.id, courseId: payments.courseId })
+      .from(payments)
+      .where(
+        and(
+          eq(payments.userId, user.id),
+          eq(payments.gateway, 'bank_transfer'),
+          inArray(payments.status, [
+            PAYMENT_STATUS.PENDING,
+            PAYMENT_STATUS.AWAITING_APPROVAL,
+          ] as any),
+          inArray(payments.courseId, courseIds),
+        ),
+      );
+    const inFlightMulti = await db
+      .select({ id: payments.id, courseId: paymentItems.courseId })
+      .from(paymentItems)
+      .innerJoin(payments, eq(payments.id, paymentItems.paymentId))
+      .where(
+        and(
+          eq(payments.userId, user.id),
+          eq(payments.gateway, 'bank_transfer'),
+          inArray(payments.status, [
+            PAYMENT_STATUS.PENDING,
+            PAYMENT_STATUS.AWAITING_APPROVAL,
+          ] as any),
+          inArray(paymentItems.courseId, courseIds),
+        ),
+      );
+    const blocked = [...inFlightSingle, ...inFlightMulti].find((r) =>
+      courseIds.includes(r.courseId),
+    );
+    if (blocked) {
+      const c = courseById.get(blocked.courseId);
+      throw new ConflictException(
+        `You already have a bank transfer in review for "${c?.title || 'this course'}". Please wait for the finance team or replace the receipt from your pending payment page instead of starting a new payment.`,
+      );
+    }
 
     // 2. Per-course validation: must be paid, must not be at capacity.
     const lines = orderedCourses.map((course) => {

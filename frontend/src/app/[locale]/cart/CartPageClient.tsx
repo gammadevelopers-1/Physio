@@ -76,11 +76,18 @@ export default function CartPageClient({
   // course id; unknown ids default to "not enrolled" so the regular
   // line item renders as-is.
   const [enrolledMap, setEnrolledMap] = useState<Record<string, boolean>>({});
+  // Course ids in the cart that the buyer has ALREADY initiated a bank
+  // transfer for (status pending or awaiting_approval). The value is the
+  // payment id so the badge can deep-link back to the existing payment.
+  const [pendingPaymentMap, setPendingPaymentMap] = useState<
+    Record<string, string>
+  >({});
   useEffect(() => {
     if (!mounted) return;
     if (!isAuthenticated || !isStudent) return;
     if (items.length === 0) {
       setEnrolledMap({});
+      setPendingPaymentMap({});
       return;
     }
     let cancelled = false;
@@ -88,15 +95,23 @@ export default function CartPageClient({
       .getEnrollmentStatus(items.map((it) => it.id))
       .then((res) => {
         if (cancelled) return;
-        const next: Record<string, boolean> = {};
+        const enrolledNext: Record<string, boolean> = {};
+        const pendingNext: Record<string, string> = {};
         for (const [id, entry] of Object.entries(res.byId || {})) {
-          next[id] = !!entry?.isEnrolled;
+          enrolledNext[id] = !!entry?.isEnrolled;
+          if (entry?.pendingBankTransferPaymentId) {
+            pendingNext[id] = entry.pendingBankTransferPaymentId;
+          }
         }
-        setEnrolledMap(next);
+        setEnrolledMap(enrolledNext);
+        setPendingPaymentMap(pendingNext);
       })
       .catch(() => {
         // Silent — backend's INSERT-time guard catches anything we miss.
-        if (!cancelled) setEnrolledMap({});
+        if (!cancelled) {
+          setEnrolledMap({});
+          setPendingPaymentMap({});
+        }
       });
     return () => {
       cancelled = true;
@@ -107,10 +122,18 @@ export default function CartPageClient({
 
   const enrolledCount = items.filter((it) => enrolledMap[it.id]).length;
   const hasEnrolledItems = enrolledCount > 0;
+  const pendingCount = items.filter((it) => pendingPaymentMap[it.id]).length;
+  const hasPendingItems = pendingCount > 0;
 
   const removeEnrolledItems = () => {
     items.forEach((it) => {
       if (enrolledMap[it.id]) removeItem(it.id);
+    });
+  };
+
+  const removePendingItems = () => {
+    items.forEach((it) => {
+      if (pendingPaymentMap[it.id]) removeItem(it.id);
     });
   };
 
@@ -144,6 +167,7 @@ export default function CartPageClient({
     }
     if (!isStudent) return; // defensive — button is hidden when notice shows
     if (hasEnrolledItems) return; // forces buyer to remove the duplicates first
+    if (hasPendingItems) return; // can't checkout courses already in pending bank transfer
     router.push(`/${locale}/checkout`);
   };
 
@@ -255,9 +279,33 @@ export default function CartPageClient({
                     </div>
                   </div>
                 )}
+                {hasPendingItems && (
+                  <div className="rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] p-4">
+                    <div className="flex items-start gap-3">
+                      <Clock className="w-5 h-5 text-[var(--color-primary)] flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[var(--color-text-primary)] mb-1">
+                          {t("pendingBanner.title", { count: pendingCount })}
+                        </p>
+                        <p className="text-xs text-[var(--color-text-secondary)] mb-3">
+                          {t("pendingBanner.body")}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={removePendingItems}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white btn-gold rounded-lg transition-opacity hover:opacity-90"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          {t("pendingBanner.removeAll")}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {items.map((item) => {
                   const onSale = item.onSale && item.effectivePrice != null;
                   const isAlreadyEnrolled = !!enrolledMap[item.id];
+                  const isPendingPayment = !!pendingPaymentMap[item.id];
                   return (
                     <div
                       key={item.id}
@@ -266,12 +314,25 @@ export default function CartPageClient({
                       className={`bg-white rounded-xl border ${
                         isAlreadyEnrolled
                           ? "border-[#FCA5A5] opacity-75"
+                          : isPendingPayment
+                          ? "border-[#BFDBFE] opacity-75"
                           : "border-[#E5E7EB]"
                       } overflow-hidden hover:shadow-sm transition-shadow`}
                     >
                       {isAlreadyEnrolled && (
                         <div className="bg-[#FEF2F2] border-b border-[#FCA5A5] px-4 py-2 text-xs font-medium text-[#7F1D1D]">
                           {t("enrolledBanner.itemBadge")}
+                        </div>
+                      )}
+                      {!isAlreadyEnrolled && isPendingPayment && (
+                        <div className="bg-[#EFF6FF] border-b border-[#BFDBFE] px-4 py-2 text-xs font-medium text-[var(--color-text-primary)] flex items-center justify-between gap-2">
+                          <span>{t("pendingBanner.itemBadge")}</span>
+                          <Link
+                            href={`/${locale}/payment/bank-transfer/${pendingPaymentMap[item.id]}`}
+                            className="text-[var(--color-primary)] hover:underline"
+                          >
+                            {t("pendingBanner.viewPayment")}
+                          </Link>
                         </div>
                       )}
                       <div className="flex flex-col sm:flex-row">
@@ -446,10 +507,12 @@ export default function CartPageClient({
                       <button
                         type="button"
                         onClick={handleProceedToCheckout}
-                        disabled={hasEnrolledItems}
+                        disabled={hasEnrolledItems || hasPendingItems}
                         title={
                           hasEnrolledItems
                             ? t("enrolledBanner.proceedBlocked")
+                            : hasPendingItems
+                            ? t("pendingBanner.proceedBlocked")
                             : undefined
                         }
                         className="w-full h-12 btn-gold text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 focus-ring disabled:opacity-60 disabled:cursor-not-allowed"
@@ -460,6 +523,11 @@ export default function CartPageClient({
                       {hasEnrolledItems && (
                         <p className="text-[11px] text-[#B91C1C] text-center leading-snug">
                           {t("enrolledBanner.proceedBlocked")}
+                        </p>
+                      )}
+                      {!hasEnrolledItems && hasPendingItems && (
+                        <p className="text-[11px] text-[var(--color-primary)] text-center leading-snug">
+                          {t("pendingBanner.proceedBlocked")}
                         </p>
                       )}
                     </>

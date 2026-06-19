@@ -162,11 +162,17 @@ export default function CheckoutPageClient({
   // Map is keyed by courseId so render code can show per-item badges +
   // disable the Pay button when at least one item is already enrolled.
   const [enrolledMap, setEnrolledMap] = useState<Record<string, boolean>>({});
+  // Course ids the buyer already has a bank-transfer payment in review for.
+  // Value is the payment id so the badge / takeover can deep-link back.
+  const [pendingPaymentMap, setPendingPaymentMap] = useState<
+    Record<string, string>
+  >({});
   useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated || !isStudent) return;
     if (items.length === 0) {
       setEnrolledMap({});
+      setPendingPaymentMap({});
       return;
     }
     let cancelled = false;
@@ -174,14 +180,22 @@ export default function CheckoutPageClient({
       .getEnrollmentStatus(items.map((it) => it.id))
       .then((res) => {
         if (cancelled) return;
-        const next: Record<string, boolean> = {};
+        const enrolledNext: Record<string, boolean> = {};
+        const pendingNext: Record<string, string> = {};
         for (const [id, entry] of Object.entries(res.byId || {})) {
-          next[id] = !!entry?.isEnrolled;
+          enrolledNext[id] = !!entry?.isEnrolled;
+          if (entry?.pendingBankTransferPaymentId) {
+            pendingNext[id] = entry.pendingBankTransferPaymentId;
+          }
         }
-        setEnrolledMap(next);
+        setEnrolledMap(enrolledNext);
+        setPendingPaymentMap(pendingNext);
       })
       .catch(() => {
-        if (!cancelled) setEnrolledMap({});
+        if (!cancelled) {
+          setEnrolledMap({});
+          setPendingPaymentMap({});
+        }
       });
     return () => {
       cancelled = true;
@@ -193,6 +207,15 @@ export default function CheckoutPageClient({
   const hasEnrolledItems = enrolledItemCount > 0;
   const allItemsEnrolled =
     items.length > 0 && enrolledItemCount === items.length;
+  const pendingItemCount = items.filter((it) => pendingPaymentMap[it.id]).length;
+  const hasPendingItems = pendingItemCount > 0;
+  const allItemsPending =
+    items.length > 0 && pendingItemCount === items.length;
+  // When every cart item is a pending payment AND none are enrolled, link to
+  // the single payment (if there's only one) so the takeover CTA goes
+  // straight to the right place.
+  const singlePendingPaymentId =
+    Object.values(pendingPaymentMap)[0] || null;
 
   // Coupon stacking: blocked if ANY cart line is on sale without
   // saleAllowsCoupon. In cart mode, we don't know per-line stacking from
@@ -257,6 +280,7 @@ export default function CheckoutPageClient({
     if (items.length === 0 || processing) return;
     if (!isStudent) return; // defensive — UI hides the button for non-students
     if (hasEnrolledItems) return; // UI hides the button; this is the second wall
+    if (hasPendingItems) return; // pending bank-transfer for one of these courses — server would 409 anyway
 
     setProcessing(true);
     setError(null);
@@ -463,6 +487,50 @@ export default function CheckoutPageClient({
               </div>
             </div>
           </div>
+        ) : allItemsPending ? (
+          /* Every cart line is a pending bank-transfer — block payment and
+             route them back to the existing payment instead of letting them
+             open a second one. */
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#BFDBFE]">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-[#EFF6FF] flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-[var(--color-primary)]" />
+                </div>
+                <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">
+                  {t("pendingPayment.title")}
+                </h2>
+              </div>
+              <p className="text-sm text-[var(--color-text-secondary)] mb-5">
+                {isExpressMode
+                  ? t("pendingPayment.expressBody")
+                  : t("pendingPayment.cartBody", { count: items.length })}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                {singlePendingPaymentId && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(
+                        `/${locale}/payment/bank-transfer/${singlePendingPaymentId}`,
+                      )
+                    }
+                    className="flex-1 h-12 btn-gold rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2"
+                  >
+                    {t("pendingPayment.viewPayment")}
+                    <Chevron size={16} aria-hidden="true" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => router.push(`/${locale}/courses`)}
+                  className="flex-1 h-12 border border-[#D1D5DB] rounded-xl text-sm font-medium text-[#1F2937] hover:bg-[#F3F4F6] transition-colors"
+                >
+                  {t("pendingPayment.browseMore")}
+                </button>
+              </div>
+            </div>
+          </div>
         ) : (
           <div className="flex flex-col lg:flex-row gap-6">
             {/* ── Left: Order ── */}
@@ -494,16 +562,30 @@ export default function CheckoutPageClient({
                   </div>
                 )}
 
+                {!hasEnrolledItems && hasPendingItems && !allItemsPending && (
+                  <div className="mb-3 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] p-3">
+                    <p className="text-xs font-semibold text-[var(--color-text-primary)] mb-1">
+                      {t("pendingPayment.partialTitle", { count: pendingItemCount })}
+                    </p>
+                    <p className="text-[11px] text-[var(--color-text-secondary)]">
+                      {t("pendingPayment.partialBody")}
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   {items.map((item) => {
                     const title = isRTL && item.titleAr ? item.titleAr : item.title;
                     const isAlreadyEnrolled = !!enrolledMap[item.id];
+                    const isPendingPayment = !!pendingPaymentMap[item.id];
                     return (
                       <div
                         key={item.id}
                         className={`flex gap-4 p-3 border ${
                           isAlreadyEnrolled
                             ? "border-[#FCA5A5] bg-[#FEF2F2]/40"
+                            : isPendingPayment
+                            ? "border-[#BFDBFE] bg-[#EFF6FF]/40"
                             : "border-[#E5E7EB]"
                         } rounded-xl`}
                       >
@@ -540,6 +622,11 @@ export default function CheckoutPageClient({
                           {isAlreadyEnrolled && (
                             <p className="mt-1 text-[11px] font-semibold text-[#B91C1C]">
                               {t("alreadyEnrolled.itemBadge")}
+                            </p>
+                          )}
+                          {!isAlreadyEnrolled && isPendingPayment && (
+                            <p className="mt-1 text-[11px] font-semibold text-[var(--color-primary)]">
+                              {t("pendingPayment.itemBadge")}
                             </p>
                           )}
                           <div className="flex items-center gap-2 flex-wrap mt-1.5">
@@ -845,10 +932,16 @@ export default function CheckoutPageClient({
                     net if a buyer somehow bypasses the disabled state. */}
                 <button
                   onClick={handleSubmit}
-                  disabled={processing || hasEnrolledItems}
+                  disabled={processing || hasEnrolledItems || hasPendingItems}
                   aria-busy={processing}
                   aria-label={processing ? (isRTL ? "جاري المعالجة" : "Processing payment") : `${t("payment.payNow")} SAR ${total.toFixed(2)}`}
-                  title={hasEnrolledItems ? t("alreadyEnrolled.partialBody") : undefined}
+                  title={
+                    hasEnrolledItems
+                      ? t("alreadyEnrolled.partialBody")
+                      : hasPendingItems
+                      ? t("pendingPayment.partialBody")
+                      : undefined
+                  }
                   className="w-full h-12 rounded-xl text-white font-medium btn-gold hover:opacity-90 transition-opacity mb-4 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus-ring"
                 >
                   {processing ? (

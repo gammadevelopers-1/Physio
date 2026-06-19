@@ -24,6 +24,7 @@ import {
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import Select from "@/components/admin-dashboard/Select";
 import {
   bankTransferApi,
   type BankTransferDetails,
@@ -248,7 +249,7 @@ export default function BankTransferPageClient({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
+      <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
         <Navbar
           siteSettings={siteSettings}
           navLinks={navbarLinks}
@@ -264,7 +265,7 @@ export default function BankTransferPageClient({
 
   if (loadError || !paymentData || !bankDetails) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
+      <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
         <Navbar
           siteSettings={siteSettings}
           navLinks={navbarLinks}
@@ -312,7 +313,7 @@ export default function BankTransferPageClient({
   const currency = paymentData.payment.currency;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
+    <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
       <Navbar
         siteSettings={siteSettings}
         navLinks={navbarLinks}
@@ -362,7 +363,7 @@ export default function BankTransferPageClient({
             {/* ─── LEFT: Application Summary ──────────────────────────── */}
             <aside className="w-full lg:w-[360px] lg:flex-shrink-0">
               <div className="bg-white rounded-2xl p-6 shadow-sm lg:sticky lg:top-24">
-                <h2 className="text-lg font-semibold text-[#071437] mb-4">
+                <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                   {t("summary.title")}
                 </h2>
 
@@ -384,7 +385,7 @@ export default function BankTransferPageClient({
                   )}
                   <Row label={t("summary.beforeTax")} value={fmt(subtotal - discountAmount, currency)} />
                   <Row label={t("summary.vat")} value={fmt(taxAmount, currency)} />
-                  <div className="border-t border-[#e5e5e5] my-2" />
+                  <div className="border-t border-[var(--color-border)] my-2" />
                   <Row
                     label={t("summary.amountDue")}
                     value={fmt(total, currency)}
@@ -396,7 +397,7 @@ export default function BankTransferPageClient({
                   type="button"
                   onClick={handleDownloadProforma}
                   disabled={proformaLoading}
-                  className="mt-5 w-full h-10 rounded-lg border border-[#005bd3] text-[#005bd3] text-sm font-medium hover:bg-[#EFF6FF] transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-ring"
+                  className="mt-5 w-full h-10 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] text-sm font-medium hover:bg-[var(--color-surface-card)] transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-ring"
                 >
                   {proformaLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
@@ -416,7 +417,7 @@ export default function BankTransferPageClient({
             {/* ─── RIGHT: Payment ───────────────────────────────────── */}
             <div className="flex-1 min-w-0">
               <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm">
-                <h1 className="text-xl font-semibold text-[#071437] mb-1">
+                <h1 className="text-xl font-semibold text-[var(--color-text-primary)] mb-1">
                   {t("payment.title")}
                 </h1>
                 <p className="text-sm text-[var(--on-surface-variant)] mb-6">
@@ -428,7 +429,7 @@ export default function BankTransferPageClient({
                   <button
                     type="button"
                     onClick={() => router.push(`/${locale}/checkout?expressCourseId=${paymentData.payment.courseId}`)}
-                    className="border border-[#e5e5e5] rounded-xl p-4 flex items-center justify-between hover:border-[var(--on-surface-variant)] transition-colors text-start focus-ring"
+                    className="border border-[var(--color-border)] rounded-xl p-4 flex items-center justify-between hover:border-[var(--on-surface-variant)] transition-colors text-start focus-ring"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-[18px] h-[18px] rounded-full border-2 border-[#d5d7da] bg-white" aria-hidden="true" />
@@ -442,16 +443,16 @@ export default function BankTransferPageClient({
                     </span>
                   </button>
 
-                  <div className="border-2 border-[#005bd3] rounded-xl p-4 bg-[#F0F7FF]">
+                  <div className="border-2 border-[var(--color-primary)] rounded-xl p-4 bg-[var(--color-surface-card)]">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-[18px] h-[18px] rounded-full bg-white border-[6px] border-[#005bd3]" aria-hidden="true" />
-                        <Building2 className="w-5 h-5 text-[#005bd3]" aria-hidden="true" />
-                        <span className="font-medium text-[#005bd3]">
+                        <div className="w-[18px] h-[18px] rounded-full bg-white border-[6px] border-[var(--color-primary)]" aria-hidden="true" />
+                        <Building2 className="w-5 h-5 text-[var(--color-primary)]" aria-hidden="true" />
+                        <span className="font-medium text-[var(--color-primary)]">
                           {t("method.bankTransfer")}
                         </span>
                       </div>
-                      <CheckCircle2 className="w-5 h-5 text-[#005bd3]" aria-hidden="true" />
+                      <CheckCircle2 className="w-5 h-5 text-[var(--color-primary)]" aria-hidden="true" />
                     </div>
                   </div>
                 </div>
@@ -494,7 +495,7 @@ export default function BankTransferPageClient({
 
                 {/* Refund info — also hidden while a receipt is pending review. */}
                 {!isPendingReview && (
-                <section className="mt-6 pt-6 border-t border-[#e5e5e5]">
+                <section className="mt-6 pt-6 border-t border-[var(--color-border)]">
                   <h3 className="text-sm font-semibold text-[var(--on-surface-default)] mb-1">
                     {t("refund.title")}
                   </h3>
@@ -509,24 +510,21 @@ export default function BankTransferPageClient({
                         value={refundHolder}
                         onChange={(e) => setRefundHolder(e.target.value)}
                         placeholder={isRTL ? "محمد عبدالله" : "Mohammed Abdullah"}
-                        className="w-full h-11 px-3 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#005bd3]"
+                        className="w-full h-11 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                         autoComplete="name"
                       />
                     </Field>
 
                     <Field label={t("refund.bank")} required>
-                      <select
+                      <Select
                         value={refundBank}
-                        onChange={(e) => setRefundBank(e.target.value)}
-                        className="w-full h-11 px-3 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#005bd3] bg-white"
-                      >
-                        <option value="">{t("refund.bankPlaceholder")}</option>
-                        {(isRTL ? KSA_BANKS_AR : KSA_BANKS_EN).map((b) => (
-                          <option key={b} value={b}>
-                            {b}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={setRefundBank}
+                        placeholder={t("refund.bankPlaceholder")}
+                        options={(isRTL ? KSA_BANKS_AR : KSA_BANKS_EN).map(
+                          (b) => ({ value: b, label: b }),
+                        )}
+                        ariaLabel={t("refund.bank")}
+                      />
                     </Field>
 
                     {(refundBank === "Other" || refundBank === "بنك آخر") && (
@@ -536,7 +534,7 @@ export default function BankTransferPageClient({
                           value={refundBankOther}
                           onChange={(e) => setRefundBankOther(e.target.value)}
                           placeholder={t("refund.bankOtherPlaceholder")}
-                          className="w-full h-11 px-3 border border-[#e5e5e5] rounded-lg text-sm focus:outline-none focus:border-[#005bd3]"
+                          className="w-full h-11 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                         />
                       </Field>
                     )}
@@ -557,7 +555,7 @@ export default function BankTransferPageClient({
                         onChange={(e) => setRefundIban(e.target.value.toUpperCase())}
                         placeholder="SA0000000000000000000000"
                         dir="ltr"
-                        className="w-full h-11 px-3 border border-[#e5e5e5] rounded-lg text-sm font-mono focus:outline-none focus:border-[#005bd3]"
+                        className="w-full h-11 px-3 border border-[var(--color-border)] rounded-lg text-sm font-mono focus:outline-none focus:border-[var(--color-primary)]"
                         maxLength={29}
                       />
                     </Field>
@@ -572,7 +570,7 @@ export default function BankTransferPageClient({
                         onChange={(e) => setRefundNationalId(e.target.value.replace(/\D/g, ""))}
                         placeholder="1010101010"
                         dir="ltr"
-                        className="w-full h-11 px-3 border border-[#e5e5e5] rounded-lg text-sm font-mono focus:outline-none focus:border-[#005bd3]"
+                        className="w-full h-11 px-3 border border-[var(--color-border)] rounded-lg text-sm font-mono focus:outline-none focus:border-[var(--color-primary)]"
                         maxLength={15}
                       />
                     </Field>
@@ -612,7 +610,7 @@ export default function BankTransferPageClient({
                         link: (chunks) => (
                           <Link
                             href={`/${locale}/legal/terms`}
-                            className="text-[#005bd3] hover:underline"
+                            className="text-[var(--color-primary)] hover:underline"
                           >
                             {chunks}
                           </Link>
@@ -706,9 +704,9 @@ function BankDetailsCard({
     : details.instructionsEn || details.instructionsAr;
 
   return (
-    <section className="rounded-xl border border-[#E5E7EB] p-4 md:p-5 bg-[#FAFBFC]">
+    <section className="rounded-xl border border-[var(--color-border)] p-4 md:p-5 bg-[var(--color-surface-page)]">
       <div className="flex items-center gap-2 mb-3">
-        <Building2 className="w-5 h-5 text-[#005bd3]" aria-hidden="true" />
+        <Building2 className="w-5 h-5 text-[var(--color-primary)]" aria-hidden="true" />
         <h3 className="text-sm font-semibold text-[var(--on-surface-default)]">
           {t("bankDetails.title")}
         </h3>
@@ -795,11 +793,11 @@ function CopyableField({
       <label className="block text-xs font-medium text-[var(--on-surface-variant)] mb-1">
         {label}
       </label>
-      <div className="flex items-center gap-2 bg-white border border-[#E5E7EB] rounded-lg pe-2">
+      <div className="flex items-center gap-2 bg-white border border-[var(--color-border)] rounded-lg pe-2">
         <button
           type="button"
           onClick={handleCopy}
-          className="flex-shrink-0 p-2.5 text-[var(--on-surface-variant)] hover:text-[#005bd3] focus-ring rounded"
+          className="flex-shrink-0 p-2.5 text-[var(--on-surface-variant)] hover:text-[var(--color-primary)] focus-ring rounded"
           aria-label={copied ? "Copied" : `Copy ${label}`}
           title={copied ? "Copied" : "Copy"}
         >
@@ -835,7 +833,35 @@ function ReceiptUploadDropzone({
   t: TFn;
 }) {
   const [dragOver, setDragOver] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // One object URL per file — memoized + revoked on change/unmount so we
+  // don't leak blob memory each render. Covers both image thumbnails and
+  // the in-page PDF preview iframe.
+  const previewUrl = useMemo(() => {
+    if (!file) return null;
+    return URL.createObjectURL(file);
+  }, [file]);
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  // Close the preview modal on Escape so the file dropzone keeps regular
+  // keyboard behaviour.
+  useEffect(() => {
+    if (!previewOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPreviewOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [previewOpen]);
+
+  const isImage = !!file && file.type.startsWith("image/");
+  const isPdf = file?.type === "application/pdf";
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -845,16 +871,15 @@ function ReceiptUploadDropzone({
   };
 
   if (file) {
-    const previewUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : null;
     return (
-      <div className="rounded-xl border border-[#E5E7EB] bg-[#FAFBFC] p-4">
+      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-page)] p-4">
         <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-white border border-[#E5E7EB] flex items-center justify-center overflow-hidden">
-            {previewUrl ? (
+          <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-white border border-[var(--color-border)] flex items-center justify-center overflow-hidden">
+            {isImage && previewUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={previewUrl} alt={file.name} className="w-full h-full object-cover" />
             ) : (
-              <FileText className="w-6 h-6 text-[#005bd3]" aria-hidden="true" />
+              <FileText className="w-6 h-6 text-[var(--color-primary)]" aria-hidden="true" />
             )}
           </div>
           <div className="flex-1 min-w-0">
@@ -866,17 +891,16 @@ function ReceiptUploadDropzone({
             </p>
           </div>
           <div className="flex items-center gap-1">
-            {previewUrl && (
-              <a
-                href={previewUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 text-[var(--on-surface-variant)] hover:text-[#005bd3] focus-ring rounded"
+            {(isImage || isPdf) && (
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(true)}
+                className="p-2 text-[var(--on-surface-variant)] hover:text-[var(--color-primary)] focus-ring rounded"
                 aria-label={t("file.preview")}
                 title={t("file.preview")}
               >
                 <Eye className="w-4 h-4" aria-hidden="true" />
-              </a>
+              </button>
             )}
             <button
               type="button"
@@ -894,6 +918,51 @@ function ReceiptUploadDropzone({
             {error}
           </p>
         )}
+        {previewOpen && previewUrl && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("file.preview")}
+            onClick={() => setPreviewOpen(false)}
+            className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              dir={isRTL ? "rtl" : "ltr"}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
+            >
+              <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-[var(--color-border)]">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
+                  {file.name}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setPreviewOpen(false)}
+                  className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] rounded focus-ring"
+                  aria-label={t("file.remove")}
+                >
+                  <X className="w-5 h-5" aria-hidden="true" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-auto bg-[var(--color-surface-page)] flex items-center justify-center">
+                {isImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={previewUrl}
+                    alt={file.name}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                ) : (
+                  <iframe
+                    src={previewUrl}
+                    title={file.name}
+                    className="w-full h-[75vh] border-0"
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -909,8 +978,8 @@ function ReceiptUploadDropzone({
         onDrop={onDrop}
         className={`block rounded-xl border-2 border-dashed transition-colors cursor-pointer p-8 text-center ${
           dragOver
-            ? "border-[#005bd3] bg-[#F0F7FF]"
-            : "border-[#E5E7EB] bg-[#FAFBFC] hover:border-[#005bd3]/50"
+            ? "border-[var(--color-primary)] bg-[var(--color-surface-card)]"
+            : "border-[var(--color-border)] bg-[var(--color-surface-page)] hover:border-[var(--color-primary)]/50"
         }`}
       >
         <input
@@ -921,8 +990,8 @@ function ReceiptUploadDropzone({
           className="hidden"
         />
         <div className="flex flex-col items-center gap-2">
-          <div className="w-12 h-12 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center">
-            <Upload className="w-5 h-5 text-[#005bd3]" aria-hidden="true" />
+          <div className="w-12 h-12 rounded-full bg-white border border-[var(--color-border)] flex items-center justify-center">
+            <Upload className="w-5 h-5 text-[var(--color-primary)]" aria-hidden="true" />
           </div>
           <p className="text-sm font-medium text-[var(--on-surface-default)]">
             {t("upload.cta")}
@@ -974,17 +1043,17 @@ function ActiveReceiptNotice({
   }
 
   return (
-    <div className="mb-6 bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl p-4">
+    <div className="mb-6 bg-[var(--color-surface-card)] border border-[var(--color-border-subtle)] rounded-xl p-4">
       <div className="flex items-start gap-3">
-        <CheckCircle2 className="w-5 h-5 text-[#005bd3] flex-shrink-0 mt-0.5" aria-hidden="true" />
+        <CheckCircle2 className="w-5 h-5 text-[var(--color-primary)] flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div className="flex-1">
-          <p className="text-sm font-semibold text-[#1E40AF]">
+          <p className="text-sm font-semibold text-[var(--color-primary-dark)]">
             {t("activeReceipt.pendingTitle")}
           </p>
-          <p className="text-sm text-[#1E3A8A] mt-1">
+          <p className="text-sm text-[var(--color-primary-dark)] mt-1">
             {t("activeReceipt.pendingBody")}
           </p>
-          <p className="text-xs text-[#1E3A8A] mt-2 opacity-80">
+          <p className="text-xs text-[var(--color-primary-dark)] mt-2 opacity-80">
             {t("activeReceipt.uploadedAt", {
               when: new Date(receipt.uploadedAt).toLocaleString(locale === "ar" ? "ar-SA" : "en-US"),
             })}

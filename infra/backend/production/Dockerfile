@@ -46,6 +46,12 @@ COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
 # Copy certificate assets (fonts, logos) for PDF generation
 COPY --from=builder --chown=nestjs:nodejs /app/src/modules/certificates/assets ./dist/src/modules/certificates/assets
 
+# Copy shared assets (Arabic fonts for invoice / proforma PDFs). The invoice
+# service resolves these from process.cwd()/src/assets/fonts; without this
+# copy, every invoice and proforma PDF either 500s or silently fails to
+# generate (the existing generateInvoice swallows the error in a catch).
+COPY --from=builder --chown=nestjs:nodejs /app/src/assets ./src/assets
+
 # Switch to non-root user
 USER nestjs
 

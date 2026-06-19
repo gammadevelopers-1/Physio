@@ -1120,7 +1120,10 @@
       "addedToCart": "Added to cart!",
       "alreadyEnrolledTitle": "You're enrolled in this course",
       "alreadyEnrolledBody": "Pick up where you left off in your learning dashboard.",
-      "goToMyCourse": "Go to my course"
+      "goToMyCourse": "Go to my course",
+      "pendingPaymentTitle": "Payment under review",
+      "pendingPaymentBody": "Your bank transfer for this course is being reviewed by our finance team. You'll be notified by email once it's approved.",
+      "viewPendingPayment": "View pending payment"
     },
     "nonStudentNotice": {
       "title": "Available for student accounts",
@@ -1203,6 +1206,14 @@
       "itemBadge": "Already enrolled — remove to continue",
       "proceedBlocked": "Remove already-enrolled courses to proceed."
     },
+    "pendingBanner": {
+      "title": "{count, plural, =1 {1 course in your cart has a payment under review} other {# courses in your cart have a payment under review}}",
+      "body": "You've already submitted a bank transfer for these. Wait for finance approval or open the pending payment instead of paying again.",
+      "removeAll": "Remove pending courses",
+      "itemBadge": "Payment under review",
+      "viewPayment": "View payment",
+      "proceedBlocked": "Remove the courses with pending payments to proceed."
+    },
     "emptyTitle": "Your cart is empty",
     "emptyDescription": "Browse our courses and add them to your cart",
     "browseCourses": "Browse Courses",
@@ -1233,6 +1244,16 @@
       "partialTitle": "{count, plural, =1 {1 item in this order is already enrolled} other {# items in this order are already enrolled}}",
       "partialBody": "Remove the already-enrolled course(s) from your cart before paying.",
       "itemBadge": "Already enrolled"
+    },
+    "pendingPayment": {
+      "title": "Payment already under review",
+      "expressBody": "You've already submitted a bank transfer for this course. Our finance team is reviewing it — you'll be notified by email once it's approved.",
+      "cartBody": "{count, plural, =1 {You've already submitted a bank transfer for this course.} other {You've already submitted bank transfers for these # courses.}} Wait for finance approval before paying again.",
+      "viewPayment": "View pending payment",
+      "browseMore": "Browse more courses",
+      "partialTitle": "{count, plural, =1 {1 item in this order has a payment under review} other {# items in this order have payments under review}}",
+      "partialBody": "Open the pending payment(s) instead of paying again. Remove the items with pending payments from your cart to proceed.",
+      "itemBadge": "Payment under review"
     },
     "buyerDetails": "Buyer details",
     "editProfile": "Edit profile",
@@ -8037,7 +8058,11 @@
         "paid": "Paid",
         "pending": "Pending",
         "failed": "Failed",
-        "refunded": "Refunded"
+        "refunded": "Refunded",
+        "awaiting_approval": "Awaiting Approval",
+        "processing": "Processing",
+        "partially_refunded": "Partially Refunded",
+        "chargeback": "Chargeback"
       },
       "actions": {
         "view": "View",

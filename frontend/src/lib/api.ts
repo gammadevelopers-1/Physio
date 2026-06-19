@@ -4408,6 +4408,11 @@ export interface EnrollmentStatusEntry {
   isEnrolled: boolean;
   enrollmentId: string | null;
   status: 'active' | 'completed' | 'expired' | null;
+  // Set when the student has already initiated a bank transfer for this
+  // course but finance hasn't actioned the receipt yet. UI uses this to
+  // route them back to /payment/bank-transfer/<id> instead of letting them
+  // start a duplicate payment.
+  pendingBankTransferPaymentId?: string | null;
 }
 
 export interface EnrollmentStatusResponse {

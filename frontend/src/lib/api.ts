@@ -108,6 +108,42 @@ function processQueue(error: Error | null, token: string | null) {
   refreshQueue = [];
 }
 
+/**
+ * Single canonical token-refresh path. AuthContext.initAuth and fetchApi's
+ * 401 auto-refresh both go through this so the underlying /auth/refresh
+ * call never races with itself. Without this, both code paths fire on a
+ * fresh page load, the HTTP-only refresh cookie rotates after the first
+ * response, and the loser sees "Session expired" even though the user is
+ * actually signed in.
+ */
+export async function refreshAccessToken(): Promise<string> {
+  if (isRefreshing) {
+    return new Promise<string>((resolve, reject) => {
+      refreshQueue.push({ resolve, reject });
+    });
+  }
+
+  isRefreshing = true;
+  try {
+    const res = await fetch(`${API_URL}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) throw new Error('Refresh failed');
+    const data = (await res.json()) as { accessToken: string };
+    setAccessToken(data.accessToken);
+    processQueue(null, data.accessToken);
+    return data.accessToken;
+  } catch (err) {
+    processQueue(err as Error, null);
+    removeAccessToken();
+    throw err;
+  } finally {
+    isRefreshing = false;
+  }
+}
+
 async function fetchApi<T>(
   endpoint: string,
   options: FetchOptions = {}
@@ -166,49 +202,15 @@ async function fetchApi<T>(
     return fetchApi<T>(endpoint, { ...options, _attempt: _attempt + 1 });
   }
 
-  // Handle 401 - attempt token refresh once
+  // Handle 401 - attempt token refresh once via the shared canonical path
+  // (queues onto any in-flight refresh, so AuthContext's mount-time refresh
+  // and any concurrent 401 retries all share the same /auth/refresh call).
   if (response.status === 401 && !skipAuth && !_isRetry) {
-    if (isRefreshing) {
-      // Another refresh is in-flight; queue this request
-      return new Promise<T>((resolve, reject) => {
-        refreshQueue.push({
-          resolve: (newToken: string) => {
-            headers['Authorization'] = `Bearer ${newToken}`;
-            fetchApi<T>(endpoint, { ...options, _isRetry: true })
-              .then(resolve)
-              .catch(reject);
-          },
-          reject,
-        });
-      });
-    }
-
-    isRefreshing = true;
-
     try {
-      const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (!refreshResponse.ok) {
-        throw new Error('Refresh failed');
-      }
-
-      const data = await refreshResponse.json();
-      setAccessToken(data.accessToken);
-      processQueue(null, data.accessToken);
-
-      // Retry original request with new token
-      headers['Authorization'] = `Bearer ${data.accessToken}`;
+      await refreshAccessToken();
       return fetchApi<T>(endpoint, { ...options, _isRetry: true });
-    } catch (refreshError) {
-      processQueue(refreshError as Error, null);
-      removeAccessToken();
+    } catch {
       throw new ApiError(401, 'Session expired. Please log in again.');
-    } finally {
-      isRefreshing = false;
     }
   }
 

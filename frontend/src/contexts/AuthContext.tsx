@@ -12,7 +12,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { authApi, setAccessToken, removeAccessToken } from '@/lib/api';
+import { authApi, setAccessToken, removeAccessToken, refreshAccessToken } from '@/lib/api';
 import type { User } from '@/lib/api';
 
 // ===========================================
@@ -125,8 +125,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initAuth = async () => {
       try {
-        const refreshResponse = await authApi.refresh();
-        setAccessToken(refreshResponse.accessToken);
+        // Use the canonical refresh path so any concurrent fetchApi 401
+        // retries piggyback on this same call instead of triggering a
+        // second /auth/refresh (which would rotate the cookie and break
+        // whichever request lost the race).
+        await refreshAccessToken();
 
         const user = await authApi.me();
         setSessionCookie();

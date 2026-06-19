@@ -69,6 +69,18 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
         amount: params.amount,
         currency: params.currency,
       },
+      // tax_amount + shipping_amount are REQUIRED by Tamara's /checkout
+      // endpoint even when zero. Omitting them returns HTTP 500 with the
+      // generic "Something went wrong with us" message instead of a clean
+      // 400 — verified empirically against api-sandbox.tamara.co.
+      tax_amount: {
+        amount: 0,
+        currency: params.currency,
+      },
+      shipping_amount: {
+        amount: 0,
+        currency: params.currency,
+      },
       description: params.description,
       country_code: 'SA',
       payment_type: 'PAY_BY_INSTALMENTS',
@@ -79,6 +91,9 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
           reference_id: params.metadata.courseId,
           type: 'Digital',
           name: params.description,
+          // sku is REQUIRED per item (same 500-on-omit behaviour). We reuse
+          // the courseId since each item maps 1:1 to a course in our model.
+          sku: params.metadata.courseId,
           quantity: 1,
           unit_price: {
             amount: params.amount,

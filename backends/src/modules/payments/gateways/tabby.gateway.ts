@@ -67,6 +67,10 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
           items: [
             {
               title: params.description,
+              // Tabby's docs list this as optional, but it surfaces in their
+              // refund / dispute UI when set — pass courseId so finance can
+              // trace a line item back to a course without joining tables.
+              reference_id: params.metadata.courseId,
               quantity: 1,
               unit_price: params.amount.toFixed(2),
               category: 'Education',

@@ -121,7 +121,7 @@ export class WebhooksController {
     //    before answering 'paid', so this is async.
     const webhookResult = await gateway.processWebhook(body);
 
-    // 4. Skip non-terminal statuses (e.g. Tap INITIATED / IN_PROGRESS)
+    // 4. Skip non-terminal statuses (e.g. Tamara pre-authorise retries)
     if (webhookResult.status === 'pending') {
       this.logger.log(
         `Non-terminal webhook ignored: ${gatewayName}/${webhookResult.chargeId} (status=pending)`,

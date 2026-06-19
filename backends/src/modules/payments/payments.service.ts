@@ -603,6 +603,15 @@ export class PaymentsService {
         : `${lines.length} courses: ${lines[0].course.title}` +
           (lines.length > 1 ? ` (+${lines.length - 1} more)` : '');
 
+    // Tabby's Pre-Scoring step requires a phone number on the buyer; without
+    // one their checkout silently auto-declines. Surface a clear error up
+    // front instead of letting the buyer fail at the gateway page.
+    if (dto.gateway === 'tabby' && !userData?.phone) {
+      throw new BadRequestException(
+        'Tabby requires a phone number on your profile. Please add one in account settings, or use a different payment method.',
+      );
+    }
+
     let chargeResult: Awaited<ReturnType<typeof gateway.createCharge>>;
     try {
       chargeResult = await gateway.createCharge({

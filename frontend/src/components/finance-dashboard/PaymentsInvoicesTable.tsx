@@ -30,11 +30,22 @@ interface Transaction {
   course: string;
   amount: string;
   gateway: "Moyasar" | "Tamara" | "Tabby" | "BankTransfer";
-  status: "paid" | "pending" | "failed" | "refunded";
+  status: "paid" | "pending" | "failed" | "rejected" | "refunded";
   errorCode?: string | null;
   failureReason?: string | null;
   gatewayChargeId?: string | null;
   paymentMethod?: string | null;
+  // Bank-transfer specific — populated only for bank_transfer rows where an
+  // active (non-replaced) receipt exists. The "received at" timestamp is the
+  // receipt upload time; the refund fields are the snapshot the buyer entered.
+  receiptUploadedAt?: string | null;
+  receiptReviewStatus?: "pending" | "approved" | "rejected" | null;
+  receiptReviewedAt?: string | null;
+  receiptReviewerNote?: string | null;
+  refundAccountHolder?: string | null;
+  refundIban?: string | null;
+  refundBankName?: string | null;
+  refundNationalId?: string | null;
 }
 
 interface PaymentsInvoicesTableProps {
@@ -128,7 +139,9 @@ const PaymentsInvoicesTable = ({
   const statusStyles: Record<string, string> = {
     paid: "bg-[#DCFCE7] text-[#16A34A]",
     pending: "bg-[#FEF9C3] text-[#CA8A04]",
+    awaiting_approval: "bg-[#DBEAFE] text-[#1D4ED8]",
     failed: "bg-[#FEE2E2] text-[#DC2626]",
+    rejected: "bg-[#FEE2E2] text-[#B91C1C]",
     refunded: "bg-[#FFEDD5] text-[#EA580C]",
   };
 
@@ -520,6 +533,31 @@ const PaymentsInvoicesTable = ({
                 ...(selectedTx.errorCode ? [{ label: t("paymentsTable.transactionDetail.errorCode"), value: selectedTx.errorCode, mono: true, error: true }] : []),
                 ...(selectedTx.failureReason ? [{ label: t("paymentsTable.transactionDetail.failureReason"), value: selectedTx.failureReason }] : []),
                 ...(selectedTx.gatewayChargeId ? [{ label: t("paymentsTable.transactionDetail.gatewayTxId"), value: selectedTx.gatewayChargeId, mono: true }] : []),
+                // Bank-transfer extras: receipt upload time + the buyer's
+                // refund-info snapshot. Only shown when an active receipt
+                // exists (receiptUploadedAt is populated).
+                ...(selectedTx.gateway === "BankTransfer" && selectedTx.receiptUploadedAt
+                  ? [
+                      {
+                        label: t("paymentsTable.transactionDetail.receiptReceivedAt"),
+                        value: new Date(selectedTx.receiptUploadedAt).toLocaleString(
+                          locale === "ar" ? "ar-SA" : "en-US",
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(selectedTx.gateway === "BankTransfer" && selectedTx.refundAccountHolder
+                  ? [{ label: t("paymentsTable.transactionDetail.refundAccountHolder"), value: selectedTx.refundAccountHolder }]
+                  : []),
+                ...(selectedTx.gateway === "BankTransfer" && selectedTx.refundIban
+                  ? [{ label: t("paymentsTable.transactionDetail.refundIban"), value: selectedTx.refundIban, mono: true }]
+                  : []),
+                ...(selectedTx.gateway === "BankTransfer" && selectedTx.refundBankName
+                  ? [{ label: t("paymentsTable.transactionDetail.refundBankName"), value: selectedTx.refundBankName }]
+                  : []),
+                ...(selectedTx.gateway === "BankTransfer" && selectedTx.refundNationalId
+                  ? [{ label: t("paymentsTable.transactionDetail.refundNationalId"), value: selectedTx.refundNationalId, mono: true }]
+                  : []),
               ].map(({ label, value, mono, error }) => (
                 <div
                   key={label}

@@ -424,21 +424,26 @@ export class BankTransferService {
       // Primary course = first cart line (legacy column on payments table).
       const primaryCourseId = quote.courseIds[0];
 
-      // Supersede any prior rejected attempts for these courses so finance
-      // sees the latest one and the dashboard isn't littered with stale
-      // PENDING rows. We only sweep this user's own rows.
-      const rejectedSingle = await tx
+      // Mark prior REJECTED or stale PENDING bank-transfer attempts for these
+      // courses as FAILED with reason "Superseded …" so the finance dashboard
+      // shows one entry per submission cycle (not a trail of dead rejections).
+      // Only sweep this user's own rows.
+      const supersedeStatuses = [
+        PAYMENT_STATUS.PENDING,
+        PAYMENT_STATUS.REJECTED,
+      ] as any;
+      const supersedeSingle = await tx
         .select({ id: payments.id })
         .from(payments)
         .where(
           and(
             eq(payments.userId, user.id),
             eq(payments.gateway, 'bank_transfer'),
-            eq(payments.status, PAYMENT_STATUS.PENDING),
+            inArray(payments.status, supersedeStatuses),
             inArray(payments.courseId, quote.courseIds),
           ),
         );
-      const rejectedMulti = await tx
+      const supersedeMulti = await tx
         .select({ id: payments.id })
         .from(paymentItems)
         .innerJoin(payments, eq(payments.id, paymentItems.paymentId))
@@ -446,12 +451,12 @@ export class BankTransferService {
           and(
             eq(payments.userId, user.id),
             eq(payments.gateway, 'bank_transfer'),
-            eq(payments.status, PAYMENT_STATUS.PENDING),
+            inArray(payments.status, supersedeStatuses),
             inArray(paymentItems.courseId, quote.courseIds),
           ),
         );
       const staleIds = Array.from(
-        new Set([...rejectedSingle, ...rejectedMulti].map((r) => r.id)),
+        new Set([...supersedeSingle, ...supersedeMulti].map((r) => r.id)),
       );
       if (staleIds.length > 0) {
         await tx
@@ -586,6 +591,54 @@ export class BankTransferService {
       );
     }
     return this.invoiceService.generateProformaPdfBuffer(paymentId);
+  }
+
+  /**
+   * Build a proforma PDF for the draft-mode checkout — the buyer hasn't
+   * committed (no payment row yet) but wants to download the proforma to
+   * forward to a finance team / employer before making the wire. We run
+   * the same quote validation as submitDraft so price / discount / cart
+   * limits are honored, then hand off to InvoiceService.
+   */
+  async getProformaPdfForQuote(
+    user: AuthenticatedUser,
+    dto: { courseIds: string[]; discountCode?: string },
+  ): Promise<{ buffer: Buffer; proformaNumber: string }> {
+    const quote = await this.paymentsService.quotePayment(user, dto);
+
+    const userData = await this.getUserData(user.id);
+
+    const lineItems = quote.lineItems.map((li) => ({
+      description: li.title,
+      descriptionAr: li.titleAr || null,
+      deliveryType: li.deliveryType || null,
+      amount: li.effectivePrice,
+    }));
+
+    return this.invoiceService.generateProformaPdfFromQuote({
+      buyer: {
+        name:
+          `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
+          user.email,
+        email: user.email,
+        nationalId: (userData as any)?.nationalId || null,
+      },
+      courseIds: quote.courseIds,
+      lineItems,
+      subtotal: quote.totals.subtotal,
+      discountAmount: quote.totals.discountAmount,
+      taxAmount: quote.totals.taxAmount,
+      totalAmount: quote.totals.totalAmount,
+    });
+  }
+
+  private async getUserData(userId: string) {
+    const [row] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    return row || null;
   }
 
   async getReceiptById(receiptId: string): Promise<PaymentReceipt | null> {
@@ -941,9 +994,14 @@ export class BankTransferService {
 
   /**
    * Finance rejects a receipt: marks it rejected with a reviewer note that
-   * the student sees on re-upload. The payment goes back to PENDING (not
-   * FAILED) so the student can fix the issue and re-upload without starting
-   * a brand-new checkout — the bank-transfer page handles the re-upload UX.
+   * the student sees on re-upload. The payment moves to FAILED with the
+   * reviewer note copied into failureReason so the Payments page shows the
+   * rejection immediately (rather than the row sitting in "pending" until
+   * the student starts a new draft).
+   *
+   * Student is still unblocked because getEnrollmentStatusBulk treats only
+   * AWAITING_APPROVAL as blocking. If the student re-uploads via the old
+   * URL, uploadReceipt revives the payment back to AWAITING_APPROVAL.
    *
    * Reviewer note is required and shown to the student verbatim. Internal
    * note (optional) stays private to finance.
@@ -1000,11 +1058,19 @@ export class BankTransferService {
         );
       }
 
-      // Roll payment back to PENDING so the student can upload a replacement
-      // (the bank-transfer page allows uploads on any non-finalized status).
+      // Mark payment as REJECTED (semantically distinct from FAILED, which
+      // is reserved for platform/gateway failures). failureReason stores the
+      // reviewer note so the Payments page can surface it without joining
+      // back to paymentReceipts. uploadReceipt revives the payment back to
+      // AWAITING_APPROVAL if the student re-uploads on the same URL.
       await tx
         .update(payments)
-        .set({ status: PAYMENT_STATUS.PENDING, updatedAt: new Date() })
+        .set({
+          status: PAYMENT_STATUS.REJECTED,
+          failedAt: new Date(),
+          failureReason: `Bank transfer receipt rejected: ${opts.reviewerNote.trim()}`,
+          updatedAt: new Date(),
+        })
         .where(eq(payments.id, receipt.paymentId));
     });
 
@@ -1030,7 +1096,7 @@ export class BankTransferService {
     return {
       receiptId,
       paymentId: receipt.paymentId,
-      paymentStatus: PAYMENT_STATUS.PENDING,
+      paymentStatus: PAYMENT_STATUS.REJECTED,
     };
   }
 

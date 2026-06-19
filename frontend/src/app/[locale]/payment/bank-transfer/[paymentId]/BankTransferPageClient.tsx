@@ -32,6 +32,7 @@ import {
   type BankTransferPayment,
   ApiError,
 } from "@/lib/api";
+import { useAuth } from "@/contexts";
 import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
 
 interface BankTransferPageClientProps {
@@ -105,6 +106,8 @@ export default function BankTransferPageClient({
     ? searchParams.get("discountCode") || undefined
     : undefined;
 
+  const { user } = useAuth();
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [bankDetails, setBankDetails] = useState<BankTransferDetails | null>(null);
@@ -115,7 +118,9 @@ export default function BankTransferPageClient({
   >(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Form state
+  // Form state — refundHolder + refundNationalId prefilled from the logged-in
+  // student. Both stay editable since the payer may be a third party (parent,
+  // employer, etc) wiring money from a different account.
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [refundHolder, setRefundHolder] = useState("");
@@ -124,6 +129,20 @@ export default function BankTransferPageClient({
   const [refundBankOther, setRefundBankOther] = useState("");
   const [refundNationalId, setRefundNationalId] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Prefill once when the user becomes available. Touch only empty fields so
+  // typed input never gets overwritten.
+  useEffect(() => {
+    if (!user) return;
+    setRefundHolder((prev) => {
+      if (prev) return prev;
+      return `${user.firstName || ""} ${user.lastName || ""}`.trim();
+    });
+    setRefundNationalId((prev) => {
+      if (prev) return prev;
+      return user.nationalId || "";
+    });
+  }, [user]);
 
   // Load bank details + payment (or quote, in draft mode) in parallel.
   useEffect(() => {
@@ -213,20 +232,34 @@ export default function BankTransferPageClient({
 
   // Download a branded proforma invoice (PDF) summarising what the student is
   // about to pay for. Useful for sending to a finance department / employer for
-  // reimbursement before the actual payment is made.
+  // reimbursement before the actual payment is made. Two code paths:
+  //   - Draft mode: POST /proforma/quote with cart payload (no payment row yet)
+  //   - Persisted:  GET  /:paymentId/proforma (existing payment row)
   const [proformaLoading, setProformaLoading] = useState(false);
   const handleDownloadProforma = useCallback(async () => {
-    // Draft mode has no payment row yet, so the proforma endpoint can't run.
-    // Hide the button instead of calling.
-    if (isDraftMode) return;
-    if (!paymentId || proformaLoading) return;
+    if (proformaLoading) return;
     setProformaLoading(true);
     try {
-      const blob = await bankTransferApi.downloadProforma(paymentId);
+      let blob: Blob;
+      let filename: string;
+      if (isDraftMode) {
+        if (draftCourseIds.length === 0) {
+          throw new ApiError(400, t("loadError"));
+        }
+        blob = await bankTransferApi.downloadProformaFromQuote({
+          courseIds: draftCourseIds,
+          discountCode: draftDiscountCode,
+        });
+        filename = `proforma-${draftCourseIds[0].slice(0, 8)}.pdf`;
+      } else {
+        if (!paymentId) return;
+        blob = await bankTransferApi.downloadProforma(paymentId);
+        filename = `proforma-${paymentId.slice(0, 8)}.pdf`;
+      }
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `proforma-${paymentId.slice(0, 8)}.pdf`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -238,7 +271,7 @@ export default function BankTransferPageClient({
     } finally {
       setProformaLoading(false);
     }
-  }, [paymentId, proformaLoading, t, isDraftMode]);
+  }, [paymentId, proformaLoading, t, isDraftMode, draftCourseIds, draftDiscountCode]);
 
   const handleFileSelect = useCallback(
     (file: File | null) => {
@@ -499,21 +532,19 @@ export default function BankTransferPageClient({
                   />
                 </div>
 
-                {!isDraftMode && (
-                  <button
-                    type="button"
-                    onClick={handleDownloadProforma}
-                    disabled={proformaLoading}
-                    className="mt-5 w-full h-10 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] text-sm font-medium hover:bg-[var(--color-surface-card)] transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-ring"
-                  >
-                    {proformaLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                    ) : (
-                      <Download className="w-4 h-4" aria-hidden="true" />
-                    )}
-                    <span>{t("proforma.download")}</span>
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={handleDownloadProforma}
+                  disabled={proformaLoading}
+                  className="mt-5 w-full h-10 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] text-sm font-medium hover:bg-[var(--color-surface-card)] transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-ring"
+                >
+                  {proformaLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Download className="w-4 h-4" aria-hidden="true" />
+                  )}
+                  <span>{t("proforma.download")}</span>
+                </button>
 
                 <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-[var(--on-surface-variant)]">
                   <Lock className="w-3.5 h-3.5" aria-hidden="true" />

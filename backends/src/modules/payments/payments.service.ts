@@ -11,6 +11,7 @@ import { db } from '../../database';
 import {
   payments,
   paymentItems,
+  paymentReceipts,
   courses,
   enrollments,
   users,
@@ -19,6 +20,7 @@ import {
   COURSE_STATUS,
   ENROLLMENT_STATUS,
 } from '../../database/schema';
+import { isNull } from 'drizzle-orm';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { GatewayFactory } from './gateways/gateway.factory';
@@ -251,9 +253,8 @@ export class PaymentsService {
 
     // Reject if the student already has an in-flight bank-transfer payment
     // for any course in this cart. Only AWAITING_APPROVAL blocks — that's
-    // "finance is reviewing your receipt right now". A PENDING row at this
-    // point means the receipt was already REJECTED (reject handler flips
-    // payment back to PENDING), so the student is free to start over.
+    // "finance is reviewing your receipt right now". Rejected attempts are
+    // FAILED (not blocking) so the student is free to start over.
     const inFlightSingle = await db
       .select({ id: payments.id, courseId: payments.courseId })
       .from(payments)
@@ -1146,11 +1147,30 @@ export class PaymentsService {
         paidAt: payments.paidAt,
         failedAt: payments.failedAt,
         createdAt: payments.createdAt,
+        // Active bank-transfer receipt (NULL for non-bank-transfer rows).
+        // Surfaced so the Payments page detail can show refund info and the
+        // upload timestamp ("time we received the receipt") without a second
+        // round-trip.
+        receiptUploadedAt: paymentReceipts.createdAt,
+        receiptReviewStatus: paymentReceipts.reviewStatus,
+        receiptReviewedAt: paymentReceipts.reviewedAt,
+        receiptReviewerNote: paymentReceipts.reviewerNote,
+        refundAccountHolder: paymentReceipts.refundAccountHolder,
+        refundIban: paymentReceipts.refundIban,
+        refundBankName: paymentReceipts.refundBankName,
+        refundNationalId: paymentReceipts.refundNationalId,
       })
       .from(payments)
       .leftJoin(courses, eq(payments.courseId, courses.id))
       .leftJoin(users, eq(payments.userId, users.id))
       .leftJoin(invoices, eq(invoices.paymentId, payments.id))
+      .leftJoin(
+        paymentReceipts,
+        and(
+          eq(paymentReceipts.paymentId, payments.id),
+          isNull(paymentReceipts.replacedById),
+        ),
+      )
       .where(whereClause)
       .orderBy(desc(payments.createdAt))
       .limit(limit)

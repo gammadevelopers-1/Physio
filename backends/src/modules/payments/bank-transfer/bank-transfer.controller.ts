@@ -152,6 +152,29 @@ export class BankTransferController {
   }
 
   /**
+   * Draft-mode proforma: no payment row exists yet. Buyer passes the same
+   * courseIds + discountCode they'd submit to submit-draft, and gets back
+   * a PDF computed from a fresh quote. Useful before they decide to commit.
+   */
+  @Post('proforma/quote')
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async downloadProformaFromQuote(
+    @Body() body: { courseIds: string[]; discountCode?: string },
+    @CurrentUser() user: AuthenticatedUser,
+    @Res() res: Response,
+  ) {
+    const { buffer, proformaNumber } =
+      await this.bankTransferService.getProformaPdfForQuote(user, body);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="proforma-${proformaNumber}.pdf"`,
+    );
+    res.setHeader('Content-Length', buffer.length.toString());
+    res.end(buffer);
+  }
+
+  /**
    * Owner or finance role gets a short-lived signed URL to view the receipt.
    * Finance-side enforcement is the controller's job; here we check the
    * receipt's payment owner matches the caller, OR the caller has a

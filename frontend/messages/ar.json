@@ -8058,6 +8058,7 @@
         "paid": "مدفوع",
         "pending": "معلق",
         "failed": "فشل",
+        "rejected": "مرفوض",
         "refunded": "مسترد",
         "awaiting_approval": "بانتظار الموافقة",
         "processing": "قيد المعالجة",
@@ -8097,6 +8098,11 @@
         "failureReason": "سبب الفشل",
         "gatewayTxId": "معرّف معاملة البوابة",
         "paymentMethod": "طريقة الدفع",
+        "receiptReceivedAt": "تم استلام الإيصال في",
+        "refundAccountHolder": "المُرسل — اسم صاحب الحساب",
+        "refundIban": "المُرسل — رقم الآيبان",
+        "refundBankName": "المُرسل — البنك",
+        "refundNationalId": "المُرسل — رقم الهوية",
         "close": "إغلاق"
       },
       "refundModal": {

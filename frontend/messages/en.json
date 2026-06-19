@@ -8058,6 +8058,7 @@
         "paid": "Paid",
         "pending": "Pending",
         "failed": "Failed",
+        "rejected": "Rejected",
         "refunded": "Refunded",
         "awaiting_approval": "Awaiting Approval",
         "processing": "Processing",
@@ -8097,6 +8098,11 @@
         "failureReason": "Failure Reason",
         "gatewayTxId": "Gateway TX ID",
         "paymentMethod": "Payment Method",
+        "receiptReceivedAt": "Receipt received at",
+        "refundAccountHolder": "Sender — account holder",
+        "refundIban": "Sender — IBAN",
+        "refundBankName": "Sender — bank",
+        "refundNationalId": "Sender — National ID",
         "close": "Close"
       },
       "refundModal": {

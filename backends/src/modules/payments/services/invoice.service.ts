@@ -650,6 +650,60 @@ export class InvoiceService {
     });
   }
 
+  /**
+   * Build a proforma PDF directly from a quote payload (no persisted payment
+   * row). Used by the draft-mode bank-transfer page so the buyer can download
+   * the proforma BEFORE submitting — useful for their employer/finance team to
+   * approve the spend before the actual transfer is made.
+   *
+   * The proforma number is content-hashed from courseIds + total so the same
+   * cart always produces the same number (so a re-downloaded proforma matches
+   * one the buyer already shared).
+   */
+  async generateProformaPdfFromQuote(args: {
+    buyer: { name: string; email: string; nationalId: string | null };
+    courseIds: string[];
+    lineItems: Array<{
+      description: string;
+      descriptionAr: string | null;
+      deliveryType: string | null;
+      amount: number;
+    }>;
+    subtotal: number;
+    discountAmount: number;
+    taxAmount: number;
+    totalAmount: number;
+  }): Promise<{ buffer: Buffer; proformaNumber: string }> {
+    const branding = await this.siteSettings.getBranding();
+
+    // Stable per-cart number: short hash of sorted courseIds + total amount.
+    const seed = `${args.courseIds.slice().sort().join('|')}|${args.totalAmount.toFixed(2)}`;
+    const proformaNumber = `PRO-${this.shortHash(seed)}`;
+
+    const buffer = await this.renderProformaPdf({
+      proformaNumber,
+      issuedAt: new Date(),
+      buyer: args.buyer,
+      payment: { gateway: 'bank_transfer', amount: args.totalAmount },
+      lineItems: args.lineItems,
+      subtotal: args.subtotal,
+      discountAmount: args.discountAmount,
+      taxAmount: args.taxAmount,
+      totalAmount: args.totalAmount,
+      branding,
+    });
+    return { buffer, proformaNumber };
+  }
+
+  private shortHash(input: string): string {
+    // 8-char base36 hash — collision risk irrelevant; just for a stable label.
+    let h = 0;
+    for (let i = 0; i < input.length; i++) {
+      h = (h * 31 + input.charCodeAt(i)) >>> 0;
+    }
+    return h.toString(36).toUpperCase().padStart(8, '0').slice(0, 8);
+  }
+
   private renderProformaPdf(args: {
     proformaNumber: string;
     issuedAt: Date;

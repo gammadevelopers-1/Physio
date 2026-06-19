@@ -91,6 +91,7 @@ export const PAYMENT_STATUS = {
   AWAITING_APPROVAL: 'awaiting_approval',
   PAID: 'paid',
   FAILED: 'failed',
+  REJECTED: 'rejected',
   REFUNDED: 'refunded',
   PARTIALLY_REFUNDED: 'partially_refunded',
   CHARGEBACK: 'chargeback',

@@ -6896,6 +6896,36 @@ export const bankTransferApi = {
     }
     return res.blob();
   },
+
+  // Draft-mode proforma: no payment row yet. Pass the same payload as the
+  // quote endpoint and get the PDF Blob back.
+  downloadProformaFromQuote: async (data: {
+    courseIds: string[];
+    discountCode?: string;
+  }): Promise<Blob> => {
+    const token = getAccessToken();
+    const res = await fetch(
+      `${API_URL}/payments/bank-transfer/proforma/quote`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(data),
+      },
+    );
+    if (!res.ok) {
+      let message = `HTTP ${res.status}`;
+      try {
+        const body = await res.json();
+        if (body?.message) message = body.message;
+      } catch {}
+      throw new ApiError(res.status, message);
+    }
+    return res.blob();
+  },
 };
 
 // ===========================================

@@ -654,9 +654,8 @@ export class StudentService {
     // Find any in-flight bank-transfer payment for these courses so the FE
     // can block a duplicate buy attempt. Only AWAITING_APPROVAL counts as
     // "blocking" — that's where finance is actively reviewing the receipt.
-    // If the payment is PENDING here, the receipt was already REJECTED by
-    // finance (the reject flow flips payment back to PENDING) so the student
-    // is free to start over via Buy Now / re-upload from the old URL.
+    // Rejected payments are FAILED (not blocking) so the student can start
+    // a new draft via Buy Now or re-upload on the same URL.
     const pendingStatuses = [PAYMENT_STATUS.AWAITING_APPROVAL] as string[];
 
     const singleLine = await db

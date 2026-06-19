@@ -6799,6 +6799,30 @@ export const bankTransferApi = {
     api.get<{ url: string; fileName: string }>(
       `/payments/bank-transfer/receipts/${receiptId}/download`,
     ),
+
+  // Fetches the PDF directly as a Blob so the FE can trigger a download
+  // without ever exposing the buffer to a tab navigation. Goes through plain
+  // fetch (not fetchApi) because fetchApi assumes JSON; we need the raw body.
+  downloadProforma: async (paymentId: string): Promise<Blob> => {
+    const token = getAccessToken();
+    const res = await fetch(
+      `${API_URL}/payments/bank-transfer/${paymentId}/proforma`,
+      {
+        method: 'GET',
+        credentials: 'include',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      },
+    );
+    if (!res.ok) {
+      let message = `HTTP ${res.status}`;
+      try {
+        const body = await res.json();
+        if (body?.message) message = body.message;
+      } catch {}
+      throw new ApiError(res.status, message);
+    }
+    return res.blob();
+  },
 };
 
 // ===========================================

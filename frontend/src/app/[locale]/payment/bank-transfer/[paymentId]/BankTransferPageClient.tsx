@@ -19,6 +19,7 @@ import {
   ChevronRight,
   ChevronLeft,
   Eye,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
@@ -140,6 +141,40 @@ export default function BankTransferPageClient({
   }, [paymentData]);
 
   const courseTitle = paymentData?.course?.title || t("course");
+
+  // True when an active receipt is already under review by finance. In this
+  // state we hide the upload + refund form + submit button to prevent
+  // duplicate uploads. The student can still see the pending banner, bank
+  // details, and the proforma download. Re-upload is only allowed after the
+  // receipt is rejected.
+  const isPendingReview =
+    paymentData?.activeReceipt?.reviewStatus === "pending";
+
+  // Download a branded proforma invoice (PDF) summarising what the student is
+  // about to pay for. Useful for sending to a finance department / employer for
+  // reimbursement before the actual payment is made.
+  const [proformaLoading, setProformaLoading] = useState(false);
+  const handleDownloadProforma = useCallback(async () => {
+    if (!paymentId || proformaLoading) return;
+    setProformaLoading(true);
+    try {
+      const blob = await bankTransferApi.downloadProforma(paymentId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `proforma-${paymentId.slice(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError ? err.message : t("proforma.downloadFailed"),
+      );
+    } finally {
+      setProformaLoading(false);
+    }
+  }, [paymentId, proformaLoading, t]);
 
   const handleFileSelect = useCallback(
     (file: File | null) => {
@@ -357,7 +392,21 @@ export default function BankTransferPageClient({
                   />
                 </div>
 
-                <div className="mt-6 flex items-center justify-center gap-1.5 text-xs text-[var(--on-surface-variant)]">
+                <button
+                  type="button"
+                  onClick={handleDownloadProforma}
+                  disabled={proformaLoading}
+                  className="mt-5 w-full h-10 rounded-lg border border-[#005bd3] text-[#005bd3] text-sm font-medium hover:bg-[#EFF6FF] transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-ring"
+                >
+                  {proformaLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Download className="w-4 h-4" aria-hidden="true" />
+                  )}
+                  <span>{t("proforma.download")}</span>
+                </button>
+
+                <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-[var(--on-surface-variant)]">
                   <Lock className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{t("summary.secure")}</span>
                 </div>
@@ -378,7 +427,7 @@ export default function BankTransferPageClient({
                 <div role="radiogroup" aria-label={t("payment.method")} className="flex flex-col gap-3 mb-6">
                   <button
                     type="button"
-                    onClick={() => router.push(`/${locale}/checkout?courseId=${paymentData.payment.courseId}`)}
+                    onClick={() => router.push(`/${locale}/checkout?expressCourseId=${paymentData.payment.courseId}`)}
                     className="border border-[#e5e5e5] rounded-xl p-4 flex items-center justify-between hover:border-[var(--on-surface-variant)] transition-colors text-start focus-ring"
                   >
                     <div className="flex items-center gap-3">
@@ -425,21 +474,26 @@ export default function BankTransferPageClient({
                   t={t}
                 />
 
-                {/* Receipt upload */}
-                <section className="mt-6">
-                  <h3 className="text-sm font-semibold text-[var(--on-surface-default)] mb-3">
-                    {t("upload.title")}
-                  </h3>
-                  <ReceiptUploadDropzone
-                    file={selectedFile}
-                    onFileChange={handleFileSelect}
-                    error={fileError}
-                    isRTL={isRTL}
-                    t={t}
-                  />
-                </section>
+                {/* Receipt upload — hidden when a receipt is already under review
+                    so the student can't accidentally upload a duplicate. They can
+                    still re-upload after a rejection. */}
+                {!isPendingReview && (
+                  <section className="mt-6">
+                    <h3 className="text-sm font-semibold text-[var(--on-surface-default)] mb-3">
+                      {t("upload.title")}
+                    </h3>
+                    <ReceiptUploadDropzone
+                      file={selectedFile}
+                      onFileChange={handleFileSelect}
+                      error={fileError}
+                      isRTL={isRTL}
+                      t={t}
+                    />
+                  </section>
+                )}
 
-                {/* Refund info */}
+                {/* Refund info — also hidden while a receipt is pending review. */}
+                {!isPendingReview && (
                 <section className="mt-6 pt-6 border-t border-[#e5e5e5]">
                   <h3 className="text-sm font-semibold text-[var(--on-surface-default)] mb-1">
                     {t("refund.title")}
@@ -524,6 +578,7 @@ export default function BankTransferPageClient({
                     </Field>
                   </div>
                 </section>
+                )}
 
                 {/* Errors */}
                 {formError && (
@@ -533,35 +588,39 @@ export default function BankTransferPageClient({
                   </div>
                 )}
 
-                {/* Submit */}
-                <button
-                  type="submit"
-                  disabled={submitting || !selectedFile}
-                  aria-busy={submitting}
-                  className="w-full mt-6 h-12 rounded-xl text-white font-medium btn-gold hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus-ring"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                      <span>{t("submitting")}</span>
-                    </>
-                  ) : (
-                    <span>{t("submit")}</span>
-                  )}
-                </button>
+                {/* Submit — hidden while a receipt is pending review. */}
+                {!isPendingReview && (
+                  <>
+                    <button
+                      type="submit"
+                      disabled={submitting || !selectedFile}
+                      aria-busy={submitting}
+                      className="w-full mt-6 h-12 rounded-xl text-white font-medium btn-gold hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus-ring"
+                    >
+                      {submitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                          <span>{t("submitting")}</span>
+                        </>
+                      ) : (
+                        <span>{t("submit")}</span>
+                      )}
+                    </button>
 
-                <p className="text-xs text-[var(--on-surface-variant)] mt-3 text-center">
-                  {t.rich("terms", {
-                    link: (chunks) => (
-                      <Link
-                        href={`/${locale}/legal/terms`}
-                        className="text-[#005bd3] hover:underline"
-                      >
-                        {chunks}
-                      </Link>
-                    ),
-                  })}
-                </p>
+                    <p className="text-xs text-[var(--on-surface-variant)] mt-3 text-center">
+                      {t.rich("terms", {
+                        link: (chunks) => (
+                          <Link
+                            href={`/${locale}/legal/terms`}
+                            className="text-[#005bd3] hover:underline"
+                          >
+                            {chunks}
+                          </Link>
+                        ),
+                      })}
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           </div>

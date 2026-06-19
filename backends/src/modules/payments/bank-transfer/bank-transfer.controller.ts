@@ -12,12 +12,13 @@ import {
   UseInterceptors,
   UploadedFile,
   Req,
+  Res,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { BankTransferService } from './bank-transfer.service';
 import { CreateReceiptDto } from './dto/create-receipt.dto';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
@@ -94,6 +95,29 @@ export class BankTransferController {
       dto,
       ipAddress,
     );
+  }
+
+  /**
+   * Stream a branded proforma-invoice PDF for the buyer to download. Same
+   * template as the paid invoice but tagged "PROFORMA / AWAITING PAYMENT"
+   * and explicitly NOT a tax invoice — useful for sending to a finance
+   * department for reimbursement BEFORE the bank transfer is made. Owner only.
+   */
+  @Get(':paymentId/proforma')
+  async downloadProforma(
+    @Param('paymentId') paymentId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Res() res: Response,
+  ) {
+    const pdf = await this.bankTransferService.getProformaPdf(paymentId, user);
+    const filename = `proforma-${paymentId.slice(0, 8)}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${filename}"`,
+    );
+    res.setHeader('Content-Length', pdf.length.toString());
+    res.end(pdf);
   }
 
   /**

@@ -201,6 +201,17 @@ export class BankTransferService {
       );
     }
 
+    // Block duplicate uploads: if there's already an active receipt sitting in
+    // 'pending' review, the student must wait for finance to action it (or
+    // refresh and see the rejection) before submitting again. The FE hides the
+    // form in this state; this is the API-side belt-and-suspenders.
+    const prevReceipt = await this.getActiveReceipt(paymentId);
+    if (prevReceipt && prevReceipt.reviewStatus === RECEIPT_REVIEW_STATUS.PENDING) {
+      throw new ConflictException(
+        'A receipt for this payment is already under review. Wait for the finance team or contact support if you need to make a change.',
+      );
+    }
+
     // Build the GCS object path: <prefix>/<paymentId>/<uuid>-<sanitized-name>.
     // The UUID makes re-uploads collision-free; sanitized name preserves the
     // original extension for downstream tools (PDF readers, image viewers).
@@ -215,8 +226,6 @@ export class BankTransferService {
       file.mimetype,
     );
     this.logger.log(`Uploaded bank transfer receipt to private/${objectPath}`);
-
-    const prevReceipt = await this.getActiveReceipt(paymentId);
 
     // Insert the new receipt + transition payment status in one transaction.
     const newReceipt = await db.transaction(async (tx) => {
@@ -313,6 +322,33 @@ export class BankTransferService {
     );
 
     return { url, fileName: receipt.fileName };
+  }
+
+  /**
+   * Render a branded proforma-invoice PDF for an unpaid bank-transfer payment
+   * and return the raw buffer. The student downloads this from the
+   * bank-transfer page so they can forward it to a finance department /
+   * employer for reimbursement before they actually make the transfer.
+   * Ownership is enforced by the controller.
+   */
+  async getProformaPdf(paymentId: string, user: AuthenticatedUser): Promise<Buffer> {
+    const [payment] = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.id, paymentId))
+      .limit(1);
+    if (!payment) throw new NotFoundException('Payment not found');
+    if (payment.userId !== user.id) {
+      throw new ForbiddenException(
+        'You can only download proformas for your own payments',
+      );
+    }
+    if (payment.gateway !== 'bank_transfer') {
+      throw new BadRequestException(
+        'Proforma invoices are only available for bank-transfer payments',
+      );
+    }
+    return this.invoiceService.generateProformaPdfBuffer(paymentId);
   }
 
   async getReceiptById(receiptId: string): Promise<PaymentReceipt | null> {

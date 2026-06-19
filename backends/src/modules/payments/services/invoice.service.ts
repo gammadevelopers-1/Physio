@@ -419,6 +419,368 @@ export class InvoiceService {
     });
   }
 
+  /**
+   * Build a branded "proforma invoice" PDF for an unpaid payment so the
+   * student can hand it to a finance department / employer for reimbursement
+   * before they make the bank transfer. Same template as the real invoice
+   * but tagged PROFORMA and explicitly NOT a tax invoice. Nothing is
+   * persisted — the buffer is returned for direct download.
+   */
+  async generateProformaPdfBuffer(paymentId: string): Promise<Buffer> {
+    const [payment] = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.id, paymentId))
+      .limit(1);
+    if (!payment) throw new NotFoundException('Payment not found');
+
+    const [userData] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, payment.userId))
+      .limit(1);
+
+    const items = await db
+      .select({
+        courseId: paymentItems.courseId,
+        unitPrice: paymentItems.unitPrice,
+        salePrice: paymentItems.salePrice,
+        lineDiscount: paymentItems.discountAmount,
+        lineTotal: paymentItems.lineTotal,
+      })
+      .from(paymentItems)
+      .where(eq(paymentItems.paymentId, paymentId));
+
+    const lineCourseIds =
+      items.length > 0 ? items.map((i) => i.courseId) : [payment.courseId];
+    const lineCourses = await db
+      .select()
+      .from(courses)
+      .where(inArray(courses.id, lineCourseIds));
+    const courseById = new Map(lineCourses.map((c) => [c.id, c]));
+    const primaryCourse =
+      courseById.get(payment.courseId) || lineCourses[0];
+    if (!userData || !primaryCourse) {
+      throw new NotFoundException('User or course not found');
+    }
+
+    const paymentMeta = payment.metadata as any;
+    const subtotal = Number(paymentMeta?.subtotal || payment.amount);
+    const discountAmount = Number(paymentMeta?.discountAmount || 0);
+    const taxAmount = Number(paymentMeta?.taxAmount || 0);
+    const totalAmount = Number(payment.amount);
+
+    const lineItemsSnapshot =
+      items.length > 0
+        ? items.map((it) => {
+            const c = courseById.get(it.courseId);
+            return {
+              description: c?.title || 'Course',
+              descriptionAr: c?.titleAr || null,
+              deliveryType: c?.deliveryType || null,
+              amount: Number(it.lineTotal),
+            };
+          })
+        : [
+            {
+              description: primaryCourse.title,
+              descriptionAr: primaryCourse.titleAr || null,
+              deliveryType: primaryCourse.deliveryType || null,
+              amount: subtotal,
+            },
+          ];
+
+    return this.renderProformaPdf({
+      proformaNumber: `PRO-${paymentId.slice(0, 8).toUpperCase()}`,
+      issuedAt: new Date(),
+      buyer: {
+        name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+        email: userData.email,
+        nationalId: (userData as any).nationalId || null,
+      },
+      payment: {
+        gateway: payment.gateway,
+        amount: totalAmount,
+      },
+      lineItems: lineItemsSnapshot,
+      subtotal,
+      discountAmount,
+      taxAmount,
+      totalAmount,
+    });
+  }
+
+  private renderProformaPdf(args: {
+    proformaNumber: string;
+    issuedAt: Date;
+    buyer: { name: string; email: string; nationalId: string | null };
+    payment: { gateway: string; amount: number };
+    lineItems: Array<{
+      description: string;
+      descriptionAr: string | null;
+      deliveryType: string | null;
+      amount: number;
+    }>;
+    subtotal: number;
+    discountAmount: number;
+    taxAmount: number;
+    totalAmount: number;
+  }): Promise<Buffer> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+        const chunks: Buffer[] = [];
+        doc.on('data', (c: Buffer) => chunks.push(c));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        doc.on('error', reject);
+
+        const fontsDir = path.join(process.cwd(), 'src', 'assets', 'fonts');
+        doc.registerFont(
+          'NotoArabic',
+          path.join(fontsDir, 'NotoSansArabic-Regular.ttf'),
+        );
+        doc.registerFont(
+          'NotoArabicBold',
+          path.join(fontsDir, 'NotoSansArabic-Bold.ttf'),
+        );
+        const ws = { wordSpacing: 2 };
+
+        // ── Header: company info (left) ──
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(20)
+          .fillColor('#1A2747')
+          .text('Roya Almustaqbal for Health Training', 50, 50);
+        doc.fillColor('#000');
+        doc
+          .font('NotoArabic')
+          .fontSize(10)
+          .text('رؤيا المستقبل للتدريب الصحي', 50, 78, ws);
+        doc
+          .font('Helvetica')
+          .fontSize(10)
+          .text('nelc@physioguidance.org', 50, 95);
+
+        // ── Header: proforma badge (right) ──
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(18)
+          .fillColor('#B8860B')
+          .text('PROFORMA / ', 350, 50, {
+            continued: true,
+            align: 'right',
+          });
+        doc.font('NotoArabicBold').text('فاتورة مبدئية', ws);
+        doc.fillColor('#000');
+
+        doc
+          .font('Helvetica')
+          .fontSize(10)
+          .text(`No: ${args.proformaNumber}`, 350, 78, { align: 'right' })
+          .text(
+            `Date: ${args.issuedAt.toLocaleDateString('en-US')}`,
+            350,
+            93,
+            { align: 'right' },
+          );
+
+        // Awaiting-payment status pill
+        doc
+          .rect(395, 108, 150, 18)
+          .fillColor('#FEF3C7')
+          .fill();
+        doc
+          .fillColor('#92400E')
+          .font('Helvetica-Bold')
+          .fontSize(9)
+          .text('AWAITING PAYMENT', 395, 113, {
+            width: 150,
+            align: 'center',
+          });
+        doc.fillColor('#000');
+
+        // Divider
+        doc.moveTo(50, 140).lineTo(545, 140).stroke();
+
+        // ── Bill To (left) ──
+        const sectionTop = 160;
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(12)
+          .text('Bill To / ', 50, sectionTop, { continued: true });
+        doc.font('NotoArabicBold').text('فاتورة إلى', ws);
+        doc
+          .font('Helvetica')
+          .fontSize(10)
+          .text(args.buyer.name || args.buyer.email, 50, sectionTop + 20)
+          .text(args.buyer.email, 50, sectionTop + 35);
+
+        let customerInfoY = sectionTop + 50;
+        if (args.buyer.nationalId) {
+          doc.text(
+            `National ID: ${args.buyer.nationalId}`,
+            50,
+            customerInfoY,
+          );
+          customerInfoY += 15;
+        }
+
+        // ── Payment intent (right) ──
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(12)
+          .text('Payment Method / ', 350, sectionTop, {
+            continued: true,
+            align: 'right',
+          });
+        doc.font('NotoArabicBold').text('طريقة الدفع', ws);
+        doc
+          .font('Helvetica')
+          .fontSize(10)
+          .text(
+            args.payment.gateway === 'bank_transfer'
+              ? 'Bank Transfer'
+              : args.payment.gateway,
+            350,
+            sectionTop + 20,
+            { align: 'right' },
+          );
+
+        // ── Line items table ──
+        const tableTop = Math.max(customerInfoY, sectionTop + 65) + 20;
+        doc
+          .fontSize(10)
+          .font('Helvetica-Bold')
+          .text('Description', 50, tableTop);
+        doc
+          .font('Helvetica-Bold')
+          .text('Amount', 450, tableTop, { align: 'right' });
+        doc.moveTo(50, tableTop + 15).lineTo(545, tableTop + 15).stroke();
+
+        let y = tableTop + 25;
+        for (const item of args.lineItems) {
+          const rowTop = y;
+          doc
+            .font('Helvetica')
+            .fontSize(10)
+            .text(item.description, 50, y, { width: 380 });
+          let rowExtra = 0;
+          if (item.descriptionAr) {
+            doc.font('NotoArabic').text(item.descriptionAr, 50, y + 15, ws);
+            rowExtra += 15;
+          }
+          if (item.deliveryType) {
+            doc
+              .font('Helvetica')
+              .fontSize(9)
+              .text(`Delivery: ${item.deliveryType}`, 50, y + 15 + rowExtra);
+            doc.fontSize(10);
+            rowExtra += 15;
+          }
+          doc
+            .font('Helvetica')
+            .fontSize(10)
+            .text(`SAR ${Number(item.amount).toFixed(2)}`, 450, rowTop, {
+              align: 'right',
+            });
+          y += 25 + rowExtra;
+        }
+
+        doc
+          .moveTo(50, y - 5)
+          .lineTo(545, y - 5)
+          .strokeColor('#e5e5e5')
+          .stroke()
+          .strokeColor('#000');
+
+        if (args.discountAmount > 0) {
+          doc
+            .font('Helvetica')
+            .fontSize(10)
+            .text('Discount / ', 50, y, { continued: true });
+          doc.font('NotoArabic').text('خصم');
+          doc
+            .font('Helvetica')
+            .text(
+              `- SAR ${args.discountAmount.toFixed(2)}`,
+              450,
+              y,
+              { align: 'right' },
+            );
+          y += 20;
+        }
+
+        if (args.taxAmount > 0) {
+          doc
+            .font('Helvetica')
+            .fontSize(10)
+            .text('VAT (15%) / ', 50, y, { continued: true });
+          doc.font('NotoArabic').text('ضريبة القيمة المضافة', ws);
+          doc
+            .font('Helvetica')
+            .text(`SAR ${args.taxAmount.toFixed(2)}`, 450, y, {
+              align: 'right',
+            });
+          y += 20;
+        }
+
+        doc.moveTo(50, y).lineTo(545, y).stroke();
+        y += 10;
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(14)
+          .text('Amount Due / ', 50, y, { continued: true });
+        doc.font('NotoArabicBold').text('المبلغ المستحق', ws);
+        doc
+          .font('Helvetica-Bold')
+          .text(`SAR ${args.totalAmount.toFixed(2)}`, 450, y, {
+            align: 'right',
+          });
+
+        // ── Disclaimer block ──
+        y += 50;
+        doc
+          .rect(50, y, 495, 50)
+          .fillColor('#F8FAFC')
+          .fill();
+        doc.fillColor('#000');
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(9)
+          .fillColor('#1A2747')
+          .text('Notice', 60, y + 8);
+        doc
+          .font('Helvetica')
+          .fontSize(8)
+          .fillColor('#475569')
+          .text(
+            'This is a proforma invoice issued before payment. It is NOT a tax invoice. A final tax invoice will be issued once the bank transfer is received and approved by our finance team.',
+            60,
+            y + 22,
+            { width: 475 },
+          );
+        doc.fillColor('#000');
+
+        // ── Footer ──
+        doc
+          .font('Helvetica')
+          .fontSize(8)
+          .fillColor('#94A3B8')
+          .text(
+            'PhysioGuidance · physioguidance.org · nelc@physioguidance.org',
+            50,
+            780,
+            { align: 'center', width: 495 },
+          );
+        doc.fillColor('#000');
+
+        doc.end();
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
   async getInvoicePdfUrl(invoiceId: string, userId?: string) {
     const conditions = [eq(invoices.id, invoiceId)];
     if (userId) {

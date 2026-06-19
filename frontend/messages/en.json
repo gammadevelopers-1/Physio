@@ -80,10 +80,14 @@
     },
     "activeReceipt": {
       "pendingTitle": "Your receipt is under review",
-      "pendingBody": "Our finance team is reviewing your payment. You'll be notified by email as soon as it's approved. You can upload a new receipt below if you need to replace this one.",
+      "pendingBody": "Our finance team is reviewing your payment. You'll be notified by email as soon as it's approved or if anything needs to be corrected. Please don't upload another receipt while this one is being reviewed.",
       "rejectedTitle": "Your previous receipt was rejected",
       "rejectedFallback": "Please upload a new receipt.",
       "uploadedAt": "Uploaded: {when}"
+    },
+    "proforma": {
+      "download": "Download proforma invoice",
+      "downloadFailed": "Couldn't download the proforma invoice. Please try again."
     }
   },
   "statusPage": {

@@ -13,9 +13,24 @@ import {
 } from '../../../database/schema';
 import { StorageService } from '../../storage/storage.service';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
+import {
+  SiteSettingsService,
+  SiteBranding,
+} from '../../site-settings/site-settings.service';
 import * as PDFDocument from 'pdfkit';
 import * as QRCode from 'qrcode';
 import * as path from 'path';
+
+/**
+ * Reverse word order for Arabic multi-word strings so PDFKit's L→R
+ * placement reads correctly R→L on the page. PDFKit/fontkit handles
+ * letter-level shaping per word but does not run the Unicode bidi
+ * algorithm to reorder runs, which leaves multi-word Arabic visually
+ * mirrored unless we pre-reverse it.
+ */
+function arRtl(text: string): string {
+  return text.split(/\s+/).filter(Boolean).reverse().join(' ');
+}
 
 @Injectable()
 export class InvoiceService {
@@ -24,6 +39,7 @@ export class InvoiceService {
   constructor(
     private readonly storageService: StorageService,
     private readonly auditLogService: AuditLogService,
+    private readonly siteSettings: SiteSettingsService,
   ) {}
 
   async generateInvoice(paymentId: string) {
@@ -195,12 +211,14 @@ export class InvoiceService {
 
     // Generate PDF
     try {
+      const branding = await this.siteSettings.getBranding();
       const pdfBuffer = await this.generatePdf(
         invoice,
         payment,
         userData,
         primaryCourse,
         lineItemsSnapshot,
+        branding,
       );
 
       // Upload to storage (path used as key for signed URL generation)
@@ -240,12 +258,13 @@ export class InvoiceService {
     payment: any,
     userData: any,
     course: any,
-    lineItems?: Array<{
+    lineItems: Array<{
       description: string;
       descriptionAr: string | null;
       deliveryType: string | null;
       amount: number;
-    }>,
+    }> | undefined,
+    branding: SiteBranding,
   ): Promise<Buffer> {
     return new Promise(async (resolve, reject) => {
       try {
@@ -266,61 +285,129 @@ export class InvoiceService {
         const ws = { wordSpacing: 2 };
 
         // ── Header: left side (company info) ──
-        doc.font('Helvetica-Bold').fontSize(20)
-          .text('Roya Almustaqbal for Health Training', 50, 50);
-        doc.font('NotoArabic').fontSize(10)
-          .text('رؤيا المستقبل للتدريب الصحي', 50, 78, ws);
-        doc.font('Helvetica').fontSize(10)
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(18)
+          .fillColor('#1A2747')
+          .text(branding.siteNameEn, 50, 50, { width: 280 });
+        doc.fillColor('#000');
+        doc
+          .font('NotoArabic')
+          .fontSize(10)
+          .text(arRtl(branding.siteNameAr), 50, 78, { width: 280, ...ws });
+        doc
+          .font('Helvetica')
+          .fontSize(10)
           .text('nelc@physioguidance.org', 50, 95);
 
         // ── Header: right side (invoice title + meta) ──
-        doc.font('Helvetica-Bold').fontSize(18)
-          .text('INVOICE / ', 350, 50, { continued: true, align: 'right' });
-        doc.font('NotoArabicBold').text('فاتورة', ws);
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(16)
+          .fillColor('#1A2747')
+          .text('INVOICE', 350, 50, { width: 195, align: 'right' });
+        doc
+          .font('NotoArabicBold')
+          .fontSize(13)
+          .text(arRtl('فاتورة'), 350, 70, { width: 195, align: 'right', ...ws });
+        doc.fillColor('#000');
 
-        doc.font('Helvetica').fontSize(10)
-          .text(`Invoice #: ${invoice.invoiceNumber}`, 350, 78, { align: 'right' })
-          .text(`Date: ${new Date(invoice.issuedAt).toLocaleDateString('en-US')}`, 350, 93, { align: 'right' });
+        doc
+          .font('Helvetica')
+          .fontSize(10)
+          .text(`Invoice #: ${invoice.invoiceNumber}`, 350, 95, {
+            width: 195,
+            align: 'right',
+          })
+          .text(
+            `Date: ${new Date(invoice.issuedAt).toLocaleDateString('en-US')}`,
+            350,
+            110,
+            { width: 195, align: 'right' },
+          );
 
-        let headerY = 108;
+        let headerY = 125;
         if (invoice.paidAt) {
-          doc.text(`Paid: ${new Date(invoice.paidAt).toLocaleDateString('en-US')}`, 350, headerY, { align: 'right' });
+          doc.text(
+            `Paid: ${new Date(invoice.paidAt).toLocaleDateString('en-US')}`,
+            350,
+            headerY,
+            { width: 195, align: 'right' },
+          );
           headerY += 15;
         }
         if (invoice.dueDate) {
-          doc.text(`Due: ${new Date(invoice.dueDate).toLocaleDateString('en-US')}`, 350, headerY, { align: 'right' });
+          doc.text(
+            `Due: ${new Date(invoice.dueDate).toLocaleDateString('en-US')}`,
+            350,
+            headerY,
+            { width: 195, align: 'right' },
+          );
           headerY += 15;
         }
 
         // ── Divider ──
-        const dividerY = Math.max(120, headerY + 5);
+        const dividerY = Math.max(150, headerY + 5);
         doc.moveTo(50, dividerY).lineTo(545, dividerY).stroke();
 
         // ── Customer info (left) ──
         const sectionTop = dividerY + 20;
-        doc.font('Helvetica-Bold').fontSize(12)
-          .text('Bill To / ', 50, sectionTop, { continued: true });
-        doc.font('NotoArabicBold').text('فاتورة إلى', ws);
+        doc.font('Helvetica-Bold').fontSize(12).text('Bill To', 50, sectionTop);
+        doc
+          .font('NotoArabicBold')
+          .fontSize(11)
+          .text(arRtl('فاتورة إلى'), 50, sectionTop + 14, { width: 280, ...ws });
 
-        doc.font('Helvetica').fontSize(10)
-          .text(`${userData.firstName || ''} ${userData.lastName || ''}`.trim(), 50, sectionTop + 20)
-          .text(userData.email, 50, sectionTop + 35);
+        doc
+          .font('Helvetica')
+          .fontSize(10)
+          .text(
+            `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+            50,
+            sectionTop + 32,
+          )
+          .text(userData.email, 50, sectionTop + 47);
 
-        let customerInfoY = sectionTop + 50;
+        let customerInfoY = sectionTop + 62;
         if ((userData as any).nationalId) {
           doc.text(`National ID: ${(userData as any).nationalId}`, 50, customerInfoY);
           customerInfoY += 15;
         }
 
         // ── Payment info (right) ──
-        doc.font('Helvetica-Bold').fontSize(12)
-          .text('Payment Details / ', 350, sectionTop, { continued: true, align: 'right' });
-        doc.font('NotoArabicBold').text('تفاصيل الدفع', ws);
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(12)
+          .text('Payment Details', 350, sectionTop, {
+            width: 195,
+            align: 'right',
+          });
+        doc
+          .font('NotoArabicBold')
+          .fontSize(11)
+          .text(arRtl('تفاصيل الدفع'), 350, sectionTop + 14, {
+            width: 195,
+            align: 'right',
+            ...ws,
+          });
 
-        doc.font('Helvetica').fontSize(10)
-          .text(`Gateway: ${payment.gateway}`, 350, sectionTop + 20, { align: 'right' })
-          .text(`Method: ${payment.paymentMethod || 'N/A'}`, 350, sectionTop + 35, { align: 'right' })
-          .text(`Transaction: ${payment.gatewayChargeId || 'N/A'}`, 350, sectionTop + 50, { align: 'right' });
+        doc
+          .font('Helvetica')
+          .fontSize(10)
+          .text(`Gateway: ${payment.gateway}`, 350, sectionTop + 32, {
+            width: 195,
+            align: 'right',
+          })
+          .text(`Method: ${payment.paymentMethod || 'N/A'}`, 350, sectionTop + 47, {
+            width: 195,
+            align: 'right',
+          })
+          .text(
+            `Transaction: ${payment.gatewayChargeId || 'N/A'}`,
+            350,
+            sectionTop + 62,
+            { width: 195, align: 'right' },
+          );
 
         // ── Line items table ──
         const tableTop = Math.max(customerInfoY, sectionTop + 65) + 20;
@@ -349,7 +436,12 @@ export class InvoiceService {
           doc.font('Helvetica').fontSize(10).text(item.description, 50, y, { width: 380 });
           let rowExtra = 0;
           if (item.descriptionAr) {
-            doc.font('NotoArabic').text(item.descriptionAr, 50, y + 15, ws);
+            doc
+              .font('NotoArabic')
+              .text(arRtl(item.descriptionAr), 50, y + 15, {
+                width: 380,
+                ...ws,
+              });
             rowExtra += 15;
           }
           if (item.deliveryType) {
@@ -365,28 +457,61 @@ export class InvoiceService {
         // Light divider between items and the totals block.
         doc.moveTo(50, y - 5).lineTo(545, y - 5).strokeColor('#e5e5e5').stroke().strokeColor('#000');
 
-        // Discount
+        // Totals — separate label / Arabic / amount calls (no `continued`)
+        // so wrap on one column never shifts the others. Fixed columns.
+        const labelX = 50;
+        const arX = 130;
+        const amountX = 450;
+        const amountWidth = 95;
         if (Number(invoice.discountAmount) > 0) {
-          doc.font('Helvetica').fontSize(10).text('Discount / ', 50, y, { continued: true });
-          doc.font('NotoArabic').text('خصم');
-          doc.font('Helvetica').text(`- SAR ${Number(invoice.discountAmount).toFixed(2)}`, 450, y, { align: 'right' });
+          doc.font('Helvetica').fontSize(10).text('Discount', labelX, y);
+          doc
+            .font('NotoArabic')
+            .text(arRtl('خصم'), arX, y, { width: 280, ...ws });
+          doc
+            .font('Helvetica')
+            .text(
+              `- SAR ${Number(invoice.discountAmount).toFixed(2)}`,
+              amountX,
+              y,
+              { width: amountWidth, align: 'right' },
+            );
           y += 20;
         }
 
-        // Tax
         if (Number(invoice.taxAmount) > 0) {
-          doc.font('Helvetica').fontSize(10).text('VAT (15%) / ', 50, y, { continued: true });
-          doc.font('NotoArabic').text('ضريبة القيمة المضافة', ws);
-          doc.font('Helvetica').text(`SAR ${Number(invoice.taxAmount).toFixed(2)}`, 450, y, { align: 'right' });
+          doc.font('Helvetica').fontSize(10).text('VAT (15%)', labelX, y);
+          doc
+            .font('NotoArabic')
+            .text(arRtl('ضريبة القيمة المضافة'), arX, y, {
+              width: 280,
+              ...ws,
+            });
+          doc
+            .font('Helvetica')
+            .text(
+              `SAR ${Number(invoice.taxAmount).toFixed(2)}`,
+              amountX,
+              y,
+              { width: amountWidth, align: 'right' },
+            );
           y += 20;
         }
 
         // ── Total ──
         doc.moveTo(50, y).lineTo(545, y).stroke();
         y += 10;
-        doc.font('Helvetica-Bold').fontSize(14).text('Total / ', 50, y, { continued: true });
-        doc.font('NotoArabicBold').text('المجموع', ws);
-        doc.font('Helvetica-Bold').text(`SAR ${Number(invoice.totalAmount).toFixed(2)}`, 450, y, { align: 'right' });
+        doc.font('Helvetica-Bold').fontSize(14).text('Total', labelX, y);
+        doc
+          .font('NotoArabicBold')
+          .text(arRtl('المجموع'), arX, y + 2, { width: 280, ...ws });
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(14)
+          .text(`SAR ${Number(invoice.totalAmount).toFixed(2)}`, amountX, y, {
+            width: amountWidth,
+            align: 'right',
+          });
 
         // ── QR Code ──
         y += 40;
@@ -408,9 +533,21 @@ export class InvoiceService {
         }
 
         // ── Footer ──
-        doc.font('Helvetica').fontSize(8)
-          .text('Thank you for your purchase! | ', 50, 750, { continued: true, align: 'center', width: 495 });
-        doc.font('NotoArabic').text('شكراً لك على الشراء', ws);
+        doc
+          .font('Helvetica')
+          .fontSize(8)
+          .text('Thank you for your purchase!', 50, 750, {
+            width: 495,
+            align: 'center',
+          });
+        doc
+          .font('NotoArabic')
+          .fontSize(8)
+          .text(arRtl('شكراً لك على الشراء'), 50, 762, {
+            width: 495,
+            align: 'center',
+            ...ws,
+          });
 
         doc.end();
       } catch (err) {
@@ -490,6 +627,8 @@ export class InvoiceService {
             },
           ];
 
+    const branding = await this.siteSettings.getBranding();
+
     return this.renderProformaPdf({
       proformaNumber: `PRO-${paymentId.slice(0, 8).toUpperCase()}`,
       issuedAt: new Date(),
@@ -507,6 +646,7 @@ export class InvoiceService {
       discountAmount,
       taxAmount,
       totalAmount,
+      branding,
     });
   }
 
@@ -525,6 +665,7 @@ export class InvoiceService {
     discountAmount: number;
     taxAmount: number;
     totalAmount: number;
+    branding: SiteBranding;
   }): Promise<Buffer> {
     return new Promise(async (resolve, reject) => {
       try {
@@ -546,76 +687,85 @@ export class InvoiceService {
         const ws = { wordSpacing: 2 };
 
         // ── Header: company info (left) ──
+        // Render English siteName at fontSize 18 (was 20) so longer names
+        // don't run into the right-side title block.
         doc
           .font('Helvetica-Bold')
-          .fontSize(20)
+          .fontSize(18)
           .fillColor('#1A2747')
-          .text('Roya Almustaqbal for Health Training', 50, 50);
+          .text(args.branding.siteNameEn, 50, 50, { width: 280 });
         doc.fillColor('#000');
         doc
           .font('NotoArabic')
           .fontSize(10)
-          .text('رؤيا المستقبل للتدريب الصحي', 50, 78, ws);
+          .text(arRtl(args.branding.siteNameAr), 50, 78, { width: 280, ...ws });
         doc
           .font('Helvetica')
           .fontSize(10)
           .text('nelc@physioguidance.org', 50, 95);
 
-        // ── Header: proforma badge (right) ──
+        // ── Header: proforma title (right, two stacked lines, NO continued) ──
+        // Stacking avoids the wrap overflow we hit with `continued: true` +
+        // `align: 'right'` at fontSize 18 in a 195px column.
         doc
           .font('Helvetica-Bold')
-          .fontSize(18)
+          .fontSize(16)
           .fillColor('#B8860B')
-          .text('PROFORMA / ', 350, 50, {
-            continued: true,
+          .text('PROFORMA INVOICE', 350, 50, { width: 195, align: 'right' });
+        doc
+          .font('NotoArabicBold')
+          .fontSize(13)
+          .text(arRtl('فاتورة مبدئية'), 350, 70, {
+            width: 195,
             align: 'right',
+            ...ws,
           });
-        doc.font('NotoArabicBold').text('فاتورة مبدئية', ws);
         doc.fillColor('#000');
 
+        // Number + date pushed below the two-line title.
         doc
           .font('Helvetica')
           .fontSize(10)
-          .text(`No: ${args.proformaNumber}`, 350, 78, { align: 'right' })
+          .text(`No: ${args.proformaNumber}`, 350, 95, {
+            width: 195,
+            align: 'right',
+          })
           .text(
             `Date: ${args.issuedAt.toLocaleDateString('en-US')}`,
             350,
-            93,
-            { align: 'right' },
+            110,
+            { width: 195, align: 'right' },
           );
 
-        // Awaiting-payment status pill
-        doc
-          .rect(395, 108, 150, 18)
-          .fillColor('#FEF3C7')
-          .fill();
+        // Awaiting-payment status pill below the meta lines.
+        doc.rect(395, 128, 150, 18).fillColor('#FEF3C7').fill();
         doc
           .fillColor('#92400E')
           .font('Helvetica-Bold')
           .fontSize(9)
-          .text('AWAITING PAYMENT', 395, 113, {
+          .text('AWAITING PAYMENT', 395, 133, {
             width: 150,
             align: 'center',
           });
         doc.fillColor('#000');
 
-        // Divider
-        doc.moveTo(50, 140).lineTo(545, 140).stroke();
+        // Divider — pushed down to clear the taller header block.
+        doc.moveTo(50, 160).lineTo(545, 160).stroke();
 
         // ── Bill To (left) ──
-        const sectionTop = 160;
+        const sectionTop = 180;
+        doc.font('Helvetica-Bold').fontSize(12).text('Bill To', 50, sectionTop);
         doc
-          .font('Helvetica-Bold')
-          .fontSize(12)
-          .text('Bill To / ', 50, sectionTop, { continued: true });
-        doc.font('NotoArabicBold').text('فاتورة إلى', ws);
+          .font('NotoArabicBold')
+          .fontSize(11)
+          .text(arRtl('فاتورة إلى'), 50, sectionTop + 14, { width: 280, ...ws });
         doc
           .font('Helvetica')
           .fontSize(10)
-          .text(args.buyer.name || args.buyer.email, 50, sectionTop + 20)
-          .text(args.buyer.email, 50, sectionTop + 35);
+          .text(args.buyer.name || args.buyer.email, 50, sectionTop + 32)
+          .text(args.buyer.email, 50, sectionTop + 47);
 
-        let customerInfoY = sectionTop + 50;
+        let customerInfoY = sectionTop + 62;
         if (args.buyer.nationalId) {
           doc.text(
             `National ID: ${args.buyer.nationalId}`,
@@ -629,11 +779,18 @@ export class InvoiceService {
         doc
           .font('Helvetica-Bold')
           .fontSize(12)
-          .text('Payment Method / ', 350, sectionTop, {
-            continued: true,
+          .text('Payment Method', 350, sectionTop, {
+            width: 195,
             align: 'right',
           });
-        doc.font('NotoArabicBold').text('طريقة الدفع', ws);
+        doc
+          .font('NotoArabicBold')
+          .fontSize(11)
+          .text(arRtl('طريقة الدفع'), 350, sectionTop + 14, {
+            width: 195,
+            align: 'right',
+            ...ws,
+          });
         doc
           .font('Helvetica')
           .fontSize(10)
@@ -642,8 +799,8 @@ export class InvoiceService {
               ? 'Bank Transfer'
               : args.payment.gateway,
             350,
-            sectionTop + 20,
-            { align: 'right' },
+            sectionTop + 32,
+            { width: 195, align: 'right' },
           );
 
         // ── Line items table ──
@@ -666,7 +823,12 @@ export class InvoiceService {
             .text(item.description, 50, y, { width: 380 });
           let rowExtra = 0;
           if (item.descriptionAr) {
-            doc.font('NotoArabic').text(item.descriptionAr, 50, y + 15, ws);
+            doc
+              .font('NotoArabic')
+              .text(arRtl(item.descriptionAr), 50, y + 15, {
+                width: 380,
+                ...ws,
+              });
             rowExtra += 15;
           }
           if (item.deliveryType) {
@@ -693,32 +855,42 @@ export class InvoiceService {
           .stroke()
           .strokeColor('#000');
 
+        // Totals — render label / Arabic / amount as three separate text
+        // calls so a wrap on one doesn't push the others. The right-side
+        // amount uses absolute positioning so it always lines up regardless
+        // of the label's width.
+        const labelX = 50;
+        const arX = 130;
+        const amountX = 450;
+        const amountWidth = 95;
         if (args.discountAmount > 0) {
+          doc.font('Helvetica').fontSize(10).text('Discount', labelX, y);
           doc
-            .font('Helvetica')
-            .fontSize(10)
-            .text('Discount / ', 50, y, { continued: true });
-          doc.font('NotoArabic').text('خصم');
+            .font('NotoArabic')
+            .text(arRtl('خصم'), arX, y, { width: 280, ...ws });
           doc
             .font('Helvetica')
             .text(
               `- SAR ${args.discountAmount.toFixed(2)}`,
-              450,
+              amountX,
               y,
-              { align: 'right' },
+              { width: amountWidth, align: 'right' },
             );
           y += 20;
         }
 
         if (args.taxAmount > 0) {
+          doc.font('Helvetica').fontSize(10).text('VAT (15%)', labelX, y);
+          doc
+            .font('NotoArabic')
+            .text(arRtl('ضريبة القيمة المضافة'), arX, y, {
+              width: 280,
+              ...ws,
+            });
           doc
             .font('Helvetica')
-            .fontSize(10)
-            .text('VAT (15%) / ', 50, y, { continued: true });
-          doc.font('NotoArabic').text('ضريبة القيمة المضافة', ws);
-          doc
-            .font('Helvetica')
-            .text(`SAR ${args.taxAmount.toFixed(2)}`, 450, y, {
+            .text(`SAR ${args.taxAmount.toFixed(2)}`, amountX, y, {
+              width: amountWidth,
               align: 'right',
             });
           y += 20;
@@ -726,14 +898,15 @@ export class InvoiceService {
 
         doc.moveTo(50, y).lineTo(545, y).stroke();
         y += 10;
+        doc.font('Helvetica-Bold').fontSize(14).text('Amount Due', labelX, y);
+        doc
+          .font('NotoArabicBold')
+          .text(arRtl('المبلغ المستحق'), arX, y + 2, { width: 280, ...ws });
         doc
           .font('Helvetica-Bold')
           .fontSize(14)
-          .text('Amount Due / ', 50, y, { continued: true });
-        doc.font('NotoArabicBold').text('المبلغ المستحق', ws);
-        doc
-          .font('Helvetica-Bold')
-          .text(`SAR ${args.totalAmount.toFixed(2)}`, 450, y, {
+          .text(`SAR ${args.totalAmount.toFixed(2)}`, amountX, y, {
+            width: amountWidth,
             align: 'right',
           });
 
@@ -767,7 +940,7 @@ export class InvoiceService {
           .fontSize(8)
           .fillColor('#94A3B8')
           .text(
-            'PhysioGuidance · physioguidance.org · nelc@physioguidance.org',
+            `${args.branding.siteNameEn} · physioguidance.org · nelc@physioguidance.org`,
             50,
             780,
             { align: 'center', width: 495 },
@@ -810,12 +983,14 @@ export class InvoiceService {
           // courses — a renamed course would silently rewrite a paid invoice).
           const meta = (invoice.metadata as any) || {};
           const persistedLineItems = Array.isArray(meta.lineItems) ? meta.lineItems : undefined;
+          const branding = await this.siteSettings.getBranding();
           const pdfBuffer = await this.generatePdf(
             invoice,
             payment,
             userData,
             course,
             persistedLineItems,
+            branding,
           );
           const filename = `invoices/${invoice.invoiceNumber}.pdf`;
           await this.storageService.uploadPrivate(pdfBuffer, filename, 'application/pdf');

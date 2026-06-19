@@ -37,11 +37,13 @@ import { PAYMENT_QUEUE_NAMES } from './constants';
 // External modules
 import { StorageModule } from '../storage/storage.module';
 import { EmailModule } from '../email/email.module';
+import { SiteSettingsModule } from '../site-settings/site-settings.module';
 
 @Module({
   imports: [
     StorageModule,
     EmailModule,
+    SiteSettingsModule,
     // BullMQ queue for webhook processing (conditional on Redis)
     ...(process.env.REDIS_HOST
       ? [BullModule.registerQueue({ name: PAYMENT_QUEUE_NAMES.WEBHOOK_PROCESSING })]

@@ -212,11 +212,7 @@ export default function CheckoutPage() {
       const result = await paymentApi.initiate({
         courseIds: items.map((it) => it.id),
         gateway,
-        // Backend's payment_method CHECK constraint only allows
-        // card/mada/apple_pay/bnpl (or NULL). Bank transfer carries
-        // its meaning in the gateway field — leave payment_method NULL
-        // so we don't trip the DB check.
-        paymentMethod: gateway === "bank_transfer" ? undefined : paymentMethod,
+        paymentMethod,
         discountCode: discountResult?.valid ? discountCode : undefined,
         locale: locale as "ar" | "en",
       });

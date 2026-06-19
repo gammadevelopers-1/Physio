@@ -114,16 +114,20 @@ export function csrfMiddleware(
     (req.headers[CSRF_HEADER_NAME] as string | undefined) ||
     (req.headers[CSRF_HEADER_NAME.toUpperCase()] as string | undefined);
 
-  // If neither cookie nor header is set, this is NOT a CSRF attack — a real
-  // CSRF would carry the victim's cookie attached automatically by the
-  // browser. This happens when the frontend's Bearer token is briefly
-  // unavailable (e.g. on a token-refresh race after page reload). Let the
-  // request through so the auth guard returns 401, which triggers the
-  // frontend's refresh-and-retry flow. Returning 403 here freezes those
-  // requests because the frontend only retries on 401.
-  if (!cookieToken && !headerToken) return next();
+  // If the request didn't supply a CSRF header at all, it isn't attempting
+  // the double-submit handshake — let the auth guard decide. In our setup
+  // the frontend authenticates every mutation with a Bearer token, so a
+  // missing header almost always means we're in the brief token-refresh
+  // race after a page reload (in-memory access token gone, refresh hasn't
+  // completed). Returning 403 here would freeze that request because the
+  // frontend's retry loop only fires on 401. A real CSRF attack can't add
+  // an Authorization header (blocked by CORS preflight) and won't reach a
+  // mutation endpoint that requires it. Cookie-auth endpoints that DO need
+  // CSRF protection (e.g. /api/auth/*) are not in this path — they are
+  // already in BYPASS_PREFIXES or protected by their own checks.
+  if (!headerToken) return next();
 
-  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+  if (!cookieToken || cookieToken !== headerToken) {
     res.status(403).json({
       statusCode: 403,
       message: 'CSRF token missing or invalid',

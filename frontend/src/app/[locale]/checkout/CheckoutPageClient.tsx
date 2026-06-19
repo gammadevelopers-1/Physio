@@ -285,6 +285,23 @@ export default function CheckoutPageClient({
     setProcessing(true);
     setError(null);
 
+    // Bank transfer is intentionally NOT created server-side until the buyer
+    // commits by uploading their receipt + clicking Submit. Skip the
+    // /payments/initiate call (no DB row, no orphan in the finance dashboard)
+    // and route the buyer straight to the draft bank-transfer page with the
+    // cart state in the URL. The page calls /payments/quote on load for
+    // accurate totals and POSTs everything to /submit-draft on submit.
+    if (gateway === "bank_transfer") {
+      const params = new URLSearchParams();
+      params.set("courseIds", items.map((it) => it.id).join(","));
+      if (discountResult?.valid && discountCode) {
+        params.set("discountCode", discountCode);
+      }
+      if (isExpressMode) params.set("isExpress", "true");
+      router.push(`/${locale}/payment/bank-transfer/draft?${params.toString()}`);
+      return;
+    }
+
     try {
       const result = await paymentApi.initiate({
         courseIds: items.map((it) => it.id),

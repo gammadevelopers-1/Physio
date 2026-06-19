@@ -18,6 +18,7 @@ import { PaymentsService } from './payments.service';
 import { GatewayFactory } from './gateways/gateway.factory';
 import { MockGateway, MockConfig } from './gateways/mock.gateway';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
+import { QuotePaymentDto } from './dto/quote-payment.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -42,6 +43,23 @@ export class PaymentsController {
   ) {
     const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
     return this.paymentsService.initiatePayment(user, dto, ipAddress);
+  }
+
+  /**
+   * Read-only quote — runs the same validation pipeline as /initiate (course
+   * exists, capacity, NELC limit, discount validation, VAT) and returns the
+   * computed totals + line items without creating ANY DB rows. The bank-
+   * transfer "draft" page uses this to show the buyer their amount before
+   * they commit by uploading a receipt.
+   */
+  @Post('quote')
+  @Roles('STUDENT')
+  @Throttle({ default: { ttl: 60000, limit: 30 } })
+  async quotePayment(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: QuotePaymentDto,
+  ) {
+    return this.paymentsService.quotePayment(user, dto);
   }
 
   @Get('callback')

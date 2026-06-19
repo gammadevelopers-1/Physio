@@ -43,6 +43,181 @@ export class PaymentsService {
     private readonly emailService: EmailService,
   ) {}
 
+  /**
+   * Validate + price a cart without writing anything. Mirrors the read-only
+   * pipeline in initiatePayment so the bank-transfer "draft" flow can show
+   * accurate totals before any DB row exists. Throws the same exceptions
+   * initiatePayment would have thrown so the FE error-handling is uniform.
+   *
+   * Skips the duplicate-in-flight-payment guard intentionally: the quote
+   * itself isn't a commit, so it shouldn't block a buyer from previewing.
+   * The actual submit (createBankTransferDraft) re-runs validation in the
+   * same transaction that inserts the rows.
+   */
+  async quotePayment(
+    user: AuthenticatedUser,
+    dto: { courseIds: string[]; discountCode?: string },
+  ) {
+    const courseIds = Array.from(new Set(dto.courseIds));
+    if (courseIds.length === 0) {
+      throw new BadRequestException('At least one course is required');
+    }
+
+    const courseRows = await db
+      .select()
+      .from(courses)
+      .where(
+        and(
+          inArray(courses.id, courseIds),
+          eq(courses.status, COURSE_STATUS.ACTIVE),
+        ),
+      );
+    if (courseRows.length !== courseIds.length) {
+      const found = new Set(courseRows.map((c) => c.id));
+      const missing = courseIds.filter((id) => !found.has(id));
+      throw new NotFoundException(
+        `Course(s) not available: ${missing.join(', ')}`,
+      );
+    }
+
+    const courseById = new Map(courseRows.map((c) => [c.id, c]));
+    const orderedCourses = courseIds.map((id) => courseById.get(id)!);
+
+    const lines = orderedCourses.map((course) => {
+      const sale = getEffectivePrice(course);
+      const salePrice = sale.effectivePrice;
+      if (salePrice <= 0) {
+        throw new BadRequestException(
+          `Course "${course.title}" is free — use the free-enroll flow instead.`,
+        );
+      }
+      return { course, sale, salePrice };
+    });
+
+    for (const { course } of lines) {
+      if (course.maxEnrollment) {
+        const [countResult] = await db
+          .select({ count: count() })
+          .from(enrollments)
+          .where(
+            and(
+              eq(enrollments.courseId, course.id),
+              eq(enrollments.status, 'active'),
+            ),
+          );
+        if (Number(countResult?.count || 0) >= course.maxEnrollment) {
+          throw new BadRequestException(`Course "${course.title}" is full`);
+        }
+      }
+    }
+
+    const cartByClassification = lines.reduce(
+      (acc, { course }) => {
+        const cls = classifyCourse(course.startDate, course.endDate);
+        acc[cls] = (acc[cls] || 0) + 1;
+        return acc;
+      },
+      {} as Record<'short' | 'long', number>,
+    );
+
+    for (const cls of ['short', 'long'] as const) {
+      const cartCount = cartByClassification[cls] || 0;
+      if (cartCount === 0) continue;
+      const max = getNelcMaxEnrollment(cls);
+      const [existing] = await db
+        .select({ count: count() })
+        .from(enrollments)
+        .innerJoin(courses, eq(enrollments.courseId, courses.id))
+        .where(
+          and(
+            eq(enrollments.studentId, user.id),
+            inArray(enrollments.status, ['active', 'pending_payment']),
+            cls === 'long'
+              ? sql`(${courses.endDate}::date - ${courses.startDate}::date) > 5`
+              : sql`(${courses.endDate}::date - ${courses.startDate}::date) <= 5 OR ${courses.startDate} IS NULL OR ${courses.endDate} IS NULL`,
+          ),
+        );
+      const totalAfter = Number(existing?.count || 0) + cartCount;
+      if (totalAfter > max) {
+        throw new BadRequestException(
+          `NELC limit reached: you may enroll in at most ${max} ${cls} courses. ` +
+            `You currently have ${existing?.count || 0} and this order would add ${cartCount}.`,
+        );
+      }
+    }
+
+    const originalSubtotal =
+      Math.round(lines.reduce((s, l) => s + Number(l.course.price), 0) * 100) /
+      100;
+    const subtotal =
+      Math.round(lines.reduce((s, l) => s + l.salePrice, 0) * 100) / 100;
+    const saleDiscount = Math.max(0, originalSubtotal - subtotal);
+
+    let discountAmount = 0;
+    let discountId: string | null = null;
+    if (dto.discountCode) {
+      const saleHoldout = lines.find(
+        (l) => l.sale.onSale && !l.sale.saleAllowsCoupon,
+      );
+      if (saleHoldout) {
+        throw new BadRequestException(
+          `Course "${saleHoldout.course.title}" is on sale; coupon codes cannot be combined with the sale.`,
+        );
+      }
+      const result = await this.discountService.validateDiscount(
+        dto.discountCode,
+        lines[0].course.id,
+        user.id,
+        subtotal,
+      );
+      if (!result.valid) {
+        throw new BadRequestException(result.error || 'Invalid discount code');
+      }
+      discountAmount = result.discountAmount;
+      discountId = result.discountId;
+    }
+
+    const VAT_RATE = 0.15;
+    const taxableAmount = Math.max(0, subtotal - discountAmount);
+    const taxAmount = Math.round(taxableAmount * VAT_RATE * 100) / 100;
+    const totalAmount = Math.max(0, taxableAmount + taxAmount);
+
+    if (totalAmount <= 0) {
+      throw new BadRequestException(
+        'Total amount is zero after discount. This order is effectively free.',
+      );
+    }
+
+    return {
+      courseIds,
+      lineItems: lines.map(({ course, salePrice, sale }) => ({
+        id: course.id,
+        title: course.title,
+        titleAr: course.titleAr,
+        thumbnail: (course as any).thumbnail || null,
+        price: Number(course.price),
+        effectivePrice: salePrice,
+        onSale: sale.onSale,
+        salePercent: sale.salePercent,
+        saleAllowsCoupon: sale.saleAllowsCoupon,
+        deliveryType: course.deliveryType || null,
+        startDate: course.startDate,
+        cmeHours: course.cmeHours || 0,
+      })),
+      totals: {
+        originalSubtotal,
+        subtotal,
+        saleDiscount,
+        discountAmount,
+        discountCode: dto.discountCode || null,
+        discountId,
+        taxAmount,
+        totalAmount,
+        currency: 'SAR',
+      },
+    };
+  }
+
   async initiatePayment(user: AuthenticatedUser, dto: InitiatePaymentDto, ipAddress?: string) {
     // De-duplicate courseIds defensively — UI shouldn't send duplicates, but a
     // duplicate would crash the unique-per-payment constraint mid-transaction.

@@ -21,6 +21,7 @@ import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { BankTransferService } from './bank-transfer.service';
 import { CreateReceiptDto } from './dto/create-receipt.dto';
+import { SubmitDraftDto } from './dto/submit-draft.dto';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
@@ -46,6 +47,36 @@ export class BankTransferController {
   @Get('details')
   async getBankDetails() {
     return this.bankTransferService.getBankDetails();
+  }
+
+  /**
+   * One-shot bank-transfer submission. The buyer never had a payment row
+   * before this call — we validate the cart, upload the file, then create
+   * payment + items + receipt in one transaction with status
+   * AWAITING_APPROVAL. Same multipart shape as the receipt-upload endpoint
+   * plus courseIds[] + optional discountCode.
+   *
+   * Replaces the old "initiate then upload" flow so abandoned bank-transfer
+   * attempts leave zero rows in the finance dashboard.
+   */
+  @Post('submit-draft')
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 16 * 1024 * 1024 },
+    }),
+  )
+  async submitDraft(
+    @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() dto: SubmitDraftDto,
+    @Req() req: Request,
+  ) {
+    const ipAddress =
+      req.ip ||
+      (req.connection as { remoteAddress?: string } | undefined)?.remoteAddress ||
+      'unknown';
+    return this.bankTransferService.submitDraft(user, file, dto, ipAddress);
   }
 
   /**

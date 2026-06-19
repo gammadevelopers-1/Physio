@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import {
@@ -27,6 +27,7 @@ import Footer from "@/components/Footer";
 import Select from "@/components/admin-dashboard/Select";
 import {
   bankTransferApi,
+  paymentApi,
   type BankTransferDetails,
   type BankTransferPayment,
   ApiError,
@@ -84,14 +85,34 @@ export default function BankTransferPageClient({
 }: BankTransferPageClientProps) {
   const { paymentId } = useParams<{ paymentId: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const locale = useLocale();
   const t = useTranslations("bankTransfer");
   const isRTL = locale === "ar";
+
+  // Draft mode = URL is /payment/bank-transfer/draft?courseIds=A,B[&discountCode=X]
+  // Nothing exists in the DB yet; the page loads totals from /payments/quote
+  // and the submit handler POSTs everything (cart + receipt) to /submit-draft.
+  const isDraftMode = paymentId === "draft";
+  const draftCourseIds = useMemo(() => {
+    if (!isDraftMode) return [] as string[];
+    return (searchParams.get("courseIds") || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }, [isDraftMode, searchParams]);
+  const draftDiscountCode = isDraftMode
+    ? searchParams.get("discountCode") || undefined
+    : undefined;
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [bankDetails, setBankDetails] = useState<BankTransferDetails | null>(null);
   const [paymentData, setPaymentData] = useState<BankTransferPayment | null>(null);
+  // Draft-mode quote — same shape area as paymentData but no DB row yet.
+  const [draftQuote, setDraftQuote] = useState<
+    Awaited<ReturnType<typeof paymentApi.quote>> | null
+  >(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   // Form state
@@ -104,11 +125,43 @@ export default function BankTransferPageClient({
   const [refundNationalId, setRefundNationalId] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Load bank details + payment in parallel.
+  // Load bank details + payment (or quote, in draft mode) in parallel.
   useEffect(() => {
     if (!paymentId) return;
     let cancelled = false;
     setLoading(true);
+
+    if (isDraftMode) {
+      if (draftCourseIds.length === 0) {
+        setLoadError(t("loadError"));
+        setLoading(false);
+        return;
+      }
+      Promise.all([
+        bankTransferApi.getDetails(),
+        paymentApi.quote({
+          courseIds: draftCourseIds,
+          discountCode: draftDiscountCode,
+        }),
+      ])
+        .then(([details, quote]) => {
+          if (cancelled) return;
+          setBankDetails(details);
+          setDraftQuote(quote);
+        })
+        .catch((err: unknown) => {
+          if (cancelled) return;
+          const msg = err instanceof ApiError ? err.message : t("loadError");
+          setLoadError(msg);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
+
     Promise.all([
       bankTransferApi.getDetails(),
       bankTransferApi.getPayment(paymentId),
@@ -134,28 +187,38 @@ export default function BankTransferPageClient({
     return () => {
       cancelled = true;
     };
-  }, [paymentId, locale, router, t]);
+  }, [paymentId, locale, router, t, isDraftMode, draftCourseIds, draftDiscountCode]);
 
   const amountDue = useMemo(() => {
+    if (isDraftMode) return draftQuote?.totals.totalAmount ?? null;
     if (!paymentData) return null;
     return Number(paymentData.payment.amount);
-  }, [paymentData]);
+  }, [isDraftMode, draftQuote, paymentData]);
 
-  const courseTitle = paymentData?.course?.title || t("course");
+  const courseTitle = isDraftMode
+    ? draftQuote?.lineItems[0]
+      ? isRTL
+        ? draftQuote.lineItems[0].titleAr || draftQuote.lineItems[0].title
+        : draftQuote.lineItems[0].title
+      : t("course")
+    : paymentData?.course?.title || t("course");
 
   // True when an active receipt is already under review by finance. In this
   // state we hide the upload + refund form + submit button to prevent
   // duplicate uploads. The student can still see the pending banner, bank
   // details, and the proforma download. Re-upload is only allowed after the
-  // receipt is rejected.
+  // receipt is rejected. Draft mode never has a receipt yet.
   const isPendingReview =
-    paymentData?.activeReceipt?.reviewStatus === "pending";
+    !isDraftMode && paymentData?.activeReceipt?.reviewStatus === "pending";
 
   // Download a branded proforma invoice (PDF) summarising what the student is
   // about to pay for. Useful for sending to a finance department / employer for
   // reimbursement before the actual payment is made.
   const [proformaLoading, setProformaLoading] = useState(false);
   const handleDownloadProforma = useCallback(async () => {
+    // Draft mode has no payment row yet, so the proforma endpoint can't run.
+    // Hide the button instead of calling.
+    if (isDraftMode) return;
     if (!paymentId || proformaLoading) return;
     setProformaLoading(true);
     try {
@@ -175,7 +238,7 @@ export default function BankTransferPageClient({
     } finally {
       setProformaLoading(false);
     }
-  }, [paymentId, proformaLoading, t]);
+  }, [paymentId, proformaLoading, t, isDraftMode]);
 
   const handleFileSelect = useCallback(
     (file: File | null) => {
@@ -230,14 +293,36 @@ export default function BankTransferPageClient({
 
     setSubmitting(true);
     try {
-      await bankTransferApi.uploadReceipt(paymentId, selectedFile, {
-        refundAccountHolder: refundHolder.trim(),
-        refundIban: iban,
-        refundBankName: bankNameForSubmit,
-        refundNationalId: refundNationalId.trim() || undefined,
-      });
+      let landingPaymentId: string;
+      if (isDraftMode) {
+        // First time the buyer commits — create the payment row + receipt
+        // atomically. The finance dashboard sees exactly one new entry.
+        const result = await bankTransferApi.submitDraft(
+          draftCourseIds,
+          selectedFile,
+          {
+            refundAccountHolder: refundHolder.trim(),
+            refundIban: iban,
+            refundBankName: bankNameForSubmit,
+            refundNationalId: refundNationalId.trim() || undefined,
+          },
+          { discountCode: draftDiscountCode },
+        );
+        landingPaymentId = result.paymentId;
+      } else {
+        // Existing payment (re-upload after rejection / explicit retry).
+        await bankTransferApi.uploadReceipt(paymentId, selectedFile, {
+          refundAccountHolder: refundHolder.trim(),
+          refundIban: iban,
+          refundBankName: bankNameForSubmit,
+          refundNationalId: refundNationalId.trim() || undefined,
+        });
+        landingPaymentId = paymentId;
+      }
       toast.success(t("success.uploaded"));
-      router.replace(`/${locale}/payment/success?paymentId=${paymentId}`);
+      router.replace(
+        `/${locale}/payment/success?paymentId=${landingPaymentId}`,
+      );
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : t("errors.uploadFailed");
       setFormError(msg);
@@ -263,7 +348,9 @@ export default function BankTransferPageClient({
     );
   }
 
-  if (loadError || !paymentData || !bankDetails) {
+  // Need bankDetails + (paymentData OR draftQuote) for a valid page.
+  const dataReady = !!bankDetails && (isDraftMode ? !!draftQuote : !!paymentData);
+  if (loadError || !dataReady) {
     return (
       <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
         <Navbar
@@ -294,23 +381,42 @@ export default function BankTransferPageClient({
     );
   }
 
-  const meta = paymentData.payment.metadata as
-    | {
-        subtotal?: number;
-        discountAmount?: number;
-        saleDiscountAmount?: number;
-        taxAmount?: number;
-        originalPrice?: number;
-      }
-    | null;
-
-  const subtotal = Number(meta?.subtotal ?? amountDue ?? 0);
-  const originalPrice = Number(meta?.originalPrice ?? subtotal);
-  const saleDiscount = Number(meta?.saleDiscountAmount ?? 0);
-  const discountAmount = Number(meta?.discountAmount ?? 0);
-  const taxAmount = Number(meta?.taxAmount ?? 0);
-  const total = Number(amountDue ?? 0);
-  const currency = paymentData.payment.currency;
+  // Read totals from either the persisted payment (existing flow) or the
+  // server-side quote (draft flow). Both shapes are normalized to the same
+  // local variables so the render code doesn't branch.
+  let subtotal: number;
+  let originalPrice: number;
+  let saleDiscount: number;
+  let discountAmount: number;
+  let taxAmount: number;
+  let total: number;
+  let currency: string;
+  if (isDraftMode && draftQuote) {
+    subtotal = draftQuote.totals.subtotal;
+    originalPrice = draftQuote.totals.originalSubtotal;
+    saleDiscount = draftQuote.totals.saleDiscount;
+    discountAmount = draftQuote.totals.discountAmount;
+    taxAmount = draftQuote.totals.taxAmount;
+    total = draftQuote.totals.totalAmount;
+    currency = draftQuote.totals.currency;
+  } else {
+    const meta = paymentData!.payment.metadata as
+      | {
+          subtotal?: number;
+          discountAmount?: number;
+          saleDiscountAmount?: number;
+          taxAmount?: number;
+          originalPrice?: number;
+        }
+      | null;
+    subtotal = Number(meta?.subtotal ?? amountDue ?? 0);
+    originalPrice = Number(meta?.originalPrice ?? subtotal);
+    saleDiscount = Number(meta?.saleDiscountAmount ?? 0);
+    discountAmount = Number(meta?.discountAmount ?? 0);
+    taxAmount = Number(meta?.taxAmount ?? 0);
+    total = Number(amountDue ?? 0);
+    currency = paymentData!.payment.currency;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
@@ -393,19 +499,21 @@ export default function BankTransferPageClient({
                   />
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleDownloadProforma}
-                  disabled={proformaLoading}
-                  className="mt-5 w-full h-10 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] text-sm font-medium hover:bg-[var(--color-surface-card)] transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-ring"
-                >
-                  {proformaLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                  ) : (
-                    <Download className="w-4 h-4" aria-hidden="true" />
-                  )}
-                  <span>{t("proforma.download")}</span>
-                </button>
+                {!isDraftMode && (
+                  <button
+                    type="button"
+                    onClick={handleDownloadProforma}
+                    disabled={proformaLoading}
+                    className="mt-5 w-full h-10 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] text-sm font-medium hover:bg-[var(--color-surface-card)] transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-ring"
+                  >
+                    {proformaLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Download className="w-4 h-4" aria-hidden="true" />
+                    )}
+                    <span>{t("proforma.download")}</span>
+                  </button>
+                )}
 
                 <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-[var(--on-surface-variant)]">
                   <Lock className="w-3.5 h-3.5" aria-hidden="true" />
@@ -428,7 +536,26 @@ export default function BankTransferPageClient({
                 <div role="radiogroup" aria-label={t("payment.method")} className="flex flex-col gap-3 mb-6">
                   <button
                     type="button"
-                    onClick={() => router.push(`/${locale}/checkout?expressCourseId=${paymentData.payment.courseId}`)}
+                    onClick={() => {
+                      // Draft mode: go back to the cart's checkout so the buyer
+                      // can re-select Credit Card and re-submit. Existing mode:
+                      // re-enter express checkout for the same course.
+                      if (isDraftMode) {
+                        const isExpress =
+                          searchParams.get("isExpress") === "true";
+                        if (isExpress && draftCourseIds[0]) {
+                          router.push(
+                            `/${locale}/checkout?expressCourseId=${draftCourseIds[0]}`,
+                          );
+                        } else {
+                          router.push(`/${locale}/checkout`);
+                        }
+                        return;
+                      }
+                      router.push(
+                        `/${locale}/checkout?expressCourseId=${paymentData!.payment.courseId}`,
+                      );
+                    }}
                     className="border border-[var(--color-border)] rounded-xl p-4 flex items-center justify-between hover:border-[var(--on-surface-variant)] transition-colors text-start focus-ring"
                   >
                     <div className="flex items-center gap-3">
@@ -457,8 +584,8 @@ export default function BankTransferPageClient({
                   </div>
                 </div>
 
-                {/* Already-uploaded notice */}
-                {paymentData.activeReceipt && (
+                {/* Already-uploaded notice — only meaningful in existing mode. */}
+                {!isDraftMode && paymentData?.activeReceipt && (
                   <ActiveReceiptNotice
                     receipt={paymentData.activeReceipt}
                     t={t}

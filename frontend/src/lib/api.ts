@@ -6709,6 +6709,41 @@ export const paymentApi = {
     locale?: string;
   }) => api.post<{ paymentId: string; redirectUrl: string; amount: number; currency: string }>('/payments/initiate', data),
 
+  /**
+   * Read-only quote for the bank-transfer "draft" page. Same validation as
+   * /initiate (course exists, capacity, NELC, discount) — but no DB row is
+   * created. Returns the line items + totals to render the summary.
+   */
+  quote: (data: { courseIds: string[]; discountCode?: string }) =>
+    api.post<{
+      courseIds: string[];
+      lineItems: Array<{
+        id: string;
+        title: string;
+        titleAr: string | null;
+        thumbnail: string | null;
+        price: number;
+        effectivePrice: number;
+        onSale: boolean;
+        salePercent: number | null;
+        saleAllowsCoupon: boolean;
+        deliveryType: string | null;
+        startDate: string | null;
+        cmeHours: number;
+      }>;
+      totals: {
+        originalSubtotal: number;
+        subtotal: number;
+        saleDiscount: number;
+        discountAmount: number;
+        discountCode: string | null;
+        discountId: string | null;
+        taxAmount: number;
+        totalAmount: number;
+        currency: string;
+      };
+    }>('/payments/quote', data),
+
   verify: (paymentId: string) =>
     api.post<{ status: string; paymentId: string; amount?: string; currency?: string; gateway?: string; paidAt?: string; failureReason?: string }>(`/payments/verify/${paymentId}`),
 
@@ -6804,6 +6839,39 @@ export const bankTransferApi = {
     api.get<{ url: string; fileName: string }>(
       `/payments/bank-transfer/receipts/${receiptId}/download`,
     ),
+
+  /**
+   * One-shot draft submission — uploads the receipt AND creates the payment
+   * row + line items in a single backend call. Use this from the draft
+   * bank-transfer page. No DB row exists for this cart until this resolves.
+   */
+  submitDraft: (
+    courseIds: string[],
+    file: File,
+    refundInfo: {
+      refundAccountHolder: string;
+      refundIban: string;
+      refundBankName: string;
+      refundNationalId?: string;
+    },
+    opts?: { discountCode?: string },
+  ) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('courseIds', courseIds.join(','));
+    if (opts?.discountCode) fd.append('discountCode', opts.discountCode);
+    fd.append('refundAccountHolder', refundInfo.refundAccountHolder);
+    fd.append('refundIban', refundInfo.refundIban);
+    fd.append('refundBankName', refundInfo.refundBankName);
+    if (refundInfo.refundNationalId) {
+      fd.append('refundNationalId', refundInfo.refundNationalId);
+    }
+    return uploadFormData<{
+      paymentId: string;
+      receiptId: string;
+      paymentStatus: string;
+    }>(`/payments/bank-transfer/submit-draft`, fd);
+  },
 
   // Fetches the PDF directly as a Blob so the FE can trigger a download
   // without ever exposing the buffer to a tab navigation. Goes through plain

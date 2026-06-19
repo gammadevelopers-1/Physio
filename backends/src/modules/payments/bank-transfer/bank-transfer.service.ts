@@ -29,6 +29,8 @@ import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { EmailService } from '../../email/email.service';
 import { InvoiceService } from '../services/invoice.service';
 import { CreateReceiptDto } from './dto/create-receipt.dto';
+import { SubmitDraftDto } from './dto/submit-draft.dto';
+import { PaymentsService } from '../payments.service';
 
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
@@ -72,6 +74,7 @@ export class BankTransferService {
     private readonly auditLogService: AuditLogService,
     private readonly emailService: EmailService,
     private readonly invoiceService: InvoiceService,
+    private readonly paymentsService: PaymentsService,
   ) {}
 
   /**
@@ -322,6 +325,197 @@ export class BankTransferService {
     );
 
     return { url, fileName: receipt.fileName };
+  }
+
+  /**
+   * Draft submission — the buyer never had a payment row before this call.
+   * Validates the cart (capacity, NELC, discount) via PaymentsService.quote,
+   * uploads the file, then creates payment + payment_items + receipt in
+   * one transaction with status AWAITING_APPROVAL. After this returns, the
+   * finance dashboard shows exactly one row and the audit log has exactly
+   * one upload event.
+   *
+   * Idempotency-by-intent: if the buyer somehow already has a pending or
+   * awaiting-approval bank transfer for any of these courses (another
+   * tab / race), we reject with 409 instead of duplicating.
+   */
+  async submitDraft(
+    user: AuthenticatedUser,
+    file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
+    dto: SubmitDraftDto,
+    ipAddress?: string,
+  ): Promise<{ paymentId: string; receiptId: string; paymentStatus: string }> {
+    if (!file?.buffer) {
+      throw new BadRequestException('Receipt file is required');
+    }
+    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      throw new BadRequestException(
+        'Unsupported file type. Allowed: PDF, JPG, JPEG, PNG',
+      );
+    }
+    if (file.size > MAX_RECEIPT_BYTES) {
+      throw new BadRequestException(
+        `File too large. Maximum size is ${Math.floor(MAX_RECEIPT_BYTES / 1024 / 1024)} MB`,
+      );
+    }
+
+    // Re-run the full validation pipeline (course exists, capacity, NELC,
+    // discount). Throws BadRequestException / NotFoundException on failure,
+    // same as the regular initiate flow.
+    const quote = await this.paymentsService.quotePayment(user, {
+      courseIds: dto.courseIds,
+      discountCode: dto.discountCode,
+    });
+
+    // Belt-and-suspenders: no other pending bank-transfer for these courses.
+    const inFlightSingle = await db
+      .select({ id: payments.id, courseId: payments.courseId })
+      .from(payments)
+      .where(
+        and(
+          eq(payments.userId, user.id),
+          eq(payments.gateway, 'bank_transfer'),
+          inArray(payments.status, [
+            PAYMENT_STATUS.PENDING,
+            PAYMENT_STATUS.AWAITING_APPROVAL,
+          ] as any),
+          inArray(payments.courseId, quote.courseIds),
+        ),
+      );
+    const inFlightMulti = await db
+      .select({ id: payments.id, courseId: paymentItems.courseId })
+      .from(paymentItems)
+      .innerJoin(payments, eq(payments.id, paymentItems.paymentId))
+      .where(
+        and(
+          eq(payments.userId, user.id),
+          eq(payments.gateway, 'bank_transfer'),
+          inArray(payments.status, [
+            PAYMENT_STATUS.PENDING,
+            PAYMENT_STATUS.AWAITING_APPROVAL,
+          ] as any),
+          inArray(paymentItems.courseId, quote.courseIds),
+        ),
+      );
+    if (inFlightSingle.length > 0 || inFlightMulti.length > 0) {
+      throw new ConflictException(
+        'You already have a bank transfer in review for one of these courses. Open the pending payment instead of starting a new one.',
+      );
+    }
+
+    // First write: file to private GCS. If the transaction below fails, the
+    // file is orphaned — cheap and the scanner doesn't care about untracked
+    // objects. Inverting the order (DB first, GCS second) would leave a
+    // committed row with a missing file, which is worse.
+    const safeName = sanitizeFileName(file.originalname);
+    // No paymentId yet — use a fresh UUID for the directory so paths stay
+    // unique. We move the file's logical "owner" to the payment row below.
+    const draftKey = randomUUID();
+    const objectPath = `${RECEIPTS_PREFIX}/draft-${draftKey}/${randomUUID()}-${safeName}`;
+    await this.storageService.uploadPrivate(
+      file.buffer,
+      objectPath,
+      file.mimetype,
+    );
+
+    const { paymentId, receiptId } = await db.transaction(async (tx) => {
+      // Primary course = first cart line (legacy column on payments table).
+      const primaryCourseId = quote.courseIds[0];
+
+      // Build payment metadata that the proforma PDF + UI rely on.
+      const metadata = {
+        subtotal: quote.totals.subtotal,
+        originalPrice: quote.totals.originalSubtotal,
+        saleDiscountAmount: quote.totals.saleDiscount,
+        discountAmount: quote.totals.discountAmount,
+        discountCode: quote.totals.discountCode,
+        discountId: quote.totals.discountId,
+        taxAmount: quote.totals.taxAmount,
+        source: 'bank_transfer_draft',
+      };
+
+      const [paymentRow] = await tx
+        .insert(payments)
+        .values({
+          userId: user.id,
+          courseId: primaryCourseId,
+          amount: quote.totals.totalAmount.toFixed(2),
+          currency: quote.totals.currency,
+          gateway: 'bank_transfer',
+          paymentMethod: 'bank_transfer',
+          status: PAYMENT_STATUS.AWAITING_APPROVAL,
+          gatewayChargeId: `bt_draft_${draftKey}`,
+          metadata,
+        })
+        .returning({ id: payments.id });
+
+      // Multi-line items so refund + invoice generation see the full cart.
+      if (quote.lineItems.length > 0) {
+        await tx.insert(paymentItems).values(
+          quote.lineItems.map((it) => ({
+            paymentId: paymentRow.id,
+            courseId: it.id,
+            unitPrice: it.price.toFixed(2),
+            salePrice: it.effectivePrice.toFixed(2),
+            discountAmount: '0.00',
+            lineTotal: it.effectivePrice.toFixed(2),
+          })),
+        );
+      }
+
+      const [created] = await tx
+        .insert(paymentReceipts)
+        .values({
+          paymentId: paymentRow.id,
+          uploadedBy: user.id,
+          fileName: file.originalname,
+          mimeType: file.mimetype,
+          fileSizeBytes: file.size,
+          gcsObjectPath: objectPath,
+          scanStatus: RECEIPT_SCAN_STATUS.PENDING,
+          reviewStatus: RECEIPT_REVIEW_STATUS.PENDING,
+          refundAccountHolder: dto.refundAccountHolder,
+          refundIban: dto.refundIban,
+          refundBankName: dto.refundBankName,
+          refundNationalId: dto.refundNationalId || null,
+        })
+        .returning({ id: paymentReceipts.id });
+
+      return { paymentId: paymentRow.id, receiptId: created.id };
+    });
+
+    await this.auditLogService.log({
+      entityType: 'payment',
+      entityId: paymentId,
+      action: 'bank_transfer_draft_submitted',
+      performedBy: user.id,
+      ipAddress,
+      metadata: {
+        receiptId,
+        fileName: file.originalname,
+        fileSize: file.size,
+        courseIds: quote.courseIds,
+        totalAmount: quote.totals.totalAmount,
+        discountCode: quote.totals.discountCode || null,
+      },
+    });
+
+    // Email + scan-poll outside the transaction; failures are logged, not fatal.
+    void this.emailService
+      .sendBankTransferReceived(user.id, paymentId)
+      .catch((err) =>
+        this.logger.error(
+          `Failed to send bank transfer receipt email: ${err.message}`,
+        ),
+      );
+
+    void this.pollScanStatus(receiptId, objectPath);
+
+    return {
+      paymentId,
+      receiptId,
+      paymentStatus: PAYMENT_STATUS.AWAITING_APPROVAL,
+    };
   }
 
   /**

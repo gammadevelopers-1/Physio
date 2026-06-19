@@ -10,6 +10,7 @@ import { useCart, CartItem } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import NonStudentEnrollmentNotice from "@/components/courses/NonStudentEnrollmentNotice";
 import BnplPromoWidgets from "@/components/courses/BnplPromoWidgets";
+import { studentApi } from "@/lib/api";
 import {
   ShoppingCart,
   Trash2,
@@ -69,6 +70,50 @@ export default function CartPageClient({
     setMounted(true);
   }, []);
 
+  // Already-enrolled lookup for everything in the cart. We disable the
+  // proceed button (and surface a per-item badge below) so the buyer
+  // never tries to pay for a course they already own. Map is keyed by
+  // course id; unknown ids default to "not enrolled" so the regular
+  // line item renders as-is.
+  const [enrolledMap, setEnrolledMap] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    if (!mounted) return;
+    if (!isAuthenticated || !isStudent) return;
+    if (items.length === 0) {
+      setEnrolledMap({});
+      return;
+    }
+    let cancelled = false;
+    studentApi
+      .getEnrollmentStatus(items.map((it) => it.id))
+      .then((res) => {
+        if (cancelled) return;
+        const next: Record<string, boolean> = {};
+        for (const [id, entry] of Object.entries(res.byId || {})) {
+          next[id] = !!entry?.isEnrolled;
+        }
+        setEnrolledMap(next);
+      })
+      .catch(() => {
+        // Silent — backend's INSERT-time guard catches anything we miss.
+        if (!cancelled) setEnrolledMap({});
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Recompute when the cart items change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted, isAuthenticated, isStudent, items.map((it) => it.id).join(",")]);
+
+  const enrolledCount = items.filter((it) => enrolledMap[it.id]).length;
+  const hasEnrolledItems = enrolledCount > 0;
+
+  const removeEnrolledItems = () => {
+    items.forEach((it) => {
+      if (enrolledMap[it.id]) removeItem(it.id);
+    });
+  };
+
   const getTitle = (item: CartItem) => {
     if (isRTL && item.titleAr) return item.titleAr;
     return item.title;
@@ -98,6 +143,7 @@ export default function CartPageClient({
       return;
     }
     if (!isStudent) return; // defensive — button is hidden when notice shows
+    if (hasEnrolledItems) return; // forces buyer to remove the duplicates first
     router.push(`/${locale}/checkout`);
   };
 
@@ -186,15 +232,48 @@ export default function CartPageClient({
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
               {/* Items column */}
               <div className="space-y-4">
+                {hasEnrolledItems && (
+                  <div className="rounded-xl border border-[#FCA5A5] bg-[#FEF2F2] p-4">
+                    <div className="flex items-start gap-3">
+                      <ShoppingCart className="w-5 h-5 text-[#B91C1C] flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[#7F1D1D] mb-1">
+                          {t("enrolledBanner.title", { count: enrolledCount })}
+                        </p>
+                        <p className="text-xs text-[#991B1B] mb-3">
+                          {t("enrolledBanner.body")}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={removeEnrolledItems}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-[#DC2626] hover:bg-[#B91C1C] rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          {t("enrolledBanner.removeAll")}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {items.map((item) => {
                   const onSale = item.onSale && item.effectivePrice != null;
+                  const isAlreadyEnrolled = !!enrolledMap[item.id];
                   return (
                     <div
                       key={item.id}
                       role="article"
                       aria-label={getTitle(item)}
-                      className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden hover:shadow-sm transition-shadow"
+                      className={`bg-white rounded-xl border ${
+                        isAlreadyEnrolled
+                          ? "border-[#FCA5A5] opacity-75"
+                          : "border-[#E5E7EB]"
+                      } overflow-hidden hover:shadow-sm transition-shadow`}
                     >
+                      {isAlreadyEnrolled && (
+                        <div className="bg-[#FEF2F2] border-b border-[#FCA5A5] px-4 py-2 text-xs font-medium text-[#7F1D1D]">
+                          {t("enrolledBanner.itemBadge")}
+                        </div>
+                      )}
                       <div className="flex flex-col sm:flex-row">
                         {/* Thumbnail */}
                         <div className="sm:w-40 sm:flex-shrink-0">
@@ -363,14 +442,27 @@ export default function CartPageClient({
 
                   {/* Proceed CTA — hidden for non-students who see the notice above */}
                   {!showNonStudentNotice && (
-                    <button
-                      type="button"
-                      onClick={handleProceedToCheckout}
-                      className="w-full h-12 btn-gold text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 focus-ring"
-                    >
-                      {t("proceedToCheckout")}
-                      <Arrow className="w-4 h-4" />
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleProceedToCheckout}
+                        disabled={hasEnrolledItems}
+                        title={
+                          hasEnrolledItems
+                            ? t("enrolledBanner.proceedBlocked")
+                            : undefined
+                        }
+                        className="w-full h-12 btn-gold text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 focus-ring disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {t("proceedToCheckout")}
+                        <Arrow className="w-4 h-4" />
+                      </button>
+                      {hasEnrolledItems && (
+                        <p className="text-[11px] text-[#B91C1C] text-center leading-snug">
+                          {t("enrolledBanner.proceedBlocked")}
+                        </p>
+                      )}
+                    </>
                   )}
 
                   <div className="flex items-center justify-center gap-1.5 text-xs text-[#6B7280]">

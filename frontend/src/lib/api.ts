@@ -4404,9 +4404,37 @@ import type {
   TicketDetail,
 } from '@/types/student-dashboard';
 
+export interface EnrollmentStatusEntry {
+  isEnrolled: boolean;
+  enrollmentId: string | null;
+  status: 'active' | 'completed' | 'expired' | null;
+}
+
+export interface EnrollmentStatusResponse {
+  byId: Record<string, EnrollmentStatusEntry>;
+}
+
 export const studentApi = {
   getDashboard: () =>
     api.get<StudentDashboardStats>('/student/dashboard'),
+
+  /**
+   * Bulk-check whether the current student is already enrolled in each of
+   * the given course ids. Used by the course detail / cart / checkout
+   * pages to hide payment methods for already-owned courses before the
+   * buyer ever clicks Pay. Unknown ids come back as isEnrolled=false so
+   * callers can render a Record<courseId, status> with no per-id error
+   * handling. Backend caps at 50 ids per call.
+   */
+  getEnrollmentStatus: (courseIds: string[]) => {
+    if (!courseIds || courseIds.length === 0) {
+      return Promise.resolve<EnrollmentStatusResponse>({ byId: {} });
+    }
+    const qs = encodeURIComponent(courseIds.join(','));
+    return api.get<EnrollmentStatusResponse>(
+      `/student/enrollment-status?courseIds=${qs}`,
+    );
+  },
 
   getCourses: (params?: {
     status?: string;

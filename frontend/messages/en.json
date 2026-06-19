@@ -1113,7 +1113,10 @@
       "learnMore": "Learn more",
       "securePayment": "Secure payment through",
       "inCart": "In Cart",
-      "addedToCart": "Added to cart!"
+      "addedToCart": "Added to cart!",
+      "alreadyEnrolledTitle": "You're enrolled in this course",
+      "alreadyEnrolledBody": "Pick up where you left off in your learning dashboard.",
+      "goToMyCourse": "Go to my course"
     },
     "nonStudentNotice": {
       "title": "Available for student accounts",
@@ -1189,6 +1192,13 @@
     "totalLabel": "Total",
     "vatDisclaimer": "Final amount including VAT is calculated at checkout. Discount codes can be applied on the next step.",
     "secureNote": "Secure & encrypted checkout",
+    "enrolledBanner": {
+      "title": "{count, plural, =1 {1 course in your cart is already enrolled} other {# courses in your cart are already enrolled}}",
+      "body": "You already own these courses. Remove them from your cart to continue.",
+      "removeAll": "Remove enrolled courses",
+      "itemBadge": "Already enrolled — remove to continue",
+      "proceedBlocked": "Remove already-enrolled courses to proceed."
+    },
     "emptyTitle": "Your cart is empty",
     "emptyDescription": "Browse our courses and add them to your cart",
     "browseCourses": "Browse Courses",
@@ -1209,6 +1219,17 @@
     "orderTitle": "Order ({count, plural, =1 {1 item} other {# items}})",
     "editOrder": "Edit",
     "removeItem": "Remove",
+    "alreadyEnrolled": {
+      "title": "You already own this",
+      "expressBody": "This course is in your learning dashboard. There's nothing to pay for — pick up where you left off.",
+      "cartBody": "{count, plural, =1 {The course in your cart is already in your learning dashboard.} other {All # courses in your cart are already in your learning dashboard.}} There's nothing to pay for.",
+      "goToCourse": "Go to course",
+      "goToMyCourses": "Go to my courses",
+      "browseMore": "Browse more courses",
+      "partialTitle": "{count, plural, =1 {1 item in this order is already enrolled} other {# items in this order are already enrolled}}",
+      "partialBody": "Remove the already-enrolled course(s) from your cart before paying.",
+      "itemBadge": "Already enrolled"
+    },
     "buyerDetails": "Buyer details",
     "editProfile": "Edit profile",
     "buyerName": "Name",

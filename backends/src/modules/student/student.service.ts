@@ -4,7 +4,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, asc, count, sql, ilike, or, gte, lte, isNull } from 'drizzle-orm';
+import { eq, and, desc, asc, count, sql, ilike, or, gte, lte, isNull, inArray } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   enrollments,
@@ -72,6 +72,12 @@ function seededShuffle<T>(array: T[], seed: number): T[] {
 function makeSeed(...parts: string[]): number {
   const hash = createHash('md5').update(parts.join(':')).digest();
   return hash.readUInt32BE(0);
+}
+
+export interface EnrollmentStatusEntry {
+  isEnrolled: boolean;
+  enrollmentId: string | null;
+  status: 'active' | 'completed' | 'expired' | null;
 }
 
 @Injectable()
@@ -583,6 +589,54 @@ export class StudentService {
       limit,
       totalPages: Math.ceil(Number(countResult?.count || 0) / limit),
     };
+  }
+
+  /**
+   * Bulk enrollment lookup powering the "Already Enrolled" UX on the
+   * course detail, cart, and checkout pages. Returns a row per requested
+   * id so callers can build a Record<courseId, status>. Unknown course
+   * ids return isEnrolled=false instead of erroring — the page-level
+   * UX simply doesn't render the "already enrolled" badge for them.
+   *
+   * `cancelled` and `refunded` enrollments are treated as NOT enrolled
+   * so the student can re-purchase. Only active/completed/expired count.
+   */
+  async getEnrollmentStatusBulk(studentId: string, courseIds: string[]) {
+    // Dedupe + cap for sanity. A cart is capped at 20 items elsewhere,
+    // so 50 is a comfortable ceiling that also tolerates the detail page
+    // bundling a "related courses" lookup later.
+    const unique = Array.from(new Set(courseIds)).slice(0, 50);
+    if (unique.length === 0) {
+      return { byId: {} as Record<string, EnrollmentStatusEntry> };
+    }
+
+    const rows = await db
+      .select({
+        id: enrollments.id,
+        courseId: enrollments.courseId,
+        status: enrollments.status,
+      })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.studentId, studentId),
+          inArray(enrollments.courseId, unique),
+          inArray(enrollments.status, ['active', 'completed', 'expired']),
+        ),
+      );
+
+    const byId: Record<string, EnrollmentStatusEntry> = {};
+    for (const id of unique) {
+      byId[id] = { isEnrolled: false, enrollmentId: null, status: null };
+    }
+    for (const row of rows) {
+      byId[row.courseId] = {
+        isEnrolled: true,
+        enrollmentId: row.id,
+        status: row.status as 'active' | 'completed' | 'expired',
+      };
+    }
+    return { byId };
   }
 
   // ─── Course Detail (for Learning Page) ──────────────────

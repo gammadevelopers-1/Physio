@@ -20,7 +20,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
-import { paymentApi, discountApi } from "@/lib/api";
+import { paymentApi, discountApi, studentApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart, CartItem } from "@/contexts/CartContext";
 import NonStudentEnrollmentNotice from "@/components/courses/NonStudentEnrollmentNotice";
@@ -157,6 +157,43 @@ export default function CheckoutPageClient({
     return cartItems.map(cartItemToCheckoutItem);
   }, [isExpressMode, expressItem, cartItems]);
 
+  // Bulk enrollment lookup — same as cart, plus the express-mode case
+  // where the buyer landed here via Buy Now on a course they already own.
+  // Map is keyed by courseId so render code can show per-item badges +
+  // disable the Pay button when at least one item is already enrolled.
+  const [enrolledMap, setEnrolledMap] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated || !isStudent) return;
+    if (items.length === 0) {
+      setEnrolledMap({});
+      return;
+    }
+    let cancelled = false;
+    studentApi
+      .getEnrollmentStatus(items.map((it) => it.id))
+      .then((res) => {
+        if (cancelled) return;
+        const next: Record<string, boolean> = {};
+        for (const [id, entry] of Object.entries(res.byId || {})) {
+          next[id] = !!entry?.isEnrolled;
+        }
+        setEnrolledMap(next);
+      })
+      .catch(() => {
+        if (!cancelled) setEnrolledMap({});
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, isAuthenticated, isStudent, items.map((it) => it.id).join(",")]);
+
+  const enrolledItemCount = items.filter((it) => enrolledMap[it.id]).length;
+  const hasEnrolledItems = enrolledItemCount > 0;
+  const allItemsEnrolled =
+    items.length > 0 && enrolledItemCount === items.length;
+
   // Coupon stacking: blocked if ANY cart line is on sale without
   // saleAllowsCoupon. In cart mode, we don't know per-line stacking from
   // the localStorage snapshot, so any on-sale line conservatively blocks
@@ -219,6 +256,7 @@ export default function CheckoutPageClient({
   const handleSubmit = async () => {
     if (items.length === 0 || processing) return;
     if (!isStudent) return; // defensive — UI hides the button for non-students
+    if (hasEnrolledItems) return; // UI hides the button; this is the second wall
 
     setProcessing(true);
     setError(null);
@@ -370,6 +408,61 @@ export default function CheckoutPageClient({
               canSwitchToStudent={(user?.roles || []).includes("STUDENT")}
             />
           </div>
+        ) : allItemsEnrolled ? (
+          /* Express mode → buyer clicked Buy Now on a course they already
+             own; OR cart mode where every line is already enrolled. Either
+             way, nothing to pay for — skip the whole order/payment grid. */
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#BBF7D0]">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-[#F0FDF4] flex items-center justify-center">
+                  <Lock className="w-5 h-5 text-[#16A34A]" />
+                </div>
+                <h2 className="text-xl font-semibold text-[#166534]">
+                  {t("alreadyEnrolled.title")}
+                </h2>
+              </div>
+              <p className="text-sm text-[#15803D] mb-5">
+                {isExpressMode
+                  ? t("alreadyEnrolled.expressBody")
+                  : t("alreadyEnrolled.cartBody", { count: items.length })}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                {isExpressMode && items[0] ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(
+                        `/${locale}/dashboard/student/courses/${items[0].id}`,
+                      )
+                    }
+                    className="flex-1 h-12 btn-gold rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2"
+                  >
+                    {t("alreadyEnrolled.goToCourse")}
+                    <Chevron size={16} aria-hidden="true" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(`/${locale}/dashboard/student/courses`)
+                    }
+                    className="flex-1 h-12 btn-gold rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2"
+                  >
+                    {t("alreadyEnrolled.goToMyCourses")}
+                    <Chevron size={16} aria-hidden="true" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => router.push(`/${locale}/courses`)}
+                  className="flex-1 h-12 border border-[#D1D5DB] rounded-xl text-sm font-medium text-[#1F2937] hover:bg-[#F3F4F6] transition-colors"
+                >
+                  {t("alreadyEnrolled.browseMore")}
+                </button>
+              </div>
+            </div>
+          </div>
         ) : (
           <div className="flex flex-col lg:flex-row gap-6">
             {/* ── Left: Order ── */}
@@ -390,13 +483,29 @@ export default function CheckoutPageClient({
                   )}
                 </div>
 
+                {hasEnrolledItems && (
+                  <div className="mb-3 rounded-xl border border-[#FCA5A5] bg-[#FEF2F2] p-3">
+                    <p className="text-xs font-semibold text-[#7F1D1D] mb-1">
+                      {t("alreadyEnrolled.partialTitle", { count: enrolledItemCount })}
+                    </p>
+                    <p className="text-[11px] text-[#991B1B]">
+                      {t("alreadyEnrolled.partialBody")}
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   {items.map((item) => {
                     const title = isRTL && item.titleAr ? item.titleAr : item.title;
+                    const isAlreadyEnrolled = !!enrolledMap[item.id];
                     return (
                       <div
                         key={item.id}
-                        className="flex gap-4 p-3 border border-[#E5E7EB] rounded-xl"
+                        className={`flex gap-4 p-3 border ${
+                          isAlreadyEnrolled
+                            ? "border-[#FCA5A5] bg-[#FEF2F2]/40"
+                            : "border-[#E5E7EB]"
+                        } rounded-xl`}
                       >
                         {item.thumbnail && (
                           <div className="relative w-[100px] h-[75px] rounded-lg overflow-hidden bg-[#eef3f7] flex-shrink-0">
@@ -428,6 +537,11 @@ export default function CheckoutPageClient({
                               </button>
                             )}
                           </div>
+                          {isAlreadyEnrolled && (
+                            <p className="mt-1 text-[11px] font-semibold text-[#B91C1C]">
+                              {t("alreadyEnrolled.itemBadge")}
+                            </p>
+                          )}
                           <div className="flex items-center gap-2 flex-wrap mt-1.5">
                             {item.deliveryType && (
                               <span className="inline-flex items-center gap-1 bg-[#f4f4f5] px-2 py-0.5 rounded text-[11px] text-[#4a4c4f]">
@@ -725,13 +839,17 @@ export default function CheckoutPageClient({
                   </div>
                 )}
 
-                {/* Single Pay button */}
+                {/* Single Pay button — disabled if any cart line is a course
+                    the buyer already owns (banner above tells them to remove
+                    it from cart). Backend's INSERT-time guard is the safety
+                    net if a buyer somehow bypasses the disabled state. */}
                 <button
                   onClick={handleSubmit}
-                  disabled={processing}
+                  disabled={processing || hasEnrolledItems}
                   aria-busy={processing}
                   aria-label={processing ? (isRTL ? "جاري المعالجة" : "Processing payment") : `${t("payment.payNow")} SAR ${total.toFixed(2)}`}
-                  className="w-full h-12 rounded-xl text-white font-medium btn-gold hover:opacity-90 transition-opacity mb-4 flex items-center justify-center gap-2 disabled:opacity-50 focus-ring"
+                  title={hasEnrolledItems ? t("alreadyEnrolled.partialBody") : undefined}
+                  className="w-full h-12 rounded-xl text-white font-medium btn-gold hover:opacity-90 transition-opacity mb-4 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus-ring"
                 >
                   {processing ? (
                     <>

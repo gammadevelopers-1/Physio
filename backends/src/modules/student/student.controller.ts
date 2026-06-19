@@ -50,6 +50,26 @@ export class StudentController {
   /**
    * GET /student/courses — Student's enrolled courses
    */
+  /**
+   * GET /student/enrollment-status?courseIds=a,b,c — bulk check whether the
+   * current student is already enrolled in each course. Powers the
+   * "Already Enrolled" UX on course detail / cart / checkout so the buyer
+   * never sees payment methods for a course they already own. Accepts up
+   * to 50 ids per call; unknown ids return isEnrolled=false instead of
+   * 404 so the UI can render a uniform map without per-id error handling.
+   */
+  @Get('enrollment-status')
+  async getEnrollmentStatus(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('courseIds') courseIdsCsv?: string,
+  ) {
+    const ids = (courseIdsCsv || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return this.studentService.getEnrollmentStatusBulk(user.id, ids);
+  }
+
   @Get('courses')
   async getMyCourses(
     @CurrentUser() user: AuthenticatedUser,

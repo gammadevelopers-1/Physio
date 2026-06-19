@@ -642,6 +642,40 @@ const CourseDetailContent = ({
     };
   }, [apiCourse, isStudent, apiIsFree]);
 
+  // Already-enrolled lookup. Decides whether to hide the Buy Now / Add to
+  // Cart / payment-method UI in favour of an "Already Enrolled" card.
+  // Only runs for signed-in students; guests + non-students get the regular
+  // browse flow. 'loading' avoids briefly flashing the wrong CTA state.
+  const [enrolledState, setEnrolledState] = useState<
+    "loading" | "enrolled" | "not-enrolled" | "skip"
+  >("skip");
+  useEffect(() => {
+    if (!apiCourse?.id) return;
+    if (!isAuthenticated || !isStudent) {
+      setEnrolledState("skip");
+      return;
+    }
+    let cancelled = false;
+    setEnrolledState("loading");
+    studentApi
+      .getEnrollmentStatus([apiCourse.id])
+      .then((res) => {
+        if (cancelled) return;
+        const entry = res.byId?.[apiCourse.id];
+        setEnrolledState(entry?.isEnrolled ? "enrolled" : "not-enrolled");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // Network failed — fall through to the regular CTAs rather than
+        // blocking the buyer. The server still rejects an INSERT for an
+        // already-enrolled course as the safety net.
+        setEnrolledState("not-enrolled");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [apiCourse?.id, isAuthenticated, isStudent]);
+
   // Trigger points-based redemption. Reuses enrollResult for UI feedback —
   // a successful redemption ends in the same place (course unlocked) so
   // sharing the success path is simpler than a parallel state.
@@ -1741,6 +1775,36 @@ const CourseDetailContent = ({
                           canSwitchToStudent={(user?.roles || []).includes("STUDENT")}
                         />
                       </div>
+                    ) : enrolledState === "loading" ? (
+                      /* PAID COURSE, student auth confirmed — wait on enrollment
+                         lookup before deciding whether to show Buy Now or the
+                         "Already Enrolled" card, so the CTA never flashes. */
+                      <div className="mb-3 h-12 rounded-xl bg-[var(--color-border-subtle)] animate-pulse" />
+                    ) : enrolledState === "enrolled" ? (
+                      /* ALREADY ENROLLED — no payment methods, no cart, just
+                         a path back into the course. */
+                      <div className="mb-3 rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Check className="w-5 h-5 text-[#16A34A]" />
+                          <span className="text-sm font-semibold text-[#166534]">
+                            {t("pricingCard.alreadyEnrolledTitle")}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#15803D] mb-3">
+                          {t("pricingCard.alreadyEnrolledBody")}
+                        </p>
+                        <button
+                          onClick={() =>
+                            router.push(
+                              `/${locale}/dashboard/student/courses/${apiCourse!.id}`,
+                            )
+                          }
+                          className="w-full h-12 btn-gold rounded-xl text-white font-medium flex items-center justify-center gap-2"
+                        >
+                          {t("pricingCard.goToMyCourse")}
+                          <ChevronIcon className="w-4 h-4" aria-hidden="true" />
+                        </button>
+                      </div>
                     ) : (
                       /* PAID COURSE — Amazon-style: Buy Now (express) + Add to Cart */
                       <>
@@ -2075,6 +2139,31 @@ const CourseDetailContent = ({
                   roleLabel={user?.activeRole || ""}
                   canSwitchToStudent={(user?.roles || []).includes("STUDENT")}
                 />
+              </div>
+            ) : enrolledState === "loading" ? (
+              <div className="mb-2 h-10 rounded-xl bg-[var(--color-border-subtle)] animate-pulse" />
+            ) : enrolledState === "enrolled" ? (
+              <div className="mb-2 rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] p-3">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Check className="w-4 h-4 text-[#16A34A]" />
+                  <span className="text-sm font-semibold text-[#166534]">
+                    {t("pricingCard.alreadyEnrolledTitle")}
+                  </span>
+                </div>
+                <p className="text-xs text-[#15803D] mb-2.5">
+                  {t("pricingCard.alreadyEnrolledBody")}
+                </p>
+                <button
+                  onClick={() =>
+                    router.push(
+                      `/${locale}/dashboard/student/courses/${apiCourse!.id}`,
+                    )
+                  }
+                  className="w-full h-10 btn-gold rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2"
+                >
+                  {t("pricingCard.goToMyCourse")}
+                  <ChevronIcon className="w-4 h-4" aria-hidden="true" />
+                </button>
               </div>
             ) : (
               <>

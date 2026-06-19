@@ -250,11 +250,10 @@ export class PaymentsService {
     const orderedCourses = courseIds.map((id) => courseById.get(id)!);
 
     // Reject if the student already has an in-flight bank-transfer payment
-    // for any course in this cart. Without this guard they could pay twice for
-    // the same course while the first receipt is still under review.
-    // "In flight" = PENDING (no receipt yet) or AWAITING_APPROVAL (receipt
-    // uploaded, finance hasn't actioned it). Approved or failed payments
-    // don't block — those are the "retry after rejection" path.
+    // for any course in this cart. Only AWAITING_APPROVAL blocks — that's
+    // "finance is reviewing your receipt right now". A PENDING row at this
+    // point means the receipt was already REJECTED (reject handler flips
+    // payment back to PENDING), so the student is free to start over.
     const inFlightSingle = await db
       .select({ id: payments.id, courseId: payments.courseId })
       .from(payments)
@@ -263,7 +262,6 @@ export class PaymentsService {
           eq(payments.userId, user.id),
           eq(payments.gateway, 'bank_transfer'),
           inArray(payments.status, [
-            PAYMENT_STATUS.PENDING,
             PAYMENT_STATUS.AWAITING_APPROVAL,
           ] as any),
           inArray(payments.courseId, courseIds),
@@ -278,7 +276,6 @@ export class PaymentsService {
           eq(payments.userId, user.id),
           eq(payments.gateway, 'bank_transfer'),
           inArray(payments.status, [
-            PAYMENT_STATUS.PENDING,
             PAYMENT_STATUS.AWAITING_APPROVAL,
           ] as any),
           inArray(paymentItems.courseId, courseIds),

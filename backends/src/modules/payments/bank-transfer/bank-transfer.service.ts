@@ -367,7 +367,11 @@ export class BankTransferService {
       discountCode: dto.discountCode,
     });
 
-    // Belt-and-suspenders: no other pending bank-transfer for these courses.
+    // Belt-and-suspenders: block only when another receipt is actively
+    // under finance review. A PENDING row at this point = the previous
+    // receipt was rejected and the student is starting over, which is
+    // allowed. We'll mark those old rows as FAILED inside the transaction
+    // below so the finance dashboard isn't littered with rejected attempts.
     const inFlightSingle = await db
       .select({ id: payments.id, courseId: payments.courseId })
       .from(payments)
@@ -376,7 +380,6 @@ export class BankTransferService {
           eq(payments.userId, user.id),
           eq(payments.gateway, 'bank_transfer'),
           inArray(payments.status, [
-            PAYMENT_STATUS.PENDING,
             PAYMENT_STATUS.AWAITING_APPROVAL,
           ] as any),
           inArray(payments.courseId, quote.courseIds),
@@ -391,7 +394,6 @@ export class BankTransferService {
           eq(payments.userId, user.id),
           eq(payments.gateway, 'bank_transfer'),
           inArray(payments.status, [
-            PAYMENT_STATUS.PENDING,
             PAYMENT_STATUS.AWAITING_APPROVAL,
           ] as any),
           inArray(paymentItems.courseId, quote.courseIds),
@@ -421,6 +423,47 @@ export class BankTransferService {
     const { paymentId, receiptId } = await db.transaction(async (tx) => {
       // Primary course = first cart line (legacy column on payments table).
       const primaryCourseId = quote.courseIds[0];
+
+      // Supersede any prior rejected attempts for these courses so finance
+      // sees the latest one and the dashboard isn't littered with stale
+      // PENDING rows. We only sweep this user's own rows.
+      const rejectedSingle = await tx
+        .select({ id: payments.id })
+        .from(payments)
+        .where(
+          and(
+            eq(payments.userId, user.id),
+            eq(payments.gateway, 'bank_transfer'),
+            eq(payments.status, PAYMENT_STATUS.PENDING),
+            inArray(payments.courseId, quote.courseIds),
+          ),
+        );
+      const rejectedMulti = await tx
+        .select({ id: payments.id })
+        .from(paymentItems)
+        .innerJoin(payments, eq(payments.id, paymentItems.paymentId))
+        .where(
+          and(
+            eq(payments.userId, user.id),
+            eq(payments.gateway, 'bank_transfer'),
+            eq(payments.status, PAYMENT_STATUS.PENDING),
+            inArray(paymentItems.courseId, quote.courseIds),
+          ),
+        );
+      const staleIds = Array.from(
+        new Set([...rejectedSingle, ...rejectedMulti].map((r) => r.id)),
+      );
+      if (staleIds.length > 0) {
+        await tx
+          .update(payments)
+          .set({
+            status: PAYMENT_STATUS.FAILED,
+            failedAt: new Date(),
+            failureReason: 'Superseded by new bank transfer attempt',
+            updatedAt: new Date(),
+          })
+          .where(inArray(payments.id, staleIds));
+      }
 
       // Build payment metadata that the proforma PDF + UI rely on.
       const metadata = {

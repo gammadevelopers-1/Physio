@@ -652,14 +652,12 @@ export class StudentService {
     }
 
     // Find any in-flight bank-transfer payment for these courses so the FE
-    // can block a duplicate buy attempt. We look at both single-course
-    // payments (payments.courseId) and multi-line carts (payment_items).
-    // "Pending" here = the student initiated checkout but finance hasn't
-    // actioned the receipt yet — covers PENDING and AWAITING_APPROVAL.
-    const pendingStatuses = [
-      PAYMENT_STATUS.PENDING,
-      PAYMENT_STATUS.AWAITING_APPROVAL,
-    ] as string[];
+    // can block a duplicate buy attempt. Only AWAITING_APPROVAL counts as
+    // "blocking" — that's where finance is actively reviewing the receipt.
+    // If the payment is PENDING here, the receipt was already REJECTED by
+    // finance (the reject flow flips payment back to PENDING) so the student
+    // is free to start over via Buy Now / re-upload from the old URL.
+    const pendingStatuses = [PAYMENT_STATUS.AWAITING_APPROVAL] as string[];
 
     const singleLine = await db
       .select({ id: payments.id, courseId: payments.courseId })

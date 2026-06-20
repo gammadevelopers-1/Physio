@@ -4738,7 +4738,7 @@
       "sectionReviews": "المراجعات",
       "moveUp": "تحريك لأعلى",
       "moveDown": "تحريك لأسفل",
-      "priceLabel": "السعر (ريال)",
+      "priceLabel": "السعر (ريال سعودي)",
       "enrollmentDeadlineLabel": "الموعد النهائي للتسجيل",
       "languageLabel": "اللغة",
       "languageEn": "الإنجليزية",
@@ -4782,11 +4782,9 @@
       "pricingDescription": "حدد ما إذا كانت هذه الدورة مجانية أو تتطلب دفعاً",
       "pricingFree": "مجانية",
       "pricingPaid": "مدفوعة",
-      "priceLabel": "السعر (ريال سعودي)",
       "pricePlaceholder": "مثال: 500.00",
       "priceRequired": "السعر مطلوب للدورات المدفوعة",
       "priceMinError": "يجب أن يكون السعر أكبر من 0",
-      "enrollmentDeadlineLabel": "الموعد النهائي للتسجيل",
       "cmeHoursLabel": "ساعات التعليم الطبي المستمر",
       "cmeAccreditedLabel": "معتمد للتعليم الطبي المستمر",
       "cmeAccreditedDesc": "هذه الدورة معتمدة للتعليم الطبي المستمر",
@@ -7995,12 +7993,22 @@
       "netRevenue": "صافي الإيرادات",
       "avgOrderValue": "متوسط قيمة الطلب",
       "pendingInvoices": "الفواتير المعلقة",
-      "refundRate": "معدل الاسترداد",
+      "refundRate": "نسبة الاسترداد",
       "totalTransactions": "إجمالي المعاملات",
       "sar": "ر.س",
       "afterRefunds": "بعد الاستردادات",
       "totalPending": "ر.س {amount} معلق",
-      "thisMonth": "هذا الشهر"
+      "thisMonth": "هذا الشهر",
+      "grossRevenue": "إجمالي الإيرادات",
+      "pendingApproval": "بانتظار الموافقة",
+      "successRate": "نسبة النجاح",
+      "failedRate": "نسبة الفشل",
+      "vsPrevious": "{value} مقارنة بالفترة السابقة",
+      "noPriorPeriod": "لا توجد بيانات سابقة",
+      "awaitingFinance": "بانتظار مراجعة المالية",
+      "ofDecidedAttempts": "من المحاولات المُقرَّرة",
+      "failedCount": "{count} عملية فاشلة",
+      "regionLabel": "مؤشرات المالية"
     },
     "dateFilter": {
       "today": "اليوم",
@@ -8028,7 +8036,11 @@
       "bnplSplit": "BNPL مقابل المباشر",
       "bnpl": "BNPL",
       "direct": "مباشر",
-      "noData": "لا توجد بيانات لهذه الفترة"
+      "noData": "لا توجد بيانات لهذه الفترة",
+      "subtitle": "تتبع إجمالي الإيرادات ومتوسط الطلب والنمو",
+      "grossPeriod": "الإجمالي (الفترة)",
+      "trend": "الاتجاه",
+      "revenue": "الإيرادات"
     },
     "paymentsTable": {
       "title": "المدفوعات والفواتير الأخيرة",
@@ -8807,6 +8819,104 @@
         "previous": "السابق",
         "next": "التالي"
       }
+    },
+    "recentTransactions": {
+      "title": "أحدث المعاملات",
+      "subtitle": "آخر المدفوعات عبر جميع البوابات",
+      "viewAll": "عرض الكل",
+      "empty": "لا توجد معاملات حتى الآن",
+      "col": {
+        "date": "التاريخ",
+        "customer": "العميل",
+        "course": "الدورة",
+        "gateway": "البوابة",
+        "status": "الحالة",
+        "amount": "المبلغ"
+      }
+    },
+    "status": {
+      "paid": "مدفوع",
+      "pending": "قيد الانتظار",
+      "awaitingApproval": "بانتظار الموافقة",
+      "failed": "فاشل",
+      "refunded": "مُسترَد",
+      "partiallyRefunded": "مُسترَد جزئيًا",
+      "chargeback": "استرجاع بنكي",
+      "processing": "قيد المعالجة"
+    },
+    "analytics": {
+      "title": "التحليلات",
+      "subtitle": "توزيع الحالات والأكثر مبيعًا ونوع التقديم",
+      "empty": "لا توجد بيانات لهذه الفترة",
+      "txn": "معاملات",
+      "tabs": {
+        "status": "توزيع الحالات",
+        "topCourses": "أعلى الدورات",
+        "delivery": "نوع التقديم"
+      },
+      "delivery": {
+        "live": "مباشر",
+        "online": "عبر الإنترنت",
+        "hybrid": "مختلط",
+        "recorded": "مسجَّل",
+        "self_paced": "ذاتي",
+        "webinar": "ندوة",
+        "unknown": "غير محدد"
+      }
+    },
+    "rail": {
+      "viewAll": "عرض الكل",
+      "refunds": {
+        "title": "طلبات الاسترداد",
+        "empty": "لا توجد طلبات استرداد",
+        "approve": "موافقة",
+        "reject": "رفض",
+        "approveSuccess": "تمت الموافقة على الاسترداد",
+        "approveFailed": "فشلت الموافقة على الاسترداد",
+        "rejectSuccess": "تم رفض الاسترداد",
+        "rejectFailed": "فشل رفض الاسترداد",
+        "rejectTitle": "رفض طلب الاسترداد",
+        "rejectSubtitle": "أدخل سببًا (10 أحرف على الأقل).",
+        "rejectPlaceholder": "سبب الرفض…",
+        "cancel": "إلغاء"
+      },
+      "bankTransfers": {
+        "title": "التحويلات البنكية",
+        "empty": "لا توجد إيصالات قيد الانتظار",
+        "ageHours": "منذ {hours}س"
+      },
+      "reconciliation": {
+        "title": "الاختلافات",
+        "empty": "جميع المدفوعات متطابقة",
+        "escalated": "مُصعَّد"
+      },
+      "coupons": {
+        "title": "كوبونات نشطة",
+        "empty": "لا توجد كوبونات نشطة",
+        "percentOff": "خصم {value}%",
+        "fixedOff": "خصم {value} ر.س",
+        "expiresIn": "ينتهي خلال {days} يوم"
+      },
+      "alerts": {
+        "title": "التنبيهات",
+        "empty": "لا توجد تنبيهات",
+        "clearAll": "مسح الكل",
+        "dismiss": "إخفاء"
+      }
+    },
+    "alerts": {
+      "failedPayments": {
+        "title": "{count} عملية دفع فاشلة",
+        "desc": "افحص أخطاء البوابة أو أعد المحاولة."
+      },
+      "awaitingApproval": {
+        "title": "{count} تحويل بنكي بانتظار الموافقة",
+        "desc": "راجع الإيصالات المرفوعة في قائمة التحويلات البنكية."
+      },
+      "highRefundRate": {
+        "title": "نسبة الاسترداد {rate}% أعلى من الحد",
+        "desc": "ابحث عن ارتفاع في الاستردادات حسب الدورة أو البوابة."
+      }
     }
   },
   "supportCommon": {
@@ -9088,7 +9198,7 @@
       "teamChat": "محادثة الفريق"
     },
     "activity": {
-      "noRecent": "لا يوجد نشاط حديث",
+      "noRecent": "لا يوجد نشاط حديث بعد.",
       "ticketCreated": "#1234 أنشأها أحمد ك.",
       "repliedTo": "{name} رد على #{id}",
       "ticketResolved": "#1231 تم الحل",
@@ -9103,7 +9213,6 @@
         "1hour": "منذ ساعة"
       },
       "viewAll": "عرض كل النشاط",
-      "noRecent": "لا يوجد نشاط حديث بعد.",
       "events": {
         "created": "تم إنشاء تذكرة جديدة",
         "resolved": "تم حل التذكرة",

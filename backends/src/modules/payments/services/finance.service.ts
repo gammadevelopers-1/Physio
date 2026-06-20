@@ -36,7 +36,10 @@ export class FinanceService {
       totalRefunds: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} IN ('refunded', 'partially_refunded') THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
       pendingPayments: sql<number>`COUNT(CASE WHEN ${payments.status} = 'pending' THEN 1 END)`,
       pendingAmount: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'pending' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+      awaitingApprovalCount: sql<number>`COUNT(CASE WHEN ${payments.status} = 'awaiting_approval' THEN 1 END)`,
+      awaitingApprovalAmount: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'awaiting_approval' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
       failedPayments: sql<number>`COUNT(CASE WHEN ${payments.status} = 'failed' THEN 1 END)`,
+      totalAttempts: sql<number>`COUNT(*)`,
     };
 
     const [stats] = await db
@@ -83,6 +86,18 @@ export class FinanceService {
       refundRateTrend = Number((currentRefundRate - prevRefundRate).toFixed(1));
     }
 
+    const failedPayments = Number(stats?.failedPayments || 0);
+    const awaitingApprovalCount = Number(stats?.awaitingApprovalCount || 0);
+    const awaitingApprovalAmount = Number(stats?.awaitingApprovalAmount || 0);
+    const totalAttempts = Number(stats?.totalAttempts || 0);
+    const decidedAttempts = totalPayments + failedPayments;
+    const successRate = decidedAttempts > 0
+      ? Number(((totalPayments / decidedAttempts) * 100).toFixed(2))
+      : 0;
+    const failedRate = totalAttempts > 0
+      ? Number(((failedPayments / totalAttempts) * 100).toFixed(2))
+      : 0;
+
     return {
       totalRevenue,
       totalPayments,
@@ -90,7 +105,12 @@ export class FinanceService {
       netRevenue: totalRevenue - totalRefunds,
       pendingPayments: Number(stats?.pendingPayments || 0),
       pendingAmount: Number(stats?.pendingAmount || 0),
-      failedPayments: Number(stats?.failedPayments || 0),
+      awaitingApprovalCount,
+      awaitingApprovalAmount,
+      failedPayments,
+      totalAttempts,
+      successRate,
+      failedRate,
       averageOrderValue,
       revenueTrend,
       avgOrderTrend,

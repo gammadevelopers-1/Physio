@@ -4780,11 +4780,9 @@
       "pricingDescription": "Set whether this course is free or requires payment",
       "pricingFree": "Free",
       "pricingPaid": "Paid",
-      "priceLabel": "Price (SAR)",
       "pricePlaceholder": "e.g. 500.00",
       "priceRequired": "Price is required for paid courses",
       "priceMinError": "Price must be greater than 0",
-      "enrollmentDeadlineLabel": "Enrollment Deadline",
       "cmeHoursLabel": "CME Hours",
       "cmeAccreditedLabel": "CME Accredited",
       "cmeAccreditedDesc": "This course is accredited for Continuing Medical Education",
@@ -8000,7 +7998,17 @@
       "sar": "SAR",
       "afterRefunds": "After refunds",
       "totalPending": "SAR {amount} pending",
-      "thisMonth": "This month"
+      "thisMonth": "This month",
+      "grossRevenue": "Gross Revenue",
+      "pendingApproval": "Pending Approval",
+      "successRate": "Success Rate",
+      "failedRate": "Failed Rate",
+      "vsPrevious": "{value} vs previous period",
+      "noPriorPeriod": "No prior period",
+      "awaitingFinance": "Awaiting finance review",
+      "ofDecidedAttempts": "Of decided attempts",
+      "failedCount": "{count} failed payments",
+      "regionLabel": "Finance KPIs"
     },
     "dateFilter": {
       "today": "Today",
@@ -8028,7 +8036,11 @@
       "bnplSplit": "BNPL VS DIRECT",
       "bnpl": "BNPL",
       "direct": "Direct",
-      "noData": "No data for this period"
+      "noData": "No data for this period",
+      "subtitle": "Track gross revenue, AOV, and growth",
+      "grossPeriod": "Gross (period)",
+      "trend": "Trend",
+      "revenue": "Revenue"
     },
     "paymentsTable": {
       "title": "Recent Payments & Invoices",
@@ -8807,6 +8819,104 @@
         "previous": "Previous",
         "next": "Next"
       }
+    },
+    "recentTransactions": {
+      "title": "Recent Transactions",
+      "subtitle": "Latest payments across all gateways",
+      "viewAll": "View all",
+      "empty": "No transactions yet",
+      "col": {
+        "date": "Date",
+        "customer": "Customer",
+        "course": "Course",
+        "gateway": "Gateway",
+        "status": "Status",
+        "amount": "Amount"
+      }
+    },
+    "status": {
+      "paid": "Paid",
+      "pending": "Pending",
+      "awaitingApproval": "Awaiting Approval",
+      "failed": "Failed",
+      "refunded": "Refunded",
+      "partiallyRefunded": "Partially Refunded",
+      "chargeback": "Chargeback",
+      "processing": "Processing"
+    },
+    "analytics": {
+      "title": "Analytics",
+      "subtitle": "Status mix, top sellers, delivery breakdown",
+      "empty": "No data for this period",
+      "txn": "transactions",
+      "tabs": {
+        "status": "Status Mix",
+        "topCourses": "Top Courses",
+        "delivery": "Delivery Type"
+      },
+      "delivery": {
+        "live": "Live",
+        "online": "Online",
+        "hybrid": "Hybrid",
+        "recorded": "Recorded",
+        "self_paced": "Self-paced",
+        "webinar": "Webinar",
+        "unknown": "Unknown"
+      }
+    },
+    "rail": {
+      "viewAll": "View all",
+      "refunds": {
+        "title": "Refund Queue",
+        "empty": "No refund requests",
+        "approve": "Approve",
+        "reject": "Reject",
+        "approveSuccess": "Refund approved",
+        "approveFailed": "Failed to approve refund",
+        "rejectSuccess": "Refund rejected",
+        "rejectFailed": "Failed to reject refund",
+        "rejectTitle": "Reject refund request",
+        "rejectSubtitle": "Provide a reason (min. 10 characters).",
+        "rejectPlaceholder": "Reason for rejection…",
+        "cancel": "Cancel"
+      },
+      "bankTransfers": {
+        "title": "Bank Transfers",
+        "empty": "No pending receipts",
+        "ageHours": "{hours}h ago"
+      },
+      "reconciliation": {
+        "title": "Drifts",
+        "empty": "All payments in sync",
+        "escalated": "Escalated"
+      },
+      "coupons": {
+        "title": "Active Coupons",
+        "empty": "No active coupons",
+        "percentOff": "{value}% off",
+        "fixedOff": "SAR {value} off",
+        "expiresIn": "Expires in {days}d"
+      },
+      "alerts": {
+        "title": "Alerts",
+        "empty": "No alerts",
+        "clearAll": "Clear all",
+        "dismiss": "Dismiss"
+      }
+    },
+    "alerts": {
+      "failedPayments": {
+        "title": "{count} failed payments",
+        "desc": "Investigate gateway errors or retry."
+      },
+      "awaitingApproval": {
+        "title": "{count} bank transfers awaiting approval",
+        "desc": "Review uploaded receipts in the Bank Transfers queue."
+      },
+      "highRefundRate": {
+        "title": "Refund rate {rate}% above threshold",
+        "desc": "Check for refund spikes by course or gateway."
+      }
     }
   },
   "supportCommon": {
@@ -9088,7 +9198,7 @@
       "teamChat": "Team Chat"
     },
     "activity": {
-      "noRecent": "No recent activity",
+      "noRecent": "No recent activity yet.",
       "ticketCreated": "#1234 created by Ahmed K.",
       "repliedTo": "{name} replied to #{id}",
       "ticketResolved": "#1231 resolved",
@@ -9103,7 +9213,6 @@
         "1hour": "1 hour ago"
       },
       "viewAll": "View All Activity",
-      "noRecent": "No recent activity yet.",
       "events": {
         "created": "New ticket created",
         "resolved": "Ticket resolved",

@@ -7400,8 +7400,15 @@ export const financeApi = {
     return api.get<any[]>(`/finance/revenue-by-source${qs ? `?${qs}` : ''}`);
   },
 
-  getPaymentStatus: () =>
-    api.get<any[]>('/finance/payment-status'),
+  getPaymentStatus: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<{ status: string; count: number; totalAmount: number }[]>(
+      `/finance/payment-status${qs ? `?${qs}` : ''}`,
+    );
+  },
 
   /**
    * Manually retry the Authorise + Capture flow for a stuck Tamara payment.

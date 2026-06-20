@@ -21,19 +21,51 @@ export class FinanceService {
     return conditions;
   }
 
+  /**
+   * Date conditions anchored on paidAt — the moment the money was recognised.
+   * Use for revenue/gateway/top-course/trend queries so a bank transfer
+   * created weeks ago but approved today shows up in today's revenue, not
+   * in the original creation window. Falls back to createdAt for rows
+   * where paidAt is null (which shouldn't happen for paid rows but is
+   * defensive).
+   */
+  private buildPaidAtConditions(startDate?: string, endDate?: string) {
+    const conditions: any[] = [];
+    if (startDate) {
+      conditions.push(
+        sql`COALESCE(${payments.paidAt}, ${payments.createdAt}) >= ${new Date(startDate)}`,
+      );
+    }
+    if (endDate) {
+      conditions.push(
+        sql`COALESCE(${payments.paidAt}, ${payments.createdAt}) <= ${new Date(endDate)}`,
+      );
+    }
+    return conditions;
+  }
+
   private computeTrend(current: number, previous: number): number {
     if (previous === 0) return current > 0 ? 100 : 0;
     return Number((((current - previous) / previous) * 100).toFixed(1));
   }
 
   async getSummary(startDate?: string, endDate?: string) {
-    const dateConditions = this.buildDateConditions(startDate, endDate);
-    const whereClause = dateConditions.length > 0 ? and(...dateConditions) : undefined;
+    // Two queries — paid/refunded revenue uses paidAt window (when money
+    // was recognised); pending/failed/attempts use createdAt window (when
+    // activity happened). This fixes the case where a bank transfer is
+    // created weeks ago but approved today: today's window must include it.
+    const paidConditions = this.buildPaidAtConditions(startDate, endDate);
+    const activityConditions = this.buildDateConditions(startDate, endDate);
+    const paidWhere = paidConditions.length > 0 ? and(...paidConditions) : undefined;
+    const activityWhere = activityConditions.length > 0 ? and(...activityConditions) : undefined;
 
-    const selectFields = {
+    const paidSelect = {
       totalRevenue: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'paid' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
       totalPayments: sql<number>`COUNT(CASE WHEN ${payments.status} = 'paid' THEN 1 END)`,
       totalRefunds: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} IN ('refunded', 'partially_refunded') THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+    };
+
+    const activitySelect = {
       pendingPayments: sql<number>`COUNT(CASE WHEN ${payments.status} = 'pending' THEN 1 END)`,
       pendingAmount: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'pending' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
       awaitingApprovalCount: sql<number>`COUNT(CASE WHEN ${payments.status} = 'awaiting_approval' THEN 1 END)`,
@@ -42,17 +74,18 @@ export class FinanceService {
       totalAttempts: sql<number>`COUNT(*)`,
     };
 
-    const [stats] = await db
-      .select(selectFields)
+    const [paidStats] = await db.select(paidSelect).from(payments).where(paidWhere);
+    const [activityStats] = await db
+      .select(activitySelect)
       .from(payments)
-      .where(whereClause);
+      .where(activityWhere);
 
-    const totalRevenue = Number(stats?.totalRevenue || 0);
-    const totalPayments = Number(stats?.totalPayments || 0);
-    const totalRefunds = Number(stats?.totalRefunds || 0);
+    const totalRevenue = Number(paidStats?.totalRevenue || 0);
+    const totalPayments = Number(paidStats?.totalPayments || 0);
+    const totalRefunds = Number(paidStats?.totalRefunds || 0);
     const averageOrderValue = totalPayments > 0 ? totalRevenue / totalPayments : 0;
 
-    // Compute previous period for trend comparison
+    // Previous-period comparison — same dual-window approach
     let revenueTrend = 0;
     let avgOrderTrend = 0;
     let refundRateTrend = 0;
@@ -61,50 +94,50 @@ export class FinanceService {
       const start = new Date(startDate);
       const end = new Date(endDate);
       const durationMs = end.getTime() - start.getTime();
-      const prevEnd = new Date(start.getTime() - 1); // day before current start
+      const prevEnd = new Date(start.getTime() - 1);
       const prevStart = new Date(prevEnd.getTime() - durationMs);
 
-      const prevConditions = [
-        gte(payments.createdAt, prevStart),
-        lte(payments.createdAt, prevEnd),
-      ];
+      const prevPaidConditions = this.buildPaidAtConditions(
+        prevStart.toISOString(),
+        prevEnd.toISOString(),
+      );
 
-      const [prevStats] = await db
-        .select(selectFields)
+      const [prevPaidStats] = await db
+        .select(paidSelect)
         .from(payments)
-        .where(and(...prevConditions));
+        .where(and(...prevPaidConditions));
 
-      const prevRevenue = Number(prevStats?.totalRevenue || 0);
-      const prevPayments = Number(prevStats?.totalPayments || 0);
-      const prevRefunds = Number(prevStats?.totalRefunds || 0);
+      const prevRevenue = Number(prevPaidStats?.totalRevenue || 0);
+      const prevPayments = Number(prevPaidStats?.totalPayments || 0);
+      const prevRefunds = Number(prevPaidStats?.totalRefunds || 0);
       const prevAvgOrder = prevPayments > 0 ? prevRevenue / prevPayments : 0;
-      const currentRefundRate = totalPayments > 0 ? (totalRefunds / totalRevenue) * 100 : 0;
-      const prevRefundRate = prevPayments > 0 ? (prevRefunds / prevRevenue) * 100 : 0;
+      const currentRefundRate = totalRevenue > 0 ? (totalRefunds / totalRevenue) * 100 : 0;
+      const prevRefundRate = prevRevenue > 0 ? (prevRefunds / prevRevenue) * 100 : 0;
 
       revenueTrend = this.computeTrend(totalRevenue, prevRevenue);
       avgOrderTrend = this.computeTrend(averageOrderValue, prevAvgOrder);
       refundRateTrend = Number((currentRefundRate - prevRefundRate).toFixed(1));
     }
 
-    const failedPayments = Number(stats?.failedPayments || 0);
-    const awaitingApprovalCount = Number(stats?.awaitingApprovalCount || 0);
-    const awaitingApprovalAmount = Number(stats?.awaitingApprovalAmount || 0);
-    const totalAttempts = Number(stats?.totalAttempts || 0);
+    const failedPayments = Number(activityStats?.failedPayments || 0);
+    const awaitingApprovalCount = Number(activityStats?.awaitingApprovalCount || 0);
+    const awaitingApprovalAmount = Number(activityStats?.awaitingApprovalAmount || 0);
+    const totalAttempts = Number(activityStats?.totalAttempts || 0);
     const decidedAttempts = totalPayments + failedPayments;
-    const successRate = decidedAttempts > 0
-      ? Number(((totalPayments / decidedAttempts) * 100).toFixed(2))
-      : 0;
-    const failedRate = totalAttempts > 0
-      ? Number(((failedPayments / totalAttempts) * 100).toFixed(2))
-      : 0;
+    const successRate =
+      decidedAttempts > 0
+        ? Number(((totalPayments / decidedAttempts) * 100).toFixed(2))
+        : 0;
+    const failedRate =
+      totalAttempts > 0 ? Number(((failedPayments / totalAttempts) * 100).toFixed(2)) : 0;
 
     return {
       totalRevenue,
       totalPayments,
       totalRefunds,
       netRevenue: totalRevenue - totalRefunds,
-      pendingPayments: Number(stats?.pendingPayments || 0),
-      pendingAmount: Number(stats?.pendingAmount || 0),
+      pendingPayments: Number(activityStats?.pendingPayments || 0),
+      pendingAmount: Number(activityStats?.pendingAmount || 0),
       awaitingApprovalCount,
       awaitingApprovalAmount,
       failedPayments,
@@ -119,24 +152,52 @@ export class FinanceService {
   }
 
   async getRevenueBySource(startDate?: string, endDate?: string) {
-    const dateConditions = this.buildDateConditions(startDate, endDate);
-    const whereClause = dateConditions.length > 0 ? and(...dateConditions) : undefined;
+    // Filter on paidAt so paid bank transfers (which can have a much earlier
+    // createdAt) land in the correct revenue window.
+    const dateConditions = this.buildPaidAtConditions(startDate, endDate);
+    const conditions = [eq(payments.status, 'paid' as any), ...dateConditions];
 
-    const results = await db
-      .select({
-        gateway: payments.gateway,
-        totalRevenue: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'paid' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
-        count: sql<number>`COUNT(CASE WHEN ${payments.status} = 'paid' THEN 1 END)`,
-      })
-      .from(payments)
-      .where(whereClause)
-      .groupBy(payments.gateway);
+    // Activity counts per gateway (any status, window on createdAt) so the
+    // 'volume' view can show all transactions even when revenue is zero.
+    const activityConditions = this.buildDateConditions(startDate, endDate);
 
-    return results.map((r) => ({
-      gateway: r.gateway,
-      totalRevenue: Number(r.totalRevenue),
-      count: Number(r.count),
-    }));
+    const [paidResults, activityResults] = await Promise.all([
+      db
+        .select({
+          gateway: payments.gateway,
+          totalRevenue: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
+          paidCount: sql<number>`COUNT(*)`,
+        })
+        .from(payments)
+        .where(and(...conditions))
+        .groupBy(payments.gateway),
+      db
+        .select({
+          gateway: payments.gateway,
+          totalCount: sql<number>`COUNT(*)`,
+        })
+        .from(payments)
+        .where(activityConditions.length ? and(...activityConditions) : undefined)
+        .groupBy(payments.gateway),
+    ]);
+
+    const activityMap = new Map<string, number>();
+    for (const r of activityResults) activityMap.set(r.gateway, Number(r.totalCount));
+
+    const allGateways = new Set<string>([
+      ...paidResults.map((r) => r.gateway),
+      ...activityResults.map((r) => r.gateway),
+    ]);
+
+    return Array.from(allGateways).map((gateway) => {
+      const paid = paidResults.find((r) => r.gateway === gateway);
+      return {
+        gateway,
+        totalRevenue: Number(paid?.totalRevenue || 0),
+        count: Number(paid?.paidCount || 0),
+        totalCount: activityMap.get(gateway) || 0,
+      };
+    });
   }
 
   async getRevenueTrend(
@@ -145,20 +206,24 @@ export class FinanceService {
     endDate?: string,
   ): Promise<{ period: string; revenue: number; count: number }[]> {
     const safePeriod = ['day', 'week', 'month'].includes(period) ? period : 'day';
-    const conditions: any[] = [eq(payments.status, 'paid' as any)];
-    const dateConditions = this.buildDateConditions(startDate, endDate);
-    conditions.push(...dateConditions);
+    // Group by paidAt — when the money was recognised — and filter on the
+    // same column so bank transfers approved later appear on the right day.
+    const dateAnchor = sql`COALESCE(${payments.paidAt}, ${payments.createdAt})`;
+    const conditions: any[] = [
+      eq(payments.status, 'paid' as any),
+      ...this.buildPaidAtConditions(startDate, endDate),
+    ];
 
     const result = await db
       .select({
-        period: sql<string>`date_trunc(${safePeriod}, ${payments.createdAt})::text`,
+        period: sql<string>`date_trunc(${safePeriod}, ${dateAnchor})::text`,
         revenue: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
         count: sql<number>`COUNT(*)::int`,
       })
       .from(payments)
       .where(and(...conditions))
-      .groupBy(sql`date_trunc(${safePeriod}, ${payments.createdAt})`)
-      .orderBy(sql`date_trunc(${safePeriod}, ${payments.createdAt})`);
+      .groupBy(sql`date_trunc(${safePeriod}, ${dateAnchor})`)
+      .orderBy(sql`date_trunc(${safePeriod}, ${dateAnchor})`);
 
     return result.map((r) => ({
       period: r.period,
@@ -172,9 +237,11 @@ export class FinanceService {
     startDate?: string,
     endDate?: string,
   ): Promise<{ courseId: string; title: string; titleAr: string | null; revenue: number; count: number }[]> {
-    const conditions: any[] = [eq(payments.status, 'paid' as any)];
-    const dateConditions = this.buildDateConditions(startDate, endDate);
-    conditions.push(...dateConditions);
+    // Anchor on paidAt — top courses by realised revenue in the window.
+    const conditions: any[] = [
+      eq(payments.status, 'paid' as any),
+      ...this.buildPaidAtConditions(startDate, endDate),
+    ];
 
     const result = await db
       .select({
@@ -222,7 +289,7 @@ export class FinanceService {
   }
 
   async getRefundRate(startDate?: string, endDate?: string) {
-    const dateConditions = this.buildDateConditions(startDate, endDate);
+    const dateConditions = this.buildPaidAtConditions(startDate, endDate);
     const whereClause = dateConditions.length > 0 ? and(...dateConditions) : undefined;
 
     const [stats] = await db

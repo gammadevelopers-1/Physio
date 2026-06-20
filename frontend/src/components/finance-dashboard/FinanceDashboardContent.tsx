@@ -9,7 +9,6 @@ import FinanceNavbar from "./FinanceNavbar";
 import FinanceKPICards, { FinanceKPIData } from "./FinanceKPICards";
 import RevenueSummaryWidget from "./RevenueSummaryWidget";
 import RecentTransactionsWidget, { RecentTransaction, TxStatus } from "./RecentTransactionsWidget";
-import FinanceAnalyticsWidget from "./FinanceAnalyticsWidget";
 import RefundsQueueRail, { RefundQueueItem } from "./right-rail/RefundsQueueRail";
 import BankTransferRail, { BankTransferRailItem } from "./right-rail/BankTransferRail";
 import ReconciliationDriftsRail, { DriftRailItem } from "./right-rail/ReconciliationDriftsRail";
@@ -56,8 +55,8 @@ const FinanceDashboardContent = () => {
   const [kpiLoading, setKpiLoading] = useState(true);
 
   const [revenueData, setRevenueData] = useState<{
-    gateways: { name: string; gatewayKey: string; percentage: number; amount: number }[];
-    topCourses: { name: string; revenue: number }[];
+    gateways: { name: string; gatewayKey: string; percentage: number; amount: number; totalCount?: number }[];
+    topCourses: { name: string; revenue: number; enrollments: number }[];
   }>({ gateways: [], topCourses: [] });
   const [revenueLoading, setRevenueLoading] = useState(true);
 
@@ -175,20 +174,25 @@ const FinanceDashboardContent = () => {
 
     // Revenue by source
     if (revenueRes.status === "fulfilled") {
-      const sources = revenueRes.value || [];
-      const total = sources.reduce((sum: number, s: { totalRevenue: number }) => sum + (s.totalRevenue || 0), 0);
-      const gatewayList = sources.map((s: { gateway: string; totalRevenue: number }) => ({
+      type SourceRow = { gateway: string; totalRevenue: number; count?: number; totalCount?: number };
+      const sources = (revenueRes.value || []) as SourceRow[];
+      const total = sources.reduce((sum, s) => sum + (s.totalRevenue || 0), 0);
+      const gatewayList = sources.map((s) => ({
         name: s.gateway?.charAt(0).toUpperCase() + s.gateway?.slice(1).replace(/_/g, " "),
         gatewayKey: s.gateway,
         percentage: total > 0 ? Math.round((s.totalRevenue / total) * 100) : 0,
         amount: Number(s.totalRevenue),
+        totalCount: Number(s.totalCount || 0),
       }));
       const topCoursesList =
         topCoursesRes.status === "fulfilled"
-          ? (topCoursesRes.value || []).map((c: { title: string; titleAr?: string | null; revenue: number }) => ({
-              name: locale === "ar" && c.titleAr ? c.titleAr : c.title,
-              revenue: Number(c.revenue) || 0,
-            }))
+          ? (topCoursesRes.value || []).map(
+              (c: { title: string; titleAr?: string | null; revenue: number; count?: number }) => ({
+                name: locale === "ar" && c.titleAr ? c.titleAr : c.title,
+                revenue: Number(c.revenue) || 0,
+                enrollments: Number(c.count) || 0,
+              }),
+            )
           : [];
       setRevenueData({ gateways: gatewayList, topCourses: topCoursesList });
     }
@@ -394,7 +398,7 @@ const FinanceDashboardContent = () => {
               {/* KPI Cards */}
               <FinanceKPICards data={kpiData} loading={kpiLoading} />
 
-              {/* Revenue (full width) */}
+              {/* Revenue + Analytics (full width, merged) */}
               <div className="mb-6">
                 <RevenueSummaryWidget
                   gateways={revenueData.gateways}
@@ -406,15 +410,13 @@ const FinanceDashboardContent = () => {
                         ? kpiData.grossRevenue / Math.max(1, transactions.filter((t) => t.status === "paid").length)
                         : 0,
                   }}
+                  dateRange={dateRange}
                   loading={revenueLoading}
                 />
               </div>
 
               {/* Recent Transactions (full width) */}
               <RecentTransactionsWidget transactions={transactions} loading={transactionsLoading} />
-
-              {/* Analytics (full width) */}
-              <FinanceAnalyticsWidget dateRange={dateRange} />
             </div>
 
             {/* Right Rail */}

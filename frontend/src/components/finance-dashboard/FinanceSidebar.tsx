@@ -254,27 +254,32 @@ const FinanceSidebar = ({
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div className="mt-6 flex justify-around py-4 border-t border-[var(--color-border)]">
-          <div className="text-center">
-            <p className="text-xl font-bold text-[var(--color-text-primary)]">
-              {profile.revenue}
-            </p>
-            <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.revenue")}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xl font-bold text-[var(--color-text-primary)]">
-              {profile.invoices}
-            </p>
-            <p className="text-xs text-[var(--color-text-secondary)]">
-              {t("sidebar.invoicesCount")}
-            </p>
-          </div>
-          <div className="text-center">
-            <p className="text-xl font-bold text-[#16A34A]">
-              {profile.refundRate}%
-            </p>
-            <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.refundRate")}</p>
+        {/* Stats Row — labelled All-time so users don't confuse with the date-filtered main panel */}
+        <div className="mt-6 pt-4 border-t border-[var(--color-border)]">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-secondary)] text-center mb-2">
+            {t("sidebar.allTime")}
+          </p>
+          <div className="flex justify-around">
+            <div className="text-center">
+              <p className="text-xl font-bold text-[var(--color-text-primary)]">
+                {profile.revenue}
+              </p>
+              <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.revenue")}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-[var(--color-text-primary)]">
+                {profile.invoices}
+              </p>
+              <p className="text-xs text-[var(--color-text-secondary)]">
+                {t("sidebar.invoicesCount")}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-[#16A34A]">
+                {profile.refundRate}%
+              </p>
+              <p className="text-xs text-[var(--color-text-secondary)]">{t("sidebar.refundRate")}</p>
+            </div>
           </div>
         </div>
 

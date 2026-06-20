@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
-import { Receipt, ArrowRight, ArrowLeft, CreditCard, User, Calendar } from "lucide-react";
+import { ReceiptText, ArrowRight, ArrowLeft, User, Calendar } from "lucide-react";
 import Money from "./shared/Money";
 import { FINANCE_COLORS, gatewayColor } from "./shared/financeColors";
 import { TableRowSkeleton } from "./shared/Skeleton";
@@ -86,7 +86,7 @@ const RecentTransactionsWidget = ({
       <div className={`flex items-center justify-between px-5 py-4 border-b border-[var(--color-border-subtle)] ${isRTL ? "flex-row-reverse" : ""}`}>
         <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
           <div className="w-9 h-9 rounded-lg bg-[var(--color-border-subtle)] flex items-center justify-center">
-            <Receipt className="w-4.5 h-4.5 text-[var(--color-primary)]" />
+            <ReceiptText className="w-4.5 h-4.5 text-[var(--color-primary)]" />
           </div>
           <div>
             <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
@@ -138,7 +138,7 @@ const RecentTransactionsWidget = ({
               <tr>
                 <td colSpan={6} className="px-4 py-12 text-center">
                   <div className="flex flex-col items-center gap-2 text-[var(--color-text-secondary)]">
-                    <Receipt className="w-8 h-8 opacity-40" />
+                    <ReceiptText className="w-8 h-8 opacity-40" />
                     <p className="text-sm">{t("recentTransactions.empty")}</p>
                   </div>
                 </td>

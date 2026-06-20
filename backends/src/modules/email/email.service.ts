@@ -166,6 +166,19 @@ import {
   getTicketStatusChangeHtml,
   getTicketStatusChangeText,
 } from './templates/ticket-status-change.template';
+import {
+  getReconciliationEscalationCreatedHtml,
+  getReconciliationEscalationCreatedText,
+} from './templates/reconciliation-escalation-created.template';
+import {
+  getReconciliationEscalationTransitionHtml,
+  getReconciliationEscalationTransitionText,
+} from './templates/reconciliation-escalation-transition.template';
+import {
+  getReconciliationDigestHtml,
+  getReconciliationDigestText,
+  type ReconciliationDigestParams,
+} from './templates/reconciliation-digest.template';
 import { EmailLocale, getEmailStrings, t, htmlAttrs } from './email-i18n';
 import { TemplateResolverService } from '../templates/template-resolver.service';
 import { findTemplateMeta } from '../templates/template-registry';
@@ -2446,6 +2459,225 @@ ${description ? `Description: ${description}\n` : ''}Open the ticket to approve 
       this.logger.log(`Refund completed email sent to ${user.email}`);
     } catch (error) {
       this.logger.error(`Failed to send refund completed email`, error);
+    }
+  }
+
+  /**
+   * Notify all admins of a new reconciliation escalation. Sent fire-and-
+   * forget by EscalationsService — never bubbles errors. High-urgency
+   * escalations get an [URGENT] prefix so triage can scan inbox quickly.
+   */
+  async sendReconciliationEscalationCreated(
+    adminEmails: string[],
+    escalationId: string,
+    urgency: 'low' | 'normal' | 'high',
+  ): Promise<void> {
+    if (adminEmails.length === 0) return;
+    try {
+      const base = process.env.FRONTEND_URL || 'https://physioguidance.org';
+      const escalationUrl = `${base}/en/dashboard/admin/finance/escalations/${escalationId}`;
+      const params = { escalationId, urgency, escalationUrl };
+      const subjectPrefix = urgency === 'high' ? '[URGENT] ' : '';
+      await this.send({
+        to: adminEmails,
+        subject: `${subjectPrefix}Reconciliation escalation needs review`,
+        html: getReconciliationEscalationCreatedHtml(params),
+        text: getReconciliationEscalationCreatedText(params),
+      });
+      this.logger.log(
+        `Reconciliation escalation ${escalationId} (urgency=${urgency}) notified to ${adminEmails.length} admin(s)`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send reconciliation escalation notification for ${escalationId}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Notify the finance user who raised the escalation when admin transitions
+   * it. `kind` controls subject + body copy via the shared template.
+   */
+  /**
+   * Daily reconciliation digest. Sent by the cron at ~02:30 KSA after the
+   * nightly scan completes. Recipients are finance + admin + super_admin.
+   */
+  async sendReconciliationDigest(
+    recipients: string[],
+    params: ReconciliationDigestParams,
+  ): Promise<void> {
+    if (recipients.length === 0) return;
+    try {
+      await this.send({
+        to: recipients,
+        subject: `Reconciliation digest — ${params.scanDate}`,
+        html: getReconciliationDigestHtml(params),
+        text: getReconciliationDigestText(params),
+      });
+      this.logger.log(
+        `Reconciliation digest sent to ${recipients.length} recipient(s) for ${params.scanDate}`,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to send reconciliation digest`, error);
+    }
+  }
+
+  /**
+   * "X escalations have been waiting > Yh — please review" reminder.
+   * Sent by the stale-reminder cron at ~10:00 KSA.
+   */
+  async sendReconciliationStaleReminder(
+    recipients: string[],
+    kind: 'pending' | 'in_progress',
+    count: number,
+    hours: number,
+  ): Promise<void> {
+    if (recipients.length === 0 || count === 0) return;
+    try {
+      const base = process.env.FRONTEND_URL || 'https://physioguidance.org';
+      const dashboardUrl = `${base}/en/dashboard/admin/finance/escalations?status=${kind}`;
+      const subject =
+        kind === 'pending'
+          ? `Reminder: ${count} reconciliation escalation${count === 1 ? '' : 's'} waiting > ${hours}h`
+          : `Reminder: ${count} escalation${count === 1 ? '' : 's'} you claimed are open > ${hours}h`;
+      const headline =
+        kind === 'pending'
+          ? 'Pending escalations need a claim'
+          : 'In-progress escalations need closure';
+      const body =
+        kind === 'pending'
+          ? `<strong>${count}</strong> reconciliation escalation${count === 1 ? ' has' : 's have'} been pending for over ${hours} hours with no admin claiming them. Open the queue, claim what you can act on, and resolve or send back.`
+          : `You have <strong>${count}</strong> escalation${count === 1 ? '' : 's'} in progress for over ${hours} hours. If you're blocked, send them back to finance with a note; otherwise resolve them.`;
+      await this.send({
+        to: recipients,
+        subject,
+        html: this.simpleAlertHtml(headline, body, dashboardUrl, 'Open queue'),
+        text: `PhysioGuidance — ${headline}\n\n${body.replace(/<[^>]+>/g, '')}\n\nOpen: ${dashboardUrl}`,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to send reconciliation stale reminder`, error);
+    }
+  }
+
+  async sendReconciliationAutoEscalationSummary(
+    recipients: string[],
+    count: number,
+  ): Promise<void> {
+    if (recipients.length === 0 || count === 0) return;
+    try {
+      const base = process.env.FRONTEND_URL || 'https://physioguidance.org';
+      const dashboardUrl = `${base}/en/dashboard/admin/finance/escalations?status=pending`;
+      const subject = `${count} reconciliation finding${count === 1 ? '' : 's'} auto-escalated overnight`;
+      const body = `The reconciliation cron auto-escalated <strong>${count}</strong> finding${count === 1 ? '' : 's'} based on the per-drift-type thresholds. These need admin action — open the queue, sort by urgency, and resolve them.`;
+      await this.send({
+        to: recipients,
+        subject,
+        html: this.simpleAlertHtml('Auto-escalations need review', body, dashboardUrl, 'Open queue'),
+        text: `PhysioGuidance — ${subject}\n\n${body.replace(/<[^>]+>/g, '')}\n\nOpen: ${dashboardUrl}`,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to send auto-escalation summary`, error);
+    }
+  }
+
+  async sendReconciliationScanFailedAlert(
+    recipients: string[],
+    errorMessage: string,
+  ): Promise<void> {
+    if (recipients.length === 0) return;
+    try {
+      const base = process.env.FRONTEND_URL || 'https://physioguidance.org';
+      const dashboardUrl = `${base}/en/dashboard/finance/reconciliation`;
+      const subject = `[URGENT] Reconciliation cron scan failed`;
+      const body = `The daily reconciliation scan failed with the error below. Drift detection is paused until the next successful run. Retry manually from the reconciliation page, and investigate the gateway/DB issue.<br/><br/><pre style="background:#f9fafb;padding:12px;border-radius:6px;font-size:11px;overflow-x:auto;">${errorMessage}</pre>`;
+      await this.send({
+        to: recipients,
+        subject,
+        html: this.simpleAlertHtml('Reconciliation scan failed', body, dashboardUrl, 'Open reconciliation page'),
+        text: `PhysioGuidance — Reconciliation scan failed\n\n${errorMessage}\n\nManual retry: ${dashboardUrl}`,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to send scan-failure alert`, error);
+    }
+  }
+
+  /**
+   * Minimal HTML alert template — shared by the three short reconciliation
+   * alerts above (stale reminder, auto-escalation summary, scan failure).
+   * The digest has its own richer template; this one is just "headline +
+   * body + button".
+   */
+  private simpleAlertHtml(
+    headline: string,
+    bodyHtml: string,
+    ctaUrl: string,
+    ctaLabel: string,
+  ): string {
+    return `<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EEF3F7;">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <tr><td style="background:linear-gradient(135deg,#a37f49,#6b4e24);padding:24px 32px;text-align:center;">
+          <span style="font-size:22px;font-weight:700;color:#fff;">Physio</span><span style="font-size:22px;font-weight:700;color:#f5f0e8;">Guidance</span>
+          <br/><span style="font-size:11px;color:rgba(255,255,255,0.7);letter-spacing:1px;text-transform:uppercase;">Finance · Reconciliation</span>
+        </td></tr>
+        <tr><td style="padding:24px 32px 0;">
+          <h1 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#1a1a1a;">${headline}</h1>
+          <p style="margin:0 0 16px;font-size:14px;color:#525252;line-height:1.6;">${bodyHtml}</p>
+        </td></tr>
+        <tr><td style="padding:0 32px 24px;">
+          <a href="${ctaUrl}" style="display:inline-block;padding:12px 24px;background-color:#a37f49;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">${ctaLabel}</a>
+        </td></tr>
+        <tr><td style="padding:0 32px;"><div style="height:1px;background-color:#e5e7eb;"></div></td></tr>
+        <tr><td style="padding:16px 32px 24px;text-align:center;">
+          <p style="margin:0;font-size:11px;color:#9ca3af;">&copy; ${new Date().getFullYear()} PhysioGuidance.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+  }
+
+  async sendReconciliationEscalationTransition(
+    financeEmail: string,
+    escalationId: string,
+    kind: 'sent_back' | 'declined' | 'resolved',
+  ): Promise<void> {
+    try {
+      const base = process.env.FRONTEND_URL || 'https://physioguidance.org';
+      // Finance link goes back to the reconciliation page (the escalated
+      // finding is what they care about). The admin escalation detail is a
+      // separate route admin-only.
+      const escalationUrl = `${base}/en/dashboard/finance/reconciliation`;
+      const params = { escalationId, kind, escalationUrl };
+      const subject =
+        kind === 'sent_back'
+          ? 'Admin sent your reconciliation escalation back for more info'
+          : kind === 'declined'
+            ? 'Admin closed your reconciliation escalation without action'
+            : 'Your reconciliation escalation has been resolved';
+      await this.send({
+        to: financeEmail,
+        subject,
+        html: getReconciliationEscalationTransitionHtml(params),
+        text: getReconciliationEscalationTransitionText(params),
+      });
+      this.logger.log(
+        `Reconciliation escalation ${escalationId} ${kind} notified to ${financeEmail}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send reconciliation transition email for ${escalationId}`,
+        error,
+      );
     }
   }
 }

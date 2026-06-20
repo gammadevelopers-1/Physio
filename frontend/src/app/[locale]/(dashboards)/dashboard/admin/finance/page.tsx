@@ -1,9 +1,9 @@
 import { setRequestLocale } from "next-intl/server";
-import { FinanceContent } from "@/components/admin-dashboard";
+import { AdminFinanceShell } from "@/components/admin-dashboard";
 
 export const metadata = {
   title: "Finance | Admin Dashboard | PhysioGuidance",
-  description: "Financial management, revenue, and payments",
+  description: "Admin super-view of payments, refunds, reconciliation, and escalations",
 };
 
 export default async function FinancePage({
@@ -16,7 +16,7 @@ export default async function FinancePage({
 
   return (
     <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
-      <FinanceContent />
+      <AdminFinanceShell />
     </main>
   );
 }

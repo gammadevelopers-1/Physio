@@ -10,6 +10,8 @@ import { DiscountsController } from './discounts/discounts.controller';
 import { FinanceController } from './finance/finance.controller';
 import { BankTransferController } from './bank-transfer/bank-transfer.controller';
 import { ReconciliationController } from './reconciliation/reconciliation.controller';
+import { EscalationsController } from './reconciliation/escalations.controller';
+import { ReconciliationCronController } from './reconciliation/reconciliation-cron.controller';
 
 // Services
 import { PaymentsService } from './payments.service';
@@ -21,6 +23,8 @@ import { PaymentCleanupService } from './services/payment-cleanup.service';
 import { TamaraRetryService } from './services/tamara-retry.service';
 import { BankTransferService } from './bank-transfer/bank-transfer.service';
 import { ReconciliationService } from './reconciliation/reconciliation.service';
+import { EscalationsService } from './reconciliation/escalations.service';
+import { ReconciliationCronService } from './reconciliation/reconciliation-cron.service';
 
 // Gateways
 import { GatewayFactory } from './gateways/gateway.factory';
@@ -40,12 +44,14 @@ import { PAYMENT_QUEUE_NAMES } from './constants';
 import { StorageModule } from '../storage/storage.module';
 import { EmailModule } from '../email/email.module';
 import { SiteSettingsModule } from '../site-settings/site-settings.module';
+import { EnrollmentsModule } from '../enrollments/enrollments.module';
 
 @Module({
   imports: [
     StorageModule,
     EmailModule,
     SiteSettingsModule,
+    EnrollmentsModule,
     // BullMQ queue for webhook processing (conditional on Redis)
     ...(process.env.REDIS_HOST
       ? [BullModule.registerQueue({ name: PAYMENT_QUEUE_NAMES.WEBHOOK_PROCESSING })]
@@ -60,6 +66,8 @@ import { SiteSettingsModule } from '../site-settings/site-settings.module';
     FinanceController,
     BankTransferController,
     ReconciliationController,
+    EscalationsController,
+    ReconciliationCronController,
   ],
   providers: [
     PaymentsService,
@@ -69,6 +77,8 @@ import { SiteSettingsModule } from '../site-settings/site-settings.module';
     FinanceService,
     BankTransferService,
     ReconciliationService,
+    EscalationsService,
+    ReconciliationCronService,
     GatewayFactory,
     MockGateway,
     MoyasarGateway,

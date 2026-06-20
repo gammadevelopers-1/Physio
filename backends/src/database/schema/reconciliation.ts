@@ -7,6 +7,7 @@ import {
   jsonb,
   text,
   index,
+  AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { users } from './users';
 import { payments } from './payments';
@@ -36,6 +37,12 @@ export const reconciliationFindings = pgTable(
       onDelete: 'set null',
     }),
     resolvedAt: timestamp('resolved_at'),
+    // Denormalized pointer to the latest escalation. Source of truth is
+    // the FK on reconciliation_escalations.findingId.
+    escalationId: uuid('escalation_id').references(
+      (): AnyPgColumn => reconciliationEscalations.id,
+      { onDelete: 'set null' },
+    ),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -46,6 +53,64 @@ export const reconciliationFindings = pgTable(
     index('reconciliation_findings_scan_run_id_idx').on(table.scanRunId),
   ],
 );
+
+/**
+ * Escalation of a reconciliation finding from finance → admin. See
+ * migration 0088 for source-of-truth on the CHECK constraints + indexes
+ * (notably the partial unique index that enforces "one active escalation
+ * per finding"). Drizzle mirrors but does NOT re-enforce these here.
+ */
+export const reconciliationEscalations = pgTable(
+  'reconciliation_escalations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    findingId: uuid('finding_id')
+      .notNull()
+      .references(() => reconciliationFindings.id, { onDelete: 'cascade' }),
+    escalatedBy: uuid('escalated_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    escalatedAt: timestamp('escalated_at').defaultNow().notNull(),
+    escalationNote: text('escalation_note').notNull(),
+    proposedAction: varchar('proposed_action', { length: 32 }).notNull(),
+    urgency: varchar('urgency', { length: 16 }).notNull().default('normal'),
+
+    status: varchar('status', { length: 16 }).notNull().default('pending'),
+    claimedBy: uuid('claimed_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    claimedAt: timestamp('claimed_at'),
+
+    actionTaken: varchar('action_taken', { length: 32 }),
+    resolutionNote: text('resolution_note'),
+    resolvedBy: uuid('resolved_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    resolvedAt: timestamp('resolved_at'),
+
+    linkedEntityType: varchar('linked_entity_type', { length: 32 }),
+    linkedEntityId: uuid('linked_entity_id'),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('reconciliation_escalations_status_idx').on(table.status),
+    index('reconciliation_escalations_escalated_by_idx').on(table.escalatedBy),
+    index('reconciliation_escalations_claimed_by_idx').on(table.claimedBy),
+    index('reconciliation_escalations_finding_id_idx').on(table.findingId),
+    index('reconciliation_escalations_escalated_at_idx').on(table.escalatedAt),
+  ],
+);
+
+export const reconciliationSettings = pgTable('reconciliation_settings', {
+  key: text('key').primaryKey(),
+  value: jsonb('value').notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  updatedBy: uuid('updated_by').references(() => users.id, {
+    onDelete: 'set null',
+  }),
+});
 
 export const reconciliationScans = pgTable(
   'reconciliation_scans',
@@ -86,6 +151,36 @@ export const RECONCILIATION_STATUS = {
   UNRESOLVED: 'unresolved',
   RESOLVED: 'resolved',
   IGNORED: 'ignored',
+  ESCALATED: 'escalated',
+} as const;
+
+export const ESCALATION_STATUS = {
+  PENDING: 'pending',
+  IN_PROGRESS: 'in_progress',
+  RESOLVED: 'resolved',
+  DECLINED: 'declined',
+  SENT_BACK: 'sent_back',
+} as const;
+
+export const ESCALATION_URGENCY = {
+  LOW: 'low',
+  NORMAL: 'normal',
+  HIGH: 'high',
+} as const;
+
+export const ESCALATION_PROPOSED_ACTION = {
+  ENROLL: 'enroll',
+  REFUND: 'refund',
+  INVESTIGATE: 'investigate',
+  OTHER: 'other',
+  SYSTEM_INFERRED: 'system_inferred',
+} as const;
+
+export const ESCALATION_ACTION_TAKEN = {
+  ENROLLED: 'enrolled',
+  REFUNDED: 'refunded',
+  NO_ACTION: 'no_action',
+  SENT_BACK: 'sent_back',
 } as const;
 
 export const RECONCILIATION_SCAN_STATUS = {
@@ -98,3 +193,6 @@ export type ReconciliationFinding = typeof reconciliationFindings.$inferSelect;
 export type NewReconciliationFinding = typeof reconciliationFindings.$inferInsert;
 export type ReconciliationScan = typeof reconciliationScans.$inferSelect;
 export type NewReconciliationScan = typeof reconciliationScans.$inferInsert;
+export type ReconciliationEscalation = typeof reconciliationEscalations.$inferSelect;
+export type NewReconciliationEscalation = typeof reconciliationEscalations.$inferInsert;
+export type ReconciliationSetting = typeof reconciliationSettings.$inferSelect;

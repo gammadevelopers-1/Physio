@@ -7043,7 +7043,7 @@ export type ReconciliationGateway =
   | 'bank_transfer'
   | 'all';
 
-export type ReconciliationFindingStatus = 'unresolved' | 'resolved' | 'ignored';
+export type ReconciliationFindingStatus = 'unresolved' | 'resolved' | 'ignored' | 'escalated';
 
 export interface ReconciliationFinding {
   id: string;
@@ -7126,6 +7126,172 @@ export const reconciliationApi = {
       `/payments/reconciliation/findings/${findingId}/ignore`,
       { note },
     ),
+};
+
+// ===========================================
+// Finance — Reconciliation Escalations API
+// ===========================================
+// When finance can't resolve a finding themselves (e.g. missing_local needs
+// a manual enrollment which only admin can do), they Escalate to admin.
+
+export type EscalationStatus =
+  | 'pending'
+  | 'in_progress'
+  | 'resolved'
+  | 'declined'
+  | 'sent_back';
+
+export type EscalationUrgency = 'low' | 'normal' | 'high';
+
+export type EscalationProposedAction =
+  | 'enroll'
+  | 'refund'
+  | 'investigate'
+  | 'other'
+  | 'system_inferred';
+
+export type EscalationActionTaken =
+  | 'enrolled'
+  | 'refunded'
+  | 'no_action'
+  | 'sent_back';
+
+export interface ReconciliationEscalationListItem {
+  id: string;
+  findingId: string;
+  escalatedBy: string | null;
+  escalatedAt: string;
+  escalationNote: string;
+  proposedAction: EscalationProposedAction;
+  urgency: EscalationUrgency;
+  status: EscalationStatus;
+  claimedBy: string | null;
+  claimedAt: string | null;
+  actionTaken: EscalationActionTaken | null;
+  resolutionNote: string | null;
+  resolvedBy: string | null;
+  resolvedAt: string | null;
+  linkedEntityType: string | null;
+  linkedEntityId: string | null;
+  // Finding context
+  driftType: ReconciliationDriftType;
+  gateway: string;
+  paymentId: string | null;
+  gatewayChargeId: string | null;
+  ourValue: Record<string, unknown> | null;
+  gatewayValue: Record<string, unknown> | null;
+  customerName: string | null;
+  customerEmail: string | null;
+  courseTitle: string | null;
+  escalatedByName: string | null;
+  claimedByName: string | null;
+  resolvedByName: string | null;
+}
+
+export interface ReconciliationEscalationDetail extends ReconciliationEscalationListItem {
+  findingCreatedAt: string;
+  customerId: string | null;
+  courseId: string | null;
+  paymentAmount: string | null;
+  paymentCurrency: string | null;
+  paymentStatus: string | null;
+  paymentGateway: string | null;
+  paymentMethod: string | null;
+  paymentCreatedAt: string | null;
+}
+
+export interface EscalationStats {
+  pending: number;
+  inProgress: number;
+  highUrgencyOpen: number;
+  avgResolutionMinutes: number;
+}
+
+export const escalationsApi = {
+  create: (
+    findingId: string,
+    body: {
+      note: string;
+      proposedAction: EscalationProposedAction;
+      urgency?: EscalationUrgency;
+    },
+  ) =>
+    api.post<{ id: string; status: EscalationStatus }>(
+      `/payments/reconciliation/findings/${findingId}/escalate`,
+      body,
+    ),
+
+  list: (opts: {
+    status?: EscalationStatus | 'all';
+    gateway?: string;
+    urgency?: EscalationUrgency;
+    escalatedBy?: string;
+    claimedBy?: string;
+    page?: number;
+    limit?: number;
+  } = {}) => {
+    const sp = new URLSearchParams();
+    if (opts.status) sp.set('status', opts.status);
+    if (opts.gateway) sp.set('gateway', opts.gateway);
+    if (opts.urgency) sp.set('urgency', opts.urgency);
+    if (opts.escalatedBy) sp.set('escalatedBy', opts.escalatedBy);
+    if (opts.claimedBy) sp.set('claimedBy', opts.claimedBy);
+    sp.set('page', String(opts.page ?? 1));
+    sp.set('limit', String(opts.limit ?? 20));
+    return api.get<{
+      data: ReconciliationEscalationListItem[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }>(`/payments/reconciliation/escalations?${sp.toString()}`);
+  },
+
+  getStats: () =>
+    api.get<EscalationStats>('/payments/reconciliation/escalations/stats'),
+
+  get: (id: string) =>
+    api.get<ReconciliationEscalationDetail>(
+      `/payments/reconciliation/escalations/${id}`,
+    ),
+
+  claim: (id: string) =>
+    api.patch<{ id: string; status: EscalationStatus }>(
+      `/payments/reconciliation/escalations/${id}/claim`,
+      {},
+    ),
+
+  sendBack: (id: string, note: string) =>
+    api.patch<{ id: string; status: EscalationStatus; findingId: string }>(
+      `/payments/reconciliation/escalations/${id}/send-back`,
+      { note },
+    ),
+
+  close: (id: string, note: string) =>
+    api.patch<{ id: string; status: EscalationStatus; findingId: string }>(
+      `/payments/reconciliation/escalations/${id}/close`,
+      { note },
+    ),
+
+  enroll: (
+    id: string,
+    body: { studentId: string; courseId: string; note: string },
+  ) =>
+    api.post<{
+      escalationId: string;
+      findingId: string;
+      enrollmentId: string;
+      paymentCreated: boolean;
+      paymentId: string | null;
+    }>(`/payments/reconciliation/escalations/${id}/enroll`, body),
+
+  refund: (
+    id: string,
+    body: { amount?: number; reason: string; note: string },
+  ) =>
+    api.post<{
+      escalationId: string;
+      findingId: string;
+      refundId: string;
+      gatewayRefundId: string | null;
+    }>(`/payments/reconciliation/escalations/${id}/refund`, body),
 };
 
 // ===========================================

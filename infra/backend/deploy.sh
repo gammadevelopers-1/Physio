@@ -219,6 +219,15 @@ for _TM in TAMARA_API_TOKEN TAMARA_NOTIFICATION_TOKEN TAMARA_PUBLIC_KEY; do
         log_info "Tamara secret found: $_TM"
     fi
 done
+
+# Reconciliation cron token — verified server-side by the cron endpoint
+# (X-Cron-Token header) as a belt-and-braces check on top of OIDC. If the
+# secret isn't created yet, the cron endpoints throw 401 until it is, which
+# is the safe default for a security-sensitive system endpoint.
+if gcloud secrets describe RECONCILIATION_CRON_TOKEN &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},RECONCILIATION_CRON_TOKEN=RECONCILIATION_CRON_TOKEN:latest"
+    log_info "Reconciliation cron token secret found"
+fi
 # Tamara API URL — sandbox by default; override per env if going live.
 TAMARA_API_URL="${TAMARA_API_URL:-https://api-sandbox.tamara.co}"
 ENV_VARS="${ENV_VARS}||TAMARA_API_URL=${TAMARA_API_URL}"

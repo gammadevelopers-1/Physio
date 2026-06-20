@@ -13,6 +13,8 @@ import {
   ChevronRight,
   Eye,
   Info,
+  Send,
+  ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import FinanceSidebar from "./FinanceSidebar";
@@ -20,19 +22,22 @@ import FinanceMobileSidebar from "./FinanceMobileSidebar";
 import FinanceNavbar from "./FinanceNavbar";
 import {
   reconciliationApi,
+  escalationsApi,
   ApiError,
   type ReconciliationFinding,
   type ReconciliationScan,
   type ReconciliationDriftType,
   type ReconciliationFindingStatus,
   type ReconciliationGateway,
+  type EscalationProposedAction,
+  type EscalationUrgency,
 } from "@/lib/api";
 import { useFinanceProfile } from "@/hooks/useFinanceProfile";
 
-type StatusTab = ReconciliationFindingStatus | "all";
+type StatusTab = ReconciliationFindingStatus | "escalated" | "all";
 type ScanGateway = Exclude<ReconciliationGateway, "all">;
 
-const STATUS_TABS: StatusTab[] = ["unresolved", "resolved", "ignored", "all"];
+const STATUS_TABS: StatusTab[] = ["unresolved", "escalated", "resolved", "ignored", "all"];
 
 // Gateways available in the "Run scan" picker. "all" is offered as a separate
 // button below since semantically it's a different operation.
@@ -87,6 +92,33 @@ const GATEWAY_LABEL: Record<string, string> = {
   bank_transfer: "Bank Transfer",
 };
 
+// When finance opens the escalate modal we pre-pick the proposedAction and
+// urgency that fit the drift type — finance can override either, but the
+// default matches what the cron will eventually auto-pick in Phase E.5 so
+// behaviour stays consistent across human + system escalations.
+function suggestActionForDriftType(driftType: ReconciliationDriftType): EscalationProposedAction {
+  switch (driftType) {
+    case "missing_local":
+      return "enroll";
+    case "status_mismatch":
+    case "amount_mismatch":
+      return "refund";
+    case "paid_no_receipt":
+      return "investigate";
+    case "orphan_receipt":
+      return "enroll";
+    default:
+      return "other";
+  }
+}
+
+function suggestUrgencyForDriftType(driftType: ReconciliationDriftType): EscalationUrgency {
+  // Money received but no access → high (customer about to complain).
+  // Suspected fraud → high. Everything else → normal.
+  if (driftType === "missing_local" || driftType === "paid_no_receipt") return "high";
+  return "normal";
+}
+
 export default function ReconciliationContent() {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
@@ -110,6 +142,10 @@ export default function ReconciliationContent() {
   const [actingId, setActingId] = useState<string | null>(null);
   const [resolveTarget, setResolveTarget] = useState<ReconciliationFinding | null>(null);
   const [ignoreTarget, setIgnoreTarget] = useState<ReconciliationFinding | null>(null);
+  const [escalateTarget, setEscalateTarget] = useState<ReconciliationFinding | null>(null);
+  const [escalationNote, setEscalationNote] = useState("");
+  const [escalationAction, setEscalationAction] = useState<EscalationProposedAction>("enroll");
+  const [escalationUrgency, setEscalationUrgency] = useState<EscalationUrgency>("normal");
   const [viewTarget, setViewTarget] = useState<ReconciliationFinding | null>(null);
   const [note, setNote] = useState("");
 
@@ -181,6 +217,32 @@ export default function ReconciliationContent() {
       fetchData();
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Failed to ignore");
+    } finally {
+      setActingId(null);
+    }
+  };
+
+  const handleEscalate = async () => {
+    if (!escalateTarget) return;
+    if (escalationNote.trim().length < 20) {
+      toast.error("Escalation note must be at least 20 characters");
+      return;
+    }
+    setActingId(escalateTarget.id);
+    try {
+      await escalationsApi.create(escalateTarget.id, {
+        note: escalationNote.trim(),
+        proposedAction: escalationAction,
+        urgency: escalationUrgency,
+      });
+      toast.success("Escalated to admin");
+      setEscalateTarget(null);
+      setEscalationNote("");
+      setEscalationAction("enroll");
+      setEscalationUrgency("normal");
+      fetchData();
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to escalate");
     } finally {
       setActingId(null);
     }
@@ -463,7 +525,27 @@ export default function ReconciliationContent() {
                                     >
                                       Ignore
                                     </button>
+                                    <button
+                                      onClick={() => {
+                                        setEscalateTarget(f);
+                                        setEscalationNote("");
+                                        setEscalationAction(suggestActionForDriftType(f.driftType));
+                                        setEscalationUrgency(suggestUrgencyForDriftType(f.driftType));
+                                      }}
+                                      disabled={actingId === f.id}
+                                      className="px-2 py-1 text-xs font-medium text-violet-700 border border-violet-300 rounded hover:bg-violet-50 flex items-center gap-1"
+                                      title="Escalate to admin if you can't resolve this yourself"
+                                    >
+                                      <Send className="w-3 h-3" />
+                                      Escalate
+                                    </button>
                                   </>
+                                )}
+                                {f.status === "escalated" && (
+                                  <span className="px-2 py-1 text-xs font-medium text-violet-700 bg-violet-50 rounded flex items-center gap-1">
+                                    <ShieldAlert className="w-3 h-3" />
+                                    Escalated
+                                  </span>
                                 )}
                               </div>
                             </td>
@@ -541,6 +623,107 @@ export default function ReconciliationContent() {
           notePlaceholder="Required — explain why this finding doesn't need action (≥5 chars)"
           loading={actingId === ignoreTarget.id}
         />
+      )}
+
+      {/* Escalate modal */}
+      {escalateTarget && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => setEscalateTarget(null)}
+        >
+          <div
+            className="bg-[var(--color-surface-card)] rounded-2xl shadow-xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3 mb-4">
+              <ShieldAlert className="w-5 h-5 text-violet-600 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-base font-semibold">Escalate to admin</h3>
+                <p className="text-sm text-[var(--color-text-secondary)] mt-1">
+                  Admin will see this on their finance dashboard with the full context. Use this when the fix needs a privilege you don&apos;t have — manual enrollment, refund, or investigation.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                  Proposed action
+                </label>
+                <select
+                  value={escalationAction}
+                  onChange={(e) => setEscalationAction(e.target.value as EscalationProposedAction)}
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                >
+                  <option value="enroll">Manually enroll the student</option>
+                  <option value="refund">Issue refund to student</option>
+                  <option value="investigate">Investigate (possible fraud / data issue)</option>
+                  <option value="other">Other (explain in note)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                  Urgency
+                </label>
+                <div className="flex gap-2">
+                  {(["low", "normal", "high"] as EscalationUrgency[]).map((u) => (
+                    <button
+                      key={u}
+                      onClick={() => setEscalationUrgency(u)}
+                      className={`flex-1 py-2 text-xs font-medium rounded-lg border capitalize transition-colors ${
+                        escalationUrgency === u
+                          ? u === "high"
+                            ? "bg-red-50 border-red-300 text-red-700"
+                            : u === "low"
+                              ? "bg-slate-50 border-slate-300 text-slate-700"
+                              : "bg-blue-50 border-blue-300 text-blue-700"
+                          : "bg-[var(--color-surface-card)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                      }`}
+                    >
+                      {u}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                  Note for admin <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={escalationNote}
+                  onChange={(e) => setEscalationNote(e.target.value)}
+                  rows={4}
+                  placeholder="Required (≥20 chars) — explain what you think happened and what admin should do."
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                />
+                <div className="text-xs text-[var(--color-text-secondary)] mt-1">
+                  {escalationNote.length}/20 minimum
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setEscalateTarget(null)}
+                disabled={actingId === escalateTarget.id}
+                className="px-4 py-2 text-sm font-medium border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEscalate}
+                disabled={actingId === escalateTarget.id || escalationNote.trim().length < 20}
+                className="px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg disabled:opacity-60 flex items-center gap-2"
+              >
+                {actingId === escalateTarget.id && <Loader2 className="w-4 h-4 animate-spin" />}
+                <Send className="w-4 h-4" />
+                Escalate to admin
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* View details modal */}

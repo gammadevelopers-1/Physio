@@ -519,6 +519,20 @@
       "when": 1782964800000,
       "tag": "0087_extend_drift_types",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1782968400000,
+      "tag": "0088_reconciliation_escalations",
+      "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1782972000000,
+      "tag": "0089_seed_reconciliation_settings",
+      "breakpoints": true
     }
   ]
 }

@@ -512,6 +512,13 @@
       "when": 1782961200000,
       "tag": "0086_reconciliation_findings",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1782964800000,
+      "tag": "0087_extend_drift_types",
+      "breakpoints": true
     }
   ]
 }

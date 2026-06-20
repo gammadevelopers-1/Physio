@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import FinanceSidebar from "./FinanceSidebar";
@@ -24,18 +25,48 @@ import {
   type ReconciliationScan,
   type ReconciliationDriftType,
   type ReconciliationFindingStatus,
+  type ReconciliationGateway,
 } from "@/lib/api";
 import { useFinanceProfile } from "@/hooks/useFinanceProfile";
 
 type StatusTab = ReconciliationFindingStatus | "all";
+type ScanGateway = Exclude<ReconciliationGateway, "all">;
 
 const STATUS_TABS: StatusTab[] = ["unresolved", "resolved", "ignored", "all"];
+
+// Gateways available in the "Run scan" picker. "all" is offered as a separate
+// button below since semantically it's a different operation.
+const SCAN_GATEWAYS: { key: ScanGateway; label: string; tooltip?: string }[] = [
+  { key: "moyasar", label: "Moyasar" },
+  {
+    key: "tamara",
+    label: "Tamara",
+    tooltip:
+      "Webhook-recovery sweep only — Tamara's list-orders endpoint isn't enabled on our account, so this re-fetches each local Tamara payment to catch missed webhooks.",
+  },
+  {
+    key: "tabby",
+    label: "Tabby",
+    tooltip:
+      "Webhook-recovery sweep — Tabby has no merchant list API, so this re-fetches each local Tabby payment to catch missed webhooks.",
+  },
+  {
+    key: "bank_transfer",
+    label: "Bank Transfer",
+    tooltip:
+      "Internal consistency check — flags stuck approvals (>7d), orphan approved receipts, and PAID rows missing a receipt.",
+  },
+];
 
 const DRIFT_TYPE_LABEL: Record<ReconciliationDriftType, string> = {
   missing_local: "Missing locally",
   missing_gateway: "Missing on gateway",
   amount_mismatch: "Amount mismatch",
   status_mismatch: "Status mismatch",
+  stuck_pending: "Stuck pending",
+  stuck_approval: "Stuck approval",
+  orphan_receipt: "Orphan receipt",
+  paid_no_receipt: "Paid, no receipt",
 };
 
 const DRIFT_TYPE_PILL: Record<ReconciliationDriftType, string> = {
@@ -43,6 +74,17 @@ const DRIFT_TYPE_PILL: Record<ReconciliationDriftType, string> = {
   missing_gateway: "bg-[#FFEDD5] text-[#C2410C]",
   amount_mismatch: "bg-[#FEF3C7] text-[#92400E]",
   status_mismatch: "bg-[#DBEAFE] text-[#1D4ED8]",
+  stuck_pending: "bg-[#E0E7FF] text-[#3730A3]",
+  stuck_approval: "bg-[#FCE7F3] text-[#9D174D]",
+  orphan_receipt: "bg-[#F3E8FF] text-[#6B21A8]",
+  paid_no_receipt: "bg-[#FFE4E6] text-[#9F1239]",
+};
+
+const GATEWAY_LABEL: Record<string, string> = {
+  moyasar: "Moyasar",
+  tamara: "Tamara",
+  tabby: "Tabby",
+  bank_transfer: "Bank Transfer",
 };
 
 export default function ReconciliationContent() {
@@ -52,6 +94,7 @@ export default function ReconciliationContent() {
   const profile = useFinanceProfile();
 
   const [statusTab, setStatusTab] = useState<StatusTab>("unresolved");
+  const [scanGateway, setScanGateway] = useState<ScanGateway>("moyasar");
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
@@ -92,10 +135,10 @@ export default function ReconciliationContent() {
     fetchData();
   }, [fetchData]);
 
-  const handleScan = async () => {
+  const handleScan = async (gateway: ReconciliationGateway = scanGateway) => {
     setScanning(true);
     try {
-      const result = await reconciliationApi.runScan({ gateway: "moyasar" });
+      const result = await reconciliationApi.runScan({ gateway });
       toast.success(
         `Scan complete — scanned ${result.recordsScanned} records, found ${result.driftsFound} drifts`,
       );
@@ -167,7 +210,7 @@ export default function ReconciliationContent() {
                     Drift between our payment records and the gateway&apos;s own data
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={fetchData}
                     disabled={loading}
@@ -177,7 +220,7 @@ export default function ReconciliationContent() {
                     Refresh
                   </button>
                   <button
-                    onClick={handleScan}
+                    onClick={() => handleScan("all")}
                     disabled={scanning}
                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[var(--color-primary)] rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60"
                   >
@@ -186,7 +229,53 @@ export default function ReconciliationContent() {
                     ) : (
                       <Scale className="w-4 h-4" />
                     )}
-                    {scanning ? "Scanning…" : "Run scan now"}
+                    {scanning ? "Scanning…" : "Scan all gateways"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Per-gateway scan picker */}
+              <div className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg p-3 mb-6">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
+                      Scan a single gateway:
+                    </span>
+                    {SCAN_GATEWAYS.map((g) => (
+                      <button
+                        key={g.key}
+                        onClick={() => setScanGateway(g.key)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                          scanGateway === g.key
+                            ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]"
+                            : "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
+                        }`}
+                      >
+                        {g.label}
+                        {g.tooltip && (
+                          <span className="relative group/tip">
+                            <Info className="w-3.5 h-3.5 opacity-70" />
+                            <span
+                              className={`pointer-events-none absolute z-10 hidden group-hover/tip:block top-full mt-1 ${isRTL ? "right-0" : "left-0"} w-64 p-2 bg-[var(--color-text-primary)] text-white text-[11px] rounded shadow-lg normal-case font-normal`}
+                            >
+                              {g.tooltip}
+                            </span>
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => handleScan(scanGateway)}
+                    disabled={scanning}
+                    className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[var(--color-primary)] border border-[var(--color-primary)] rounded-lg hover:bg-[var(--color-primary)] hover:text-white transition-colors disabled:opacity-60"
+                  >
+                    {scanning ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Scale className="w-3.5 h-3.5" />
+                    )}
+                    Run {SCAN_GATEWAYS.find((g) => g.key === scanGateway)?.label ?? scanGateway} scan
                   </button>
                 </div>
               </div>
@@ -325,7 +414,7 @@ export default function ReconciliationContent() {
                                 {DRIFT_TYPE_LABEL[f.driftType] || f.driftType}
                               </span>
                             </td>
-                            <td className="p-3 capitalize">{f.gateway}</td>
+                            <td className="p-3">{GATEWAY_LABEL[f.gateway] || f.gateway}</td>
                             <td className="p-3 font-mono text-xs">
                               {f.gatewayChargeId ||
                                 (f.paymentId ? f.paymentId.slice(0, 12) + "…" : "—")}
@@ -477,8 +566,14 @@ export default function ReconciliationContent() {
               </button>
             </div>
             <div className="space-y-3 text-sm">
-              <DetailRow label="Drift type" value={DRIFT_TYPE_LABEL[viewTarget.driftType]} />
-              <DetailRow label="Gateway" value={viewTarget.gateway} />
+              <DetailRow
+                label="Drift type"
+                value={DRIFT_TYPE_LABEL[viewTarget.driftType] || viewTarget.driftType}
+              />
+              <DetailRow
+                label="Gateway"
+                value={GATEWAY_LABEL[viewTarget.gateway] || viewTarget.gateway}
+              />
               <DetailRow label="Status" value={viewTarget.status} />
               <DetailRow
                 label="Gateway charge ID"

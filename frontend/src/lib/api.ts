@@ -7030,7 +7030,18 @@ export type ReconciliationDriftType =
   | 'missing_local'
   | 'missing_gateway'
   | 'amount_mismatch'
-  | 'status_mismatch';
+  | 'status_mismatch'
+  | 'stuck_pending'
+  | 'stuck_approval'
+  | 'orphan_receipt'
+  | 'paid_no_receipt';
+
+export type ReconciliationGateway =
+  | 'moyasar'
+  | 'tamara'
+  | 'tabby'
+  | 'bank_transfer'
+  | 'all';
 
 export type ReconciliationFindingStatus = 'unresolved' | 'resolved' | 'ignored';
 
@@ -7096,7 +7107,9 @@ export const reconciliationApi = {
     }>(`/payments/reconciliation/findings?${sp.toString()}`);
   },
 
-  runScan: (opts: { gateway?: 'moyasar' | 'all'; fromDate?: string; toDate?: string } = {}) =>
+  runScan: (
+    opts: { gateway?: ReconciliationGateway; fromDate?: string; toDate?: string } = {},
+  ) =>
     api.post<{ scanId: string; recordsScanned: number; driftsFound: number }>(
       '/payments/reconciliation/scan',
       opts,

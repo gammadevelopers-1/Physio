@@ -50,12 +50,17 @@ export class ReconciliationController {
   /**
    * Trigger a scan on demand. Defaults to the last 7 days for `moyasar`.
    * Rate-limited to 5/min to prevent accidental hammer-clicking from running
-   * many concurrent Moyasar paginated fetches.
+   * many concurrent paginated fetches or per-payment refetch sweeps.
    */
   @Post('scan')
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   async runScan(
-    @Body() body: { gateway?: 'moyasar' | 'all'; fromDate?: string; toDate?: string } = {},
+    @Body()
+    body: {
+      gateway?: 'moyasar' | 'tamara' | 'tabby' | 'bank_transfer' | 'all';
+      fromDate?: string;
+      toDate?: string;
+    } = {},
     @CurrentUser() user: AuthenticatedUser,
   ) {
     const to = body.toDate ? new Date(body.toDate) : new Date();

@@ -5,10 +5,11 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
-import { eq, and, gte, lte, desc, inArray, sql } from 'drizzle-orm';
+import { eq, and, gte, lte, desc, inArray, sql, isNull, notInArray } from 'drizzle-orm';
 import { db } from '../../../database';
 import {
   payments,
+  paymentReceipts,
   reconciliationFindings,
   reconciliationScans,
   users,
@@ -17,12 +18,26 @@ import {
   RECONCILIATION_STATUS,
   RECONCILIATION_SCAN_STATUS,
   PAYMENT_STATUS,
+  RECEIPT_REVIEW_STATUS,
 } from '../../../database/schema';
 import { MoyasarGateway } from '../gateways/moyasar.gateway';
+import { TamaraGateway } from '../gateways/tamara.gateway';
+import { TabbyGateway } from '../gateways/tabby.gateway';
+import { NormalizedPaymentStatus } from '../gateways/gateway-types';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
 
 const MOYASAR_TERMINAL_STATUSES = new Set(['paid', 'captured', 'failed', 'refunded']);
+
+// Sweep tunables. These are not user-configurable yet — exposing them in
+// settings is a Phase 3 concern.
+const STUCK_PENDING_AGE_MS = 24 * 60 * 60 * 1000; // 24h
+const STUCK_APPROVAL_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+// Cap the per-scan API hammer: re-fetching one Tabby/Tamara payment at a
+// time is fine, but a 90-day window with hundreds of pending rows would
+// burn rate limits. If the user needs more coverage they can narrow the
+// window or wait for the daily cron (Phase 3) to chew through it.
+const SWEEP_MAX_PAYMENTS = 200;
 
 /**
  * Drift detection between our payments table and each gateway's own records.
@@ -46,13 +61,15 @@ export class ReconciliationService {
 
   constructor(
     private readonly moyasar: MoyasarGateway,
+    private readonly tamara: TamaraGateway,
+    private readonly tabby: TabbyGateway,
     private readonly auditLogService: AuditLogService,
   ) {}
 
   // ─── Scan entry point ────────────────────────────────────────────────
 
   async runScan(opts: {
-    gateway: 'moyasar' | 'all';
+    gateway: 'moyasar' | 'tamara' | 'tabby' | 'bank_transfer' | 'all';
     fromDate: Date;
     toDate: Date;
     triggeredBy: string | null;
@@ -86,7 +103,21 @@ export class ReconciliationService {
         recordsScanned += result.recordsScanned;
         driftsFound += result.driftsFound;
       }
-      // Tamara / Tabby / Bank Transfer scans plug in here (Phase 2).
+      if (opts.gateway === 'tamara' || opts.gateway === 'all') {
+        const result = await this.scanTamara(scan.id, opts.fromDate, opts.toDate);
+        recordsScanned += result.recordsScanned;
+        driftsFound += result.driftsFound;
+      }
+      if (opts.gateway === 'tabby' || opts.gateway === 'all') {
+        const result = await this.scanTabby(scan.id, opts.fromDate, opts.toDate);
+        recordsScanned += result.recordsScanned;
+        driftsFound += result.driftsFound;
+      }
+      if (opts.gateway === 'bank_transfer' || opts.gateway === 'all') {
+        const result = await this.scanBankTransfer(scan.id, opts.fromDate, opts.toDate);
+        recordsScanned += result.recordsScanned;
+        driftsFound += result.driftsFound;
+      }
 
       await db
         .update(reconciliationScans)
@@ -273,6 +304,354 @@ export class ReconciliationService {
         });
         driftsFound++;
       }
+    }
+
+    return { recordsScanned, driftsFound };
+  }
+
+  // ─── Tamara scan (webhook-recovery sweep) ────────────────────────────
+  //
+  // Tamara's `/merchants/orders` list endpoint requires a permission flag
+  // that's not enabled on our merchant account (returns 403). Until Tamara
+  // turns it on we can't do bidirectional drift detection — we can only
+  // re-fetch each local Tamara payment by ID and check whether the gateway
+  // status now disagrees with ours.
+  //
+  // What this catches:
+  //   - status_mismatch  — Tamara says paid/captured but we still say pending
+  //                        (webhook dropped or our retry chain stalled)
+  //   - amount_mismatch  — captured amount differs (partial-capture edge case)
+  //   - stuck_pending    — we say pending, Tamara also says pending, but the
+  //                        payment is > 24h old (buyer abandoned the flow)
+  //
+  // It does NOT catch missing_local — without a Tamara list endpoint we have
+  // no way to know about an order that exists on Tamara but never produced
+  // a payment row on our side.
+
+  private async scanTamara(scanRunId: string, from: Date, to: Date) {
+    return this.gatewayRefetchSweep({
+      scanRunId,
+      from,
+      to,
+      gateway: 'tamara',
+      fetchStatus: async (id) => this.tamara.getPaymentStatus(id),
+      fetchRaw: (id) => this.tamara.getCharge(id),
+      // Tamara's raw GET returns total_amount: { amount, currency } at the
+      // top level when the order has been captured.
+      extractAmount: (raw) =>
+        raw?.total_amount?.amount != null ? Number(raw.total_amount.amount) : null,
+    });
+  }
+
+  // ─── Tabby scan (webhook-recovery sweep) ─────────────────────────────
+  //
+  // Tabby has no merchant list API. Same shape as Tamara: walk our local
+  // Tabby payments in the window, re-fetch each, flag drift.
+
+  private async scanTabby(scanRunId: string, from: Date, to: Date) {
+    return this.gatewayRefetchSweep({
+      scanRunId,
+      from,
+      to,
+      gateway: 'tabby',
+      fetchStatus: (id) => this.tabby.getPaymentStatus(id),
+      fetchRaw: (id) => this.tabby.getCharge(id),
+      // Tabby returns amount at top level as a stringified decimal.
+      extractAmount: (raw) =>
+        raw?.amount != null ? Number(raw.amount) : null,
+    });
+  }
+
+  /**
+   * Per-payment refetch sweep used by both Tamara and Tabby. Iterates local
+   * payments in the window, hits the gateway's get-by-id endpoint for each,
+   * and records drift. Capped at SWEEP_MAX_PAYMENTS to bound API hammering.
+   */
+  private async gatewayRefetchSweep(args: {
+    scanRunId: string;
+    from: Date;
+    to: Date;
+    gateway: 'tamara' | 'tabby';
+    fetchStatus: (id: string) => Promise<NormalizedPaymentStatus>;
+    fetchRaw: (id: string) => Promise<any>;
+    extractAmount: (raw: any) => number | null;
+  }) {
+    const { scanRunId, from, to, gateway, fetchStatus, fetchRaw, extractAmount } = args;
+
+    // Walk payments we'd want to re-verify: anything PENDING or PAID with a
+    // charge id. We deliberately exclude FAILED/REFUNDED — terminal-failed
+    // rows are usually fine and re-checking them every scan is just noise.
+    const candidates = await db
+      .select({
+        id: payments.id,
+        gatewayChargeId: payments.gatewayChargeId,
+        status: payments.status,
+        amount: payments.amount,
+        currency: payments.currency,
+        createdAt: payments.createdAt,
+      })
+      .from(payments)
+      .where(
+        and(
+          eq(payments.gateway, gateway),
+          gte(payments.createdAt, from),
+          lte(payments.createdAt, to),
+          inArray(payments.status, [PAYMENT_STATUS.PENDING, PAYMENT_STATUS.PAID] as any),
+        ),
+      )
+      .orderBy(desc(payments.createdAt))
+      .limit(SWEEP_MAX_PAYMENTS);
+
+    let recordsScanned = 0;
+    let driftsFound = 0;
+    const now = Date.now();
+
+    for (const p of candidates) {
+      if (!p.gatewayChargeId) continue;
+      recordsScanned++;
+
+      let normalizedStatus: NormalizedPaymentStatus;
+      let raw: any;
+      try {
+        normalizedStatus = await fetchStatus(p.gatewayChargeId);
+        raw = await fetchRaw(p.gatewayChargeId);
+      } catch (err) {
+        // A single payment failing to refetch shouldn't kill the whole scan.
+        // Log and skip — the daily cron will retry on the next pass.
+        this.logger.warn(
+          `${gateway} refetch failed for charge=${p.gatewayChargeId}: ${(err as Error).message}`,
+        );
+        continue;
+      }
+
+      // status_mismatch — local PENDING but gateway says paid/refunded.
+      if (
+        p.status === PAYMENT_STATUS.PENDING &&
+        (normalizedStatus === 'paid' || normalizedStatus === 'refunded')
+      ) {
+        await this.recordFinding({
+          scanRunId,
+          gateway,
+          driftType: RECONCILIATION_DRIFT_TYPE.STATUS_MISMATCH,
+          paymentId: p.id,
+          gatewayChargeId: p.gatewayChargeId,
+          ourValue: { status: p.status },
+          gatewayValue: { status: normalizedStatus },
+        });
+        driftsFound++;
+        continue;
+      }
+
+      // status_mismatch — local PAID but gateway says failed/cancelled/refunded.
+      if (
+        p.status === PAYMENT_STATUS.PAID &&
+        (normalizedStatus === 'failed' ||
+          normalizedStatus === 'cancelled' ||
+          normalizedStatus === 'refunded')
+      ) {
+        await this.recordFinding({
+          scanRunId,
+          gateway,
+          driftType: RECONCILIATION_DRIFT_TYPE.STATUS_MISMATCH,
+          paymentId: p.id,
+          gatewayChargeId: p.gatewayChargeId,
+          ourValue: { status: p.status },
+          gatewayValue: { status: normalizedStatus },
+        });
+        driftsFound++;
+        continue;
+      }
+
+      // amount_mismatch — only meaningful when both sides agree it's paid.
+      if (
+        p.status === PAYMENT_STATUS.PAID &&
+        normalizedStatus === 'paid'
+      ) {
+        const gatewayAmount = extractAmount(raw);
+        if (gatewayAmount != null && Math.abs(Number(p.amount) - gatewayAmount) > 0.01) {
+          await this.recordFinding({
+            scanRunId,
+            gateway,
+            driftType: RECONCILIATION_DRIFT_TYPE.AMOUNT_MISMATCH,
+            paymentId: p.id,
+            gatewayChargeId: p.gatewayChargeId,
+            ourValue: { amount: Number(p.amount), currency: p.currency },
+            gatewayValue: { amount: gatewayAmount },
+          });
+          driftsFound++;
+        }
+        continue;
+      }
+
+      // stuck_pending — both sides still PENDING after 24h. Either the buyer
+      // abandoned the checkout or the gateway lost the session.
+      if (
+        p.status === PAYMENT_STATUS.PENDING &&
+        normalizedStatus === 'pending' &&
+        now - p.createdAt.getTime() > STUCK_PENDING_AGE_MS
+      ) {
+        await this.recordFinding({
+          scanRunId,
+          gateway,
+          driftType: RECONCILIATION_DRIFT_TYPE.STUCK_PENDING,
+          paymentId: p.id,
+          gatewayChargeId: p.gatewayChargeId,
+          ourValue: { status: p.status, createdAt: p.createdAt.toISOString() },
+          gatewayValue: { status: normalizedStatus },
+        });
+        driftsFound++;
+      }
+    }
+
+    return { recordsScanned, driftsFound };
+  }
+
+  // ─── Bank Transfer scan (internal consistency) ───────────────────────
+  //
+  // No external gateway — this is an internal audit of the bank-transfer
+  // flow. Three checks:
+  //
+  //   stuck_approval  — payment in awaiting_approval > 7d (finance forgot it)
+  //   orphan_receipt  — receipt approved but payment never advanced to PAID
+  //   paid_no_receipt — payment PAID via bank transfer but no receipt row
+  //                     (manual override or schema bypass — needs review)
+
+  private async scanBankTransfer(scanRunId: string, from: Date, to: Date) {
+    let recordsScanned = 0;
+    let driftsFound = 0;
+    const cutoff = new Date(Date.now() - STUCK_APPROVAL_AGE_MS);
+
+    // 1. stuck_approval — bank-transfer payments in awaiting_approval whose
+    //    last status change is older than 7 days. updatedAt is the closest
+    //    proxy we have for "when did finance last touch this" since the
+    //    payments table doesn't carry an explicit awaiting-since timestamp.
+    const stuck = await db
+      .select({
+        id: payments.id,
+        amount: payments.amount,
+        currency: payments.currency,
+        updatedAt: payments.updatedAt,
+        createdAt: payments.createdAt,
+      })
+      .from(payments)
+      .where(
+        and(
+          eq(payments.gateway, 'bank_transfer'),
+          eq(payments.status, PAYMENT_STATUS.AWAITING_APPROVAL),
+          gte(payments.createdAt, from),
+          lte(payments.createdAt, to),
+          lte(payments.updatedAt, cutoff),
+        ),
+      );
+
+    for (const p of stuck) {
+      recordsScanned++;
+      await this.recordFinding({
+        scanRunId,
+        gateway: 'bank_transfer',
+        driftType: RECONCILIATION_DRIFT_TYPE.STUCK_APPROVAL,
+        paymentId: p.id,
+        gatewayChargeId: null,
+        ourValue: {
+          status: PAYMENT_STATUS.AWAITING_APPROVAL,
+          amount: Number(p.amount),
+          currency: p.currency,
+          waitingSince: p.updatedAt.toISOString(),
+        },
+        gatewayValue: null,
+      });
+      driftsFound++;
+    }
+
+    // 2. orphan_receipt — approved receipt but payment is NOT PAID/REFUNDED.
+    //    This catches the data-integrity bug where the receipt review
+    //    pathway approved a receipt but the payment row update failed.
+    //    We scope by receipt.createdAt rather than payment.createdAt because
+    //    receipts can be uploaded weeks after the payment originated.
+    const orphans = await db
+      .select({
+        receiptId: paymentReceipts.id,
+        paymentId: paymentReceipts.paymentId,
+        receiptStatus: paymentReceipts.reviewStatus,
+        reviewedAt: paymentReceipts.reviewedAt,
+        paymentStatus: payments.status,
+      })
+      .from(paymentReceipts)
+      .innerJoin(payments, eq(payments.id, paymentReceipts.paymentId))
+      .where(
+        and(
+          eq(paymentReceipts.reviewStatus, RECEIPT_REVIEW_STATUS.APPROVED),
+          gte(paymentReceipts.createdAt, from),
+          lte(paymentReceipts.createdAt, to),
+          notInArray(payments.status, [
+            PAYMENT_STATUS.PAID,
+            PAYMENT_STATUS.REFUNDED,
+            PAYMENT_STATUS.PARTIALLY_REFUNDED,
+          ] as any),
+          // Skip receipts that got superseded by a re-upload — only the
+          // active receipt in the chain represents drift.
+          isNull(paymentReceipts.replacedById),
+        ),
+      );
+
+    for (const o of orphans) {
+      recordsScanned++;
+      await this.recordFinding({
+        scanRunId,
+        gateway: 'bank_transfer',
+        driftType: RECONCILIATION_DRIFT_TYPE.ORPHAN_RECEIPT,
+        paymentId: o.paymentId,
+        gatewayChargeId: null,
+        ourValue: {
+          paymentStatus: o.paymentStatus,
+          receiptId: o.receiptId,
+          receiptStatus: o.receiptStatus,
+          reviewedAt: o.reviewedAt?.toISOString() || null,
+        },
+        gatewayValue: null,
+      });
+      driftsFound++;
+    }
+
+    // 3. paid_no_receipt — payment PAID via bank-transfer with no receipt
+    //    row at all. Either finance recorded it manually (legitimate but
+    //    worth surfacing) or something bypassed the receipt-upload pathway.
+    const paidNoReceipt = await db
+      .select({
+        id: payments.id,
+        amount: payments.amount,
+        currency: payments.currency,
+        paidAt: payments.paidAt,
+      })
+      .from(payments)
+      .leftJoin(paymentReceipts, eq(paymentReceipts.paymentId, payments.id))
+      .where(
+        and(
+          eq(payments.gateway, 'bank_transfer'),
+          eq(payments.status, PAYMENT_STATUS.PAID),
+          gte(payments.createdAt, from),
+          lte(payments.createdAt, to),
+          isNull(paymentReceipts.id),
+        ),
+      );
+
+    for (const p of paidNoReceipt) {
+      recordsScanned++;
+      await this.recordFinding({
+        scanRunId,
+        gateway: 'bank_transfer',
+        driftType: RECONCILIATION_DRIFT_TYPE.PAID_NO_RECEIPT,
+        paymentId: p.id,
+        gatewayChargeId: null,
+        ourValue: {
+          status: PAYMENT_STATUS.PAID,
+          amount: Number(p.amount),
+          currency: p.currency,
+          paidAt: p.paidAt?.toISOString() || null,
+        },
+        gatewayValue: null,
+      });
+      driftsFound++;
     }
 
     return { recordsScanned, driftsFound };

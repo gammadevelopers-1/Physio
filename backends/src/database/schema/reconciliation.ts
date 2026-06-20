@@ -76,6 +76,10 @@ export const RECONCILIATION_DRIFT_TYPE = {
   MISSING_GATEWAY: 'missing_gateway',
   AMOUNT_MISMATCH: 'amount_mismatch',
   STATUS_MISMATCH: 'status_mismatch',
+  STUCK_PENDING: 'stuck_pending',
+  STUCK_APPROVAL: 'stuck_approval',
+  ORPHAN_RECEIPT: 'orphan_receipt',
+  PAID_NO_RECEIPT: 'paid_no_receipt',
 } as const;
 
 export const RECONCILIATION_STATUS = {

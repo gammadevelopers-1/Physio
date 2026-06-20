@@ -505,6 +505,13 @@
       "when": 1782957600000,
       "tag": "0085_add_rejected_payment_status",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1782961200000,
+      "tag": "0086_reconciliation_findings",
+      "breakpoints": true
     }
   ]
 }

@@ -158,6 +158,52 @@ export class MoyasarGateway extends BaseGateway implements PaymentGateway {
     return response.json();
   }
 
+  /**
+   * Paginated list of invoices in a date range. Used by the reconciliation
+   * scan to compare Moyasar's own records against our payments table. Returns
+   * a slice; caller is responsible for paginating until `meta.next_page` is null.
+   *
+   * Moyasar uses cursor-style pagination via `?page=N&per_page=M`. Dates filter
+   * via `created[gte]` / `created[lte]` in ISO-8601.
+   */
+  async listInvoices(opts: {
+    fromIso: string;
+    toIso: string;
+    page?: number;
+    perPage?: number;
+  }): Promise<{
+    invoices: Array<{
+      id: string;
+      status: string;
+      amount: number;
+      currency: string;
+      created_at: string;
+      metadata: Record<string, unknown> | null;
+    }>;
+    meta: { current_page: number; next_page: number | null; total_count: number };
+  }> {
+    const sp = new URLSearchParams({
+      'created[gte]': opts.fromIso,
+      'created[lte]': opts.toIso,
+      page: String(opts.page ?? 1),
+      per_page: String(opts.perPage ?? 100),
+    });
+
+    const response = await this.fetchWithTimeout(
+      `${this.apiUrl}/invoices?${sp.toString()}`,
+      { headers: { Authorization: this.getAuthHeader() } },
+      15000,
+    );
+    if (!response.ok) {
+      throw new Error(`Moyasar listInvoices failed: HTTP ${response.status}`);
+    }
+    const data = (await response.json()) as any;
+    return {
+      invoices: data.invoices || [],
+      meta: data.meta || { current_page: opts.page ?? 1, next_page: null, total_count: 0 },
+    };
+  }
+
   async getPaymentStatus(chargeId: string): Promise<NormalizedPaymentStatus> {
     const data = await this.getCharge(chargeId);
     switch (data.status) {

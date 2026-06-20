@@ -123,6 +123,7 @@ export * from './sidebar-views';
 export * from './invoices';
 export * from './refunds';
 export * from './discount-codes';
+export * from './reconciliation';
 
 // Health check (can remove later)
 import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';

@@ -7023,6 +7023,99 @@ export const financeBankTransferApi = {
 };
 
 // ===========================================
+// Finance — Reconciliation API
+// ===========================================
+
+export type ReconciliationDriftType =
+  | 'missing_local'
+  | 'missing_gateway'
+  | 'amount_mismatch'
+  | 'status_mismatch';
+
+export type ReconciliationFindingStatus = 'unresolved' | 'resolved' | 'ignored';
+
+export interface ReconciliationFinding {
+  id: string;
+  scanRunId: string;
+  gateway: string;
+  driftType: ReconciliationDriftType;
+  paymentId: string | null;
+  gatewayChargeId: string | null;
+  ourValue: Record<string, unknown> | null;
+  gatewayValue: Record<string, unknown> | null;
+  status: ReconciliationFindingStatus;
+  resolutionNote: string | null;
+  resolvedBy: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+  userName: string | null;
+  userEmail: string | null;
+  courseTitle: string | null;
+}
+
+export interface ReconciliationScan {
+  id: string;
+  gateway: string;
+  fromDate: string;
+  toDate: string;
+  status: 'running' | 'succeeded' | 'failed';
+  recordsScanned: number;
+  driftsFound: number;
+  triggeredBy: string | null;
+  startedAt: string;
+  finishedAt: string | null;
+  durationMs: number | null;
+  errorMessage: string | null;
+}
+
+export const reconciliationApi = {
+  getStats: () =>
+    api.get<{
+      unresolved: number;
+      byDriftType: Record<string, number>;
+      byGateway: Record<string, number>;
+      lastScans: ReconciliationScan[];
+    }>('/payments/reconciliation/stats'),
+
+  listFindings: (opts: {
+    status?: ReconciliationFindingStatus | 'all';
+    gateway?: string;
+    driftType?: ReconciliationDriftType;
+    page?: number;
+    limit?: number;
+  } = {}) => {
+    const sp = new URLSearchParams();
+    if (opts.status) sp.set('status', opts.status);
+    if (opts.gateway) sp.set('gateway', opts.gateway);
+    if (opts.driftType) sp.set('driftType', opts.driftType);
+    sp.set('page', String(opts.page ?? 1));
+    sp.set('limit', String(opts.limit ?? 20));
+    return api.get<{
+      data: ReconciliationFinding[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }>(`/payments/reconciliation/findings?${sp.toString()}`);
+  },
+
+  runScan: (opts: { gateway?: 'moyasar' | 'all'; fromDate?: string; toDate?: string } = {}) =>
+    api.post<{ scanId: string; recordsScanned: number; driftsFound: number }>(
+      '/payments/reconciliation/scan',
+      opts,
+    ),
+
+  resolve: (findingId: string, note?: string) =>
+    api.patch<{ id: string; status: string }>(
+      `/payments/reconciliation/findings/${findingId}/resolve`,
+      { note },
+    ),
+
+  ignore: (findingId: string, note: string) =>
+    api.patch<{ id: string; status: string }>(
+      `/payments/reconciliation/findings/${findingId}/ignore`,
+      { note },
+    ),
+};
+
+// ===========================================
 // Invoice API
 // ===========================================
 

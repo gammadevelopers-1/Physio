@@ -9,6 +9,7 @@ import { RefundsController } from './refunds/refunds.controller';
 import { DiscountsController } from './discounts/discounts.controller';
 import { FinanceController } from './finance/finance.controller';
 import { BankTransferController } from './bank-transfer/bank-transfer.controller';
+import { ReconciliationController } from './reconciliation/reconciliation.controller';
 
 // Services
 import { PaymentsService } from './payments.service';
@@ -19,6 +20,7 @@ import { FinanceService } from './services/finance.service';
 import { PaymentCleanupService } from './services/payment-cleanup.service';
 import { TamaraRetryService } from './services/tamara-retry.service';
 import { BankTransferService } from './bank-transfer/bank-transfer.service';
+import { ReconciliationService } from './reconciliation/reconciliation.service';
 
 // Gateways
 import { GatewayFactory } from './gateways/gateway.factory';
@@ -57,6 +59,7 @@ import { SiteSettingsModule } from '../site-settings/site-settings.module';
     DiscountsController,
     FinanceController,
     BankTransferController,
+    ReconciliationController,
   ],
   providers: [
     PaymentsService,
@@ -65,6 +68,7 @@ import { SiteSettingsModule } from '../site-settings/site-settings.module';
     DiscountService,
     FinanceService,
     BankTransferService,
+    ReconciliationService,
     GatewayFactory,
     MockGateway,
     MoyasarGateway,

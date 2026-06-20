@@ -25,6 +25,7 @@ import {
   Headphones,
   UserPlus,
   Building2,
+  Scale,
 } from "lucide-react";
 
 interface FinanceProfile {
@@ -132,6 +133,11 @@ const FinanceSidebar = ({
       label: t("sidebar.reports"),
       href: `/${locale}/dashboard/finance/reports`,
       icon: BarChart3,
+    },
+    {
+      label: t("sidebar.reconciliation"),
+      href: `/${locale}/dashboard/finance/reconciliation`,
+      icon: Scale,
     },
     {
       label: t("sidebar.auditLog"),

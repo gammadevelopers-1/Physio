@@ -17,6 +17,13 @@ const FINANCE_AUDIT_ENTITY_TYPES = [
   'invoice',
   'discount_code',
   'webhook',
+  // Reconciliation is owned by finance — finding resolve/ignore/escalate
+  // and the escalation lifecycle (claim/send_back/decline/enroll/refund)
+  // all need to show up on the finance audit log page. Cron-triggered
+  // scans also land here so finance can see "system did the nightly scan".
+  'reconciliation_finding',
+  'reconciliation_escalation',
+  'reconciliation_scan',
 ];
 
 export interface AdminAuditLogFilters {

@@ -7062,6 +7062,15 @@ export interface ReconciliationFinding {
   userName: string | null;
   userEmail: string | null;
   courseTitle: string | null;
+  // Linked-escalation context (populated when finding has been escalated).
+  // Survives sendBack so finance can see admin's note even after the
+  // finding goes back to UNRESOLVED.
+  escalationId: string | null;
+  escalationStatus: string | null;
+  escalationActionTaken: string | null;
+  escalationResolutionNote: string | null;
+  escalationResolvedAt: string | null;
+  escalationResolvedByName: string | null;
 }
 
 export interface ReconciliationScan {
@@ -7279,6 +7288,8 @@ export const escalationsApi = {
       findingId: string;
       enrollmentId: string;
       paymentCreated: boolean;
+      paymentFlipped: boolean;
+      receiptApproved: boolean;
       paymentId: string | null;
     }>(`/payments/reconciliation/escalations/${id}/enroll`, body),
 

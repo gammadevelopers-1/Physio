@@ -8636,6 +8636,141 @@
       "laylaNoor": "ليلى نور",
       "omarFahad": "عمر فهد"
     },
+    "reconciliationPage": {
+      "title": "التسوية المالية",
+      "subtitle": "الفروقات بين سجلات المدفوعات لدينا وبيانات بوابات الدفع",
+      "refresh": "تحديث",
+      "scanAllGateways": "فحص جميع البوابات",
+      "scanning": "جارٍ الفحص…",
+      "scanASingleGateway": "فحص بوابة واحدة:",
+      "runGatewayScan": "تشغيل فحص {gateway}",
+      "kpi": {
+        "unresolved": "غير محلولة",
+        "missingLocally": "ناقصة محليًا",
+        "missingOnGateway": "ناقصة في البوابة",
+        "mismatches": "اختلافات"
+      },
+      "recentScans": "الفحوصات الأخيرة",
+      "scanStats": "{scanned} مفحوص · {drifts} فروقات",
+      "tabs": {
+        "unresolved": "غير محلولة",
+        "escalated": "مُصعّدة",
+        "resolved": "محلولة",
+        "ignored": "متجاهَلة",
+        "all": "الكل"
+      },
+      "empty": {
+        "title": "لا توجد نتائج",
+        "unresolvedBody": "كل شيء متطابق. شغّل فحصًا للتحقق مرة أخرى.",
+        "otherBody": "لا توجد نتائج {status}."
+      },
+      "table": {
+        "drift": "الفرق",
+        "gateway": "البوابة",
+        "chargeOrPaymentId": "معرّف الدفع / المعاملة",
+        "customer": "العميل",
+        "detected": "تاريخ الاكتشاف",
+        "actions": "إجراءات"
+      },
+      "actions": {
+        "view": "عرض التفاصيل",
+        "resolve": "حلّ",
+        "ignore": "تجاهل",
+        "escalate": "تصعيد"
+      },
+      "pagination": {
+        "summary": "{total} نتيجة · صفحة {page} من {totalPages}"
+      },
+      "driftTypes": {
+        "missing_local": "ناقصة محليًا",
+        "missing_gateway": "ناقصة في البوابة",
+        "amount_mismatch": "اختلاف في المبلغ",
+        "status_mismatch": "اختلاف في الحالة",
+        "stuck_pending": "عالقة قيد الانتظار",
+        "stuck_approval": "عالقة قيد الموافقة",
+        "orphan_receipt": "إيصال يتيم",
+        "paid_no_receipt": "مدفوعة بدون إيصال"
+      },
+      "gateways": {
+        "moyasar": "ميسر",
+        "tamara": "تمارا",
+        "tabby": "تابي",
+        "bank_transfer": "تحويل بنكي"
+      },
+      "gatewayTooltips": {
+        "tamara": "فحص استرجاع Webhook فقط — لم يتم تفعيل واجهة قائمة الطلبات في حساب تمارا، لذا يعيد جلب كل عملية دفع محلية للكشف عن Webhooks الفائتة.",
+        "tabby": "فحص استرجاع Webhook — لا تملك تابي واجهة قائمة للتاجر، لذا يعيد جلب كل عملية دفع محلية للكشف عن Webhooks الفائتة.",
+        "bank_transfer": "فحص اتساق داخلي — يُظهر الموافقات العالقة (>7 أيام)، الإيصالات المعتمدة اليتيمة، والمدفوعات المعلّمة كمدفوعة بلا إيصال."
+      },
+      "escalatedPill": "مُصعّدة",
+      "sentBack": {
+        "label": "أعادها {name}"
+      },
+      "escalateModal": {
+        "title": "تصعيد إلى المسؤول",
+        "subtitle": "سيرى المسؤول هذا التصعيد في لوحته المالية مع كامل السياق. استخدم هذا عندما يحتاج الحل صلاحيات لا تملكها — تسجيل يدوي، استرداد، أو تحقيق.",
+        "proposedAction": "الإجراء المقترح",
+        "actionEnroll": "تسجيل الطالب يدويًا",
+        "actionRefund": "إصدار استرداد للطالب",
+        "actionInvestigate": "تحقيق (احتيال محتمل / مشكلة بيانات)",
+        "actionOther": "آخر (اشرح في الملاحظة)",
+        "urgency": "الأولوية",
+        "urgencyLow": "منخفضة",
+        "urgencyNormal": "عادية",
+        "urgencyHigh": "عالية",
+        "noteLabel": "ملاحظة للمسؤول",
+        "notePlaceholder": "مطلوبة (≥20 حرفًا) — اشرح ما حدث وما يجب على المسؤول فعله.",
+        "noteMinimum": "{count}/20 كحد أدنى",
+        "cancel": "إلغاء",
+        "submit": "تصعيد إلى المسؤول"
+      },
+      "resolveModal": {
+        "title": "وضع علامة \"محلولة\"",
+        "subtitle": "تمت معالجة الفرق. الملاحظة (اختيارية) لأغراض سجل المراجعة.",
+        "notePlaceholder": "اختياري — مثلاً \"إعادة مزامنة يدوية من ميسر\"",
+        "confirm": "وضع علامة محلولة"
+      },
+      "ignoreModal": {
+        "title": "تجاهل هذه النتيجة",
+        "subtitle": "للبيانات التجريبية أو المحاولات المعروفة المهملة أو أي فروق لا تتطلب إجراءً. الملاحظة مطلوبة.",
+        "notePlaceholder": "مطلوبة — اشرح لماذا لا تتطلب هذه النتيجة إجراء (≥5 أحرف)",
+        "confirm": "تجاهل"
+      },
+      "view": {
+        "title": "تفاصيل النتيجة",
+        "detectedPrefix": "اكتُشف",
+        "customerAndCourse": "العميل والدورة",
+        "customer": "العميل",
+        "email": "البريد الإلكتروني",
+        "course": "الدورة",
+        "paymentReferences": "مراجع الدفع",
+        "gatewayChargeId": "معرّف الدفع لدى البوابة",
+        "localPaymentId": "معرّف الدفع المحلي",
+        "driftEvidence": "أدلة الفرق",
+        "ourValue": "قيمتنا",
+        "gatewayValue": "قيمة البوابة",
+        "resolutionNote": "ملاحظة الحل",
+        "escalation": {
+          "sentBack": "أعاده المسؤول",
+          "resolved": "حلّه المسؤول ({action})",
+          "declined": "أغلقه المسؤول بدون إجراء",
+          "current": "مُصعّد حاليًا"
+        }
+      },
+      "toasts": {
+        "scanCompleteFmt": "اكتمل الفحص — {records} سجل مفحوص، تم العثور على {drifts} فروقات",
+        "scanFailed": "فشل الفحص",
+        "loadFailed": "فشل تحميل بيانات التسوية",
+        "resolved": "تم وضع علامة محلولة",
+        "resolveFailed": "فشل الحل",
+        "ignored": "تم وضع علامة متجاهَلة",
+        "ignoreFailed": "فشل التجاهل",
+        "noteMin5": "يجب أن تكون الملاحظة 5 أحرف على الأقل",
+        "escalated": "تم التصعيد إلى المسؤول",
+        "escalateFailed": "فشل التصعيد",
+        "noteMin20": "يجب أن تكون ملاحظة التصعيد 20 حرفًا على الأقل"
+      }
+    },
     "auditLog": {
       "title": "سجل المراجعة",
       "subtitle": "سجل غير قابل للتعديل لجميع الأحداث المالية — متوافق مع المركز الوطني للتعلم الإلكتروني",

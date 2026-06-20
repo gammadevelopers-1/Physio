@@ -11,6 +11,7 @@ import {
   payments,
   paymentReceipts,
   reconciliationFindings,
+  reconciliationEscalations,
   reconciliationScans,
   users,
   courses,
@@ -785,11 +786,26 @@ export class ReconciliationService {
         userName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
         userEmail: users.email,
         courseTitle: courses.title,
+        // Linked escalation context. We always join (regardless of finding
+        // status) so finance can see admin's note even after a finding
+        // has been sent back and is technically 'unresolved' again. The
+        // pointer is set by EscalationsService and survives sendBack via
+        // keepEscalationPointer=true (E.1 bug fix).
+        escalationId: reconciliationEscalations.id,
+        escalationStatus: reconciliationEscalations.status,
+        escalationActionTaken: reconciliationEscalations.actionTaken,
+        escalationResolutionNote: reconciliationEscalations.resolutionNote,
+        escalationResolvedAt: reconciliationEscalations.resolvedAt,
+        escalationResolvedByName: sql<string>`(SELECT CONCAT(first_name, ' ', last_name) FROM users WHERE id = ${reconciliationEscalations.resolvedBy})`,
       })
       .from(reconciliationFindings)
       .leftJoin(payments, eq(payments.id, reconciliationFindings.paymentId))
       .leftJoin(users, eq(users.id, payments.userId))
       .leftJoin(courses, eq(courses.id, payments.courseId))
+      .leftJoin(
+        reconciliationEscalations,
+        eq(reconciliationEscalations.id, reconciliationFindings.escalationId),
+      )
       .where(whereExpr)
       .orderBy(desc(reconciliationFindings.createdAt))
       .limit(limit)

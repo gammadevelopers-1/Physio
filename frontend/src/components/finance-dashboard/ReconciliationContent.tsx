@@ -15,6 +15,7 @@ import {
   Info,
   Send,
   ShieldAlert,
+  Undo2,
 } from "lucide-react";
 import { toast } from "sonner";
 import FinanceSidebar from "./FinanceSidebar";
@@ -40,39 +41,12 @@ type ScanGateway = Exclude<ReconciliationGateway, "all">;
 const STATUS_TABS: StatusTab[] = ["unresolved", "escalated", "resolved", "ignored", "all"];
 
 // Gateways available in the "Run scan" picker. "all" is offered as a separate
-// button below since semantically it's a different operation.
-const SCAN_GATEWAYS: { key: ScanGateway; label: string; tooltip?: string }[] = [
-  { key: "moyasar", label: "Moyasar" },
-  {
-    key: "tamara",
-    label: "Tamara",
-    tooltip:
-      "Webhook-recovery sweep only — Tamara's list-orders endpoint isn't enabled on our account, so this re-fetches each local Tamara payment to catch missed webhooks.",
-  },
-  {
-    key: "tabby",
-    label: "Tabby",
-    tooltip:
-      "Webhook-recovery sweep — Tabby has no merchant list API, so this re-fetches each local Tabby payment to catch missed webhooks.",
-  },
-  {
-    key: "bank_transfer",
-    label: "Bank Transfer",
-    tooltip:
-      "Internal consistency check — flags stuck approvals (>7d), orphan approved receipts, and PAID rows missing a receipt.",
-  },
-];
+// button below since semantically it's a different operation. Labels +
+// tooltips are looked up via i18n at render time using the key.
+const SCAN_GATEWAY_KEYS: ScanGateway[] = ["moyasar", "tamara", "tabby", "bank_transfer"];
 
-const DRIFT_TYPE_LABEL: Record<ReconciliationDriftType, string> = {
-  missing_local: "Missing locally",
-  missing_gateway: "Missing on gateway",
-  amount_mismatch: "Amount mismatch",
-  status_mismatch: "Status mismatch",
-  stuck_pending: "Stuck pending",
-  stuck_approval: "Stuck approval",
-  orphan_receipt: "Orphan receipt",
-  paid_no_receipt: "Paid, no receipt",
-};
+// Tooltips only fire on these three (Moyasar is the one without a quirk).
+const GATEWAYS_WITH_TOOLTIP = new Set<ScanGateway>(["tamara", "tabby", "bank_transfer"]);
 
 const DRIFT_TYPE_PILL: Record<ReconciliationDriftType, string> = {
   missing_local: "bg-[#FEE2E2] text-[#B91C1C]",
@@ -83,13 +57,6 @@ const DRIFT_TYPE_PILL: Record<ReconciliationDriftType, string> = {
   stuck_approval: "bg-[#FCE7F3] text-[#9D174D]",
   orphan_receipt: "bg-[#F3E8FF] text-[#6B21A8]",
   paid_no_receipt: "bg-[#FFE4E6] text-[#9F1239]",
-};
-
-const GATEWAY_LABEL: Record<string, string> = {
-  moyasar: "Moyasar",
-  tamara: "Tamara",
-  tabby: "Tabby",
-  bank_transfer: "Bank Transfer",
 };
 
 // When finance opens the escalate modal we pre-pick the proposedAction and
@@ -120,10 +87,25 @@ function suggestUrgencyForDriftType(driftType: ReconciliationDriftType): Escalat
 }
 
 export default function ReconciliationContent() {
-  const t = useTranslations("financeDashboard");
+  const t = useTranslations("financeDashboard.reconciliationPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
   const profile = useFinanceProfile();
+
+  const gatewayLabel = (g: string) => {
+    try {
+      return t(`gateways.${g}` as never);
+    } catch {
+      return g;
+    }
+  };
+  const driftLabel = (d: ReconciliationDriftType) => {
+    try {
+      return t(`driftTypes.${d}` as never);
+    } catch {
+      return d;
+    }
+  };
 
   const [statusTab, setStatusTab] = useState<StatusTab>("unresolved");
   const [scanGateway, setScanGateway] = useState<ScanGateway>("moyasar");
@@ -161,11 +143,11 @@ export default function ReconciliationContent() {
       setTotal(list.pagination.total);
       setStats(s);
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : "Failed to load reconciliation data");
+      toast.error(err instanceof ApiError ? err.message : t("toasts.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [statusTab, page]);
+  }, [statusTab, page, t]);
 
   useEffect(() => {
     fetchData();
@@ -176,11 +158,14 @@ export default function ReconciliationContent() {
     try {
       const result = await reconciliationApi.runScan({ gateway });
       toast.success(
-        `Scan complete — scanned ${result.recordsScanned} records, found ${result.driftsFound} drifts`,
+        t("toasts.scanCompleteFmt", {
+          records: result.recordsScanned,
+          drifts: result.driftsFound,
+        }),
       );
       fetchData();
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : "Scan failed");
+      toast.error(err instanceof ApiError ? err.message : t("toasts.scanFailed"));
     } finally {
       setScanning(false);
     }
@@ -191,12 +176,12 @@ export default function ReconciliationContent() {
     setActingId(resolveTarget.id);
     try {
       await reconciliationApi.resolve(resolveTarget.id, note.trim() || undefined);
-      toast.success("Finding marked as resolved");
+      toast.success(t("toasts.resolved"));
       setResolveTarget(null);
       setNote("");
       fetchData();
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : "Failed to resolve");
+      toast.error(err instanceof ApiError ? err.message : t("toasts.resolveFailed"));
     } finally {
       setActingId(null);
     }
@@ -205,18 +190,18 @@ export default function ReconciliationContent() {
   const handleIgnore = async () => {
     if (!ignoreTarget) return;
     if (note.trim().length < 5) {
-      toast.error("Note must be at least 5 characters");
+      toast.error(t("toasts.noteMin5"));
       return;
     }
     setActingId(ignoreTarget.id);
     try {
       await reconciliationApi.ignore(ignoreTarget.id, note.trim());
-      toast.success("Finding marked as ignored");
+      toast.success(t("toasts.ignored"));
       setIgnoreTarget(null);
       setNote("");
       fetchData();
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : "Failed to ignore");
+      toast.error(err instanceof ApiError ? err.message : t("toasts.ignoreFailed"));
     } finally {
       setActingId(null);
     }
@@ -225,7 +210,7 @@ export default function ReconciliationContent() {
   const handleEscalate = async () => {
     if (!escalateTarget) return;
     if (escalationNote.trim().length < 20) {
-      toast.error("Escalation note must be at least 20 characters");
+      toast.error(t("toasts.noteMin20"));
       return;
     }
     setActingId(escalateTarget.id);
@@ -235,7 +220,7 @@ export default function ReconciliationContent() {
         proposedAction: escalationAction,
         urgency: escalationUrgency,
       });
-      toast.success("Escalated to admin");
+      toast.success(t("toasts.escalated"));
       setEscalateTarget(null);
       setEscalationNote("");
       setEscalationAction("enroll");
@@ -266,10 +251,10 @@ export default function ReconciliationContent() {
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-[var(--on-surface-default)] flex items-center gap-2">
                     <Scale className="w-6 h-6 text-[var(--color-primary)]" />
-                    Reconciliation
+                    {t("title")}
                   </h1>
                   <p className="text-sm text-[var(--on-surface-variant)] mt-1">
-                    Drift between our payment records and the gateway&apos;s own data
+                    {t("subtitle")}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -279,7 +264,7 @@ export default function ReconciliationContent() {
                     className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-60"
                   >
                     <RefreshCw className="w-4 h-4" />
-                    Refresh
+                    {t("refresh")}
                   </button>
                   <button
                     onClick={() => handleScan("all")}
@@ -291,7 +276,7 @@ export default function ReconciliationContent() {
                     ) : (
                       <Scale className="w-4 h-4" />
                     )}
-                    {scanning ? "Scanning…" : "Scan all gateways"}
+                    {scanning ? t("scanning") : t("scanAllGateways")}
                   </button>
                 </div>
               </div>
@@ -301,26 +286,26 @@ export default function ReconciliationContent() {
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
-                      Scan a single gateway:
+                      {t("scanASingleGateway")}
                     </span>
-                    {SCAN_GATEWAYS.map((g) => (
+                    {SCAN_GATEWAY_KEYS.map((key) => (
                       <button
-                        key={g.key}
-                        onClick={() => setScanGateway(g.key)}
+                        key={key}
+                        onClick={() => setScanGateway(key)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                          scanGateway === g.key
+                          scanGateway === key
                             ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]"
                             : "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
                         }`}
                       >
-                        {g.label}
-                        {g.tooltip && (
+                        {gatewayLabel(key)}
+                        {GATEWAYS_WITH_TOOLTIP.has(key) && (
                           <span className="relative group/tip">
                             <Info className="w-3.5 h-3.5 opacity-70" />
                             <span
                               className={`pointer-events-none absolute z-10 hidden group-hover/tip:block top-full mt-1 ${isRTL ? "right-0" : "left-0"} w-64 p-2 bg-[var(--color-text-primary)] text-white text-[11px] rounded shadow-lg normal-case font-normal`}
                             >
-                              {g.tooltip}
+                              {t(`gatewayTooltips.${key}` as never)}
                             </span>
                           </span>
                         )}
@@ -337,7 +322,7 @@ export default function ReconciliationContent() {
                     ) : (
                       <Scale className="w-3.5 h-3.5" />
                     )}
-                    Run {SCAN_GATEWAYS.find((g) => g.key === scanGateway)?.label ?? scanGateway} scan
+                    {t("runGatewayScan", { gateway: gatewayLabel(scanGateway) })}
                   </button>
                 </div>
               </div>
@@ -345,20 +330,20 @@ export default function ReconciliationContent() {
               {/* KPI cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
                 <KpiCard
-                  label="Unresolved"
+                  label={t("kpi.unresolved")}
                   value={stats?.unresolved ?? "—"}
                   emphasis={(stats?.unresolved ?? 0) > 0 ? "danger" : "normal"}
                 />
                 <KpiCard
-                  label="Missing locally"
+                  label={t("kpi.missingLocally")}
                   value={stats?.byDriftType?.missing_local ?? 0}
                 />
                 <KpiCard
-                  label="Missing on gateway"
+                  label={t("kpi.missingOnGateway")}
                   value={stats?.byDriftType?.missing_gateway ?? 0}
                 />
                 <KpiCard
-                  label="Mismatches"
+                  label={t("kpi.mismatches")}
                   value={
                     (stats?.byDriftType?.amount_mismatch ?? 0) +
                     (stats?.byDriftType?.status_mismatch ?? 0)
@@ -370,7 +355,7 @@ export default function ReconciliationContent() {
               {stats?.lastScans && stats.lastScans.length > 0 && (
                 <div className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg p-3 mb-6">
                   <div className="text-xs font-medium text-[var(--color-text-secondary)] mb-2">
-                    Recent scans
+                    {t("recentScans")}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {stats.lastScans.slice(0, 5).map((s) => (
@@ -378,7 +363,7 @@ export default function ReconciliationContent() {
                         key={s.id}
                         className="flex items-center gap-2 px-2 py-1 bg-[var(--color-surface-page)] rounded text-xs"
                       >
-                        <span className="font-medium">{s.gateway}</span>
+                        <span className="font-medium">{gatewayLabel(s.gateway)}</span>
                         <span className="text-[var(--color-text-secondary)]">
                           {new Date(s.startedAt).toLocaleString(locale === "ar" ? "ar-SA" : "en-US")}
                         </span>
@@ -395,7 +380,10 @@ export default function ReconciliationContent() {
                         </span>
                         {s.status === "succeeded" && (
                           <span className="text-[var(--color-text-secondary)]">
-                            {s.recordsScanned} scanned · {s.driftsFound} drifts
+                            {t("scanStats", {
+                              scanned: s.recordsScanned,
+                              drifts: s.driftsFound,
+                            })}
                           </span>
                         )}
                       </div>
@@ -417,13 +405,13 @@ export default function ReconciliationContent() {
                         setStatusTab(key);
                         setPage(1);
                       }}
-                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors capitalize ${
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                         active
                           ? "bg-[var(--color-primary)] text-white"
                           : "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
                       }`}
                     >
-                      {key}
+                      {t(`tabs.${key}` as never)}
                     </button>
                   );
                 })}
@@ -439,12 +427,12 @@ export default function ReconciliationContent() {
                   <div className="flex flex-col items-center justify-center py-16 text-center px-4">
                     <Check className="w-12 h-12 text-[var(--color-text-secondary)] opacity-40 mb-3" />
                     <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                      No findings
+                      {t("empty.title")}
                     </p>
                     <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                       {statusTab === "unresolved"
-                        ? "Everything looks reconciled. Run a scan to check again."
-                        : `No ${statusTab} findings.`}
+                        ? t("empty.unresolvedBody")
+                        : t("empty.otherBody", { status: t(`tabs.${statusTab}` as never) })}
                     </p>
                   </div>
                 ) : (
@@ -452,36 +440,60 @@ export default function ReconciliationContent() {
                     <table className="w-full text-sm">
                       <thead className="bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]">
                         <tr>
-                          <th className="text-left p-3 font-medium">Drift</th>
-                          <th className="text-left p-3 font-medium">Gateway</th>
-                          <th className="text-left p-3 font-medium">Charge / Payment ID</th>
-                          <th className="text-left p-3 font-medium">Customer</th>
-                          <th className="text-left p-3 font-medium">Detected</th>
-                          <th className="text-right p-3 font-medium">Actions</th>
+                          <th className={`${isRTL ? "text-right" : "text-left"} p-3 font-medium`}>{t("table.drift")}</th>
+                          <th className={`${isRTL ? "text-right" : "text-left"} p-3 font-medium`}>{t("table.gateway")}</th>
+                          <th className={`${isRTL ? "text-right" : "text-left"} p-3 font-medium`}>{t("table.chargeOrPaymentId")}</th>
+                          <th className={`${isRTL ? "text-right" : "text-left"} p-3 font-medium`}>{t("table.customer")}</th>
+                          <th className={`${isRTL ? "text-right" : "text-left"} p-3 font-medium`}>{t("table.detected")}</th>
+                          <th className={`${isRTL ? "text-left" : "text-right"} p-3 font-medium`}>{t("table.actions")}</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {items.map((f) => (
+                        {items.map((f) => {
+                          // A finding is "sent back" when admin returned the
+                          // escalation to finance with a note. Surface that
+                          // note inline so finance knows what admin needs
+                          // instead of just seeing the row reappear silently.
+                          const sentBack =
+                            f.status === "unresolved" &&
+                            f.escalationStatus === "sent_back" &&
+                            !!f.escalationResolutionNote;
+                          return (
                           <tr
                             key={f.id}
-                            className="border-t border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
+                            className={`border-t border-[var(--color-border)] hover:bg-[var(--color-surface-page)] ${
+                              sentBack ? "bg-violet-50/30" : ""
+                            }`}
                           >
-                            <td className="p-3">
+                            <td className="p-3 align-top">
                               <span
                                 className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${
                                   DRIFT_TYPE_PILL[f.driftType] ||
                                   "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]"
                                 }`}
                               >
-                                {DRIFT_TYPE_LABEL[f.driftType] || f.driftType}
+                                {driftLabel(f.driftType)}
                               </span>
+                              {sentBack && (
+                                <div className="mt-2 max-w-[260px] bg-violet-50 border border-violet-200 rounded-md p-2 text-[11px] text-violet-900 leading-snug">
+                                  <div className="flex items-center gap-1 font-semibold mb-1">
+                                    <Undo2 className="w-3 h-3" />
+                                    {t("sentBack.label", {
+                                      name: f.escalationResolvedByName || "admin",
+                                    })}
+                                  </div>
+                                  <div className="whitespace-pre-wrap break-words text-violet-800">
+                                    {f.escalationResolutionNote}
+                                  </div>
+                                </div>
+                              )}
                             </td>
-                            <td className="p-3">{GATEWAY_LABEL[f.gateway] || f.gateway}</td>
-                            <td className="p-3 font-mono text-xs">
+                            <td className="p-3 align-top">{gatewayLabel(f.gateway)}</td>
+                            <td className="p-3 align-top font-mono text-xs">
                               {f.gatewayChargeId ||
                                 (f.paymentId ? f.paymentId.slice(0, 12) + "…" : "—")}
                             </td>
-                            <td className="p-3">
+                            <td className="p-3 align-top">
                               {f.userName || f.userEmail || "—"}
                               {f.courseTitle && (
                                 <div className="text-xs text-[var(--color-text-secondary)]">
@@ -489,17 +501,17 @@ export default function ReconciliationContent() {
                                 </div>
                               )}
                             </td>
-                            <td className="p-3 text-[var(--color-text-secondary)]">
+                            <td className="p-3 align-top text-[var(--color-text-secondary)]">
                               {new Date(f.createdAt).toLocaleString(
                                 locale === "ar" ? "ar-SA" : "en-US",
                               )}
                             </td>
-                            <td className="p-3 text-right">
-                              <div className="flex justify-end gap-1">
+                            <td className={`p-3 align-top ${isRTL ? "text-left" : "text-right"}`}>
+                              <div className={`flex gap-1 ${isRTL ? "justify-start" : "justify-end"}`}>
                                 <button
                                   onClick={() => setViewTarget(f)}
                                   className="p-1.5 rounded hover:bg-[var(--color-surface-card)] text-[var(--color-text-secondary)]"
-                                  aria-label="View details"
+                                  aria-label={t("actions.view")}
                                 >
                                   <Eye className="w-4 h-4" />
                                 </button>
@@ -513,7 +525,7 @@ export default function ReconciliationContent() {
                                       disabled={actingId === f.id}
                                       className="px-2 py-1 text-xs font-medium text-emerald-700 border border-emerald-300 rounded hover:bg-emerald-50"
                                     >
-                                      Resolve
+                                      {t("actions.resolve")}
                                     </button>
                                     <button
                                       onClick={() => {
@@ -523,7 +535,7 @@ export default function ReconciliationContent() {
                                       disabled={actingId === f.id}
                                       className="px-2 py-1 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded hover:bg-[var(--color-surface-page)]"
                                     >
-                                      Ignore
+                                      {t("actions.ignore")}
                                     </button>
                                     <button
                                       onClick={() => {
@@ -534,23 +546,23 @@ export default function ReconciliationContent() {
                                       }}
                                       disabled={actingId === f.id}
                                       className="px-2 py-1 text-xs font-medium text-violet-700 border border-violet-300 rounded hover:bg-violet-50 flex items-center gap-1"
-                                      title="Escalate to admin if you can't resolve this yourself"
                                     >
                                       <Send className="w-3 h-3" />
-                                      Escalate
+                                      {t("actions.escalate")}
                                     </button>
                                   </>
                                 )}
                                 {f.status === "escalated" && (
                                   <span className="px-2 py-1 text-xs font-medium text-violet-700 bg-violet-50 rounded flex items-center gap-1">
                                     <ShieldAlert className="w-3 h-3" />
-                                    Escalated
+                                    {t("escalatedPill")}
                                   </span>
                                 )}
                               </div>
                             </td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -559,7 +571,7 @@ export default function ReconciliationContent() {
                 {totalPages > 1 && (
                   <div className="flex items-center justify-between p-3 border-t border-[var(--color-border)]">
                     <div className="text-xs text-[var(--color-text-secondary)]">
-                      {total} findings · page {page} of {totalPages}
+                      {t("pagination.summary", { total, page, totalPages })}
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -588,19 +600,20 @@ export default function ReconciliationContent() {
       {/* Resolve modal */}
       {resolveTarget && (
         <Modal
-          title="Mark as resolved"
-          subtitle="The drift has been addressed. The note (optional) is for audit history."
+          title={t("resolveModal.title")}
+          subtitle={t("resolveModal.subtitle")}
           onClose={() => {
             setResolveTarget(null);
             setNote("");
           }}
           onConfirm={handleResolve}
-          confirmLabel="Mark resolved"
+          confirmLabel={t("resolveModal.confirm")}
+          cancelLabel={t("escalateModal.cancel")}
           confirmClass="bg-emerald-600 hover:bg-emerald-700"
           icon={<Check className="w-5 h-5 text-emerald-600" />}
           note={note}
           setNote={setNote}
-          notePlaceholder="Optional — e.g. 'Resynced from Moyasar manually'"
+          notePlaceholder={t("resolveModal.notePlaceholder")}
           loading={actingId === resolveTarget.id}
         />
       )}
@@ -608,19 +621,20 @@ export default function ReconciliationContent() {
       {/* Ignore modal */}
       {ignoreTarget && (
         <Modal
-          title="Ignore this finding"
-          subtitle="Use for test data, known abandoned attempts, or other non-actionable drift. Note is required."
+          title={t("ignoreModal.title")}
+          subtitle={t("ignoreModal.subtitle")}
           onClose={() => {
             setIgnoreTarget(null);
             setNote("");
           }}
           onConfirm={handleIgnore}
-          confirmLabel="Ignore"
+          confirmLabel={t("ignoreModal.confirm")}
+          cancelLabel={t("escalateModal.cancel")}
           confirmClass="bg-[var(--color-text-secondary)] hover:opacity-90"
           icon={<X className="w-5 h-5 text-[var(--color-text-secondary)]" />}
           note={note}
           setNote={setNote}
-          notePlaceholder="Required — explain why this finding doesn't need action (≥5 chars)"
+          notePlaceholder={t("ignoreModal.notePlaceholder")}
           loading={actingId === ignoreTarget.id}
         />
       )}
@@ -638,9 +652,9 @@ export default function ReconciliationContent() {
             <div className="flex items-start gap-3 mb-4">
               <ShieldAlert className="w-5 h-5 text-violet-600 mt-0.5" />
               <div className="flex-1">
-                <h3 className="text-base font-semibold">Escalate to admin</h3>
+                <h3 className="text-base font-semibold">{t("escalateModal.title")}</h3>
                 <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-                  Admin will see this on their finance dashboard with the full context. Use this when the fix needs a privilege you don&apos;t have — manual enrollment, refund, or investigation.
+                  {t("escalateModal.subtitle")}
                 </p>
               </div>
             </div>
@@ -648,30 +662,30 @@ export default function ReconciliationContent() {
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
-                  Proposed action
+                  {t("escalateModal.proposedAction")}
                 </label>
                 <select
                   value={escalationAction}
                   onChange={(e) => setEscalationAction(e.target.value as EscalationProposedAction)}
                   className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                 >
-                  <option value="enroll">Manually enroll the student</option>
-                  <option value="refund">Issue refund to student</option>
-                  <option value="investigate">Investigate (possible fraud / data issue)</option>
-                  <option value="other">Other (explain in note)</option>
+                  <option value="enroll">{t("escalateModal.actionEnroll")}</option>
+                  <option value="refund">{t("escalateModal.actionRefund")}</option>
+                  <option value="investigate">{t("escalateModal.actionInvestigate")}</option>
+                  <option value="other">{t("escalateModal.actionOther")}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
-                  Urgency
+                  {t("escalateModal.urgency")}
                 </label>
                 <div className="flex gap-2">
                   {(["low", "normal", "high"] as EscalationUrgency[]).map((u) => (
                     <button
                       key={u}
                       onClick={() => setEscalationUrgency(u)}
-                      className={`flex-1 py-2 text-xs font-medium rounded-lg border capitalize transition-colors ${
+                      className={`flex-1 py-2 text-xs font-medium rounded-lg border transition-colors ${
                         escalationUrgency === u
                           ? u === "high"
                             ? "bg-red-50 border-red-300 text-red-700"
@@ -681,7 +695,7 @@ export default function ReconciliationContent() {
                           : "bg-[var(--color-surface-card)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                       }`}
                     >
-                      {u}
+                      {t(`escalateModal.urgency${u.charAt(0).toUpperCase() + u.slice(1)}` as never)}
                     </button>
                   ))}
                 </div>
@@ -689,28 +703,28 @@ export default function ReconciliationContent() {
 
               <div>
                 <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
-                  Note for admin <span className="text-red-500">*</span>
+                  {t("escalateModal.noteLabel")} <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={escalationNote}
                   onChange={(e) => setEscalationNote(e.target.value)}
                   rows={4}
-                  placeholder="Required (≥20 chars) — explain what you think happened and what admin should do."
+                  placeholder={t("escalateModal.notePlaceholder")}
                   className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                 />
                 <div className="text-xs text-[var(--color-text-secondary)] mt-1">
-                  {escalationNote.length}/20 minimum
+                  {t("escalateModal.noteMinimum", { count: escalationNote.length })}
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 mt-4">
+            <div className={`flex gap-2 mt-4 ${isRTL ? "justify-start" : "justify-end"}`}>
               <button
                 onClick={() => setEscalateTarget(null)}
                 disabled={actingId === escalateTarget.id}
                 className="px-4 py-2 text-sm font-medium border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] disabled:opacity-60"
               >
-                Cancel
+                {t("escalateModal.cancel")}
               </button>
               <button
                 onClick={handleEscalate}
@@ -719,7 +733,7 @@ export default function ReconciliationContent() {
               >
                 {actingId === escalateTarget.id && <Loader2 className="w-4 h-4 animate-spin" />}
                 <Send className="w-4 h-4" />
-                Escalate to admin
+                {t("escalateModal.submit")}
               </button>
             </div>
           </div>
@@ -739,7 +753,7 @@ export default function ReconciliationContent() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-semibold flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-amber-600" />
-                Finding details
+                {t("view.title")}
               </h3>
               <button
                 onClick={() => setViewTarget(null)}
@@ -748,52 +762,155 @@ export default function ReconciliationContent() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="space-y-3 text-sm">
-              <DetailRow
-                label="Drift type"
-                value={DRIFT_TYPE_LABEL[viewTarget.driftType] || viewTarget.driftType}
-              />
-              <DetailRow
-                label="Gateway"
-                value={GATEWAY_LABEL[viewTarget.gateway] || viewTarget.gateway}
-              />
-              <DetailRow label="Status" value={viewTarget.status} />
-              <DetailRow
-                label="Gateway charge ID"
-                value={viewTarget.gatewayChargeId || "—"}
-                mono
-              />
-              <DetailRow
-                label="Local payment ID"
-                value={viewTarget.paymentId || "—"}
-                mono
-              />
-              <DetailRow label="Customer" value={viewTarget.userName || viewTarget.userEmail || "—"} />
-              <DetailRow label="Course" value={viewTarget.courseTitle || "—"} />
-              <DetailRow
-                label="Detected"
-                value={new Date(viewTarget.createdAt).toLocaleString(
-                  locale === "ar" ? "ar-SA" : "en-US",
+            <div className="space-y-4 text-sm">
+              {/* Top strip — drift type + status as pills */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-medium ${
+                    DRIFT_TYPE_PILL[viewTarget.driftType] ||
+                    "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]"
+                  }`}
+                >
+                  {driftLabel(viewTarget.driftType)}
+                </span>
+                <span className="inline-flex px-2.5 py-1 rounded-full text-[11px] font-medium bg-[var(--color-surface-page)] text-[var(--color-text-primary)] border border-[var(--color-border)]">
+                  {gatewayLabel(viewTarget.gateway)}
+                </span>
+                <span className="inline-flex px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700">
+                  {(() => {
+                    try {
+                      return t(`tabs.${viewTarget.status}` as never);
+                    } catch {
+                      return viewTarget.status;
+                    }
+                  })()}
+                </span>
+                <span className={`text-[11px] text-[var(--color-text-secondary)] ${isRTL ? "mr-auto" : "ml-auto"}`}>
+                  {t("view.detectedPrefix")}{" "}
+                  {new Date(viewTarget.createdAt).toLocaleString(
+                    locale === "ar" ? "ar-SA" : "en-US",
+                  )}
+                </span>
+              </div>
+
+              {/* Customer + course card */}
+              <DetailCard title={t("view.customerAndCourse")}>
+                <DetailField
+                  label={t("view.customer")}
+                  value={viewTarget.userName || viewTarget.userEmail || "—"}
+                />
+                {viewTarget.userEmail && viewTarget.userName && (
+                  <DetailField label={t("view.email")} value={viewTarget.userEmail} />
                 )}
-              />
-              <div>
-                <div className="text-xs text-[var(--color-text-secondary)] font-medium mb-1">
-                  Our value
+                <DetailField label={t("view.course")} value={viewTarget.courseTitle || "—"} />
+              </DetailCard>
+
+              {/* IDs card — long UUIDs get their own line so they don't wrap badly */}
+              <DetailCard title={t("view.paymentReferences")}>
+                <DetailField
+                  label={t("view.gatewayChargeId")}
+                  value={viewTarget.gatewayChargeId || "—"}
+                  mono
+                  stack
+                />
+                <DetailField
+                  label={t("view.localPaymentId")}
+                  value={viewTarget.paymentId || "—"}
+                  mono
+                  stack
+                />
+              </DetailCard>
+
+              {/* Drift evidence — side-by-side when both present */}
+              <DetailCard title={t("view.driftEvidence")}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)] font-semibold mb-1">
+                      {t("view.ourValue")}
+                    </div>
+                    <pre className="bg-[var(--color-surface-page)] p-2.5 rounded text-[11px] overflow-x-auto font-mono leading-relaxed border border-[var(--color-border)]" dir="ltr">
+                      {viewTarget.ourValue
+                        ? JSON.stringify(viewTarget.ourValue, null, 2)
+                        : "null"}
+                    </pre>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)] font-semibold mb-1">
+                      {t("view.gatewayValue")}
+                    </div>
+                    <pre className="bg-[var(--color-surface-page)] p-2.5 rounded text-[11px] overflow-x-auto font-mono leading-relaxed border border-[var(--color-border)]" dir="ltr">
+                      {viewTarget.gatewayValue
+                        ? JSON.stringify(viewTarget.gatewayValue, null, 2)
+                        : "null"}
+                    </pre>
+                  </div>
                 </div>
-                <pre className="bg-[var(--color-surface-page)] p-2 rounded text-xs overflow-x-auto">
-                  {JSON.stringify(viewTarget.ourValue, null, 2) || "null"}
-                </pre>
-              </div>
-              <div>
-                <div className="text-xs text-[var(--color-text-secondary)] font-medium mb-1">
-                  Gateway value
-                </div>
-                <pre className="bg-[var(--color-surface-page)] p-2 rounded text-xs overflow-x-auto">
-                  {JSON.stringify(viewTarget.gatewayValue, null, 2) || "null"}
-                </pre>
-              </div>
+              </DetailCard>
+
+              {/* Resolution note (when finance resolved/ignored) */}
               {viewTarget.resolutionNote && (
-                <DetailRow label="Resolution note" value={viewTarget.resolutionNote} />
+                <DetailCard title={t("view.resolutionNote")}>
+                  <p className="text-sm text-[var(--color-text-primary)] whitespace-pre-wrap break-words">
+                    {viewTarget.resolutionNote}
+                  </p>
+                </DetailCard>
+              )}
+
+              {/* Escalation history — visible whenever the finding has ever
+                  been escalated. Headline + colour adapts to current state. */}
+              {viewTarget.escalationId && (
+                <div
+                  className={`rounded-lg border p-3 ${
+                    viewTarget.escalationStatus === "sent_back"
+                      ? "bg-violet-50 border-violet-200"
+                      : viewTarget.escalationStatus === "resolved"
+                        ? "bg-emerald-50 border-emerald-200"
+                        : viewTarget.escalationStatus === "declined"
+                          ? "bg-slate-50 border-slate-200"
+                          : "bg-blue-50 border-blue-200"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    {viewTarget.escalationStatus === "sent_back" ? (
+                      <Undo2 className="w-4 h-4 text-violet-700" />
+                    ) : (
+                      <ShieldAlert
+                        className={`w-4 h-4 ${
+                          viewTarget.escalationStatus === "resolved"
+                            ? "text-emerald-700"
+                            : viewTarget.escalationStatus === "declined"
+                              ? "text-slate-700"
+                              : "text-blue-700"
+                        }`}
+                      />
+                    )}
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-primary)]">
+                      {viewTarget.escalationStatus === "sent_back"
+                        ? t("view.escalation.sentBack")
+                        : viewTarget.escalationStatus === "resolved"
+                          ? t("view.escalation.resolved", {
+                              action:
+                                (viewTarget.escalationActionTaken || "").replace(/_/g, " ") ||
+                                "action",
+                            })
+                          : viewTarget.escalationStatus === "declined"
+                            ? t("view.escalation.declined")
+                            : t("view.escalation.current")}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-[var(--color-text-secondary)] mb-2">
+                    {viewTarget.escalationResolvedByName || "admin"}
+                    {viewTarget.escalationResolvedAt &&
+                      ` · ${new Date(viewTarget.escalationResolvedAt).toLocaleString(
+                        locale === "ar" ? "ar-SA" : "en-US",
+                      )}`}
+                  </div>
+                  {viewTarget.escalationResolutionNote && (
+                    <p className="text-sm text-[var(--color-text-primary)] whitespace-pre-wrap break-words">
+                      {viewTarget.escalationResolutionNote}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -828,13 +945,68 @@ function KpiCard({
   );
 }
 
-function DetailRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+/**
+ * Card wrapper for a logical section in the Finding details modal — gives
+ * each group its own labelled box so the modal reads as a quick scan
+ * instead of a soup of label/value pairs.
+ */
+function DetailCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex justify-between gap-3">
-      <dt className="text-[var(--color-text-secondary)] font-medium flex-shrink-0">{label}</dt>
+    <div className="bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg p-3">
+      <div className="text-[11px] uppercase tracking-wide text-[var(--color-text-secondary)] font-semibold mb-2">
+        {title}
+      </div>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
+/**
+ * Label/value field that auto-stacks vertical when `stack` is on (for
+ * long UUIDs) or when content is too wide to fit beside the label. Mono
+ * styling for IDs.
+ */
+function DetailField({
+  label,
+  value,
+  mono,
+  stack,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  stack?: boolean;
+}) {
+  if (stack) {
+    return (
+      <div>
+        <div className="text-[11px] text-[var(--color-text-secondary)] mb-0.5">
+          {label}
+        </div>
+        <div
+          className={`text-[var(--color-text-primary)] break-all ${
+            mono ? "font-mono text-[12px]" : "text-sm"
+          }`}
+        >
+          {value}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="flex justify-between gap-3 items-baseline">
+      <dt className="text-[12px] text-[var(--color-text-secondary)] flex-shrink-0">
+        {label}
+      </dt>
       <dd
-        className={`text-[var(--color-text-primary)] text-right break-all ${
-          mono ? "font-mono text-xs" : ""
+        className={`text-[var(--color-text-primary)] text-right break-words min-w-0 ${
+          mono ? "font-mono text-xs" : "text-sm"
         }`}
       >
         {value}
@@ -849,6 +1021,7 @@ function Modal({
   onClose,
   onConfirm,
   confirmLabel,
+  cancelLabel,
   confirmClass,
   icon,
   note,
@@ -861,6 +1034,7 @@ function Modal({
   onClose: () => void;
   onConfirm: () => void;
   confirmLabel: string;
+  cancelLabel?: string;
   confirmClass: string;
   icon: React.ReactNode;
   note: string;
@@ -897,7 +1071,7 @@ function Modal({
             disabled={loading}
             className="px-4 py-2 text-sm font-medium border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] disabled:opacity-60"
           >
-            Cancel
+            {cancelLabel || "Cancel"}
           </button>
           <button
             onClick={onConfirm}

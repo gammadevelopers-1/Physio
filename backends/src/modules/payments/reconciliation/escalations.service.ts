@@ -6,12 +6,13 @@ import {
   ConflictException,
   ForbiddenException,
 } from '@nestjs/common';
-import { eq, and, desc, sql, inArray, or } from 'drizzle-orm';
+import { eq, and, desc, sql, inArray, or, isNull } from 'drizzle-orm';
 import { db } from '../../../database';
 import {
   reconciliationFindings,
   reconciliationEscalations,
   payments,
+  paymentReceipts,
   refunds,
   users,
   courses,
@@ -25,11 +26,13 @@ import {
   PAYMENT_STATUS,
   PAYMENT_METHOD,
   REFUND_STATUS,
+  RECEIPT_REVIEW_STATUS,
 } from '../../../database/schema';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { EmailService } from '../../email/email.service';
 import { EnrollmentsService } from '../../enrollments/enrollments.service';
 import { RefundService } from '../services/refund.service';
+import { InvoiceService } from '../services/invoice.service';
 import { GatewayFactory } from '../gateways/gateway.factory';
 import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
 
@@ -74,6 +77,7 @@ export class EscalationsService {
     private readonly emailService: EmailService,
     private readonly enrollmentsService: EnrollmentsService,
     private readonly refundService: RefundService,
+    private readonly invoiceService: InvoiceService,
     private readonly gatewayFactory: GatewayFactory,
   ) {}
 
@@ -471,9 +475,12 @@ export class EscalationsService {
       toStatus: ESCALATION_STATUS.SENT_BACK,
       actionTaken: ESCALATION_ACTION_TAKEN.SENT_BACK,
       note: trimmed,
-      // Send back unlocks the finding so finance can act again.
+      // Send back unlocks the finding so finance can act again, but we
+      // KEEP the escalation pointer so finance can see admin's note +
+      // who sent it back. listFindings joins the latest escalation when
+      // escalationId is present, regardless of the finding's own status.
       findingStatus: RECONCILIATION_STATUS.UNRESOLVED,
-      keepEscalationPointer: false,
+      keepEscalationPointer: true,
     });
 
     await this.auditLogService.log({
@@ -646,6 +653,8 @@ export class EscalationsService {
     findingId: string;
     enrollmentId: string;
     paymentCreated: boolean;
+    paymentFlipped: boolean;
+    receiptApproved: boolean;
     paymentId: string | null;
   }> {
     const note = (opts.note || '').trim();
@@ -761,12 +770,89 @@ export class EscalationsService {
       throw err;
     }
 
-    // 5. Transactionally resolve the escalation + finding + link the new
-    //    payment to the finding (for traceability). At this point the
-    //    student is enrolled — if this tx fails we log + re-throw, but the
-    //    real-world state (student has access) is correct.
+    // 5. Transactionally:
+    //   a. Flip the existing payment to PAID if it's currently non-terminal
+    //      (stuck_approval, orphan_receipt, stuck_pending → the payment
+    //      row already exists but in a stale state). Without this step
+    //      the Bank Transfers + Payments pages still show "pending"
+    //      after admin enrolls, which is the whole point of the
+    //      escalation — finance assumes "enrolled = payment good".
+    //   b. Mark the most-recent non-replaced pending receipt as APPROVED
+    //      (bank-transfer only) so the Bank Transfers review queue stops
+    //      showing it.
+    //   c. Resolve the escalation + finding + link the payment to the
+    //      finding for traceability.
+    //
+    // Race + safety:
+    //   - Payment update is conditional on status != PAID, so a concurrent
+    //     normal approval doesn't get clobbered.
+    //   - Receipt update is conditional on reviewStatus = PENDING for the
+    //     same reason.
+    //   - If this tx fails we log + re-throw; the enrollment already
+    //     succeeded so the student still has access. Admin can re-resolve
+    //     manually next pass.
+    let paymentFlipped = false;
+    let receiptApproved = false;
     try {
       await db.transaction(async (tx) => {
+        if (paymentId && !paymentCreated) {
+          // Only for the existing-payment case — created payments were
+          // already inserted as PAID in step 3 above.
+          const [existing] = await tx
+            .select({ status: payments.status, gateway: payments.gateway })
+            .from(payments)
+            .where(eq(payments.id, paymentId))
+            .limit(1);
+
+          const terminalGood = [
+            PAYMENT_STATUS.PAID,
+            PAYMENT_STATUS.REFUNDED,
+            PAYMENT_STATUS.PARTIALLY_REFUNDED,
+          ] as string[];
+
+          if (existing && !terminalGood.includes(existing.status)) {
+            const flipped = await tx
+              .update(payments)
+              .set({
+                status: PAYMENT_STATUS.PAID,
+                paidAt: new Date(),
+                updatedAt: new Date(),
+              })
+              .where(
+                and(
+                  eq(payments.id, paymentId),
+                  sql`${payments.status} != ${PAYMENT_STATUS.PAID}`,
+                ),
+              )
+              .returning({ id: payments.id });
+            paymentFlipped = flipped.length > 0;
+
+            // Bank-transfer side-effect: a pending receipt linked to this
+            // payment needs to flip to approved so it disappears from
+            // finance's review queue. Other gateways don't have receipts.
+            if (paymentFlipped && existing.gateway === 'bank_transfer') {
+              const receiptFlip = await tx
+                .update(paymentReceipts)
+                .set({
+                  reviewStatus: RECEIPT_REVIEW_STATUS.APPROVED,
+                  reviewedBy: user.id,
+                  reviewedAt: new Date(),
+                  financeInternalNote: `Approved via reconciliation escalation by admin: ${note}`,
+                  updatedAt: new Date(),
+                })
+                .where(
+                  and(
+                    eq(paymentReceipts.paymentId, paymentId),
+                    eq(paymentReceipts.reviewStatus, RECEIPT_REVIEW_STATUS.PENDING),
+                    isNull(paymentReceipts.replacedById),
+                  ),
+                )
+                .returning({ id: paymentReceipts.id });
+              receiptApproved = receiptFlip.length > 0;
+            }
+          }
+        }
+
         await tx
           .update(reconciliationEscalations)
           .set({
@@ -788,7 +874,7 @@ export class EscalationsService {
             resolutionNote: `Resolved via escalation — enrolled ${student.email} in "${course.title}". ${note}`,
             resolvedBy: user.id,
             resolvedAt: new Date(),
-            paymentId: paymentId, // link payment we just created
+            paymentId: paymentId, // link payment we just created or had
             updatedAt: new Date(),
           })
           .where(eq(reconciliationFindings.id, escalation.findingId));
@@ -800,6 +886,20 @@ export class EscalationsService {
           `Error: ${(err as Error).message}`,
       );
       throw err;
+    }
+
+    // 5b. Async invoice generation when we just flipped a payment to PAID.
+    //     Fire-and-forget — matches the canonical bank-transfer approval
+    //     pattern. Doesn't block the API response; logs but doesn't throw
+    //     if invoice generation hits an issue.
+    if (paymentFlipped && paymentId) {
+      void this.invoiceService
+        .generateInvoice(paymentId)
+        .catch((e) =>
+          this.logger.error(
+            `Invoice generation failed for escalation-enrolled payment ${paymentId}: ${e.message}`,
+          ),
+        );
     }
 
     await this.auditLogService.log({
@@ -814,6 +914,8 @@ export class EscalationsService {
         enrollmentId,
         paymentId,
         paymentCreated,
+        paymentFlipped,
+        receiptApproved,
         note,
       },
     });
@@ -828,6 +930,8 @@ export class EscalationsService {
       findingId: escalation.findingId,
       enrollmentId,
       paymentCreated,
+      paymentFlipped,
+      receiptApproved,
       paymentId,
     };
   }

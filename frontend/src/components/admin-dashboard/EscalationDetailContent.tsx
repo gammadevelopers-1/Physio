@@ -230,11 +230,12 @@ export default function EscalationDetailContent({ escalationId }: { escalationId
         courseId: enrollCourseId,
         note: enrollNote.trim(),
       });
-      toast.success(
-        result.paymentCreated
-          ? "Enrolled — payment row created + student notified"
-          : "Enrolled — student notified",
-      );
+      const parts = ["Enrolled"];
+      if (result.paymentCreated) parts.push("payment created");
+      else if (result.paymentFlipped) parts.push("payment marked paid");
+      if (result.receiptApproved) parts.push("receipt approved");
+      parts.push("student notified");
+      toast.success(parts.join(" — "));
       setEnrollOpen(false);
       setEnrollStudentId("");
       setEnrollStudentLabel("");

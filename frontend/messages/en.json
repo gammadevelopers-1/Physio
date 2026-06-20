@@ -8636,6 +8636,141 @@
       "laylaNoor": "Layla Noor",
       "omarFahad": "Omar Fahad"
     },
+    "reconciliationPage": {
+      "title": "Reconciliation",
+      "subtitle": "Drift between our payment records and the gateway's own data",
+      "refresh": "Refresh",
+      "scanAllGateways": "Scan all gateways",
+      "scanning": "Scanning…",
+      "scanASingleGateway": "Scan a single gateway:",
+      "runGatewayScan": "Run {gateway} scan",
+      "kpi": {
+        "unresolved": "Unresolved",
+        "missingLocally": "Missing locally",
+        "missingOnGateway": "Missing on gateway",
+        "mismatches": "Mismatches"
+      },
+      "recentScans": "Recent scans",
+      "scanStats": "{scanned} scanned · {drifts} drifts",
+      "tabs": {
+        "unresolved": "Unresolved",
+        "escalated": "Escalated",
+        "resolved": "Resolved",
+        "ignored": "Ignored",
+        "all": "All"
+      },
+      "empty": {
+        "title": "No findings",
+        "unresolvedBody": "Everything looks reconciled. Run a scan to check again.",
+        "otherBody": "No {status} findings."
+      },
+      "table": {
+        "drift": "Drift",
+        "gateway": "Gateway",
+        "chargeOrPaymentId": "Charge / Payment ID",
+        "customer": "Customer",
+        "detected": "Detected",
+        "actions": "Actions"
+      },
+      "actions": {
+        "view": "View details",
+        "resolve": "Resolve",
+        "ignore": "Ignore",
+        "escalate": "Escalate"
+      },
+      "pagination": {
+        "summary": "{total} findings · page {page} of {totalPages}"
+      },
+      "driftTypes": {
+        "missing_local": "Missing locally",
+        "missing_gateway": "Missing on gateway",
+        "amount_mismatch": "Amount mismatch",
+        "status_mismatch": "Status mismatch",
+        "stuck_pending": "Stuck pending",
+        "stuck_approval": "Stuck approval",
+        "orphan_receipt": "Orphan receipt",
+        "paid_no_receipt": "Paid, no receipt"
+      },
+      "gateways": {
+        "moyasar": "Moyasar",
+        "tamara": "Tamara",
+        "tabby": "Tabby",
+        "bank_transfer": "Bank Transfer"
+      },
+      "gatewayTooltips": {
+        "tamara": "Webhook-recovery sweep only — Tamara's list-orders endpoint isn't enabled on our account, so this re-fetches each local Tamara payment to catch missed webhooks.",
+        "tabby": "Webhook-recovery sweep — Tabby has no merchant list API, so this re-fetches each local Tabby payment to catch missed webhooks.",
+        "bank_transfer": "Internal consistency check — flags stuck approvals (>7d), orphan approved receipts, and PAID rows missing a receipt."
+      },
+      "escalatedPill": "Escalated",
+      "sentBack": {
+        "label": "Sent back by {name}"
+      },
+      "escalateModal": {
+        "title": "Escalate to admin",
+        "subtitle": "Admin will see this on their finance dashboard with the full context. Use this when the fix needs a privilege you don't have — manual enrollment, refund, or investigation.",
+        "proposedAction": "Proposed action",
+        "actionEnroll": "Manually enroll the student",
+        "actionRefund": "Issue refund to student",
+        "actionInvestigate": "Investigate (possible fraud / data issue)",
+        "actionOther": "Other (explain in note)",
+        "urgency": "Urgency",
+        "urgencyLow": "low",
+        "urgencyNormal": "normal",
+        "urgencyHigh": "high",
+        "noteLabel": "Note for admin",
+        "notePlaceholder": "Required (≥20 chars) — explain what you think happened and what admin should do.",
+        "noteMinimum": "{count}/20 minimum",
+        "cancel": "Cancel",
+        "submit": "Escalate to admin"
+      },
+      "resolveModal": {
+        "title": "Mark as resolved",
+        "subtitle": "The drift has been addressed. The note (optional) is for audit history.",
+        "notePlaceholder": "Optional — e.g. 'Resynced from Moyasar manually'",
+        "confirm": "Mark resolved"
+      },
+      "ignoreModal": {
+        "title": "Ignore this finding",
+        "subtitle": "Use for test data, known abandoned attempts, or other non-actionable drift. Note is required.",
+        "notePlaceholder": "Required — explain why this finding doesn't need action (≥5 chars)",
+        "confirm": "Ignore"
+      },
+      "view": {
+        "title": "Finding details",
+        "detectedPrefix": "Detected",
+        "customerAndCourse": "Customer & course",
+        "customer": "Customer",
+        "email": "Email",
+        "course": "Course",
+        "paymentReferences": "Payment references",
+        "gatewayChargeId": "Gateway charge ID",
+        "localPaymentId": "Local payment ID",
+        "driftEvidence": "Drift evidence",
+        "ourValue": "Our value",
+        "gatewayValue": "Gateway value",
+        "resolutionNote": "Resolution note",
+        "escalation": {
+          "sentBack": "Sent back from admin",
+          "resolved": "Resolved by admin ({action})",
+          "declined": "Closed by admin without action",
+          "current": "Currently escalated"
+        }
+      },
+      "toasts": {
+        "scanCompleteFmt": "Scan complete — scanned {records} records, found {drifts} drifts",
+        "scanFailed": "Scan failed",
+        "loadFailed": "Failed to load reconciliation data",
+        "resolved": "Finding marked as resolved",
+        "resolveFailed": "Failed to resolve",
+        "ignored": "Finding marked as ignored",
+        "ignoreFailed": "Failed to ignore",
+        "noteMin5": "Note must be at least 5 characters",
+        "escalated": "Escalated to admin",
+        "escalateFailed": "Failed to escalate",
+        "noteMin20": "Escalation note must be at least 20 characters"
+      }
+    },
     "auditLog": {
       "title": "Audit Trail",
       "subtitle": "Immutable log of all financial events — NELC compliant",

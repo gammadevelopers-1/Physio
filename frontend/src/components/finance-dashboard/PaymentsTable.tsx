@@ -181,7 +181,7 @@ const PaymentsTable = ({
       {!loading && totalCount > 0 && (
         <div className={`flex items-center justify-between px-4 py-3 border-t border-[var(--color-border-subtle)] ${isRTL ? "flex-row-reverse" : ""}`}>
           <p className="text-xs text-[var(--color-text-secondary)]">
-            {t("paymentsTable.pagination", { page, totalPages, total: totalCount })}
+            {t("paymentsTable.pagination.pageOf", { page, totalPages, total: totalCount })}
           </p>
           <div className={`flex items-center gap-1 ${isRTL ? "flex-row-reverse" : ""}`}>
             <button

@@ -8147,7 +8147,12 @@
           "other": "أخرى"
         }
       },
-      "pagination": "صفحة {page} من {totalPages} · {total} إجمالي",
+      "pagination": {
+        "showing": "عرض {from}-{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي",
+        "pageOf": "صفحة {page} من {totalPages} · {total} إجمالي"
+      },
       "empty": "لا توجد مدفوعات تطابق عوامل التصفية الحالية.",
       "showAbandoned": "إظهار المتروكة",
       "showAbandonedTooltip": "تبديل لإظهار المدفوعات التي لم يكمل المشتري الدفع فيها.",

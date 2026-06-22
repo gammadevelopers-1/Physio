@@ -8147,7 +8147,12 @@
           "other": "Other"
         }
       },
-      "pagination": "Page {page} of {totalPages} · {total} total",
+      "pagination": {
+        "showing": "Showing {from}-{to} of {total}",
+        "previous": "Previous",
+        "next": "Next",
+        "pageOf": "Page {page} of {totalPages} · {total} total"
+      },
       "empty": "No payments match the current filters.",
       "showAbandoned": "Include abandoned",
       "showAbandonedTooltip": "Toggle to show payments where the buyer never completed checkout.",

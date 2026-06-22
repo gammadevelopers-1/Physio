@@ -27,6 +27,11 @@ import { JwtAuthGuard, RolesGuard } from '../../auth/guards';
 export class RefundsController {
   constructor(private readonly refundService: RefundService) {}
 
+  // ---------------------------------------------------------------------
+  // Literal-path routes — MUST be declared BEFORE wildcard `:id` routes,
+  // otherwise Express matches `/refunds/summary` as id="summary".
+  // ---------------------------------------------------------------------
+
   @Post()
   @Roles('STUDENT', 'FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async requestRefund(
@@ -42,6 +47,44 @@ export class RefundsController {
       user.roles.includes('SUPER_ADMIN');
     const requesterId = isAdmin ? (dto as any).userId || user.id : user.id;
     return this.refundService.requestRefund(requesterId, dto, ipAddress);
+  }
+
+  @Post('admin-initiate')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async adminInitiate(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateRefundDto & { justification?: string },
+    @Req() req: Request,
+  ) {
+    const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
+    return this.refundService.adminInitiateRefund(user.id, dto, ipAddress);
+  }
+
+  @Get('summary')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getSummary(
+    @Query('status') status?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('gateway') gateway?: string,
+    @Query('reason') reason?: string,
+  ) {
+    return this.refundService.getRefundSummary({
+      status,
+      startDate,
+      endDate,
+      gateway,
+      reason,
+    });
+  }
+
+  @Get('refundable-payments')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getRefundablePayments(
+    @Query('search') search?: string,
+    @Query('limit', new DefaultValuePipe(25), ParseIntPipe) limit?: number,
+  ) {
+    return this.refundService.listRefundablePayments(search, limit);
   }
 
   @Get('my-refunds')
@@ -84,6 +127,8 @@ export class RefundsController {
     @Query('search') search?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Query('gateway') gateway?: string,
+    @Query('reason') reason?: string,
   ) {
     return this.refundService.getAllRefunds(
       page,
@@ -92,7 +137,25 @@ export class RefundsController {
       search,
       startDate,
       endDate,
+      gateway,
+      reason,
     );
+  }
+
+  // ---------------------------------------------------------------------
+  // Wildcard `:id` routes — declared LAST.
+  // ---------------------------------------------------------------------
+
+  @Get(':id/detail')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getDetail(@Param('id') id: string) {
+    return this.refundService.getRefundDetail(id);
+  }
+
+  @Get(':id/audit')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getAudit(@Param('id') id: string) {
+    return this.refundService.getRefundAudit(id);
   }
 
   @Get(':id')
@@ -128,5 +191,22 @@ export class RefundsController {
   ) {
     const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
     return this.refundService.rejectRefund(id, user.id, dto, ipAddress);
+  }
+
+  @Patch(':id/mark-failed')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async markFailed(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { note: string },
+    @Req() req: Request,
+  ) {
+    const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
+    return this.refundService.markFailed(
+      id,
+      user.id,
+      body?.note || 'Marked as failed by admin',
+      ipAddress,
+    );
   }
 }

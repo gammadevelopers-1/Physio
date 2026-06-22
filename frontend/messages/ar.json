@@ -8316,16 +8316,24 @@
     },
     "refundsPage": {
       "title": "إدارة الاستردادات",
-      "subtitle": "معالجة وتتبع وتحليل طلبات الاسترداد",
+      "subtitle": "معالجة طلبات الاسترداد ومتابعتها وتحليلها",
       "tabs": {
-        "pending": "معلقة",
-        "approved": "موافق عليها",
-        "rejected": "مرفوضة",
-        "processed": "مُعالجة"
+        "pending": "قيد المراجعة",
+        "approved": "تمت الموافقة",
+        "rejected": "مرفوض",
+        "processed": "تمت المعالجة",
+        "all": "الكل",
+        "processing": "قيد المعالجة",
+        "completed": "مكتمل",
+        "failed": "فشل"
       },
       "statusLabels": {
         "processing": "قيد المعالجة",
-        "completed": "مكتملة"
+        "completed": "مكتمل",
+        "pending": "قيد المراجعة",
+        "approved": "تمت الموافقة",
+        "rejected": "مرفوض",
+        "failed": "فشل"
       },
       "stats": {
         "totalRefunds": "إجمالي الاستردادات",
@@ -8373,7 +8381,141 @@
         "rejectedAt": "تم الرفض",
         "rejectionReason": "سبب الرفض"
       },
-      "detailTitle": "تفاصيل الاسترداد"
+      "detailTitle": "تفاصيل الاسترداد",
+      "initiateRefund": "إنشاء طلب استرداد",
+      "kpi": {
+        "pendingTitle": "بانتظار المراجعة",
+        "pendingSubtitle": "في انتظار الموافقة",
+        "inFlightTitle": "قيد التنفيذ",
+        "inFlightSubtitle": "تمت الموافقة أو في المعالجة",
+        "netRefundedTitle": "صافي المسترد",
+        "netRefundedSubtitle": "المبلغ المُعاد فعلياً للعملاء",
+        "deductionTitle": "خصومات محتفظ بها",
+        "deductionSubtitle": "رسوم BNPL على الاستردادات المكتملة",
+        "refundRateTitle": "نسبة الاسترداد",
+        "refundRateSubtitle": "بالقيمة، مقارنةً بالإيرادات في الفترة",
+        "avgResolutionTitle": "متوسط مدة المعالجة",
+        "avgResolutionSubtitle": "من الطلب حتى الإكمال",
+        "hoursSuffix": "س",
+        "daysSuffix": "يوم"
+      },
+      "filters": {
+        "status": "الحالة",
+        "gateway": "البوابة",
+        "reason": "السبب",
+        "allStatuses": "كل الحالات",
+        "allGateways": "كل البوابات",
+        "allReasons": "كل الأسباب",
+        "period": "الفترة"
+      },
+      "reasonLabels": {
+        "policy": "حسب السياسة",
+        "cancelled": "إلغاء دورة",
+        "duplicate": "دفعة مكررة",
+        "technical": "خطأ تقني",
+        "other": "أخرى"
+      },
+      "actions": {
+        "approve": "موافقة",
+        "reject": "رفض",
+        "retryGateway": "إعادة المحاولة",
+        "markFailed": "تعليم كفاشل",
+        "view": "عرض",
+        "openPayment": "فتح الدفعة",
+        "openInvoice": "فتح الفاتورة"
+      },
+      "rejectModal": {
+        "title": "رفض طلب الاسترداد",
+        "description": "أدخل سبب رفض طلب الاسترداد. هذه الملاحظة إلزامية.",
+        "placeholder": "أدخل سبب الرفض...",
+        "required": "سبب الرفض مطلوب",
+        "confirm": "رفض الطلب",
+        "cancel": "إلغاء"
+      },
+      "failModal": {
+        "title": "تعليم الاسترداد كفاشل",
+        "description": "استخدم هذا حين تتعذّر معالجة الاسترداد عبر البوابة ويُطلب تحويل يدوي. تُسجَّل الملاحظة في سجل التدقيق.",
+        "placeholder": "اشرح سبب تعذّر إتمام الاسترداد عبر البوابة...",
+        "required": "السبب مطلوب",
+        "confirm": "تعليم كفاشل"
+      },
+      "initiateModal": {
+        "title": "إنشاء طلب استرداد نيابة عن المتعلّم",
+        "description": "اختر دفعة مدفوعة وحدد السبب وأضف تبريراً. سيُبلَّغ المتعلّم كما لو طلب الاسترداد بنفسه.",
+        "searchPlaceholder": "ابحث بالاسم أو البريد أو الدورة أو رقم العملية...",
+        "noPayments": "لا توجد دفعات مؤهلة",
+        "paymentLabel": "الدفعة المختارة",
+        "reasonLabel": "السبب",
+        "noteLabel": "ملاحظة داخلية (اختياري)",
+        "justificationLabel": "التبرير (سجل التدقيق)",
+        "justificationPlaceholder": "لماذا تنشئ هذا الطلب نيابة عن المتعلّم؟",
+        "confirm": "إنشاء طلب الاسترداد",
+        "successToast": "تم إنشاء طلب الاسترداد نيابة عن المتعلّم"
+      },
+      "drawer": {
+        "title": "تفاصيل الاسترداد",
+        "tabs": {
+          "overview": "نظرة عامة",
+          "payment": "الدفعة",
+          "audit": "سجل التدقيق"
+        },
+        "overview": {
+          "refundId": "معرّف الاسترداد",
+          "gatewayRefundId": "معرّف البوابة",
+          "requester": "مقدّم الطلب",
+          "course": "الدورة",
+          "invoice": "الفاتورة",
+          "reason": "السبب",
+          "originalAmount": "المبلغ الأصلي",
+          "deduction": "الخصم",
+          "refundAmount": "المبلغ المسترد",
+          "gateway": "البوابة",
+          "method": "الوسيلة",
+          "status": "الحالة",
+          "processor": "تمت معالجته بواسطة",
+          "approvalNote": "ملاحظة الموافقة",
+          "rejectionNote": "ملاحظة الرفض",
+          "notes": "ملاحظات مقدّم الطلب"
+        },
+        "timeline": {
+          "title": "الجدول الزمني",
+          "requested": "تم الطلب",
+          "approved": "تمت الموافقة",
+          "processing": "إرسال إلى البوابة",
+          "completed": "اكتمل",
+          "rejected": "تم الرفض",
+          "failed": "علِّم كفاشل"
+        },
+        "audit": {
+          "empty": "لا توجد سجلات بعد.",
+          "by": "بواسطة",
+          "viewMeta": "عرض البيانات الوصفية",
+          "hideMeta": "إخفاء البيانات الوصفية"
+        }
+      },
+      "bulkRules": {
+        "title": "قواعد الخصم",
+        "moyasar": "ميسر / تحويل بنكي: لا توجد رسوم محتفظ بها — يُرد المبلغ كاملاً.",
+        "tamara": "تمارا (BNPL): تُحتفظ بنسبة 10% من المبلغ كرسوم معالجة.",
+        "tabby": "تابي (BNPL): رسوم معالجة قابلة للضبط حسب اتفاقية التاجر."
+      },
+      "list": {
+        "empty": "لا توجد عمليات استرداد مطابقة",
+        "age": "قبل {value}"
+      },
+      "toasts": {
+        "approveSuccess": "تمت الموافقة على الاسترداد",
+        "rejectSuccess": "تم رفض الاسترداد",
+        "markFailedSuccess": "تم تعليم الاسترداد كفاشل",
+        "exportSuccess": "بدأ التصدير",
+        "exportError": "فشل التصدير",
+        "genericError": "فشل الإجراء"
+      },
+      "pagination": {
+        "pageOf": "صفحة {page} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      }
     },
     "discountsPage": {
       "title": "إدارة الخصومات والقسائم",

@@ -7590,23 +7590,144 @@ export const refundApi = {
   request: (data: { paymentId: string; reason: string; reasonNote?: string }) =>
     api.post<any>('/refunds', data),
 
-  getAll: (page = 1, limit = 10, filters?: { status?: string; search?: string; startDate?: string; endDate?: string }) => {
+  getAll: (
+    page = 1,
+    limit = 10,
+    filters?: {
+      status?: string;
+      search?: string;
+      startDate?: string;
+      endDate?: string;
+      gateway?: string;
+      reason?: string;
+    },
+  ) => {
     const sp = new URLSearchParams({ page: String(page), limit: String(limit) });
     if (filters?.status && filters.status !== 'all') sp.set('status', filters.status);
     if (filters?.search) sp.set('search', filters.search);
     if (filters?.startDate) sp.set('startDate', filters.startDate);
     if (filters?.endDate) sp.set('endDate', filters.endDate);
+    if (filters?.gateway && filters.gateway !== 'all') sp.set('gateway', filters.gateway);
+    if (filters?.reason && filters.reason !== 'all') sp.set('reason', filters.reason);
     return api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/refunds?${sp.toString()}`);
+  },
+
+  getSummary: (filters?: {
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+    gateway?: string;
+    reason?: string;
+  }) => {
+    const sp = new URLSearchParams();
+    if (filters?.status && filters.status !== 'all') sp.set('status', filters.status);
+    if (filters?.startDate) sp.set('startDate', filters.startDate);
+    if (filters?.endDate) sp.set('endDate', filters.endDate);
+    if (filters?.gateway && filters.gateway !== 'all') sp.set('gateway', filters.gateway);
+    if (filters?.reason && filters.reason !== 'all') sp.set('reason', filters.reason);
+    const qs = sp.toString();
+    return api.get<{
+      totalCount: number;
+      pendingCount: number;
+      approvedCount: number;
+      processingCount: number;
+      completedCount: number;
+      rejectedCount: number;
+      failedCount: number;
+      pendingAmount: number;
+      inFlightAmount: number;
+      grossRefundedAmount: number;
+      netRefundedAmount: number;
+      deductionCaptured: number;
+      avgResolutionHours: number;
+      refundRateByAmount: number;
+      paidWindowAmount: number;
+    }>(`/refunds/summary${qs ? `?${qs}` : ''}`);
   },
 
   getById: (refundId: string) =>
     api.get<any>(`/refunds/${refundId}`),
+
+  getDetail: (refundId: string) =>
+    api.get<{
+      id: string;
+      paymentId: string;
+      invoiceId: string | null;
+      requestedBy: string;
+      processedBy: string | null;
+      reason: string;
+      reasonNote: string | null;
+      originalAmount: string;
+      deductionAmount: string;
+      deductionReason: string | null;
+      refundAmount: string;
+      status: string;
+      gatewayRefundId: string | null;
+      approvalNote: string | null;
+      rejectionNote: string | null;
+      createdAt: string;
+      approvedAt: string | null;
+      completedAt: string | null;
+      rejectedAt: string | null;
+      requesterName: string | null;
+      requesterEmail: string | null;
+      gateway: string | null;
+      paymentMethod: string | null;
+      paymentStatus: string | null;
+      paymentAmount: string | null;
+      gatewayChargeId: string | null;
+      courseId: string | null;
+      courseTitle: string | null;
+      courseTitleAr: string | null;
+      invoiceNumber: string | null;
+      processorName: string | null;
+      processorEmail: string | null;
+    }>(`/refunds/${refundId}/detail`),
+
+  getAudit: (refundId: string) =>
+    api.get<Array<{
+      id: string;
+      action: string;
+      entityType: string;
+      entityId: string;
+      performedBy: string | null;
+      metadata: Record<string, unknown> | null;
+      createdAt: string;
+      actorName: string | null;
+      actorEmail: string | null;
+    }>>(`/refunds/${refundId}/audit`),
 
   approve: (refundId: string, approvalNote?: string) =>
     api.patch<{ status: string }>(`/refunds/${refundId}/approve`, approvalNote ? { approvalNote } : {}),
 
   reject: (refundId: string, rejectionNote: string) =>
     api.patch<{ status: string }>(`/refunds/${refundId}/reject`, { rejectionNote }),
+
+  markFailed: (refundId: string, note: string) =>
+    api.patch<{ status: string }>(`/refunds/${refundId}/mark-failed`, { note }),
+
+  adminInitiate: (data: {
+    paymentId: string;
+    reason: string;
+    reasonNote?: string;
+    justification?: string;
+  }) => api.post<any>('/refunds/admin-initiate', data),
+
+  listRefundablePayments: (search?: string, limit = 25) => {
+    const sp = new URLSearchParams({ limit: String(limit) });
+    if (search) sp.set('search', search);
+    return api.get<Array<{
+      id: string;
+      amount: string;
+      gateway: string;
+      paidAt: string;
+      userId: string;
+      userName: string;
+      userEmail: string;
+      courseId: string;
+      courseTitle: string;
+    }>>(`/refunds/refundable-payments?${sp.toString()}`);
+  },
 
   export: async (params?: { status?: string; startDate?: string; endDate?: string }) => {
     const token = getAccessToken();

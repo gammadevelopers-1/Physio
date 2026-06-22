@@ -8316,16 +8316,24 @@
     },
     "refundsPage": {
       "title": "Refund Management",
-      "subtitle": "Process, track, and analyze refund requests",
+      "subtitle": "Process, track, and analyse refund requests",
       "tabs": {
         "pending": "Pending",
         "approved": "Approved",
         "rejected": "Rejected",
-        "processed": "Processed"
+        "processed": "Processed",
+        "all": "All",
+        "processing": "Processing",
+        "completed": "Completed",
+        "failed": "Failed"
       },
       "statusLabels": {
         "processing": "Processing",
-        "completed": "Completed"
+        "completed": "Completed",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "failed": "Failed"
       },
       "stats": {
         "totalRefunds": "Total Refunds",
@@ -8373,7 +8381,141 @@
         "rejectedAt": "Rejected",
         "rejectionReason": "Rejection Reason"
       },
-      "detailTitle": "Refund Details"
+      "detailTitle": "Refund Details",
+      "initiateRefund": "Initiate Refund",
+      "kpi": {
+        "pendingTitle": "Pending Refunds",
+        "pendingSubtitle": "Awaiting approval",
+        "inFlightTitle": "In-Flight",
+        "inFlightSubtitle": "Approved or processing",
+        "netRefundedTitle": "Net Refunded",
+        "netRefundedSubtitle": "Completed · paid back to customers",
+        "deductionTitle": "Deductions Captured",
+        "deductionSubtitle": "BNPL fees retained on completed refunds",
+        "refundRateTitle": "Refund Rate",
+        "refundRateSubtitle": "By amount, vs paid revenue in window",
+        "avgResolutionTitle": "Avg. Resolution",
+        "avgResolutionSubtitle": "Request → Completed",
+        "hoursSuffix": "h",
+        "daysSuffix": "d"
+      },
+      "filters": {
+        "status": "Status",
+        "gateway": "Gateway",
+        "reason": "Reason",
+        "allStatuses": "All statuses",
+        "allGateways": "All gateways",
+        "allReasons": "All reasons",
+        "period": "Period"
+      },
+      "reasonLabels": {
+        "policy": "Policy Request",
+        "cancelled": "Course Cancelled",
+        "duplicate": "Duplicate Payment",
+        "technical": "Technical Error",
+        "other": "Other"
+      },
+      "actions": {
+        "approve": "Approve",
+        "reject": "Reject",
+        "retryGateway": "Retry Gateway",
+        "markFailed": "Mark as Failed",
+        "view": "View",
+        "openPayment": "Open Payment",
+        "openInvoice": "Open Invoice"
+      },
+      "rejectModal": {
+        "title": "Reject Refund",
+        "description": "Provide a reason for rejecting this refund request. This note is mandatory.",
+        "placeholder": "Enter rejection reason or notes...",
+        "required": "Rejection reason is required",
+        "confirm": "Reject Refund",
+        "cancel": "Cancel"
+      },
+      "failModal": {
+        "title": "Mark Refund as Failed",
+        "description": "Use this when the gateway can not complete the refund and a manual settlement is needed. The note is recorded in the audit log.",
+        "placeholder": "Explain why this refund cannot proceed via gateway...",
+        "required": "A reason is required",
+        "confirm": "Mark as Failed"
+      },
+      "initiateModal": {
+        "title": "Initiate Refund on Behalf of Learner",
+        "description": "Search a paid payment, pick a reason, and add a justification. The learner is notified the same way as a self-initiated refund.",
+        "searchPlaceholder": "Search by name, email, course, or charge ID...",
+        "noPayments": "No eligible payments found",
+        "paymentLabel": "Selected payment",
+        "reasonLabel": "Reason",
+        "noteLabel": "Internal note (optional)",
+        "justificationLabel": "Justification (audit trail)",
+        "justificationPlaceholder": "Why are you initiating this on the learner's behalf?",
+        "confirm": "Create Refund Request",
+        "successToast": "Refund request created on learner's behalf"
+      },
+      "drawer": {
+        "title": "Refund Details",
+        "tabs": {
+          "overview": "Overview",
+          "payment": "Payment",
+          "audit": "Audit"
+        },
+        "overview": {
+          "refundId": "Refund ID",
+          "gatewayRefundId": "Gateway Refund ID",
+          "requester": "Requester",
+          "course": "Course",
+          "invoice": "Invoice",
+          "reason": "Reason",
+          "originalAmount": "Original Amount",
+          "deduction": "Deduction",
+          "refundAmount": "Refund Amount",
+          "gateway": "Gateway",
+          "method": "Method",
+          "status": "Status",
+          "processor": "Processed By",
+          "approvalNote": "Approval Note",
+          "rejectionNote": "Rejection Note",
+          "notes": "Requester Notes"
+        },
+        "timeline": {
+          "title": "Timeline",
+          "requested": "Requested",
+          "approved": "Approved",
+          "processing": "Sent to gateway",
+          "completed": "Completed",
+          "rejected": "Rejected",
+          "failed": "Marked as failed"
+        },
+        "audit": {
+          "empty": "No audit entries yet.",
+          "by": "by",
+          "viewMeta": "View metadata",
+          "hideMeta": "Hide metadata"
+        }
+      },
+      "bulkRules": {
+        "title": "Deduction Rules",
+        "moyasar": "Moyasar / Bank Transfer: No processing fee retained — full refund.",
+        "tamara": "Tamara BNPL: 10% of original amount retained as processing fee.",
+        "tabby": "Tabby BNPL: Configurable processing fee per merchant agreement."
+      },
+      "list": {
+        "empty": "No refunds match your filters",
+        "age": "{value} ago"
+      },
+      "toasts": {
+        "approveSuccess": "Refund approved",
+        "rejectSuccess": "Refund rejected",
+        "markFailedSuccess": "Refund marked as failed",
+        "exportSuccess": "Export started",
+        "exportError": "Export failed",
+        "genericError": "Action failed"
+      },
+      "pagination": {
+        "pageOf": "Page {page} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
     },
     "discountsPage": {
       "title": "Discount & Coupon Management",

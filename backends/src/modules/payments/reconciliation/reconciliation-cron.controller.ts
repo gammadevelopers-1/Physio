@@ -46,6 +46,14 @@ export class ReconciliationCronController {
     return this.cron.runStaleReminderSweep();
   }
 
+  @Post('abandoned-sweep')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async abandonedSweep(@Headers('x-cron-token') token: string) {
+    this.assertToken(token);
+    this.logger.log('Cron-triggered abandoned-payment sweep starting');
+    return this.cron.runAbandonedPaymentSweep();
+  }
+
   private assertToken(provided: string | undefined): void {
     const expected = process.env.RECONCILIATION_CRON_TOKEN;
     // In development we let it through to make local testing easy. In any

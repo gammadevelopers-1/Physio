@@ -8060,7 +8060,7 @@
       "export": "تصدير",
       "exportCsv": "تصدير CSV",
       "exportPdf": "تصدير PDF",
-      "searchPlaceholder": "بحث في الفواتير...",
+      "searchPlaceholder": "ابحث بالعميل أو البريد أو رقم الفاتورة…",
       "noResults": "لا توجد معاملات للفلاتر المحددة.",
       "filters": {
         "allStatus": "جميع الحالات",
@@ -8147,10 +8147,25 @@
           "other": "أخرى"
         }
       },
-      "pagination": {
-        "showing": "عرض {from}-{to} من {total}",
-        "previous": "السابق",
-        "next": "التالي"
+      "pagination": "صفحة {page} من {totalPages} · {total} إجمالي",
+      "empty": "لا توجد مدفوعات تطابق عوامل التصفية الحالية.",
+      "showAbandoned": "إظهار المتروكة",
+      "showAbandonedTooltip": "تبديل لإظهار المدفوعات التي لم يكمل المشتري الدفع فيها.",
+      "filter": {
+        "allStatuses": "جميع الحالات",
+        "allGateways": "جميع البوابات",
+        "allMethods": "جميع الطرق",
+        "bankTransfer": "تحويل بنكي",
+        "card": "بطاقة"
+      },
+      "col": {
+        "date": "التاريخ",
+        "customer": "العميل",
+        "course": "الدورة",
+        "gateway": "البوابة",
+        "method": "الطريقة",
+        "status": "الحالة",
+        "amount": "المبلغ"
       }
     },
     "refundsQueue": {
@@ -8205,15 +8220,20 @@
       "processRefund": "معالجة استرداد"
     },
     "paymentsPage": {
-      "title": "إدارة المدفوعات",
-      "subtitle": "إدارة جميع المعاملات ومعالجة المدفوعات",
+      "title": "المدفوعات",
+      "subtitle": "سجل كامل لجميع المدفوعات عبر البوابات",
       "retryPayment": "إعادة المحاولة",
       "exportTransactions": "تصدير المعاملات",
       "stats": {
         "totalPayments": "إجمالي المدفوعات",
         "successRate": "معدل النجاح",
         "failedPayments": "فاشلة",
-        "totalVolume": "إجمالي الحجم"
+        "totalVolume": "إجمالي الحجم",
+        "inPeriod": "المدفوعات في الفترة",
+        "totalPaid": "المعاملات المدفوعة",
+        "pending": "بانتظار الموافقة",
+        "needsAttention": "يحتاج إلى مراجعة",
+        "failed": "فاشلة"
       }
     },
     "invoicesPage": {
@@ -8856,7 +8876,8 @@
       "partiallyRefunded": "مُسترَد جزئيًا",
       "chargeback": "استرجاع بنكي",
       "processing": "قيد المعالجة",
-      "rejected": "مرفوض"
+      "rejected": "مرفوض",
+      "abandoned": "متروك"
     },
     "analytics": {
       "title": "التحليلات",
@@ -8935,6 +8956,46 @@
         "title": "نسبة الاسترداد {rate}% أعلى من الحد",
         "desc": "ابحث عن ارتفاع في الاستردادات حسب الدورة أو البوابة."
       }
+    },
+    "paymentDetail": {
+      "title": "تفاصيل الدفعة",
+      "amount": "المبلغ",
+      "paidAt": "تاريخ الدفع",
+      "tabs": {
+        "overview": "نظرة عامة",
+        "gateway": "سجلات البوابة",
+        "audit": "سجل التدقيق"
+      },
+      "customerCourse": "العميل والدورة",
+      "customer": "العميل",
+      "email": "البريد الإلكتروني",
+      "course": "الدورة",
+      "payment": "الدفعة",
+      "gateway": "البوابة",
+      "method": "الطريقة",
+      "chargeId": "معرّف العملية",
+      "created": "تاريخ الإنشاء",
+      "failureReason": "سبب الفشل",
+      "invoice": "الفاتورة",
+      "noInvoice": "لم يتم إنشاء فاتورة بعد.",
+      "refundsHistory": "الاستردادات ({count})",
+      "viewRefunds": "عرض جميع الاستردادات",
+      "receipt": "إيصال التحويل البنكي",
+      "fileName": "الملف",
+      "scanStatus": "الفحص",
+      "reviewStatus": "المراجعة",
+      "uploadedAt": "تاريخ الرفع",
+      "reconciliation": "التسوية",
+      "driftType": "نوع الاختلاف",
+      "findingStatus": "الحالة",
+      "escalation": "التصعيد",
+      "viewReconciliation": "فتح التسوية",
+      "gatewayLogs": "استجابة البوابة",
+      "noGatewayResponse": "لا توجد استجابة بوابة محفوظة لهذه الدفعة.",
+      "metadata": "البيانات الوصفية",
+      "auditTrail": "سجل التدقيق",
+      "noAudit": "لا توجد سجلات تدقيق لهذه الدفعة بعد.",
+      "systemActor": "النظام"
     }
   },
   "supportCommon": {

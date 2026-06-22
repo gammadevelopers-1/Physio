@@ -95,6 +95,7 @@ export const PAYMENT_STATUS = {
   REFUNDED: 'refunded',
   PARTIALLY_REFUNDED: 'partially_refunded',
   CHARGEBACK: 'chargeback',
+  ABANDONED: 'abandoned',
 } as const;
 
 export type PaymentStatus =

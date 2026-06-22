@@ -159,7 +159,35 @@ export class PaymentsController {
     @Query('search') search?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Query('gateway') gateway?: string,
+    @Query('paymentMethod') paymentMethod?: string,
+    @Query('includeAbandoned') includeAbandoned?: string,
   ) {
-    return this.paymentsService.getAllPayments(page, limit, status, search, startDate, endDate);
+    return this.paymentsService.getAllPayments(
+      page,
+      limit,
+      status,
+      search,
+      startDate,
+      endDate,
+      gateway,
+      paymentMethod,
+      includeAbandoned === 'true' || includeAbandoned === '1',
+    );
+  }
+
+  @Get(':paymentId/detail')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getPaymentDetail(@Param('paymentId') paymentId: string) {
+    return this.paymentsService.getPaymentDetail(paymentId);
+  }
+
+  @Get(':paymentId/audit')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getPaymentAudit(
+    @Param('paymentId') paymentId: string,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+  ) {
+    return this.paymentsService.getPaymentAudit(paymentId, limit);
   }
 }

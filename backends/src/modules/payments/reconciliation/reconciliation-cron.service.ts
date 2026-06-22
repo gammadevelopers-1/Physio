@@ -489,4 +489,47 @@ export class ReconciliationCronService {
       .where(where);
     return rows.map((r) => r.email).filter((e): e is string => !!e);
   }
+
+  // ─── Abandoned payment sweep ─────────────────────────────────────────
+  //
+  // When a student clicks Pay we create a row immediately with status
+  // 'pending' (required so we have an id to hand off to the gateway and
+  // so webhooks can map back). If they bail before completing checkout,
+  // that row stays pending forever — polluting the payments table and
+  // the "Pending" KPI.
+  //
+  // This sweep marks pending/processing rows older than `abandonAfterHours`
+  // with NO gateway_charge_id (i.e. the gateway never even saw them) as
+  // 'abandoned'. Default view on the Payments page excludes them so
+  // finance only sees actionable rows; reconciliation can still surface
+  // them when chasing drift.
+
+  async runAbandonedPaymentSweep(opts: { abandonAfterHours?: number } = {}): Promise<{
+    sweptCount: number;
+    cutoff: string;
+  }> {
+    const abandonAfterHours = opts.abandonAfterHours ?? 24;
+    const cutoff = new Date(Date.now() - abandonAfterHours * 60 * 60 * 1000);
+
+    this.logger.log(
+      `Abandoned payment sweep starting: marking pending/processing rows with no gateway_charge_id older than ${cutoff.toISOString()}`,
+    );
+
+    const result = await db
+      .update(payments)
+      .set({ status: 'abandoned' as any, updatedAt: new Date() })
+      .where(
+        and(
+          inArray(payments.status, ['pending', 'processing'] as any),
+          isNull(payments.gatewayChargeId),
+          lte(payments.createdAt, cutoff),
+        ),
+      )
+      .returning({ id: payments.id });
+
+    const sweptCount = result.length;
+    this.logger.log(`Abandoned sweep complete: ${sweptCount} payments marked abandoned`);
+
+    return { sweptCount, cutoff: cutoff.toISOString() };
+  }
 }

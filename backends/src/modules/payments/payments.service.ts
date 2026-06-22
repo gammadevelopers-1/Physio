@@ -16,6 +16,10 @@ import {
   enrollments,
   users,
   invoices,
+  refunds,
+  reconciliationFindings,
+  reconciliationEscalations,
+  auditLogs,
   PAYMENT_STATUS,
   COURSE_STATUS,
   ENROLLMENT_STATUS,
@@ -1100,6 +1104,157 @@ export class PaymentsService {
     return payment || null;
   }
 
+  /**
+   * Detail view for the Finance Payments page drawer. One round-trip to
+   * Postgres returns the payment plus everything finance might want to
+   * see on a single transaction: customer, course, invoice, active
+   * bank-transfer receipt, ALL refunds, latest reconciliation finding
+   * (and its escalation if any). Gateway response JSON is included so
+   * the "Gateway Logs" tab can render it without a second fetch.
+   */
+  async getPaymentDetail(paymentId: string) {
+    const [base] = await db
+      .select({
+        id: payments.id,
+        userId: payments.userId,
+        userName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+        userEmail: users.email,
+        courseId: payments.courseId,
+        courseTitle: courses.title,
+        courseTitleAr: courses.titleAr,
+        gateway: payments.gateway,
+        gatewayChargeId: payments.gatewayChargeId,
+        paymentMethod: payments.paymentMethod,
+        amount: payments.amount,
+        currency: payments.currency,
+        status: payments.status,
+        gatewayResponse: payments.gatewayResponse,
+        errorCode: payments.errorCode,
+        failureReason: payments.failureReason,
+        metadata: payments.metadata,
+        paidAt: payments.paidAt,
+        failedAt: payments.failedAt,
+        createdAt: payments.createdAt,
+        updatedAt: payments.updatedAt,
+        invoiceId: invoices.id,
+        invoiceNumber: invoices.invoiceNumber,
+        invoiceStatus: invoices.status,
+        invoiceIssuedAt: invoices.issuedAt,
+        invoiceTotal: invoices.totalAmount,
+      })
+      .from(payments)
+      .leftJoin(users, eq(payments.userId, users.id))
+      .leftJoin(courses, eq(payments.courseId, courses.id))
+      .leftJoin(invoices, eq(invoices.paymentId, payments.id))
+      .where(eq(payments.id, paymentId))
+      .limit(1);
+
+    if (!base) {
+      throw new NotFoundException(`Payment ${paymentId} not found`);
+    }
+
+    const [activeReceipt] = await db
+      .select({
+        id: paymentReceipts.id,
+        fileName: paymentReceipts.fileName,
+        scanStatus: paymentReceipts.scanStatus,
+        reviewStatus: paymentReceipts.reviewStatus,
+        reviewerNote: paymentReceipts.reviewerNote,
+        financeInternalNote: paymentReceipts.financeInternalNote,
+        reviewedAt: paymentReceipts.reviewedAt,
+        uploadedAt: paymentReceipts.createdAt,
+        refundAccountHolder: paymentReceipts.refundAccountHolder,
+        refundIban: paymentReceipts.refundIban,
+        refundBankName: paymentReceipts.refundBankName,
+        refundNationalId: paymentReceipts.refundNationalId,
+      })
+      .from(paymentReceipts)
+      .where(
+        and(
+          eq(paymentReceipts.paymentId, paymentId),
+          isNull(paymentReceipts.replacedById),
+        ),
+      )
+      .limit(1);
+
+    const refundRows = await db
+      .select({
+        id: refunds.id,
+        amount: refunds.refundAmount,
+        deductionAmount: refunds.deductionAmount,
+        reason: refunds.reason,
+        reasonNote: refunds.reasonNote,
+        status: refunds.status,
+        requestedAt: refunds.createdAt,
+        approvedAt: refunds.approvedAt,
+        completedAt: refunds.completedAt,
+        rejectedAt: refunds.rejectedAt,
+        gatewayRefundId: refunds.gatewayRefundId,
+      })
+      .from(refunds)
+      .where(eq(refunds.paymentId, paymentId))
+      .orderBy(desc(refunds.createdAt));
+
+    const findingRow = await db
+      .select({
+        id: reconciliationFindings.id,
+        driftType: reconciliationFindings.driftType,
+        status: reconciliationFindings.status,
+        createdAt: reconciliationFindings.createdAt,
+        resolvedAt: reconciliationFindings.resolvedAt,
+        escalationId: reconciliationEscalations.id,
+        escalationStatus: reconciliationEscalations.status,
+        escalationUrgency: reconciliationEscalations.urgency,
+        escalationActionTaken: reconciliationEscalations.actionTaken,
+      })
+      .from(reconciliationFindings)
+      .leftJoin(
+        reconciliationEscalations,
+        eq(reconciliationEscalations.id, reconciliationFindings.escalationId),
+      )
+      .where(eq(reconciliationFindings.paymentId, paymentId))
+      .orderBy(desc(reconciliationFindings.createdAt))
+      .limit(1);
+
+    return {
+      payment: base,
+      receipt: activeReceipt || null,
+      refunds: refundRows,
+      reconciliation: findingRow[0] || null,
+    };
+  }
+
+  /**
+   * Audit-trail tab on the payment drawer. Reads from the shared
+   * audit_logs table filtered to entries where entityId = paymentId AND
+   * entityType in the payment-related set (covers refunds + reconciliation
+   * actions that name this payment as their entity context).
+   */
+  async getPaymentAudit(paymentId: string, limit: number = 50) {
+    return db
+      .select({
+        id: auditLogs.id,
+        action: auditLogs.action,
+        entityType: auditLogs.entityType,
+        entityId: auditLogs.entityId,
+        performedBy: auditLogs.performedBy,
+        metadata: auditLogs.metadata,
+        createdAt: auditLogs.createdAt,
+        actorName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+        actorEmail: users.email,
+      })
+      .from(auditLogs)
+      .leftJoin(users, eq(auditLogs.performedBy, users.id))
+      .where(
+        and(
+          eq(auditLogs.entityType, 'payment'),
+          eq(auditLogs.entityId, paymentId),
+        ),
+      )
+      .orderBy(desc(auditLogs.createdAt))
+      .limit(Math.min(limit, 200));
+  }
+
   async getAllPayments(
     page: number = 1,
     limit: number = 10,
@@ -1107,12 +1262,25 @@ export class PaymentsService {
     search?: string,
     startDate?: string,
     endDate?: string,
+    gateway?: string,
+    paymentMethod?: string,
+    includeAbandoned: boolean = false,
   ) {
     const offset = (page - 1) * limit;
     const conditions: any[] = [];
 
     if (status && status !== 'all') {
       conditions.push(eq(payments.status, status as any));
+    } else if (!includeAbandoned) {
+      // Default Payments view hides abandoned rows so finance only sees
+      // actionable transactions. Toggle in the UI flips includeAbandoned.
+      conditions.push(ne(payments.status, 'abandoned' as any));
+    }
+    if (gateway && gateway !== 'all') {
+      conditions.push(eq(payments.gateway, gateway));
+    }
+    if (paymentMethod && paymentMethod !== 'all') {
+      conditions.push(eq(payments.paymentMethod, paymentMethod));
     }
     if (search) {
       conditions.push(

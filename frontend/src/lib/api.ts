@@ -6755,14 +6755,112 @@ export const paymentApi = {
   getMyPayments: (page = 1, limit = 10) =>
     api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/payments/my-payments?page=${page}&limit=${limit}`),
 
-  getAll: (page = 1, limit = 10, filters?: { status?: string; search?: string; startDate?: string; endDate?: string }) => {
+  getAll: (
+    page = 1,
+    limit = 10,
+    filters?: {
+      status?: string;
+      search?: string;
+      startDate?: string;
+      endDate?: string;
+      gateway?: string;
+      paymentMethod?: string;
+      includeAbandoned?: boolean;
+    },
+  ) => {
     const sp = new URLSearchParams({ page: String(page), limit: String(limit) });
     if (filters?.status && filters.status !== 'all') sp.set('status', filters.status);
     if (filters?.search) sp.set('search', filters.search);
     if (filters?.startDate) sp.set('startDate', filters.startDate);
     if (filters?.endDate) sp.set('endDate', filters.endDate);
+    if (filters?.gateway && filters.gateway !== 'all') sp.set('gateway', filters.gateway);
+    if (filters?.paymentMethod && filters.paymentMethod !== 'all') sp.set('paymentMethod', filters.paymentMethod);
+    if (filters?.includeAbandoned) sp.set('includeAbandoned', 'true');
     return api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/payments?${sp.toString()}`);
   },
+
+  getDetail: (paymentId: string) =>
+    api.get<{
+      payment: {
+        id: string;
+        userId: string;
+        userName: string;
+        userEmail: string;
+        courseId: string;
+        courseTitle: string;
+        courseTitleAr: string | null;
+        gateway: string;
+        gatewayChargeId: string | null;
+        paymentMethod: string | null;
+        amount: string;
+        currency: string;
+        status: string;
+        gatewayResponse: Record<string, unknown> | null;
+        errorCode: string | null;
+        failureReason: string | null;
+        metadata: Record<string, unknown> | null;
+        paidAt: string | null;
+        failedAt: string | null;
+        createdAt: string;
+        updatedAt: string;
+        invoiceId: string | null;
+        invoiceNumber: string | null;
+        invoiceStatus: string | null;
+        invoiceIssuedAt: string | null;
+        invoiceTotal: string | null;
+      };
+      receipt: {
+        id: string;
+        fileName: string;
+        scanStatus: string;
+        reviewStatus: string;
+        reviewerNote: string | null;
+        financeInternalNote: string | null;
+        reviewedAt: string | null;
+        uploadedAt: string;
+        refundAccountHolder: string | null;
+        refundIban: string | null;
+        refundBankName: string | null;
+        refundNationalId: string | null;
+      } | null;
+      refunds: Array<{
+        id: string;
+        amount: string;
+        deductionAmount: string;
+        reason: string;
+        reasonNote: string | null;
+        status: string;
+        requestedAt: string;
+        approvedAt: string | null;
+        completedAt: string | null;
+        rejectedAt: string | null;
+        gatewayRefundId: string | null;
+      }>;
+      reconciliation: {
+        id: string;
+        driftType: string;
+        status: string;
+        createdAt: string;
+        resolvedAt: string | null;
+        escalationId: string | null;
+        escalationStatus: string | null;
+        escalationUrgency: string | null;
+        escalationActionTaken: string | null;
+      } | null;
+    }>(`/payments/${paymentId}/detail`),
+
+  getAudit: (paymentId: string, limit = 50) =>
+    api.get<Array<{
+      id: string;
+      action: string;
+      entityType: string;
+      entityId: string;
+      performedBy: string | null;
+      metadata: Record<string, unknown> | null;
+      createdAt: string;
+      actorName: string | null;
+      actorEmail: string | null;
+    }>>(`/payments/${paymentId}/audit?limit=${limit}`),
 };
 
 // ===========================================

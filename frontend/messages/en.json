@@ -8060,7 +8060,7 @@
       "export": "Export",
       "exportCsv": "Export CSV",
       "exportPdf": "Export PDF",
-      "searchPlaceholder": "Search invoices...",
+      "searchPlaceholder": "Search customer, email, invoice…",
       "noResults": "No transactions found for the selected filters.",
       "filters": {
         "allStatus": "All Status",
@@ -8147,10 +8147,25 @@
           "other": "Other"
         }
       },
-      "pagination": {
-        "showing": "Showing {from}-{to} of {total}",
-        "previous": "Previous",
-        "next": "Next"
+      "pagination": "Page {page} of {totalPages} · {total} total",
+      "empty": "No payments match the current filters.",
+      "showAbandoned": "Include abandoned",
+      "showAbandonedTooltip": "Toggle to show payments where the buyer never completed checkout.",
+      "filter": {
+        "allStatuses": "All statuses",
+        "allGateways": "All gateways",
+        "allMethods": "All methods",
+        "bankTransfer": "Bank Transfer",
+        "card": "Card"
+      },
+      "col": {
+        "date": "Date",
+        "customer": "Customer",
+        "course": "Course",
+        "gateway": "Gateway",
+        "method": "Method",
+        "status": "Status",
+        "amount": "Amount"
       }
     },
     "refundsQueue": {
@@ -8205,15 +8220,20 @@
       "processRefund": "Process Refund"
     },
     "paymentsPage": {
-      "title": "Payments Management",
-      "subtitle": "Manage all transactions and payment processing",
+      "title": "Payments",
+      "subtitle": "Full ledger of every payment across gateways",
       "retryPayment": "Retry Payment",
       "exportTransactions": "Export Transactions",
       "stats": {
         "totalPayments": "Total Payments",
         "successRate": "Success Rate",
         "failedPayments": "Failed",
-        "totalVolume": "Total Volume"
+        "totalVolume": "Total Volume",
+        "inPeriod": "Payments in period",
+        "totalPaid": "Paid transactions",
+        "pending": "Pending approval",
+        "needsAttention": "Needs attention",
+        "failed": "Failed"
       }
     },
     "invoicesPage": {
@@ -8856,7 +8876,8 @@
       "partiallyRefunded": "Partially Refunded",
       "chargeback": "Chargeback",
       "processing": "Processing",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "abandoned": "Abandoned"
     },
     "analytics": {
       "title": "Analytics",
@@ -8935,6 +8956,46 @@
         "title": "Refund rate {rate}% above threshold",
         "desc": "Check for refund spikes by course or gateway."
       }
+    },
+    "paymentDetail": {
+      "title": "Payment Details",
+      "amount": "Amount",
+      "paidAt": "Paid at",
+      "tabs": {
+        "overview": "Overview",
+        "gateway": "Gateway Logs",
+        "audit": "Audit Trail"
+      },
+      "customerCourse": "Customer & Course",
+      "customer": "Customer",
+      "email": "Email",
+      "course": "Course",
+      "payment": "Payment",
+      "gateway": "Gateway",
+      "method": "Method",
+      "chargeId": "Charge ID",
+      "created": "Created",
+      "failureReason": "Failure",
+      "invoice": "Invoice",
+      "noInvoice": "No invoice generated yet.",
+      "refundsHistory": "Refunds ({count})",
+      "viewRefunds": "View all refunds",
+      "receipt": "Bank Transfer Receipt",
+      "fileName": "File",
+      "scanStatus": "Scan",
+      "reviewStatus": "Review",
+      "uploadedAt": "Uploaded",
+      "reconciliation": "Reconciliation",
+      "driftType": "Drift type",
+      "findingStatus": "Status",
+      "escalation": "Escalation",
+      "viewReconciliation": "Open reconciliation",
+      "gatewayLogs": "Gateway Response",
+      "noGatewayResponse": "No gateway response captured for this payment.",
+      "metadata": "Metadata",
+      "auditTrail": "Audit Trail",
+      "noAudit": "No audit entries for this payment yet.",
+      "systemActor": "System"
     }
   },
   "supportCommon": {

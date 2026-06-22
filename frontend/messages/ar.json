@@ -8264,19 +8264,43 @@
         "totalInvoices": "إجمالي الفواتير",
         "paidInvoices": "مدفوعة",
         "overdueInvoices": "متأخرة",
-        "totalAmount": "إجمالي المبلغ"
+        "totalAmount": "إجمالي المبلغ",
+        "refundedInvoices": "المستردة"
       },
       "agingReport": "تقرير التقادم",
       "agingCategories": {
         "current": "حالي (0-30 يوم)",
         "days30": "31-60 يوم",
         "days60": "61-90 يوم",
-        "overdue90": "أكثر من 90 يوم"
+        "overdue90": "أكثر من 90 يوم",
+        "paid": "مدفوعة"
       },
       "filters": {
         "startDate": "من",
         "endDate": "إلى",
-        "clearDates": "مسح التواريخ"
+        "clearDates": "مسح التواريخ",
+        "allStatuses": "جميع الحالات",
+        "searchPlaceholder": "ابحث برقم الفاتورة أو العميل أو البريد أو الدورة…"
+      },
+      "empty": "لا توجد فواتير تطابق الفلاتر الحالية.",
+      "refundedBadge": "استرداد: {status}",
+      "table": {
+        "invoice": "الفاتورة",
+        "date": "التاريخ",
+        "customer": "العميل",
+        "course": "الدورة",
+        "gateway": "البوابة",
+        "amount": "المبلغ",
+        "status": "الحالة"
+      },
+      "actions": {
+        "exportCsv": "تصدير CSV",
+        "exportTooltip": "تنزيل المجموعة المفلترة الحالية كملف CSV.",
+        "overdueSweep": "تحديد المتأخرة",
+        "overdueSweepRunning": "جاري التشغيل…",
+        "overdueSweepTooltip": "البحث عن الفواتير الصادرة التي تجاوزت تاريخ الاستحقاق وتحديدها كمتأخرة.",
+        "overdueSweepResult": "تم تحديد {count} فاتورة كمتأخرة.",
+        "overdueSweepError": "فشل التشغيل. حاول مرة أخرى بعد قليل."
       }
     },
     "refundsPage": {
@@ -9010,6 +9034,73 @@
       "viewer": {
         "viewRaw": "عرض JSON الخام",
         "viewPretty": "عرض منسق"
+      }
+    },
+    "invoiceDetail": {
+      "title": "تفاصيل الفاتورة",
+      "total": "الإجمالي",
+      "issued": "صادرة",
+      "paid": "مدفوعة",
+      "buyer": "المشتري",
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "nationalId": "رقم الهوية",
+      "course": "الدورة",
+      "amounts": "المبالغ",
+      "subtotal": "المجموع الفرعي",
+      "discount": "خصم",
+      "vat": "ضريبة القيمة المضافة (15%)",
+      "payment": "الدفعة",
+      "gateway": "البوابة",
+      "method": "الطريقة",
+      "chargeId": "معرّف العملية",
+      "openPayment": "فتح الدفعة",
+      "openRefunds": "عرض جميع الاستردادات",
+      "refundsHistory": "الاستردادات ({count})",
+      "lineItems": "بنود الفاتورة",
+      "noLineItems": "لا توجد بنود مسجلة لهذه الفاتورة.",
+      "pdfPreview": "معاينة PDF",
+      "pdfUnavailable": "ملف PDF غير متاح. حاول إعادة إنشائه.",
+      "openInNewTab": "فتح في علامة تبويب جديدة",
+      "noAudit": "لا توجد سجلات تدقيق لهذه الفاتورة بعد.",
+      "systemActor": "النظام",
+      "verifyHint": "رابط التحقق العام",
+      "tabs": {
+        "overview": "نظرة عامة",
+        "items": "البنود",
+        "audit": "سجل التدقيق",
+        "pdf": "PDF"
+      },
+      "actions": {
+        "downloadPdf": "تنزيل",
+        "resend": "إعادة إرسال البريد",
+        "regenPdf": "إعادة الإنشاء",
+        "cancel": "إلغاء الفاتورة"
+      },
+      "feedback": {
+        "resend": {
+          "ok": "تم إرسال بريد الفاتورة مجدداً.",
+          "err": "فشل إرسال بريد الفاتورة."
+        },
+        "regen": {
+          "ok": "تم إعادة إنشاء ملف PDF.",
+          "err": "فشل إعادة إنشاء ملف PDF."
+        },
+        "cancel": {
+          "ok": "تم إلغاء الفاتورة.",
+          "err": "فشل إلغاء الفاتورة."
+        }
+      },
+      "cancelConfirm": {
+        "title": "إلغاء هذه الفاتورة؟",
+        "warning": "الإلغاء لا يسترد الدفعة. استخدم تدفق الاسترداد إذا كنت تريد إعادة المال للمشتري.",
+        "reasonPlaceholder": "سبب الإلغاء (مطلوب)",
+        "back": "رجوع",
+        "confirm": "تأكيد الإلغاء",
+        "running": "جاري الإلغاء…"
+      },
+      "errors": {
+        "pdfDownload": "لا يمكن إنشاء رابط PDF. حاول إعادة إنشائه."
       }
     }
   },
@@ -11640,6 +11731,10 @@
     "paid": "مدفوعة",
     "pending": "قيد الانتظار",
     "amount": "المبلغ",
-    "issuedDate": "تاريخ الإصدار"
+    "issuedDate": "تاريخ الإصدار",
+    "paidDate": "تاريخ الدفع",
+    "cancelled": "ملغاة",
+    "refunded": "مستردة",
+    "verifiedFootnote": "تم التحقق مباشرة من سجلات فيزيو جايدنس"
   }
 }

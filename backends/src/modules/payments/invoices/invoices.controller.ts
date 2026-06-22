@@ -2,13 +2,17 @@ import {
   Controller,
   Get,
   Post,
+  Body,
   Param,
   Query,
+  Res,
   DefaultValuePipe,
   ParseIntPipe,
   NotFoundException,
+  BadRequestException,
   UseGuards,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { InvoiceService } from '../services/invoice.service';
 import { EmailService } from '../../email/email.service';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
@@ -105,8 +109,106 @@ export class InvoicesController {
     @Query('status') status?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Query('search') search?: string,
+    @Query('gateway') gateway?: string,
   ) {
-    return this.invoiceService.getAllInvoices(page, limit, status, startDate, endDate);
+    return this.invoiceService.getAllInvoices(
+      page,
+      limit,
+      status,
+      startDate,
+      endDate,
+      search,
+      gateway,
+    );
+  }
+
+  @Get('summary')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getInvoiceSummary(
+    @Query('status') status?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('search') search?: string,
+    @Query('gateway') gateway?: string,
+  ) {
+    return this.invoiceService.getInvoiceSummary({
+      status,
+      startDate,
+      endDate,
+      search,
+      gateway,
+    });
+  }
+
+  @Get(':id/detail')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getAdminInvoiceDetail(@Param('id') id: string) {
+    return this.invoiceService.getInvoiceDetail(id);
+  }
+
+  @Get(':id/audit')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getInvoiceAudit(
+    @Param('id') id: string,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+  ) {
+    return this.invoiceService.getInvoiceAudit(id, limit);
+  }
+
+  @Post(':id/regenerate-pdf')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async regeneratePdf(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.invoiceService.regeneratePdf(id, user.id);
+  }
+
+  @Post(':id/cancel')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async cancelInvoice(
+    @Param('id') id: string,
+    @Body() body: { reason?: string },
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const reason = (body?.reason || '').trim();
+    if (reason.length < 4) {
+      throw new BadRequestException('Cancellation reason is required (min 4 chars)');
+    }
+    return this.invoiceService.cancelInvoice(id, reason, user.id);
+  }
+
+  @Post('overdue-sweep/run')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async runOverdueSweep() {
+    return this.invoiceService.sweepOverdueInvoices();
+  }
+
+  @Get('export.csv')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async exportCsv(
+    @Res() res: Response,
+    @Query('status') status?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('search') search?: string,
+    @Query('gateway') gateway?: string,
+  ) {
+    const csv = await this.invoiceService.exportInvoicesCsv({
+      status,
+      startDate,
+      endDate,
+      search,
+      gateway,
+    });
+    const filename = `invoices-${new Date().toISOString().slice(0, 10)}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${filename}"`,
+    );
+    res.send(csv);
   }
 
   @Post(':id/resend')

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ReconciliationCronService } from './reconciliation-cron.service';
+import { InvoiceService } from '../services/invoice.service';
 
 /**
  * HTTP entry point for Cloud Scheduler. Cloud Scheduler authenticates the
@@ -26,7 +27,10 @@ import { ReconciliationCronService } from './reconciliation-cron.service';
 export class ReconciliationCronController {
   private readonly logger = new Logger(ReconciliationCronController.name);
 
-  constructor(private readonly cron: ReconciliationCronService) {}
+  constructor(
+    private readonly cron: ReconciliationCronService,
+    private readonly invoiceService: InvoiceService,
+  ) {}
 
   @Post('daily-scan')
   // Even with auth, throttle to defend against accidental Scheduler
@@ -52,6 +56,14 @@ export class ReconciliationCronController {
     this.assertToken(token);
     this.logger.log('Cron-triggered abandoned-payment sweep starting');
     return this.cron.runAbandonedPaymentSweep();
+  }
+
+  @Post('overdue-invoices')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async overdueInvoices(@Headers('x-cron-token') token: string) {
+    this.assertToken(token);
+    this.logger.log('Cron-triggered overdue-invoice sweep starting');
+    return this.invoiceService.sweepOverdueInvoices();
   }
 
   private assertToken(provided: string | undefined): void {

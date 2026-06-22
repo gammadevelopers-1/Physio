@@ -8264,19 +8264,43 @@
         "totalInvoices": "Total Invoices",
         "paidInvoices": "Paid",
         "overdueInvoices": "Overdue",
-        "totalAmount": "Total Amount"
+        "totalAmount": "Total Amount",
+        "refundedInvoices": "Refunded"
       },
       "agingReport": "Aging Report",
       "agingCategories": {
         "current": "Current (0-30 days)",
         "days30": "31-60 days",
         "days60": "61-90 days",
-        "overdue90": "90+ days"
+        "overdue90": "90+ days",
+        "paid": "Paid"
       },
       "filters": {
         "startDate": "From",
         "endDate": "To",
-        "clearDates": "Clear Dates"
+        "clearDates": "Clear Dates",
+        "allStatuses": "All statuses",
+        "searchPlaceholder": "Search invoice #, customer, email, course…"
+      },
+      "empty": "No invoices match the current filters.",
+      "refundedBadge": "Refund: {status}",
+      "table": {
+        "invoice": "Invoice",
+        "date": "Date",
+        "customer": "Customer",
+        "course": "Course",
+        "gateway": "Gateway",
+        "amount": "Amount",
+        "status": "Status"
+      },
+      "actions": {
+        "exportCsv": "Export CSV",
+        "exportTooltip": "Download the current filtered set as CSV.",
+        "overdueSweep": "Flag overdue",
+        "overdueSweepRunning": "Running…",
+        "overdueSweepTooltip": "Find issued invoices past their due date and mark them overdue.",
+        "overdueSweepResult": "Flagged {count} invoice(s) as overdue.",
+        "overdueSweepError": "Sweep failed. Try again in a moment."
       }
     },
     "refundsPage": {
@@ -9010,6 +9034,73 @@
       "viewer": {
         "viewRaw": "View raw JSON",
         "viewPretty": "View pretty"
+      }
+    },
+    "invoiceDetail": {
+      "title": "Invoice Details",
+      "total": "Total",
+      "issued": "Issued",
+      "paid": "Paid",
+      "buyer": "Buyer",
+      "name": "Name",
+      "email": "Email",
+      "nationalId": "National ID",
+      "course": "Course",
+      "amounts": "Amounts",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "vat": "VAT (15%)",
+      "payment": "Payment",
+      "gateway": "Gateway",
+      "method": "Method",
+      "chargeId": "Charge ID",
+      "openPayment": "Open payment",
+      "openRefunds": "View all refunds",
+      "refundsHistory": "Refunds ({count})",
+      "lineItems": "Line Items",
+      "noLineItems": "No line items recorded for this invoice.",
+      "pdfPreview": "PDF Preview",
+      "pdfUnavailable": "PDF not available. Try regenerating it.",
+      "openInNewTab": "Open in new tab",
+      "noAudit": "No audit entries for this invoice yet.",
+      "systemActor": "System",
+      "verifyHint": "Public verify URL",
+      "tabs": {
+        "overview": "Overview",
+        "items": "Items",
+        "audit": "Audit Trail",
+        "pdf": "PDF"
+      },
+      "actions": {
+        "downloadPdf": "Download",
+        "resend": "Resend email",
+        "regenPdf": "Regenerate",
+        "cancel": "Cancel invoice"
+      },
+      "feedback": {
+        "resend": {
+          "ok": "Invoice email re-sent.",
+          "err": "Failed to resend invoice email."
+        },
+        "regen": {
+          "ok": "PDF regenerated.",
+          "err": "PDF regeneration failed."
+        },
+        "cancel": {
+          "ok": "Invoice cancelled.",
+          "err": "Failed to cancel invoice."
+        }
+      },
+      "cancelConfirm": {
+        "title": "Cancel this invoice?",
+        "warning": "Cancelling does not refund the payment. Use the refund flow if money should be returned to the buyer.",
+        "reasonPlaceholder": "Reason for cancellation (required)",
+        "back": "Back",
+        "confirm": "Confirm cancellation",
+        "running": "Cancelling…"
+      },
+      "errors": {
+        "pdfDownload": "Could not generate the PDF link. Try regenerating it."
       }
     }
   },
@@ -11640,6 +11731,10 @@
     "paid": "Paid",
     "pending": "Pending",
     "amount": "Amount",
-    "issuedDate": "Issued Date"
+    "issuedDate": "Issued Date",
+    "paidDate": "Paid",
+    "cancelled": "Cancelled",
+    "refunded": "Refunded",
+    "verifiedFootnote": "Verified directly against the PhysioGuidance ledger"
   }
 }

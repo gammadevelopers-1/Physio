@@ -268,156 +268,250 @@ export class InvoiceService {
   ): Promise<Buffer> {
     return new Promise(async (resolve, reject) => {
       try {
-        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+        const doc = new PDFDocument({ size: 'A4', margin: 0 });
         const chunks: Buffer[] = [];
 
         doc.on('data', (chunk: Buffer) => chunks.push(chunk));
         doc.on('end', () => resolve(Buffer.concat(chunks)));
         doc.on('error', reject);
 
-        // Register Arabic-supporting fonts
-        // fontkit (PDFKit's font engine) handles Arabic GSUB shaping natively
         const fontsDir = path.join(process.cwd(), 'src', 'assets', 'fonts');
         doc.registerFont('NotoArabic', path.join(fontsDir, 'NotoSansArabic-Regular.ttf'));
         doc.registerFont('NotoArabicBold', path.join(fontsDir, 'NotoSansArabic-Bold.ttf'));
-
-        // wordSpacing fixes collapsed spaces between Arabic words in PDFKit
         const ws = { wordSpacing: 2 };
 
-        // ── Header: left side (company info) ──
+        // ── Brand palette ──
+        const BRAND = '#1A2747'; // deep navy
+        const ACCENT = '#B8860B'; // gold
+        const MUTED = '#6B7280';
+        const SOFT = '#F3F4F6';
+        const SUCCESS = '#16A34A';
+        const VIOLET = '#7C3AED';
+        const DANGER = '#DC2626';
+
+        const status = (invoice.status as string) || 'issued';
+        const statusBadge =
+          status === 'paid'
+            ? { bg: '#DCFCE7', fg: SUCCESS, label: 'PAID', ar: 'مدفوعة' }
+            : status === 'refunded'
+              ? { bg: '#EDE9FE', fg: VIOLET, label: 'REFUNDED', ar: 'مستردة' }
+              : status === 'cancelled'
+                ? { bg: '#FEE2E2', fg: DANGER, label: 'CANCELLED', ar: 'ملغاة' }
+                : status === 'overdue'
+                  ? { bg: '#FEF3C7', fg: '#D97706', label: 'OVERDUE', ar: 'متأخرة' }
+                  : { bg: '#DBEAFE', fg: '#1D4ED8', label: 'ISSUED', ar: 'صادرة' };
+
+        // Sanitize Arabic name — Strapi sometimes returns control chars (RTL
+        // marks, ZWNJ, BOM) that break NotoArabic shaping and render as boxes.
+        const safeAr = (s: string | null | undefined): string =>
+          (s || '')
+            .replace(/[​-‏‪-‮﻿]/g, '')
+            .trim();
+        const siteNameArSafe = safeAr(branding.siteNameAr) || 'فيزيو جايدنس';
+
+        // ── Header band — full-width navy bar ──
+        doc.rect(0, 0, 595, 110).fill(BRAND);
+
+        // Logo / site name (left)
         doc
+          .fillColor('#FFFFFF')
           .font('Helvetica-Bold')
-          .fontSize(18)
-          .fillColor('#1A2747')
-          .text(branding.siteNameEn, 50, 50, { width: 280 });
-        doc.fillColor('#000');
+          .fontSize(22)
+          .text(branding.siteNameEn, 40, 30, { width: 320 });
         doc
           .font('NotoArabic')
-          .fontSize(10)
-          .text(arRtl(branding.siteNameAr), 50, 78, { width: 280, ...ws });
+          .fontSize(12)
+          .text(arRtl(siteNameArSafe), 40, 58, { width: 320, ...ws });
         doc
           .font('Helvetica')
-          .fontSize(10)
-          .text('nelc@physioguidance.org', 50, 95);
+          .fontSize(9)
+          .fillColor('#CBD5E1')
+          .text('nelc@physioguidance.org · physioguidance.org', 40, 80);
 
-        // ── Header: right side (invoice title + meta) ──
+        // Invoice title (right)
         doc
+          .fillColor('#FFFFFF')
           .font('Helvetica-Bold')
-          .fontSize(16)
-          .fillColor('#1A2747')
-          .text('INVOICE', 350, 50, { width: 195, align: 'right' });
+          .fontSize(26)
+          .text('INVOICE', 360, 28, { width: 195, align: 'right' });
         doc
           .font('NotoArabicBold')
           .fontSize(13)
-          .text(arRtl('فاتورة'), 350, 70, { width: 195, align: 'right', ...ws });
-        doc.fillColor('#000');
-
-        doc
-          .font('Helvetica')
-          .fontSize(10)
-          .text(`Invoice #: ${invoice.invoiceNumber}`, 350, 95, {
-            width: 195,
-            align: 'right',
-          })
-          .text(
-            `Date: ${new Date(invoice.issuedAt).toLocaleDateString('en-US')}`,
-            350,
-            110,
-            { width: 195, align: 'right' },
-          );
-
-        let headerY = 125;
-        if (invoice.paidAt) {
-          doc.text(
-            `Paid: ${new Date(invoice.paidAt).toLocaleDateString('en-US')}`,
-            350,
-            headerY,
-            { width: 195, align: 'right' },
-          );
-          headerY += 15;
-        }
-        if (invoice.dueDate) {
-          doc.text(
-            `Due: ${new Date(invoice.dueDate).toLocaleDateString('en-US')}`,
-            350,
-            headerY,
-            { width: 195, align: 'right' },
-          );
-          headerY += 15;
-        }
-
-        // ── Divider ──
-        const dividerY = Math.max(150, headerY + 5);
-        doc.moveTo(50, dividerY).lineTo(545, dividerY).stroke();
-
-        // ── Customer info (left) ──
-        const sectionTop = dividerY + 20;
-        doc.font('Helvetica-Bold').fontSize(12).text('Bill To', 50, sectionTop);
-        doc
-          .font('NotoArabicBold')
-          .fontSize(11)
-          .text(arRtl('فاتورة إلى'), 50, sectionTop + 14, { width: 280, ...ws });
-
-        doc
-          .font('Helvetica')
-          .fontSize(10)
-          .text(
-            `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
-            50,
-            sectionTop + 32,
-          )
-          .text(userData.email, 50, sectionTop + 47);
-
-        let customerInfoY = sectionTop + 62;
-        if ((userData as any).nationalId) {
-          doc.text(`National ID: ${(userData as any).nationalId}`, 50, customerInfoY);
-          customerInfoY += 15;
-        }
-
-        // ── Payment info (right) ──
-        doc
-          .font('Helvetica-Bold')
-          .fontSize(12)
-          .text('Payment Details', 350, sectionTop, {
-            width: 195,
-            align: 'right',
-          });
-        doc
-          .font('NotoArabicBold')
-          .fontSize(11)
-          .text(arRtl('تفاصيل الدفع'), 350, sectionTop + 14, {
+          .fillColor('#CBD5E1')
+          .text(arRtl('فاتورة ضريبية'), 360, 60, {
             width: 195,
             align: 'right',
             ...ws,
           });
 
+        // Gold accent strip beneath header band
+        doc.rect(0, 110, 595, 4).fill(ACCENT);
+        doc.fillColor('#000000');
+
+        // ── Status badge + invoice meta strip ──
+        const metaTop = 134;
+        // Status badge (left)
+        const badgeWidth = 110;
+        doc.roundedRect(40, metaTop, badgeWidth, 22, 4).fill(statusBadge.bg);
+        doc
+          .fillColor(statusBadge.fg)
+          .font('Helvetica-Bold')
+          .fontSize(10)
+          .text(statusBadge.label, 40, metaTop + 6, {
+            width: badgeWidth,
+            align: 'center',
+          });
+        doc.fillColor('#000000');
+
+        // Meta lines (right)
+        const metaLines: Array<[string, string]> = [
+          ['Invoice #', invoice.invoiceNumber],
+          ['Issue Date', new Date(invoice.issuedAt).toLocaleDateString('en-US')],
+        ];
+        if (invoice.paidAt) {
+          metaLines.push(['Paid', new Date(invoice.paidAt).toLocaleDateString('en-US')]);
+        }
+        if (invoice.dueDate) {
+          metaLines.push([
+            'Due Date',
+            new Date(invoice.dueDate).toLocaleDateString('en-US'),
+          ]);
+        }
+        let mY = metaTop;
+        for (const [label, value] of metaLines) {
+          doc
+            .font('Helvetica')
+            .fontSize(9)
+            .fillColor(MUTED)
+            .text(label, 360, mY, { width: 90, align: 'right' });
+          doc
+            .font('Helvetica-Bold')
+            .fontSize(10)
+            .fillColor('#111827')
+            .text(value, 455, mY - 1, { width: 100, align: 'right' });
+          mY += 14;
+        }
+
+        // ── Bill To + Payment Details two-column block ──
+        const sectionTop = Math.max(metaTop + 50, mY + 16);
+
+        // Bill To label
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(10)
+          .fillColor(MUTED)
+          .text('BILL TO', 40, sectionTop);
+        doc
+          .font('NotoArabicBold')
+          .fontSize(9)
+          .text(arRtl('فاتورة إلى'), 40, sectionTop + 12, { width: 240, ...ws });
+
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(12)
+          .fillColor('#111827')
+          .text(
+            `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
+            40,
+            sectionTop + 30,
+            { width: 240 },
+          );
         doc
           .font('Helvetica')
           .fontSize(10)
-          .text(`Gateway: ${payment.gateway}`, 350, sectionTop + 32, {
-            width: 195,
+          .fillColor(MUTED)
+          .text(userData.email, 40, sectionTop + 48, { width: 240 });
+        let customerInfoY = sectionTop + 64;
+        if ((userData as any).nationalId) {
+          doc
+            .font('Helvetica')
+            .fontSize(9)
+            .fillColor(MUTED)
+            .text(`National ID · ${(userData as any).nationalId}`, 40, customerInfoY);
+          customerInfoY += 14;
+        }
+
+        // Payment Details (right)
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(10)
+          .fillColor(MUTED)
+          .text('PAYMENT DETAILS', 320, sectionTop, { width: 235, align: 'right' });
+        doc
+          .font('NotoArabicBold')
+          .fontSize(9)
+          .text(arRtl('تفاصيل الدفع'), 320, sectionTop + 12, {
+            width: 235,
             align: 'right',
-          })
-          .text(`Method: ${payment.paymentMethod || 'N/A'}`, 350, sectionTop + 47, {
-            width: 195,
-            align: 'right',
-          })
+            ...ws,
+          });
+
+        const gatewayLabel =
+          payment.gateway === 'bank_transfer'
+            ? 'Bank Transfer'
+            : payment.gateway.charAt(0).toUpperCase() + payment.gateway.slice(1);
+        doc
+          .font('Helvetica')
+          .fontSize(9)
+          .fillColor(MUTED)
+          .text('Gateway', 320, sectionTop + 30, { width: 100, align: 'right' });
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(10)
+          .fillColor('#111827')
+          .text(gatewayLabel, 425, sectionTop + 29, { width: 130, align: 'right' });
+
+        doc
+          .font('Helvetica')
+          .fontSize(9)
+          .fillColor(MUTED)
+          .text('Method', 320, sectionTop + 46, { width: 100, align: 'right' });
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(10)
+          .fillColor('#111827')
           .text(
-            `Transaction: ${payment.gatewayChargeId || 'N/A'}`,
-            350,
-            sectionTop + 62,
-            { width: 195, align: 'right' },
+            payment.paymentMethod
+              ? payment.paymentMethod.replace(/_/g, ' ').toUpperCase()
+              : 'N/A',
+            425,
+            sectionTop + 45,
+            { width: 130, align: 'right' },
           );
 
-        // ── Line items table ──
-        const tableTop = Math.max(customerInfoY, sectionTop + 65) + 20;
-        doc.fontSize(10).font('Helvetica-Bold').text('Description', 50, tableTop);
-        doc.font('Helvetica').text('Amount', 450, tableTop, { align: 'right' });
-        doc.moveTo(50, tableTop + 15).lineTo(545, tableTop + 15).stroke();
+        if (payment.gatewayChargeId) {
+          doc
+            .font('Helvetica')
+            .fontSize(9)
+            .fillColor(MUTED)
+            .text('Reference', 320, sectionTop + 62, { width: 100, align: 'right' });
+          doc
+            .font('Helvetica')
+            .fontSize(8)
+            .fillColor('#111827')
+            .text(payment.gatewayChargeId, 320, sectionTop + 75, {
+              width: 235,
+              align: 'right',
+              lineBreak: false,
+            });
+        }
 
-        // Render line items. Multi-line carts pass the full list; legacy
-        // single-course invoices fall back to a one-row synthesis from
-        // the primary course + subtotal.
+        // ── Line items table ──
+        const tableTop = Math.max(customerInfoY, sectionTop + 95) + 18;
+
+        // Header bar
+        doc.rect(40, tableTop, 515, 22).fill(SOFT);
+        doc
+          .fillColor(MUTED)
+          .font('Helvetica-Bold')
+          .fontSize(9)
+          .text('DESCRIPTION', 50, tableTop + 7, { width: 300 });
+        doc.text('QTY', 360, tableTop + 7, { width: 40, align: 'center' });
+        doc.text('UNIT PRICE', 400, tableTop + 7, { width: 75, align: 'right' });
+        doc.text('AMOUNT', 475, tableTop + 7, { width: 75, align: 'right' });
+        doc.fillColor('#000000');
+
+        // Render rows
         const itemsToRender =
           lineItems && lineItems.length > 0
             ? lineItems
@@ -430,124 +524,232 @@ export class InvoiceService {
                 },
               ];
 
-        let y = tableTop + 25;
+        let y = tableTop + 30;
+        let rowIdx = 0;
         for (const item of itemsToRender) {
           const rowTop = y;
-          doc.font('Helvetica').fontSize(10).text(item.description, 50, y, { width: 380 });
+          if (rowIdx % 2 === 1) {
+            doc.rect(40, rowTop - 4, 515, 26).fill('#FAFAFA');
+            doc.fillColor('#000000');
+          }
+          doc
+            .font('Helvetica')
+            .fontSize(10)
+            .fillColor('#111827')
+            .text(item.description, 50, y, { width: 300 });
           let rowExtra = 0;
           if (item.descriptionAr) {
             doc
               .font('NotoArabic')
-              .text(arRtl(item.descriptionAr), 50, y + 15, {
-                width: 380,
-                ...ws,
-              });
-            rowExtra += 15;
+              .fontSize(9)
+              .fillColor(MUTED)
+              .text(arRtl(item.descriptionAr), 50, y + 14, { width: 300, ...ws });
+            rowExtra += 14;
           }
           if (item.deliveryType) {
-            doc.font('Helvetica').fontSize(9)
-              .text(`Delivery: ${item.deliveryType}`, 50, y + 15 + rowExtra);
-            doc.fontSize(10);
-            rowExtra += 15;
+            doc
+              .font('Helvetica')
+              .fontSize(8)
+              .fillColor(MUTED)
+              .text(
+                `${item.deliveryType.toUpperCase()}`,
+                50,
+                y + 14 + rowExtra,
+                { width: 300 },
+              );
+            rowExtra += 12;
           }
-          doc.font('Helvetica').fontSize(10)
-            .text(`SAR ${Number(item.amount).toFixed(2)}`, 450, rowTop, { align: 'right' });
-          y += 25 + rowExtra;
-        }
-        // Light divider between items and the totals block.
-        doc.moveTo(50, y - 5).lineTo(545, y - 5).strokeColor('#e5e5e5').stroke().strokeColor('#000');
-
-        // Totals — separate label / Arabic / amount calls (no `continued`)
-        // so wrap on one column never shifts the others. Fixed columns.
-        const labelX = 50;
-        const arX = 130;
-        const amountX = 450;
-        const amountWidth = 95;
-        if (Number(invoice.discountAmount) > 0) {
-          doc.font('Helvetica').fontSize(10).text('Discount', labelX, y);
-          doc
-            .font('NotoArabic')
-            .text(arRtl('خصم'), arX, y, { width: 280, ...ws });
+          // Qty + unit price + amount
           doc
             .font('Helvetica')
-            .text(
-              `- SAR ${Number(invoice.discountAmount).toFixed(2)}`,
-              amountX,
-              y,
-              { width: amountWidth, align: 'right' },
-            );
-          y += 20;
+            .fontSize(10)
+            .fillColor('#111827')
+            .text('1', 360, rowTop + 1, { width: 40, align: 'center' });
+          doc.text(`SAR ${Number(item.amount).toFixed(2)}`, 400, rowTop + 1, {
+            width: 75,
+            align: 'right',
+          });
+          doc
+            .font('Helvetica-Bold')
+            .text(`SAR ${Number(item.amount).toFixed(2)}`, 475, rowTop + 1, {
+              width: 75,
+              align: 'right',
+            });
+          y += Math.max(26, 16 + rowExtra);
+          rowIdx += 1;
         }
 
-        if (Number(invoice.taxAmount) > 0) {
-          doc.font('Helvetica').fontSize(10).text('VAT (15%)', labelX, y);
+        // ── Totals block ──
+        const totalsTop = y + 14;
+        const totalsLeft = 320;
+        const totalsWidth = 235;
+        let tY = totalsTop;
+
+        const totalsRow = (
+          label: string,
+          arLabel: string,
+          value: string,
+          bold = false,
+        ) => {
+          doc
+            .font(bold ? 'Helvetica-Bold' : 'Helvetica')
+            .fontSize(bold ? 11 : 10)
+            .fillColor(bold ? '#111827' : MUTED)
+            .text(label, totalsLeft, tY, { width: 120 });
           doc
             .font('NotoArabic')
-            .text(arRtl('ضريبة القيمة المضافة'), arX, y, {
-              width: 280,
+            .fontSize(9)
+            .fillColor(MUTED)
+            .text(arRtl(arLabel), totalsLeft + 60, tY + 2, {
+              width: 80,
               ...ws,
             });
           doc
-            .font('Helvetica')
-            .text(
-              `SAR ${Number(invoice.taxAmount).toFixed(2)}`,
-              amountX,
-              y,
-              { width: amountWidth, align: 'right' },
-            );
-          y += 20;
+            .font(bold ? 'Helvetica-Bold' : 'Helvetica')
+            .fontSize(bold ? 11 : 10)
+            .fillColor(bold ? '#111827' : '#111827')
+            .text(value, totalsLeft, tY, { width: totalsWidth, align: 'right' });
+          tY += 18;
+        };
+
+        totalsRow(
+          'Subtotal',
+          'المجموع الفرعي',
+          `SAR ${Number(invoice.subtotal).toFixed(2)}`,
+        );
+        if (Number(invoice.discountAmount) > 0) {
+          totalsRow(
+            'Discount',
+            'خصم',
+            `- SAR ${Number(invoice.discountAmount).toFixed(2)}`,
+          );
+        }
+        if (Number(invoice.taxAmount) > 0) {
+          totalsRow(
+            'VAT (15%)',
+            'ضريبة القيمة المضافة',
+            `SAR ${Number(invoice.taxAmount).toFixed(2)}`,
+          );
         }
 
-        // ── Total ──
-        doc.moveTo(50, y).lineTo(545, y).stroke();
-        y += 10;
-        doc.font('Helvetica-Bold').fontSize(14).text('Total', labelX, y);
+        // Divider before total
+        doc
+          .moveTo(totalsLeft, tY + 2)
+          .lineTo(totalsLeft + totalsWidth, tY + 2)
+          .strokeColor('#E5E7EB')
+          .stroke()
+          .strokeColor('#000000');
+        tY += 10;
+
+        // Highlighted total box
+        doc.rect(totalsLeft, tY, totalsWidth, 32).fill(BRAND);
+        doc
+          .fillColor('#FFFFFF')
+          .font('Helvetica-Bold')
+          .fontSize(12)
+          .text('TOTAL', totalsLeft + 12, tY + 10);
         doc
           .font('NotoArabicBold')
-          .text(arRtl('المجموع'), arX, y + 2, { width: 280, ...ws });
+          .fontSize(11)
+          .text(arRtl('الإجمالي'), totalsLeft + 60, tY + 11, {
+            width: 80,
+            ...ws,
+          });
         doc
           .font('Helvetica-Bold')
           .fontSize(14)
-          .text(`SAR ${Number(invoice.totalAmount).toFixed(2)}`, amountX, y, {
-            width: amountWidth,
-            align: 'right',
-          });
-
-        // ── QR Code ──
-        y += 40;
-        try {
-          const qrDataUrl = await QRCode.toDataURL(
-            `https://physioguidance.org/verify-invoice/${invoice.invoiceNumber}`,
-            { width: 100 },
+          .text(
+            `SAR ${Number(invoice.totalAmount).toFixed(2)}`,
+            totalsLeft,
+            tY + 9,
+            { width: totalsWidth - 12, align: 'right' },
           );
+        doc.fillColor('#000000');
+        tY += 50;
+
+        // ── QR Code (bottom-left) + Footer notice (bottom-right) ──
+        const qrTop = Math.max(tY, 640);
+        try {
+          // Locale-prefixed URL — middleware will keep it if user hits /en or
+          // /ar, but starting from /en means the QR works without redirect.
+          const verifyUrl = `https://physioguidance.org/en/verify-invoice/${invoice.invoiceNumber}`;
+          const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
+            width: 90,
+            margin: 0,
+            color: { dark: BRAND, light: '#FFFFFF' },
+          });
           const qrBuffer = Buffer.from(
             qrDataUrl.replace('data:image/png;base64,', ''),
             'base64',
           );
-          doc.image(qrBuffer, 230, y, { width: 80, height: 80 });
-          y += 90;
-          doc.font('Helvetica').fontSize(8)
-            .text('Scan to verify invoice', 230, y, { width: 80, align: 'center' });
-        } catch (err) {
+          doc.image(qrBuffer, 40, qrTop, { width: 80, height: 80 });
+          doc
+            .font('Helvetica-Bold')
+            .fontSize(9)
+            .fillColor('#111827')
+            .text('Scan to verify', 130, qrTop + 8);
+          doc
+            .font('NotoArabicBold')
+            .fontSize(9)
+            .fillColor('#111827')
+            .text(arRtl('امسح للتحقق'), 130, qrTop + 22, { width: 120, ...ws });
+          doc
+            .font('Helvetica')
+            .fontSize(8)
+            .fillColor(MUTED)
+            .text(
+              'This invoice can be authenticated by scanning the QR code or visiting',
+              130,
+              qrTop + 40,
+              { width: 250 },
+            );
+          doc
+            .font('Helvetica')
+            .fontSize(8)
+            .fillColor(ACCENT)
+            .text(
+              `physioguidance.org/verify-invoice/${invoice.invoiceNumber}`,
+              130,
+              qrTop + 54,
+              { width: 250 },
+            );
+        } catch {
           this.logger.warn('Failed to generate QR code for invoice');
         }
 
         // ── Footer ──
         doc
+          .rect(0, 790, 595, 52)
+          .fill('#F9FAFB');
+        doc
+          .fillColor(BRAND)
+          .font('Helvetica-Bold')
+          .fontSize(9)
+          .text(branding.siteNameEn, 40, 800);
+        doc
           .font('Helvetica')
           .fontSize(8)
-          .text('Thank you for your purchase!', 50, 750, {
-            width: 495,
-            align: 'center',
-          });
+          .fillColor(MUTED)
+          .text(
+            'Thank you for your purchase. This invoice serves as your tax receipt.',
+            40,
+            814,
+            { width: 350 },
+          );
         doc
           .font('NotoArabic')
           .fontSize(8)
-          .text(arRtl('شكراً لك على الشراء'), 50, 762, {
-            width: 495,
-            align: 'center',
+          .fillColor(MUTED)
+          .text(arRtl('شكراً لك على الشراء. تعتبر هذه الفاتورة إيصالاً ضريبياً'), 40, 826, {
+            width: 350,
             ...ws,
           });
+        doc
+          .font('Helvetica')
+          .fontSize(8)
+          .fillColor(MUTED)
+          .text('Page 1 of 1', 440, 814, { width: 115, align: 'right' });
+        doc.fillColor('#000000');
 
         doc.end();
       } catch (err) {
@@ -1131,6 +1333,8 @@ export class InvoiceService {
     status?: string,
     startDate?: string,
     endDate?: string,
+    search?: string,
+    gateway?: string,
   ) {
     const offset = (page - 1) * limit;
 
@@ -1138,12 +1342,24 @@ export class InvoiceService {
     if (status) conditions.push(eq(invoices.status, status as any));
     if (startDate) conditions.push(gte(invoices.issuedAt, new Date(startDate)));
     if (endDate) conditions.push(lte(invoices.issuedAt, new Date(endDate)));
+    if (gateway) conditions.push(eq(payments.gateway, gateway));
+    if (search) {
+      const q = `%${search}%`;
+      conditions.push(
+        sql`(${invoices.invoiceNumber} ILIKE ${q}
+             OR ${users.email} ILIKE ${q}
+             OR ${users.firstName} ILIKE ${q}
+             OR ${users.lastName} ILIKE ${q}
+             OR ${courses.title} ILIKE ${q})`,
+      );
+    }
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const invoicesList = await db
       .select({
         id: invoices.id,
         invoiceNumber: invoices.invoiceNumber,
+        paymentId: invoices.paymentId,
         userName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
         userEmail: users.email,
         courseTitle: courses.title,
@@ -1155,10 +1371,18 @@ export class InvoiceService {
         status: invoices.status,
         issuedAt: invoices.issuedAt,
         paidAt: invoices.paidAt,
+        dueDate: invoices.dueDate,
+        gateway: payments.gateway,
+        refundStatus: sql<string | null>`(
+          SELECT ${refunds.status} FROM ${refunds}
+          WHERE ${refunds.paymentId} = ${invoices.paymentId}
+          ORDER BY ${refunds.createdAt} DESC LIMIT 1
+        )`.as('refund_status'),
       })
       .from(invoices)
       .leftJoin(courses, eq(invoices.courseId, courses.id))
       .leftJoin(users, eq(invoices.userId, users.id))
+      .leftJoin(payments, eq(invoices.paymentId, payments.id))
       .where(whereClause)
       .orderBy(desc(invoices.issuedAt))
       .limit(limit)
@@ -1167,6 +1391,9 @@ export class InvoiceService {
     const [totalResult] = await db
       .select({ count: count() })
       .from(invoices)
+      .leftJoin(payments, eq(invoices.paymentId, payments.id))
+      .leftJoin(users, eq(invoices.userId, users.id))
+      .leftJoin(courses, eq(invoices.courseId, courses.id))
       .where(whereClause);
 
     return {
@@ -1178,6 +1405,424 @@ export class InvoiceService {
         totalPages: Math.ceil(Number(totalResult?.count || 0) / limit),
       },
     };
+  }
+
+  /**
+   * Aggregates for the Invoices page KPI strip — real sums + per-status
+   * counts across the full filtered dataset (not the current page).
+   * Same filter set as getAllInvoices so the stats match what the table
+   * lists. Single query so the page loads as one round-trip.
+   */
+  async getInvoiceSummary(opts: {
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+    gateway?: string;
+  }) {
+    const conditions: any[] = [];
+    if (opts.status) conditions.push(eq(invoices.status, opts.status as any));
+    if (opts.startDate)
+      conditions.push(gte(invoices.issuedAt, new Date(opts.startDate)));
+    if (opts.endDate)
+      conditions.push(lte(invoices.issuedAt, new Date(opts.endDate)));
+    if (opts.gateway) conditions.push(eq(payments.gateway, opts.gateway));
+    if (opts.search) {
+      const q = `%${opts.search}%`;
+      conditions.push(
+        sql`(${invoices.invoiceNumber} ILIKE ${q}
+             OR ${users.email} ILIKE ${q}
+             OR ${users.firstName} ILIKE ${q}
+             OR ${users.lastName} ILIKE ${q}
+             OR ${courses.title} ILIKE ${q})`,
+      );
+    }
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [row] = await db
+      .select({
+        totalCount: sql<number>`COUNT(*)::int`,
+        totalAmount: sql<string>`COALESCE(SUM(${invoices.totalAmount}::numeric), 0)`,
+        paidCount: sql<number>`COUNT(CASE WHEN ${invoices.status} = 'paid' THEN 1 END)::int`,
+        paidAmount: sql<string>`COALESCE(SUM(CASE WHEN ${invoices.status} = 'paid' THEN ${invoices.totalAmount}::numeric ELSE 0 END), 0)`,
+        overdueCount: sql<number>`COUNT(CASE WHEN ${invoices.status} = 'overdue' THEN 1 END)::int`,
+        overdueAmount: sql<string>`COALESCE(SUM(CASE WHEN ${invoices.status} = 'overdue' THEN ${invoices.totalAmount}::numeric ELSE 0 END), 0)`,
+        refundedCount: sql<number>`COUNT(CASE WHEN ${invoices.status} = 'refunded' THEN 1 END)::int`,
+        refundedAmount: sql<string>`COALESCE(SUM(CASE WHEN ${invoices.status} = 'refunded' THEN ${invoices.totalAmount}::numeric ELSE 0 END), 0)`,
+        cancelledCount: sql<number>`COUNT(CASE WHEN ${invoices.status} = 'cancelled' THEN 1 END)::int`,
+      })
+      .from(invoices)
+      .leftJoin(payments, eq(invoices.paymentId, payments.id))
+      .leftJoin(users, eq(invoices.userId, users.id))
+      .leftJoin(courses, eq(invoices.courseId, courses.id))
+      .where(whereClause);
+
+    return {
+      totalCount: row?.totalCount ?? 0,
+      totalAmount: Number(row?.totalAmount ?? 0),
+      paidCount: row?.paidCount ?? 0,
+      paidAmount: Number(row?.paidAmount ?? 0),
+      overdueCount: row?.overdueCount ?? 0,
+      overdueAmount: Number(row?.overdueAmount ?? 0),
+      refundedCount: row?.refundedCount ?? 0,
+      refundedAmount: Number(row?.refundedAmount ?? 0),
+      cancelledCount: row?.cancelledCount ?? 0,
+    };
+  }
+
+  /**
+   * Full detail for the invoice drawer — invoice row + payment + buyer +
+   * line items + refund list + matching audit-log entries. One method so
+   * the drawer opens in a single round-trip.
+   */
+  async getInvoiceDetail(invoiceId: string) {
+    const [base] = await db
+      .select({
+        invoice: invoices,
+        userName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+        userEmail: users.email,
+        userId: users.id,
+        gateway: payments.gateway,
+        paymentMethod: payments.paymentMethod,
+        paymentStatus: payments.status,
+        gatewayChargeId: payments.gatewayChargeId,
+        courseTitle: courses.title,
+        courseTitleAr: courses.titleAr,
+      })
+      .from(invoices)
+      .leftJoin(users, eq(invoices.userId, users.id))
+      .leftJoin(payments, eq(invoices.paymentId, payments.id))
+      .leftJoin(courses, eq(invoices.courseId, courses.id))
+      .where(eq(invoices.id, invoiceId))
+      .limit(1);
+
+    if (!base) {
+      throw new NotFoundException(`Invoice ${invoiceId} not found`);
+    }
+
+    // Persisted line items snapshot lives on metadata — use it (don't re-query
+    // courses since a renamed course would silently rewrite a paid invoice).
+    const meta = (base.invoice.metadata as any) || {};
+    const lineItems = Array.isArray(meta.lineItems) ? meta.lineItems : [];
+
+    const refundRows = await db
+      .select({
+        id: refunds.id,
+        amount: refunds.refundAmount,
+        reason: refunds.reason,
+        reasonNote: refunds.reasonNote,
+        status: refunds.status,
+        requestedAt: refunds.createdAt,
+        approvedAt: refunds.approvedAt,
+        completedAt: refunds.completedAt,
+        rejectedAt: refunds.rejectedAt,
+      })
+      .from(refunds)
+      .where(eq(refunds.paymentId, base.invoice.paymentId))
+      .orderBy(desc(refunds.createdAt));
+
+    return {
+      invoice: base.invoice,
+      buyer: {
+        id: base.userId,
+        name: base.userName,
+        email: base.userEmail,
+        nationalId: meta.buyer?.nationalId || null,
+      },
+      payment: {
+        id: base.invoice.paymentId,
+        gateway: base.gateway,
+        paymentMethod: base.paymentMethod,
+        status: base.paymentStatus,
+        gatewayChargeId: base.gatewayChargeId,
+      },
+      course: {
+        id: base.invoice.courseId,
+        title: base.courseTitle,
+        titleAr: base.courseTitleAr,
+      },
+      lineItems,
+      refunds: refundRows,
+    };
+  }
+
+  /**
+   * Force-regenerate the invoice PDF — useful when the template has been
+   * updated, the file was lost, or the buyer reports a corrupt download.
+   * Re-renders using the persisted line-items snapshot so the invoice
+   * content is unchanged; only the rendering refreshes. Audits the action
+   * with the actor.
+   */
+  async regeneratePdf(invoiceId: string, actorUserId: string) {
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.id, invoiceId))
+      .limit(1);
+
+    if (!invoice) throw new NotFoundException('Invoice not found');
+
+    const [payment] = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.id, invoice.paymentId))
+      .limit(1);
+    const [userData] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, invoice.userId))
+      .limit(1);
+    const [course] = await db
+      .select()
+      .from(courses)
+      .where(eq(courses.id, invoice.courseId))
+      .limit(1);
+
+    if (!payment || !userData || !course) {
+      throw new NotFoundException('Linked payment / user / course missing');
+    }
+
+    const meta = (invoice.metadata as any) || {};
+    const persistedLineItems = Array.isArray(meta.lineItems)
+      ? meta.lineItems
+      : undefined;
+    const branding = await this.siteSettings.getBranding();
+    const pdfBuffer = await this.generatePdf(
+      invoice,
+      payment,
+      userData,
+      course,
+      persistedLineItems,
+      branding,
+    );
+    const filename = `invoices/${invoice.invoiceNumber}.pdf`;
+    await this.storageService.uploadPrivate(
+      pdfBuffer,
+      filename,
+      'application/pdf',
+    );
+    await db
+      .update(invoices)
+      .set({ pdfUrl: filename, updatedAt: new Date() })
+      .where(eq(invoices.id, invoice.id));
+
+    await this.auditLogService.log({
+      entityType: 'invoice',
+      entityId: invoice.id,
+      action: 'invoice_pdf_regenerated',
+      performedBy: actorUserId,
+      metadata: { invoiceNumber: invoice.invoiceNumber },
+    });
+
+    return { ok: true, invoiceNumber: invoice.invoiceNumber };
+  }
+
+  /**
+   * Admin action to void an invoice — flips status to 'cancelled' and
+   * audits the action with a required reason. Idempotent: cancelling an
+   * already-cancelled invoice is a no-op. Does NOT touch the underlying
+   * payment (refund flow handles that side); finance can cancel a
+   * mis-issued invoice without forcing a refund.
+   */
+  async cancelInvoice(
+    invoiceId: string,
+    reason: string,
+    actorUserId: string,
+  ) {
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.id, invoiceId))
+      .limit(1);
+    if (!invoice) throw new NotFoundException('Invoice not found');
+    if (invoice.status === INVOICE_STATUS.CANCELLED) {
+      return { ok: true, invoiceNumber: invoice.invoiceNumber, alreadyCancelled: true };
+    }
+
+    await db
+      .update(invoices)
+      .set({ status: INVOICE_STATUS.CANCELLED, updatedAt: new Date() })
+      .where(eq(invoices.id, invoiceId));
+
+    await this.auditLogService.log({
+      entityType: 'invoice',
+      entityId: invoiceId,
+      action: 'invoice_cancelled',
+      performedBy: actorUserId,
+      metadata: {
+        invoiceNumber: invoice.invoiceNumber,
+        previousStatus: invoice.status,
+        reason,
+      },
+    });
+
+    return { ok: true, invoiceNumber: invoice.invoiceNumber };
+  }
+
+  /**
+   * Overdue sweep — invoices with a due date in the past that are still
+   * issued (not paid/cancelled/refunded) get flipped to 'overdue'. Only
+   * relevant for bank-transfer / future net-N invoices since direct
+   * gateway-paid rows write status=paid up front. Returns swept count.
+   */
+  async sweepOverdueInvoices() {
+    const now = new Date();
+    const result = await db
+      .update(invoices)
+      .set({ status: INVOICE_STATUS.OVERDUE, updatedAt: new Date() })
+      .where(
+        and(
+          eq(invoices.status, INVOICE_STATUS.ISSUED),
+          sql`${invoices.dueDate} IS NOT NULL`,
+          lte(invoices.dueDate, now),
+        ),
+      )
+      .returning({ id: invoices.id, invoiceNumber: invoices.invoiceNumber });
+
+    for (const row of result) {
+      await this.auditLogService.log({
+        entityType: 'invoice',
+        entityId: row.id,
+        action: 'invoice_overdue_flagged',
+        performedBy: 'system',
+        ipAddress: 'cron',
+        metadata: { invoiceNumber: row.invoiceNumber, sweptAt: now.toISOString() },
+      });
+    }
+
+    this.logger.log(`Overdue sweep: flagged ${result.length} invoice(s) as overdue`);
+    return { sweptCount: result.length, sweptAt: now.toISOString() };
+  }
+
+  /**
+   * CSV export of the current filtered invoice set. Same filters as the
+   * admin list query. No pagination — returns the full match. Includes
+   * line items inline as a pipe-separated summary so the spreadsheet
+   * is one row per invoice (common ask from finance).
+   */
+  async exportInvoicesCsv(opts: {
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+    gateway?: string;
+  }): Promise<string> {
+    const { data } = await this.getAllInvoices(
+      1,
+      10000,
+      opts.status,
+      opts.startDate,
+      opts.endDate,
+      opts.search,
+      opts.gateway,
+    );
+
+    const header = [
+      'Invoice Number',
+      'Status',
+      'Customer Name',
+      'Customer Email',
+      'Course',
+      'Gateway',
+      'Subtotal (SAR)',
+      'Discount (SAR)',
+      'VAT (SAR)',
+      'Total (SAR)',
+      'Issued At',
+      'Paid At',
+      'Due Date',
+      'Refund Status',
+    ];
+    const escape = (v: unknown) => {
+      const s = v === null || v === undefined ? '' : String(v);
+      return `"${s.replace(/"/g, '""')}"`;
+    };
+
+    const rows = [header.join(',')];
+    for (const r of data) {
+      rows.push(
+        [
+          escape(r.invoiceNumber),
+          escape(r.status),
+          escape((r as any).userName?.trim() || ''),
+          escape((r as any).userEmail || ''),
+          escape((r as any).courseTitle || ''),
+          escape((r as any).gateway || ''),
+          escape(Number((r as any).subtotal || 0).toFixed(2)),
+          escape(Number((r as any).discountAmount || 0).toFixed(2)),
+          escape(Number((r as any).taxAmount || 0).toFixed(2)),
+          escape(Number((r as any).totalAmount || 0).toFixed(2)),
+          escape(
+            (r as any).issuedAt
+              ? new Date((r as any).issuedAt).toISOString()
+              : '',
+          ),
+          escape(
+            (r as any).paidAt ? new Date((r as any).paidAt).toISOString() : '',
+          ),
+          escape(
+            (r as any).dueDate
+              ? new Date((r as any).dueDate).toISOString()
+              : '',
+          ),
+          escape((r as any).refundStatus || ''),
+        ].join(','),
+      );
+    }
+    return rows.join('\n');
+  }
+
+  /**
+   * Audit-trail for the invoice drawer — pulls direct invoice events plus
+   * the linked payment + refund events so the drawer shows the full
+   * lifecycle (generation, regen, cancel, refund-requested/approved/
+   * completed, payment_completed). Same UNION pattern as
+   * PaymentsService.getPaymentAudit.
+   */
+  async getInvoiceAudit(invoiceId: string, limit: number = 100) {
+    const [invoice] = await db
+      .select({ paymentId: invoices.paymentId })
+      .from(invoices)
+      .where(eq(invoices.id, invoiceId))
+      .limit(1);
+    if (!invoice) return [];
+
+    const cap = Math.min(limit, 200);
+    const result = await db.execute(sql`
+      SELECT a.id,
+             a.action,
+             a.entity_type AS "entityType",
+             a.entity_id AS "entityId",
+             a.performed_by AS "performedBy",
+             a.metadata,
+             a.created_at AS "createdAt",
+             CASE
+               WHEN u.id IS NULL THEN NULL
+               ELSE CONCAT(u.first_name, ' ', u.last_name)
+             END AS "actorName",
+             u.email AS "actorEmail"
+      FROM audit_logs a
+      LEFT JOIN users u ON a.performed_by = u.id
+      WHERE
+        (a.entity_type = 'invoice' AND a.entity_id = ${invoiceId})
+        OR (a.entity_type = 'payment' AND a.entity_id = ${invoice.paymentId})
+        OR (a.entity_type = 'refund' AND a.entity_id IN (
+          SELECT id FROM refunds WHERE payment_id = ${invoice.paymentId}
+        ))
+      ORDER BY a.created_at DESC
+      LIMIT ${cap}
+    `);
+    return result.rows as Array<{
+      id: string;
+      action: string;
+      entityType: string;
+      entityId: string;
+      performedBy: string | null;
+      metadata: Record<string, unknown> | null;
+      createdAt: string;
+      actorName: string | null;
+      actorEmail: string | null;
+    }>;
   }
 
   async getInvoiceById(invoiceId: string) {

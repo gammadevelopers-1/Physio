@@ -7418,23 +7418,168 @@ export const escalationsApi = {
 // Invoice API
 // ===========================================
 
+export interface InvoiceRow {
+  id: string;
+  invoiceNumber: string;
+  paymentId: string;
+  userName: string | null;
+  userEmail: string | null;
+  courseTitle: string | null;
+  courseTitleAr: string | null;
+  subtotal: string;
+  discountAmount: string;
+  taxAmount: string;
+  totalAmount: string;
+  status: 'draft' | 'issued' | 'paid' | 'overdue' | 'cancelled' | 'refunded';
+  issuedAt: string;
+  paidAt: string | null;
+  dueDate: string | null;
+  gateway: string | null;
+  refundStatus: string | null;
+}
+
+export interface InvoiceSummary {
+  totalCount: number;
+  totalAmount: number;
+  paidCount: number;
+  paidAmount: number;
+  overdueCount: number;
+  overdueAmount: number;
+  refundedCount: number;
+  refundedAmount: number;
+  cancelledCount: number;
+}
+
+type InvoiceFilters = {
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+  gateway?: string;
+};
+
+function buildInvoiceFilterParams(filters?: InvoiceFilters): URLSearchParams {
+  const sp = new URLSearchParams();
+  if (filters?.status && filters.status !== 'all') sp.set('status', filters.status);
+  if (filters?.startDate) sp.set('startDate', filters.startDate);
+  if (filters?.endDate) sp.set('endDate', filters.endDate);
+  if (filters?.search) sp.set('search', filters.search);
+  if (filters?.gateway && filters.gateway !== 'all') sp.set('gateway', filters.gateway);
+  return sp;
+}
+
 export const invoiceApi = {
   getMyInvoices: (page = 1, limit = 10) =>
     api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/invoices/my-invoices?page=${page}&limit=${limit}`),
 
-  getAll: (page = 1, limit = 10, filters?: { status?: string; startDate?: string; endDate?: string }) => {
-    const sp = new URLSearchParams({ page: String(page), limit: String(limit) });
-    if (filters?.status && filters.status !== 'all') sp.set('status', filters.status);
-    if (filters?.startDate) sp.set('startDate', filters.startDate);
-    if (filters?.endDate) sp.set('endDate', filters.endDate);
-    return api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/invoices?${sp.toString()}`);
+  getAll: (page = 1, limit = 10, filters?: InvoiceFilters) => {
+    const sp = buildInvoiceFilterParams(filters);
+    sp.set('page', String(page));
+    sp.set('limit', String(limit));
+    return api.get<{
+      data: InvoiceRow[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }>(`/invoices?${sp.toString()}`);
   },
+
+  getSummary: (filters?: InvoiceFilters) => {
+    const sp = buildInvoiceFilterParams(filters);
+    const qs = sp.toString();
+    return api.get<InvoiceSummary>(`/invoices/summary${qs ? `?${qs}` : ''}`);
+  },
+
+  getDetail: (invoiceId: string) =>
+    api.get<{
+      invoice: {
+        id: string;
+        invoiceNumber: string;
+        paymentId: string;
+        userId: string;
+        courseId: string;
+        subtotal: string;
+        discountAmount: string;
+        taxAmount: string;
+        totalAmount: string;
+        status: string;
+        issuedAt: string;
+        paidAt: string | null;
+        dueDate: string | null;
+        pdfUrl: string | null;
+        metadata: Record<string, unknown> | null;
+      };
+      buyer: { id: string; name: string | null; email: string | null; nationalId: string | null };
+      payment: {
+        id: string;
+        gateway: string | null;
+        paymentMethod: string | null;
+        status: string | null;
+        gatewayChargeId: string | null;
+      };
+      course: { id: string; title: string | null; titleAr: string | null };
+      lineItems: Array<{
+        description: string;
+        descriptionAr: string | null;
+        deliveryType: string | null;
+        amount: number;
+      }>;
+      refunds: Array<{
+        id: string;
+        amount: string;
+        reason: string;
+        reasonNote: string | null;
+        status: string;
+        requestedAt: string;
+        approvedAt: string | null;
+        completedAt: string | null;
+        rejectedAt: string | null;
+      }>;
+    }>(`/invoices/${invoiceId}/detail`),
+
+  getAudit: (invoiceId: string, limit = 100) =>
+    api.get<Array<{
+      id: string;
+      action: string;
+      entityType: string;
+      entityId: string;
+      performedBy: string | null;
+      metadata: Record<string, unknown> | null;
+      createdAt: string;
+      actorName: string | null;
+      actorEmail: string | null;
+    }>>(`/invoices/${invoiceId}/audit?limit=${limit}`),
 
   getPdfUrl: (invoiceId: string) =>
     api.get<{ url: string; invoiceNumber: string }>(`/invoices/${invoiceId}/pdf`),
 
   resend: (invoiceId: string) =>
-    api.post<{ sent: boolean }>(`/invoices/${invoiceId}/resend`),
+    api.post<{ sent: boolean; invoiceNumber: string }>(`/invoices/${invoiceId}/resend`),
+
+  regeneratePdf: (invoiceId: string) =>
+    api.post<{ ok: boolean; invoiceNumber: string }>(`/invoices/${invoiceId}/regenerate-pdf`),
+
+  cancel: (invoiceId: string, reason: string) =>
+    api.post<{ ok: boolean; invoiceNumber: string }>(`/invoices/${invoiceId}/cancel`, { reason }),
+
+  runOverdueSweep: () =>
+    api.post<{ sweptCount: number; sweptAt: string }>('/invoices/overdue-sweep/run'),
+
+  /**
+   * Downloads the CSV export for the current filter set as a Blob — caller
+   * is responsible for triggering the browser save. Bypasses the api wrapper
+   * because the response is a binary stream, not JSON.
+   */
+  exportCsv: async (filters?: InvoiceFilters): Promise<Blob> => {
+    const sp = buildInvoiceFilterParams(filters);
+    const qs = sp.toString();
+    const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api').replace(/\/$/, '');
+    const url = `${base}/invoices/export.csv${qs ? `?${qs}` : ''}`;
+    const token = getAccessToken();
+    const res = await fetch(url, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error(`CSV export failed: ${res.status}`);
+    return res.blob();
+  },
 };
 
 // ===========================================

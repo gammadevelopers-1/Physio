@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import DatePicker from "@/components/ui/DatePicker";
 
 interface DateRange {
   startDate?: string;
@@ -107,36 +108,36 @@ const DateRangeFilter = ({
       </div>
 
       {/* Custom date inputs — stacked BELOW the pill group on its own row
-          so opening Custom never widens the header. */}
+          so opening Custom never widens the header. Uses the platform
+          DatePicker (Hijri / Gregorian toggle, consistent with other
+          dashboards) instead of the native HTML date input. */}
       {activePreset === "custom" && (
         <div
-          className={`inline-flex items-center gap-1.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg px-2 py-1 shadow-sm ${isRTL ? "flex-row-reverse" : ""}`}
+          className={`inline-flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
         >
-          <input
-            type="date"
-            value={customStart}
-            max={customEnd || undefined}
-            onChange={(e) => {
-              setCustomStart(e.target.value);
-              handleCustomChange(e.target.value, customEnd);
-            }}
-            className="px-1.5 py-0.5 text-xs border-0 rounded-md focus:outline-none text-[var(--color-text-primary)] bg-transparent w-[120px]"
-            dir="ltr"
-            aria-label={t("dateFilter.startDate")}
-          />
+          <div className="w-[160px]">
+            <DatePicker
+              value={customStart}
+              max={customEnd || undefined}
+              onChange={(iso) => {
+                setCustomStart(iso);
+                handleCustomChange(iso, customEnd);
+              }}
+              placeholder={t("dateFilter.startDate")}
+            />
+          </div>
           <span className="text-xs text-[var(--color-text-secondary)]">–</span>
-          <input
-            type="date"
-            value={customEnd}
-            min={customStart || undefined}
-            onChange={(e) => {
-              setCustomEnd(e.target.value);
-              handleCustomChange(customStart, e.target.value);
-            }}
-            className="px-1.5 py-0.5 text-xs border-0 rounded-md focus:outline-none text-[var(--color-text-primary)] bg-transparent w-[120px]"
-            dir="ltr"
-            aria-label={t("dateFilter.endDate")}
-          />
+          <div className="w-[160px]">
+            <DatePicker
+              value={customEnd}
+              min={customStart || undefined}
+              onChange={(iso) => {
+                setCustomEnd(iso);
+                handleCustomChange(customStart, iso);
+              }}
+              placeholder={t("dateFilter.endDate")}
+            />
+          </div>
         </div>
       )}
     </div>

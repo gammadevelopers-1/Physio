@@ -8855,7 +8855,8 @@
       "refunded": "مُسترَد",
       "partiallyRefunded": "مُسترَد جزئيًا",
       "chargeback": "استرجاع بنكي",
-      "processing": "قيد المعالجة"
+      "processing": "قيد المعالجة",
+      "rejected": "مرفوض"
     },
     "analytics": {
       "title": "التحليلات",
@@ -8874,7 +8875,11 @@
         "recorded": "مسجَّل",
         "self_paced": "ذاتي",
         "webinar": "ندوة",
-        "unknown": "غير محدد"
+        "unknown": "غير محدد",
+        "zoom": "زووم",
+        "self-paced": "ذاتي",
+        "in_person": "حضوري",
+        "in-person": "حضوري"
       }
     },
     "rail": {

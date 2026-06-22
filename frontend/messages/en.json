@@ -8855,7 +8855,8 @@
       "refunded": "Refunded",
       "partiallyRefunded": "Partially Refunded",
       "chargeback": "Chargeback",
-      "processing": "Processing"
+      "processing": "Processing",
+      "rejected": "Rejected"
     },
     "analytics": {
       "title": "Analytics",
@@ -8874,7 +8875,11 @@
         "recorded": "Recorded",
         "self_paced": "Self-paced",
         "webinar": "Webinar",
-        "unknown": "Unknown"
+        "unknown": "Unknown",
+        "zoom": "Zoom",
+        "self-paced": "Self-paced",
+        "in_person": "In-person",
+        "in-person": "In-person"
       }
     },
     "rail": {

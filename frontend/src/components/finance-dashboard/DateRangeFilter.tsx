@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { Calendar } from "lucide-react";
 
 interface DateRange {
   startDate?: string;
@@ -86,12 +85,10 @@ const DateRangeFilter = ({
 
   return (
     <div className={`flex flex-col sm:flex-row sm:items-center gap-2 ${isRTL ? "sm:flex-row-reverse" : ""}`}>
-      {/* Single inline pill group: calendar icon + presets — all aligned, same height */}
+      {/* Single inline pill group — calendar icon removed to free up header space */}
       <div
-        className={`inline-flex items-center gap-1.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg px-2 py-1 shadow-sm ${isRTL ? "flex-row-reverse" : ""}`}
+        className={`inline-flex items-center bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg p-1 shadow-sm ${isRTL ? "flex-row-reverse" : ""}`}
       >
-        <Calendar className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
-        <div className="w-px h-4 bg-[var(--color-border)] flex-shrink-0" />
         <div className="flex items-center gap-0.5">
           {presets.map((preset) => (
             <button

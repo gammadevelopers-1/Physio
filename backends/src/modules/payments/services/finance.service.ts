@@ -206,27 +206,26 @@ export class FinanceService {
     endDate?: string,
   ): Promise<{ period: string; revenue: number; count: number }[]> {
     const safePeriod = ['day', 'week', 'month'].includes(period) ? period : 'day';
-    // Group + filter on COALESCE(paidAt, createdAt) so bank transfers
-    // approved later appear on the right day. Inlining the COALESCE
-    // expression in each clause avoids drizzle's nested-sql-chunk
-    // parameter binding pitfall (which 500s when the same chunk is
-    // reused across select/groupBy/orderBy).
-    const conditions: any[] = [
-      eq(payments.status, 'paid' as any),
-      ...this.buildPaidAtConditions(startDate, endDate),
-    ];
+    // Status='paid' rows have paid_at set, so we anchor + group + filter
+    // on payments.paidAt directly. The earlier COALESCE(paid_at, created_at)
+    // approach hit a drizzle quirk where the column reference compiled
+    // unqualified in SELECT but qualified in GROUP BY, so Postgres rejected
+    // the GROUP BY as not matching the projection.
+    const conditions: any[] = [eq(payments.status, 'paid' as any)];
+    if (startDate) conditions.push(gte(payments.paidAt, new Date(startDate)));
+    if (endDate) conditions.push(lte(payments.paidAt, new Date(endDate)));
 
     try {
       const result = await db
         .select({
-          period: sql<string>`date_trunc(${safePeriod}, COALESCE(${payments.paidAt}, ${payments.createdAt}))::text`,
+          period: sql<string>`date_trunc(${safePeriod}, ${payments.paidAt})::text`,
           revenue: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
           count: sql<number>`COUNT(*)::int`,
         })
         .from(payments)
         .where(and(...conditions))
-        .groupBy(sql`date_trunc(${safePeriod}, COALESCE(${payments.paidAt}, ${payments.createdAt}))`)
-        .orderBy(sql`date_trunc(${safePeriod}, COALESCE(${payments.paidAt}, ${payments.createdAt}))`);
+        .groupBy(sql`date_trunc(${safePeriod}, ${payments.paidAt})`)
+        .orderBy(sql`date_trunc(${safePeriod}, ${payments.paidAt})`);
 
       return result.map((r) => ({
         period: r.period,
@@ -234,8 +233,6 @@ export class FinanceService {
         count: Number(r.count),
       }));
     } catch (err) {
-      // Don't swallow SQL errors — log so production trend failures stop
-      // showing as silent "No data" in the UI.
       this.logger.error(
         `getRevenueTrend failed (period=${safePeriod}, start=${startDate}, end=${endDate}): ${err instanceof Error ? err.message : String(err)}`,
       );

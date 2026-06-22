@@ -670,16 +670,16 @@ const RevenueSummaryWidget = ({
 
           {/* Gateway breakdown with Revenue/Volume toggle */}
           <div className="bg-[var(--color-surface-page)] rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
+            <div className="mb-3">
+              <h4 className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-2">
                 {t("revenueSummary.byGateway")}
               </h4>
-              <div className="flex bg-[var(--color-surface-card)] rounded p-0.5">
+              <div className={`inline-flex bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-md p-0.5 w-full ${isRTL ? "flex-row-reverse" : ""}`}>
                 <button
                   onClick={() => setGatewayMode("revenue")}
-                  className={`px-2 py-0.5 text-[10px] font-medium rounded transition-colors ${
+                  className={`flex-1 px-2 py-1 text-[10px] font-medium rounded transition-colors ${
                     gatewayMode === "revenue"
-                      ? "bg-[var(--color-border-subtle)] text-[var(--color-text-primary)]"
+                      ? "bg-[var(--color-primary)] text-white shadow-sm"
                       : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                   }`}
                 >
@@ -687,9 +687,9 @@ const RevenueSummaryWidget = ({
                 </button>
                 <button
                   onClick={() => setGatewayMode("volume")}
-                  className={`px-2 py-0.5 text-[10px] font-medium rounded transition-colors ${
+                  className={`flex-1 px-2 py-1 text-[10px] font-medium rounded transition-colors ${
                     gatewayMode === "volume"
-                      ? "bg-[var(--color-border-subtle)] text-[var(--color-text-primary)]"
+                      ? "bg-[var(--color-primary)] text-white shadow-sm"
                       : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                   }`}
                 >

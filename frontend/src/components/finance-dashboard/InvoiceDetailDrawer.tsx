@@ -413,7 +413,7 @@ const InvoiceDetailDrawer = ({
                   <Row label={t("invoiceDetail.method")} value={data.payment.paymentMethod?.replace(/_/g, " ") || "—"} isRTL={isRTL} />
                   <Row label={t("invoiceDetail.chargeId")} value={data.payment.gatewayChargeId || "—"} mono isRTL={isRTL} />
                   <Link
-                    href={`/${locale}/dashboard/finance/payments`}
+                    href={`/${locale}/dashboard/finance/payments?paymentId=${data.payment.id}`}
                     className={`inline-flex items-center gap-1 mt-1 text-xs font-medium text-[var(--color-primary)] hover:underline ${isRTL ? "flex-row-reverse" : ""}`}
                   >
                     {t("invoiceDetail.openPayment")}

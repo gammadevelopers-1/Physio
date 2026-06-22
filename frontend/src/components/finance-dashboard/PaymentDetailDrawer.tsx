@@ -233,7 +233,7 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
                 <Card title={t("paymentDetail.invoice")} icon={<FileText className="w-4 h-4" />} isRTL={isRTL}>
                   {data.payment.invoiceId ? (
                     <Link
-                      href={`/${locale}/dashboard/finance/invoices`}
+                      href={`/${locale}/dashboard/finance/invoices?invoiceId=${data.payment.invoiceId}`}
                       className={`flex items-center justify-between gap-2 text-sm group ${isRTL ? "flex-row-reverse" : ""}`}
                     >
                       <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>

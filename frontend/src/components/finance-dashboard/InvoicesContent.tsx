@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import FinanceSidebar from "./FinanceSidebar";
 import FinanceMobileSidebar from "./FinanceMobileSidebar";
@@ -18,12 +19,9 @@ import {
   ChevronRight,
   Clock,
   CheckCircle,
-  AlertTriangle,
   Loader2,
   Download,
-  Sparkles,
   RotateCcw,
-  Ban,
   ArrowRight,
   ArrowLeft,
 } from "lucide-react";
@@ -46,6 +44,9 @@ const InvoicesContent = () => {
   const isRTL = locale === "ar";
   const ArrowGlyph = isRTL ? ArrowLeft : ArrowRight;
   const profile = useFinanceProfile();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const [dateRange, setDateRange] = useState<{ startDate?: string; endDate?: string; label: string }>(getDefaultDateRange);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -66,9 +67,26 @@ const InvoicesContent = () => {
   const [agingLoading, setAgingLoading] = useState(true);
 
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
-  const [sweepRunning, setSweepRunning] = useState(false);
-  const [sweepResult, setSweepResult] = useState<{ count: number } | null>(null);
   const [csvExporting, setCsvExporting] = useState(false);
+
+  // Deep-link: ?invoiceId=... opens the drawer; URL stays in sync as user
+  // opens/closes so reload + back navigation preserve drawer state.
+  useEffect(() => {
+    const iid = searchParams.get("invoiceId");
+    if (iid && iid !== selectedInvoiceId) {
+      setSelectedInvoiceId(iid);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const openInvoiceDrawer = (id: string | null) => {
+    setSelectedInvoiceId(id);
+    const sp = new URLSearchParams(searchParams.toString());
+    if (id) sp.set("invoiceId", id);
+    else sp.delete("invoiceId");
+    const qs = sp.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
 
   // Debounced search → query
   useEffect(() => {
@@ -160,11 +178,14 @@ const InvoicesContent = () => {
     fetchAging();
   }, [fetchAging]);
 
+  // 'overdue' is intentionally absent — invoices in this product are
+  // always created status='paid' (payment-first flow), so the overdue
+  // bucket is structurally empty. Cron + endpoint still exist for the
+  // day B2B / net-30 invoicing lands. See feedback note in commit msg.
   const statusOptions = [
     { value: "all", label: t("invoicesPage.filters.allStatuses") },
     { value: "paid", label: t("invoicesPage.statuses.paid") },
     { value: "issued", label: t("invoicesPage.statuses.issued") },
-    { value: "overdue", label: t("invoicesPage.statuses.overdue") },
     { value: "refunded", label: t("invoicesPage.statuses.refunded") },
     { value: "cancelled", label: t("invoicesPage.statuses.cancelled") },
   ];
@@ -179,23 +200,6 @@ const InvoicesContent = () => {
 
   const handleAgingClick = (bucketStatus: string) => {
     setStatusFilter(bucketStatus);
-  };
-
-  const handleOverdueSweep = async () => {
-    if (sweepRunning) return;
-    setSweepRunning(true);
-    setSweepResult(null);
-    try {
-      const res = await invoiceApi.runOverdueSweep();
-      setSweepResult({ count: res.sweptCount });
-      await fetchRows();
-      await fetchSummary();
-      await fetchAging();
-    } catch {
-      setSweepResult({ count: -1 });
-    } finally {
-      setSweepRunning(false);
-    }
   };
 
   const handleCsvExport = async () => {
@@ -248,10 +252,9 @@ const InvoicesContent = () => {
               </div>
 
               {/* 4 real KPI stats */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                 {summaryLoading ? (
                   <>
-                    <KPICardSkeleton />
                     <KPICardSkeleton />
                     <KPICardSkeleton />
                     <KPICardSkeleton />
@@ -287,21 +290,6 @@ const InvoicesContent = () => {
                       icon={CheckCircle}
                       iconBg={FINANCE_COLORS.success.bg}
                       iconColor={FINANCE_COLORS.success.text}
-                    />
-                    <StatCard
-                      label={t("invoicesPage.stats.overdueInvoices")}
-                      value={(summary?.overdueCount || 0).toLocaleString("en-US")}
-                      sublabel={
-                        <Money
-                          amount={summary?.overdueAmount || 0}
-                          decimals={0}
-                          iconSize={11}
-                          className="text-xs text-[var(--color-text-secondary)]"
-                        />
-                      }
-                      icon={AlertTriangle}
-                      iconBg={FINANCE_COLORS.warning.bg}
-                      iconColor={FINANCE_COLORS.warning.text}
                     />
                     <StatCard
                       label={t("invoicesPage.stats.refundedInvoices")}
@@ -357,25 +345,7 @@ const InvoicesContent = () => {
                     {t("invoicesPage.actions.exportCsv")}
                   </button>
 
-                  <button
-                    onClick={handleOverdueSweep}
-                    disabled={sweepRunning}
-                    className="inline-flex items-center gap-1.5 h-9 px-3 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50"
-                    title={t("invoicesPage.actions.overdueSweepTooltip")}
-                  >
-                    {sweepRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                    {sweepRunning
-                      ? t("invoicesPage.actions.overdueSweepRunning")
-                      : t("invoicesPage.actions.overdueSweep")}
-                  </button>
                 </div>
-                {sweepResult && (
-                  <p className={`mt-2 text-[11px] ${sweepResult.count === -1 ? "text-[#DC2626]" : "text-[var(--color-text-secondary)]"} ${isRTL ? "text-right" : ""}`}>
-                    {sweepResult.count === -1
-                      ? t("invoicesPage.actions.overdueSweepError")
-                      : t("invoicesPage.actions.overdueSweepResult", { count: sweepResult.count })}
-                  </p>
-                )}
               </div>
 
               {/* Table */}
@@ -412,7 +382,7 @@ const InvoicesContent = () => {
                             locale={locale}
                             t={t}
                             ArrowGlyph={ArrowGlyph}
-                            onClick={() => setSelectedInvoiceId(inv.id)}
+                            onClick={() => openInvoiceDrawer(inv.id)}
                           />
                         ))
                       )}
@@ -508,7 +478,7 @@ const InvoicesContent = () => {
 
       <InvoiceDetailDrawer
         invoiceId={selectedInvoiceId}
-        onClose={() => setSelectedInvoiceId(null)}
+        onClose={() => openInvoiceDrawer(null)}
         onChanged={() => {
           fetchRows();
           fetchSummary();

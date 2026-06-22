@@ -11735,6 +11735,11 @@
     "paidDate": "Paid",
     "cancelled": "Cancelled",
     "refunded": "Refunded",
-    "verifiedFootnote": "Verified directly against the PhysioGuidance ledger"
+    "verifiedFootnote": "Verified directly against the PhysioGuidance ledger",
+    "buyer": "Issued to",
+    "course": "Course",
+    "paymentMethod": "Payment",
+    "subtotal": "Subtotal",
+    "vat": "VAT (15%)"
   }
 }

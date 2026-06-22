@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { CreditCard, Clock, XCircle, Search, Eye, EyeOff, Loader2, Sparkles } from "lucide-react";
 import FinanceSidebar from "./FinanceSidebar";
@@ -29,6 +30,9 @@ const PaymentsContent = () => {
   const locale = useLocale();
   const isRTL = locale === "ar";
   const profile = useFinanceProfile();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const [dateRange, setDateRange] = useState<{ startDate?: string; endDate?: string; label: string }>(getDefaultDateRange);
   const [page, setPage] = useState(1);
@@ -60,6 +64,26 @@ const PaymentsContent = () => {
   const [sweepRunning, setSweepRunning] = useState(false);
   const [sweepResult, setSweepResult] = useState<{ count: number; cutoff: string } | null>(null);
 
+  // Deep-link receiver: ?paymentId=... opens the drawer on mount. URL stays
+  // updated as the user navigates so back/forward + reload preserve state.
+  useEffect(() => {
+    const pid = searchParams.get("paymentId");
+    if (pid && pid !== selectedPaymentId) {
+      setSelectedPaymentId(pid);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const openPaymentDrawer = (id: string | null) => {
+    setSelectedPaymentId(id);
+    // Sync URL — push so back navigates out of the drawer.
+    const sp = new URLSearchParams(searchParams.toString());
+    if (id) sp.set("paymentId", id);
+    else sp.delete("paymentId");
+    const qs = sp.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
+
   const fetchRows = useCallback(async () => {
     setLoading(true);
     try {
@@ -86,10 +110,13 @@ const PaymentsContent = () => {
       };
       const mapped: PaymentRow[] = (res.data || []).map((p: PaymentApiRow) => ({
         id: p.id,
-        date: new Date(p.createdAt).toLocaleDateString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-US", {
+        date: new Date(p.createdAt).toLocaleString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-US", {
           month: "short",
           day: "numeric",
           year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
         }),
         customer: p.userName || p.userEmail || "-",
         customerEmail: p.userEmail,
@@ -353,7 +380,7 @@ const PaymentsContent = () => {
                 totalPages={totalPages}
                 totalCount={totalCount}
                 onPageChange={setPage}
-                onRowClick={setSelectedPaymentId}
+                onRowClick={openPaymentDrawer}
               />
             </div>
           </div>
@@ -363,7 +390,7 @@ const PaymentsContent = () => {
       {/* Detail drawer */}
       <PaymentDetailDrawer
         paymentId={selectedPaymentId}
-        onClose={() => setSelectedPaymentId(null)}
+        onClose={() => openPaymentDrawer(null)}
       />
     </>
   );

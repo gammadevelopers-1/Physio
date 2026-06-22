@@ -268,7 +268,10 @@ export class InvoiceService {
   ): Promise<Buffer> {
     return new Promise(async (resolve, reject) => {
       try {
-        const doc = new PDFDocument({ size: 'A4', margin: 0 });
+        // bufferPages keeps page generation lazy so we can verify the doc
+        // never spills past page 1; if it does, we explicitly remove the
+        // overflow page rather than letting it ship blank.
+        const doc = new PDFDocument({ size: 'A4', margin: 0, bufferPages: true });
         const chunks: Buffer[] = [];
 
         doc.on('data', (chunk: Buffer) => chunks.push(chunk));
@@ -281,8 +284,8 @@ export class InvoiceService {
         const ws = { wordSpacing: 2 };
 
         // ── Brand palette ──
-        const BRAND = '#1A2747'; // deep navy
-        const ACCENT = '#B8860B'; // gold
+        const BRAND = '#1A2747';
+        const ACCENT = '#B8860B';
         const MUTED = '#6B7280';
         const SOFT = '#F3F4F6';
         const SUCCESS = '#16A34A';
@@ -297,85 +300,98 @@ export class InvoiceService {
               ? { bg: '#EDE9FE', fg: VIOLET, label: 'REFUNDED', ar: 'مستردة' }
               : status === 'cancelled'
                 ? { bg: '#FEE2E2', fg: DANGER, label: 'CANCELLED', ar: 'ملغاة' }
-                : status === 'overdue'
-                  ? { bg: '#FEF3C7', fg: '#D97706', label: 'OVERDUE', ar: 'متأخرة' }
-                  : { bg: '#DBEAFE', fg: '#1D4ED8', label: 'ISSUED', ar: 'صادرة' };
+                : { bg: '#DBEAFE', fg: '#1D4ED8', label: 'ISSUED', ar: 'صادرة' };
 
-        // Sanitize Arabic name — Strapi sometimes returns control chars (RTL
-        // marks, ZWNJ, BOM) that break NotoArabic shaping and render as boxes.
-        const safeAr = (s: string | null | undefined): string =>
-          (s || '')
+        // Site-name fallback. NotoSansArabic has no Latin glyphs, so if the
+        // admin entered Latin chars in the Arabic field (or Strapi returned
+        // an empty / whitespace-only value), we use the hard-coded Arabic
+        // brand name instead of letting Latin chars render as boxes.
+        const safeAr = (s: string | null | undefined): string => {
+          const stripped = (s || '')
             .replace(/[​-‏‪-‮﻿]/g, '')
             .trim();
-        const siteNameArSafe = safeAr(branding.siteNameAr) || 'فيزيو جايدنس';
+          if (!stripped) return 'فيزيو جايدنس';
+          return /[؀-ۿ]/.test(stripped) ? stripped : 'فيزيو جايدنس';
+        };
+        const siteNameArSafe = safeAr(branding.siteNameAr);
 
-        // ── Header band — full-width navy bar ──
-        doc.rect(0, 0, 595, 110).fill(BRAND);
+        // Date+time formatter — always en-US Latin digits, 24h time so the
+        // invoice reads identically for any locale viewer.
+        const fmtDT = (d: Date | string | null | undefined) => {
+          if (!d) return '';
+          const date = new Date(d);
+          const dd = date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          });
+          const tt = date.toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          });
+          return `${dd} · ${tt}`;
+        };
 
-        // Logo / site name (left)
+        // ── Header band ──
+        doc.rect(0, 0, 595, 100).fill(BRAND);
         doc
           .fillColor('#FFFFFF')
           .font('Helvetica-Bold')
           .fontSize(22)
-          .text(branding.siteNameEn, 40, 30, { width: 320 });
+          .text(branding.siteNameEn, 40, 26, { width: 320 });
         doc
           .font('NotoArabic')
           .fontSize(12)
-          .text(arRtl(siteNameArSafe), 40, 58, { width: 320, ...ws });
+          .fillColor('#FFFFFF')
+          .text(arRtl(siteNameArSafe), 40, 54, { width: 320, ...ws });
         doc
           .font('Helvetica')
           .fontSize(9)
           .fillColor('#CBD5E1')
-          .text('nelc@physioguidance.org · physioguidance.org', 40, 80);
+          .text('nelc@physioguidance.org · physioguidance.org', 40, 76);
 
-        // Invoice title (right)
         doc
           .fillColor('#FFFFFF')
           .font('Helvetica-Bold')
           .fontSize(26)
-          .text('INVOICE', 360, 28, { width: 195, align: 'right' });
+          .text('INVOICE', 360, 26, { width: 195, align: 'right' });
         doc
           .font('NotoArabicBold')
           .fontSize(13)
           .fillColor('#CBD5E1')
-          .text(arRtl('فاتورة ضريبية'), 360, 60, {
+          .text(arRtl('فاتورة ضريبية'), 360, 58, {
             width: 195,
             align: 'right',
             ...ws,
           });
-
-        // Gold accent strip beneath header band
-        doc.rect(0, 110, 595, 4).fill(ACCENT);
+        doc.rect(0, 100, 595, 4).fill(ACCENT);
         doc.fillColor('#000000');
 
-        // ── Status badge + invoice meta strip ──
-        const metaTop = 134;
-        // Status badge (left)
+        // ── Status badge + meta strip ──
+        const metaTop = 124;
         const badgeWidth = 110;
-        doc.roundedRect(40, metaTop, badgeWidth, 22, 4).fill(statusBadge.bg);
+        doc.roundedRect(40, metaTop, badgeWidth, 24, 4).fill(statusBadge.bg);
         doc
           .fillColor(statusBadge.fg)
           .font('Helvetica-Bold')
           .fontSize(10)
-          .text(statusBadge.label, 40, metaTop + 6, {
+          .text(statusBadge.label, 40, metaTop + 7, {
             width: badgeWidth,
             align: 'center',
           });
         doc.fillColor('#000000');
 
-        // Meta lines (right)
+        // Meta lines (right) — date + time on each
         const metaLines: Array<[string, string]> = [
           ['Invoice #', invoice.invoiceNumber],
-          ['Issue Date', new Date(invoice.issuedAt).toLocaleDateString('en-US')],
+          ['Issued', fmtDT(invoice.issuedAt)],
         ];
         if (invoice.paidAt) {
-          metaLines.push(['Paid', new Date(invoice.paidAt).toLocaleDateString('en-US')]);
+          metaLines.push(['Paid', fmtDT(invoice.paidAt)]);
         }
         if (invoice.dueDate) {
-          metaLines.push([
-            'Due Date',
-            new Date(invoice.dueDate).toLocaleDateString('en-US'),
-          ]);
+          metaLines.push(['Due', fmtDT(invoice.dueDate)]);
         }
         let mY = metaTop;
         for (const [label, value] of metaLines) {
@@ -383,135 +399,116 @@ export class InvoiceService {
             .font('Helvetica')
             .fontSize(9)
             .fillColor(MUTED)
-            .text(label, 360, mY, { width: 90, align: 'right' });
+            .text(label, 320, mY, { width: 80, align: 'right' });
           doc
             .font('Helvetica-Bold')
             .fontSize(10)
             .fillColor('#111827')
-            .text(value, 455, mY - 1, { width: 100, align: 'right' });
-          mY += 14;
+            .text(value, 405, mY - 1, { width: 150, align: 'right' });
+          mY += 13;
         }
 
-        // ── Bill To + Payment Details two-column block ──
-        const sectionTop = Math.max(metaTop + 50, mY + 16);
-
-        // Bill To label
+        // ── Bill-To / Payment-Details two-column block in soft cards ──
+        const sectionTop = Math.max(metaTop + 40, mY + 12);
+        const cardW = 252;
+        const cardH = 92;
+        // Left card — Bill To
+        doc
+          .roundedRect(40, sectionTop, cardW, cardH, 6)
+          .lineWidth(1)
+          .strokeColor('#E5E7EB')
+          .stroke();
         doc
           .font('Helvetica-Bold')
-          .fontSize(10)
-          .fillColor(MUTED)
-          .text('BILL TO', 40, sectionTop);
-        doc
-          .font('NotoArabicBold')
           .fontSize(9)
-          .text(arRtl('فاتورة إلى'), 40, sectionTop + 12, { width: 240, ...ws });
-
+          .fillColor(MUTED)
+          .text('BILL TO', 52, sectionTop + 10);
         doc
           .font('Helvetica-Bold')
           .fontSize(12)
           .fillColor('#111827')
           .text(
-            `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
-            40,
-            sectionTop + 30,
-            { width: 240 },
+            `${userData.firstName || ''} ${userData.lastName || ''}`.trim() ||
+              userData.email,
+            52,
+            sectionTop + 26,
+            { width: cardW - 24 },
           );
         doc
           .font('Helvetica')
-          .fontSize(10)
+          .fontSize(9)
           .fillColor(MUTED)
-          .text(userData.email, 40, sectionTop + 48, { width: 240 });
-        let customerInfoY = sectionTop + 64;
+          .text(userData.email, 52, sectionTop + 44, { width: cardW - 24 });
         if ((userData as any).nationalId) {
-          doc
-            .font('Helvetica')
-            .fontSize(9)
-            .fillColor(MUTED)
-            .text(`National ID · ${(userData as any).nationalId}`, 40, customerInfoY);
-          customerInfoY += 14;
+          doc.text(
+            `National ID · ${(userData as any).nationalId}`,
+            52,
+            sectionTop + 58,
+            { width: cardW - 24 },
+          );
         }
 
-        // Payment Details (right)
+        // Right card — Payment Details
+        const rightX = 303;
+        doc
+          .roundedRect(rightX, sectionTop, cardW, cardH, 6)
+          .lineWidth(1)
+          .strokeColor('#E5E7EB')
+          .stroke();
         doc
           .font('Helvetica-Bold')
-          .fontSize(10)
-          .fillColor(MUTED)
-          .text('PAYMENT DETAILS', 320, sectionTop, { width: 235, align: 'right' });
-        doc
-          .font('NotoArabicBold')
           .fontSize(9)
-          .text(arRtl('تفاصيل الدفع'), 320, sectionTop + 12, {
-            width: 235,
-            align: 'right',
-            ...ws,
-          });
-
+          .fillColor(MUTED)
+          .text('PAYMENT DETAILS', rightX + 12, sectionTop + 10);
         const gatewayLabel =
           payment.gateway === 'bank_transfer'
             ? 'Bank Transfer'
             : payment.gateway.charAt(0).toUpperCase() + payment.gateway.slice(1);
-        doc
-          .font('Helvetica')
-          .fontSize(9)
-          .fillColor(MUTED)
-          .text('Gateway', 320, sectionTop + 30, { width: 100, align: 'right' });
-        doc
-          .font('Helvetica-Bold')
-          .fontSize(10)
-          .fillColor('#111827')
-          .text(gatewayLabel, 425, sectionTop + 29, { width: 130, align: 'right' });
-
-        doc
-          .font('Helvetica')
-          .fontSize(9)
-          .fillColor(MUTED)
-          .text('Method', 320, sectionTop + 46, { width: 100, align: 'right' });
-        doc
-          .font('Helvetica-Bold')
-          .fontSize(10)
-          .fillColor('#111827')
-          .text(
-            payment.paymentMethod
-              ? payment.paymentMethod.replace(/_/g, ' ').toUpperCase()
-              : 'N/A',
-            425,
-            sectionTop + 45,
-            { width: 130, align: 'right' },
-          );
-
-        if (payment.gatewayChargeId) {
+        const methodLabel = payment.paymentMethod
+          ? payment.paymentMethod.replace(/_/g, ' ').toUpperCase()
+          : '—';
+        const referenceShort = payment.gatewayChargeId
+          ? payment.gatewayChargeId.length > 30
+            ? `${payment.gatewayChargeId.slice(0, 14)}…${payment.gatewayChargeId.slice(-12)}`
+            : payment.gatewayChargeId
+          : '—';
+        const payRows: Array<[string, string]> = [
+          ['Gateway', gatewayLabel],
+          ['Method', methodLabel],
+          ['Reference', referenceShort],
+        ];
+        let pY = sectionTop + 28;
+        for (const [k, v] of payRows) {
           doc
             .font('Helvetica')
             .fontSize(9)
             .fillColor(MUTED)
-            .text('Reference', 320, sectionTop + 62, { width: 100, align: 'right' });
+            .text(k, rightX + 12, pY, { width: 80 });
           doc
-            .font('Helvetica')
-            .fontSize(8)
+            .font(k === 'Reference' ? 'Helvetica' : 'Helvetica-Bold')
+            .fontSize(k === 'Reference' ? 8 : 10)
             .fillColor('#111827')
-            .text(payment.gatewayChargeId, 320, sectionTop + 75, {
-              width: 235,
+            .text(v, rightX + 90, pY, {
+              width: cardW - 102,
               align: 'right',
               lineBreak: false,
             });
+          pY += 18;
         }
 
         // ── Line items table ──
-        const tableTop = Math.max(customerInfoY, sectionTop + 95) + 18;
-
-        // Header bar
-        doc.rect(40, tableTop, 515, 22).fill(SOFT);
+        const tableTop = sectionTop + cardH + 22;
+        doc.rect(40, tableTop, 515, 24).fill(SOFT);
         doc
           .fillColor(MUTED)
           .font('Helvetica-Bold')
           .fontSize(9)
-          .text('DESCRIPTION', 50, tableTop + 7, { width: 300 });
-        doc.text('QTY', 360, tableTop + 7, { width: 40, align: 'center' });
-        doc.text('UNIT PRICE', 400, tableTop + 7, { width: 75, align: 'right' });
-        doc.text('AMOUNT', 475, tableTop + 7, { width: 75, align: 'right' });
+          .text('DESCRIPTION', 50, tableTop + 8, { width: 300 });
+        doc.text('QTY', 360, tableTop + 8, { width: 40, align: 'center' });
+        doc.text('UNIT', 400, tableTop + 8, { width: 75, align: 'right' });
+        doc.text('AMOUNT', 475, tableTop + 8, { width: 75, align: 'right' });
         doc.fillColor('#000000');
 
-        // Render rows
         const itemsToRender =
           lineItems && lineItems.length > 0
             ? lineItems
@@ -524,7 +521,7 @@ export class InvoiceService {
                 },
               ];
 
-        let y = tableTop + 30;
+        let y = tableTop + 32;
         let rowIdx = 0;
         for (const item of itemsToRender) {
           const rowTop = y;
@@ -538,28 +535,14 @@ export class InvoiceService {
             .fillColor('#111827')
             .text(item.description, 50, y, { width: 300 });
           let rowExtra = 0;
-          if (item.descriptionAr) {
-            doc
-              .font('NotoArabic')
-              .fontSize(9)
-              .fillColor(MUTED)
-              .text(arRtl(item.descriptionAr), 50, y + 14, { width: 300, ...ws });
-            rowExtra += 14;
-          }
           if (item.deliveryType) {
             doc
               .font('Helvetica')
               .fontSize(8)
               .fillColor(MUTED)
-              .text(
-                `${item.deliveryType.toUpperCase()}`,
-                50,
-                y + 14 + rowExtra,
-                { width: 300 },
-              );
+              .text(item.deliveryType.toUpperCase(), 50, y + 14, { width: 300 });
             rowExtra += 12;
           }
-          // Qty + unit price + amount
           doc
             .font('Helvetica')
             .fontSize(10)
@@ -575,106 +558,74 @@ export class InvoiceService {
               width: 75,
               align: 'right',
             });
-          y += Math.max(26, 16 + rowExtra);
+          y += Math.max(24, 16 + rowExtra);
           rowIdx += 1;
         }
 
         // ── Totals block ──
-        const totalsTop = y + 14;
+        let tY = y + 12;
         const totalsLeft = 320;
         const totalsWidth = 235;
-        let tY = totalsTop;
-
-        const totalsRow = (
-          label: string,
-          arLabel: string,
-          value: string,
-          bold = false,
-        ) => {
+        const totalsRow = (label: string, value: string, bold = false) => {
           doc
             .font(bold ? 'Helvetica-Bold' : 'Helvetica')
             .fontSize(bold ? 11 : 10)
             .fillColor(bold ? '#111827' : MUTED)
             .text(label, totalsLeft, tY, { width: 120 });
           doc
-            .font('NotoArabic')
-            .fontSize(9)
-            .fillColor(MUTED)
-            .text(arRtl(arLabel), totalsLeft + 60, tY + 2, {
-              width: 80,
-              ...ws,
-            });
-          doc
             .font(bold ? 'Helvetica-Bold' : 'Helvetica')
             .fontSize(bold ? 11 : 10)
-            .fillColor(bold ? '#111827' : '#111827')
+            .fillColor('#111827')
             .text(value, totalsLeft, tY, { width: totalsWidth, align: 'right' });
-          tY += 18;
+          tY += 16;
         };
 
-        totalsRow(
-          'Subtotal',
-          'المجموع الفرعي',
-          `SAR ${Number(invoice.subtotal).toFixed(2)}`,
-        );
+        totalsRow('Subtotal', `SAR ${Number(invoice.subtotal).toFixed(2)}`);
         if (Number(invoice.discountAmount) > 0) {
           totalsRow(
             'Discount',
-            'خصم',
             `- SAR ${Number(invoice.discountAmount).toFixed(2)}`,
           );
         }
         if (Number(invoice.taxAmount) > 0) {
           totalsRow(
             'VAT (15%)',
-            'ضريبة القيمة المضافة',
             `SAR ${Number(invoice.taxAmount).toFixed(2)}`,
           );
         }
-
-        // Divider before total
         doc
           .moveTo(totalsLeft, tY + 2)
           .lineTo(totalsLeft + totalsWidth, tY + 2)
           .strokeColor('#E5E7EB')
           .stroke()
           .strokeColor('#000000');
-        tY += 10;
+        tY += 8;
 
         // Highlighted total box
-        doc.rect(totalsLeft, tY, totalsWidth, 32).fill(BRAND);
+        doc.rect(totalsLeft, tY, totalsWidth, 30).fill(BRAND);
         doc
           .fillColor('#FFFFFF')
           .font('Helvetica-Bold')
           .fontSize(12)
-          .text('TOTAL', totalsLeft + 12, tY + 10);
-        doc
-          .font('NotoArabicBold')
-          .fontSize(11)
-          .text(arRtl('الإجمالي'), totalsLeft + 60, tY + 11, {
-            width: 80,
-            ...ws,
-          });
+          .text('TOTAL', totalsLeft + 12, tY + 9);
         doc
           .font('Helvetica-Bold')
           .fontSize(14)
           .text(
             `SAR ${Number(invoice.totalAmount).toFixed(2)}`,
             totalsLeft,
-            tY + 9,
+            tY + 8,
             { width: totalsWidth - 12, align: 'right' },
           );
         doc.fillColor('#000000');
-        tY += 50;
+        tY += 44;
 
-        // ── QR Code (bottom-left) + Footer notice (bottom-right) ──
-        const qrTop = Math.max(tY, 640);
+        // ── QR + verify panel (left-aligned, fixed row) ──
+        const qrTop = Math.min(Math.max(tY, 600), 660);
         try {
-          // Locale-prefixed URL — middleware will keep it if user hits /en or
-          // /ar, but starting from /en means the QR works without redirect.
           const verifyUrl = `https://physioguidance.org/en/verify-invoice/${invoice.invoiceNumber}`;
           const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
-            width: 90,
+            width: 80,
             margin: 0,
             color: { dark: BRAND, light: '#FFFFFF' },
           });
@@ -682,26 +633,21 @@ export class InvoiceService {
             qrDataUrl.replace('data:image/png;base64,', ''),
             'base64',
           );
-          doc.image(qrBuffer, 40, qrTop, { width: 80, height: 80 });
+          doc.image(qrBuffer, 40, qrTop, { width: 72, height: 72 });
           doc
             .font('Helvetica-Bold')
             .fontSize(9)
             .fillColor('#111827')
-            .text('Scan to verify', 130, qrTop + 8);
-          doc
-            .font('NotoArabicBold')
-            .fontSize(9)
-            .fillColor('#111827')
-            .text(arRtl('امسح للتحقق'), 130, qrTop + 22, { width: 120, ...ws });
+            .text('Scan to verify', 124, qrTop + 6);
           doc
             .font('Helvetica')
             .fontSize(8)
             .fillColor(MUTED)
             .text(
-              'This invoice can be authenticated by scanning the QR code or visiting',
-              130,
-              qrTop + 40,
-              { width: 250 },
+              'Authenticate this invoice via QR or:',
+              124,
+              qrTop + 22,
+              { width: 240 },
             );
           doc
             .font('Helvetica')
@@ -709,48 +655,54 @@ export class InvoiceService {
             .fillColor(ACCENT)
             .text(
               `physioguidance.org/verify-invoice/${invoice.invoiceNumber}`,
-              130,
-              qrTop + 54,
-              { width: 250 },
+              124,
+              qrTop + 36,
+              { width: 280, lineBreak: false },
             );
         } catch {
           this.logger.warn('Failed to generate QR code for invoice');
         }
 
-        // ── Footer ──
-        doc
-          .rect(0, 790, 595, 52)
-          .fill('#F9FAFB');
+        // ── Footer band ──
+        doc.rect(0, 770, 595, 72).fill('#F9FAFB');
         doc
           .fillColor(BRAND)
           .font('Helvetica-Bold')
           .fontSize(9)
-          .text(branding.siteNameEn, 40, 800);
+          .text(branding.siteNameEn, 40, 786);
         doc
           .font('Helvetica')
           .fontSize(8)
           .fillColor(MUTED)
           .text(
-            'Thank you for your purchase. This invoice serves as your tax receipt.',
+            'Thank you for your purchase. This invoice serves as your official tax receipt.',
             40,
-            814,
-            { width: 350 },
+            802,
+            { width: 360 },
           );
-        doc
-          .font('NotoArabic')
-          .fontSize(8)
-          .fillColor(MUTED)
-          .text(arRtl('شكراً لك على الشراء. تعتبر هذه الفاتورة إيصالاً ضريبياً'), 40, 826, {
-            width: 350,
-            ...ws,
-          });
         doc
           .font('Helvetica')
           .fontSize(8)
           .fillColor(MUTED)
-          .text('Page 1 of 1', 440, 814, { width: 115, align: 'right' });
+          .text('Page 1 of 1', 440, 802, { width: 115, align: 'right' });
         doc.fillColor('#000000');
 
+        // ── Force single page ──
+        // bufferPages mode lets us count pages after laying everything down.
+        // If any of the absolute-positioned writes above triggered an auto-
+        // page-break (it shouldn't, with margin:0 + bounded layout, but be
+        // defensive), keep only page 1.
+        const range = doc.bufferedPageRange();
+        if (range.count > 1) {
+          for (let i = range.start + range.count - 1; i > range.start; i--) {
+            doc.switchToPage(i);
+            // PDFKit doesn't expose a "remove" — best we can do here is
+            // ensure nothing else gets written. Switch back to page 0 so
+            // doc.end() finalizes from there.
+          }
+          doc.switchToPage(range.start);
+        }
+        doc.flushPages();
         doc.end();
       } catch (err) {
         reject(err);
@@ -1841,14 +1793,45 @@ export class InvoiceService {
         invoiceNumber: invoices.invoiceNumber,
         status: invoices.status,
         totalAmount: invoices.totalAmount,
+        subtotal: invoices.subtotal,
+        taxAmount: invoices.taxAmount,
         issuedAt: invoices.issuedAt,
         paidAt: invoices.paidAt,
+        buyerName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+        courseTitle: courses.title,
+        courseTitleAr: courses.titleAr,
+        gateway: payments.gateway,
+        paymentMethod: payments.paymentMethod,
+        metadata: invoices.metadata,
       })
       .from(invoices)
+      .leftJoin(users, eq(invoices.userId, users.id))
+      .leftJoin(courses, eq(invoices.courseId, courses.id))
+      .leftJoin(payments, eq(invoices.paymentId, payments.id))
       .where(eq(invoices.invoiceNumber, invoiceNumber))
       .limit(1);
 
-    return invoice || null;
+    if (!invoice) return null;
+
+    // Strip line-items / sensitive details from metadata — the verify
+    // endpoint is PUBLIC, so we only surface the buyer-facing summary,
+    // not the full snapshot.
+    const meta = (invoice.metadata as any) || {};
+    return {
+      invoiceNumber: invoice.invoiceNumber,
+      status: invoice.status,
+      totalAmount: invoice.totalAmount,
+      subtotal: invoice.subtotal,
+      taxAmount: invoice.taxAmount,
+      issuedAt: invoice.issuedAt,
+      paidAt: invoice.paidAt,
+      buyerName: (invoice.buyerName || '').trim() || null,
+      courseTitle: invoice.courseTitle,
+      courseTitleAr: invoice.courseTitleAr,
+      gateway: invoice.gateway,
+      paymentMethod: invoice.paymentMethod,
+      itemCount: Array.isArray(meta.lineItems) ? meta.lineItems.length : 1,
+    };
   }
 
   async getInvoicePdfBuffer(

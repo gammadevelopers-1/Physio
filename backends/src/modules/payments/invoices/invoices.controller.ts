@@ -40,9 +40,17 @@ export class InvoicesController {
       invoiceNumber: invoice.invoiceNumber,
       status: invoice.status,
       amount: invoice.totalAmount,
+      subtotal: invoice.subtotal,
+      taxAmount: invoice.taxAmount,
       currency: 'SAR',
       issuedDate: invoice.issuedAt,
       paidDate: invoice.paidAt,
+      buyerName: invoice.buyerName,
+      courseTitle: invoice.courseTitle,
+      courseTitleAr: invoice.courseTitleAr,
+      gateway: invoice.gateway,
+      paymentMethod: invoice.paymentMethod,
+      itemCount: invoice.itemCount,
       verified: true,
     };
   }

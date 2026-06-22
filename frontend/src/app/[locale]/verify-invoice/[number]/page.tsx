@@ -12,9 +12,17 @@ interface VerifyResult {
   invoiceNumber: string;
   status: string;
   amount: string;
+  subtotal?: string;
+  taxAmount?: string;
   currency: string;
   issuedDate: string;
   paidDate: string | null;
+  buyerName?: string | null;
+  courseTitle?: string | null;
+  courseTitleAr?: string | null;
+  gateway?: string | null;
+  paymentMethod?: string | null;
+  itemCount?: number;
   verified: boolean;
 }
 
@@ -102,65 +110,119 @@ export default function VerifyInvoicePathPage({ params }: Props) {
               <p className="text-[#737373] mb-6">{t("verifiedDesc")}</p>
 
               <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-5 text-left space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm text-[#6B7280]">
-                    {t("invoiceNumber")}
-                  </span>
-                  <span className="text-sm font-medium text-[#111827] font-mono">
-                    {result.invoiceNumber}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-[#6B7280]">{t("status")}</span>
-                  <span
-                    className={`text-sm font-medium ${
-                      result.status === "paid"
-                        ? "text-green-600"
+                <VerifyRow
+                  label={t("invoiceNumber")}
+                  value={<span className="font-mono">{result.invoiceNumber}</span>}
+                />
+                <VerifyRow
+                  label={t("status")}
+                  value={
+                    <span
+                      className={`font-medium capitalize ${
+                        result.status === "paid"
+                          ? "text-green-600"
+                          : result.status === "cancelled"
+                            ? "text-red-600"
+                            : result.status === "refunded"
+                              ? "text-violet-600"
+                              : "text-yellow-600"
+                      }`}
+                    >
+                      {result.status === "paid"
+                        ? t("paid")
                         : result.status === "cancelled"
-                          ? "text-red-600"
+                          ? t("cancelled") || "Cancelled"
                           : result.status === "refunded"
-                            ? "text-violet-600"
-                            : "text-yellow-600"
-                    }`}
-                  >
-                    {result.status === "paid"
-                      ? t("paid")
-                      : result.status === "cancelled"
-                        ? t("cancelled") || "Cancelled"
-                        : result.status === "refunded"
-                          ? t("refunded") || "Refunded"
-                          : t("pending")}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-[#6B7280]">{t("amount")}</span>
-                  <span className="text-sm font-medium text-[#111827]">
-                    {result.currency} {Number(result.amount).toLocaleString("en-US")}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-[#6B7280]">
-                    {t("issuedDate")}
-                  </span>
-                  <span className="text-sm font-medium text-[#111827]">
-                    {new Date(result.issuedDate).toLocaleDateString(
-                      isRTL ? "ar-SA-u-nu-latn" : "en-US",
-                      { month: "short", day: "numeric", year: "numeric" }
-                    )}
-                  </span>
-                </div>
+                            ? t("refunded") || "Refunded"
+                            : t("pending")}
+                    </span>
+                  }
+                />
+                {result.buyerName && (
+                  <VerifyRow label={t("buyer") || "Issued to"} value={result.buyerName} />
+                )}
+                {(result.courseTitle || result.courseTitleAr) && (
+                  <VerifyRow
+                    label={t("course") || "Course"}
+                    value={
+                      <span>
+                        {(isRTL && result.courseTitleAr) || result.courseTitle}
+                        {(result.itemCount || 0) > 1 && (
+                          <span className="text-[10px] text-[#9CA3AF] ms-1">
+                            +{(result.itemCount || 1) - 1}
+                          </span>
+                        )}
+                      </span>
+                    }
+                  />
+                )}
+                {result.gateway && (
+                  <VerifyRow
+                    label={t("paymentMethod") || "Payment"}
+                    value={
+                      <span className="capitalize">
+                        {result.gateway === "bank_transfer"
+                          ? "Bank Transfer"
+                          : result.gateway}
+                        {result.paymentMethod && (
+                          <span className="text-[#6B7280] ms-1">
+                            · {result.paymentMethod.replace(/_/g, " ")}
+                          </span>
+                        )}
+                      </span>
+                    }
+                  />
+                )}
+                {result.subtotal && Number(result.subtotal) !== Number(result.amount) && (
+                  <VerifyRow
+                    label={t("subtotal") || "Subtotal"}
+                    value={`${result.currency} ${Number(result.subtotal).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+                  />
+                )}
+                {result.taxAmount && Number(result.taxAmount) > 0 && (
+                  <VerifyRow
+                    label={t("vat") || "VAT (15%)"}
+                    value={`${result.currency} ${Number(result.taxAmount).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+                  />
+                )}
+                <VerifyRow
+                  label={t("amount")}
+                  value={
+                    <span className="font-bold text-base">
+                      {result.currency}{" "}
+                      {Number(result.amount).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </span>
+                  }
+                />
+                <VerifyRow
+                  label={t("issuedDate")}
+                  value={new Date(result.issuedDate).toLocaleString(
+                    isRTL ? "ar-SA-u-nu-latn" : "en-US",
+                    {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }
+                  )}
+                />
                 {result.paidDate && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-[#6B7280]">
-                      {t("paidDate") || "Paid"}
-                    </span>
-                    <span className="text-sm font-medium text-[#111827]">
-                      {new Date(result.paidDate).toLocaleDateString(
-                        isRTL ? "ar-SA-u-nu-latn" : "en-US",
-                        { month: "short", day: "numeric", year: "numeric" }
-                      )}
-                    </span>
-                  </div>
+                  <VerifyRow
+                    label={t("paidDate") || "Paid"}
+                    value={new Date(result.paidDate).toLocaleString(
+                      isRTL ? "ar-SA-u-nu-latn" : "en-US",
+                      {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }
+                    )}
+                  />
                 )}
               </div>
 
@@ -173,6 +235,15 @@ export default function VerifyInvoicePathPage({ params }: Props) {
         </div>
       </main>
       <Footer />
+    </div>
+  );
+}
+
+function VerifyRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <span className="text-sm text-[#6B7280] shrink-0">{label}</span>
+      <span className="text-sm text-[#111827] text-right break-all">{value}</span>
     </div>
   );
 }

@@ -213,7 +213,7 @@ const FinanceDashboardContent = () => {
       };
       const mapped: RecentTransaction[] = data.map((p: PaymentRow) => ({
         id: p.id,
-        date: new Date(p.createdAt).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
+        date: new Date(p.createdAt).toLocaleDateString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-US", {
           month: "short",
           day: "numeric",
         }),
@@ -280,7 +280,7 @@ const FinanceDashboardContent = () => {
           id: f.id,
           driftType: f.driftType,
           gateway: f.gateway,
-          detectedAt: new Date(f.createdAt).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
+          detectedAt: new Date(f.createdAt).toLocaleDateString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-US", {
             month: "short",
             day: "numeric",
           }),

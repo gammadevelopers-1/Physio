@@ -68,8 +68,8 @@ const InvoicesContent = () => {
       const mapped: Invoice[] = (invoicesRes.data || []).map((inv: any) => ({
         id: inv.id,
         invoiceNumber: inv.invoiceNumber || inv.id.slice(0, 13).toUpperCase(),
-        date: new Date(inv.issuedAt).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric", year: "numeric" }),
-        dueDate: inv.dueDate ? new Date(inv.dueDate).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric", year: "numeric" }) : "-",
+        date: new Date(inv.issuedAt).toLocaleDateString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-US", { month: "short", day: "numeric", year: "numeric" }),
+        dueDate: inv.dueDate ? new Date(inv.dueDate).toLocaleDateString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-US", { month: "short", day: "numeric", year: "numeric" }) : "-",
         customer: inv.userName || inv.userEmail || "-",
         course: isRTL ? (inv.courseTitleAr || inv.courseTitle || "-") : (inv.courseTitle || "-"),
         amount: `${t("kpi.sar")} ${Number(inv.totalAmount).toLocaleString()}`,

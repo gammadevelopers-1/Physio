@@ -6812,6 +6812,8 @@ export const paymentApi = {
       receipt: {
         id: string;
         fileName: string;
+        mimeType: string;
+        fileSizeBytes: number;
         scanStatus: string;
         reviewStatus: string;
         reviewerNote: string | null;
@@ -6822,6 +6824,7 @@ export const paymentApi = {
         refundIban: string | null;
         refundBankName: string | null;
         refundNationalId: string | null;
+        downloadUrl: string | null;
       } | null;
       refunds: Array<{
         id: string;
@@ -6861,6 +6864,14 @@ export const paymentApi = {
       actorName: string | null;
       actorEmail: string | null;
     }>>(`/payments/${paymentId}/audit?limit=${limit}`),
+
+  /**
+   * Admin-triggered abandoned-payment sweep. Same logic the cron runs nightly;
+   * surfaced as a button on the Payments page so finance can flip stale
+   * pending rows immediately instead of waiting for the next tick.
+   */
+  runAbandonedSweep: () =>
+    api.post<{ sweptCount: number; cutoff: string }>('/payments/abandoned-sweep/run'),
 };
 
 // ===========================================

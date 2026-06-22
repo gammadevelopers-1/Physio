@@ -214,7 +214,7 @@ const RefundsContent = () => {
   };
 
   const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
+    new Date(dateStr).toLocaleDateString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",

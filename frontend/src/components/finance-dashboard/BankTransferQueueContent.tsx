@@ -908,7 +908,7 @@ function KV({
 function formatDate(iso: string | null, locale: string): string {
   if (!iso) return "—";
   try {
-    return new Date(iso).toLocaleString(locale === "ar" ? "ar-SA" : "en-US", {
+    return new Date(iso).toLocaleString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",

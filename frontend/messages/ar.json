@@ -8171,7 +8171,12 @@
         "method": "الطريقة",
         "status": "الحالة",
         "amount": "المبلغ"
-      }
+      },
+      "runSweep": "تشغيل مسح المتروكة",
+      "runSweepRunning": "جاري التشغيل…",
+      "runSweepTooltip": "تحديد المدفوعات المعلقة القديمة (أكثر من 24 ساعة بدون عملية بوابة) كمتروكة.",
+      "runSweepResult": "تم تنظيف {count} دفعة معلقة قديمة.",
+      "runSweepError": "فشل المسح. حاول مرة أخرى بعد قليل."
     },
     "refundsQueue": {
       "title": "قائمة الاستردادات",
@@ -9000,7 +9005,12 @@
       "metadata": "البيانات الوصفية",
       "auditTrail": "سجل التدقيق",
       "noAudit": "لا توجد سجلات تدقيق لهذه الدفعة بعد.",
-      "systemActor": "النظام"
+      "systemActor": "النظام",
+      "receiptUnavailable": "ملف الإيصال غير متاح — لا يزال قيد الفحص أو فشل الفحص.",
+      "viewer": {
+        "viewRaw": "عرض JSON الخام",
+        "viewPretty": "عرض منسق"
+      }
     }
   },
   "supportCommon": {

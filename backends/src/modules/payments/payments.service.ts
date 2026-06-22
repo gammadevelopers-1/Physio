@@ -31,6 +31,7 @@ import { GatewayFactory } from './gateways/gateway.factory';
 import { DiscountService } from './services/discount.service';
 import { InvoiceService } from './services/invoice.service';
 import { EmailService } from '../email/email.service';
+import { StorageService } from '../storage/storage.service';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { classifyCourse, getNelcMaxEnrollment } from '../courses/nelc-config';
 import { getEffectivePrice } from '../courses/pricing.util';
@@ -47,6 +48,7 @@ export class PaymentsService {
     private readonly auditLogService: AuditLogService,
     private readonly invoiceService: InvoiceService,
     private readonly emailService: EmailService,
+    private readonly storageService: StorageService,
   ) {}
 
   /**
@@ -446,14 +448,15 @@ export class PaymentsService {
         }
 
         if (existing && existing.status === ENROLLMENT_STATUS.PENDING_PAYMENT) {
-          // Cancel stale pending payments for THIS enrollment so the new
-          // cart payment cleanly supersedes the abandoned attempt.
-          await tx
+          // Mark stale pending payments for THIS enrollment as ABANDONED so
+          // the new cart payment cleanly supersedes the prior attempt. We use
+          // 'abandoned' (not 'failed') because the buyer didn't get a gateway
+          // decline — they just walked away from the previous checkout.
+          // 'failed' is reserved for gateway-declined / receipt-rejected.
+          const supersededDirect = await tx
             .update(payments)
             .set({
-              status: PAYMENT_STATUS.FAILED,
-              failedAt: new Date(),
-              failureReason: 'Superseded by new payment attempt',
+              status: 'abandoned' as any,
               updatedAt: new Date(),
             })
             .where(
@@ -461,20 +464,38 @@ export class PaymentsService {
                 eq(payments.enrollmentId, existing.id),
                 eq(payments.status, PAYMENT_STATUS.PENDING),
               ),
-            );
-          // Also cancel stale pending cart-payments where this course was a line.
-          await tx.execute(
+            )
+            .returning({ id: payments.id });
+          // Also supersede stale pending cart-payments where this course was a line.
+          const supersededCart = await tx.execute(
             sql`UPDATE payments
-                SET status = ${PAYMENT_STATUS.FAILED},
-                    failed_at = NOW(),
-                    failure_reason = 'Superseded by new payment attempt',
+                SET status = 'abandoned',
                     updated_at = NOW()
                 WHERE status = ${PAYMENT_STATUS.PENDING}
                   AND id IN (
                     SELECT payment_id FROM payment_items
                     WHERE enrollment_id = ${existing.id}
-                  )`,
+                  )
+                RETURNING id`,
           );
+          // Audit every superseded row so the payment drawer shows why it flipped.
+          const superseded = [
+            ...supersededDirect.map((r) => r.id),
+            ...(supersededCart.rows as { id: string }[]).map((r) => r.id),
+          ];
+          for (const pid of superseded) {
+            await this.auditLogService.log({
+              entityType: 'payment',
+              entityId: pid,
+              action: 'payment_abandoned_on_retry',
+              performedBy: user.id,
+              ipAddress,
+              metadata: {
+                reason: 'Superseded by new payment attempt',
+                supersededByCourseId: course.id,
+              },
+            });
+          }
           enrollmentIds.push(existing.id);
           continue;
         }
@@ -947,6 +968,87 @@ export class PaymentsService {
     });
   }
 
+  /**
+   * Chargeback handler. Card-network reversal (Visa/Mastercard/mada via
+   * Moyasar) — the bank yanked the money out of our merchant account.
+   * Flip the payment to CHARGEBACK and revoke the corresponding enrollment
+   * so the student loses access. Idempotent: a row already in CHARGEBACK
+   * is a no-op. Audit row is written for both the chargeback transition
+   * and the revoked enrollments.
+   */
+  async processPaymentChargeback(
+    paymentId: string,
+    reason?: string,
+    errorCode?: string,
+  ) {
+    const [payment] = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.id, paymentId))
+      .limit(1);
+
+    if (!payment || payment.status === PAYMENT_STATUS.CHARGEBACK) {
+      return; // Already chargedback or doesn't exist
+    }
+
+    const revokedEnrollmentIds: string[] = [];
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(payments)
+        .set({
+          status: PAYMENT_STATUS.CHARGEBACK,
+          failedAt: new Date(),
+          failureReason: reason || 'Chargeback received from card network',
+          ...(errorCode ? { errorCode } : {}),
+          updatedAt: new Date(),
+        })
+        .where(eq(payments.id, paymentId));
+
+      // Revoke any currently-active enrollments funded by this payment.
+      const lineEnrollmentRows = await tx
+        .select({ enrollmentId: paymentItems.enrollmentId })
+        .from(paymentItems)
+        .where(eq(paymentItems.paymentId, paymentId));
+
+      const enrollmentIdsToRevoke = lineEnrollmentRows
+        .map((r) => r.enrollmentId)
+        .filter((id): id is string => Boolean(id));
+
+      if (enrollmentIdsToRevoke.length === 0 && payment.enrollmentId) {
+        enrollmentIdsToRevoke.push(payment.enrollmentId);
+      }
+
+      if (enrollmentIdsToRevoke.length > 0) {
+        const revoked = await tx
+          .update(enrollments)
+          .set({ status: ENROLLMENT_STATUS.DROPPED })
+          .where(
+            and(
+              inArray(enrollments.id, enrollmentIdsToRevoke),
+              eq(enrollments.status, 'active'),
+            ),
+          )
+          .returning({ id: enrollments.id });
+        revokedEnrollmentIds.push(...revoked.map((r) => r.id));
+      }
+    });
+
+    await this.auditLogService.log({
+      entityType: 'payment',
+      entityId: paymentId,
+      action: 'payment_chargeback',
+      performedBy: payment.userId,
+      ipAddress: 'system-webhook',
+      metadata: {
+        gateway: payment.gateway,
+        reason: reason || null,
+        errorCode: errorCode || null,
+        revokedEnrollmentIds,
+      },
+    });
+  }
+
   async verifyPayment(paymentId: string, user: AuthenticatedUser) {
     const [payment] = await db
       .select()
@@ -1157,6 +1259,9 @@ export class PaymentsService {
       .select({
         id: paymentReceipts.id,
         fileName: paymentReceipts.fileName,
+        mimeType: paymentReceipts.mimeType,
+        fileSizeBytes: paymentReceipts.fileSizeBytes,
+        gcsObjectPath: paymentReceipts.gcsObjectPath,
         scanStatus: paymentReceipts.scanStatus,
         reviewStatus: paymentReceipts.reviewStatus,
         reviewerNote: paymentReceipts.reviewerNote,
@@ -1176,6 +1281,29 @@ export class PaymentsService {
         ),
       )
       .limit(1);
+
+    // Generate a short-lived signed URL for the receipt file so the drawer
+    // can preview/download it. Only computed when the scan is clean — we
+    // never expose an infected or scan-failed file to the finance reviewer.
+    let receiptWithUrl:
+      | (typeof activeReceipt & { downloadUrl: string | null })
+      | null = null;
+    if (activeReceipt) {
+      let downloadUrl: string | null = null;
+      if (activeReceipt.scanStatus === 'clean') {
+        try {
+          downloadUrl = await this.storageService.getSignedUrl(
+            'private',
+            activeReceipt.gcsObjectPath,
+          );
+        } catch (err) {
+          this.logger.warn(
+            `Failed to sign receipt URL for ${activeReceipt.id}: ${(err as Error).message}`,
+          );
+        }
+      }
+      receiptWithUrl = { ...activeReceipt, downloadUrl };
+    }
 
     const refundRows = await db
       .select({
@@ -1218,7 +1346,7 @@ export class PaymentsService {
 
     return {
       payment: base,
-      receipt: activeReceipt || null,
+      receipt: receiptWithUrl,
       refunds: refundRows,
       reconciliation: findingRow[0] || null,
     };
@@ -1230,29 +1358,61 @@ export class PaymentsService {
    * entityType in the payment-related set (covers refunds + reconciliation
    * actions that name this payment as their entity context).
    */
-  async getPaymentAudit(paymentId: string, limit: number = 50) {
-    return db
-      .select({
-        id: auditLogs.id,
-        action: auditLogs.action,
-        entityType: auditLogs.entityType,
-        entityId: auditLogs.entityId,
-        performedBy: auditLogs.performedBy,
-        metadata: auditLogs.metadata,
-        createdAt: auditLogs.createdAt,
-        actorName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
-        actorEmail: users.email,
-      })
-      .from(auditLogs)
-      .leftJoin(users, eq(auditLogs.performedBy, users.id))
-      .where(
-        and(
-          eq(auditLogs.entityType, 'payment'),
-          eq(auditLogs.entityId, paymentId),
-        ),
-      )
-      .orderBy(desc(auditLogs.createdAt))
-      .limit(Math.min(limit, 200));
+  async getPaymentAudit(paymentId: string, limit: number = 100) {
+    // Audit entries that name this payment as their entity context.
+    // We pull from four entity scopes and UNION them so the drawer shows
+    // the full lifecycle:
+    //   1. entityType='payment' AND entityId=paymentId — direct payment events
+    //      (initiated/completed/failed/abandoned/chargeback, bank-transfer
+    //      lifecycle, tamara retry, payment_abandoned_on_retry).
+    //   2. entityType='refund' for refunds whose paymentId matches —
+    //      refund_requested / approved / rejected / completed.
+    //   3. entityType='reconciliation_finding' for findings on this payment.
+    //   4. entityType='invoice' for the invoice generated for this payment.
+    //
+    // Same shape as the original method so the existing frontend keeps
+    // working; new rows just carry a different entityType label.
+    const cap = Math.min(limit, 200);
+    const result = await db.execute(sql`
+      SELECT a.id,
+             a.action,
+             a.entity_type AS "entityType",
+             a.entity_id AS "entityId",
+             a.performed_by AS "performedBy",
+             a.metadata,
+             a.created_at AS "createdAt",
+             CASE
+               WHEN u.id IS NULL THEN NULL
+               ELSE CONCAT(u.first_name, ' ', u.last_name)
+             END AS "actorName",
+             u.email AS "actorEmail"
+      FROM audit_logs a
+      LEFT JOIN users u ON a.performed_by = u.id
+      WHERE
+        (a.entity_type = 'payment' AND a.entity_id = ${paymentId})
+        OR (a.entity_type = 'refund' AND a.entity_id IN (
+          SELECT id FROM refunds WHERE payment_id = ${paymentId}
+        ))
+        OR (a.entity_type = 'reconciliation_finding' AND a.entity_id IN (
+          SELECT id FROM reconciliation_findings WHERE payment_id = ${paymentId}
+        ))
+        OR (a.entity_type = 'invoice' AND a.entity_id IN (
+          SELECT id FROM invoices WHERE payment_id = ${paymentId}
+        ))
+      ORDER BY a.created_at DESC
+      LIMIT ${cap}
+    `);
+    return result.rows as Array<{
+      id: string;
+      action: string;
+      entityType: string;
+      entityId: string;
+      performedBy: string | null;
+      metadata: Record<string, unknown> | null;
+      createdAt: string;
+      actorName: string | null;
+      actorEmail: string | null;
+    }>;
   }
 
   async getAllPayments(

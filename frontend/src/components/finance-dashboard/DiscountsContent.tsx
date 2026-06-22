@@ -144,7 +144,7 @@ const DiscountsContent = () => {
           usedCount: d.currentUses || 0,
           usageLimit: d.maxUses || 0,
           expiryDate: validUntil
-            ? validUntil.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric", year: "numeric" })
+            ? validUntil.toLocaleDateString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-US", { month: "short", day: "numeric", year: "numeric" })
             : "-",
           validUntilRaw: d.validUntil || null,
           status,

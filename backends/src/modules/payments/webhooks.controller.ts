@@ -184,7 +184,7 @@ export class WebhooksController {
   private async processWebhookSync(
     gateway: string,
     chargeId: string,
-    status: 'paid' | 'failed' | 'refunded',
+    status: 'paid' | 'failed' | 'refunded' | 'chargeback',
     rawBody: any,
     errorCode?: string,
   ) {
@@ -241,6 +241,15 @@ export class WebhooksController {
         } catch (err) {
           this.logger.error(`Payment failure email failed: ${err.message}`);
         }
+      } else if (status === 'chargeback' && payment.status !== 'chargeback') {
+        // Card-network reversal — revoke enrollment + flip status. Card
+        // gateways (Moyasar) are the only path that fires this; BNPL +
+        // bank transfer can't chargeback in the network sense.
+        await this.paymentsService.processPaymentChargeback(
+          payment.id,
+          rawBody?.data?.refunded_reason || rawBody?.data?.message || 'Chargeback received',
+          errorCode,
+        );
       } else if (status === 'refunded') {
         try {
           const { refunds } = await import('../../database/schema');

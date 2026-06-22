@@ -162,7 +162,7 @@ const AuditLogContent = () => {
 
   const formatTimestamp = (ts: string) => {
     const d = new Date(ts);
-    return d.toLocaleString(locale === "ar" ? "ar-SA" : "en-US", {
+    return d.toLocaleString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",

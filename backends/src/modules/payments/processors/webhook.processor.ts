@@ -11,7 +11,7 @@ import { EmailService } from '../../email/email.service';
 interface WebhookJobData {
   gateway: string;
   chargeId: string;
-  status: 'paid' | 'failed' | 'refunded';
+  status: 'paid' | 'failed' | 'refunded' | 'chargeback';
   errorCode?: string;
   rawBody: any;
 }
@@ -142,6 +142,21 @@ export class WebhookProcessor extends WorkerHost {
           action: 'webhook_processed',
           performedBy: 'system',
           metadata: { gateway, status: 'failed', paymentId: payment.id },
+        });
+      } else if (status === 'chargeback') {
+        if (payment.status !== 'chargeback') {
+          await this.paymentsService.processPaymentChargeback(
+            payment.id,
+            rawBody?.data?.refunded_reason || rawBody?.data?.message || 'Chargeback received',
+            job.data.errorCode,
+          );
+        }
+        await this.auditLogService.log({
+          entityType: 'webhook',
+          entityId: chargeId,
+          action: 'webhook_processed',
+          performedBy: 'system',
+          metadata: { gateway, status: 'chargeback', paymentId: payment.id },
         });
       } else if (status === 'refunded') {
         // Find the active refund for this payment and complete it

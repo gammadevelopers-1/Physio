@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { CreditCard, Clock, XCircle, Search, Eye, EyeOff } from "lucide-react";
+import { CreditCard, Clock, XCircle, Search, Eye, EyeOff, Loader2, Sparkles } from "lucide-react";
 import FinanceSidebar from "./FinanceSidebar";
 import FinanceMobileSidebar from "./FinanceMobileSidebar";
 import FinanceNavbar from "./FinanceNavbar";
@@ -57,6 +57,8 @@ const PaymentsContent = () => {
   const [summaryLoading, setSummaryLoading] = useState(true);
 
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
+  const [sweepRunning, setSweepRunning] = useState(false);
+  const [sweepResult, setSweepResult] = useState<{ count: number; cutoff: string } | null>(null);
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
@@ -84,7 +86,7 @@ const PaymentsContent = () => {
       };
       const mapped: PaymentRow[] = (res.data || []).map((p: PaymentApiRow) => ({
         id: p.id,
-        date: new Date(p.createdAt).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
+        date: new Date(p.createdAt).toLocaleDateString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-US", {
           month: "short",
           day: "numeric",
           year: "numeric",
@@ -171,11 +173,16 @@ const PaymentsContent = () => {
     { value: "bank_transfer", label: t("paymentsTable.filter.bankTransfer") },
   ];
 
+  // Moyasar accepts: card, mada, applepay, samsungpay, stcpay (it returns
+  // these exact lowercase strings on the payment row). Tamara/Tabby return
+  // 'bnpl'. Bank transfer rows carry 'bank_transfer'.
   const methodOptions = [
     { value: "all", label: t("paymentsTable.filter.allMethods") },
     { value: "card", label: t("paymentsTable.filter.card") },
     { value: "mada", label: "Mada" },
-    { value: "apple_pay", label: "Apple Pay" },
+    { value: "applepay", label: "Apple Pay" },
+    { value: "samsungpay", label: "Samsung Pay" },
+    { value: "stcpay", label: "STC Pay" },
     { value: "bnpl", label: "BNPL" },
     { value: "bank_transfer", label: t("paymentsTable.filter.bankTransfer") },
   ];
@@ -225,7 +232,7 @@ const PaymentsContent = () => {
                       icon={CreditCard}
                       iconBg={FINANCE_COLORS.info.bg}
                       iconColor={FINANCE_COLORS.info.text}
-                      value={(summary?.totalPayments || 0).toLocaleString(locale === "ar" ? "ar-SA" : "en-US")}
+                      value={(summary?.totalPayments || 0).toLocaleString("en-US")}
                       sublabel={t("paymentsPage.stats.totalPaid")}
                     />
                     <StatCard
@@ -233,7 +240,7 @@ const PaymentsContent = () => {
                       icon={Clock}
                       iconBg={FINANCE_COLORS.warning.bg}
                       iconColor={FINANCE_COLORS.warning.text}
-                      value={totalPendingCount.toLocaleString(locale === "ar" ? "ar-SA" : "en-US")}
+                      value={totalPendingCount.toLocaleString("en-US")}
                       sublabel={
                         <Money
                           amount={totalPendingAmount}
@@ -248,7 +255,7 @@ const PaymentsContent = () => {
                       icon={XCircle}
                       iconBg={FINANCE_COLORS.error.bg}
                       iconColor={FINANCE_COLORS.error.text}
-                      value={(summary?.failedPayments || 0).toLocaleString(locale === "ar" ? "ar-SA" : "en-US")}
+                      value={(summary?.failedPayments || 0).toLocaleString("en-US")}
                       sublabel={t("paymentsPage.stats.needsAttention")}
                     />
                   </>
@@ -293,7 +300,49 @@ const PaymentsContent = () => {
                     {includeAbandoned ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                     {t("paymentsTable.showAbandoned")}
                   </button>
+
+                  {/* Manual abandoned-sweep trigger — runs the same job the cron
+                      runs nightly. Lets finance flip stale pending rows
+                      immediately when they need to clean the ledger. */}
+                  <button
+                    onClick={async () => {
+                      if (sweepRunning) return;
+                      setSweepRunning(true);
+                      setSweepResult(null);
+                      try {
+                        const res = await paymentApi.runAbandonedSweep();
+                        setSweepResult({ count: res.sweptCount, cutoff: res.cutoff });
+                        await fetchRows();
+                        await fetchSummary();
+                      } catch {
+                        setSweepResult({ count: -1, cutoff: "" });
+                      } finally {
+                        setSweepRunning(false);
+                      }
+                    }}
+                    disabled={sweepRunning}
+                    className="inline-flex items-center gap-1.5 h-9 px-3 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50"
+                    title={t("paymentsTable.runSweepTooltip")}
+                  >
+                    {sweepRunning ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5" />
+                    )}
+                    {sweepRunning ? t("paymentsTable.runSweepRunning") : t("paymentsTable.runSweep")}
+                  </button>
                 </div>
+                {sweepResult && (
+                  <p className={`mt-2 text-[11px] ${
+                    sweepResult.count === -1
+                      ? "text-[#DC2626]"
+                      : "text-[var(--color-text-secondary)]"
+                  } ${isRTL ? "text-right" : ""}`}>
+                    {sweepResult.count === -1
+                      ? t("paymentsTable.runSweepError")
+                      : t("paymentsTable.runSweepResult", { count: sweepResult.count })}
+                  </p>
+                )}
               </div>
 
               {/* Table */}

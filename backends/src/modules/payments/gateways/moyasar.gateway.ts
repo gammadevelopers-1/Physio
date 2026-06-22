@@ -98,10 +98,24 @@ export class MoyasarGateway extends BaseGateway implements PaymentGateway {
     // A payment webhook references its invoice via data.invoice_id; fall back to
     // data.id for non-invoice events.
     const chargeId = body.data?.invoice_id || body.data?.id || body.id;
-    let status: 'paid' | 'failed' | 'refunded' = 'failed';
+    let status: 'paid' | 'failed' | 'refunded' | 'chargeback' = 'failed';
 
     const eventType = body.type || body.status;
-    if (eventType === 'payment_paid' || body.data?.status === 'paid') {
+    // Chargeback detection: Moyasar may emit a dedicated `payment_chargeback`
+    // event, or surface a chargeback via a refund event whose reason/source
+    // indicates a dispute (e.g. `chargeback`, `dispute`). Be lenient — we
+    // log everything and the finance dashboard surfaces the raw payload so
+    // mis-detections can be corrected manually if Moyasar's shape changes.
+    const refundReason: string | undefined =
+      body.data?.refunded_reason || body.data?.refund_reason || body.data?.source;
+    const isChargebackSignal =
+      eventType === 'payment_chargeback' ||
+      body.data?.status === 'chargeback' ||
+      (typeof refundReason === 'string' && /chargeback|dispute/i.test(refundReason));
+
+    if (isChargebackSignal) {
+      status = 'chargeback';
+    } else if (eventType === 'payment_paid' || body.data?.status === 'paid') {
       status = 'paid';
     } else if (eventType === 'payment_refunded' || body.data?.status === 'refunded') {
       status = 'refunded';

@@ -56,7 +56,7 @@ export interface RefundResult {
 
 export interface WebhookResult {
   chargeId: string;
-  status: 'paid' | 'failed' | 'refunded' | 'pending';
+  status: 'paid' | 'failed' | 'refunded' | 'pending' | 'chargeback';
   errorCode?: string;
   rawData?: any;
 }

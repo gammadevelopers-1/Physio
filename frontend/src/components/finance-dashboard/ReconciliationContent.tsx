@@ -365,7 +365,7 @@ export default function ReconciliationContent() {
                       >
                         <span className="font-medium">{gatewayLabel(s.gateway)}</span>
                         <span className="text-[var(--color-text-secondary)]">
-                          {new Date(s.startedAt).toLocaleString(locale === "ar" ? "ar-SA" : "en-US")}
+                          {new Date(s.startedAt).toLocaleString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-US")}
                         </span>
                         <span
                           className={`px-1.5 py-0.5 rounded ${

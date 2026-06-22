@@ -13,24 +13,27 @@ interface MoneyProps {
   showIcon?: boolean;
 }
 
-function formatNumber(num: number, decimals: number, locale: string): string {
-  const loc = locale === "ar" ? "ar-SA" : "en-US";
-  return num.toLocaleString(loc, {
+// Always render money with Latin digits (0–9) — Arabic-Indic numerals
+// (٠١٢٣…) in the Arabic locale are confusing for finance staff who
+// cross-reference these values against bank statements + gateway exports
+// that all use Latin digits. The currency icon stays the SAR glyph; only
+// the digits switch back to Latin regardless of locale.
+function formatNumber(num: number, decimals: number, _locale: string): string {
+  return num.toLocaleString("en-US", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
 }
 
-function abbreviateNumber(num: number, locale: string): string {
-  const loc = locale === "ar" ? "ar-SA" : "en-US";
+function abbreviateNumber(num: number, _locale: string): string {
   const abs = Math.abs(num);
   if (abs >= 1_000_000) {
-    return (num / 1_000_000).toLocaleString(loc, { maximumFractionDigits: 2 }) + "M";
+    return (num / 1_000_000).toLocaleString("en-US", { maximumFractionDigits: 2 }) + "M";
   }
   if (abs >= 1_000) {
-    return (num / 1_000).toLocaleString(loc, { maximumFractionDigits: 1 }) + "K";
+    return (num / 1_000).toLocaleString("en-US", { maximumFractionDigits: 1 }) + "K";
   }
-  return num.toLocaleString(loc);
+  return num.toLocaleString("en-US");
 }
 
 const Money = ({

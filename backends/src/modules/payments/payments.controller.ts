@@ -15,6 +15,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { PaymentsService } from './payments.service';
+import { ReconciliationCronService } from './reconciliation/reconciliation-cron.service';
 import { GatewayFactory } from './gateways/gateway.factory';
 import { MockGateway, MockConfig } from './gateways/mock.gateway';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
@@ -31,6 +32,7 @@ export class PaymentsController {
   constructor(
     private readonly paymentsService: PaymentsService,
     private readonly gatewayFactory: GatewayFactory,
+    private readonly reconciliationCron: ReconciliationCronService,
   ) {}
 
   @Post('initiate')
@@ -189,5 +191,18 @@ export class PaymentsController {
     @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
   ) {
     return this.paymentsService.getPaymentAudit(paymentId, limit);
+  }
+
+  /**
+   * Manual trigger for the abandoned-payment sweep, called from the
+   * finance Payments page when admins want to flip stale pending rows
+   * immediately instead of waiting for the next Cloud Scheduler tick.
+   * Same logic as the cron — RBAC-gated rather than token-gated.
+   */
+  @Post('abandoned-sweep/run')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  @Throttle({ default: { ttl: 60_000, limit: 6 } })
+  async runAbandonedSweep() {
+    return this.reconciliationCron.runAbandonedPaymentSweep();
   }
 }

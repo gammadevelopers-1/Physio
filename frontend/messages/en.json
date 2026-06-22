@@ -8171,7 +8171,12 @@
         "method": "Method",
         "status": "Status",
         "amount": "Amount"
-      }
+      },
+      "runSweep": "Run abandoned sweep",
+      "runSweepRunning": "Running…",
+      "runSweepTooltip": "Mark stale pending payments (older than 24h with no gateway charge) as abandoned.",
+      "runSweepResult": "Swept {count} stale pending payment(s).",
+      "runSweepError": "Sweep failed. Try again in a moment."
     },
     "refundsQueue": {
       "title": "Refunds Queue",
@@ -9000,7 +9005,12 @@
       "metadata": "Metadata",
       "auditTrail": "Audit Trail",
       "noAudit": "No audit entries for this payment yet.",
-      "systemActor": "System"
+      "systemActor": "System",
+      "receiptUnavailable": "Receipt file is not available — it is still being scanned or failed the scan.",
+      "viewer": {
+        "viewRaw": "View raw JSON",
+        "viewPretty": "View pretty"
+      }
     }
   },
   "supportCommon": {

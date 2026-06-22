@@ -530,6 +530,24 @@ export class ReconciliationCronService {
     const sweptCount = result.length;
     this.logger.log(`Abandoned sweep complete: ${sweptCount} payments marked abandoned`);
 
+    // One audit row per swept payment so the payment drawer shows the
+    // automatic transition. We tag performedBy=null (system) and include
+    // the cutoff so the reviewer can see exactly which rule fired.
+    for (const row of result) {
+      await this.auditLogService.log({
+        entityType: 'payment',
+        entityId: row.id,
+        action: 'payment_abandoned_by_sweep',
+        performedBy: 'system',
+        ipAddress: 'cron',
+        metadata: {
+          cutoff: cutoff.toISOString(),
+          abandonAfterHours,
+          reason: 'No gateway charge created within window',
+        },
+      });
+    }
+
     return { sweptCount, cutoff: cutoff.toISOString() };
   }
 }

@@ -6,20 +6,26 @@ import { useTranslations, useLocale } from "next-intl";
 import {
   Loader2,
   User,
-  BookOpen,
   CreditCard,
   FileText,
   RotateCcw,
   Building2,
   Scale,
   Clock,
-  AlertCircle,
   ExternalLink,
   ChevronRight,
   ChevronLeft,
+  Download,
+  ShieldCheck,
+  ShieldAlert,
+  ShieldOff,
+  Eye,
+  RefreshCcw,
+  AlertCircle,
 } from "lucide-react";
 import Drawer from "./shared/Drawer";
 import Money from "./shared/Money";
+import GatewayResponseViewer from "./GatewayResponseViewer";
 import { FINANCE_COLORS, gatewayColor } from "./shared/financeColors";
 import { paymentApi } from "@/lib/api";
 
@@ -39,7 +45,7 @@ const STATUS_PILL: Record<string, { bg: string; text: string }> = {
   rejected: { bg: FINANCE_COLORS.slate.bg, text: FINANCE_COLORS.slate.textDark },
   refunded: { bg: FINANCE_COLORS.violet.bg, text: FINANCE_COLORS.violet.textDark },
   partially_refunded: { bg: FINANCE_COLORS.violet.bgSoft, text: FINANCE_COLORS.violet.textDark },
-  chargeback: { bg: FINANCE_COLORS.slate.bg, text: FINANCE_COLORS.slate.textDark },
+  chargeback: { bg: FINANCE_COLORS.error.bg, text: FINANCE_COLORS.error.textDark },
   abandoned: { bg: FINANCE_COLORS.slate.bg, text: FINANCE_COLORS.slate.textDark },
 };
 
@@ -118,7 +124,7 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
       onClose={onClose}
       title={t("paymentDetail.title")}
       subtitle={headerSubtitle}
-      width={620}
+      width={640}
       headerExtra={
         data ? (
           <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${statusStyle.bg} ${statusStyle.text}`}>
@@ -134,7 +140,11 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
       ) : (
         <>
           {/* Amount summary strip */}
-          <div className={`px-5 py-4 bg-[var(--color-surface-card)] border-b border-[var(--color-border-subtle)] flex items-baseline gap-4 ${isRTL ? "flex-row-reverse" : ""}`}>
+          <div
+            className={`px-5 py-4 bg-[var(--color-surface-card)] border-b border-[var(--color-border-subtle)] flex items-baseline gap-6 ${
+              isRTL ? "flex-row-reverse text-right" : ""
+            }`}
+          >
             <div>
               <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-secondary)]">
                 {t("paymentDetail.amount")}
@@ -149,7 +159,7 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
                   {t("paymentDetail.paidAt")}
                 </p>
                 <p className="text-sm text-[var(--color-text-primary)] mt-0.5">
-                  {new Date(data.payment.paidAt).toLocaleString(locale === "ar" ? "ar-SA" : "en-US")}
+                  {new Date(data.payment.paidAt).toLocaleString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-US")}
                 </p>
               </div>
             )}
@@ -177,9 +187,9 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
             {activeTab === "overview" && (
               <>
                 {/* Customer + Course */}
-                <Card title={t("paymentDetail.customerCourse")} icon={<User className="w-4 h-4" />}>
-                  <Row label={t("paymentDetail.customer")} value={data.payment.userName || "—"} />
-                  <Row label={t("paymentDetail.email")} value={data.payment.userEmail || "—"} mono />
+                <Card title={t("paymentDetail.customerCourse")} icon={<User className="w-4 h-4" />} isRTL={isRTL}>
+                  <Row label={t("paymentDetail.customer")} value={data.payment.userName || "—"} isRTL={isRTL} />
+                  <Row label={t("paymentDetail.email")} value={data.payment.userEmail || "—"} mono isRTL={isRTL} />
                   <Row
                     label={t("paymentDetail.course")}
                     value={
@@ -187,13 +197,14 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
                       data.payment.courseTitle ||
                       "—"
                     }
+                    isRTL={isRTL}
                   />
                 </Card>
 
                 {/* Payment */}
-                <Card title={t("paymentDetail.payment")} icon={<CreditCard className="w-4 h-4" />}>
-                  <Row label={t("paymentDetail.gateway")}>
-                    <span className="inline-flex items-center gap-1.5">
+                <Card title={t("paymentDetail.payment")} icon={<CreditCard className="w-4 h-4" />} isRTL={isRTL}>
+                  <Row label={t("paymentDetail.gateway")} isRTL={isRTL}>
+                    <span className={`inline-flex items-center gap-1.5 ${isRTL ? "flex-row-reverse" : ""}`}>
                       <span
                         className="w-2 h-2 rounded-full"
                         style={{ backgroundColor: gatewayColor(data.payment.gateway) }}
@@ -201,14 +212,15 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
                       <span className="capitalize">{data.payment.gateway?.replace(/_/g, " ")}</span>
                     </span>
                   </Row>
-                  <Row label={t("paymentDetail.method")} value={data.payment.paymentMethod?.replace(/_/g, " ") || "—"} />
-                  <Row label={t("paymentDetail.chargeId")} value={data.payment.gatewayChargeId || "—"} mono />
+                  <Row label={t("paymentDetail.method")} value={prettyMethod(data.payment.paymentMethod) || "—"} isRTL={isRTL} />
+                  <Row label={t("paymentDetail.chargeId")} value={data.payment.gatewayChargeId || "—"} mono isRTL={isRTL} />
                   <Row
                     label={t("paymentDetail.created")}
-                    value={new Date(data.payment.createdAt).toLocaleString(locale === "ar" ? "ar-SA" : "en-US")}
+                    value={new Date(data.payment.createdAt).toLocaleString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-US")}
+                    isRTL={isRTL}
                   />
                   {data.payment.failureReason && (
-                    <Row label={t("paymentDetail.failureReason")}>
+                    <Row label={t("paymentDetail.failureReason")} isRTL={isRTL}>
                       <span className="text-[#DC2626]">
                         {data.payment.errorCode ? `${data.payment.errorCode}: ` : ""}
                         {data.payment.failureReason}
@@ -218,7 +230,7 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
                 </Card>
 
                 {/* Linked Invoice */}
-                <Card title={t("paymentDetail.invoice")} icon={<FileText className="w-4 h-4" />}>
+                <Card title={t("paymentDetail.invoice")} icon={<FileText className="w-4 h-4" />} isRTL={isRTL}>
                   {data.payment.invoiceId ? (
                     <Link
                       href={`/${locale}/dashboard/finance/invoices`}
@@ -243,7 +255,11 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
 
                 {/* Refunds */}
                 {data.refunds.length > 0 && (
-                  <Card title={t("paymentDetail.refundsHistory", { count: data.refunds.length })} icon={<RotateCcw className="w-4 h-4" />}>
+                  <Card
+                    title={t("paymentDetail.refundsHistory", { count: data.refunds.length })}
+                    icon={<RotateCcw className="w-4 h-4" />}
+                    isRTL={isRTL}
+                  >
                     <ul className="space-y-2">
                       {data.refunds.map((r) => (
                         <li
@@ -283,42 +299,24 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
 
                 {/* Bank Transfer Receipt */}
                 {data.receipt && (
-                  <Card title={t("paymentDetail.receipt")} icon={<Building2 className="w-4 h-4" />}>
-                    <Row label={t("paymentDetail.fileName")} value={data.receipt.fileName} mono />
-                    <Row label={t("paymentDetail.scanStatus")}>
-                      <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
-                        data.receipt.scanStatus === "clean"
-                          ? `${FINANCE_COLORS.success.bg} ${FINANCE_COLORS.success.textDark}`
-                          : data.receipt.scanStatus === "infected"
-                            ? `${FINANCE_COLORS.error.bg} ${FINANCE_COLORS.error.textDark}`
-                            : `${FINANCE_COLORS.warning.bg} ${FINANCE_COLORS.warning.textDark}`
-                      } capitalize`}>
-                        {data.receipt.scanStatus}
-                      </span>
-                    </Row>
-                    <Row label={t("paymentDetail.reviewStatus")}>
-                      <span className="capitalize">{data.receipt.reviewStatus}</span>
-                    </Row>
-                    <Row
-                      label={t("paymentDetail.uploadedAt")}
-                      value={new Date(data.receipt.uploadedAt).toLocaleString(locale === "ar" ? "ar-SA" : "en-US")}
-                    />
+                  <Card title={t("paymentDetail.receipt")} icon={<Building2 className="w-4 h-4" />} isRTL={isRTL}>
+                    <ReceiptPreview receipt={data.receipt} isRTL={isRTL} />
                   </Card>
                 )}
 
                 {/* Reconciliation finding */}
                 {data.reconciliation && (
-                  <Card title={t("paymentDetail.reconciliation")} icon={<Scale className="w-4 h-4" />}>
-                    <Row label={t("paymentDetail.driftType")}>
+                  <Card title={t("paymentDetail.reconciliation")} icon={<Scale className="w-4 h-4" />} isRTL={isRTL}>
+                    <Row label={t("paymentDetail.driftType")} isRTL={isRTL}>
                       <span className="capitalize">
                         {data.reconciliation.driftType.replace(/_/g, " ")}
                       </span>
                     </Row>
-                    <Row label={t("paymentDetail.findingStatus")}>
+                    <Row label={t("paymentDetail.findingStatus")} isRTL={isRTL}>
                       <span className="capitalize">{data.reconciliation.status}</span>
                     </Row>
                     {data.reconciliation.escalationId && (
-                      <Row label={t("paymentDetail.escalation")}>
+                      <Row label={t("paymentDetail.escalation")} isRTL={isRTL}>
                         <span className="capitalize">
                           {data.reconciliation.escalationStatus}
                           {data.reconciliation.escalationUrgency &&
@@ -339,63 +337,22 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
             )}
 
             {activeTab === "gateway" && (
-              <Card title={t("paymentDetail.gatewayLogs")} icon={<CreditCard className="w-4 h-4" />}>
-                {data.payment.gatewayResponse ? (
-                  <pre
-                    className="text-[11px] font-mono bg-[var(--color-surface-page)] rounded-lg p-3 overflow-x-auto whitespace-pre-wrap break-all max-h-[400px] overflow-y-auto"
-                    dir="ltr"
-                  >
-                    {JSON.stringify(data.payment.gatewayResponse, null, 2)}
-                  </pre>
-                ) : (
-                  <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)] py-3">
-                    <AlertCircle className="w-4 h-4" />
-                    {t("paymentDetail.noGatewayResponse")}
-                  </div>
-                )}
-                {data.payment.metadata && Object.keys(data.payment.metadata).length > 0 && (
-                  <div className="mt-3">
-                    <p className="text-[10px] uppercase tracking-wider text-[var(--color-text-secondary)] mb-1.5">
-                      {t("paymentDetail.metadata")}
-                    </p>
-                    <pre
-                      className="text-[11px] font-mono bg-[var(--color-surface-page)] rounded-lg p-3 overflow-x-auto whitespace-pre-wrap break-all"
-                      dir="ltr"
-                    >
-                      {JSON.stringify(data.payment.metadata, null, 2)}
-                    </pre>
-                  </div>
-                )}
-              </Card>
+              <GatewayResponseViewer
+                gatewayResponse={data.payment.gatewayResponse as Record<string, unknown> | null}
+                metadata={data.payment.metadata as Record<string, unknown> | null}
+                gateway={data.payment.gateway}
+              />
             )}
 
             {activeTab === "audit" && (
-              <Card title={t("paymentDetail.auditTrail")} icon={<Clock className="w-4 h-4" />}>
-                {auditLoading ? (
-                  <div className="flex items-center justify-center py-6">
-                    <Loader2 className="w-5 h-5 animate-spin text-[var(--color-primary)]" />
-                  </div>
-                ) : audit.length === 0 ? (
-                  <p className="text-xs text-[var(--color-text-secondary)] py-3">
-                    {t("paymentDetail.noAudit")}
-                  </p>
-                ) : (
-                  <ol className="space-y-3">
-                    {audit.map((entry) => (
-                      <li key={entry.id} className={`relative ${isRTL ? "pr-4" : "pl-4"}`}>
-                        <span className={`absolute top-1.5 ${isRTL ? "right-0" : "left-0"} w-2 h-2 rounded-full bg-[var(--color-primary)]`} />
-                        <p className="text-[12px] font-medium text-[var(--color-text-primary)]">
-                          {entry.action.replace(/_/g, " ")}
-                        </p>
-                        <p className="text-[11px] text-[var(--color-text-secondary)]">
-                          {entry.actorName || t("paymentDetail.systemActor")} ·{" "}
-                          {new Date(entry.createdAt).toLocaleString(locale === "ar" ? "ar-SA" : "en-US")}
-                        </p>
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </Card>
+              <AuditTrail
+                entries={audit}
+                loading={auditLoading}
+                isRTL={isRTL}
+                locale={locale}
+                t={t}
+                onRefresh={fetchAudit}
+              />
             )}
           </div>
         </>
@@ -408,14 +365,20 @@ function Card({
   title,
   icon,
   children,
+  isRTL,
 }: {
   title: string;
   icon: React.ReactNode;
   children: React.ReactNode;
+  isRTL: boolean;
 }) {
   return (
     <section className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
-      <header className="px-4 py-2.5 border-b border-[var(--color-border-subtle)] flex items-center gap-2 text-[var(--color-text-primary)]">
+      <header
+        className={`px-4 py-2.5 border-b border-[var(--color-border-subtle)] flex items-center gap-2 text-[var(--color-text-primary)] ${
+          isRTL ? "flex-row-reverse" : ""
+        }`}
+      >
         <span className="text-[var(--color-primary)]">{icon}</span>
         <h3 className="text-[12px] font-semibold uppercase tracking-wider">{title}</h3>
       </header>
@@ -428,20 +391,262 @@ function Row({
   label,
   value,
   mono,
+  isRTL,
   children,
 }: {
   label: string;
   value?: string;
   mono?: boolean;
+  isRTL: boolean;
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-3 text-sm">
+    <div className={`flex items-start justify-between gap-3 text-sm ${isRTL ? "flex-row-reverse" : ""}`}>
       <dt className="text-[var(--color-text-secondary)] font-medium shrink-0">{label}</dt>
-      <dd className={`text-[var(--color-text-primary)] text-right break-all ${mono ? "font-mono text-xs" : ""}`}>
+      <dd
+        className={`text-[var(--color-text-primary)] break-all ${mono ? "font-mono text-xs" : ""} ${
+          isRTL ? "text-left" : "text-right"
+        }`}
+      >
         {children ?? value}
       </dd>
     </div>
+  );
+}
+
+function prettyMethod(method: string | null | undefined): string | null {
+  if (!method) return null;
+  const map: Record<string, string> = {
+    card: "Card",
+    mada: "Mada",
+    applepay: "Apple Pay",
+    apple_pay: "Apple Pay",
+    samsungpay: "Samsung Pay",
+    samsung_pay: "Samsung Pay",
+    stcpay: "STC Pay",
+    stc_pay: "STC Pay",
+    bnpl: "BNPL",
+    bank_transfer: "Bank Transfer",
+  };
+  return map[method.toLowerCase()] || method.replace(/_/g, " ");
+}
+
+function ScanPill({ status }: { status: string }) {
+  const isClean = status === "clean";
+  const isInfected = status === "infected";
+  const Icon = isClean ? ShieldCheck : isInfected ? ShieldAlert : ShieldOff;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full capitalize ${
+        isClean
+          ? `${FINANCE_COLORS.success.bg} ${FINANCE_COLORS.success.textDark}`
+          : isInfected
+            ? `${FINANCE_COLORS.error.bg} ${FINANCE_COLORS.error.textDark}`
+            : `${FINANCE_COLORS.warning.bg} ${FINANCE_COLORS.warning.textDark}`
+      }`}
+    >
+      <Icon className="w-3 h-3" />
+      {status.replace(/_/g, " ")}
+    </span>
+  );
+}
+
+function ReceiptPreview({
+  receipt,
+  isRTL,
+}: {
+  receipt: {
+    id: string;
+    fileName: string;
+    mimeType?: string;
+    fileSizeBytes?: number;
+    scanStatus: string;
+    reviewStatus: string;
+    uploadedAt: string;
+    downloadUrl?: string | null;
+  };
+  isRTL: boolean;
+}) {
+  const t = useTranslations("financeDashboard");
+  const locale = useLocale();
+  const isImage = receipt.mimeType?.startsWith("image/");
+  const fileSizeKB = receipt.fileSizeBytes ? Math.round(receipt.fileSizeBytes / 1024) : null;
+
+  return (
+    <div className="space-y-3">
+      {receipt.downloadUrl && isImage && (
+        <a
+          href={receipt.downloadUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block relative w-full h-48 rounded-lg overflow-hidden border border-[var(--color-border-subtle)] bg-[var(--color-surface-page)] group"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={receipt.downloadUrl}
+            alt={receipt.fileName}
+            className="w-full h-full object-contain"
+          />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+            <Eye className="w-6 h-6 text-white" />
+          </div>
+        </a>
+      )}
+
+      {receipt.downloadUrl && !isImage && (
+        <a
+          href={receipt.downloadUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`flex items-center justify-between gap-3 p-3 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-page)] hover:border-[var(--color-primary)] group ${
+            isRTL ? "flex-row-reverse" : ""
+          }`}
+        >
+          <div className={`flex items-center gap-2 min-w-0 ${isRTL ? "flex-row-reverse" : ""}`}>
+            <FileText className="w-5 h-5 text-[var(--color-text-secondary)] flex-shrink-0" />
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-[var(--color-text-primary)] truncate" dir="ltr">
+                {receipt.fileName}
+              </p>
+              {fileSizeKB !== null && (
+                <p className="text-[10px] text-[var(--color-text-secondary)]">
+                  {fileSizeKB.toLocaleString("en-US")} KB
+                </p>
+              )}
+            </div>
+          </div>
+          <Download className="w-4 h-4 text-[var(--color-text-secondary)] group-hover:text-[var(--color-primary)] flex-shrink-0" />
+        </a>
+      )}
+
+      {!receipt.downloadUrl && receipt.scanStatus !== "clean" && (
+        <div className="flex items-center gap-2 p-3 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-page)] text-xs text-[var(--color-text-secondary)]">
+          <AlertCircle className="w-4 h-4 text-[#D97706]" />
+          {t("paymentDetail.receiptUnavailable")}
+        </div>
+      )}
+
+      <div className="space-y-1.5">
+        <Row label={t("paymentDetail.fileName")} value={receipt.fileName} mono isRTL={isRTL} />
+        <Row label={t("paymentDetail.scanStatus")} isRTL={isRTL}>
+          <ScanPill status={receipt.scanStatus} />
+        </Row>
+        <Row label={t("paymentDetail.reviewStatus")} isRTL={isRTL}>
+          <span className="capitalize">{receipt.reviewStatus}</span>
+        </Row>
+        <Row
+          label={t("paymentDetail.uploadedAt")}
+          value={new Date(receipt.uploadedAt).toLocaleString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-US")}
+          isRTL={isRTL}
+        />
+      </div>
+    </div>
+  );
+}
+
+function prettyAction(action: string): string {
+  return action
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function AuditTrail({
+  entries,
+  loading,
+  isRTL,
+  locale,
+  t,
+  onRefresh,
+}: {
+  entries: Array<{
+    id: string;
+    action: string;
+    entityType: string;
+    entityId: string;
+    performedBy: string | null;
+    metadata: Record<string, unknown> | null;
+    createdAt: string;
+    actorName?: string | null;
+    actorEmail?: string | null;
+  }>;
+  loading: boolean;
+  isRTL: boolean;
+  locale: string;
+  t: ReturnType<typeof useTranslations>;
+  onRefresh: () => void;
+}) {
+  return (
+    <section className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] overflow-hidden">
+      <header
+        className={`px-4 py-2.5 border-b border-[var(--color-border-subtle)] flex items-center justify-between gap-2 text-[var(--color-text-primary)] ${
+          isRTL ? "flex-row-reverse" : ""
+        }`}
+      >
+        <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+          <Clock className="w-4 h-4 text-[var(--color-primary)]" />
+          <h3 className="text-[12px] font-semibold uppercase tracking-wider">
+            {t("paymentDetail.auditTrail")}
+          </h3>
+        </div>
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={loading}
+          className="text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] disabled:opacity-40"
+          aria-label="Refresh audit trail"
+        >
+          <RefreshCcw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+        </button>
+      </header>
+      <div className="p-4">
+        {loading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="w-5 h-5 animate-spin text-[var(--color-primary)]" />
+          </div>
+        ) : entries.length === 0 ? (
+          <p className="text-xs text-[var(--color-text-secondary)] py-3">
+            {t("paymentDetail.noAudit")}
+          </p>
+        ) : (
+          <ol className="space-y-3">
+            {entries.map((entry) => {
+              const note =
+                (entry.metadata?.reviewerNote as string) ||
+                (entry.metadata?.internalNote as string) ||
+                (entry.metadata?.reason as string) ||
+                null;
+              return (
+                <li
+                  key={entry.id}
+                  className={`relative ${isRTL ? "pr-4 border-r-2" : "pl-4 border-l-2"} border-[var(--color-border-subtle)]`}
+                >
+                  <span
+                    className={`absolute top-1.5 ${isRTL ? "-right-[5px]" : "-left-[5px]"} w-2 h-2 rounded-full bg-[var(--color-primary)]`}
+                  />
+                  <div className={`flex items-baseline justify-between gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                    <p className="text-[12px] font-medium text-[var(--color-text-primary)]">
+                      {prettyAction(entry.action)}
+                    </p>
+                    <span className="text-[10px] uppercase tracking-wider text-[var(--color-text-secondary)]">
+                      {entry.entityType.replace(/_/g, " ")}
+                    </span>
+                  </div>
+                  <p className={`text-[11px] text-[var(--color-text-secondary)] ${isRTL ? "text-right" : ""}`}>
+                    {entry.actorName || t("paymentDetail.systemActor")} ·{" "}
+                    {new Date(entry.createdAt).toLocaleString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-US")}
+                  </p>
+                  {note && (
+                    <p className="text-[11px] text-[var(--color-text-primary)] mt-1 px-2 py-1 bg-[var(--color-surface-page)] rounded">
+                      {note}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </div>
+    </section>
   );
 }
 

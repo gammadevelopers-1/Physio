@@ -84,8 +84,8 @@ const DateRangeFilter = ({
   };
 
   return (
-    <div className={`flex flex-col sm:flex-row sm:items-center gap-2 ${isRTL ? "sm:flex-row-reverse" : ""}`}>
-      {/* Single inline pill group — calendar icon removed to free up header space */}
+    <div className={`flex flex-col items-end gap-2 ${isRTL ? "items-start" : "items-end"}`}>
+      {/* Pill group row — fixed width regardless of custom-open state */}
       <div
         className={`inline-flex items-center bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg p-1 shadow-sm ${isRTL ? "flex-row-reverse" : ""}`}
       >
@@ -106,9 +106,11 @@ const DateRangeFilter = ({
         </div>
       </div>
 
+      {/* Custom date inputs — stacked BELOW the pill group on its own row
+          so opening Custom never widens the header. */}
       {activePreset === "custom" && (
         <div
-          className={`inline-flex items-center gap-2 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg px-2 py-1 ${isRTL ? "flex-row-reverse" : ""}`}
+          className={`inline-flex items-center gap-1.5 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg px-2 py-1 shadow-sm ${isRTL ? "flex-row-reverse" : ""}`}
         >
           <input
             type="date"
@@ -118,8 +120,9 @@ const DateRangeFilter = ({
               setCustomStart(e.target.value);
               handleCustomChange(e.target.value, customEnd);
             }}
-            className="px-2 py-1 text-xs border-0 rounded-md focus:outline-none text-[var(--color-text-primary)] bg-transparent"
+            className="px-1.5 py-0.5 text-xs border-0 rounded-md focus:outline-none text-[var(--color-text-primary)] bg-transparent w-[120px]"
             dir="ltr"
+            aria-label={t("dateFilter.startDate")}
           />
           <span className="text-xs text-[var(--color-text-secondary)]">–</span>
           <input
@@ -130,8 +133,9 @@ const DateRangeFilter = ({
               setCustomEnd(e.target.value);
               handleCustomChange(customStart, e.target.value);
             }}
-            className="px-2 py-1 text-xs border-0 rounded-md focus:outline-none text-[var(--color-text-primary)] bg-transparent"
+            className="px-1.5 py-0.5 text-xs border-0 rounded-md focus:outline-none text-[var(--color-text-primary)] bg-transparent w-[120px]"
             dir="ltr"
+            aria-label={t("dateFilter.endDate")}
           />
         </div>
       )}

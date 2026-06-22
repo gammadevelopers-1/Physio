@@ -8017,7 +8017,9 @@
       "30d": "30D",
       "3m": "3M",
       "custom": "Custom",
-      "1y": "1Y"
+      "1y": "1Y",
+      "startDate": "Start date",
+      "endDate": "End date"
     },
     "revenueSummary": {
       "title": "Revenue Summary",

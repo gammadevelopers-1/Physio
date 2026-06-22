@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import FinanceSidebar from "./FinanceSidebar";
@@ -63,8 +64,15 @@ const InvoicesContent = () => {
   const [rowsLoading, setRowsLoading] = useState(true);
   const [summary, setSummary] = useState<InvoiceSummary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
-  const [aging, setAging] = useState<{ current: any; thirtyDay: any; sixtyDay: any; ninetyPlus: any; paid: any } | null>(null);
-  const [agingLoading, setAgingLoading] = useState(true);
+  const [reviewAging, setReviewAging] = useState<{
+    asOf: string;
+    underSix: { count: number; amount: number };
+    sixToDay: { count: number; amount: number };
+    dayToTwo: { count: number; amount: number };
+    beyondTwo: { count: number; amount: number };
+    scanQueue: { count: number; amount: number };
+  } | null>(null);
+  const [reviewAgingLoading, setReviewAgingLoading] = useState(true);
 
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [csvExporting, setCsvExporting] = useState(false);
@@ -145,28 +153,20 @@ const InvoicesContent = () => {
     }
   }, [statusFilter, gatewayFilter, searchQuery, dateRange.startDate, dateRange.endDate]);
 
-  const fetchAging = useCallback(async () => {
-    setAgingLoading(true);
+  // Real-time bank-transfer review queue aging — only meaningful "waiting
+  // on us" receivable in this product. Date range filter doesn't apply here
+  // (it's a live queue snapshot), so refresh independently.
+  const fetchReviewAging = useCallback(async () => {
+    setReviewAgingLoading(true);
     try {
-      const res = await financeApi.getInvoiceAging(
-        dateRange.startDate && dateRange.endDate
-          ? { startDate: dateRange.startDate, endDate: dateRange.endDate }
-          : undefined,
-      );
-      const bucket = (b: any) => (b && typeof b === "object" ? b : { count: b || 0, amount: 0 });
-      setAging({
-        current: bucket(res?.current),
-        thirtyDay: bucket(res?.thirtyDay),
-        sixtyDay: bucket(res?.sixtyDay),
-        ninetyPlus: bucket(res?.ninetyPlus),
-        paid: bucket(res?.paid),
-      });
+      const res = await financeApi.getBankTransferReviewAging();
+      setReviewAging(res);
     } catch {
-      setAging(null);
+      setReviewAging(null);
     } finally {
-      setAgingLoading(false);
+      setReviewAgingLoading(false);
     }
-  }, [dateRange.startDate, dateRange.endDate]);
+  }, []);
 
   useEffect(() => {
     fetchRows();
@@ -175,8 +175,8 @@ const InvoicesContent = () => {
     fetchSummary();
   }, [fetchSummary]);
   useEffect(() => {
-    fetchAging();
-  }, [fetchAging]);
+    fetchReviewAging();
+  }, [fetchReviewAging]);
 
   // 'overdue' is intentionally absent — invoices in this product are
   // always created status='paid' (payment-first flow), so the overdue
@@ -197,10 +197,6 @@ const InvoicesContent = () => {
     { value: "tabby", label: "Tabby" },
     { value: "bank_transfer", label: t("paymentsTable.filter.bankTransfer") },
   ];
-
-  const handleAgingClick = (bucketStatus: string) => {
-    setStatusFilter(bucketStatus);
-  };
 
   const handleCsvExport = async () => {
     if (csvExporting) return;
@@ -421,52 +417,79 @@ const InvoicesContent = () => {
                 )}
               </div>
 
-              {/* Aging Report — clickable buckets */}
+              {/* Bank Transfer Review Aging — replaces the invoice-aging
+                  bucket set. This product creates invoices paid-up-front,
+                  so the only meaningful "waiting on us" receivable is the
+                  bank-transfer receipt review queue. Clicking any bucket
+                  jumps to the Bank Transfers page to action it. */}
               <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5">
-                <div className={`flex items-center gap-2 mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
-                  <Clock className="w-5 h-5 text-[#EA580C]" />
-                  <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{t("invoicesPage.agingReport")}</h3>
+                <div className={`flex items-center justify-between gap-2 mb-1 ${isRTL ? "flex-row-reverse" : ""}`}>
+                  <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                    <Clock className="w-5 h-5 text-[#EA580C]" />
+                    <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
+                      {t("invoicesPage.reviewQueueTitle")}
+                    </h3>
+                  </div>
+                  {reviewAging && (
+                    <span className="text-[10px] uppercase tracking-wider text-[var(--color-text-secondary)]">
+                      {t("invoicesPage.reviewQueueAsOf", {
+                        when: new Date(reviewAging.asOf).toLocaleTimeString(
+                          locale === "ar" ? "ar-SA-u-nu-latn" : "en-US",
+                          { hour: "2-digit", minute: "2-digit", hour12: false }
+                        ),
+                      })}
+                    </span>
+                  )}
                 </div>
-                {agingLoading || !aging ? (
+                <p className="text-xs text-[var(--color-text-secondary)] mb-4">
+                  {t("invoicesPage.reviewQueueSubtitle")}
+                </p>
+                {reviewAgingLoading || !reviewAging ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                     {Array.from({ length: 5 }).map((_, i) => <KPICardSkeleton key={i} />)}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <AgingBucket
-                      label={t("invoicesPage.agingCategories.current")}
-                      count={Number(aging.current.count || 0)}
-                      amount={Number(aging.current.amount || 0)}
-                      color="bg-[#3B82F6]"
-                      onClick={() => handleAgingClick("issued")}
-                    />
-                    <AgingBucket
-                      label={t("invoicesPage.agingCategories.days30")}
-                      count={Number(aging.thirtyDay.count || 0)}
-                      amount={Number(aging.thirtyDay.amount || 0)}
-                      color="bg-[#D97706]"
-                      onClick={() => handleAgingClick("overdue")}
-                    />
-                    <AgingBucket
-                      label={t("invoicesPage.agingCategories.days60")}
-                      count={Number(aging.sixtyDay.count || 0)}
-                      amount={Number(aging.sixtyDay.amount || 0)}
-                      color="bg-[#EA580C]"
-                      onClick={() => handleAgingClick("overdue")}
-                    />
-                    <AgingBucket
-                      label={t("invoicesPage.agingCategories.overdue90")}
-                      count={Number(aging.ninetyPlus.count || 0)}
-                      amount={Number(aging.ninetyPlus.amount || 0)}
-                      color="bg-[#DC2626]"
-                      onClick={() => handleAgingClick("overdue")}
-                    />
-                    <AgingBucket
-                      label={t("invoicesPage.agingCategories.paid")}
-                      count={Number(aging.paid.count || 0)}
-                      amount={Number(aging.paid.amount || 0)}
+                    <ReviewBucket
+                      label={t("invoicesPage.reviewQueueBuckets.underSix")}
+                      count={reviewAging.underSix.count}
+                      amount={reviewAging.underSix.amount}
                       color="bg-[#16A34A]"
-                      onClick={() => handleAgingClick("paid")}
+                      href={`/${locale}/dashboard/finance/bank-transfers?review=pending`}
+                      t={t}
+                    />
+                    <ReviewBucket
+                      label={t("invoicesPage.reviewQueueBuckets.sixToDay")}
+                      count={reviewAging.sixToDay.count}
+                      amount={reviewAging.sixToDay.amount}
+                      color="bg-[#3B82F6]"
+                      href={`/${locale}/dashboard/finance/bank-transfers?review=pending`}
+                      t={t}
+                    />
+                    <ReviewBucket
+                      label={t("invoicesPage.reviewQueueBuckets.dayToTwo")}
+                      count={reviewAging.dayToTwo.count}
+                      amount={reviewAging.dayToTwo.amount}
+                      color="bg-[#D97706]"
+                      href={`/${locale}/dashboard/finance/bank-transfers?review=pending`}
+                      t={t}
+                    />
+                    <ReviewBucket
+                      label={t("invoicesPage.reviewQueueBuckets.beyondTwo")}
+                      count={reviewAging.beyondTwo.count}
+                      amount={reviewAging.beyondTwo.amount}
+                      color="bg-[#DC2626]"
+                      href={`/${locale}/dashboard/finance/bank-transfers?review=pending`}
+                      urgent={reviewAging.beyondTwo.count > 0}
+                      t={t}
+                    />
+                    <ReviewBucket
+                      label={t("invoicesPage.reviewQueueBuckets.scanQueue")}
+                      count={reviewAging.scanQueue.count}
+                      amount={reviewAging.scanQueue.amount}
+                      color="bg-[#7C3AED]"
+                      href={`/${locale}/dashboard/finance/bank-transfers?scan=pending`}
+                      t={t}
                     />
                   </div>
                 )}
@@ -482,7 +505,7 @@ const InvoicesContent = () => {
         onChanged={() => {
           fetchRows();
           fetchSummary();
-          fetchAging();
+          fetchReviewAging();
         }}
       />
     </>
@@ -607,23 +630,32 @@ function InvoiceRowView({
   );
 }
 
-function AgingBucket({
+function ReviewBucket({
   label,
   count,
   amount,
   color,
-  onClick,
+  href,
+  urgent,
+  t,
 }: {
   label: string;
   count: number;
   amount: number;
   color: string;
-  onClick: () => void;
+  href: string;
+  urgent?: boolean;
+  t: ReturnType<typeof useTranslations>;
 }) {
+  const isEmpty = count === 0;
   return (
-    <button
-      onClick={onClick}
-      className="text-left p-4 bg-[var(--color-surface-page)] rounded-xl border border-[var(--color-border-subtle)] hover:border-[var(--color-primary)] transition-colors"
+    <Link
+      href={href}
+      className={`block text-left p-4 rounded-xl border transition-colors ${
+        urgent && count > 0
+          ? "bg-[#FEF2F2] border-[#FECACA] hover:border-[#DC2626]"
+          : "bg-[var(--color-surface-page)] border-[var(--color-border-subtle)] hover:border-[var(--color-primary)]"
+      } ${isEmpty ? "opacity-60" : ""}`}
     >
       <div className="flex items-center gap-2 mb-2">
         <div className={`w-2.5 h-2.5 rounded-full ${color}`} />
@@ -633,9 +665,13 @@ function AgingBucket({
         {count.toLocaleString("en-US")}
       </p>
       <div className="text-[13px] text-[var(--color-text-secondary)] mt-0.5">
-        <Money amount={amount} decimals={0} iconSize={10} />
+        {count === 0 ? (
+          <span className="text-[11px]">{t("invoicesPage.reviewQueueEmpty")}</span>
+        ) : (
+          <Money amount={amount} decimals={0} iconSize={10} />
+        )}
       </div>
-    </button>
+    </Link>
   );
 }
 

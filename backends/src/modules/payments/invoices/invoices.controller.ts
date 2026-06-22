@@ -66,14 +66,66 @@ export class InvoicesController {
     return this.invoiceService.getInvoicesByUser(user.id, page, limit, status);
   }
 
+  // IMPORTANT: literal routes (`summary`, `export.csv`, `overdue-sweep/run`)
+  // MUST be declared BEFORE the `:id`-shaped routes below. Express's router
+  // matches in declaration order, so a `@Get(':id')` before `@Get('summary')`
+  // would swallow `/invoices/summary` as `id="summary"` and return null.
+  @Get('summary')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getInvoiceSummary(
+    @Query('status') status?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('search') search?: string,
+    @Query('gateway') gateway?: string,
+  ) {
+    return this.invoiceService.getInvoiceSummary({
+      status,
+      startDate,
+      endDate,
+      search,
+      gateway,
+    });
+  }
+
+  @Get('export.csv')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async exportCsv(
+    @Res() res: Response,
+    @Query('status') status?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('search') search?: string,
+    @Query('gateway') gateway?: string,
+  ) {
+    const csv = await this.invoiceService.exportInvoicesCsv({
+      status,
+      startDate,
+      endDate,
+      search,
+      gateway,
+    });
+    const filename = `invoices-${new Date().toISOString().slice(0, 10)}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${filename}"`,
+    );
+    res.send(csv);
+  }
+
+  @Post('overdue-sweep/run')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async runOverdueSweep() {
+    return this.invoiceService.sweepOverdueInvoices();
+  }
+
   @Get(':id/pdf')
   @Roles('STUDENT', 'FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async getInvoicePdf(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    // Students can only access their own invoices
-    // Finance/Admin roles can access any
     const isAdmin =
       user.roles.includes('FINANCE') ||
       user.roles.includes('ADMIN') ||
@@ -95,8 +147,6 @@ export class InvoicesController {
     if (!invoice) {
       throw new NotFoundException('Invoice not found');
     }
-
-    // Students can only view their own invoices
     const isAdmin =
       user.roles.includes('FINANCE') ||
       user.roles.includes('ADMIN') ||
@@ -105,7 +155,6 @@ export class InvoicesController {
     if (!isAdmin && invoice.userId !== user.id) {
       throw new NotFoundException('Invoice not found');
     }
-
     return invoice;
   }
 
@@ -129,24 +178,6 @@ export class InvoicesController {
       search,
       gateway,
     );
-  }
-
-  @Get('summary')
-  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
-  async getInvoiceSummary(
-    @Query('status') status?: string,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-    @Query('search') search?: string,
-    @Query('gateway') gateway?: string,
-  ) {
-    return this.invoiceService.getInvoiceSummary({
-      status,
-      startDate,
-      endDate,
-      search,
-      gateway,
-    });
   }
 
   @Get(':id/detail')
@@ -185,38 +216,6 @@ export class InvoicesController {
       throw new BadRequestException('Cancellation reason is required (min 4 chars)');
     }
     return this.invoiceService.cancelInvoice(id, reason, user.id);
-  }
-
-  @Post('overdue-sweep/run')
-  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
-  async runOverdueSweep() {
-    return this.invoiceService.sweepOverdueInvoices();
-  }
-
-  @Get('export.csv')
-  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
-  async exportCsv(
-    @Res() res: Response,
-    @Query('status') status?: string,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-    @Query('search') search?: string,
-    @Query('gateway') gateway?: string,
-  ) {
-    const csv = await this.invoiceService.exportInvoicesCsv({
-      status,
-      startDate,
-      endDate,
-      search,
-      gateway,
-    });
-    const filename = `invoices-${new Date().toISOString().slice(0, 10)}.csv`;
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${filename}"`,
-    );
-    res.send(csv);
   }
 
   @Post(':id/resend')

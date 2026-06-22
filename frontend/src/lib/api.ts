@@ -7701,6 +7701,16 @@ export const financeApi = {
     }>(`/finance/invoice-aging${qs ? `?${qs}` : ''}`);
   },
 
+  getBankTransferReviewAging: () =>
+    api.get<{
+      asOf: string;
+      underSix: { count: number; amount: number };
+      sixToDay: { count: number; amount: number };
+      dayToTwo: { count: number; amount: number };
+      beyondTwo: { count: number; amount: number };
+      scanQueue: { count: number; amount: number };
+    }>(`/finance/bank-transfer-review-aging`),
+
   getRevenueTrend: (params?: { period?: 'day' | 'week' | 'month'; startDate?: string; endDate?: string }) => {
     const sp = new URLSearchParams();
     if (params?.period) sp.set('period', params.period);

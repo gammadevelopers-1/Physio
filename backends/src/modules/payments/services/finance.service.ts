@@ -3,7 +3,14 @@ import { sql, and, gte, lte, eq, desc } from 'drizzle-orm';
 import * as PDFDocument from 'pdfkit';
 import * as ExcelJS from 'exceljs';
 import { db } from '../../../database';
-import { payments, invoices, users, courses } from '../../../database/schema';
+import {
+  payments,
+  invoices,
+  users,
+  courses,
+  paymentReceipts,
+} from '../../../database/schema';
+import { isNull } from 'drizzle-orm';
 
 @Injectable()
 export class FinanceService {
@@ -374,6 +381,55 @@ export class FinanceService {
       sixtyDay: { count: Number(result?.sixtyDayCount || 0), amount: Number(result?.sixtyDayAmount || 0) },
       ninetyPlus: { count: Number(result?.ninetyPlusCount || 0), amount: Number(result?.ninetyPlusAmount || 0) },
       paid: { count: Number(result?.paidCount || 0), amount: Number(result?.paidAmount || 0) },
+    };
+  }
+
+  /**
+   * Bank-transfer receipt review aging — the only true "waiting on us"
+   * receivable in this product. Counts active receipts (latest in their
+   * re-upload chain, scan-clean, review still pending) bucketed by how
+   * long they've been sitting in the queue. Surfaces on the Invoices
+   * page replacing the empty invoice-aging bucket set. amounts read from
+   * the underlying payment row.
+   */
+  async getBankTransferReviewAging() {
+    const now = new Date();
+    const h6 = new Date(now.getTime() - 6 * 3600_000);
+    const h24 = new Date(now.getTime() - 24 * 3600_000);
+    const h48 = new Date(now.getTime() - 48 * 3600_000);
+
+    // Active receipts: latest in chain (replacedById IS NULL), scan clean,
+    // review still pending. createdAt is the upload moment which is what
+    // finance is "waiting on" — same as the dashboard's queue UI.
+    const cleanPending = sql`
+      ${paymentReceipts.replacedById} IS NULL
+      AND ${paymentReceipts.scanStatus} = 'clean'
+      AND ${paymentReceipts.reviewStatus} = 'pending'
+    `;
+
+    const [result] = await db
+      .select({
+        underSix: sql<number>`COUNT(CASE WHEN ${cleanPending} AND ${paymentReceipts.createdAt} >= ${h6} THEN 1 END)::int`,
+        underSixAmount: sql<string>`COALESCE(SUM(CASE WHEN ${cleanPending} AND ${paymentReceipts.createdAt} >= ${h6} THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+        sixToDay: sql<number>`COUNT(CASE WHEN ${cleanPending} AND ${paymentReceipts.createdAt} < ${h6} AND ${paymentReceipts.createdAt} >= ${h24} THEN 1 END)::int`,
+        sixToDayAmount: sql<string>`COALESCE(SUM(CASE WHEN ${cleanPending} AND ${paymentReceipts.createdAt} < ${h6} AND ${paymentReceipts.createdAt} >= ${h24} THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+        dayToTwo: sql<number>`COUNT(CASE WHEN ${cleanPending} AND ${paymentReceipts.createdAt} < ${h24} AND ${paymentReceipts.createdAt} >= ${h48} THEN 1 END)::int`,
+        dayToTwoAmount: sql<string>`COALESCE(SUM(CASE WHEN ${cleanPending} AND ${paymentReceipts.createdAt} < ${h24} AND ${paymentReceipts.createdAt} >= ${h48} THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+        beyondTwo: sql<number>`COUNT(CASE WHEN ${cleanPending} AND ${paymentReceipts.createdAt} < ${h48} THEN 1 END)::int`,
+        beyondTwoAmount: sql<string>`COALESCE(SUM(CASE WHEN ${cleanPending} AND ${paymentReceipts.createdAt} < ${h48} THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+        scanQueue: sql<number>`COUNT(CASE WHEN ${paymentReceipts.replacedById} IS NULL AND ${paymentReceipts.scanStatus} = 'pending' THEN 1 END)::int`,
+        scanQueueAmount: sql<string>`COALESCE(SUM(CASE WHEN ${paymentReceipts.replacedById} IS NULL AND ${paymentReceipts.scanStatus} = 'pending' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+      })
+      .from(paymentReceipts)
+      .leftJoin(payments, eq(payments.id, paymentReceipts.paymentId));
+
+    return {
+      asOf: now.toISOString(),
+      underSix: { count: result?.underSix || 0, amount: Number(result?.underSixAmount || 0) },
+      sixToDay: { count: result?.sixToDay || 0, amount: Number(result?.sixToDayAmount || 0) },
+      dayToTwo: { count: result?.dayToTwo || 0, amount: Number(result?.dayToTwoAmount || 0) },
+      beyondTwo: { count: result?.beyondTwo || 0, amount: Number(result?.beyondTwoAmount || 0) },
+      scanQueue: { count: result?.scanQueue || 0, amount: Number(result?.scanQueueAmount || 0) },
     };
   }
 

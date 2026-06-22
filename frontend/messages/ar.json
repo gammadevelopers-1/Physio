@@ -8301,6 +8301,17 @@
         "overdueSweepTooltip": "البحث عن الفواتير الصادرة التي تجاوزت تاريخ الاستحقاق وتحديدها كمتأخرة.",
         "overdueSweepResult": "تم تحديد {count} فاتورة كمتأخرة.",
         "overdueSweepError": "فشل التشغيل. حاول مرة أخرى بعد قليل."
+      },
+      "reviewQueueTitle": "قائمة مراجعة التحويلات البنكية",
+      "reviewQueueSubtitle": "إيصالات بانتظار موافقة قسم المالية، مجمّعة حسب مدة الانتظار. اضغط على أي شريحة لاتخاذ إجراء.",
+      "reviewQueueAsOf": "مباشر · {when}",
+      "reviewQueueEmpty": "خالٍ",
+      "reviewQueueBuckets": {
+        "underSix": "أقل من 6 ساعات",
+        "sixToDay": "6 - 24 ساعة",
+        "dayToTwo": "1 - 2 يوم",
+        "beyondTwo": "أكثر من يومين",
+        "scanQueue": "بانتظار الفحص"
       }
     },
     "refundsPage": {

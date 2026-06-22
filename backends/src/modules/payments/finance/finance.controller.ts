@@ -88,6 +88,12 @@ export class FinanceController {
     return this.financeService.getInvoiceAging(startDate, endDate);
   }
 
+  @Get('bank-transfer-review-aging')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getBankTransferReviewAging() {
+    return this.financeService.getBankTransferReviewAging();
+  }
+
   @Get('revenue-trend')
   @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async getRevenueTrend(

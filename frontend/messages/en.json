@@ -8301,6 +8301,17 @@
         "overdueSweepTooltip": "Find issued invoices past their due date and mark them overdue.",
         "overdueSweepResult": "Flagged {count} invoice(s) as overdue.",
         "overdueSweepError": "Sweep failed. Try again in a moment."
+      },
+      "reviewQueueTitle": "Bank Transfer Review Queue",
+      "reviewQueueSubtitle": "Receipts waiting on finance approval, grouped by how long they have been pending. Click any bucket to action it.",
+      "reviewQueueAsOf": "Live · {when}",
+      "reviewQueueEmpty": "Clear",
+      "reviewQueueBuckets": {
+        "underSix": "Under 6 hours",
+        "sixToDay": "6h – 24h",
+        "dayToTwo": "1 – 2 days",
+        "beyondTwo": "Over 2 days",
+        "scanQueue": "Scan pending"
       }
     },
     "refundsPage": {

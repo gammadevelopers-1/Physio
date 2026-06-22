@@ -206,28 +206,40 @@ export class FinanceService {
     endDate?: string,
   ): Promise<{ period: string; revenue: number; count: number }[]> {
     const safePeriod = ['day', 'week', 'month'].includes(period) ? period : 'day';
-    // Status='paid' rows have paid_at set, so we anchor + group + filter
-    // on payments.paidAt directly. The earlier COALESCE(paid_at, created_at)
-    // approach hit a drizzle quirk where the column reference compiled
-    // unqualified in SELECT but qualified in GROUP BY, so Postgres rejected
-    // the GROUP BY as not matching the projection.
-    const conditions: any[] = [eq(payments.status, 'paid' as any)];
-    if (startDate) conditions.push(gte(payments.paidAt, new Date(startDate)));
-    if (endDate) conditions.push(lte(payments.paidAt, new Date(endDate)));
+    // Drizzle creates a fresh parameter slot for each `${safePeriod}`
+    // interpolation ($1, $5, $6 ...), and Postgres treats those as distinct
+    // expressions — so date_trunc($1, paid_at) in SELECT does NOT match
+    // date_trunc($5, paid_at) in GROUP BY. Raw SQL with a subquery alias
+    // computes the bucket once and lets GROUP BY/ORDER BY reuse the alias.
+    const start = startDate ? new Date(startDate) : new Date(0);
+    const end = endDate ? new Date(endDate) : new Date();
+    const truncUnit = sql.raw(`'${safePeriod}'`); // safePeriod is validated above
 
     try {
-      const result = await db
-        .select({
-          period: sql<string>`date_trunc(${safePeriod}, ${payments.paidAt})::text`,
-          revenue: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
-          count: sql<number>`COUNT(*)::int`,
-        })
-        .from(payments)
-        .where(and(...conditions))
-        .groupBy(sql`date_trunc(${safePeriod}, ${payments.paidAt})`)
-        .orderBy(sql`date_trunc(${safePeriod}, ${payments.paidAt})`);
+      const result = await db.execute<{
+        period: string;
+        revenue: string;
+        count: number;
+      }>(sql`
+        SELECT
+          bucket::text AS period,
+          COALESCE(SUM(amount), 0)::text AS revenue,
+          COUNT(*)::int AS count
+        FROM (
+          SELECT
+            date_trunc(${truncUnit}, paid_at) AS bucket,
+            amount::numeric AS amount
+          FROM payments
+          WHERE status = 'paid'
+            AND paid_at >= ${start}
+            AND paid_at <= ${end}
+        ) sub
+        GROUP BY bucket
+        ORDER BY bucket
+      `);
 
-      return result.map((r) => ({
+      const rows = (result as unknown as { rows?: unknown[] }).rows ?? (result as unknown as unknown[]);
+      return (rows as { period: string; revenue: string; count: number }[]).map((r) => ({
         period: r.period,
         revenue: Number(r.revenue),
         count: Number(r.count),

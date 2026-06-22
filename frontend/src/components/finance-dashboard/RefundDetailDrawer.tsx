@@ -353,19 +353,18 @@ const RefundDetailDrawer = ({
                       iconSize={12}
                     />
                   </div>
-                  <div className="flex items-baseline justify-between border-t border-[var(--color-border-subtle)] pt-2">
-                    <span className="text-[#D97706]">
-                      {t("refundsPage.drawer.overview.deduction")}
-                    </span>
-                    <span className="text-[#D97706] inline-flex items-center gap-1">
-                      −
+                  {Number(data.deductionAmount || 0) > 0 && (
+                    <div className="flex items-baseline justify-between border-t border-[var(--color-border-subtle)] pt-2">
+                      <span className="text-[#92400E]">
+                        {t("refundsPage.drawer.overview.merchantFee")}
+                      </span>
                       <Money
                         amount={Number(data.deductionAmount || 0)}
-                        className="text-[#D97706]"
+                        className="text-[#92400E]"
                         iconSize={12}
                       />
-                    </span>
-                  </div>
+                    </div>
+                  )}
                 </div>
                 {data.deductionReason && (
                   <p className="mt-2 text-[11px] text-[#92400E] bg-[#FFFBEB] border border-[#FDE68A] rounded-md px-2 py-1">

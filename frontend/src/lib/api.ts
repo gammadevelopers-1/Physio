@@ -7711,7 +7711,59 @@ export const refundApi = {
     reason: string;
     reasonNote?: string;
     justification?: string;
+    /** Optional partial refund amount. Backend enforces gateway support. */
+    refundAmount?: number;
   }) => api.post<any>('/refunds/admin-initiate', data),
+
+  getPreview: (paymentId: string, amount?: number) => {
+    const qs = amount !== undefined ? `?amount=${amount}` : '';
+    return api.get<{
+      payment: {
+        id: string;
+        amount: number;
+        gateway: string;
+        paymentMethod: string | null;
+        paidAt: string | null;
+        gatewayChargeId: string | null;
+      };
+      buyer: { id: string; name: string; email: string } | null;
+      course: { id: string; title: string; titleAr: string | null } | null;
+      invoice: {
+        id: string;
+        invoiceNumber: string;
+        issuedAt: string;
+        paidAt: string | null;
+      } | null;
+      enrollment: {
+        id: string;
+        status: string;
+        enrolledAt: string | null;
+      } | null;
+      capabilities: {
+        supportsPartial: boolean;
+        maxRefundAmount: number;
+        minRefundAmount: number;
+      };
+      breakdown: {
+        originalAmount: number;
+        refundAmount: number;
+        merchantFeeRate: number;
+        merchantFeeAmount: number;
+        merchantFeeReason: string | null;
+        isPartial: boolean;
+      };
+      refundDestination: {
+        kind: 'gateway' | 'card' | 'manual_bank';
+        label: string;
+      };
+      consequences: {
+        dropsEnrollment: boolean;
+        reversesDiscount: boolean;
+        revokesCertificate: boolean;
+        cancelsFutureWebinarRegistrations: boolean;
+      };
+    }>(`/refunds/preview/${paymentId}${qs}`);
+  },
 
   listRefundablePayments: (search?: string, limit = 25) => {
     const sp = new URLSearchParams({ limit: String(limit) });

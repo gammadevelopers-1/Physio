@@ -947,6 +947,67 @@ export class ZoomService implements IZoomService, OnModuleInit {
   }
 
   /**
+   * Cancel a registrant's webinar registration on the Zoom side. After
+   * this call, the registrant's join URL stops working — even if they
+   * had it cached or bookmarked, Zoom will deny entry. Used by the
+   * refund cascade so a refunded learner is cut off at the Zoom layer
+   * too, not just in our DB.
+   *
+   * Best-effort: returns ok=false rather than throwing on Zoom errors so
+   * the calling cascade can continue with other revocations. Idempotent
+   * on Zoom's side (already-cancelled registrants return 200).
+   *
+   * Uses PUT /webinars/{webinarId}/registrants/status with action=cancel.
+   * Docs: https://developers.zoom.us/docs/api/webinars/#tag/webinars/PUT/webinars/{webinarId}/registrants/status
+   */
+  async cancelWebinarRegistrant(
+    webinarId: string,
+    registrantId: string,
+    email: string,
+  ): Promise<{ ok: boolean; error?: string }> {
+    try {
+      const token = await this.getAccessToken();
+      const response = await this.zoomFetch(
+        `https://api.zoom.us/v2/webinars/${encodeURIComponent(webinarId)}/registrants/status`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'cancel',
+            registrants: [{ id: registrantId, email }],
+          }),
+        },
+      );
+
+      if (response.ok || response.status === 204) {
+        this.logger.log(
+          `Zoom registrant cancelled: webinar=${webinarId} registrant=${registrantId}`,
+        );
+        return { ok: true };
+      }
+
+      // 404 → webinar/registrant already gone, treat as success.
+      if (response.status === 404) {
+        return { ok: true };
+      }
+
+      const errorText = await response.text();
+      this.logger.warn(
+        `Zoom cancel registrant failed (${response.status}): ${errorText}`,
+      );
+      return { ok: false, error: errorText };
+    } catch (err: any) {
+      this.logger.warn(
+        `Zoom cancel registrant threw: ${err?.message || String(err)}`,
+      );
+      return { ok: false, error: err?.message || String(err) };
+    }
+  }
+
+  /**
    * Register a single user for a webinar. Zoom dedupes by email — if the
    * email is already registered, Zoom returns the existing registrant's
    * data (including their join URL), which is what we want.

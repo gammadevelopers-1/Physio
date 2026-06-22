@@ -319,6 +319,7 @@ export class ZoomController {
   ): Promise<void> {
     // Lazy-imports to avoid circular module deps at the top.
     const { webinarRegistrations, courses } = await import('../../database/schema');
+    const { sql } = await import('drizzle-orm');
     const registrants = await db
       .select({
         email: webinarRegistrations.email,
@@ -327,7 +328,14 @@ export class ZoomController {
         joinUrl: webinarRegistrations.joinUrl,
       })
       .from(webinarRegistrations)
-      .where(eq(webinarRegistrations.sessionId, sessionId));
+      // Skip cancelled registrants (refunded students). They should NOT
+      // receive a join URL when the webinar goes live.
+      .where(
+        and(
+          eq(webinarRegistrations.sessionId, sessionId),
+          sql`${webinarRegistrations.status} <> 'cancelled'`,
+        ),
+      );
 
     if (registrants.length === 0) {
       this.logger.log(

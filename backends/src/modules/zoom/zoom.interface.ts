@@ -209,6 +209,16 @@ export interface IZoomService {
     webinarId: string,
     registrant: WebinarRegistrantInput,
   ): Promise<WebinarRegistrantResult>;
+  /**
+   * Cancel a registrant's registration on Zoom's side so their join URL
+   * stops working. Best-effort — returns ok=false on failure rather than
+   * throwing, since the calling cascade may be revoking multiple things.
+   */
+  cancelWebinarRegistrant(
+    webinarId: string,
+    registrantId: string,
+    email: string,
+  ): Promise<{ ok: boolean; error?: string }>;
   /** Check whether a Zoom user has a webinar add-on assigned. */
   checkWebinarLicense(email: string): Promise<WebinarLicenseCheckResult>;
 

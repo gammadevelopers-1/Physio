@@ -2216,7 +2216,15 @@ export class SessionsService {
         createdAt: webinarRegistrations.createdAt,
       })
       .from(webinarRegistrations)
-      .where(eq(webinarRegistrations.sessionId, sessionId))
+      // Hide cancelled registrations (refunded learners are cancelled by
+      // the refund cascade — they should not appear in the admin webinar
+      // registrant list as if they were still attending).
+      .where(
+        and(
+          eq(webinarRegistrations.sessionId, sessionId),
+          sql`${webinarRegistrations.status} <> 'cancelled'`,
+        ),
+      )
       .orderBy(desc(webinarRegistrations.createdAt));
 
     // Course-level context: paid vs free decides whether the "Not paid"

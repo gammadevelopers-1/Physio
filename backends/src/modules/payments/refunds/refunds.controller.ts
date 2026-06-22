@@ -87,6 +87,23 @@ export class RefundsController {
     return this.refundService.listRefundablePayments(search, limit);
   }
 
+  @Get('preview/:paymentId')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getRefundPreview(
+    @Param('paymentId') paymentId: string,
+    @Query('amount') amount?: string,
+  ) {
+    const requestedAmount =
+      amount !== undefined && amount !== '' ? Number(amount) : undefined;
+    if (
+      requestedAmount !== undefined &&
+      (Number.isNaN(requestedAmount) || requestedAmount <= 0)
+    ) {
+      return this.refundService.getRefundPreview(paymentId);
+    }
+    return this.refundService.getRefundPreview(paymentId, requestedAmount);
+  }
+
   @Get('my-refunds')
   @Roles('STUDENT')
   async getMyRefunds(

@@ -359,10 +359,15 @@ export class StudentService {
       isNull(courses.deletedAt),
     ];
 
-    // Filter by enrollment status
-    // When "all" or undefined, show ALL enrollments including dropped
+    // Filter by enrollment status.
+    // Default (no filter / 'all'): hide DROPPED — a refunded student
+    // should not see the course in their "My Courses" list. Explicit
+    // status filters (e.g. 'dropped' for a refund-history view) still
+    // honoured.
     if (params.status && params.status !== 'all') {
       conditions.push(eq(enrollments.status, params.status));
+    } else {
+      conditions.push(sql`${enrollments.status} <> 'dropped'`);
     }
 
     // Filter by delivery type (zoom / onsite / blended / self-paced)

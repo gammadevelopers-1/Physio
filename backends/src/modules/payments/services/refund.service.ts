@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   Logger,
   BadRequestException,
@@ -25,10 +26,14 @@ import {
   enrollments,
   courses,
   users,
+  sessions,
+  webinarRegistrations,
+  certificateRequests,
   PAYMENT_STATUS,
   REFUND_STATUS,
   ENROLLMENT_STATUS,
   INVOICE_STATUS,
+  CERTIFICATE_STATUS,
 } from '../../../database/schema';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { GatewayFactory } from '../gateways/gateway.factory';
@@ -36,13 +41,37 @@ import { EmailService } from '../../email/email.service';
 import { CreateRefundDto } from '../dto/create-refund.dto';
 import { RejectRefundDto } from '../dto/reject-refund.dto';
 import { DiscountService } from './discount.service';
+import { ZOOM_SERVICE, IZoomService } from '../../zoom/zoom.interface';
 
 @Injectable()
 export class RefundService {
   private readonly logger = new Logger(RefundService.name);
 
-  // Deduction rates by gateway — Tabby is configurable (per merchant agreement)
-  private readonly deductionRates: Record<string, number>;
+  /**
+   * Merchant fee rates by gateway — this is the COST WE BEAR on a refund,
+   * reconciled by Tamara/Tabby on our next settlement. It is NOT deducted
+   * from the customer's refund. We record it on the refund row (in the
+   * `deductionAmount` column, semantics now = "merchant fee borne") so
+   * finance can reconcile against gateway settlement reports.
+   *
+   * Confirmed via:
+   *   - Tamara docs: "the refunded amount will be deducted from your next
+   *     settlement" (https://docs.tamara.co/docs/direct-online-checkout)
+   *   - Tabby API: refund `amount` field = amount customer receives, fees
+   *     reported in settlement payout report
+   *   - Direct confirmation from Tamara support (relayed by Amna)
+   *
+   * Customers ALWAYS receive the full refund amount we send to the gateway.
+   */
+  private readonly merchantFeeRates: Record<string, number>;
+
+  /**
+   * Gateways that support a partial-amount refund (refund less than the
+   * original payment). Per Amna's Q1 decision: enabled on Moyasar and
+   * Bank Transfer only. BNPL gateways do not reliably handle partial
+   * refunds without desyncing the installment schedule.
+   */
+  private readonly partialRefundCapable = new Set(['moyasar', 'bank_transfer', 'mock']);
 
   constructor(
     private readonly configService: ConfigService,
@@ -50,9 +79,11 @@ export class RefundService {
     private readonly auditLogService: AuditLogService,
     private readonly emailService: EmailService,
     private readonly discountService: DiscountService,
+    @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
   ) {
-    const tabbyRate = this.configService.get<number>('payments.tabbyRefundDeductionRate') ?? 0.1;
-    this.deductionRates = {
+    const tabbyRate =
+      this.configService.get<number>('payments.tabbyRefundDeductionRate') ?? 0.1;
+    this.merchantFeeRates = {
       moyasar: 0,
       tamara: 0.1,
       tabby: tabbyRate,
@@ -61,8 +92,69 @@ export class RefundService {
     };
   }
 
+  /**
+   * Compute the refund math for a given payment and requested refund
+   * amount. Single source of truth for both `requestRefund` (student),
+   * `adminInitiateRefund` (finance), and `getRefundPreview` (UI).
+   *
+   * Throws BadRequestException when the requested amount violates the
+   * gateway's partial-refund capability.
+   */
+  private computeRefundMath(
+    gateway: string,
+    originalAmount: number,
+    requestedAmount?: number,
+  ): {
+    refundAmount: number;
+    merchantFeeAmount: number;
+    merchantFeeReason: string | null;
+    isPartial: boolean;
+  } {
+    const safeOriginal = Number(originalAmount.toFixed(2));
+    const requested =
+      requestedAmount === undefined || requestedAmount === null
+        ? safeOriginal
+        : Number(Number(requestedAmount).toFixed(2));
+
+    if (requested <= 0) {
+      throw new BadRequestException('Refund amount must be greater than 0');
+    }
+    if (requested > safeOriginal) {
+      throw new BadRequestException(
+        `Refund amount cannot exceed original payment (${safeOriginal})`,
+      );
+    }
+
+    const isPartial = requested < safeOriginal;
+    if (isPartial && !this.partialRefundCapable.has(gateway)) {
+      throw new BadRequestException(
+        `Partial refunds are not supported for ${gateway}. Send the full amount or change gateway.`,
+      );
+    }
+
+    const merchantFeeRate = this.merchantFeeRates[gateway] || 0;
+    // Merchant fee is calculated on the REFUNDED amount, not the original
+    // — Tamara/Tabby retain a proportional fee on what was refunded.
+    const merchantFeeAmount = Number((requested * merchantFeeRate).toFixed(2));
+
+    const gatewayLabels: Record<string, string> = {
+      tamara: 'Tamara BNPL',
+      tabby: 'Tabby BNPL',
+    };
+    const merchantFeeReason =
+      merchantFeeAmount > 0
+        ? `${gatewayLabels[gateway] || gateway} ${Math.round(merchantFeeRate * 100)}% merchant fee (reconciled on settlement, NOT deducted from customer)`
+        : null;
+
+    return {
+      refundAmount: requested,
+      merchantFeeAmount,
+      merchantFeeReason,
+      isPartial,
+    };
+  }
+
   async requestRefund(userId: string, dto: CreateRefundDto, ipAddress?: string) {
-    // 1. Find the payment
     const [payment] = await db
       .select()
       .from(payments)
@@ -76,53 +168,41 @@ export class RefundService {
     }
 
     if (payment.status !== PAYMENT_STATUS.PAID) {
-      throw new BadRequestException(
-        'Only paid payments can be refunded',
-      );
+      throw new BadRequestException('Only paid payments can be refunded');
     }
 
-    // 2. Check for existing pending/processing refund
+    // Block if ANY active or completed refund exists for this payment.
+    // Multi-refund (e.g., a second partial after one completed) is not
+    // supported in v1.
     const [existingRefund] = await db
       .select()
       .from(refunds)
       .where(
         and(
           eq(refunds.paymentId, dto.paymentId),
-          sql`${refunds.status} IN ('pending', 'approved', 'processing')`,
+          sql`${refunds.status} IN ('pending', 'approved', 'processing', 'completed')`,
         ),
       )
       .limit(1);
 
     if (existingRefund) {
       throw new BadRequestException(
-        'A refund request is already in progress for this payment',
+        'A refund already exists for this payment',
       );
     }
 
-    // 3. Calculate deduction
+    // Student-initiated requests are always FULL refunds. Partial is an
+    // admin-only action (see adminInitiateRefund).
     const originalAmount = Number(payment.amount);
-    const deductionRate = this.deductionRates[payment.gateway] || 0;
-    const deductionAmount = originalAmount * deductionRate;
-    const refundAmount = originalAmount - deductionAmount;
+    const { refundAmount, merchantFeeAmount, merchantFeeReason } =
+      this.computeRefundMath(payment.gateway, originalAmount);
 
-    // Build human-readable deduction reason for NELC audit trail
-    const gatewayLabels: Record<string, string> = {
-      tamara: 'Tamara BNPL',
-      tabby: 'Tabby BNPL',
-    };
-    const deductionReason =
-      deductionAmount > 0
-        ? `${gatewayLabels[payment.gateway] || payment.gateway} ${Math.round(deductionRate * 100)}% processing fee`
-        : null;
-
-    // 4. Find associated invoice
     const [invoice] = await db
       .select()
       .from(invoices)
       .where(eq(invoices.paymentId, dto.paymentId))
       .limit(1);
 
-    // 5. Create refund record
     const [refund] = await db
       .insert(refunds)
       .values({
@@ -132,21 +212,22 @@ export class RefundService {
         reason: dto.reason,
         reasonNote: dto.reasonNote,
         originalAmount: originalAmount.toFixed(2),
-        deductionAmount: deductionAmount.toFixed(2),
-        deductionReason,
+        // Repurposed: deductionAmount now represents the MERCHANT FEE we
+        // bear (reconciled via gateway settlement), NOT a deduction from
+        // the customer. The customer always receives `refundAmount` in full.
+        deductionAmount: merchantFeeAmount.toFixed(2),
+        deductionReason: merchantFeeReason,
         refundAmount: refundAmount.toFixed(2),
         status: REFUND_STATUS.PENDING,
       })
       .returning();
 
-    // 6. Send notification email
     try {
       await this.emailService.sendRefundRequested(userId, refund.id);
     } catch (err) {
       this.logger.error(`Failed to send refund requested email: ${err.message}`);
     }
 
-    // 7. Audit log
     await this.auditLogService.log({
       entityType: 'refund',
       entityId: refund.id,
@@ -158,7 +239,8 @@ export class RefundService {
         reason: dto.reason,
         originalAmount,
         refundAmount,
-        deductionAmount,
+        merchantFeeAmount,
+        isPartial: false,
       },
     });
 
@@ -347,6 +429,72 @@ export class RefundService {
       .where(eq(payments.id, refund.paymentId))
       .limit(1);
 
+    // Pre-load cascade targets OUTSIDE the transaction so the tx itself
+    // stays tight (writes only). All filtering done up-front.
+    //
+    // Per Amna's Q3 Option A: revoke access on EVERY refund completion
+    // (partial or full). The "partial credit while keeping access" use
+    // case is intentionally not supported — partials are still a closed
+    // door.
+    const courseId = payment?.courseId;
+    const studentId = payment?.userId;
+
+    // Find future-dated WEBINAR sessions for this course (we only cancel
+    // upcoming attendance — past sessions already happened). We also
+    // pull the Zoom webinar ID so we can revoke at the Zoom layer after
+    // the DB commit (defense-in-depth: even if a refunded learner has
+    // their join URL cached, Zoom denies entry).
+    const futureWebinarSessions =
+      courseId && studentId
+        ? await db
+            .select({
+              id: sessions.id,
+              zoomWebinarId: sessions.zoomWebinarId,
+            })
+            .from(sessions)
+            .where(
+              and(
+                eq(sessions.courseId, courseId),
+                gte(sessions.scheduledAt, new Date()),
+              ),
+            )
+        : [];
+    const futureSessionIds = futureWebinarSessions.map((s) => s.id);
+    const sessionToZoomWebinar = new Map(
+      futureWebinarSessions
+        .filter((s) => !!s.zoomWebinarId)
+        .map((s) => [s.id, s.zoomWebinarId as string]),
+    );
+
+    // Pre-load the (zoomRegistrantId, email) for each registration we're
+    // about to cancel so we can call Zoom AFTER the DB commit.
+    const registrationsToCancelOnZoom =
+      studentId && futureSessionIds.length > 0
+        ? await db
+            .select({
+              sessionId: webinarRegistrations.sessionId,
+              zoomRegistrantId: webinarRegistrations.zoomRegistrantId,
+              email: webinarRegistrations.email,
+            })
+            .from(webinarRegistrations)
+            .where(
+              and(
+                eq(webinarRegistrations.userId, studentId),
+                inArray(webinarRegistrations.sessionId, futureSessionIds),
+                sql`${webinarRegistrations.status} <> 'cancelled'`,
+              ),
+            )
+        : [];
+
+    // Cascade summary for the audit log
+    const cascade = {
+      enrollmentDropped: false,
+      webinarRegistrationsCancelled: 0,
+      certificateRevoked: false,
+      zoomRegistrantsCancelled: 0,
+      zoomRegistrantsFailed: 0,
+    };
+
     await db.transaction(async (tx) => {
       // Update refund to completed
       await tx
@@ -358,7 +506,8 @@ export class RefundService {
         })
         .where(eq(refunds.id, refundId));
 
-      // Update payment status
+      // Payment status: partial vs full. With BNPL deductions now removed,
+      // PARTIALLY_REFUNDED only fires on a TRUE admin-set partial amount.
       const originalAmount = Number(refund.originalAmount);
       const refundAmount = Number(refund.refundAmount);
       const paymentStatus =
@@ -374,7 +523,7 @@ export class RefundService {
         })
         .where(eq(payments.id, refund.paymentId));
 
-      // Update invoice status to refunded
+      // Invoice status
       if (refund.invoiceId) {
         await tx
           .update(invoices)
@@ -385,12 +534,51 @@ export class RefundService {
           .where(eq(invoices.id, refund.invoiceId));
       }
 
-      // Drop enrollment so the learner loses course access
+      // 1. Drop enrollment
       if (payment?.enrollmentId) {
         await tx
           .update(enrollments)
           .set({ status: ENROLLMENT_STATUS.DROPPED })
           .where(eq(enrollments.id, payment.enrollmentId));
+        cascade.enrollmentDropped = true;
+      }
+
+      // 2. Cancel future webinar registrations for this student
+      if (studentId && futureSessionIds.length > 0) {
+        const cancelled = await tx
+          .update(webinarRegistrations)
+          .set({ status: 'cancelled', updatedAt: new Date() })
+          .where(
+            and(
+              eq(webinarRegistrations.userId, studentId),
+              inArray(webinarRegistrations.sessionId, futureSessionIds),
+              sql`${webinarRegistrations.status} <> 'cancelled'`,
+            ),
+          )
+          .returning({ id: webinarRegistrations.id });
+        cascade.webinarRegistrationsCancelled = cancelled.length;
+      }
+
+      // 3. Revoke certificate eligibility (covers CME/CPD — the certificate
+      // IS the CME credential; there is no separate CME table)
+      if (courseId && studentId) {
+        const revoked = await tx
+          .update(certificateRequests)
+          .set({
+            status: CERTIFICATE_STATUS.REVOKED,
+            revokedBy: refund.processedBy || null,
+            revokedAt: new Date(),
+            revocationReason: `Course refunded — eligibility revoked (refund ${refundId})`,
+          })
+          .where(
+            and(
+              eq(certificateRequests.courseId, courseId),
+              eq(certificateRequests.studentId, studentId),
+              sql`${certificateRequests.status} <> 'revoked'`,
+            ),
+          )
+          .returning({ id: certificateRequests.id });
+        cascade.certificateRevoked = revoked.length > 0;
       }
     });
 
@@ -401,6 +589,29 @@ export class RefundService {
       this.logger.error(
         `Failed to reverse discount usage for payment ${refund.paymentId}: ${err.message}`,
       );
+    }
+
+    // Zoom-side registrant cancellation — best-effort, runs AFTER the DB
+    // commit so the DB cancellation stands even if Zoom is down. This is
+    // the defence-in-depth layer: stops a learner who has the join URL
+    // cached/bookmarked from entering the webinar via Zoom.
+    for (const reg of registrationsToCancelOnZoom) {
+      const zoomWebinarId = sessionToZoomWebinar.get(reg.sessionId);
+      if (!zoomWebinarId || !reg.zoomRegistrantId) continue;
+      try {
+        const res = await this.zoomService.cancelWebinarRegistrant(
+          zoomWebinarId,
+          reg.zoomRegistrantId,
+          reg.email,
+        );
+        if (res.ok) cascade.zoomRegistrantsCancelled += 1;
+        else cascade.zoomRegistrantsFailed += 1;
+      } catch (err: any) {
+        this.logger.warn(
+          `Zoom cancel registrant threw for refund ${refundId}: ${err?.message || err}`,
+        );
+        cascade.zoomRegistrantsFailed += 1;
+      }
     }
 
     // Send completion email
@@ -424,6 +635,8 @@ export class RefundService {
       metadata: {
         paymentId: refund.paymentId,
         refundAmount: refund.refundAmount,
+        merchantFeeAmount: refund.deductionAmount,
+        cascade,
       },
     });
   }
@@ -837,7 +1050,12 @@ export class RefundService {
    */
   async adminInitiateRefund(
     adminId: string,
-    dto: CreateRefundDto & { justification?: string },
+    dto: CreateRefundDto & {
+      justification?: string;
+      /** Optional partial refund amount. Defaults to full payment. Only
+       * honored for Moyasar / Bank Transfer; BNPL forces full. */
+      refundAmount?: number;
+    },
     ipAddress?: string,
   ) {
     const [payment] = await db
@@ -860,30 +1078,24 @@ export class RefundService {
       .where(
         and(
           eq(refunds.paymentId, dto.paymentId),
-          sql`${refunds.status} IN ('pending', 'approved', 'processing')`,
+          sql`${refunds.status} IN ('pending', 'approved', 'processing', 'completed')`,
         ),
       )
       .limit(1);
 
     if (existingRefund) {
       throw new BadRequestException(
-        'A refund request is already in progress for this payment',
+        'A refund already exists for this payment',
       );
     }
 
     const originalAmount = Number(payment.amount);
-    const deductionRate = this.deductionRates[payment.gateway] || 0;
-    const deductionAmount = originalAmount * deductionRate;
-    const refundAmount = originalAmount - deductionAmount;
-
-    const gatewayLabels: Record<string, string> = {
-      tamara: 'Tamara BNPL',
-      tabby: 'Tabby BNPL',
-    };
-    const deductionReason =
-      deductionAmount > 0
-        ? `${gatewayLabels[payment.gateway] || payment.gateway} ${Math.round(deductionRate * 100)}% processing fee`
-        : null;
+    const { refundAmount, merchantFeeAmount, merchantFeeReason, isPartial } =
+      this.computeRefundMath(
+        payment.gateway,
+        originalAmount,
+        dto.refundAmount,
+      );
 
     const [invoice] = await db
       .select()
@@ -901,8 +1113,8 @@ export class RefundService {
         reason: dto.reason,
         reasonNote: dto.reasonNote,
         originalAmount: originalAmount.toFixed(2),
-        deductionAmount: deductionAmount.toFixed(2),
-        deductionReason,
+        deductionAmount: merchantFeeAmount.toFixed(2),
+        deductionReason: merchantFeeReason,
         refundAmount: refundAmount.toFixed(2),
         status: REFUND_STATUS.PENDING,
       })
@@ -928,7 +1140,8 @@ export class RefundService {
         reason: dto.reason,
         originalAmount,
         refundAmount,
-        deductionAmount,
+        merchantFeeAmount,
+        isPartial,
         justification: dto.justification || null,
       },
     });
@@ -987,6 +1200,178 @@ export class RefundService {
     });
 
     return { status: 'failed' };
+  }
+
+  /**
+   * Full refund preview for a paid payment. Used by the Initiate Refund
+   * modal's confirmation step so the operator sees the complete picture
+   * (invoice + course + enrollment status + deduction breakdown + warning)
+   * BEFORE submitting. Math is identical to adminInitiateRefund so the
+   * preview is the single source of truth.
+   */
+  async getRefundPreview(paymentId: string, requestedAmount?: number) {
+    const [payment] = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.id, paymentId))
+      .limit(1);
+
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    if (payment.status !== PAYMENT_STATUS.PAID) {
+      throw new BadRequestException(
+        'Only paid payments are eligible for a refund preview',
+      );
+    }
+
+    const [existingRefund] = await db
+      .select({
+        id: refunds.id,
+        status: refunds.status,
+        createdAt: refunds.createdAt,
+      })
+      .from(refunds)
+      .where(
+        and(
+          eq(refunds.paymentId, paymentId),
+          sql`${refunds.status} IN ('pending', 'approved', 'processing','completed')`,
+        ),
+      )
+      .limit(1);
+
+    if (existingRefund) {
+      throw new BadRequestException(
+        `This payment already has a refund in progress (status: ${existingRefund.status})`,
+      );
+    }
+
+    const [buyer] = await db
+      .select({
+        id: users.id,
+        name: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+        email: users.email,
+      })
+      .from(users)
+      .where(eq(users.id, payment.userId))
+      .limit(1);
+
+    const [course] = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        titleAr: courses.titleAr,
+      })
+      .from(courses)
+      .where(eq(courses.id, payment.courseId))
+      .limit(1);
+
+    const [invoice] = await db
+      .select({
+        id: invoices.id,
+        invoiceNumber: invoices.invoiceNumber,
+        issuedAt: invoices.issuedAt,
+        paidAt: invoices.paidAt,
+      })
+      .from(invoices)
+      .where(eq(invoices.paymentId, paymentId))
+      .limit(1);
+
+    let enrollment: {
+      id: string;
+      status: string;
+      enrolledAt: Date | null;
+    } | null = null;
+    if (payment.enrollmentId) {
+      const [enr] = await db
+        .select({
+          id: enrollments.id,
+          status: enrollments.status,
+          enrolledAt: enrollments.enrolledAt,
+        })
+        .from(enrollments)
+        .where(eq(enrollments.id, payment.enrollmentId))
+        .limit(1);
+      enrollment = enr || null;
+    }
+
+    const originalAmount = Number(payment.amount);
+    const { refundAmount, merchantFeeAmount, merchantFeeReason, isPartial } =
+      this.computeRefundMath(
+        payment.gateway,
+        originalAmount,
+        requestedAmount,
+      );
+    const merchantFeeRate = this.merchantFeeRates[payment.gateway] || 0;
+
+    const gatewayLabels: Record<string, string> = {
+      tamara: 'Tamara BNPL',
+      tabby: 'Tabby BNPL',
+    };
+
+    // For BNPL: refund goes back to the gateway, which adjusts the
+    // learner's installments and refunds any installments already paid
+    // back to the learner's card. For Moyasar: reverses on the same card.
+    // For Bank Transfer: manual wire by finance team.
+    const refundDestination = ((): {
+      kind: 'gateway' | 'card' | 'manual_bank';
+      label: string;
+    } => {
+      if (payment.gateway === 'tamara' || payment.gateway === 'tabby') {
+        return {
+          kind: 'gateway',
+          label: `${gatewayLabels[payment.gateway]} — cancels remaining installments and refunds any installments already paid back to the learner's card`,
+        };
+      }
+      if (payment.gateway === 'bank_transfer') {
+        return {
+          kind: 'manual_bank',
+          label: "Manual bank wire by finance team to learner's account",
+        };
+      }
+      return {
+        kind: 'card',
+        label: "Learner's original card via Moyasar (5–10 business days)",
+      };
+    })();
+
+    const supportsPartial = this.partialRefundCapable.has(payment.gateway);
+
+    return {
+      payment: {
+        id: payment.id,
+        amount: originalAmount,
+        gateway: payment.gateway,
+        paymentMethod: payment.paymentMethod,
+        paidAt: payment.paidAt,
+        gatewayChargeId: payment.gatewayChargeId,
+      },
+      buyer,
+      course,
+      invoice,
+      enrollment,
+      capabilities: {
+        supportsPartial,
+        maxRefundAmount: originalAmount,
+        minRefundAmount: supportsPartial ? 1 : originalAmount,
+      },
+      breakdown: {
+        originalAmount,
+        refundAmount,
+        merchantFeeRate,
+        merchantFeeAmount,
+        merchantFeeReason,
+        isPartial,
+      },
+      refundDestination,
+      consequences: {
+        dropsEnrollment: !!payment.enrollmentId,
+        reversesDiscount: true,
+        revokesCertificate: true,
+        cancelsFutureWebinarRegistrations: true,
+      },
+    };
   }
 
   /**

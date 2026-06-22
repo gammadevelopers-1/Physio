@@ -45,6 +45,7 @@ import { StorageModule } from '../storage/storage.module';
 import { EmailModule } from '../email/email.module';
 import { SiteSettingsModule } from '../site-settings/site-settings.module';
 import { EnrollmentsModule } from '../enrollments/enrollments.module';
+import { ZoomModule } from '../zoom/zoom.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { EnrollmentsModule } from '../enrollments/enrollments.module';
     EmailModule,
     SiteSettingsModule,
     EnrollmentsModule,
+    ZoomModule,
     // BullMQ queue for webhook processing (conditional on Redis)
     ...(process.env.REDIS_HOST
       ? [BullModule.registerQueue({ name: PAYMENT_QUEUE_NAMES.WEBHOOK_PROCESSING })]

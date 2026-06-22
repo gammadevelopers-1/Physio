@@ -214,6 +214,17 @@ export class ZoomMockService implements IZoomService {
     return result;
   }
 
+  async cancelWebinarRegistrant(
+    webinarId: string,
+    registrantId: string,
+    email: string,
+  ): Promise<{ ok: boolean; error?: string }> {
+    this.logger.log(
+      `[MOCK] Cancelled registrant ${registrantId} (${email}) on webinar ${webinarId}`,
+    );
+    return { ok: true };
+  }
+
   async checkWebinarLicense(email: string) {
     this.logger.log(`[MOCK] License check for ${email}`);
     return {

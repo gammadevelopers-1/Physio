@@ -52,22 +52,39 @@ const ActiveCampaignBanner = () => {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
+  // Refetch on mount AND when the window regains focus, so a finance
+  // manager deleting / hiding the campaign in another tab is reflected
+  // immediately without a full page reload.
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    const load = async () => {
       try {
         const res = await discountApi.getActiveBannerCampaign();
-        if (!cancelled) setCampaign(res || null);
+        if (cancelled) return;
+        // Backend returns `{ noBanner: true }` when there's nothing to
+        // show — coerce to null so the component hides. Also handle the
+        // historical `{}` shape (empty-body fallback from the fetch
+        // wrapper) by requiring `.id` to render anything.
+        const c = res as Campaign | { noBanner?: boolean } | null;
+        if (!c || (c as { noBanner?: boolean }).noBanner || !(c as Campaign).id) {
+          setCampaign(null);
+        } else {
+          setCampaign(c as Campaign);
+        }
       } catch {
         if (!cancelled) setCampaign(null);
       }
-    })();
+    };
+    load();
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
     return () => {
       cancelled = true;
+      window.removeEventListener("focus", onFocus);
     };
   }, []);
 
-  if (dismissed || !campaign) return null;
+  if (dismissed || !campaign || !campaign.id) return null;
 
   const remaining = campaign.endsAt ? formatRemaining(campaign.endsAt, t) : "";
 

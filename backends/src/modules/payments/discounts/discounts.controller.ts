@@ -175,13 +175,20 @@ export class DiscountsController {
   }
 
   /**
-   * Public: returns the active site-wide campaign for the public banner,
-   * or null. Used by the homepage and course list pages.
+   * Public: returns the active site-wide campaign for the public banner.
+   *
+   * Always returns a JSON object — `{ noBanner: true }` when there's no
+   * active campaign, otherwise the campaign row. Avoids bare `null`
+   * because NestJS+Express collapses that to a 0-byte text/html body,
+   * which the frontend fetch wrapper coerces to `{}` — and the banner
+   * component then renders a ghost banner with empty fields after the
+   * user deletes the last active campaign.
    */
   @Get('active-banner-campaign')
   @Public()
   async getActiveBannerCampaign() {
-    return this.discountService.getActiveBannerCampaign();
+    const campaign = await this.discountService.getActiveBannerCampaign();
+    return campaign ?? ({ noBanner: true } as const);
   }
 
   // ─── Campaigns CRUD (finance) ───────────────────────────────────────

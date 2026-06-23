@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import DatePicker from "./DatePicker";
+import TimePicker from "./TimePicker";
 
 interface DateTimePickerProps {
   value: string; // "YYYY-MM-DDTHH:mm" format (datetime-local equivalent)
@@ -13,8 +13,9 @@ interface DateTimePickerProps {
 }
 
 /**
- * Combined date + time picker. The date portion uses our custom Hijri-aware
- * DatePicker; the time portion uses a standard time input.
+ * Combined date + time picker. Both halves are our custom design-system
+ * pickers — no browser-native widgets so the look is consistent across
+ * Chrome / Firefox / Safari and matches the rest of the dashboard.
  */
 export default function DateTimePicker({
   value,
@@ -41,7 +42,7 @@ export default function DateTimePicker({
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <DatePicker
           value={datePart}
           onChange={handleDateChange}
@@ -50,13 +51,13 @@ export default function DateTimePicker({
           disabled={disabled}
         />
       </div>
-      <input
-        type="time"
-        value={timePart}
-        onChange={(e) => handleTimeChange(e.target.value)}
-        disabled={disabled}
-        className="px-3 py-2.5 border border-[var(--color-input-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
-      />
+      <div className="w-[150px] flex-shrink-0">
+        <TimePicker
+          value={timePart}
+          onChange={handleTimeChange}
+          disabled={disabled}
+        />
+      </div>
     </div>
   );
 }

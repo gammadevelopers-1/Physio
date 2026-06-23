@@ -16,7 +16,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import {
   Layers,
   Tag,
@@ -41,8 +41,7 @@ type TabKey = "overview" | "codes" | "campaigns" | "course-sales" | "early-bird"
 
 const DiscountsContent = () => {
   const t = useTranslations("financeDashboard.discountsPage");
-  const locale = useLocale();
-  const isRTL = locale === "ar";
+  // dir="rtl" on <html> handles RTL ordering — no isRTL needed here.
   const profile = useFinanceProfile();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -124,9 +123,10 @@ const DiscountsContent = () => {
             <FinanceMobileSidebar profile={profile} />
 
             <div className="flex-1 min-w-0">
-              {/* Page header */}
+              {/* Page header — flex with no explicit row-reverse; dir="rtl"
+                  on <html> already reverses children naturally. */}
               <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className={`flex items-start gap-3 ${isRTL ? "flex-row-reverse text-right" : ""}`}>
+                <div className="flex items-start gap-3">
                   <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[var(--color-primary)]/15 to-[var(--color-primary)]/5 flex items-center justify-center flex-shrink-0">
                     <Layers className="w-5 h-5 text-[var(--color-primary)]" />
                   </div>
@@ -141,9 +141,9 @@ const DiscountsContent = () => {
                 </div>
               </div>
 
-              {/* Tab strip */}
+              {/* Tab strip — same: let dir="rtl" handle reverse */}
               <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-1 mb-5 overflow-x-auto">
-                <div className={`inline-flex items-center gap-0.5 min-w-full ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div className="inline-flex items-center gap-0.5 min-w-full">
                   {tabs.map((tabItem) => {
                     const Icon = tabItem.icon;
                     const active = tab === tabItem.key;

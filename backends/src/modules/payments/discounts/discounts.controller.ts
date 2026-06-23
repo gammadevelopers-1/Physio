@@ -12,6 +12,7 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
   UseGuards,
+  HttpCode,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { DiscountService } from '../services/discount.service';
@@ -156,14 +157,21 @@ export class DiscountsController {
    */
   @Post('auto-apply')
   @Public()
+  @HttpCode(200)
   async autoApply(@Body() body: { courseIds: string[]; userId?: string }) {
+    // Returns the matched code spread at the top level, OR a sentinel
+    // `{ noMatch: true }` object — NEVER bare `null`. NestJS+Express drops
+    // null bodies to text/html with Content-Length: 0, which the frontend
+    // fetch wrapper coerces to `{}` — and downstream code that reads
+    // `.code` off the result then crashes the checkout page.
     if (!Array.isArray(body?.courseIds) || body.courseIds.length === 0) {
-      return null;
+      return { noMatch: true } as const;
     }
-    return this.discountService.getBestAutoApplyDiscount(
+    const best = await this.discountService.getBestAutoApplyDiscount(
       body.courseIds,
       body.userId || null,
     );
+    return best ?? ({ noMatch: true } as const);
   }
 
   /**

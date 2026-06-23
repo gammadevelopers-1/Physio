@@ -16,6 +16,7 @@ import {
   users,
   courses,
   auditLogs,
+  enrollments,
 } from '../../../database/schema';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { CreateDiscountDto } from '../dto/create-discount.dto';
@@ -35,11 +36,32 @@ export class DiscountService {
   // the course editor. List + set/clear here, audited like other finance ops.
 
   async listCourseSales(search?: string) {
-    const conditions = [isNull(courses.deletedAt)];
+    // Only show courses that are currently open for public enrollment.
+    // A sale on a closed/full/ended course is dead weight in the dashboard
+    // and risks finance setting promos that never apply. Filter:
+    //   • status = 'active' (publishable; excludes draft/pending/archived/completed)
+    //   • soft-delete clear
+    //   • enrollment deadline not yet passed (or unset)
+    //   • end date not yet passed (or unset)
+    //   • not full — checked in JS against enrolled count vs maxEnrollment
+    //     (NULL maxEnrollment means uncapped, never full)
+    const now = new Date();
+    const todayISO = now.toISOString().slice(0, 10);
+
+    const conditions: any[] = [
+      isNull(courses.deletedAt),
+      eq(courses.status, 'active'),
+      or(
+        isNull(courses.enrollmentDeadline),
+        gt(courses.enrollmentDeadline, now),
+      )!,
+      or(isNull(courses.endDate), gte(courses.endDate, todayISO))!,
+    ];
     if (search && search.trim()) {
       const q = `%${search.trim()}%`;
       conditions.push(or(ilike(courses.title, q), ilike(courses.titleAr, q))!);
     }
+
     const rows = await db
       .select({
         id: courses.id,
@@ -52,29 +74,36 @@ export class DiscountService {
         saleStartsAt: courses.saleStartsAt,
         saleEndsAt: courses.saleEndsAt,
         saleAllowsCoupon: courses.saleAllowsCoupon,
+        maxEnrollment: courses.maxEnrollment,
+        enrolledCount: sql<number>`COALESCE((SELECT COUNT(*)::int FROM enrollments WHERE enrollments.course_id = courses.id AND enrollments.status <> 'dropped'), 0)`,
       })
       .from(courses)
       .where(and(...conditions))
       .orderBy(desc(courses.createdAt));
 
-    const now = new Date();
-    return rows.map((c) => {
-      const sale = getEffectivePrice(c, now);
-      return {
-        id: c.id,
-        title: c.title,
-        titleAr: c.titleAr,
-        thumbnail: c.thumbnail,
-        status: c.status,
-        price: sale.originalPrice,
-        effectivePrice: sale.effectivePrice,
-        onSale: sale.onSale,
-        salePercent: c.salePercent,
-        saleStartsAt: c.saleStartsAt ? c.saleStartsAt.toISOString() : null,
-        saleEndsAt: c.saleEndsAt ? c.saleEndsAt.toISOString() : null,
-        saleAllowsCoupon: c.saleAllowsCoupon,
-      };
-    });
+    return rows
+      .filter((c) => {
+        // Exclude courses that have reached their seat cap. NULL = uncapped.
+        if (c.maxEnrollment == null) return true;
+        return c.enrolledCount < c.maxEnrollment;
+      })
+      .map((c) => {
+        const sale = getEffectivePrice(c, now);
+        return {
+          id: c.id,
+          title: c.title,
+          titleAr: c.titleAr,
+          thumbnail: c.thumbnail,
+          status: c.status,
+          price: sale.originalPrice,
+          effectivePrice: sale.effectivePrice,
+          onSale: sale.onSale,
+          salePercent: c.salePercent,
+          saleStartsAt: c.saleStartsAt ? c.saleStartsAt.toISOString() : null,
+          saleEndsAt: c.saleEndsAt ? c.saleEndsAt.toISOString() : null,
+          saleAllowsCoupon: c.saleAllowsCoupon,
+        };
+      });
   }
 
   async setCourseSale(courseId: string, dto: SetCourseSaleDto, userId: string) {
@@ -1172,8 +1201,8 @@ export class DiscountService {
         autoApply: discountCodeBatches.autoApply,
         validUntil: discountCodeBatches.validUntil,
         createdAt: discountCodeBatches.createdAt,
-        redeemed: sql<number>`COALESCE((SELECT SUM(${discountCodes.currentUses})::int FROM ${discountCodes} WHERE ${discountCodes.batchId} = ${discountCodeBatches.id}), 0)`,
-        totalSaved: sql<string>`COALESCE((SELECT SUM(${discountUsage.amountSaved}) FROM ${discountUsage} JOIN ${discountCodes} ON ${discountCodes.id} = ${discountUsage.discountId} WHERE ${discountCodes.batchId} = ${discountCodeBatches.id}), 0)`,
+        redeemed: sql<number>`COALESCE((SELECT SUM(discount_codes.current_uses)::int FROM discount_codes WHERE discount_codes.batch_id = discount_code_batches.id), 0)`,
+        totalSaved: sql<string>`COALESCE((SELECT SUM(discount_usage.amount_saved) FROM discount_usage JOIN discount_codes ON discount_codes.id = discount_usage.discount_id WHERE discount_codes.batch_id = discount_code_batches.id), 0)`,
       })
       .from(discountCodeBatches)
       .orderBy(desc(discountCodeBatches.createdAt))
@@ -1482,7 +1511,11 @@ export class DiscountService {
         showOnSite: couponCampaigns.showOnSite,
         bannerCta: couponCampaigns.bannerCta,
         createdAt: couponCampaigns.createdAt,
-        codeCount: sql<number>`(SELECT COUNT(*) FROM ${discountCodes} WHERE ${discountCodes.campaignId} = ${couponCampaigns.id})::int`,
+        // Raw SQL with explicit table names — drizzle's template embedding
+        // of column references inside a correlated subquery doesn't reliably
+        // resolve the outer-scope row, leaving the count at 0 even when
+        // child codes exist. Spelling out the column names sidesteps that.
+        codeCount: sql<number>`(SELECT COUNT(*) FROM discount_codes WHERE discount_codes.campaign_id = coupon_campaigns.id)::int`,
       })
       .from(couponCampaigns)
       .where(where)
@@ -1945,7 +1978,7 @@ export class DiscountService {
         isActive: discountCodes.isActive,
         campaign: discountCodes.campaign,
         campaignId: discountCodes.campaignId,
-        totalSaved: sql<string>`COALESCE((SELECT SUM(${discountUsage.amountSaved}::numeric) FROM ${discountUsage} WHERE ${discountUsage.discountId} = ${discountCodes.id}), 0)`,
+        totalSaved: sql<string>`COALESCE((SELECT SUM(discount_usage.amount_saved::numeric) FROM discount_usage WHERE discount_usage.discount_id = discount_codes.id), 0)`,
       })
       .from(discountCodes)
       .where(eq(discountCodes.earlyBird, true))

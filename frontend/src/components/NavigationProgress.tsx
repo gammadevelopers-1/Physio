@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
 /**
@@ -14,6 +14,13 @@ export default function NavigationProgress() {
   const pathname = usePathname();
   const [progress, setProgress] = useState(0);
   const [visible, setVisible] = useState(false);
+  // Safety-timeout id — fires completeProgress if the pathname doesn't
+  // actually change within MAX_VISIBLE_MS. Without this, clicking a link
+  // to the SAME route (e.g. "Browse Courses" while already on /courses)
+  // leaves the bar pinned at 80% indefinitely because the pathname-
+  // change effect never re-runs.
+  const safetyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const MAX_VISIBLE_MS = 2500;
 
   // Listen for any link click that will cause client-side navigation
   useEffect(() => {
@@ -59,9 +66,17 @@ export default function NavigationProgress() {
     requestAnimationFrame(() => setProgress(20));
     setTimeout(() => setProgress(60), 150);
     setTimeout(() => setProgress(80), 400);
+    // Safety net — if no pathname change occurs (same-route click,
+    // intercepted navigation, etc.) the bar still completes.
+    if (safetyTimer.current) clearTimeout(safetyTimer.current);
+    safetyTimer.current = setTimeout(completeProgress, MAX_VISIBLE_MS);
   }
 
   function completeProgress() {
+    if (safetyTimer.current) {
+      clearTimeout(safetyTimer.current);
+      safetyTimer.current = null;
+    }
     setProgress(100);
     setTimeout(() => {
       setVisible(false);

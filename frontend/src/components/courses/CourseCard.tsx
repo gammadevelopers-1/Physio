@@ -222,29 +222,41 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
         {/* Divider */}
         <div className="h-px bg-[var(--color-border-subtle)] mt-2" />
 
-        {/* Footer: price + CTA */}
-        <div className={`flex items-center justify-between pt-2 ${isRTL ? "flex-row-reverse" : ""}`}>
-          {onSale && !isFree ? (
-            <span className={`flex flex-col items-start gap-0.5 ${isRTL ? "items-end" : ""}`}>
-              <span className={`flex items-baseline gap-1.5 ${isRTL ? "flex-row-reverse" : ""}`}>
-                <span className="text-[var(--color-primary)] font-bold text-[15px]">{effectivePrice} SAR</span>
-                <span className="text-[var(--color-text-secondary)] text-[13px] line-through">{price} SAR</span>
+        {/* Footer: price block + CTA.
+            Layout is robust even with long prices ("4,799.04 SAR" + "4,999 SAR"
+            + 4% OFF + View Details all on one row):
+              • price column shrinks (`min-w-0`) so the CTA never gets pushed off
+              • CTA uses `flex-shrink-0` + `whitespace-nowrap` so it stays intact
+              • each price has `whitespace-nowrap` to prevent the "SAR" wrapping
+                onto its own line at narrow widths
+              • items-start aligns the top of the price block with the CTA so a
+                taller price block doesn't push the CTA mid-card */}
+        <div className="flex items-start justify-between gap-3 pt-2">
+          <div className="min-w-0 flex flex-col items-start gap-1">
+            {onSale && !isFree ? (
+              <>
+                <div className="flex items-baseline gap-1.5 flex-wrap">
+                  <span className="text-[var(--color-primary)] font-bold text-[15px] whitespace-nowrap">
+                    {effectivePrice} SAR
+                  </span>
+                  <span className="text-[var(--color-text-secondary)] text-[12px] line-through whitespace-nowrap">
+                    {price} SAR
+                  </span>
+                </div>
+                <DiscountBadge
+                  variant="sale"
+                  percent={salePercent}
+                  amountSaved={Math.max(0, price - effectivePrice)}
+                  size="sm"
+                />
+              </>
+            ) : (
+              <span className="text-[var(--color-primary)] font-bold text-[15px] whitespace-nowrap">
+                {isFree ? t("card.free") : `${effectivePrice} SAR`}
               </span>
-              <DiscountBadge
-                variant="sale"
-                percent={salePercent}
-                amountSaved={Math.max(0, price - effectivePrice)}
-                size="sm"
-              />
-            </span>
-          ) : (
-            <span className="text-[var(--color-primary)] font-bold text-[15px]">
-              {isFree ? t("card.free") : `${effectivePrice} SAR`}
-            </span>
-          )}
-          <span
-            className={`inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
-          >
+            )}
+          </div>
+          <span className="flex-shrink-0 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] transition-colors whitespace-nowrap self-center">
             {t("card.viewDetails")}
             {isRTL ? (
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" strokeWidth={2} />

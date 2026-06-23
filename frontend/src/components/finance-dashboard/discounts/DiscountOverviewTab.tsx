@@ -44,6 +44,7 @@ import { discountApi } from "@/lib/api";
 import Money from "../shared/Money";
 import { FINANCE_COLORS, CHART_PALETTE } from "../shared/financeColors";
 import DateRangeFilter from "../DateRangeFilter";
+import Skeleton, { KPICardSkeleton, ChartSkeleton } from "../shared/Skeleton";
 
 interface Summary {
   live: { activeCodes: number; autoApplyCodes: number; activeCampaigns: number };
@@ -116,8 +117,10 @@ const DiscountOverviewTab = ({ onOpenCoupon, onSwitchTab }: Props) => {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [chart, setChart] = useState<ChartData | null>(null);
   const [activity, setActivity] = useState<Activity | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
     const [s, c, a] = await Promise.all([
       discountApi.getSummary({ startDate: range.startDate, endDate: range.endDate }).catch(() => null),
       discountApi.getChartSeries({ startDate: range.startDate, endDate: range.endDate }).catch(() => null),
@@ -126,6 +129,7 @@ const DiscountOverviewTab = ({ onOpenCoupon, onSwitchTab }: Props) => {
     setSummary(s);
     setChart(c);
     setActivity(a);
+    setLoading(false);
   }, [range.startDate, range.endDate]);
 
   useEffect(() => {
@@ -218,37 +222,39 @@ const DiscountOverviewTab = ({ onOpenCoupon, onSwitchTab }: Props) => {
         <DateRangeFilter onChange={setRange} />
       </div>
 
-      {/* KPI strip */}
+      {/* KPI strip — skeletons while summary loads, real cards after */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-        {kpis.map((k, i) => {
-          const Icon = k.icon;
-          const clickable = !!k.onClick;
-          return (
-            <button
-              key={i}
-              type="button"
-              onClick={k.onClick}
-              disabled={!clickable}
-              className={`bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-start transition-shadow ${
-                clickable ? "hover:shadow-md cursor-pointer" : "cursor-default"
-              }`}
-            >
-              <div className={`flex items-start justify-between mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
-                <div className={`w-9 h-9 rounded-lg ${k.color.bg} flex items-center justify-center`}>
-                  <Icon className={`w-4 h-4 ${k.color.text}`} />
-                </div>
-                {clickable && <ChevronRight className="w-4 h-4 text-[var(--color-text-secondary)]/40" />}
-              </div>
-              <p className="text-[11px] font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
-                {k.label}
-              </p>
-              <p className="text-2xl font-bold text-[var(--color-text-primary)] mt-0.5 leading-tight">
-                {k.value}
-              </p>
-              <p className="text-[11px] text-[var(--color-text-secondary)] mt-0.5">{k.sublabel}</p>
-            </button>
-          );
-        })}
+        {loading && !summary
+          ? Array.from({ length: 6 }).map((_, i) => <KPICardSkeleton key={i} />)
+          : kpis.map((k, i) => {
+              const Icon = k.icon;
+              const clickable = !!k.onClick;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={k.onClick}
+                  disabled={!clickable}
+                  className={`bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 text-start transition-shadow ${
+                    clickable ? "hover:shadow-md cursor-pointer" : "cursor-default"
+                  }`}
+                >
+                  <div className={`flex items-start justify-between mb-2`}>
+                    <div className={`w-9 h-9 rounded-lg ${k.color.bg} flex items-center justify-center`}>
+                      <Icon className={`w-4 h-4 ${k.color.text}`} />
+                    </div>
+                    {clickable && <ChevronRight className="w-4 h-4 text-[var(--color-text-secondary)]/40" />}
+                  </div>
+                  <p className="text-[11px] font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
+                    {k.label}
+                  </p>
+                  <p className="text-2xl font-bold text-[var(--color-text-primary)] mt-0.5 leading-tight">
+                    {k.value}
+                  </p>
+                  <p className="text-[11px] text-[var(--color-text-secondary)] mt-0.5">{k.sublabel}</p>
+                </button>
+              );
+            })}
       </div>
 
       {/* Charts row 1: Daily savings (wider) + type breakdown */}
@@ -261,7 +267,9 @@ const DiscountOverviewTab = ({ onOpenCoupon, onSwitchTab }: Props) => {
             </div>
           </div>
           <div className="h-64">
-            {chart && chart.daily.length > 0 ? (
+            {loading && !chart ? (
+              <ChartSkeleton height={240} />
+            ) : chart && chart.daily.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chart.daily} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                   <defs>
@@ -275,8 +283,9 @@ const DiscountOverviewTab = ({ onOpenCoupon, onSwitchTab }: Props) => {
                     dataKey="day"
                     tickFormatter={(d) => d.slice(5)}
                     tick={{ fontSize: 11, fill: "#64748b" }}
+                    reversed={isRTL}
                   />
-                  <YAxis tick={{ fontSize: 11, fill: "#64748b" }} />
+                  <YAxis tick={{ fontSize: 11, fill: "#64748b" }} orientation={isRTL ? "right" : "left"} />
                   <Tooltip
                     contentStyle={{ fontSize: 12, borderRadius: 8 }}
                     formatter={(v, n) =>
@@ -315,7 +324,11 @@ const DiscountOverviewTab = ({ onOpenCoupon, onSwitchTab }: Props) => {
           </h3>
           <p className="text-xs text-[var(--color-text-secondary)] mb-3">{t("charts.typeSubtitle")}</p>
           <div className="h-64">
-            {typeData.length > 0 ? (
+            {loading && !chart ? (
+              <div className="flex items-center justify-center h-full">
+                <Skeleton className="w-32 h-32 rounded-full" />
+              </div>
+            ) : typeData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={typeData} dataKey="value" outerRadius={70} innerRadius={42} paddingAngle={2}>
@@ -342,12 +355,18 @@ const DiscountOverviewTab = ({ onOpenCoupon, onSwitchTab }: Props) => {
           </h3>
           <p className="text-xs text-[var(--color-text-secondary)] mb-3">{t("charts.funnelSubtitle")}</p>
           <div className="h-56">
-            {chart && chart.funnel.attempted > 0 ? (
+            {loading && !chart ? (
+              <ChartSkeleton height={200} />
+            ) : chart && chart.funnel.attempted > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={funnelData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                  <XAxis dataKey="stage" tick={{ fontSize: 11, fill: "#64748b" }} />
-                  <YAxis tick={{ fontSize: 11, fill: "#64748b" }} />
+                  <XAxis
+                    dataKey="stage"
+                    tick={{ fontSize: 11, fill: "#64748b" }}
+                    reversed={isRTL}
+                  />
+                  <YAxis tick={{ fontSize: 11, fill: "#64748b" }} orientation={isRTL ? "right" : "left"} />
                   <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
                   <Bar dataKey="value" fill={FINANCE_COLORS.violet.hex} radius={[6, 6, 0, 0]} />
                 </BarChart>

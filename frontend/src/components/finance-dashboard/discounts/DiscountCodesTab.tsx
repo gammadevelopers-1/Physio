@@ -349,23 +349,58 @@ const DiscountCodesTab = ({ onOpenCoupon }: Props) => {
 
   return (
     <div className="space-y-5">
-      {/* Toolbar */}
-      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-4">
-        <div className={`flex flex-col lg:flex-row lg:items-center gap-3 ${isRTL ? "lg:flex-row-reverse" : ""}`}>
-          {/* Search */}
-          <div className="relative flex-1 max-w-md">
+      {/* Toolbar — two rows so search has guaranteed width and buttons
+          always fit on one line. No flex-row-reverse: dir="rtl" on
+          <html> already handles RTL ordering. */}
+      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-4 space-y-3">
+        {/* Row 1: Search (grows) + action buttons (right) */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="relative flex-1">
             <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
             <input
               type="text"
               value={searchInput}
               onChange={(e) => handleSearchInput(e.target.value)}
               placeholder={t("searchPlaceholder")}
-              className="w-full ps-9 pe-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+              className="w-full ps-9 pe-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)] bg-[var(--color-surface-page)]"
             />
           </div>
 
-          {/* Status quick pills */}
-          <div className="flex items-center gap-1 bg-[var(--color-surface-page)] rounded-lg p-0.5">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              type="button"
+              onClick={handleExport}
+              className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] inline-flex items-center gap-1.5 whitespace-nowrap"
+              title={t("actionShort.export")}
+            >
+              <Download className="w-4 h-4 flex-shrink-0" />
+              <span>{t("actionShort.export")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowBulk(true)}
+              className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] inline-flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <Layers className="w-4 h-4 flex-shrink-0" />
+              <span>{t("actionShort.bulk")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingCoupon(null);
+                setShowCreate(true);
+              }}
+              className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg text-sm font-semibold inline-flex items-center gap-1.5 hover:opacity-95 whitespace-nowrap"
+            >
+              <Plus className="w-4 h-4 flex-shrink-0" />
+              <span>{t("actionShort.create")}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Row 2: Status pills + Filters chip */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+          <div className="flex items-center gap-1 bg-[var(--color-surface-page)] rounded-lg p-0.5 overflow-x-auto">
             {["all", "active", "scheduled", "expired", "disabled"].map((s) => (
               <button
                 key={s}
@@ -385,55 +420,23 @@ const DiscountCodesTab = ({ onOpenCoupon }: Props) => {
             ))}
           </div>
 
-          {/* Advanced filters trigger */}
           <button
             type="button"
             onClick={() => setShowAdvanced((v) => !v)}
-            className={`px-3 py-2 border rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${
+            className={`px-3 py-2 border rounded-lg text-sm font-medium inline-flex items-center gap-2 whitespace-nowrap transition-colors self-start sm:self-auto ${
               activeFilterCount > 0
                 ? "border-[var(--color-primary)] text-[var(--color-primary)] bg-[var(--color-primary)]/5"
                 : "border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]"
             }`}
           >
-            <Filter className="w-4 h-4" />
-            {t("filters.title")}
+            <Filter className="w-4 h-4 flex-shrink-0" />
+            <span>{t("filters.title")}</span>
             {activeFilterCount > 0 && (
-              <span className="ms-1 px-1.5 py-0.5 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-bold">
+              <span className="px-1.5 py-0.5 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-bold">
                 {activeFilterCount}
               </span>
             )}
           </button>
-
-          <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
-            <button
-              type="button"
-              onClick={handleExport}
-              className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] flex items-center gap-1.5"
-              title={t("export")}
-            >
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">{t("export")}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowBulk(true)}
-              className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] flex items-center gap-1.5"
-            >
-              <Layers className="w-4 h-4" />
-              <span className="hidden sm:inline">{t("bulkGenerate")}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEditingCoupon(null);
-                setShowCreate(true);
-              }}
-              className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg text-sm font-semibold flex items-center gap-1.5 hover:opacity-95"
-            >
-              <Plus className="w-4 h-4" />
-              {t("createCoupon")}
-            </button>
-          </div>
         </div>
 
         {/* Advanced filters strip */}
@@ -517,7 +520,7 @@ const DiscountCodesTab = ({ onOpenCoupon }: Props) => {
 
       {/* Bulk-action toolbar */}
       {selected.size > 0 && (
-        <div className={`bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 rounded-xl px-4 py-2.5 flex items-center justify-between gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+        <div className={`bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 rounded-xl px-4 py-2.5 flex items-center justify-between gap-3`}>
           <div className="flex items-center gap-3">
             <span className="text-sm font-semibold text-[var(--color-text-primary)]">
               {t("bulk.selectedCount", { n: selected.size })}
@@ -761,7 +764,7 @@ const DiscountCodesTab = ({ onOpenCoupon }: Props) => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className={`px-4 py-3 border-t border-[var(--color-border-subtle)] flex items-center justify-between text-sm text-[var(--color-text-secondary)] ${isRTL ? "flex-row-reverse" : ""}`}>
+          <div className={`px-4 py-3 border-t border-[var(--color-border-subtle)] flex items-center justify-between text-sm text-[var(--color-text-secondary)]`}>
             <span>
               {t("pagination.showing", {
                 from: (page - 1) * PAGE_SIZE + 1,
@@ -801,7 +804,7 @@ const DiscountCodesTab = ({ onOpenCoupon }: Props) => {
           onClick={() => setShowBatches((v) => !v)}
           className="w-full px-5 py-4 flex items-center justify-between hover:bg-[var(--color-surface-page)] transition-colors"
         >
-          <div className={`flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+          <div className={`flex items-center gap-3`}>
             <div className="w-9 h-9 rounded-lg bg-[#EDE9FE] flex items-center justify-center">
               <Layers className="w-4 h-4 text-[#6D28D9]" />
             </div>

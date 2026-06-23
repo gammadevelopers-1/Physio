@@ -9312,6 +9312,11 @@
         "audit": {
           "empty": "No audit entries"
         }
+      },
+      "actionShort": {
+        "export": "Export",
+        "bulk": "Bulk",
+        "create": "New"
       }
     },
     "reportsPage": {
@@ -12603,6 +12608,7 @@
     "timeLeftHours": "{hours}h {minutes}m",
     "timeLeftMinutes": "{minutes}m",
     "cta": "Browse Courses",
-    "learnMore": "Learn more"
+    "learnMore": "Learn more",
+    "tag": "Promotion"
   }
 }

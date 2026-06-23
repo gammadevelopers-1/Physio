@@ -13,7 +13,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { Clock, Sparkles, Plus, Loader2 } from "lucide-react";
+import { Clock, Sparkles, Plus } from "lucide-react";
 import { discountApi } from "@/lib/api";
 import Money from "../shared/Money";
 import CreateCouponWizard from "./CreateCouponWizard";
@@ -55,7 +55,7 @@ interface Props {
 const EarlyBirdTab = ({ onOpenCoupon }: Props) => {
   const t = useTranslations("financeDashboard.discountsPage.earlyBirdTab");
   const locale = useLocale();
-  const isRTL = locale === "ar";
+  // const isRTL = locale === "ar"; // not needed — dir="rtl" on <html> handles flex order
 
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -184,8 +184,24 @@ const EarlyBirdTab = ({ onOpenCoupon }: Props) => {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-[var(--color-primary)]" />
+      <div className="space-y-6">
+        <div className="rounded-2xl bg-[var(--color-border-subtle)] h-20 animate-pulse" />
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-card)] p-5 animate-pulse space-y-3"
+            >
+              <div className="flex items-center justify-between">
+                <div className="h-3 w-20 bg-[var(--color-border-subtle)] rounded" />
+                <div className="h-5 w-16 bg-[var(--color-border-subtle)] rounded" />
+              </div>
+              <div className="h-7 w-32 bg-[var(--color-border-subtle)] rounded" />
+              <div className="h-10 w-full bg-[var(--color-border-subtle)] rounded-lg" />
+              <div className="h-2 w-full bg-[var(--color-border-subtle)] rounded" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -194,7 +210,7 @@ const EarlyBirdTab = ({ onOpenCoupon }: Props) => {
     <div className="space-y-6">
       {/* Hero / create CTA */}
       <div className="bg-gradient-to-r from-[#FEF3C7] via-[#FFFBEB] to-white border border-[#FCD34D]/50 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className={`flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+        <div className={`flex items-center gap-3`}>
           <div className="w-12 h-12 rounded-xl bg-[#D97706] flex items-center justify-center flex-shrink-0">
             <Clock className="w-6 h-6 text-white" />
           </div>

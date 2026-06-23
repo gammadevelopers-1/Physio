@@ -9312,6 +9312,11 @@
         "audit": {
           "empty": "لا توجد سجلات"
         }
+      },
+      "actionShort": {
+        "export": "تصدير",
+        "bulk": "دفعة",
+        "create": "جديد"
       }
     },
     "reportsPage": {
@@ -12603,6 +12608,7 @@
     "timeLeftHours": "{hours} س {minutes} د",
     "timeLeftMinutes": "{minutes} د",
     "cta": "تصفّح الدورات",
-    "learnMore": "اعرف المزيد"
+    "learnMore": "اعرف المزيد",
+    "tag": "عرض ترويجي"
   }
 }

@@ -297,7 +297,11 @@ export default function CheckoutPageClient({
     (async () => {
       try {
         const best = await discountApi.autoApply(items.map((i) => i.id));
-        if (cancelled || !best) return;
+        // `best` can be `null` (no match) OR `{}` (when the backend returns
+        // 201 with empty body — Express tags that as text/html, and the
+        // fetch wrapper coerces to `{}`). Require `.code` so we never call
+        // `.trim()` / `.toUpperCase()` on undefined later.
+        if (cancelled || !best || !best.code) return;
         setDiscountCode(best.code);
         setDiscountResult({
           valid: true,

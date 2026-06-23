@@ -36,6 +36,8 @@ import { toast } from "sonner";
 import { discountApi, publicApi } from "@/lib/api";
 import Money from "../shared/Money";
 import { FINANCE_COLORS } from "../shared/financeColors";
+import DatePicker from "@/components/ui/DatePicker";
+import Select from "@/components/admin-dashboard/Select";
 
 interface SimpleCourse {
   id: string;
@@ -43,6 +45,12 @@ interface SimpleCourse {
   titleAr?: string;
   thumbnail?: string | null;
   price?: number;
+  /** Course is currently on a finance-managed sale. Surface as a chip
+   * in the picker so finance knows attaching another coupon stacks
+   * (or is blocked at checkout depending on `saleAllowsCoupon`). */
+  onSale?: boolean;
+  salePercent?: number | null;
+  saleAllowsCoupon?: boolean;
 }
 
 interface Campaign {
@@ -181,6 +189,9 @@ const CreateCouponWizard = ({ open, onClose, onSaved, editing }: Props) => {
                   titleAr?: string;
                   thumbnail?: string | null;
                   price?: number | string;
+                  onSale?: boolean;
+                  salePercent?: number | null;
+                  saleAllowsCoupon?: boolean;
                 };
                 return {
                   id: cc.id,
@@ -188,6 +199,9 @@ const CreateCouponWizard = ({ open, onClose, onSaved, editing }: Props) => {
                   titleAr: cc.titleAr,
                   thumbnail: cc.thumbnail || null,
                   price: Number(cc.price ?? 0),
+                  onSale: !!cc.onSale,
+                  salePercent: cc.salePercent ?? null,
+                  saleAllowsCoupon: !!cc.saleAllowsCoupon,
                 };
               }),
             );
@@ -313,7 +327,7 @@ const CreateCouponWizard = ({ open, onClose, onSaved, editing }: Props) => {
       <div className="bg-[var(--color-surface-page)] rounded-2xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl">
         {/* Header */}
         <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-surface-card)] flex items-center justify-between">
-          <div className={`flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+          <div className={`flex items-center gap-3`}>
             <div className="w-9 h-9 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center">
               <Tag className="w-4 h-4 text-[var(--color-primary)]" />
             </div>
@@ -336,7 +350,7 @@ const CreateCouponWizard = ({ open, onClose, onSaved, editing }: Props) => {
         </div>
 
         {/* Body — sidebar + main */}
-        <div className={`flex-1 flex overflow-hidden ${isRTL ? "flex-row-reverse" : ""}`}>
+        <div className={`flex-1 flex overflow-hidden`}>
           {/* Sidebar — step indicator */}
           <div className="w-56 bg-[var(--color-surface-card)] border-r border-[var(--color-border-subtle)] py-5 px-3 hidden md:flex md:flex-col gap-1 overflow-y-auto">
             {stepDefs.map((s, idx) => {
@@ -584,9 +598,31 @@ const CreateCouponWizard = ({ open, onClose, onSaved, editing }: Props) => {
                                 <div className="w-10 h-10 rounded bg-[var(--color-surface-page)] flex-shrink-0" />
                               )}
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
-                                  {c.title}
-                                </p>
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+                                    {c.title}
+                                  </p>
+                                  {c.onSale && (
+                                    <span
+                                      className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FEE2E2] text-[#B91C1C] uppercase tracking-wide flex-shrink-0"
+                                      title={
+                                        c.saleAllowsCoupon
+                                          ? "This course is on sale. Coupons stack on top of the sale."
+                                          : "This course is on sale. Coupons will be REJECTED at checkout unless the sale allows stacking."
+                                      }
+                                    >
+                                      {c.salePercent ? `${c.salePercent}% Sale` : "On Sale"}
+                                    </span>
+                                  )}
+                                  {c.onSale && !c.saleAllowsCoupon && (
+                                    <span
+                                      className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FEF3C7] text-[#92400E] uppercase tracking-wide flex-shrink-0"
+                                      title="The sale on this course does not allow coupon stacking. A coupon attached here will be rejected at checkout."
+                                    >
+                                      No-stack
+                                    </span>
+                                  )}
+                                </div>
                                 {c.price !== undefined && c.price > 0 && (
                                   <p className="text-[11px] text-[var(--color-text-secondary)]">
                                     <Money amount={c.price} decimals={0} />
@@ -650,23 +686,16 @@ const CreateCouponWizard = ({ open, onClose, onSaved, editing }: Props) => {
                     <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
                       {t("step3.startsAt")}
                     </label>
-                    <input
-                      type="date"
-                      value={validFrom}
-                      onChange={(e) => setValidFrom(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
-                    />
+                    <DatePicker value={validFrom} onChange={setValidFrom} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
                       {t("step3.expiresAt")}
                     </label>
-                    <input
-                      type="date"
+                    <DatePicker
                       value={validUntil}
+                      onChange={setValidUntil}
                       min={validFrom || undefined}
-                      onChange={(e) => setValidUntil(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                     />
                   </div>
                 </div>
@@ -736,18 +765,14 @@ const CreateCouponWizard = ({ open, onClose, onSaved, editing }: Props) => {
                     <Megaphone className="w-3.5 h-3.5" />
                     {t("step4.attachCampaign")}
                   </label>
-                  <select
+                  <Select
                     value={campaignId}
-                    onChange={(e) => setCampaignId(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)] bg-[var(--color-surface-card)]"
-                  >
-                    <option value="">{t("step4.noCampaign")}</option>
-                    {campaigns.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setCampaignId}
+                    options={[
+                      { value: "", label: t("step4.noCampaign") },
+                      ...campaigns.map((c) => ({ value: c.id, label: c.name })),
+                    ]}
+                  />
                   <p className="text-[11px] text-[var(--color-text-secondary)] mt-1">
                     {t("step4.campaignHint")}
                   </p>
@@ -823,7 +848,7 @@ const CreateCouponWizard = ({ open, onClose, onSaved, editing }: Props) => {
         </div>
 
         {/* Footer */}
-        <div className={`px-6 py-3.5 border-t border-[var(--color-border)] bg-[var(--color-surface-card)] flex items-center justify-between gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+        <div className={`px-6 py-3.5 border-t border-[var(--color-border)] bg-[var(--color-surface-card)] flex items-center justify-between gap-3`}>
           <button
             type="button"
             onClick={onClose}

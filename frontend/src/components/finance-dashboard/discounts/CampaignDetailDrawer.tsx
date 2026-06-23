@@ -58,7 +58,7 @@ function fmtDate(iso: string | null, locale: string) {
 const CampaignDetailDrawer = ({ campaignId, onClose, onOpenCoupon }: Props) => {
   const t = useTranslations("financeDashboard.discountsPage.campaignsV2.drawer");
   const locale = useLocale();
-  const isRTL = locale === "ar";
+  // const isRTL = locale === "ar"; // not needed — dir="rtl" on <html> handles flex order
 
   const [tab, setTab] = useState<"overview" | "codes">("overview");
   const [data, setData] = useState<Campaign | null>(null);
@@ -102,7 +102,7 @@ const CampaignDetailDrawer = ({ campaignId, onClose, onOpenCoupon }: Props) => {
       }
     >
       {/* Tab strip */}
-      <div className={`flex items-center gap-1 px-5 py-2 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-card)] ${isRTL ? "flex-row-reverse" : ""}`}>
+      <div className={`flex items-center gap-1 px-5 py-2 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-card)]`}>
         {(["overview", "codes"] as const).map((k) => (
           <button
             key={k}

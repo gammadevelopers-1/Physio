@@ -35,6 +35,7 @@ import {
 import { toast } from "sonner";
 import { discountApi } from "@/lib/api";
 import Money from "../shared/Money";
+import DatePicker from "@/components/ui/DatePicker";
 
 interface Campaign {
   id: string;
@@ -108,7 +109,7 @@ const CampaignsTabV2 = ({ onOpenCampaign }: Props) => {
     <div className="space-y-5">
       {/* Toolbar */}
       <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-4">
-        <div className={`flex flex-col lg:flex-row lg:items-center gap-3 ${isRTL ? "lg:flex-row-reverse" : ""}`}>
+        <div className={`flex flex-col lg:flex-row lg:items-center gap-3`}>
           <div className="relative flex-1 max-w-md">
             <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)]" />
             <input
@@ -180,10 +181,10 @@ const CampaignsTabV2 = ({ onOpenCampaign }: Props) => {
               <div
                 key={c.id}
                 onClick={() => onOpenCampaign(c.id)}
-                className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] hover:shadow-md transition-shadow cursor-pointer relative"
               >
                 {/* Header strip */}
-                <div className="px-5 py-4 bg-gradient-to-br from-[var(--color-primary)]/10 to-transparent border-b border-[var(--color-border-subtle)] flex items-start justify-between gap-3">
+                <div className="px-5 py-4 rounded-t-2xl bg-gradient-to-br from-[var(--color-primary)]/10 to-transparent border-b border-[var(--color-border-subtle)] flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-xl bg-[var(--color-primary)]/15 flex items-center justify-center flex-shrink-0">
                       <Megaphone className="w-5 h-5 text-[var(--color-primary)]" />
@@ -411,21 +412,11 @@ const CampaignFormModal = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{t("startsAt")}</label>
-              <input
-                type="date"
-                value={startsAt}
-                onChange={(e) => setStartsAt(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm"
-              />
+              <DatePicker value={startsAt} onChange={setStartsAt} />
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{t("endsAt")}</label>
-              <input
-                type="date"
-                value={endsAt}
-                onChange={(e) => setEndsAt(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm"
-              />
+              <DatePicker value={endsAt} onChange={setEndsAt} min={startsAt || undefined} />
             </div>
           </div>
           <div>

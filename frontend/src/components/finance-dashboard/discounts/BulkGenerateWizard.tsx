@@ -32,6 +32,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { discountApi, publicApi } from "@/lib/api";
+import DatePicker from "@/components/ui/DatePicker";
+import Select from "@/components/admin-dashboard/Select";
 
 interface SimpleCourse {
   id: string;
@@ -232,7 +234,7 @@ const BulkGenerateWizard = ({ open, onClose, onGenerated }: Props) => {
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
       <div className="bg-[var(--color-surface-page)] rounded-2xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl">
         <div className="px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-surface-card)] flex items-center justify-between">
-          <div className={`flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+          <div className={`flex items-center gap-3`}>
             <div className="w-9 h-9 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center">
               <Layers className="w-4 h-4 text-[var(--color-primary)]" />
             </div>
@@ -254,7 +256,7 @@ const BulkGenerateWizard = ({ open, onClose, onGenerated }: Props) => {
           </button>
         </div>
 
-        <div className={`flex-1 flex overflow-hidden ${isRTL ? "flex-row-reverse" : ""}`}>
+        <div className={`flex-1 flex overflow-hidden`}>
           <div className="w-56 bg-[var(--color-surface-card)] border-r border-[var(--color-border-subtle)] py-5 px-3 hidden md:flex md:flex-col gap-1">
             {stepDefs.map((s, idx) => {
               const Icon = s.icon;
@@ -525,12 +527,7 @@ const BulkGenerateWizard = ({ open, onClose, onGenerated }: Props) => {
                   <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">
                     {t("step4.expiresAt")}
                   </label>
-                  <input
-                    type="date"
-                    value={validUntil}
-                    onChange={(e) => setValidUntil(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm"
-                  />
+                  <DatePicker value={validUntil} onChange={setValidUntil} />
                 </div>
                 <label className="flex items-start gap-3 p-3 rounded-lg border border-[var(--color-border)] cursor-pointer">
                   <input
@@ -568,16 +565,14 @@ const BulkGenerateWizard = ({ open, onClose, onGenerated }: Props) => {
                     <Megaphone className="w-3.5 h-3.5" />
                     {t("step4.campaign")}
                   </label>
-                  <select
+                  <Select
                     value={campaignId}
-                    onChange={(e) => setCampaignId(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-card)]"
-                  >
-                    <option value="">{t("step4.noCampaign")}</option>
-                    {campaigns.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
+                    onChange={setCampaignId}
+                    options={[
+                      { value: "", label: t("step4.noCampaign") },
+                      ...campaigns.map((c) => ({ value: c.id, label: c.name })),
+                    ]}
+                  />
                 </div>
               </div>
             )}
@@ -652,7 +647,7 @@ const BulkGenerateWizard = ({ open, onClose, onGenerated }: Props) => {
           </div>
         </div>
 
-        <div className={`px-6 py-3.5 border-t border-[var(--color-border)] bg-[var(--color-surface-card)] flex items-center justify-between gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+        <div className={`px-6 py-3.5 border-t border-[var(--color-border)] bg-[var(--color-surface-card)] flex items-center justify-between gap-3`}>
           <button
             type="button"
             onClick={onClose}

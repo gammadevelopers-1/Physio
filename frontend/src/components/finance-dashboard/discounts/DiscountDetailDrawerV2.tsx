@@ -121,7 +121,7 @@ const STATUS_PILL: Record<string, { bg: string; text: string }> = {
 const DiscountDetailDrawerV2 = ({ discountId, onClose }: Props) => {
   const t = useTranslations("financeDashboard.discountsPage.detailDrawer");
   const locale = useLocale();
-  const isRTL = locale === "ar";
+  // const isRTL = locale === "ar"; // not needed — dir="rtl" on <html> handles flex order
 
   const [tab, setTab] = useState<"overview" | "config" | "usage" | "audit">("overview");
   const [data, setData] = useState<Detail | null>(null);
@@ -269,7 +269,7 @@ const DiscountDetailDrawerV2 = ({ discountId, onClose }: Props) => {
         }
       >
         {/* Tab strip */}
-        <div className={`flex items-center gap-1 px-5 py-2 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-card)] ${isRTL ? "flex-row-reverse" : ""}`}>
+        <div className={`flex items-center gap-1 px-5 py-2 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-card)]`}>
           {tabs.map((tt) => (
             <button
               key={tt.key}

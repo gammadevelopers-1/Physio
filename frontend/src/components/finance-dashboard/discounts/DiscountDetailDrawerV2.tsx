@@ -38,6 +38,7 @@ import Money from "../shared/Money";
 import { FINANCE_COLORS } from "../shared/financeColors";
 import { discountApi } from "@/lib/api";
 import CreateCouponWizard from "./CreateCouponWizard";
+import ConfirmDialog from "../shared/ConfirmDialog";
 
 interface Detail {
   id: string;
@@ -85,6 +86,10 @@ interface AuditEntry {
 interface Props {
   discountId: string | null;
   onClose: () => void;
+  /** Fired after a mutation (delete / toggle / edit) so the parent can
+   * refetch dependent tabs (e.g. Early-Bird cards otherwise stay stale
+   * when a code is deleted via this drawer). */
+  onChanged?: () => void;
 }
 
 function fmtDateTime(iso: string | null, locale: string): string {
@@ -108,6 +113,7 @@ function computeStatus(d: Detail | null): "active" | "scheduled" | "expired" | "
   const now = new Date();
   if (d.validFrom && new Date(d.validFrom) > now) return "scheduled";
   if (d.validUntil && new Date(d.validUntil) < now) return "expired";
+  if (d.maxUses && d.currentUses >= d.maxUses) return "expired";
   return "active";
 }
 
@@ -118,8 +124,9 @@ const STATUS_PILL: Record<string, { bg: string; text: string }> = {
   disabled: { bg: "bg-[#FEE2E2]", text: "text-[#B91C1C]" },
 };
 
-const DiscountDetailDrawerV2 = ({ discountId, onClose }: Props) => {
+const DiscountDetailDrawerV2 = ({ discountId, onClose, onChanged }: Props) => {
   const t = useTranslations("financeDashboard.discountsPage.detailDrawer");
+  const tShared = useTranslations("financeDashboard.discountsPage");
   const locale = useLocale();
   // const isRTL = locale === "ar"; // not needed — dir="rtl" on <html> handles flex order
 
@@ -130,6 +137,7 @@ const DiscountDetailDrawerV2 = ({ discountId, onClose }: Props) => {
   const [auditLoading, setAuditLoading] = useState(false);
   const [actioning, setActioning] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!discountId) return;
@@ -179,6 +187,7 @@ const DiscountDetailDrawerV2 = ({ discountId, onClose }: Props) => {
       await discountApi.update(data.id, { isActive: !data.isActive });
       toast.success(data.isActive ? t("toasts.disabled") : t("toasts.enabled"));
       await fetchData();
+      onChanged?.();
     } catch {
       toast.error(t("toasts.toggleError"));
     } finally {
@@ -186,14 +195,15 @@ const DiscountDetailDrawerV2 = ({ discountId, onClose }: Props) => {
     }
   };
 
-  const handleDelete = async () => {
+  const performDelete = async () => {
     if (!data) return;
-    if (!confirm(t("confirmDelete"))) return;
     setActioning(true);
     try {
       await discountApi.delete(data.id);
       toast.success(t("toasts.deleted"));
+      setConfirmDelete(false);
       onClose();
+      onChanged?.();
     } catch {
       toast.error(t("toasts.deleteError"));
     } finally {
@@ -234,7 +244,7 @@ const DiscountDetailDrawerV2 = ({ discountId, onClose }: Props) => {
             <div className="flex items-center justify-between gap-2">
               <button
                 type="button"
-                onClick={handleDelete}
+                onClick={() => setConfirmDelete(true)}
                 disabled={actioning}
                 className="px-3 py-2 text-[12px] font-medium text-[#B91C1C] hover:bg-[#FEE2E2] rounded-md flex items-center gap-1.5 disabled:opacity-40"
               >
@@ -488,6 +498,7 @@ const DiscountDetailDrawerV2 = ({ discountId, onClose }: Props) => {
           onSaved={() => {
             setShowEdit(false);
             fetchData();
+            onChanged?.();
           }}
           editing={{
             id: data.id,
@@ -507,6 +518,17 @@ const DiscountDetailDrawerV2 = ({ discountId, onClose }: Props) => {
           }}
         />
       )}
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title={tShared("confirms.deleteCouponTitle")}
+        message={tShared("confirms.deleteCouponBody")}
+        confirmLabel={tShared("confirms.deleteCouponBtn")}
+        danger
+        loading={actioning}
+        onConfirm={performDelete}
+        onClose={() => setConfirmDelete(false)}
+      />
     </>
   );
 };

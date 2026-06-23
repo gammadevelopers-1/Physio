@@ -50,9 +50,13 @@ function timeLeft(iso: string | null, locale: string): string {
 
 interface Props {
   onOpenCoupon: (id: string | null) => void;
+  /** Bump from parent (DiscountsContent) when the coupon drawer
+   * mutates state — forces this tab to refetch so deleted early-bird
+   * codes stop ghosting the page. */
+  refreshKey?: number;
 }
 
-const EarlyBirdTab = ({ onOpenCoupon }: Props) => {
+const EarlyBirdTab = ({ onOpenCoupon, refreshKey = 0 }: Props) => {
   const t = useTranslations("financeDashboard.discountsPage.earlyBirdTab");
   const locale = useLocale();
   // const isRTL = locale === "ar"; // not needed — dir="rtl" on <html> handles flex order
@@ -76,7 +80,9 @@ const EarlyBirdTab = ({ onOpenCoupon }: Props) => {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    // refreshKey is in the dep list so parent-triggered changes
+    // (e.g. a delete via the detail drawer) refetch automatically.
+  }, [fetchData, refreshKey]);
 
   // Re-render every 60s so countdowns stay fresh
   useEffect(() => {

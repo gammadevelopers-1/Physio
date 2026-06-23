@@ -36,6 +36,7 @@ import { toast } from "sonner";
 import { discountApi } from "@/lib/api";
 import Money from "../shared/Money";
 import DatePicker from "@/components/ui/DatePicker";
+import ConfirmDialog from "../shared/ConfirmDialog";
 
 interface Campaign {
   id: string;
@@ -48,6 +49,10 @@ interface Campaign {
   isActive: boolean;
   showOnSite: boolean;
   bannerCta: string | null;
+  /** Set when the campaign was auto-created by a bulk-generate batch.
+   * Surfaces a "Bulk batch" pill on the card so finance can tell them
+   * apart from manual campaigns. */
+  bulkBatchId?: string | null;
   codeCount: number;
 }
 
@@ -61,10 +66,12 @@ function fmtDate(iso: string | null, locale: string): string {
 
 interface Props {
   onOpenCampaign: (id: string | null) => void;
+  refreshKey?: number;
 }
 
-const CampaignsTabV2 = ({ onOpenCampaign }: Props) => {
+const CampaignsTabV2 = ({ onOpenCampaign, refreshKey = 0 }: Props) => {
   const t = useTranslations("financeDashboard.discountsPage.campaignsV2");
+  const tShared = useTranslations("financeDashboard.discountsPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
 
@@ -76,6 +83,8 @@ const CampaignsTabV2 = ({ onOpenCampaign }: Props) => {
 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Campaign | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [actioning, setActioning] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -91,18 +100,26 @@ const CampaignsTabV2 = ({ onOpenCampaign }: Props) => {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, refreshKey]);
 
-  const handleDeactivate = async (c: Campaign) => {
-    if (!confirm(t("confirmDeactivate"))) return;
+  const requestDeactivate = (c: Campaign) => {
+    setConfirmDeleteId(c.id);
+    setOpenMenuId(null);
+  };
+
+  const performDeactivate = async () => {
+    if (!confirmDeleteId) return;
+    setActioning(true);
     try {
-      await discountApi.deleteCampaign(c.id);
+      await discountApi.deleteCampaign(confirmDeleteId);
       toast.success(t("toasts.deactivated"));
+      setConfirmDeleteId(null);
       await fetchData();
     } catch {
       toast.error(t("toasts.deactivateError"));
+    } finally {
+      setActioning(false);
     }
-    setOpenMenuId(null);
   };
 
   return (
@@ -190,9 +207,16 @@ const CampaignsTabV2 = ({ onOpenCampaign }: Props) => {
                       <Megaphone className="w-5 h-5 text-[var(--color-primary)]" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
-                        {c.name}
-                      </h3>
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
+                          {c.name}
+                        </h3>
+                        {c.bulkBatchId && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#EDE9FE] text-[#6D28D9] uppercase tracking-wide flex-shrink-0">
+                            {tShared("campaignsV2.autoBulkTag")}
+                          </span>
+                        )}
+                      </div>
                       {c.description && (
                         <p className="text-[11px] text-[var(--color-text-secondary)] line-clamp-2 mt-0.5">
                           {c.description}
@@ -244,7 +268,7 @@ const CampaignsTabV2 = ({ onOpenCampaign }: Props) => {
                           {c.isActive && (
                             <button
                               type="button"
-                              onClick={() => handleDeactivate(c)}
+                              onClick={() => requestDeactivate(c)}
                               className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#B91C1C] hover:bg-[#FEE2E2] text-start"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -319,6 +343,17 @@ const CampaignsTabV2 = ({ onOpenCampaign }: Props) => {
           }}
         />
       )}
+
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        title={tShared("confirms.deactivateCampaignTitle")}
+        message={tShared("confirms.deactivateCampaignBody")}
+        confirmLabel={tShared("confirms.deactivateCampaignBtn")}
+        danger
+        loading={actioning}
+        onConfirm={performDeactivate}
+        onClose={() => setConfirmDeleteId(null)}
+      />
     </div>
   );
 };

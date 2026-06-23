@@ -8426,6 +8426,7 @@ export const discountApi = {
         isActive: boolean;
         showOnSite: boolean;
         bannerCta: string | null;
+        bulkBatchId: string | null;
         createdAt: string;
         codeCount: number;
       }>;

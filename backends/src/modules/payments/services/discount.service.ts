@@ -729,17 +729,17 @@ export class DiscountService {
       throw new NotFoundException('Discount code not found');
     }
 
-    // Soft delete by setting isActive to false
-    await db
-      .update(discountCodes)
-      .set({ isActive: false, updatedAt: new Date() })
-      .where(eq(discountCodes.id, discountId));
+    // Hard delete. `discount_usage` cascades via FK, so any redemption
+    // history is removed with the code (audit_logs are NOT cascaded —
+    // they remain for compliance).
+    await db.delete(discountCodes).where(eq(discountCodes.id, discountId));
 
     await this.auditLogService.log({
       entityType: 'discount_code',
       entityId: discountId,
       action: 'discount_deleted',
       performedBy: userId,
+      metadata: { code: existing.code, hardDelete: true },
     });
 
     return { deleted: true };
@@ -749,17 +749,28 @@ export class DiscountService {
     const now = new Date();
     switch (status) {
       case 'active':
+        // Active = enabled + within validity window + still has uses left.
+        // A code that's hit its max uses is functionally expired even
+        // though `isActive` is still true.
         return and(
           eq(discountCodes.isActive, true),
           or(
             isNull(discountCodes.validUntil),
             gt(discountCodes.validUntil, now),
           ),
+          or(
+            isNull(discountCodes.maxUses),
+            sql`${discountCodes.currentUses} < ${discountCodes.maxUses}`,
+          ),
         );
       case 'expired':
+        // Expired = enabled but past the validity window OR fully used.
         return and(
           eq(discountCodes.isActive, true),
-          lt(discountCodes.validUntil, now),
+          or(
+            lt(discountCodes.validUntil, now),
+            sql`${discountCodes.maxUses} IS NOT NULL AND ${discountCodes.currentUses} >= ${discountCodes.maxUses}`,
+          ),
         );
       case 'disabled':
         return eq(discountCodes.isActive, false);
@@ -1118,6 +1129,39 @@ export class DiscountService {
       })
       .returning();
 
+    // Auto-create a campaign for every bulk batch that doesn't already
+    // have one. Lets finance treat the batch as a unit (track total
+    // savings, set a budget cap, end it early) without manually creating
+    // a campaign first. The `bulk_batch_id` link + "Bulk: <prefix>" name
+    // pattern make it discoverable on the Campaigns tab.
+    let effectiveCampaignId = anyDto.campaignId || null;
+    if (!effectiveCampaignId) {
+      const [autoCampaign] = await db
+        .insert(couponCampaigns)
+        .values({
+          name: `Bulk: ${prefix}`,
+          description: `Auto-created from bulk-generation batch (${dto.count} codes${
+            dto.validUntil ? `, expires ${new Date(dto.validUntil).toISOString().slice(0, 10)}` : ''
+          })`,
+          startsAt: dto.validFrom ? new Date(dto.validFrom) : new Date(),
+          endsAt: dto.validUntil ? new Date(dto.validUntil) : null,
+          budget: null,
+          isActive: true,
+          showOnSite: false,
+          bulkBatchId: batch.id,
+          createdBy: userId,
+        })
+        .returning();
+      effectiveCampaignId = autoCampaign.id;
+
+      // Backfill the batch row with the auto-created campaign id so the
+      // batches table can cross-link.
+      await db
+        .update(discountCodeBatches)
+        .set({ campaignId: autoCampaign.id })
+        .where(eq(discountCodeBatches.id, batch.id));
+    }
+
     const values = candidates.map((code) => ({
       code,
       type: dto.type,
@@ -1128,7 +1172,7 @@ export class DiscountService {
       maxUsesPerUser: dto.maxUsesPerUser ?? 1,
       // Group the batch under its campaign (falls back to the prefix).
       campaign: dto.campaign?.trim() || prefix,
-      campaignId: anyDto.campaignId || null,
+      campaignId: effectiveCampaignId,
       autoApply: anyDto.autoApply ?? false,
       earlyBird: anyDto.earlyBird ?? false,
       batchId: batch.id,
@@ -1510,6 +1554,7 @@ export class DiscountService {
         isActive: couponCampaigns.isActive,
         showOnSite: couponCampaigns.showOnSite,
         bannerCta: couponCampaigns.bannerCta,
+        bulkBatchId: couponCampaigns.bulkBatchId,
         createdAt: couponCampaigns.createdAt,
         // Raw SQL with explicit table names — drizzle's template embedding
         // of column references inside a correlated subquery doesn't reliably
@@ -1629,28 +1674,34 @@ export class DiscountService {
   }
 
   async deleteCampaign(id: string, userId: string, ipAddress?: string) {
-    // Soft-delete: mark inactive. Don't cascade — child codes keep their
-    // own isActive flag; campaign-gating in validateDiscount will reject
-    // them if the campaign is inactive.
-    const [updated] = await db
-      .update(couponCampaigns)
-      .set({ isActive: false, updatedAt: new Date() })
-      .where(eq(couponCampaigns.id, id))
-      .returning();
+    // Hard delete + cascade-clear: detach all child codes (set their
+    // campaign_id to NULL) so the megaphone/campaign chip stops showing
+    // on the code rows and Early-Bird cards. Audit logs are preserved.
+    const detached = await db
+      .update(discountCodes)
+      .set({ campaignId: null, updatedAt: new Date() })
+      .where(eq(discountCodes.campaignId, id))
+      .returning({ id: discountCodes.id });
 
-    if (!updated) {
+    const [deletedRow] = await db
+      .delete(couponCampaigns)
+      .where(eq(couponCampaigns.id, id))
+      .returning({ id: couponCampaigns.id });
+
+    if (!deletedRow) {
       throw new NotFoundException('Campaign not found');
     }
 
     await this.auditLogService.log({
       entityType: 'coupon_campaign',
       entityId: id,
-      action: 'campaign_deactivated',
+      action: 'campaign_deleted',
       performedBy: userId,
       ipAddress,
+      metadata: { detachedCodeCount: detached.length },
     });
 
-    return { id, isActive: false };
+    return { id, deleted: true, detachedCodeCount: detached.length };
   }
 
   async getCampaignById(id: string) {
@@ -1981,7 +2032,10 @@ export class DiscountService {
         totalSaved: sql<string>`COALESCE((SELECT SUM(discount_usage.amount_saved::numeric) FROM discount_usage WHERE discount_usage.discount_id = discount_codes.id), 0)`,
       })
       .from(discountCodes)
-      .where(eq(discountCodes.earlyBird, true))
+      // Hide deleted (isActive=false) codes from the Early-Bird tab so
+      // disabled codes don't keep showing as ghosts after the user
+      // deletes them.
+      .where(and(eq(discountCodes.earlyBird, true), eq(discountCodes.isActive, true)))
       .orderBy(sql`COALESCE(${discountCodes.validUntil}, '9999-12-31'::timestamp) ASC`);
 
     return rows.map((r) => {

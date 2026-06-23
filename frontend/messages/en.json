@@ -9214,7 +9214,8 @@
             "value": "Value",
             "uses": "Uses"
           }
-        }
+        },
+        "autoBulkTag": "Bulk batch"
       },
       "courseSalesTab": {
         "kpi": {
@@ -9317,6 +9318,17 @@
         "export": "Export",
         "bulk": "Bulk",
         "create": "New"
+      },
+      "confirms": {
+        "deleteCouponTitle": "Delete coupon?",
+        "deleteCouponBody": "This permanently removes the code and all of its redemption history. Audit logs are preserved. Can't be undone.",
+        "deleteCouponBtn": "Delete coupon",
+        "bulkDeleteTitle": "Delete {n} coupons?",
+        "bulkDeleteBody": "This removes the selected coupons and their redemption history. Audit logs are preserved. Can’t be undone.",
+        "bulkDeleteBtn": "Delete {n}",
+        "deactivateCampaignTitle": "Delete campaign?",
+        "deactivateCampaignBody": "Permanently deletes the campaign. Child coupons stay, but their campaign link is cleared. Audit logs are preserved.",
+        "deactivateCampaignBtn": "Delete campaign"
       }
     },
     "reportsPage": {
@@ -9951,6 +9963,10 @@
       "errors": {
         "pdfDownload": "Could not generate the PDF link. Try regenerating it."
       }
+    },
+    "confirmDialog": {
+      "confirm": "Confirm",
+      "cancel": "Cancel"
     }
   },
   "supportCommon": {

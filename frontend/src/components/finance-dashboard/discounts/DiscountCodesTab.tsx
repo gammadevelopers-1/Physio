@@ -48,6 +48,8 @@ import Money from "../shared/Money";
 import Select from "@/components/admin-dashboard/Select";
 import CreateCouponWizard from "./CreateCouponWizard";
 import BulkGenerateWizard from "./BulkGenerateWizard";
+import ConfirmDialog from "../shared/ConfirmDialog";
+import PortalMenu from "../shared/PortalMenu";
 
 interface CouponRow {
   id: string;
@@ -106,6 +108,10 @@ function computeStatus(c: CouponRow): "active" | "scheduled" | "expired" | "disa
   const now = new Date();
   if (c.validFrom && new Date(c.validFrom) > now) return "scheduled";
   if (c.validUntil && new Date(c.validUntil) < now) return "expired";
+  // A code that's hit its max-uses cap is functionally expired even if
+  // its validity window hasn't passed. Surface this so the dashboard
+  // doesn't keep showing it as "Active" once it can no longer redeem.
+  if (c.maxUses && c.currentUses >= c.maxUses) return "expired";
   return "active";
 }
 
@@ -118,9 +124,11 @@ const STATUS_PILL: Record<string, { bg: string; text: string; label: string }> =
 
 interface Props {
   onOpenCoupon: (id: string | null) => void;
+  /** Bump from parent to force a refetch after a drawer-side mutation. */
+  refreshKey?: number;
 }
 
-const DiscountCodesTab = ({ onOpenCoupon }: Props) => {
+const DiscountCodesTab = ({ onOpenCoupon, refreshKey = 0 }: Props) => {
   const t = useTranslations("financeDashboard.discountsPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
@@ -153,6 +161,10 @@ const DiscountCodesTab = ({ onOpenCoupon }: Props) => {
   const [batches, setBatches] = useState<BatchRow[]>([]);
   const [batchesLoading, setBatchesLoading] = useState(false);
   const [showBatches, setShowBatches] = useState(false);
+
+  // Confirm dialogs (replace browser confirm())
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -200,7 +212,7 @@ const DiscountCodesTab = ({ onOpenCoupon }: Props) => {
 
   useEffect(() => {
     fetchRows();
-  }, [fetchRows]);
+  }, [fetchRows, refreshKey]);
 
   const fetchBatches = useCallback(async () => {
     setBatchesLoading(true);
@@ -254,31 +266,42 @@ const DiscountCodesTab = ({ onOpenCoupon }: Props) => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("confirmDelete"))) return;
+  const requestDelete = (id: string) => {
+    setConfirmDeleteId(id);
+    setOpenMenuId(null);
+  };
+
+  const performDelete = async () => {
+    if (!confirmDeleteId) return;
     setActioning(true);
     try {
-      await discountApi.delete(id);
+      await discountApi.delete(confirmDeleteId);
       toast.success(t("toasts.deleted"));
+      setConfirmDeleteId(null);
       await fetchRows();
     } catch {
       toast.error(t("toasts.deleteError"));
     } finally {
       setActioning(false);
-      setOpenMenuId(null);
     }
   };
 
-  const handleBulkAction = async (action: "enable" | "disable" | "delete") => {
+  const requestBulkAction = (action: "enable" | "disable" | "delete") => {
+    if (selected.size === 0) return;
+    if (action === "delete") {
+      setConfirmBulkDelete(true);
+      return;
+    }
+    void performBulkAction(action);
+  };
+
+  const performBulkAction = async (action: "enable" | "disable" | "delete") => {
     if (selected.size === 0) return;
     const verbs = {
       enable: t("toasts.enabled"),
       disable: t("toasts.disabled"),
       delete: t("toasts.deleted"),
     };
-    if (action === "delete" && !confirm(t("confirmBulkDelete", { n: selected.size }))) {
-      return;
-    }
     setActioning(true);
     try {
       const ids = Array.from(selected);
@@ -291,6 +314,7 @@ const DiscountCodesTab = ({ onOpenCoupon }: Props) => {
       }
       toast.success(`${verbs[action]} · ${selected.size}`);
       setSelected(new Set());
+      setConfirmBulkDelete(false);
       await fetchRows();
     } catch {
       toast.error(t("toasts.bulkError"));
@@ -537,7 +561,7 @@ const DiscountCodesTab = ({ onOpenCoupon }: Props) => {
             <button
               type="button"
               disabled={actioning}
-              onClick={() => handleBulkAction("enable")}
+              onClick={() => requestBulkAction("enable")}
               className="px-3 py-1.5 text-[12px] font-medium text-[#15803D] bg-[#DCFCE7] rounded-md hover:opacity-90 disabled:opacity-50 flex items-center gap-1"
             >
               <Power className="w-3.5 h-3.5" /> {t("bulk.enable")}
@@ -545,7 +569,7 @@ const DiscountCodesTab = ({ onOpenCoupon }: Props) => {
             <button
               type="button"
               disabled={actioning}
-              onClick={() => handleBulkAction("disable")}
+              onClick={() => requestBulkAction("disable")}
               className="px-3 py-1.5 text-[12px] font-medium text-[#92400E] bg-[#FEF3C7] rounded-md hover:opacity-90 disabled:opacity-50 flex items-center gap-1"
             >
               <PowerOff className="w-3.5 h-3.5" /> {t("bulk.disable")}
@@ -553,7 +577,7 @@ const DiscountCodesTab = ({ onOpenCoupon }: Props) => {
             <button
               type="button"
               disabled={actioning}
-              onClick={() => handleBulkAction("delete")}
+              onClick={() => requestBulkAction("delete")}
               className="px-3 py-1.5 text-[12px] font-medium text-[#B91C1C] bg-[#FEE2E2] rounded-md hover:opacity-90 disabled:opacity-50 flex items-center gap-1"
             >
               <Trash2 className="w-3.5 h-3.5" /> {t("bulk.delete")}
@@ -720,39 +744,18 @@ const DiscountCodesTab = ({ onOpenCoupon }: Props) => {
                           {t(`statusPill.${st}`)}
                         </span>
                       </td>
-                      <td className="px-3 py-3 relative">
-                        <button
-                          type="button"
-                          onClick={() => setOpenMenuId(openMenuId === c.id ? null : c.id)}
-                          className="w-7 h-7 rounded-md hover:bg-[var(--color-surface-page)] flex items-center justify-center text-[var(--color-text-secondary)]"
-                        >
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
-                        {openMenuId === c.id && (
-                          <div
-                            className={`absolute z-20 top-full mt-1 ${isRTL ? "start-0" : "end-0"} bg-[var(--color-surface-card)] rounded-lg shadow-xl border border-[var(--color-border)] py-1 min-w-[170px]`}
-                          >
-                            <MenuItem onClick={() => { setOpenMenuId(null); onOpenCoupon(c.id); }} icon={Eye}>
-                              {t("actions.view")}
-                            </MenuItem>
-                            <MenuItem onClick={() => handleEdit(c)} icon={Pencil}>
-                              {t("actions.edit")}
-                            </MenuItem>
-                            <MenuItem onClick={() => handleDuplicate(c)} icon={Copy}>
-                              {t("actions.duplicate")}
-                            </MenuItem>
-                            <MenuItem
-                              onClick={() => handleToggleCoupon(c)}
-                              icon={c.isActive ? PowerOff : Power}
-                            >
-                              {c.isActive ? t("actions.disable") : t("actions.enable")}
-                            </MenuItem>
-                            <div className="border-t border-[var(--color-border-subtle)] my-1" />
-                            <MenuItem onClick={() => handleDelete(c.id)} icon={Trash2} danger>
-                              {t("actions.delete")}
-                            </MenuItem>
-                          </div>
-                        )}
+                      <td className="px-3 py-3">
+                        <RowActionMenu
+                          c={c}
+                          open={openMenuId === c.id}
+                          onOpenChange={(o) => setOpenMenuId(o ? c.id : null)}
+                          onView={() => { setOpenMenuId(null); onOpenCoupon(c.id); }}
+                          onEdit={() => handleEdit(c)}
+                          onDuplicate={() => handleDuplicate(c)}
+                          onToggle={() => handleToggleCoupon(c)}
+                          onDelete={() => requestDelete(c.id)}
+                          t={t}
+                        />
                       </td>
                     </tr>
                   );
@@ -911,6 +914,28 @@ const DiscountCodesTab = ({ onOpenCoupon }: Props) => {
           if (showBatches) fetchBatches();
         }}
       />
+
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        title={t("confirms.deleteCouponTitle")}
+        message={t("confirms.deleteCouponBody")}
+        confirmLabel={t("confirms.deleteCouponBtn")}
+        danger
+        loading={actioning}
+        onConfirm={performDelete}
+        onClose={() => setConfirmDeleteId(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmBulkDelete}
+        title={t("confirms.bulkDeleteTitle", { n: selected.size })}
+        message={t("confirms.bulkDeleteBody")}
+        confirmLabel={t("confirms.bulkDeleteBtn", { n: selected.size })}
+        danger
+        loading={actioning}
+        onConfirm={() => performBulkAction("delete")}
+        onClose={() => setConfirmBulkDelete(false)}
+      />
     </div>
   );
 };
@@ -943,5 +968,62 @@ const MenuItem = ({
     {children}
   </button>
 );
+
+// Per-row action menu. Owns its trigger ref so the PortalMenu can
+// anchor to the right element without prop-drilling refs through
+// the whole table.
+const RowActionMenu = ({
+  c,
+  open,
+  onOpenChange,
+  onView,
+  onEdit,
+  onDuplicate,
+  onToggle,
+  onDelete,
+  t,
+}: {
+  c: CouponRow;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onView: () => void;
+  onEdit: () => void;
+  onDuplicate: () => void;
+  onToggle: () => void;
+  onDelete: () => void;
+  t: (k: string) => string;
+}) => {
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => onOpenChange(!open)}
+        className="w-7 h-7 rounded-md hover:bg-[var(--color-surface-page)] flex items-center justify-center text-[var(--color-text-secondary)]"
+      >
+        <MoreVertical className="w-4 h-4" />
+      </button>
+      <PortalMenu anchorRef={triggerRef} open={open} onClose={() => onOpenChange(false)}>
+        <MenuItem onClick={onView} icon={Eye}>
+          {t("actions.view")}
+        </MenuItem>
+        <MenuItem onClick={onEdit} icon={Pencil}>
+          {t("actions.edit")}
+        </MenuItem>
+        <MenuItem onClick={onDuplicate} icon={Copy}>
+          {t("actions.duplicate")}
+        </MenuItem>
+        <MenuItem onClick={onToggle} icon={c.isActive ? PowerOff : Power}>
+          {c.isActive ? t("actions.disable") : t("actions.enable")}
+        </MenuItem>
+        <div className="border-t border-[var(--color-border-subtle)] my-1" />
+        <MenuItem onClick={onDelete} icon={Trash2} danger>
+          {t("actions.delete")}
+        </MenuItem>
+      </PortalMenu>
+    </>
+  );
+};
 
 export default DiscountCodesTab;

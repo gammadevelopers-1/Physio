@@ -9214,7 +9214,8 @@
             "value": "القيمة",
             "uses": "الاستخدام"
           }
-        }
+        },
+        "autoBulkTag": "دفعة جماعية"
       },
       "courseSalesTab": {
         "kpi": {
@@ -9317,6 +9318,17 @@
         "export": "تصدير",
         "bulk": "دفعة",
         "create": "جديد"
+      },
+      "confirms": {
+        "deleteCouponTitle": "حذف القسيمة؟",
+        "deleteCouponBody": "سيتم حذف الكود وكل سجلات استخدامه نهائياً. سجلات التدقيق محفوظة. لا يمكن التراجع.",
+        "deleteCouponBtn": "حذف القسيمة",
+        "bulkDeleteTitle": "حذف {n} قسائم؟",
+        "bulkDeleteBody": "سيتم حذف القسائم المختارة وسجلات استخدامها. سجلات التدقيق محفوظة. لا يمكن التراجع.",
+        "bulkDeleteBtn": "حذف {n}",
+        "deactivateCampaignTitle": "حذف الحملة؟",
+        "deactivateCampaignBody": "سيتم حذف الحملة نهائياً. القسائم التابعة تبقى لكن سيتم إزالة ارتباطها بالحملة. سجلات التدقيق محفوظة.",
+        "deactivateCampaignBtn": "حذف الحملة"
       }
     },
     "reportsPage": {
@@ -9951,6 +9963,10 @@
       "errors": {
         "pdfDownload": "لا يمكن إنشاء رابط PDF. حاول إعادة إنشائه."
       }
+    },
+    "confirmDialog": {
+      "confirm": "تأكيد",
+      "cancel": "إلغاء"
     }
   },
   "supportCommon": {

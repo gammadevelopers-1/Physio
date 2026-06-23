@@ -50,6 +50,11 @@ const DiscountsContent = () => {
   const [tab, setTab] = useState<TabKey>("overview");
   const [drawerCouponId, setDrawerCouponId] = useState<string | null>(null);
   const [drawerCampaignId, setDrawerCampaignId] = useState<string | null>(null);
+  // Bumped whenever the coupon detail drawer mutates (delete / toggle /
+  // edit) — tabs that depend on coupon data (Codes, Early Bird) include
+  // this in their fetch deps so they re-fetch automatically. Without
+  // this, deleting a code via the drawer leaves the EarlyBird card stale.
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // URL deep-link sync
   useEffect(() => {
@@ -174,14 +179,14 @@ const DiscountsContent = () => {
                 />
               )}
               {tab === "codes" && (
-                <DiscountCodesTab onOpenCoupon={openCouponDrawer} />
+                <DiscountCodesTab onOpenCoupon={openCouponDrawer} refreshKey={refreshKey} />
               )}
               {tab === "campaigns" && (
-                <CampaignsTabV2 onOpenCampaign={openCampaignDrawer} />
+                <CampaignsTabV2 onOpenCampaign={openCampaignDrawer} refreshKey={refreshKey} />
               )}
               {tab === "course-sales" && <CourseSalesTab />}
               {tab === "early-bird" && (
-                <EarlyBirdTab onOpenCoupon={openCouponDrawer} />
+                <EarlyBirdTab onOpenCoupon={openCouponDrawer} refreshKey={refreshKey} />
               )}
             </div>
           </div>
@@ -191,6 +196,7 @@ const DiscountsContent = () => {
       <DiscountDetailDrawerV2
         discountId={drawerCouponId}
         onClose={() => openCouponDrawer(null)}
+        onChanged={() => setRefreshKey((v) => v + 1)}
       />
 
       <CampaignDetailDrawer

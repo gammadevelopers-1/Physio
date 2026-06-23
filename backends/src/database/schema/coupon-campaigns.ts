@@ -44,6 +44,13 @@ export const couponCampaigns = pgTable(
     showOnSite: boolean('show_on_site').notNull().default(false),
     /** Optional CTA shown in the banner (e.g. discount code or button label). */
     bannerCta: varchar('banner_cta', { length: 80 }),
+    /**
+     * Link back to the bulk-generation batch that auto-created this
+     * campaign. NULL for manually-created campaigns. Used by the
+     * dashboard to render a "Bulk batch" badge and to group/exclude
+     * machine-generated campaigns from manual reports if needed.
+     */
+    bulkBatchId: uuid('bulk_batch_id'),
     createdBy: uuid('created_by')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
@@ -54,6 +61,7 @@ export const couponCampaigns = pgTable(
     index('coupon_campaigns_is_active_idx').on(table.isActive),
     index('coupon_campaigns_show_on_site_idx').on(table.showOnSite),
     index('coupon_campaigns_ends_at_idx').on(table.endsAt),
+    index('coupon_campaigns_bulk_batch_id_idx').on(table.bulkBatchId),
   ],
 );
 

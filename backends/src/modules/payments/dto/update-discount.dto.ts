@@ -62,4 +62,16 @@ export class UpdateDiscountDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsUUID('4')
+  campaignId?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  autoApply?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  earlyBird?: boolean;
 }

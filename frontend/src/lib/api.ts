@@ -8230,12 +8230,31 @@ export const discountApi = {
   validate: (code: string, courseId: string) =>
     api.post<{ valid: boolean; discountAmount: number; discountId: string | null; error?: string }>('/discounts/validate', { code, courseId }),
 
-  getAll: (page = 1, limit = 10, filters?: { status?: string; search?: string; startDate?: string; endDate?: string }) => {
+  getAll: (
+    page = 1,
+    limit = 10,
+    filters?: {
+      status?: string;
+      search?: string;
+      startDate?: string;
+      endDate?: string;
+      type?: 'percentage' | 'fixed';
+      autoApply?: boolean;
+      earlyBird?: boolean;
+      campaignId?: string;
+      scope?: 'all' | 'global' | 'course';
+    },
+  ) => {
     const sp = new URLSearchParams({ page: String(page), limit: String(limit) });
     if (filters?.status && filters.status !== 'all') sp.set('status', filters.status);
     if (filters?.search) sp.set('search', filters.search);
     if (filters?.startDate) sp.set('startDate', filters.startDate);
     if (filters?.endDate) sp.set('endDate', filters.endDate);
+    if (filters?.type) sp.set('type', filters.type);
+    if (filters?.autoApply !== undefined) sp.set('autoApply', String(filters.autoApply));
+    if (filters?.earlyBird !== undefined) sp.set('earlyBird', String(filters.earlyBird));
+    if (filters?.campaignId) sp.set('campaignId', filters.campaignId);
+    if (filters?.scope) sp.set('scope', filters.scope);
     return api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/discounts?${sp.toString()}`);
   },
 
@@ -8273,6 +8292,9 @@ export const discountApi = {
     maxUses?: number;
     maxUsesPerUser?: number;
     campaign?: string;
+    campaignId?: string;
+    autoApply?: boolean;
+    earlyBird?: boolean;
     minOrderAmount?: number;
     courseIds?: string[];
     validFrom?: string;
@@ -8287,11 +8309,14 @@ export const discountApi = {
     maxUses?: number;
     maxUsesPerUser?: number;
     campaign?: string;
+    campaignId?: string;
+    autoApply?: boolean;
+    earlyBird?: boolean;
     minOrderAmount?: number;
     courseIds?: string[];
     validFrom?: string;
     validUntil?: string;
-  }) => api.post<{ created: number; codes: string[] }>('/discounts/bulk', data),
+  }) => api.post<{ batchId: string; created: number; codes: string[] }>('/discounts/bulk', data),
 
   update: (id: string, data: any) =>
     api.patch<any>(`/discounts/${id}`, data),
@@ -8425,6 +8450,104 @@ export const discountApi = {
 
   deleteCampaign: (id: string) =>
     api.delete<{ id: string; isActive: boolean }>(`/discounts/campaigns/${id}`),
+
+  // ─── Overview / charts / activity (finance) ───────────────────────
+
+  getChartSeries: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<{
+      daily: Array<{ day: string; saved: number; redemptions: number }>;
+      typeBreakdown: {
+        percentage: number;
+        fixed: number;
+        earlyBird: number;
+        campaign: number;
+        autoApply: number;
+      };
+      topCodes: Array<{
+        id: string;
+        code: string;
+        type: string;
+        value: number;
+        totalSaved: number;
+        conversions: number;
+      }>;
+      funnel: {
+        attempted: number;
+        validated: number;
+        redeemed: number;
+        failed: number;
+      };
+    }>(`/discounts/chart-series${qs ? `?${qs}` : ''}`);
+  },
+
+  getRecentActivity: (limit = 10) =>
+    api.get<{
+      recentRedemptions: Array<{
+        id: string;
+        discountId: string | null;
+        code: string | null;
+        userEmail: string | null;
+        amountSaved: number;
+        paymentId: string;
+        usedAt: string;
+      }>;
+      recentFailures: Array<{
+        id: string;
+        code: string | null;
+        error: string | null;
+        userEmail: string | null;
+        createdAt: string;
+      }>;
+    }>(`/discounts/activity/recent?limit=${limit}`),
+
+  listEarlyBird: () =>
+    api.get<Array<{
+      id: string;
+      code: string;
+      type: string;
+      value: number;
+      currentUses: number;
+      maxUses: number | null;
+      autoApply: boolean;
+      applicableCourses: string[];
+      validFrom: string | null;
+      validUntil: string | null;
+      isActive: boolean;
+      campaign: string | null;
+      campaignId: string | null;
+      totalSaved: number;
+      phase: 'scheduled' | 'live' | 'expired';
+    }>>('/discounts/early-bird'),
+
+  listBatches: (opts?: { page?: number; limit?: number }) => {
+    const sp = new URLSearchParams();
+    if (opts?.page) sp.set('page', String(opts.page));
+    if (opts?.limit) sp.set('limit', String(opts.limit));
+    const qs = sp.toString();
+    return api.get<{
+      data: Array<{
+        id: string;
+        prefix: string;
+        requestedCount: number;
+        createdCount: number;
+        type: string;
+        value: number;
+        campaignLabel: string | null;
+        campaignId: string | null;
+        earlyBird: boolean;
+        autoApply: boolean;
+        validUntil: string | null;
+        createdAt: string;
+        redeemed: number;
+        totalSaved: number;
+      }>;
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }>(`/discounts/batches${qs ? `?${qs}` : ''}`);
+  },
 
   export: async (params?: { status?: string; search?: string; startDate?: string; endDate?: string }) => {
     const token = getAccessToken();

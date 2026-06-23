@@ -9,11 +9,13 @@ import { db } from '../../../database';
 import {
   discountCodes,
   discountUsage,
+  discountCodeBatches,
   couponCampaigns,
   invoices,
   payments,
   users,
   courses,
+  auditLogs,
 } from '../../../database/schema';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { CreateDiscountDto } from '../dto/create-discount.dto';
@@ -602,6 +604,9 @@ export class DiscountService {
         maxUses: dto.maxUses || null,
         maxUsesPerUser: dto.maxUsesPerUser ?? 1,
         campaign: dto.campaign?.trim() || null,
+        campaignId: (dto as { campaignId?: string }).campaignId || null,
+        autoApply: (dto as { autoApply?: boolean }).autoApply ?? false,
+        earlyBird: (dto as { earlyBird?: boolean }).earlyBird ?? false,
         minOrderAmount: dto.minOrderAmount
           ? dto.minOrderAmount.toFixed(2)
           : null,
@@ -658,6 +663,14 @@ export class DiscountService {
     if (dto.validUntil !== undefined)
       updateData.validUntil = dto.validUntil ? new Date(dto.validUntil) : null;
     if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
+    const anyDto = dto as {
+      campaignId?: string | null;
+      autoApply?: boolean;
+      earlyBird?: boolean;
+    };
+    if (anyDto.campaignId !== undefined) updateData.campaignId = anyDto.campaignId;
+    if (anyDto.autoApply !== undefined) updateData.autoApply = anyDto.autoApply;
+    if (anyDto.earlyBird !== undefined) updateData.earlyBird = anyDto.earlyBird;
 
     const [updated] = await db
       .update(discountCodes)
@@ -733,6 +746,13 @@ export class DiscountService {
     search?: string,
     startDate?: string,
     endDate?: string,
+    extra: {
+      type?: 'percentage' | 'fixed';
+      autoApply?: boolean;
+      earlyBird?: boolean;
+      campaignId?: string;
+      scope?: 'all' | 'global' | 'course';
+    } = {},
   ) {
     const offset = (page - 1) * limit;
     const conditions: any[] = [];
@@ -749,6 +769,23 @@ export class DiscountService {
     }
     if (endDate) {
       conditions.push(lte(discountCodes.createdAt, new Date(endDate)));
+    }
+    if (extra.type) {
+      conditions.push(eq(discountCodes.type, extra.type));
+    }
+    if (extra.autoApply !== undefined) {
+      conditions.push(eq(discountCodes.autoApply, extra.autoApply));
+    }
+    if (extra.earlyBird !== undefined) {
+      conditions.push(eq(discountCodes.earlyBird, extra.earlyBird));
+    }
+    if (extra.campaignId) {
+      conditions.push(eq(discountCodes.campaignId, extra.campaignId));
+    }
+    if (extra.scope === 'global') {
+      conditions.push(sql`array_length(${discountCodes.applicableCourses}, 1) IS NULL`);
+    } else if (extra.scope === 'course') {
+      conditions.push(sql`array_length(${discountCodes.applicableCourses}, 1) > 0`);
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -774,6 +811,10 @@ export class DiscountService {
         minOrderAmount: discountCodes.minOrderAmount,
         applicableCourses: discountCodes.applicableCourses,
         campaign: discountCodes.campaign,
+        campaignId: discountCodes.campaignId,
+        autoApply: discountCodes.autoApply,
+        earlyBird: discountCodes.earlyBird,
+        batchId: discountCodes.batchId,
         maxUsesPerUser: discountCodes.maxUsesPerUser,
         validFrom: discountCodes.validFrom,
         validUntil: discountCodes.validUntil,
@@ -1014,6 +1055,40 @@ export class DiscountService {
       candidates = candidates.filter((c) => !taken.has(c));
     }
 
+    const anyDto = dto as {
+      campaignId?: string;
+      autoApply?: boolean;
+      earlyBird?: boolean;
+    };
+
+    // Record the batch first so we have an id to link generated codes back to.
+    // Codes link via `batch_id` — lets the dashboard show per-batch redemption
+    // rates without aggregating on the prefix string (prefixes can collide
+    // across different campaigns).
+    const [batch] = await db
+      .insert(discountCodeBatches)
+      .values({
+        prefix,
+        requestedCount: dto.count,
+        createdCount: 0, // updated after insert
+        type: dto.type,
+        value: dto.value.toFixed(2),
+        maxUses: dto.maxUses ?? 1,
+        maxUsesPerUser: dto.maxUsesPerUser ?? 1,
+        campaignId: anyDto.campaignId || null,
+        campaignLabel: dto.campaign?.trim() || prefix,
+        minOrderAmount: dto.minOrderAmount
+          ? dto.minOrderAmount.toFixed(2)
+          : null,
+        applicableCourses: dto.courseIds || [],
+        validFrom: dto.validFrom ? new Date(dto.validFrom) : null,
+        validUntil: dto.validUntil ? new Date(dto.validUntil) : null,
+        earlyBird: anyDto.earlyBird ?? false,
+        autoApply: anyDto.autoApply ?? false,
+        createdBy: userId,
+      })
+      .returning();
+
     const values = candidates.map((code) => ({
       code,
       type: dto.type,
@@ -1024,6 +1099,10 @@ export class DiscountService {
       maxUsesPerUser: dto.maxUsesPerUser ?? 1,
       // Group the batch under its campaign (falls back to the prefix).
       campaign: dto.campaign?.trim() || prefix,
+      campaignId: anyDto.campaignId || null,
+      autoApply: anyDto.autoApply ?? false,
+      earlyBird: anyDto.earlyBird ?? false,
+      batchId: batch.id,
       minOrderAmount: dto.minOrderAmount
         ? dto.minOrderAmount.toFixed(2)
         : null,
@@ -1042,17 +1121,92 @@ export class DiscountService {
           .returning({ id: discountCodes.id, code: discountCodes.code })
       : [];
 
+    // Patch the actual created count on the batch row
+    await db
+      .update(discountCodeBatches)
+      .set({ createdCount: created.length })
+      .where(eq(discountCodeBatches.id, batch.id));
+
     await this.auditLogService.log({
       entityType: 'discount_code',
-      entityId: 'bulk',
+      entityId: batch.id,
       action: 'discount_bulk_created',
       performedBy: userId,
-      metadata: { prefix, count: dto.count, codes: created.map((c) => c.code) },
+      metadata: {
+        batchId: batch.id,
+        prefix,
+        count: dto.count,
+        created: created.length,
+      },
     });
 
     return {
+      batchId: batch.id,
       created: created.length,
       codes: created.map((c) => c.code),
+    };
+  }
+
+  // ─── Batches ───────────────────────────────────────────────────────
+
+  /**
+   * Paginated list of bulk-generation batches with per-batch redemption
+   * stats. Powers the "Batches" sub-table inside the Codes tab.
+   */
+  async listBatches(opts: { page?: number; limit?: number } = {}) {
+    const page = Math.max(1, opts.page || 1);
+    const limit = Math.min(50, Math.max(1, opts.limit || 20));
+    const offset = (page - 1) * limit;
+
+    const rows = await db
+      .select({
+        id: discountCodeBatches.id,
+        prefix: discountCodeBatches.prefix,
+        requestedCount: discountCodeBatches.requestedCount,
+        createdCount: discountCodeBatches.createdCount,
+        type: discountCodeBatches.type,
+        value: discountCodeBatches.value,
+        campaignLabel: discountCodeBatches.campaignLabel,
+        campaignId: discountCodeBatches.campaignId,
+        earlyBird: discountCodeBatches.earlyBird,
+        autoApply: discountCodeBatches.autoApply,
+        validUntil: discountCodeBatches.validUntil,
+        createdAt: discountCodeBatches.createdAt,
+        redeemed: sql<number>`COALESCE((SELECT SUM(${discountCodes.currentUses})::int FROM ${discountCodes} WHERE ${discountCodes.batchId} = ${discountCodeBatches.id}), 0)`,
+        totalSaved: sql<string>`COALESCE((SELECT SUM(${discountUsage.amountSaved}) FROM ${discountUsage} JOIN ${discountCodes} ON ${discountCodes.id} = ${discountUsage.discountId} WHERE ${discountCodes.batchId} = ${discountCodeBatches.id}), 0)`,
+      })
+      .from(discountCodeBatches)
+      .orderBy(desc(discountCodeBatches.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const [{ value: total }] = await db
+      .select({ value: count() })
+      .from(discountCodeBatches);
+
+    return {
+      data: rows.map((r) => ({
+        id: r.id,
+        prefix: r.prefix,
+        requestedCount: r.requestedCount,
+        createdCount: r.createdCount,
+        type: r.type,
+        value: Number(r.value),
+        campaignLabel: r.campaignLabel,
+        campaignId: r.campaignId,
+        earlyBird: r.earlyBird,
+        autoApply: r.autoApply,
+        validUntil: r.validUntil,
+        createdAt: r.createdAt,
+        redeemed: r.redeemed,
+        totalSaved: Number(r.totalSaved),
+      })),
+      pagination: {
+        page,
+        limit,
+        total: Number(total),
+        totalPages: Math.ceil(Number(total) / limit) || 1,
+      },
     };
   }
 
@@ -1176,6 +1330,10 @@ export class DiscountService {
         validFrom: discountCodes.validFrom,
         validUntil: discountCodes.validUntil,
         campaign: discountCodes.campaign,
+        campaignId: discountCodes.campaignId,
+        autoApply: discountCodes.autoApply,
+        earlyBird: discountCodes.earlyBird,
+        batchId: discountCodes.batchId,
         maxUsesPerUser: discountCodes.maxUsesPerUser,
         isActive: discountCodes.isActive,
         createdBy: discountCodes.createdBy,
@@ -1588,6 +1746,236 @@ export class DiscountService {
         uniqueUsers: usageRow?.uniqueUsers ?? 0,
       },
     };
+  }
+
+  // ─── Overview / charts ──────────────────────────────────────────────
+
+  /**
+   * Daily savings + redemptions series for the period, plus a type-breakdown
+   * (percentage vs fixed vs early-bird vs campaign), top 10 codes by savings,
+   * and a validation funnel (attempted → validated → redeemed). Powers the
+   * Overview tab on the finance discounts page.
+   */
+  async getDiscountChartSeries(startDate?: string, endDate?: string) {
+    const start = startDate ? new Date(startDate) : null;
+    const endRaw = endDate ? new Date(endDate) : null;
+    if (endRaw) endRaw.setHours(23, 59, 59, 999);
+
+    // Daily savings + redemptions
+    const dailyConds: any[] = [];
+    if (start) dailyConds.push(gte(discountUsage.usedAt, start));
+    if (endRaw) dailyConds.push(lte(discountUsage.usedAt, endRaw));
+    const dailyWhere = dailyConds.length > 0 ? and(...dailyConds) : undefined;
+
+    const daily = await db
+      .select({
+        day: sql<string>`TO_CHAR(${discountUsage.usedAt}::date, 'YYYY-MM-DD')`,
+        saved: sql<string>`COALESCE(SUM(${discountUsage.amountSaved}::numeric), 0)`,
+        redemptions: sql<number>`COUNT(*)::int`,
+      })
+      .from(discountUsage)
+      .where(dailyWhere)
+      .groupBy(sql`${discountUsage.usedAt}::date`)
+      .orderBy(sql`${discountUsage.usedAt}::date`);
+
+    // Type breakdown — percentage / fixed / early-bird / campaign-bound
+    // (counts of currently-active codes; not period-dependent).
+    const [typeRow] = await db
+      .select({
+        percentage: sql<number>`COUNT(CASE WHEN ${discountCodes.type} = 'percentage' AND ${discountCodes.isActive} = true THEN 1 END)::int`,
+        fixed: sql<number>`COUNT(CASE WHEN ${discountCodes.type} = 'fixed' AND ${discountCodes.isActive} = true THEN 1 END)::int`,
+        earlyBird: sql<number>`COUNT(CASE WHEN ${discountCodes.earlyBird} = true AND ${discountCodes.isActive} = true THEN 1 END)::int`,
+        campaign: sql<number>`COUNT(CASE WHEN ${discountCodes.campaignId} IS NOT NULL AND ${discountCodes.isActive} = true THEN 1 END)::int`,
+        autoApply: sql<number>`COUNT(CASE WHEN ${discountCodes.autoApply} = true AND ${discountCodes.isActive} = true THEN 1 END)::int`,
+      })
+      .from(discountCodes);
+
+    // Top 10 codes by saved amount in the window
+    const topJoinConds: any[] = [eq(discountCodes.id, discountUsage.discountId)];
+    if (start) topJoinConds.push(gte(discountUsage.usedAt, start));
+    if (endRaw) topJoinConds.push(lte(discountUsage.usedAt, endRaw));
+    const top = await db
+      .select({
+        id: discountCodes.id,
+        code: discountCodes.code,
+        type: discountCodes.type,
+        value: discountCodes.value,
+        totalSaved: sql<string>`COALESCE(SUM(${discountUsage.amountSaved}::numeric), 0)`,
+        conversions: count(discountUsage.id),
+      })
+      .from(discountCodes)
+      .innerJoin(discountUsage, and(...topJoinConds))
+      .groupBy(
+        discountCodes.id,
+        discountCodes.code,
+        discountCodes.type,
+        discountCodes.value,
+      )
+      .orderBy(desc(sql`COALESCE(SUM(${discountUsage.amountSaved}::numeric), 0)`))
+      .limit(10);
+
+    // Validation funnel — audit_logs has `discount_validation_failed`
+    // entries (write-time). Count attempted = success+fail, validated=success,
+    // redeemed = discount_usage rows.
+    const funnelConds: any[] = [
+      eq(auditLogs.entityType, 'discount'),
+      eq(auditLogs.action, 'discount_validation_failed'),
+    ];
+    if (start) funnelConds.push(gte(auditLogs.createdAt, start));
+    if (endRaw) funnelConds.push(lte(auditLogs.createdAt, endRaw));
+    const [{ failed }] = await db
+      .select({ failed: sql<number>`COUNT(*)::int` })
+      .from(auditLogs)
+      .where(and(...funnelConds));
+
+    const [{ redeemed }] = await db
+      .select({ redeemed: sql<number>`COUNT(*)::int` })
+      .from(discountUsage)
+      .where(dailyWhere);
+
+    return {
+      daily: daily.map((d) => ({
+        day: d.day,
+        saved: Number(d.saved),
+        redemptions: d.redemptions,
+      })),
+      typeBreakdown: {
+        percentage: typeRow?.percentage ?? 0,
+        fixed: typeRow?.fixed ?? 0,
+        earlyBird: typeRow?.earlyBird ?? 0,
+        campaign: typeRow?.campaign ?? 0,
+        autoApply: typeRow?.autoApply ?? 0,
+      },
+      topCodes: top.map((t) => ({
+        id: t.id,
+        code: t.code,
+        type: t.type,
+        value: Number(t.value),
+        totalSaved: Number(t.totalSaved),
+        conversions: Number(t.conversions),
+      })),
+      funnel: {
+        attempted: Number(failed) + Number(redeemed),
+        validated: Number(redeemed),
+        redeemed: Number(redeemed),
+        failed: Number(failed),
+      },
+    };
+  }
+
+  /**
+   * Recent redemptions + recent failed validations. Used by the
+   * Overview tab's activity feeds.
+   */
+  async getRecentActivity(limit: number = 10) {
+    const recentRedemptions = await db
+      .select({
+        id: discountUsage.id,
+        discountId: discountUsage.discountId,
+        code: discountCodes.code,
+        userEmail: users.email,
+        amountSaved: discountUsage.amountSaved,
+        paymentId: discountUsage.paymentId,
+        usedAt: discountUsage.usedAt,
+      })
+      .from(discountUsage)
+      .leftJoin(discountCodes, eq(discountCodes.id, discountUsage.discountId))
+      .leftJoin(users, eq(users.id, discountUsage.userId))
+      .orderBy(desc(discountUsage.usedAt))
+      .limit(Math.min(limit, 50));
+
+    const recentFailures = await db
+      .select({
+        id: auditLogs.id,
+        metadata: auditLogs.metadata,
+        performedBy: auditLogs.performedBy,
+        userEmail: users.email,
+        createdAt: auditLogs.createdAt,
+      })
+      .from(auditLogs)
+      .leftJoin(users, eq(users.id, auditLogs.performedBy))
+      .where(
+        and(
+          eq(auditLogs.entityType, 'discount'),
+          eq(auditLogs.action, 'discount_validation_failed'),
+        ),
+      )
+      .orderBy(desc(auditLogs.createdAt))
+      .limit(Math.min(limit, 50));
+
+    return {
+      recentRedemptions: recentRedemptions.map((r) => ({
+        id: r.id,
+        discountId: r.discountId,
+        code: r.code,
+        userEmail: r.userEmail,
+        amountSaved: Number(r.amountSaved),
+        paymentId: r.paymentId,
+        usedAt: r.usedAt,
+      })),
+      recentFailures: recentFailures.map((r) => ({
+        id: r.id,
+        code: (r.metadata as { code?: string })?.code ?? null,
+        error: (r.metadata as { error?: string })?.error ?? null,
+        userEmail: r.userEmail,
+        createdAt: r.createdAt,
+      })),
+    };
+  }
+
+  /**
+   * Early-bird listing for the dedicated tab. Returns active early-bird
+   * codes (those with the explicit `earlyBird` flag set) sorted by
+   * validity-end ascending so the soonest-to-expire is first.
+   */
+  async listEarlyBirdCodes() {
+    const now = new Date();
+    const rows = await db
+      .select({
+        id: discountCodes.id,
+        code: discountCodes.code,
+        type: discountCodes.type,
+        value: discountCodes.value,
+        currentUses: discountCodes.currentUses,
+        maxUses: discountCodes.maxUses,
+        autoApply: discountCodes.autoApply,
+        applicableCourses: discountCodes.applicableCourses,
+        validFrom: discountCodes.validFrom,
+        validUntil: discountCodes.validUntil,
+        isActive: discountCodes.isActive,
+        campaign: discountCodes.campaign,
+        campaignId: discountCodes.campaignId,
+        totalSaved: sql<string>`COALESCE((SELECT SUM(${discountUsage.amountSaved}::numeric) FROM ${discountUsage} WHERE ${discountUsage.discountId} = ${discountCodes.id}), 0)`,
+      })
+      .from(discountCodes)
+      .where(eq(discountCodes.earlyBird, true))
+      .orderBy(sql`COALESCE(${discountCodes.validUntil}, '9999-12-31'::timestamp) ASC`);
+
+    return rows.map((r) => {
+      const validUntil = r.validUntil ? new Date(r.validUntil) : null;
+      const validFrom = r.validFrom ? new Date(r.validFrom) : null;
+      let phase: 'scheduled' | 'live' | 'expired' = 'live';
+      if (validFrom && validFrom > now) phase = 'scheduled';
+      else if (validUntil && validUntil < now) phase = 'expired';
+      else if (!r.isActive) phase = 'expired';
+      return {
+        id: r.id,
+        code: r.code,
+        type: r.type,
+        value: Number(r.value),
+        currentUses: r.currentUses,
+        maxUses: r.maxUses,
+        autoApply: r.autoApply,
+        applicableCourses: r.applicableCourses,
+        validFrom: r.validFrom,
+        validUntil: r.validUntil,
+        isActive: r.isActive,
+        campaign: r.campaign,
+        campaignId: r.campaignId,
+        totalSaved: Number(r.totalSaved),
+        phase,
+      };
+    });
   }
 
   /**

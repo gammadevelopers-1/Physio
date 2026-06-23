@@ -52,6 +52,19 @@ export const discountCodes = pgTable(
      * within the validity window.
      */
     autoApply: boolean('auto_apply').notNull().default(false),
+    /**
+     * Explicit early-bird marker. Decoupled from `autoApply` so finance
+     * can run an early-bird campaign that still requires a code (the
+     * code just earns a special badge + counter), and conversely have
+     * silent auto-apply codes that aren't billed as "early bird".
+     */
+    earlyBird: boolean('early_bird').notNull().default(false),
+    /**
+     * Link back to the bulk-generation batch this code came from (if
+     * any). Lets the dashboard surface "batch X has used 40/50 codes"
+     * without aggregating ad-hoc on prefix.
+     */
+    batchId: uuid('batch_id'),
     createdBy: uuid('created_by')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
@@ -121,10 +134,48 @@ export const discountUsageRelations = relations(discountUsage, ({ one }) => ({
   }),
 }));
 
+/**
+ * Bulk-generation batches. Every time finance generates N codes from the
+ * "Bulk Generate" flow, a batch row is written. Codes link back via
+ * `discount_codes.batch_id` so we can show "batch X: 23/50 redeemed"
+ * without aggregating on the prefix string (prefixes can collide).
+ */
+export const discountCodeBatches = pgTable(
+  'discount_code_batches',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    prefix: varchar('prefix', { length: 50 }).notNull(),
+    requestedCount: integer('requested_count').notNull(),
+    createdCount: integer('created_count').notNull(),
+    type: varchar('type', { length: 20 }).notNull(),
+    value: numeric('value', { precision: 10, scale: 2 }).notNull(),
+    maxUses: integer('max_uses'),
+    maxUsesPerUser: integer('max_uses_per_user'),
+    campaignId: uuid('campaign_id'),
+    campaignLabel: varchar('campaign_label', { length: 100 }),
+    minOrderAmount: numeric('min_order_amount', { precision: 10, scale: 2 }),
+    applicableCourses: uuid('applicable_courses').array().notNull().default(sql`'{}'::uuid[]`),
+    validFrom: timestamp('valid_from'),
+    validUntil: timestamp('valid_until'),
+    earlyBird: boolean('early_bird').notNull().default(false),
+    autoApply: boolean('auto_apply').notNull().default(false),
+    createdBy: uuid('created_by')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('discount_code_batches_created_at_idx').on(table.createdAt),
+    index('discount_code_batches_campaign_id_idx').on(table.campaignId),
+  ],
+);
+
 export type DiscountCode = typeof discountCodes.$inferSelect;
 export type NewDiscountCode = typeof discountCodes.$inferInsert;
 export type DiscountUsage = typeof discountUsage.$inferSelect;
 export type NewDiscountUsage = typeof discountUsage.$inferInsert;
+export type DiscountCodeBatch = typeof discountCodeBatches.$inferSelect;
+export type NewDiscountCodeBatch = typeof discountCodeBatches.$inferInsert;
 
 export const DISCOUNT_TYPE = {
   PERCENTAGE: 'percentage',

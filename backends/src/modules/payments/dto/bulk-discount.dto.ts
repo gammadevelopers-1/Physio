@@ -10,6 +10,7 @@ import {
   Min,
   Max,
   MaxLength,
+  IsBoolean,
 } from 'class-validator';
 
 export class BulkDiscountDto {
@@ -60,4 +61,16 @@ export class BulkDiscountDto {
   @IsOptional()
   @IsDateString()
   validUntil?: string;
+
+  @IsOptional()
+  @IsUUID('4')
+  campaignId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  autoApply?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  earlyBird?: boolean;
 }

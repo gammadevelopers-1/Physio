@@ -8715,8 +8715,11 @@
         "expired": "Expired",
         "disabled": "Disabled",
         "all": "All Coupons",
-        "codes": "Codes",
-        "campaigns": "Campaigns"
+        "codes": "Coupon Codes",
+        "campaigns": "Campaigns",
+        "overview": "Overview",
+        "courseSales": "Course Sales",
+        "earlyBird": "Early Bird"
       },
       "stats": {
         "activeCoupons": "Active Coupons",
@@ -8748,9 +8751,13 @@
       },
       "actions": {
         "edit": "Edit",
-        "delete": "Delete"
+        "delete": "Delete",
+        "view": "View detail",
+        "duplicate": "Duplicate",
+        "enable": "Enable",
+        "disable": "Disable"
       },
-      "noCoupons": "No discount codes found",
+      "noCoupons": "No coupons match these filters",
       "bulk": {
         "title": "Bulk Generate Coupons",
         "prefix": "Code Prefix",
@@ -8758,7 +8765,12 @@
         "count": "Number of Codes",
         "preview": "Preview: {prefix}-XXXXXX",
         "generate": "Generate {count} Codes",
-        "success": "{count} discount codes created"
+        "success": "{count} discount codes created",
+        "selectedCount": "{n} selected",
+        "clear": "Clear",
+        "enable": "Enable",
+        "disable": "Disable",
+        "delete": "Delete"
       },
       "analytics": {
         "title": "Usage Analytics",
@@ -8783,7 +8795,8 @@
         "totalSavedTitle": "Total Saved",
         "totalSavedSubtitle": "Given back to learners in period",
         "avgSavedTitle": "Avg. Savings / Use",
-        "avgSavedSubtitle": "Per redemption in period"
+        "avgSavedSubtitle": "Per redemption in period",
+        "now": "Now"
       },
       "campaigns": {
         "title": "Campaigns",
@@ -8863,6 +8876,441 @@
           "by": "by",
           "viewMeta": "View metadata",
           "hideMeta": "Hide metadata"
+        }
+      },
+      "subtitleV2": "Codes, campaigns, course sales, early-bird perks — all in one place",
+      "confirmDelete": "Delete this coupon? This cannot be undone.",
+      "confirmBulkDelete": "Delete {n} selected coupons?",
+      "toasts": {
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "deleted": "Deleted",
+        "copied": "Copied!",
+        "exported": "Export downloaded",
+        "exportError": "Export failed",
+        "toggleError": "Failed to toggle",
+        "deleteError": "Delete failed",
+        "bulkError": "Bulk action failed"
+      },
+      "statusFilter": {
+        "all": "All",
+        "active": "Active",
+        "scheduled": "Scheduled",
+        "expired": "Expired",
+        "disabled": "Disabled"
+      },
+      "statusPill": {
+        "active": "Active",
+        "scheduled": "Scheduled",
+        "expired": "Expired",
+        "disabled": "Disabled"
+      },
+      "filters": {
+        "title": "Filters",
+        "type": "Type",
+        "scope": "Scope",
+        "autoApply": "Auto-apply",
+        "earlyBird": "Early bird",
+        "any": "Any",
+        "yes": "Yes",
+        "no": "No",
+        "percentage": "Percentage",
+        "fixed": "Fixed",
+        "globalScope": "All courses",
+        "courseScope": "Course-specific"
+      },
+      "columns": {
+        "code": "Code",
+        "value": "Value",
+        "scope": "Scope",
+        "uses": "Uses",
+        "savings": "Savings",
+        "validity": "Expires",
+        "status": "Status"
+      },
+      "scope": {
+        "global": "All courses",
+        "nCourses": "{n} course(s)",
+        "noExpiry": "No expiry"
+      },
+      "pagination": {
+        "showing": "Showing {from}–{to} of {total}"
+      },
+      "noCouponsHint": "Try changing the filters or create a new coupon.",
+      "batches": {
+        "title": "Bulk-generation batches",
+        "subtitle": "Each batch from the Bulk Generate wizard, with redemption stats",
+        "empty": "No batches yet — try the Bulk Generate wizard",
+        "cols": {
+          "prefix": "Prefix",
+          "count": "Created",
+          "discount": "Discount",
+          "redeemed": "Redeemed",
+          "saved": "Saved",
+          "created": "Generated"
+        }
+      },
+      "overview": {
+        "rangeLabel": "Showing {range}",
+        "ranges": {
+          "today": "today",
+          "7d": "last 7 days",
+          "30d": "last 30 days",
+          "3m": "last 3 months",
+          "1y": "last year",
+          "custom": "custom range"
+        },
+        "kpi": {
+          "activeCodes": "Active codes",
+          "activeCodesSub": "{n} auto-apply",
+          "activeCampaigns": "Active campaigns",
+          "activeCampaignsSub": "Live right now",
+          "totalSaved": "Total saved",
+          "totalSavedSub": "In selected period",
+          "redemptions": "Redemptions",
+          "redemptionsSub": "In selected period",
+          "avgSaved": "Avg / use",
+          "avgSavedSub": "Per redemption",
+          "failedValidations": "Failed checks",
+          "failedValidationsSub": "Invalid code attempts"
+        },
+        "charts": {
+          "dailyTitle": "Daily savings & redemptions",
+          "dailySubtitle": "How much we gave back, day by day",
+          "dailyEmpty": "No redemptions in this period",
+          "saved": "Saved",
+          "redemptions": "Redemptions",
+          "typeTitle": "Type mix",
+          "typeSubtitle": "Active codes by category",
+          "typePercentage": "Percentage",
+          "typeFixed": "Fixed",
+          "typeEarlyBird": "Early bird",
+          "typeCampaign": "Campaign",
+          "typeEmpty": "No active codes",
+          "funnelTitle": "Validation funnel",
+          "funnelSubtitle": "Attempts → validated → redeemed",
+          "funnelEmpty": "No data yet",
+          "funnelAttempted": "Attempted",
+          "funnelValidated": "Validated",
+          "funnelRedeemed": "Redeemed",
+          "topCodesTitle": "Top 10 codes by savings",
+          "topCodesEmpty": "No redemptions yet"
+        },
+        "activity": {
+          "recentTitle": "Recent redemptions",
+          "recentEmpty": "No recent redemptions",
+          "failuresTitle": "Recent failed checks",
+          "failuresEmpty": "No failed checks recently"
+        }
+      },
+      "wizard": {
+        "createTitle": "Create new coupon",
+        "editTitle": "Edit coupon",
+        "stepXofY": "Step {current} of {total}",
+        "createdToast": "Coupon created",
+        "editedToast": "Coupon updated",
+        "saveError": "Failed to save coupon",
+        "preview": "Preview",
+        "back": "Back",
+        "next": "Next",
+        "cancel": "Cancel",
+        "create": "Create coupon",
+        "save": "Save changes",
+        "steps": {
+          "type": "Type & code",
+          "scope": "Scope",
+          "limits": "Limits",
+          "advanced": "Advanced",
+          "review": "Review"
+        },
+        "step1": {
+          "heading": "Discount type & code",
+          "hint": "Pick how the discount applies, set the value, and choose a code customers will type at checkout.",
+          "percentage": "Percentage off",
+          "percentageHint": "A % off the cart line (e.g. 25% off)",
+          "fixed": "Fixed SAR off",
+          "fixedHint": "A flat SAR amount off (e.g. 100 SAR off)",
+          "percentValue": "Percent off (1–100)",
+          "amountValue": "Amount off in SAR",
+          "percentMax": "Percentage cannot exceed 100",
+          "code": "Coupon code",
+          "codeHint": "Customers type this at checkout. Letters and numbers only.",
+          "generate": "Generate"
+        },
+        "step2": {
+          "heading": "Where does it apply?",
+          "hint": "Either apply to every course, or restrict to a specific list.",
+          "allCourses": "All courses",
+          "allCoursesHint": "Works on any course in the cart",
+          "specificCourses": "Specific courses",
+          "specificCoursesHint": "Only the courses you pick below",
+          "searchPlaceholder": "Search courses…",
+          "selectedCount": "{n} selected",
+          "noCourses": "No courses match"
+        },
+        "step3": {
+          "heading": "Usage limits",
+          "hint": "Cap total uses to prevent runaway redemptions, and optionally schedule when it goes live.",
+          "maxUses": "Max total uses",
+          "maxUsesPlaceholder": "Unlimited",
+          "maxUsesHint": "Leave empty for unlimited",
+          "perUserLimit": "Per-user limit",
+          "startsAt": "Starts on",
+          "expiresAt": "Expires on",
+          "dateOrder": "Expiry must be after start"
+        },
+        "step4": {
+          "heading": "Advanced",
+          "hint": "Optional flags that change how the code surfaces in checkout.",
+          "autoApply": "Auto-apply to eligible carts",
+          "autoApplyHint": "Customers see the discount without typing the code. Best for site-wide promos.",
+          "earlyBird": "Mark as Early Bird",
+          "earlyBirdHint": "Shows the yellow Early Bird badge on course cards while valid.",
+          "attachCampaign": "Attach to campaign",
+          "noCampaign": "No campaign",
+          "campaignHint": "Campaign budget + end date will override this code if they run out first.",
+          "minOrder": "Minimum order (SAR)",
+          "minOrderPlaceholder": "Optional"
+        },
+        "step5": {
+          "heading": "Review & create",
+          "hint": "Double-check everything below before creating the coupon.",
+          "scope": "Scope",
+          "maxUses": "Max uses",
+          "perUser": "Per user",
+          "validity": "Validity",
+          "unlimited": "Unlimited",
+          "noExpiry": "No expiry",
+          "nCourses": "{n} courses"
+        }
+      },
+      "bulkWizard": {
+        "title": "Bulk generate coupons",
+        "stepXofY": "Step {current} of {total}",
+        "generatedToast": "Generated {n} codes",
+        "genericError": "Generation failed",
+        "back": "Back",
+        "next": "Next",
+        "cancel": "Cancel",
+        "generate": "Generate {n} codes",
+        "steps": {
+          "batch": "Batch",
+          "discount": "Discount",
+          "scope": "Scope",
+          "settings": "Settings",
+          "preview": "Preview"
+        },
+        "step1": {
+          "heading": "Batch details",
+          "hint": "Each code is {PREFIX}-XXXXXX with 6 random letters/numbers.",
+          "prefix": "Code prefix",
+          "prefixHint": "Letters and numbers only. Up to 20 characters.",
+          "count": "How many codes",
+          "countHint": "Up to 100 per batch",
+          "previewLabel": "Sample codes"
+        },
+        "step2": {
+          "heading": "Discount value",
+          "hint": "All codes in the batch share the same discount.",
+          "percentage": "Percentage off",
+          "fixed": "Fixed SAR off",
+          "percentValue": "Percent off (1–100)",
+          "amountValue": "Amount off in SAR"
+        },
+        "step3": {
+          "heading": "Course scope",
+          "hint": "Restrict to specific courses or let codes work on any course.",
+          "all": "All courses",
+          "specific": "Specific courses",
+          "searchPlaceholder": "Search courses…"
+        },
+        "step4": {
+          "heading": "Settings",
+          "hint": "Per-code usage caps + optional auto-apply, early-bird, campaign attachment.",
+          "maxUsesPer": "Max uses per code",
+          "maxUsesPerHint": "Each code in this batch can be used this many times total",
+          "perUser": "Per-user limit",
+          "expiresAt": "Expires on",
+          "autoApply": "Auto-apply",
+          "autoApplyHint": "Apply without the customer typing the code",
+          "earlyBird": "Mark as Early Bird",
+          "earlyBirdHint": "Surfaces the yellow Early Bird badge on course cards",
+          "campaign": "Attach to campaign",
+          "noCampaign": "No campaign"
+        },
+        "step5": {
+          "heading": "Final review",
+          "hint": "Codes will be generated and downloaded as a CSV.",
+          "sampleCodes": "Sample (preview only — real codes generated on submit)",
+          "samplesNote": "Showing 10 of {n}. All codes will be downloaded as a CSV.",
+          "count": "Codes",
+          "discount": "Discount",
+          "scope": "Scope",
+          "expires": "Expires",
+          "flags": "Flags",
+          "nCourses": "{n} courses",
+          "downloadNote": "CSV downloads automatically after generation"
+        }
+      },
+      "campaignsV2": {
+        "searchPlaceholder": "Search campaigns…",
+        "status": {
+          "active": "Active",
+          "expired": "Expired",
+          "all": "All"
+        },
+        "create": "New campaign",
+        "empty": "No campaigns yet",
+        "emptyHint": "Group related coupon codes under a campaign with a shared budget and banner.",
+        "budget": "Budget",
+        "unlimited": "Unlimited",
+        "codes": "codes",
+        "banner": "Site banner",
+        "confirmDeactivate": "Deactivate this campaign? Child codes will be rejected at checkout.",
+        "toasts": {
+          "deactivated": "Campaign deactivated",
+          "deactivateError": "Failed to deactivate"
+        },
+        "actions": {
+          "open": "Open",
+          "edit": "Edit",
+          "deactivate": "Deactivate"
+        },
+        "form": {
+          "createTitle": "New campaign",
+          "editTitle": "Edit campaign",
+          "name": "Name",
+          "description": "Description",
+          "startsAt": "Starts at",
+          "endsAt": "Ends at",
+          "budget": "Budget (SAR, optional)",
+          "budgetHint": "Leave empty for unlimited",
+          "showBanner": "Show banner on public site",
+          "showBannerHint": "A gradient strip appears above the courses pages while the campaign is live.",
+          "bannerCta": "Banner CTA (optional)",
+          "cancel": "Cancel",
+          "save": "Save campaign",
+          "createdToast": "Campaign created",
+          "editedToast": "Campaign saved",
+          "saveError": "Failed to save"
+        },
+        "drawer": {
+          "loading": "Loading…",
+          "notFound": "Campaign not found",
+          "active": "Active",
+          "expired": "Expired",
+          "tabs": {
+            "overview": "Overview",
+            "codes": "Codes"
+          },
+          "totalSpent": "Total redeemed",
+          "ofBudget": "of",
+          "period": "Period",
+          "codeCount": "Codes",
+          "bannerActive": "Banner active on public site",
+          "noCodes": "No codes attached yet",
+          "cols": {
+            "code": "Code",
+            "value": "Value",
+            "uses": "Uses"
+          }
+        }
+      },
+      "courseSalesTab": {
+        "kpi": {
+          "liveSales": "Live sales",
+          "totalConfigured": "Configured",
+          "avgSavings": "Live savings"
+        },
+        "filter": {
+          "all": "All",
+          "live": "Live",
+          "scheduled": "Scheduled",
+          "none": "No sale"
+        }
+      },
+      "earlyBirdTab": {
+        "badge": "Early Bird",
+        "value": "Discount",
+        "uses": "Uses",
+        "endsIn": "Ends in",
+        "startsIn": "Starts in",
+        "globalScope": "All courses",
+        "nCourses": "{n} courses",
+        "saved": "saved",
+        "empty": "No Early Bird codes yet",
+        "emptyHint": "Create one to feature a limited-time discount with a countdown badge on course cards.",
+        "sections": {
+          "live": "Active now",
+          "scheduled": "Scheduled",
+          "expired": "Expired"
+        },
+        "hero": {
+          "title": "Early Bird perks",
+          "subtitle": "Limited-time discounts with a countdown badge on course cards",
+          "create": "Create Early Bird"
+        }
+      },
+      "detailDrawer": {
+        "loading": "Loading…",
+        "edit": "Edit",
+        "enable": "Enable",
+        "disable": "Disable",
+        "delete": "Delete",
+        "confirmDelete": "Delete this coupon? This cannot be undone.",
+        "tabs": {
+          "overview": "Overview",
+          "config": "Configuration",
+          "usage": "Usage",
+          "audit": "Audit"
+        },
+        "statusPill": {
+          "active": "Active",
+          "scheduled": "Scheduled",
+          "expired": "Expired",
+          "disabled": "Disabled"
+        },
+        "toasts": {
+          "enabled": "Enabled",
+          "disabled": "Disabled",
+          "deleted": "Deleted",
+          "toggleError": "Toggle failed",
+          "deleteError": "Delete failed"
+        },
+        "overview": {
+          "uses": "Uses",
+          "totalSaved": "Total saved",
+          "uniqueUsers": "Redemptions",
+          "validFrom": "Valid from",
+          "validUntil": "Valid until",
+          "scope": "Scope",
+          "globalScope": "All courses",
+          "nCourses": "{n} course(s)",
+          "perUser": "Per user",
+          "minOrder": "Min. order",
+          "created": "Created"
+        },
+        "config": {
+          "code": "Code",
+          "type": "Type",
+          "value": "Value",
+          "maxUses": "Max uses",
+          "perUser": "Per user",
+          "minOrder": "Min. order",
+          "autoApply": "Auto-apply",
+          "earlyBird": "Early Bird",
+          "campaign": "Campaign",
+          "scope": "Scope",
+          "batch": "Batch ID"
+        },
+        "usage": {
+          "empty": "No redemptions yet",
+          "user": "User",
+          "saved": "Saved",
+          "when": "When"
+        },
+        "audit": {
+          "empty": "No audit entries"
         }
       }
     },

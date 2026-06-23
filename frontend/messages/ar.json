@@ -8715,8 +8715,11 @@
         "expired": "منتهية",
         "disabled": "معطلة",
         "all": "جميع القسائم",
-        "codes": "الأكواد",
-        "campaigns": "الحملات"
+        "codes": "أكواد القسائم",
+        "campaigns": "الحملات",
+        "overview": "نظرة عامة",
+        "courseSales": "عروض الدورات",
+        "earlyBird": "الحجز المبكر"
       },
       "stats": {
         "activeCoupons": "القسائم النشطة",
@@ -8748,9 +8751,13 @@
       },
       "actions": {
         "edit": "تعديل",
-        "delete": "حذف"
+        "delete": "حذف",
+        "view": "عرض التفاصيل",
+        "duplicate": "تكرار",
+        "enable": "تفعيل",
+        "disable": "تعطيل"
       },
-      "noCoupons": "لا توجد أكواد خصم",
+      "noCoupons": "لا توجد قسائم تطابق هذه التصفية",
       "bulk": {
         "title": "إنشاء قسائم مجمعة",
         "prefix": "بادئة الرمز",
@@ -8758,7 +8765,12 @@
         "count": "عدد الرموز",
         "preview": "معاينة: {prefix}-XXXXXX",
         "generate": "إنشاء {count} رمز",
-        "success": "تم إنشاء {count} رمز خصم"
+        "success": "تم إنشاء {count} رمز خصم",
+        "selectedCount": "محدد {n}",
+        "clear": "مسح",
+        "enable": "تفعيل",
+        "disable": "تعطيل",
+        "delete": "حذف"
       },
       "analytics": {
         "title": "تحليلات الاستخدام",
@@ -8783,7 +8795,8 @@
         "totalSavedTitle": "إجمالي التوفير",
         "totalSavedSubtitle": "ما أُعيد إلى المتعلّمين في الفترة",
         "avgSavedTitle": "متوسط التوفير لكل استخدام",
-        "avgSavedSubtitle": "لكل عملية استرداد في الفترة"
+        "avgSavedSubtitle": "لكل عملية استرداد في الفترة",
+        "now": "الآن"
       },
       "campaigns": {
         "title": "الحملات",
@@ -8863,6 +8876,441 @@
           "by": "بواسطة",
           "viewMeta": "عرض البيانات الوصفية",
           "hideMeta": "إخفاء البيانات الوصفية"
+        }
+      },
+      "subtitleV2": "الأكواد والحملات وعروض الدورات ومزايا الحجز المبكر — كل ذلك في مكان واحد",
+      "confirmDelete": "حذف هذه القسيمة؟ لا يمكن التراجع.",
+      "confirmBulkDelete": "حذف {n} قسائم محددة؟",
+      "toasts": {
+        "enabled": "تم التفعيل",
+        "disabled": "تم التعطيل",
+        "deleted": "تم الحذف",
+        "copied": "تم النسخ!",
+        "exported": "تم تنزيل الملف",
+        "exportError": "فشل التصدير",
+        "toggleError": "فشل التبديل",
+        "deleteError": "فشل الحذف",
+        "bulkError": "فشل الإجراء الجماعي"
+      },
+      "statusFilter": {
+        "all": "الكل",
+        "active": "نشط",
+        "scheduled": "مجدول",
+        "expired": "منتهي",
+        "disabled": "معطل"
+      },
+      "statusPill": {
+        "active": "نشط",
+        "scheduled": "مجدول",
+        "expired": "منتهي",
+        "disabled": "معطل"
+      },
+      "filters": {
+        "title": "تصفية",
+        "type": "النوع",
+        "scope": "النطاق",
+        "autoApply": "تطبيق تلقائي",
+        "earlyBird": "حجز مبكر",
+        "any": "الكل",
+        "yes": "نعم",
+        "no": "لا",
+        "percentage": "نسبة",
+        "fixed": "مبلغ ثابت",
+        "globalScope": "كل الدورات",
+        "courseScope": "دورات محددة"
+      },
+      "columns": {
+        "code": "الكود",
+        "value": "القيمة",
+        "scope": "النطاق",
+        "uses": "الاستخدام",
+        "savings": "التوفير",
+        "validity": "ينتهي",
+        "status": "الحالة"
+      },
+      "scope": {
+        "global": "كل الدورات",
+        "nCourses": "{n} دورة",
+        "noExpiry": "لا تنتهي"
+      },
+      "pagination": {
+        "showing": "عرض {from}–{to} من {total}"
+      },
+      "noCouponsHint": "جرّب تغيير التصفية أو أنشئ قسيمة جديدة.",
+      "batches": {
+        "title": "دفعات التوليد الجماعي",
+        "subtitle": "كل دفعة من معالج التوليد الجماعي مع إحصائيات الاستخدام",
+        "empty": "لا توجد دفعات بعد — جرّب معالج التوليد الجماعي",
+        "cols": {
+          "prefix": "البادئة",
+          "count": "تم الإنشاء",
+          "discount": "الخصم",
+          "redeemed": "تم الاستخدام",
+          "saved": "التوفير",
+          "created": "تاريخ التوليد"
+        }
+      },
+      "overview": {
+        "rangeLabel": "عرض {range}",
+        "ranges": {
+          "today": "اليوم",
+          "7d": "آخر 7 أيام",
+          "30d": "آخر 30 يوم",
+          "3m": "آخر 3 أشهر",
+          "1y": "آخر سنة",
+          "custom": "نطاق مخصص"
+        },
+        "kpi": {
+          "activeCodes": "أكواد نشطة",
+          "activeCodesSub": "{n} تلقائي",
+          "activeCampaigns": "حملات نشطة",
+          "activeCampaignsSub": "مباشر الآن",
+          "totalSaved": "إجمالي التوفير",
+          "totalSavedSub": "في الفترة المختارة",
+          "redemptions": "الاستخدامات",
+          "redemptionsSub": "في الفترة المختارة",
+          "avgSaved": "متوسط/استخدام",
+          "avgSavedSub": "لكل استخدام",
+          "failedValidations": "فحوصات فاشلة",
+          "failedValidationsSub": "محاولات أكواد غير صالحة"
+        },
+        "charts": {
+          "dailyTitle": "التوفير والاستخدامات اليومية",
+          "dailySubtitle": "مقدار ما تم تخفيضه يومياً",
+          "dailyEmpty": "لا توجد استخدامات في هذه الفترة",
+          "saved": "التوفير",
+          "redemptions": "الاستخدامات",
+          "typeTitle": "توزيع الأنواع",
+          "typeSubtitle": "الأكواد النشطة حسب الفئة",
+          "typePercentage": "نسبة",
+          "typeFixed": "مبلغ ثابت",
+          "typeEarlyBird": "حجز مبكر",
+          "typeCampaign": "حملة",
+          "typeEmpty": "لا توجد أكواد نشطة",
+          "funnelTitle": "مسار التحقق",
+          "funnelSubtitle": "المحاولات ← تم التحقق ← تم الاستخدام",
+          "funnelEmpty": "لا توجد بيانات",
+          "funnelAttempted": "محاولة",
+          "funnelValidated": "تم التحقق",
+          "funnelRedeemed": "تم الاستخدام",
+          "topCodesTitle": "أعلى 10 أكواد توفيراً",
+          "topCodesEmpty": "لا توجد استخدامات بعد"
+        },
+        "activity": {
+          "recentTitle": "استخدامات حديثة",
+          "recentEmpty": "لا توجد استخدامات حديثة",
+          "failuresTitle": "فحوصات فاشلة حديثة",
+          "failuresEmpty": "لا توجد فحوصات فاشلة"
+        }
+      },
+      "wizard": {
+        "createTitle": "إنشاء قسيمة جديدة",
+        "editTitle": "تعديل القسيمة",
+        "stepXofY": "الخطوة {current} من {total}",
+        "createdToast": "تم إنشاء القسيمة",
+        "editedToast": "تم تحديث القسيمة",
+        "saveError": "فشل حفظ القسيمة",
+        "preview": "معاينة",
+        "back": "السابق",
+        "next": "التالي",
+        "cancel": "إلغاء",
+        "create": "إنشاء القسيمة",
+        "save": "حفظ التغييرات",
+        "steps": {
+          "type": "النوع والكود",
+          "scope": "النطاق",
+          "limits": "الحدود",
+          "advanced": "متقدم",
+          "review": "مراجعة"
+        },
+        "step1": {
+          "heading": "نوع الخصم والكود",
+          "hint": "اختر طريقة تطبيق الخصم وحدد القيمة والكود.",
+          "percentage": "نسبة مئوية",
+          "percentageHint": "نسبة من قيمة الدورة (مثلاً 25%)",
+          "fixed": "مبلغ ثابت بالريال",
+          "fixedHint": "مبلغ ريال محدد (مثلاً 100 ريال)",
+          "percentValue": "النسبة (1–100)",
+          "amountValue": "المبلغ بالريال",
+          "percentMax": "لا يمكن أن تتجاوز النسبة 100",
+          "code": "كود القسيمة",
+          "codeHint": "يكتبه العملاء عند الدفع. أحرف وأرقام فقط.",
+          "generate": "توليد"
+        },
+        "step2": {
+          "heading": "أين تنطبق؟",
+          "hint": "إما لكل الدورات أو لدورات محددة.",
+          "allCourses": "كل الدورات",
+          "allCoursesHint": "تعمل على أي دورة في السلة",
+          "specificCourses": "دورات محددة",
+          "specificCoursesHint": "فقط الدورات المختارة أدناه",
+          "searchPlaceholder": "بحث عن دورة…",
+          "selectedCount": "{n} محدد",
+          "noCourses": "لا توجد دورات مطابقة"
+        },
+        "step3": {
+          "heading": "حدود الاستخدام",
+          "hint": "حد لإجمالي الاستخدامات ولكل مستخدم وتحديد التواريخ.",
+          "maxUses": "الحد الأقصى للاستخدامات",
+          "maxUsesPlaceholder": "بلا حد",
+          "maxUsesHint": "اتركه فارغاً للاستخدام بلا حد",
+          "perUserLimit": "لكل مستخدم",
+          "startsAt": "تاريخ البدء",
+          "expiresAt": "تاريخ الانتهاء",
+          "dateOrder": "يجب أن يكون الانتهاء بعد البدء"
+        },
+        "step4": {
+          "heading": "متقدم",
+          "hint": "خيارات اختيارية تغيّر طريقة ظهور الكود.",
+          "autoApply": "تطبيق تلقائي على السلات المؤهلة",
+          "autoApplyHint": "يرى العملاء الخصم دون كتابة الكود.",
+          "earlyBird": "وضع علامة الحجز المبكر",
+          "earlyBirdHint": "يظهر شارة صفراء على بطاقات الدورات.",
+          "attachCampaign": "إرفاق بحملة",
+          "noCampaign": "بدون حملة",
+          "campaignHint": "ميزانية الحملة وتاريخ انتهائها قد تجاوز هذا الكود.",
+          "minOrder": "الحد الأدنى للطلب (ريال)",
+          "minOrderPlaceholder": "اختياري"
+        },
+        "step5": {
+          "heading": "مراجعة وإنشاء",
+          "hint": "تحقق من كل شيء أدناه قبل الإنشاء.",
+          "scope": "النطاق",
+          "maxUses": "الحد الأقصى",
+          "perUser": "لكل مستخدم",
+          "validity": "الصلاحية",
+          "unlimited": "بلا حد",
+          "noExpiry": "لا تنتهي",
+          "nCourses": "{n} دورات"
+        }
+      },
+      "bulkWizard": {
+        "title": "توليد قسائم جماعي",
+        "stepXofY": "الخطوة {current} من {total}",
+        "generatedToast": "تم توليد {n} كود",
+        "genericError": "فشل التوليد",
+        "back": "السابق",
+        "next": "التالي",
+        "cancel": "إلغاء",
+        "generate": "توليد {n} كود",
+        "steps": {
+          "batch": "الدفعة",
+          "discount": "الخصم",
+          "scope": "النطاق",
+          "settings": "الإعدادات",
+          "preview": "معاينة"
+        },
+        "step1": {
+          "heading": "تفاصيل الدفعة",
+          "hint": "كل كود يكون بصيغة {PREFIX}-XXXXXX.",
+          "prefix": "بادئة الكود",
+          "prefixHint": "أحرف وأرقام فقط. حتى 20 حرفاً.",
+          "count": "عدد الأكواد",
+          "countHint": "حتى 100 لكل دفعة",
+          "previewLabel": "أكواد عينة"
+        },
+        "step2": {
+          "heading": "قيمة الخصم",
+          "hint": "كل أكواد الدفعة تشترك بنفس الخصم.",
+          "percentage": "نسبة",
+          "fixed": "مبلغ ثابت",
+          "percentValue": "النسبة (1–100)",
+          "amountValue": "المبلغ بالريال"
+        },
+        "step3": {
+          "heading": "نطاق الدورات",
+          "hint": "تقييد لدورات محددة أو السماح لجميع الدورات.",
+          "all": "كل الدورات",
+          "specific": "دورات محددة",
+          "searchPlaceholder": "بحث…"
+        },
+        "step4": {
+          "heading": "الإعدادات",
+          "hint": "حدود الاستخدام لكل كود ومزايا اختيارية.",
+          "maxUsesPer": "الاستخدامات لكل كود",
+          "maxUsesPerHint": "كل كود في الدفعة يمكن استخدامه هذا العدد",
+          "perUser": "لكل مستخدم",
+          "expiresAt": "تاريخ الانتهاء",
+          "autoApply": "تطبيق تلقائي",
+          "autoApplyHint": "يطبق دون كتابة الكود",
+          "earlyBird": "وضع علامة الحجز المبكر",
+          "earlyBirdHint": "يظهر شارة صفراء على بطاقات الدورات",
+          "campaign": "إرفاق بحملة",
+          "noCampaign": "بدون حملة"
+        },
+        "step5": {
+          "heading": "المراجعة النهائية",
+          "hint": "سيتم توليد الأكواد وتحميلها كملف CSV.",
+          "sampleCodes": "عينة (الأكواد الفعلية تُولّد عند الإرسال)",
+          "samplesNote": "عرض 10 من {n}. سيتم تحميل كل الأكواد كملف CSV.",
+          "count": "العدد",
+          "discount": "الخصم",
+          "scope": "النطاق",
+          "expires": "الانتهاء",
+          "flags": "العلامات",
+          "nCourses": "{n} دورات",
+          "downloadNote": "سيتم تحميل ملف CSV تلقائياً بعد التوليد"
+        }
+      },
+      "campaignsV2": {
+        "searchPlaceholder": "بحث عن حملة…",
+        "status": {
+          "active": "نشطة",
+          "expired": "منتهية",
+          "all": "الكل"
+        },
+        "create": "حملة جديدة",
+        "empty": "لا توجد حملات بعد",
+        "emptyHint": "اجمع الأكواد المرتبطة تحت حملة بميزانية مشتركة وبانر.",
+        "budget": "الميزانية",
+        "unlimited": "بلا حد",
+        "codes": "أكواد",
+        "banner": "بانر",
+        "confirmDeactivate": "تعطيل هذه الحملة؟ سيتم رفض الأكواد التابعة عند الدفع.",
+        "toasts": {
+          "deactivated": "تم تعطيل الحملة",
+          "deactivateError": "فشل التعطيل"
+        },
+        "actions": {
+          "open": "فتح",
+          "edit": "تعديل",
+          "deactivate": "تعطيل"
+        },
+        "form": {
+          "createTitle": "حملة جديدة",
+          "editTitle": "تعديل الحملة",
+          "name": "الاسم",
+          "description": "الوصف",
+          "startsAt": "تبدأ في",
+          "endsAt": "تنتهي في",
+          "budget": "الميزانية (ريال، اختياري)",
+          "budgetHint": "اتركه فارغاً لميزانية بلا حد",
+          "showBanner": "عرض البانر على الموقع العام",
+          "showBannerHint": "يظهر شريط ملون أعلى صفحات الدورات أثناء الحملة.",
+          "bannerCta": "نص زر البانر (اختياري)",
+          "cancel": "إلغاء",
+          "save": "حفظ الحملة",
+          "createdToast": "تم إنشاء الحملة",
+          "editedToast": "تم حفظ الحملة",
+          "saveError": "فشل الحفظ"
+        },
+        "drawer": {
+          "loading": "جاري التحميل…",
+          "notFound": "الحملة غير موجودة",
+          "active": "نشطة",
+          "expired": "منتهية",
+          "tabs": {
+            "overview": "نظرة عامة",
+            "codes": "الأكواد"
+          },
+          "totalSpent": "إجمالي الاستخدام",
+          "ofBudget": "من",
+          "period": "الفترة",
+          "codeCount": "الأكواد",
+          "bannerActive": "البانر نشط على الموقع العام",
+          "noCodes": "لا توجد أكواد مرفقة بعد",
+          "cols": {
+            "code": "الكود",
+            "value": "القيمة",
+            "uses": "الاستخدام"
+          }
+        }
+      },
+      "courseSalesTab": {
+        "kpi": {
+          "liveSales": "عروض مباشرة",
+          "totalConfigured": "تم إعدادها",
+          "avgSavings": "توفير مباشر"
+        },
+        "filter": {
+          "all": "الكل",
+          "live": "مباشر",
+          "scheduled": "مجدول",
+          "none": "بلا عرض"
+        }
+      },
+      "earlyBirdTab": {
+        "badge": "حجز مبكر",
+        "value": "الخصم",
+        "uses": "الاستخدامات",
+        "endsIn": "ينتهي خلال",
+        "startsIn": "يبدأ خلال",
+        "globalScope": "كل الدورات",
+        "nCourses": "{n} دورات",
+        "saved": "وفّر",
+        "empty": "لا توجد أكواد حجز مبكر بعد",
+        "emptyHint": "أنشئ كود حجز مبكر لعرض خصم محدود الوقت بشارة على بطاقات الدورات.",
+        "sections": {
+          "live": "مباشر الآن",
+          "scheduled": "مجدول",
+          "expired": "منتهي"
+        },
+        "hero": {
+          "title": "مزايا الحجز المبكر",
+          "subtitle": "خصومات محدودة الوقت مع شارة على بطاقات الدورات",
+          "create": "إنشاء حجز مبكر"
+        }
+      },
+      "detailDrawer": {
+        "loading": "جاري التحميل…",
+        "edit": "تعديل",
+        "enable": "تفعيل",
+        "disable": "تعطيل",
+        "delete": "حذف",
+        "confirmDelete": "حذف هذه القسيمة؟ لا يمكن التراجع.",
+        "tabs": {
+          "overview": "نظرة عامة",
+          "config": "الإعدادات",
+          "usage": "الاستخدام",
+          "audit": "السجل"
+        },
+        "statusPill": {
+          "active": "نشط",
+          "scheduled": "مجدول",
+          "expired": "منتهي",
+          "disabled": "معطل"
+        },
+        "toasts": {
+          "enabled": "تم التفعيل",
+          "disabled": "تم التعطيل",
+          "deleted": "تم الحذف",
+          "toggleError": "فشل التبديل",
+          "deleteError": "فشل الحذف"
+        },
+        "overview": {
+          "uses": "الاستخدام",
+          "totalSaved": "إجمالي التوفير",
+          "uniqueUsers": "الاستخدامات",
+          "validFrom": "صالح من",
+          "validUntil": "صالح حتى",
+          "scope": "النطاق",
+          "globalScope": "كل الدورات",
+          "nCourses": "{n} دورة",
+          "perUser": "لكل مستخدم",
+          "minOrder": "الحد الأدنى",
+          "created": "تاريخ الإنشاء"
+        },
+        "config": {
+          "code": "الكود",
+          "type": "النوع",
+          "value": "القيمة",
+          "maxUses": "الحد الأقصى",
+          "perUser": "لكل مستخدم",
+          "minOrder": "الحد الأدنى",
+          "autoApply": "تطبيق تلقائي",
+          "earlyBird": "حجز مبكر",
+          "campaign": "الحملة",
+          "scope": "النطاق",
+          "batch": "معرف الدفعة"
+        },
+        "usage": {
+          "empty": "لا توجد استخدامات بعد",
+          "user": "المستخدم",
+          "saved": "التوفير",
+          "when": "متى"
+        },
+        "audit": {
+          "empty": "لا توجد سجلات"
         }
       }
     },

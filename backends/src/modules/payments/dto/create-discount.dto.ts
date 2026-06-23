@@ -9,6 +9,7 @@ import {
   IsInt,
   Min,
   MaxLength,
+  IsBoolean,
 } from 'class-validator';
 
 export class CreateDiscountDto {
@@ -56,4 +57,16 @@ export class CreateDiscountDto {
   @IsOptional()
   @IsDateString()
   validUntil?: string;
+
+  @IsOptional()
+  @IsUUID('4')
+  campaignId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  autoApply?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  earlyBird?: boolean;
 }

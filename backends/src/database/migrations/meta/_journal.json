@@ -540,6 +540,13 @@
       "when": 1783152000000,
       "tag": "0091_coupon_campaigns_autoapply_maxdiscountpct",
       "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1783238400000,
+      "tag": "0092_discount_early_bird_batches",
+      "breakpoints": true
     }
   ]
 }

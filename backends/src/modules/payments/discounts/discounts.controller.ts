@@ -113,6 +113,38 @@ export class DiscountsController {
     return this.discountService.getDiscountSummary({ startDate, endDate });
   }
 
+  @Get('chart-series')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getChartSeries(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.discountService.getDiscountChartSeries(startDate, endDate);
+  }
+
+  @Get('activity/recent')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getRecentActivity(
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit = 10,
+  ) {
+    return this.discountService.getRecentActivity(limit);
+  }
+
+  @Get('early-bird')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async listEarlyBird() {
+    return this.discountService.listEarlyBirdCodes();
+  }
+
+  @Get('batches')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async listBatches(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit = 20,
+  ) {
+    return this.discountService.listBatches({ page, limit });
+  }
+
   // ─── Public-facing endpoints (no auth) ──────────────────────────────
 
   /**
@@ -242,8 +274,29 @@ export class DiscountsController {
     @Query('search') search?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Query('type') type?: 'percentage' | 'fixed',
+    @Query('autoApply') autoApply?: string,
+    @Query('earlyBird') earlyBird?: string,
+    @Query('campaignId') campaignId?: string,
+    @Query('scope') scope?: 'all' | 'global' | 'course',
   ) {
-    return this.discountService.findAll(page, limit, status, search, startDate, endDate);
+    return this.discountService.findAll(
+      page,
+      limit,
+      status,
+      search,
+      startDate,
+      endDate,
+      {
+        type,
+        autoApply:
+          autoApply === undefined ? undefined : autoApply === 'true',
+        earlyBird:
+          earlyBird === undefined ? undefined : earlyBird === 'true',
+        campaignId,
+        scope,
+      },
+    );
   }
 
   @Post()

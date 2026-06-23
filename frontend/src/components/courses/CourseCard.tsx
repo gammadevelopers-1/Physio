@@ -17,6 +17,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useFavourites } from "@/contexts/FavouritesContext";
 import { useAuth } from "@/contexts";
 import { FmtDate } from "@/components/ui/Fmt";
+import DiscountBadge from "./DiscountBadge";
 
 interface CourseCardProps {
   course: PublicCourse;
@@ -224,14 +225,17 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
         {/* Footer: price + CTA */}
         <div className={`flex items-center justify-between pt-2 ${isRTL ? "flex-row-reverse" : ""}`}>
           {onSale && !isFree ? (
-            <span className={`flex items-baseline gap-1.5 ${isRTL ? "flex-row-reverse" : ""}`}>
-              <span className="text-[var(--color-primary)] font-bold text-[15px]">{effectivePrice} SAR</span>
-              <span className="text-[var(--color-text-secondary)] text-[13px] line-through">{price} SAR</span>
-              {salePercent ? (
-                <span className="text-[11px] font-bold text-white bg-red-600 rounded px-1.5 py-0.5">
-                  {t("card.percentOff", { percent: salePercent })}
-                </span>
-              ) : null}
+            <span className={`flex flex-col items-start gap-0.5 ${isRTL ? "items-end" : ""}`}>
+              <span className={`flex items-baseline gap-1.5 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <span className="text-[var(--color-primary)] font-bold text-[15px]">{effectivePrice} SAR</span>
+                <span className="text-[var(--color-text-secondary)] text-[13px] line-through">{price} SAR</span>
+              </span>
+              <DiscountBadge
+                variant="sale"
+                percent={salePercent}
+                amountSaved={Math.max(0, price - effectivePrice)}
+                size="sm"
+              />
             </span>
           ) : (
             <span className="text-[var(--color-primary)] font-bold text-[15px]">

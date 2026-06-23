@@ -1311,7 +1311,15 @@
       "saleLabel": "Sale ({percent}% off)",
       "saleLabelGeneric": "Sale",
       "notAvailableOnSale": "Coupon codes can't be combined with this sale.",
-      "total": "Total"
+      "total": "Total",
+      "autoAppliedTitle": "Auto-applied",
+      "autoAppliedBody": "Early-bird saving applied automatically.",
+      "validating": "Validating...",
+      "validFor": "Valid for this cart",
+      "perLineBreakdownTitle": "Discount breakdown",
+      "perLineApplied": "Applied to {course}",
+      "perLineSkipped": "Not eligible: {course}",
+      "campaignTag": "Part of {campaign}"
     },
     "errors": {
       "courseNotFound": "Course not found",
@@ -8706,7 +8714,9 @@
         "active": "Active",
         "expired": "Expired",
         "disabled": "Disabled",
-        "all": "All Coupons"
+        "all": "All Coupons",
+        "codes": "Codes",
+        "campaigns": "Campaigns"
       },
       "stats": {
         "activeCoupons": "Active Coupons",
@@ -8760,6 +8770,100 @@
         "conversions": "uses",
         "saved": "Saved",
         "cannibalization": "Cannibalization"
+      },
+      "kpi": {
+        "activeCodesTitle": "Active Codes",
+        "activeCodesSubtitle": "Live discounts available",
+        "activeCampaignsTitle": "Active Campaigns",
+        "activeCampaignsSubtitle": "Promotional groupings live now",
+        "autoApplyTitle": "Auto-apply Codes",
+        "autoApplySubtitle": "Early-bird codes applied silently",
+        "redemptionsTitle": "Redemptions",
+        "redemptionsSubtitle": "In selected period",
+        "totalSavedTitle": "Total Saved",
+        "totalSavedSubtitle": "Given back to learners in period",
+        "avgSavedTitle": "Avg. Savings / Use",
+        "avgSavedSubtitle": "Per redemption in period"
+      },
+      "campaigns": {
+        "title": "Campaigns",
+        "createTitle": "New campaign",
+        "editTitle": "Edit campaign",
+        "empty": "No campaigns yet.",
+        "newButton": "New campaign",
+        "table": {
+          "name": "Name",
+          "period": "Period",
+          "budget": "Budget",
+          "spent": "Spent",
+          "codes": "Codes",
+          "status": "Status",
+          "showOnSite": "Banner"
+        },
+        "fields": {
+          "name": "Name",
+          "description": "Description",
+          "startsAt": "Starts at",
+          "endsAt": "Ends at",
+          "budget": "Budget (SAR, optional)",
+          "showOnSite": "Show banner on public site",
+          "bannerCta": "Banner CTA label (optional)"
+        },
+        "placeholders": {
+          "name": "e.g. Ramadan 2026",
+          "description": "Short description shown in finance + banner",
+          "bannerCta": "e.g. Shop Now"
+        },
+        "status": {
+          "active": "Active",
+          "expired": "Expired / Inactive"
+        },
+        "noEndDate": "No end date",
+        "unlimitedBudget": "Unlimited",
+        "saveButton": "Save campaign",
+        "deactivateButton": "Deactivate",
+        "deactivateConfirm": "Deactivate this campaign? Child codes will be rejected at checkout.",
+        "activeFilter": "Active",
+        "expiredFilter": "Expired",
+        "allFilter": "All"
+      },
+      "drawer": {
+        "title": "Discount Detail",
+        "tabs": {
+          "overview": "Overview",
+          "usage": "Usage",
+          "audit": "Audit"
+        },
+        "overview": {
+          "code": "Code",
+          "type": "Type",
+          "value": "Value",
+          "currentUses": "Used",
+          "maxUses": "Max uses",
+          "maxUsesPerUser": "Per user",
+          "autoApply": "Auto-apply",
+          "campaign": "Campaign",
+          "validFrom": "Valid from",
+          "validUntil": "Valid until",
+          "applicableCourses": "Applicable courses",
+          "minOrderAmount": "Minimum order",
+          "createdAt": "Created",
+          "createdBy": "Created by",
+          "noCourses": "All courses (global)",
+          "editButton": "Edit",
+          "deleteButton": "Deactivate"
+        },
+        "usage": {
+          "empty": "No redemptions yet.",
+          "amountSaved": "Saved",
+          "openPayment": "Open payment"
+        },
+        "audit": {
+          "empty": "No audit entries yet.",
+          "by": "by",
+          "viewMeta": "View metadata",
+          "hideMeta": "Hide metadata"
+        }
       }
     },
     "reportsPage": {
@@ -12033,5 +12137,24 @@
     "paymentMethod": "Payment",
     "subtotal": "Subtotal",
     "vat": "VAT (15%)"
+  },
+  "discountBadge": {
+    "salePercent": "{percent}% OFF",
+    "saleAmount": "SAVE SAR {amount}",
+    "earlyBird": "EARLY BIRD",
+    "earlyBirdSavings": "Save SAR {amount}",
+    "earlyBirdEndsIn": "Ends in {when}",
+    "autoApplied": "Auto-applied at checkout",
+    "couponHint": "Use code {code}",
+    "limitedOffer": "Limited offer"
+  },
+  "campaignBanner": {
+    "dismiss": "Dismiss",
+    "endsIn": "Ends in {when}",
+    "timeLeftDays": "{days}d {hours}h",
+    "timeLeftHours": "{hours}h {minutes}m",
+    "timeLeftMinutes": "{minutes}m",
+    "cta": "Browse Courses",
+    "learnMore": "Learn more"
   }
 }

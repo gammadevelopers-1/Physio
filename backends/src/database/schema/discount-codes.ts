@@ -32,7 +32,26 @@ export const discountCodes = pgTable(
     validUntil: timestamp('valid_until'),
     isActive: boolean('is_active').notNull().default(true),
     // Optional grouping label for promotional campaigns (e.g. "Ramadan 2026").
+    // Legacy text label — new codes should attach via `campaignId` (FK to
+    // coupon_campaigns). Kept for backward compatibility.
     campaign: varchar('campaign', { length: 100 }),
+    /**
+     * FK to coupon_campaigns. When the parent campaign ends or hits its
+     * budget, code is treated as inactive (checked in validateDiscount).
+     * Nullable so standalone codes still work.
+     *
+     * NOTE: Drizzle FK omitted intentionally to avoid circular schema
+     * import (campaigns ↔ codes). Enforced in service layer + validated
+     * at the index level.
+     */
+    campaignId: uuid('campaign_id'),
+    /**
+     * Early-bird auto-apply flag. When true, the code is applied to any
+     * eligible cart automatically (no code-typing required). Surfaced as
+     * a yellow "Early Bird" badge on the public course card while
+     * within the validity window.
+     */
+    autoApply: boolean('auto_apply').notNull().default(false),
     createdBy: uuid('created_by')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),

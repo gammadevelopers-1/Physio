@@ -1311,7 +1311,15 @@
       "saleLabel": "تخفيض ({percent}٪ خصم)",
       "saleLabelGeneric": "تخفيض",
       "notAvailableOnSale": "لا يمكن استخدام أكواد الخصم مع هذا التخفيض.",
-      "total": "المجموع"
+      "total": "المجموع",
+      "autoAppliedTitle": "مُطبّق تلقائياً",
+      "autoAppliedBody": "تم تطبيق خصم الحجز المبكر تلقائياً.",
+      "validating": "جارٍ التحقق...",
+      "validFor": "صالح لهذه السلة",
+      "perLineBreakdownTitle": "تفاصيل الخصم",
+      "perLineApplied": "مُطبّق على {course}",
+      "perLineSkipped": "غير مؤهل: {course}",
+      "campaignTag": "ضمن حملة {campaign}"
     },
     "errors": {
       "courseNotFound": "لم يتم العثور على الدورة",
@@ -8706,7 +8714,9 @@
         "active": "نشطة",
         "expired": "منتهية",
         "disabled": "معطلة",
-        "all": "جميع القسائم"
+        "all": "جميع القسائم",
+        "codes": "الأكواد",
+        "campaigns": "الحملات"
       },
       "stats": {
         "activeCoupons": "القسائم النشطة",
@@ -8760,6 +8770,100 @@
         "conversions": "استخدام",
         "saved": "وُفِّر",
         "cannibalization": "تأثير سلبي"
+      },
+      "kpi": {
+        "activeCodesTitle": "أكواد فعّالة",
+        "activeCodesSubtitle": "أكواد الخصم المتاحة حالياً",
+        "activeCampaignsTitle": "حملات فعّالة",
+        "activeCampaignsSubtitle": "مجموعات ترويجية فعّالة الآن",
+        "autoApplyTitle": "أكواد تلقائية",
+        "autoApplySubtitle": "أكواد الحجز المبكر التي تُطبَّق تلقائياً",
+        "redemptionsTitle": "مرّات الاستخدام",
+        "redemptionsSubtitle": "خلال الفترة المحددة",
+        "totalSavedTitle": "إجمالي التوفير",
+        "totalSavedSubtitle": "ما أُعيد إلى المتعلّمين في الفترة",
+        "avgSavedTitle": "متوسط التوفير لكل استخدام",
+        "avgSavedSubtitle": "لكل عملية استرداد في الفترة"
+      },
+      "campaigns": {
+        "title": "الحملات",
+        "createTitle": "حملة جديدة",
+        "editTitle": "تعديل الحملة",
+        "empty": "لا توجد حملات بعد.",
+        "newButton": "حملة جديدة",
+        "table": {
+          "name": "الاسم",
+          "period": "الفترة",
+          "budget": "الميزانية",
+          "spent": "المستهلَك",
+          "codes": "الأكواد",
+          "status": "الحالة",
+          "showOnSite": "إعلان الموقع"
+        },
+        "fields": {
+          "name": "الاسم",
+          "description": "الوصف",
+          "startsAt": "تبدأ في",
+          "endsAt": "تنتهي في",
+          "budget": "الميزانية (ر.س، اختياري)",
+          "showOnSite": "عرض شريط ترويجي في الموقع العام",
+          "bannerCta": "نص زر الإعلان (اختياري)"
+        },
+        "placeholders": {
+          "name": "مثال: رمضان 2026",
+          "description": "وصف قصير يظهر في المالية وعلى الشريط",
+          "bannerCta": "مثال: تسوّق الآن"
+        },
+        "status": {
+          "active": "فعّالة",
+          "expired": "منتهية / غير فعّالة"
+        },
+        "noEndDate": "بدون تاريخ انتهاء",
+        "unlimitedBudget": "غير محدودة",
+        "saveButton": "حفظ الحملة",
+        "deactivateButton": "إيقاف",
+        "deactivateConfirm": "إيقاف هذه الحملة؟ ستُرفض الأكواد التابعة لها عند الدفع.",
+        "activeFilter": "فعّالة",
+        "expiredFilter": "منتهية",
+        "allFilter": "الكل"
+      },
+      "drawer": {
+        "title": "تفاصيل الخصم",
+        "tabs": {
+          "overview": "نظرة عامة",
+          "usage": "الاستخدام",
+          "audit": "سجل التدقيق"
+        },
+        "overview": {
+          "code": "الكود",
+          "type": "النوع",
+          "value": "القيمة",
+          "currentUses": "استُخدم",
+          "maxUses": "الحد الأقصى للاستخدام",
+          "maxUsesPerUser": "لكل مستخدم",
+          "autoApply": "تطبيق تلقائي",
+          "campaign": "الحملة",
+          "validFrom": "صالح من",
+          "validUntil": "صالح حتى",
+          "applicableCourses": "الدورات المنطبق عليها",
+          "minOrderAmount": "الحد الأدنى للطلب",
+          "createdAt": "أُنشئ في",
+          "createdBy": "أنشأه",
+          "noCourses": "جميع الدورات (عام)",
+          "editButton": "تعديل",
+          "deleteButton": "إيقاف"
+        },
+        "usage": {
+          "empty": "لا توجد عمليات استرداد بعد.",
+          "amountSaved": "وفّر",
+          "openPayment": "فتح الدفعة"
+        },
+        "audit": {
+          "empty": "لا توجد سجلات بعد.",
+          "by": "بواسطة",
+          "viewMeta": "عرض البيانات الوصفية",
+          "hideMeta": "إخفاء البيانات الوصفية"
+        }
       }
     },
     "reportsPage": {
@@ -12033,5 +12137,24 @@
     "paymentMethod": "الدفع",
     "subtotal": "المجموع الفرعي",
     "vat": "ضريبة القيمة المضافة (15%)"
+  },
+  "discountBadge": {
+    "salePercent": "خصم {percent}٪",
+    "saleAmount": "وفّر {amount} ر.س",
+    "earlyBird": "حجز مبكر",
+    "earlyBirdSavings": "وفّر {amount} ر.س",
+    "earlyBirdEndsIn": "ينتهي خلال {when}",
+    "autoApplied": "يُطبّق تلقائياً عند الدفع",
+    "couponHint": "استخدم الرمز {code}",
+    "limitedOffer": "عرض محدود"
+  },
+  "campaignBanner": {
+    "dismiss": "إغلاق",
+    "endsIn": "ينتهي خلال {when}",
+    "timeLeftDays": "{days} يوم {hours} س",
+    "timeLeftHours": "{hours} س {minutes} د",
+    "timeLeftMinutes": "{minutes} د",
+    "cta": "تصفّح الدورات",
+    "learnMore": "اعرف المزيد"
   }
 }

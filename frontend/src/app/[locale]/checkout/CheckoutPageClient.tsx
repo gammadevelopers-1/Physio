@@ -18,6 +18,7 @@ import {
   Trash2,
   Edit3,
   AlertCircle,
+  Sparkles,
 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { paymentApi, discountApi, studentApi } from "@/lib/api";
@@ -245,6 +246,13 @@ export default function CheckoutPageClient({
     error?: string;
   } | null>(null);
   const [validatingDiscount, setValidatingDiscount] = useState(false);
+  /** True when the active discount came from the auto-apply endpoint
+   * (early-bird), false when the user typed it manually. Controls the
+   * "Auto-applied" pill. */
+  const [isAutoApplied, setIsAutoApplied] = useState(false);
+  /** Tracks the campaign name (if any) attached to the active code so
+   * we can surface "Part of <campaign>" in the breakdown. */
+  const [autoAppliedCampaign, setAutoAppliedCampaign] = useState<string | null>(null);
 
   // Totals
   const originalSubtotal = items.reduce((s, it) => s + it.price, 0);
@@ -264,6 +272,10 @@ export default function CheckoutPageClient({
       // that here so the preview matches the authoritative server result.
       const result = await discountApi.validate(discountCode, items[0].id);
       setDiscountResult(result);
+      // Manual entry overrides any prior auto-apply — re-fetch campaign meta
+      // would require an extra call; clear the campaign label for clarity.
+      setIsAutoApplied(false);
+      setAutoAppliedCampaign(null);
     } catch (err: any) {
       setDiscountResult({
         valid: false,
@@ -275,6 +287,53 @@ export default function CheckoutPageClient({
       setValidatingDiscount(false);
     }
   };
+
+  // Auto-apply early-bird discount on cart load. Runs once when items
+  // first populate. Skipped if the user has already typed a code.
+  useEffect(() => {
+    if (items.length === 0) return;
+    if (discountCode || discountResult) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const best = await discountApi.autoApply(items.map((i) => i.id));
+        if (cancelled || !best) return;
+        setDiscountCode(best.code);
+        setDiscountResult({
+          valid: true,
+          discountAmount: best.discountAmount,
+          discountId: best.discountId,
+        });
+        setIsAutoApplied(true);
+        setAutoAppliedCampaign(best.campaign?.name || null);
+      } catch {
+        /* silent — auto-apply is best-effort */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.length]);
+
+  // Debounced live re-validation when user edits the code (after the
+  // first manual Apply). Keeps preview in sync without forcing a click.
+  useEffect(() => {
+    if (!discountCode.trim()) {
+      // Cleared: drop the result too
+      if (discountResult) setDiscountResult(null);
+      setIsAutoApplied(false);
+      setAutoAppliedCampaign(null);
+      return;
+    }
+    if (isAutoApplied) return; // auto-applied codes don't re-validate on each keystroke
+    if (items.length === 0) return;
+    const handle = setTimeout(() => {
+      handleValidateDiscount();
+    }, 450);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [discountCode, items.length]);
 
   const handleSubmit = async () => {
     if (items.length === 0 || processing) return;
@@ -748,6 +807,22 @@ export default function CheckoutPageClient({
                   <h2 className="text-lg font-semibold text-[var(--on-surface-default)] mb-3">
                     {t("discount.title")}
                   </h2>
+                  {isAutoApplied && discountResult?.valid && (
+                    <div className="mb-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 flex items-start gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div className="text-[12px] text-amber-800 leading-snug">
+                        <p className="font-semibold">
+                          {t("discount.autoAppliedTitle")} · {discountCode}
+                        </p>
+                        <p>{t("discount.autoAppliedBody")}</p>
+                        {autoAppliedCampaign && (
+                          <p className="opacity-80 mt-0.5">
+                            {t("discount.campaignTag", { campaign: autoAppliedCampaign })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <div className="relative flex-1">
                       <Tag className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--on-surface-variant)]`} aria-hidden="true" />
@@ -756,13 +831,22 @@ export default function CheckoutPageClient({
                         value={discountCode}
                         onChange={(e) => {
                           setDiscountCode(e.target.value.toUpperCase());
-                          setDiscountResult(null);
+                          // Manual edit overrides auto-applied — let the
+                          // debounced effect re-validate the new code.
+                          setIsAutoApplied(false);
+                          setAutoAppliedCampaign(null);
+                          if (discountResult) setDiscountResult(null);
                         }}
                         placeholder={t("discount.placeholder")}
                         aria-label={t("discount.title")}
                         className={`w-full h-12 ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] focus-visible:ring-2 focus-visible:ring-[#005bd3] focus-visible:ring-offset-2 transition-colors`}
                         dir="ltr"
                       />
+                      {validatingDiscount && !isAutoApplied && (
+                        <Loader2
+                          className={`absolute ${isRTL ? "left-3" : "right-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--on-surface-variant)] animate-spin`}
+                        />
+                      )}
                     </div>
                     <button
                       onClick={handleValidateDiscount}

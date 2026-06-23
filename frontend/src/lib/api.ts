@@ -8317,6 +8317,115 @@ export const discountApi = {
     },
   ) => api.put<CourseSaleItem>(`/discounts/course-sales/${courseId}`, data),
 
+  // ─── Public / checkout ────────────────────────────────────────────
+
+  /** Best auto-apply (early-bird) discount for a cart, or null. Public. */
+  autoApply: (courseIds: string[], userId?: string) =>
+    api.post<{
+      code: string;
+      discountId: string;
+      discountAmount: number;
+      applicableCourseId: string;
+      campaign: { id: string; name: string } | null;
+    } | null>('/discounts/auto-apply', { courseIds, userId }),
+
+  /** Active site-wide banner campaign (or null). Public, polled by banner. */
+  getActiveBannerCampaign: () =>
+    api.get<{
+      id: string;
+      name: string;
+      description: string | null;
+      startsAt: string | null;
+      endsAt: string | null;
+      bannerCta: string | null;
+    } | null>('/discounts/active-banner-campaign'),
+
+  // ─── Finance dashboard additions ──────────────────────────────────
+
+  getSummary: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<{
+      live: {
+        activeCodes: number;
+        autoApplyCodes: number;
+        activeCampaigns: number;
+      };
+      window: {
+        redemptions: number;
+        totalSaved: number;
+        avgSaved: number;
+        uniqueUsers: number;
+      };
+    }>(`/discounts/summary${qs ? `?${qs}` : ''}`);
+  },
+
+  getAudit: (id: string) =>
+    api.get<Array<{
+      id: string;
+      action: string;
+      entityType: string;
+      entityId: string;
+      performedBy: string | null;
+      metadata: Record<string, unknown> | null;
+      createdAt: string;
+      actorName: string | null;
+      actorEmail: string | null;
+    }>>(`/discounts/${id}/audit`),
+
+  // ─── Campaigns CRUD (finance) ─────────────────────────────────────
+
+  listCampaigns: (opts?: {
+    status?: 'active' | 'expired' | 'all';
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const sp = new URLSearchParams();
+    if (opts?.status) sp.set('status', opts.status);
+    if (opts?.search) sp.set('search', opts.search);
+    if (opts?.page) sp.set('page', String(opts.page));
+    if (opts?.limit) sp.set('limit', String(opts.limit));
+    const qs = sp.toString();
+    return api.get<{
+      data: Array<{
+        id: string;
+        name: string;
+        description: string | null;
+        startsAt: string | null;
+        endsAt: string | null;
+        budget: string | null;
+        currentSpend: string;
+        isActive: boolean;
+        showOnSite: boolean;
+        bannerCta: string | null;
+        createdAt: string;
+        codeCount: number;
+      }>;
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }>(`/discounts/campaigns${qs ? `?${qs}` : ''}`);
+  },
+
+  createCampaign: (data: {
+    name: string;
+    description?: string;
+    startsAt?: string;
+    endsAt?: string;
+    budget?: number;
+    showOnSite?: boolean;
+    bannerCta?: string;
+  }) => api.post<any>('/discounts/campaigns', data),
+
+  getCampaign: (id: string) => api.get<any>(`/discounts/campaigns/${id}`),
+
+  updateCampaign: (id: string, data: any) =>
+    api.patch<any>(`/discounts/campaigns/${id}`, data),
+
+  deleteCampaign: (id: string) =>
+    api.delete<{ id: string; isActive: boolean }>(`/discounts/campaigns/${id}`),
+
   export: async (params?: { status?: string; search?: string; startDate?: string; endDate?: string }) => {
     const token = getAccessToken();
     const sp = new URLSearchParams();

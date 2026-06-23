@@ -533,6 +533,13 @@
       "when": 1782972000000,
       "tag": "0089_seed_reconciliation_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "7",
+      "when": 1783152000000,
+      "tag": "0091_coupon_campaigns_autoapply_maxdiscountpct",
+      "breakpoints": true
     }
   ]
 }

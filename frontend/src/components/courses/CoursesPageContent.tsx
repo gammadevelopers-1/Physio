@@ -9,6 +9,7 @@ import {
   CoursePagination,
   CourseCTA,
 } from "@/components/courses";
+import ActiveCampaignBanner from "@/components/courses/ActiveCampaignBanner";
 import type { CourseFiltersLabels } from "@/components/courses/CourseFilters";
 import { PublicCourse } from "@/types/instructor-dashboard";
 import { useLocale } from "next-intl";
@@ -176,6 +177,7 @@ const CoursesPageContent = ({
 
   return (
     <>
+      <ActiveCampaignBanner />
       {/* Desktop Layout */}
       <div className="hidden lg:block" dir={isRTL ? "rtl" : "ltr"}>
         <section className="px-16 py-12">

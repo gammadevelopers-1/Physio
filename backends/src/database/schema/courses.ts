@@ -41,6 +41,13 @@ export const courses = pgTable(
     // Finance-manager toggle: may a coupon ALSO be applied on top of this sale?
     // false (default) = sale OR coupon (mutually exclusive); true = stack.
     saleAllowsCoupon: boolean('sale_allows_coupon').notNull().default(false),
+    // Safety cap: even if a coupon would discount more than this percentage
+    // of the course price, the discount is capped at this %. 100 = no cap
+    // (full discount allowed). Lets finance set "max 30% off this premium
+    // course" without auditing every coupon's scope.
+    maxDiscountPct: numeric('max_discount_pct', { precision: 5, scale: 2 })
+      .notNull()
+      .default('100'),
     cmeHours: integer('cme_hours').default(0),
     enrollmentDeadline: timestamp('enrollment_deadline'),
     isCmeAccredited: boolean('is_cme_accredited').default(false),

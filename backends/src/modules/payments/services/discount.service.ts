@@ -9,7 +9,9 @@ import { db } from '../../../database';
 import {
   discountCodes,
   discountUsage,
+  couponCampaigns,
   invoices,
+  payments,
   users,
   courses,
 } from '../../../database/schema';
@@ -151,6 +153,7 @@ export class DiscountService {
     courseId: string,
     userId: string,
     coursePrice: number,
+    opts?: { ipAddress?: string },
   ): Promise<{
     valid: boolean;
     discountAmount: number;
@@ -168,17 +171,66 @@ export class DiscountService {
       )
       .limit(1);
 
+    const fail = async (error: string) => {
+      // Write failed validation to the audit trail so finance can spot
+      // brute-force fraud / abuse patterns. Best-effort; never blocks
+      // the user-facing response.
+      try {
+        await this.auditLogService.log({
+          entityType: 'discount',
+          entityId: discount?.id || 'unknown',
+          action: 'discount_validation_failed',
+          performedBy: userId,
+          ipAddress: opts?.ipAddress,
+          metadata: { code: code.toUpperCase(), courseId, coursePrice, error },
+        });
+      } catch (err: any) {
+        this.logger.warn(
+          `Failed to audit failed validation: ${err?.message || err}`,
+        );
+      }
+      return { valid: false, discountAmount: 0, discountId: null, error };
+    };
+
     if (!discount) {
-      return { valid: false, discountAmount: 0, discountId: null, error: 'Discount code not found' };
+      return fail('Discount code not found');
     }
 
     // Check validity period
     const now = new Date();
     if (discount.validFrom && new Date(discount.validFrom) > now) {
-      return { valid: false, discountAmount: 0, discountId: null, error: 'Discount code is not yet active' };
+      return fail('Discount code is not yet active');
     }
     if (discount.validUntil && new Date(discount.validUntil) < now) {
-      return { valid: false, discountAmount: 0, discountId: null, error: 'Discount code has expired' };
+      return fail('Discount code has expired');
+    }
+
+    // Check parent campaign (if attached) — auto-deactivates child codes
+    // when campaign ends or hits budget. No cron needed; checked here.
+    if (discount.campaignId) {
+      const [campaign] = await db
+        .select({
+          id: couponCampaigns.id,
+          isActive: couponCampaigns.isActive,
+          endsAt: couponCampaigns.endsAt,
+          budget: couponCampaigns.budget,
+          currentSpend: couponCampaigns.currentSpend,
+        })
+        .from(couponCampaigns)
+        .where(eq(couponCampaigns.id, discount.campaignId))
+        .limit(1);
+      if (!campaign || !campaign.isActive) {
+        return fail('Discount code campaign is not active');
+      }
+      if (campaign.endsAt && new Date(campaign.endsAt) < now) {
+        return fail('Discount code campaign has ended');
+      }
+      if (
+        campaign.budget !== null &&
+        Number(campaign.currentSpend) >= Number(campaign.budget)
+      ) {
+        return fail('Discount code campaign budget has been used up');
+      }
     }
 
     // Check max uses
@@ -186,12 +238,12 @@ export class DiscountService {
       discount.maxUses !== null &&
       discount.currentUses >= discount.maxUses
     ) {
-      return { valid: false, discountAmount: 0, discountId: null, error: 'Discount code has reached its maximum usage limit' };
+      return fail('Discount code has reached its maximum usage limit');
     }
 
     // Check course restriction (empty array = global discount)
     if (discount.applicableCourses.length > 0 && !discount.applicableCourses.includes(courseId)) {
-      return { valid: false, discountAmount: 0, discountId: null, error: 'Discount code is not valid for this course' };
+      return fail('Discount code is not valid for this course');
     }
 
     // Check min order amount
@@ -199,12 +251,7 @@ export class DiscountService {
       discount.minOrderAmount &&
       coursePrice < Number(discount.minOrderAmount)
     ) {
-      return {
-        valid: false,
-        discountAmount: 0,
-        discountId: null,
-        error: `Minimum order amount is SAR ${discount.minOrderAmount}`,
-      };
+      return fail(`Minimum order amount is SAR ${discount.minOrderAmount}`);
     }
 
     // Check per-user usage limit (configurable; NULL column = unlimited per user)
@@ -222,13 +269,9 @@ export class DiscountService {
           ),
         );
       if (Number(used) >= discount.maxUsesPerUser) {
-        return {
-          valid: false,
-          discountAmount: 0,
-          discountId: null,
-          error:
-            'You have already used this discount code the maximum number of times',
-        };
+        return fail(
+          'You have already used this discount code the maximum number of times',
+        );
       }
     }
 
@@ -240,15 +283,198 @@ export class DiscountService {
       discountAmount = Number(discount.value);
     }
 
-    // Cap at course price, then round to 2 decimals so the SAME value flows into
-    // the VAT base, the persisted invoice, and amountSaved (no ~0.01 SAR drift).
-    discountAmount = Math.round(Math.min(discountAmount, coursePrice) * 100) / 100;
+    // Cap at course price first
+    discountAmount = Math.min(discountAmount, coursePrice);
+
+    // Apply per-course safety cap (`maxDiscountPct`). Defaults to 100
+    // (= no cap) so existing courses behave unchanged.
+    const [courseRow] = await db
+      .select({ maxDiscountPct: courses.maxDiscountPct })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+    const maxPct = Number(courseRow?.maxDiscountPct ?? 100);
+    if (maxPct < 100) {
+      const capAbsolute = (coursePrice * maxPct) / 100;
+      discountAmount = Math.min(discountAmount, capAbsolute);
+    }
+
+    // Round to 2 decimals so the SAME value flows into the VAT base,
+    // the persisted invoice, and amountSaved (no ~0.01 SAR drift).
+    discountAmount = Math.round(discountAmount * 100) / 100;
 
     return {
       valid: true,
       discountAmount,
       discountId: discount.id,
     };
+  }
+
+  /**
+   * Return the single best auto-apply discount for a given cart, or null.
+   * Used by the public checkout to surface early-bird savings without the
+   * buyer needing to type a code. Picks the discount with the highest
+   * absolute savings on the cart's largest line.
+   *
+   * Honours validity windows, per-user caps, max-uses, campaign state,
+   * and the per-course `maxDiscountPct` cap. Falls back to null if no
+   * eligible discount exists.
+   */
+  async getBestAutoApplyDiscount(
+    courseIds: string[],
+    userId: string | null,
+  ): Promise<{
+    code: string;
+    discountId: string;
+    discountAmount: number;
+    applicableCourseId: string;
+    campaign: { id: string; name: string } | null;
+  } | null> {
+    if (courseIds.length === 0) return null;
+
+    const now = new Date();
+
+    // Pull all currently-active auto-apply codes. Set is small (early-bird
+    // codes are scarce), so we filter in memory by course-scope and per-
+    // user caps. Avoids a heavy JOIN.
+    const codes = await db
+      .select()
+      .from(discountCodes)
+      .where(
+        and(
+          eq(discountCodes.autoApply, true),
+          eq(discountCodes.isActive, true),
+          or(
+            isNull(discountCodes.validFrom),
+            lte(discountCodes.validFrom, now),
+          )!,
+          or(
+            isNull(discountCodes.validUntil),
+            gte(discountCodes.validUntil, now),
+          )!,
+        ),
+      );
+    if (codes.length === 0) return null;
+
+    // Fetch cart courses (id, price, maxDiscountPct) in one go.
+    const cartCourses = await db
+      .select({
+        id: courses.id,
+        price: courses.price,
+        maxDiscountPct: courses.maxDiscountPct,
+        salePercent: courses.salePercent,
+        saleStartsAt: courses.saleStartsAt,
+        saleEndsAt: courses.saleEndsAt,
+        saleAllowsCoupon: courses.saleAllowsCoupon,
+      })
+      .from(courses)
+      .where(inArray(courses.id, courseIds));
+    if (cartCourses.length === 0) return null;
+
+    // Fetch any attached campaigns in one go.
+    const campaignIds = codes
+      .map((c) => c.campaignId)
+      .filter((x): x is string => !!x);
+    const campaigns = campaignIds.length
+      ? await db
+          .select()
+          .from(couponCampaigns)
+          .where(inArray(couponCampaigns.id, campaignIds))
+      : [];
+    const campaignById = new Map(campaigns.map((c) => [c.id, c]));
+
+    let best: {
+      code: string;
+      discountId: string;
+      discountAmount: number;
+      applicableCourseId: string;
+      campaign: { id: string; name: string } | null;
+    } | null = null;
+
+    for (const code of codes) {
+      // Campaign gate
+      if (code.campaignId) {
+        const camp = campaignById.get(code.campaignId);
+        if (!camp || !camp.isActive) continue;
+        if (camp.endsAt && new Date(camp.endsAt) < now) continue;
+        if (
+          camp.budget !== null &&
+          Number(camp.currentSpend) >= Number(camp.budget)
+        ) {
+          continue;
+        }
+      }
+
+      // Global max-uses gate
+      if (code.maxUses !== null && code.currentUses >= code.maxUses) continue;
+
+      // Per-user cap gate (only when we have a user)
+      if (
+        userId &&
+        code.maxUsesPerUser !== null &&
+        code.maxUsesPerUser !== undefined
+      ) {
+        const [{ used }] = await db
+          .select({ used: count() })
+          .from(discountUsage)
+          .where(
+            and(
+              eq(discountUsage.discountId, code.id),
+              eq(discountUsage.userId, userId),
+            ),
+          );
+        if (Number(used) >= code.maxUsesPerUser) continue;
+      }
+
+      // Pick the best matching line in the cart. Course-scoped codes can
+      // only apply to scoped courses; global codes can apply to any line.
+      const eligibleLines =
+        code.applicableCourses.length > 0
+          ? cartCourses.filter((c) => code.applicableCourses.includes(c.id))
+          : cartCourses;
+      if (eligibleLines.length === 0) continue;
+
+      for (const line of eligibleLines) {
+        const effective = getEffectivePrice(line, now);
+        const linePrice = effective.effectivePrice;
+        // Sales + coupons mutually exclusive unless flagged
+        if (effective.onSale && !line.saleAllowsCoupon) continue;
+        if (linePrice <= 0) continue;
+        if (
+          code.minOrderAmount &&
+          linePrice < Number(code.minOrderAmount)
+        ) {
+          continue;
+        }
+
+        let amount =
+          code.type === 'percentage'
+            ? (linePrice * Number(code.value)) / 100
+            : Number(code.value);
+        amount = Math.min(amount, linePrice);
+        const maxPct = Number(line.maxDiscountPct ?? 100);
+        if (maxPct < 100) amount = Math.min(amount, (linePrice * maxPct) / 100);
+        amount = Math.round(amount * 100) / 100;
+        if (amount <= 0) continue;
+
+        if (!best || amount > best.discountAmount) {
+          best = {
+            code: code.code,
+            discountId: code.id,
+            discountAmount: amount,
+            applicableCourseId: line.id,
+            campaign: code.campaignId
+              ? {
+                  id: code.campaignId,
+                  name: campaignById.get(code.campaignId)?.name || '',
+                }
+              : null,
+          };
+        }
+      }
+    }
+
+    return best;
   }
 
   async recordUsage(
@@ -328,6 +554,18 @@ export class DiscountService {
           updatedAt: new Date(),
         })
         .where(eq(discountCodes.id, discountId));
+
+      // If this code belongs to a campaign, bump its currentSpend so
+      // budget enforcement stays accurate across all child codes.
+      if (discount.campaignId) {
+        await tx
+          .update(couponCampaigns)
+          .set({
+            currentSpend: sql`${couponCampaigns.currentSpend} + ${amountSaved.toFixed(2)}::numeric`,
+            updatedAt: new Date(),
+          })
+          .where(eq(couponCampaigns.id, discount.campaignId));
+      }
     });
 
     await this.auditLogService.log({
@@ -994,6 +1232,13 @@ export class DiscountService {
       return;
     }
 
+    // Resolve parent campaign (if any) so we can decrement spend.
+    const [code] = await db
+      .select({ campaignId: discountCodes.campaignId })
+      .from(discountCodes)
+      .where(eq(discountCodes.id, usage.discountId))
+      .limit(1);
+
     // Decrement currentUses (floor at 0)
     await db
       .update(discountCodes)
@@ -1002,6 +1247,17 @@ export class DiscountService {
         updatedAt: new Date(),
       })
       .where(eq(discountCodes.id, usage.discountId));
+
+    // Decrement campaign spend if applicable (floor at 0)
+    if (code?.campaignId) {
+      await db
+        .update(couponCampaigns)
+        .set({
+          currentSpend: sql`GREATEST(${couponCampaigns.currentSpend} - ${usage.amountSaved}::numeric, 0)`,
+          updatedAt: new Date(),
+        })
+        .where(eq(couponCampaigns.id, code.campaignId));
+    }
 
     // Delete the usage record
     await db
@@ -1017,5 +1273,368 @@ export class DiscountService {
     });
 
     this.logger.log(`Reversed discount usage for payment ${paymentId}, discount ${usage.discountId}`);
+  }
+
+  // ─── Campaigns CRUD ─────────────────────────────────────────────────
+
+  async listCampaigns(opts: {
+    status?: 'active' | 'expired' | 'all';
+    search?: string;
+    page?: number;
+    limit?: number;
+  } = {}) {
+    const status = opts.status || 'all';
+    const page = Math.max(1, opts.page || 1);
+    const limit = Math.min(50, Math.max(1, opts.limit || 20));
+    const offset = (page - 1) * limit;
+
+    const conditions: any[] = [];
+    if (status === 'active') {
+      conditions.push(eq(couponCampaigns.isActive, true));
+      conditions.push(
+        or(
+          isNull(couponCampaigns.endsAt),
+          gte(couponCampaigns.endsAt, new Date()),
+        )!,
+      );
+    } else if (status === 'expired') {
+      conditions.push(
+        or(
+          eq(couponCampaigns.isActive, false),
+          lt(couponCampaigns.endsAt, new Date()),
+        )!,
+      );
+    }
+    if (opts.search?.trim()) {
+      const q = `%${opts.search.trim()}%`;
+      conditions.push(ilike(couponCampaigns.name, q));
+    }
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const rows = await db
+      .select({
+        id: couponCampaigns.id,
+        name: couponCampaigns.name,
+        description: couponCampaigns.description,
+        startsAt: couponCampaigns.startsAt,
+        endsAt: couponCampaigns.endsAt,
+        budget: couponCampaigns.budget,
+        currentSpend: couponCampaigns.currentSpend,
+        isActive: couponCampaigns.isActive,
+        showOnSite: couponCampaigns.showOnSite,
+        bannerCta: couponCampaigns.bannerCta,
+        createdAt: couponCampaigns.createdAt,
+        codeCount: sql<number>`(SELECT COUNT(*) FROM ${discountCodes} WHERE ${discountCodes.campaignId} = ${couponCampaigns.id})::int`,
+      })
+      .from(couponCampaigns)
+      .where(where)
+      .orderBy(desc(couponCampaigns.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const [{ value: total }] = await db
+      .select({ value: count() })
+      .from(couponCampaigns)
+      .where(where);
+
+    return {
+      data: rows,
+      pagination: {
+        page,
+        limit,
+        total: Number(total),
+        totalPages: Math.ceil(Number(total) / limit) || 1,
+      },
+    };
+  }
+
+  async createCampaign(
+    dto: {
+      name: string;
+      description?: string;
+      startsAt?: string;
+      endsAt?: string;
+      budget?: number;
+      showOnSite?: boolean;
+      bannerCta?: string;
+    },
+    userId: string,
+    ipAddress?: string,
+  ) {
+    const [created] = await db
+      .insert(couponCampaigns)
+      .values({
+        name: dto.name,
+        description: dto.description,
+        startsAt: dto.startsAt ? new Date(dto.startsAt) : null,
+        endsAt: dto.endsAt ? new Date(dto.endsAt) : null,
+        budget: dto.budget !== undefined ? dto.budget.toFixed(2) : null,
+        showOnSite: dto.showOnSite ?? false,
+        bannerCta: dto.bannerCta,
+        createdBy: userId,
+      })
+      .returning();
+
+    await this.auditLogService.log({
+      entityType: 'coupon_campaign',
+      entityId: created.id,
+      action: 'campaign_created',
+      performedBy: userId,
+      ipAddress,
+      metadata: { name: dto.name, budget: dto.budget },
+    });
+
+    return created;
+  }
+
+  async updateCampaign(
+    id: string,
+    dto: Partial<{
+      name: string;
+      description: string | null;
+      startsAt: string | null;
+      endsAt: string | null;
+      budget: number | null;
+      isActive: boolean;
+      showOnSite: boolean;
+      bannerCta: string | null;
+    }>,
+    userId: string,
+    ipAddress?: string,
+  ) {
+    const updates: Record<string, any> = { updatedAt: new Date() };
+    if (dto.name !== undefined) updates.name = dto.name;
+    if (dto.description !== undefined) updates.description = dto.description;
+    if (dto.startsAt !== undefined)
+      updates.startsAt = dto.startsAt ? new Date(dto.startsAt) : null;
+    if (dto.endsAt !== undefined)
+      updates.endsAt = dto.endsAt ? new Date(dto.endsAt) : null;
+    if (dto.budget !== undefined)
+      updates.budget = dto.budget === null ? null : dto.budget.toFixed(2);
+    if (dto.isActive !== undefined) updates.isActive = dto.isActive;
+    if (dto.showOnSite !== undefined) updates.showOnSite = dto.showOnSite;
+    if (dto.bannerCta !== undefined) updates.bannerCta = dto.bannerCta;
+
+    const [updated] = await db
+      .update(couponCampaigns)
+      .set(updates)
+      .where(eq(couponCampaigns.id, id))
+      .returning();
+
+    if (!updated) {
+      throw new NotFoundException('Campaign not found');
+    }
+
+    await this.auditLogService.log({
+      entityType: 'coupon_campaign',
+      entityId: id,
+      action: 'campaign_updated',
+      performedBy: userId,
+      ipAddress,
+      metadata: { updates: Object.keys(updates) },
+    });
+
+    return updated;
+  }
+
+  async deleteCampaign(id: string, userId: string, ipAddress?: string) {
+    // Soft-delete: mark inactive. Don't cascade — child codes keep their
+    // own isActive flag; campaign-gating in validateDiscount will reject
+    // them if the campaign is inactive.
+    const [updated] = await db
+      .update(couponCampaigns)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(couponCampaigns.id, id))
+      .returning();
+
+    if (!updated) {
+      throw new NotFoundException('Campaign not found');
+    }
+
+    await this.auditLogService.log({
+      entityType: 'coupon_campaign',
+      entityId: id,
+      action: 'campaign_deactivated',
+      performedBy: userId,
+      ipAddress,
+    });
+
+    return { id, isActive: false };
+  }
+
+  async getCampaignById(id: string) {
+    const [campaign] = await db
+      .select()
+      .from(couponCampaigns)
+      .where(eq(couponCampaigns.id, id))
+      .limit(1);
+    if (!campaign) {
+      throw new NotFoundException('Campaign not found');
+    }
+    const codes = await db
+      .select({
+        id: discountCodes.id,
+        code: discountCodes.code,
+        type: discountCodes.type,
+        value: discountCodes.value,
+        currentUses: discountCodes.currentUses,
+        maxUses: discountCodes.maxUses,
+        isActive: discountCodes.isActive,
+        autoApply: discountCodes.autoApply,
+        validFrom: discountCodes.validFrom,
+        validUntil: discountCodes.validUntil,
+      })
+      .from(discountCodes)
+      .where(eq(discountCodes.campaignId, id))
+      .orderBy(desc(discountCodes.createdAt));
+    return { ...campaign, codes };
+  }
+
+  /**
+   * Active campaign with `showOnSite=true` for the public banner.
+   * Returns the most recently-started active campaign, or null. Used by
+   * the homepage / courses page banner strip.
+   */
+  async getActiveBannerCampaign() {
+    const now = new Date();
+    const [campaign] = await db
+      .select({
+        id: couponCampaigns.id,
+        name: couponCampaigns.name,
+        description: couponCampaigns.description,
+        startsAt: couponCampaigns.startsAt,
+        endsAt: couponCampaigns.endsAt,
+        bannerCta: couponCampaigns.bannerCta,
+      })
+      .from(couponCampaigns)
+      .where(
+        and(
+          eq(couponCampaigns.isActive, true),
+          eq(couponCampaigns.showOnSite, true),
+          or(
+            isNull(couponCampaigns.startsAt),
+            lte(couponCampaigns.startsAt, now),
+          )!,
+          or(
+            isNull(couponCampaigns.endsAt),
+            gte(couponCampaigns.endsAt, now),
+          )!,
+        ),
+      )
+      .orderBy(desc(couponCampaigns.startsAt))
+      .limit(1);
+    return campaign || null;
+  }
+
+  // ─── Finance dashboard summary + audit ──────────────────────────────
+
+  /**
+   * KPIs for the Finance > Discounts page header. Honours date range.
+   * Single round-trip via grouped query.
+   */
+  async getDiscountSummary(opts: {
+    startDate?: string;
+    endDate?: string;
+  } = {}) {
+    const startDate = opts.startDate ? new Date(opts.startDate) : null;
+    const endDateRaw = opts.endDate ? new Date(opts.endDate) : null;
+    if (endDateRaw) endDateRaw.setHours(23, 59, 59, 999);
+
+    const now = new Date();
+
+    // Live counts that ignore the date range (current state)
+    const [liveRow] = await db
+      .select({
+        activeCodes: sql<number>`COUNT(CASE WHEN ${discountCodes.isActive} = true AND (${discountCodes.validUntil} IS NULL OR ${discountCodes.validUntil} >= ${now}) THEN 1 END)::int`,
+        autoApplyCodes: sql<number>`COUNT(CASE WHEN ${discountCodes.autoApply} = true AND ${discountCodes.isActive} = true THEN 1 END)::int`,
+      })
+      .from(discountCodes);
+
+    const [campRow] = await db
+      .select({
+        activeCampaigns: sql<number>`COUNT(CASE WHEN ${couponCampaigns.isActive} = true AND (${couponCampaigns.endsAt} IS NULL OR ${couponCampaigns.endsAt} >= ${now}) THEN 1 END)::int`,
+      })
+      .from(couponCampaigns);
+
+    // Window-based usage metrics
+    const windowConds: any[] = [];
+    if (startDate) windowConds.push(gte(discountUsage.usedAt, startDate));
+    if (endDateRaw) windowConds.push(lte(discountUsage.usedAt, endDateRaw));
+    const windowWhere =
+      windowConds.length > 0 ? and(...windowConds) : undefined;
+
+    const [usageRow] = await db
+      .select({
+        redemptions: sql<number>`COUNT(*)::int`,
+        totalSaved: sql<string>`COALESCE(SUM(${discountUsage.amountSaved}::numeric), 0)`,
+        avgSaved: sql<string>`COALESCE(AVG(${discountUsage.amountSaved}::numeric), 0)`,
+        uniqueUsers: sql<number>`COUNT(DISTINCT ${discountUsage.userId})::int`,
+      })
+      .from(discountUsage)
+      .where(windowWhere);
+
+    return {
+      live: {
+        activeCodes: liveRow?.activeCodes ?? 0,
+        autoApplyCodes: liveRow?.autoApplyCodes ?? 0,
+        activeCampaigns: campRow?.activeCampaigns ?? 0,
+      },
+      window: {
+        redemptions: usageRow?.redemptions ?? 0,
+        totalSaved: Number(usageRow?.totalSaved ?? 0),
+        avgSaved: Number(
+          Number(usageRow?.avgSaved ?? 0).toFixed(2),
+        ),
+        uniqueUsers: usageRow?.uniqueUsers ?? 0,
+      },
+    };
+  }
+
+  /**
+   * Audit timeline for a discount: discount events + linked campaign
+   * events (if any) + every payment that used this code.
+   */
+  async getDiscountAudit(discountId: string, limit: number = 100) {
+    const [discount] = await db
+      .select({ campaignId: discountCodes.campaignId })
+      .from(discountCodes)
+      .where(eq(discountCodes.id, discountId))
+      .limit(1);
+    if (!discount) return [];
+
+    const cap = Math.min(limit, 200);
+    const result = await db.execute(sql`
+      SELECT a.id,
+             a.action,
+             a.entity_type AS "entityType",
+             a.entity_id AS "entityId",
+             a.performed_by AS "performedBy",
+             a.metadata,
+             a.created_at AS "createdAt",
+             CASE
+               WHEN u.id IS NULL THEN NULL
+               ELSE CONCAT(u.first_name, ' ', u.last_name)
+             END AS "actorName",
+             u.email AS "actorEmail"
+      FROM audit_logs a
+      LEFT JOIN users u ON a.performed_by = u.id
+      WHERE
+        (a.entity_type = 'discount_code' AND a.entity_id = ${discountId})
+        OR (a.entity_type = 'discount' AND a.entity_id = ${discountId})
+        ${discount.campaignId ? sql`OR (a.entity_type = 'coupon_campaign' AND a.entity_id = ${discount.campaignId})` : sql``}
+      ORDER BY a.created_at DESC
+      LIMIT ${cap}
+    `);
+    return result.rows as Array<{
+      id: string;
+      action: string;
+      entityType: string;
+      entityId: string;
+      performedBy: string | null;
+      metadata: Record<string, unknown> | null;
+      createdAt: string;
+      actorName: string | null;
+      actorEmail: string | null;
+    }>;
   }
 }

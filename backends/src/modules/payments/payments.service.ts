@@ -298,17 +298,23 @@ export class PaymentsService {
       );
     }
 
-    // 2. Per-course validation: must be paid, must not be at capacity.
+    // 2. Per-course validation: must not be at capacity. Free courses
+    // (effective price <= 0) are allowed in a mixed cart — they just
+    // contribute 0 to the subtotal. Only block the WHOLE cart if every
+    // line is free (then there's nothing to pay and the free-enroll
+    // flow should be used instead).
     const lines = orderedCourses.map((course) => {
       const sale = getEffectivePrice(course);
       const salePrice = sale.effectivePrice;
-      if (salePrice <= 0) {
-        throw new BadRequestException(
-          `Course "${course.title}" is free — use the free-enroll flow instead.`,
-        );
-      }
       return { course, sale, salePrice };
     });
+
+    const hasPaidLine = lines.some((l) => l.salePrice > 0);
+    if (!hasPaidLine) {
+      throw new BadRequestException(
+        'All selected courses are free — use the free-enroll flow instead.',
+      );
+    }
 
     for (const { course } of lines) {
       if (course.maxEnrollment) {

@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import FinanceSidebar from "./FinanceSidebar";
 import FinanceMobileSidebar from "./FinanceMobileSidebar";
 import FinanceNavbar from "./FinanceNavbar";
+import DiscountDetailDrawer from "./DiscountDetailDrawer";
+import CampaignsTab from "./CampaignsTab";
 import {
   Tag,
   Plus,
@@ -82,6 +85,44 @@ const DiscountsContent = () => {
   const locale = useLocale();
   const isRTL = locale === "ar";
   const profile = useFinanceProfile();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Top-level tab toggle — Codes vs Campaigns. Keeps the existing
+  // Codes UI intact; Campaigns renders a separate sub-component.
+  const [mainView, setMainView] = useState<"codes" | "campaigns">("codes");
+
+  // URL deep-link state: `?discountId=` opens the drawer; `?tab=campaigns`
+  // pre-selects the Campaigns view.
+  const [drawerDiscountId, setDrawerDiscountId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const did = searchParams.get("discountId");
+    if (did && did !== drawerDiscountId) setDrawerDiscountId(did);
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "campaigns") setMainView("campaigns");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const openDrawer = (id: string | null) => {
+    setDrawerDiscountId(id);
+    const sp = new URLSearchParams(searchParams.toString());
+    if (id) sp.set("discountId", id);
+    else sp.delete("discountId");
+    const qs = sp.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
+
+  const switchMainView = (v: "codes" | "campaigns") => {
+    setMainView(v);
+    const sp = new URLSearchParams(searchParams.toString());
+    if (v === "campaigns") sp.set("tab", "campaigns");
+    else sp.delete("tab");
+    const qs = sp.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
+
   const [activeTab, setActiveTab] = useState("active");
   const [showModal, setShowModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
@@ -454,6 +495,28 @@ const DiscountsContent = () => {
                 </div>
               </div>
 
+              {/* Top-level view switcher: Codes vs Campaigns */}
+              <div className="flex gap-1 bg-[var(--color-surface-page)] rounded-lg p-0.5 w-fit mb-6">
+                {(["codes", "campaigns"] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => switchMainView(v)}
+                    className={`px-4 py-1.5 text-[13px] font-medium rounded-md transition-colors ${
+                      mainView === v
+                        ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
+                        : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                    }`}
+                  >
+                    {t(`discountsPage.tabs.${v}` as any)}
+                  </button>
+                ))}
+              </div>
+
+              {mainView === "campaigns" ? (
+                <CampaignsTab />
+              ) : (
+                <>
               {/* Stats Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 {stats.map((stat, index) => {
@@ -559,7 +622,17 @@ const DiscountsContent = () => {
                                   <MoreVertical className="w-4 h-4" />
                                 </button>
                                 {openActionId === coupon.id && (
-                                  <div className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[120px] z-20 ${isRTL ? "left-0" : "right-0"}`}>
+                                  <div className={`absolute top-full mt-1 bg-[var(--color-surface-card)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-20 ${isRTL ? "left-0" : "right-0"}`}>
+                                    <button
+                                      onClick={() => {
+                                        setOpenActionId(null);
+                                        openDrawer(coupon.id);
+                                      }}
+                                      className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]"
+                                    >
+                                      <Tag className="w-3.5 h-3.5" />
+                                      View detail
+                                    </button>
                                     <button
                                       onClick={() => handleEdit(coupon)}
                                       className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]"
@@ -673,7 +746,7 @@ const DiscountsContent = () => {
                   </div>
                 </div>
 
-                {/* Top Coupons Performance */}
+                {/* Top Coupons Performance — clickable rows now open the drawer */}
                 {analytics && analytics.topCoupons.length > 0 && (
                   <div>
                     <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
@@ -681,7 +754,7 @@ const DiscountsContent = () => {
                     </h4>
                     <div className="space-y-2">
                       {analytics.topCoupons.filter(c => c.conversions > 0).slice(0, 5).map((coupon) => (
-                        <div key={coupon.id} className="flex items-center gap-3">
+                        <div key={coupon.id} className="flex items-center gap-3 cursor-pointer hover:bg-[var(--color-surface-page)] rounded px-1 -mx-1" onClick={() => openDrawer(coupon.id)}>
                           <span className="text-[12px] font-mono font-bold text-[var(--color-text-primary)] w-28 truncate">{coupon.code}</span>
                           <div className="flex-1">
                             <div className="h-5 bg-[var(--color-surface-page)] rounded-full overflow-hidden">
@@ -709,10 +782,30 @@ const DiscountsContent = () => {
                   </div>
                 )}
               </div>
+                </>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      <DiscountDetailDrawer
+        discountId={drawerDiscountId}
+        onClose={() => openDrawer(null)}
+        onChanged={() => {
+          // Re-fetch the table + analytics so the drawer's changes reflect.
+          // The existing fetchCoupons + fetchAnalytics are wired below.
+          if (typeof window !== "undefined") {
+            // Trigger by toggling the tab — cheapest re-fetch path
+            setActiveTab((prev) => prev);
+          }
+        }}
+        onEditClick={(id) => {
+          openDrawer(null);
+          const coupon = coupons.find((c) => c.id === id);
+          if (coupon) handleEdit(coupon);
+        }}
+      />
 
       {/* Create/Edit Coupon Modal */}
       {showModal && (

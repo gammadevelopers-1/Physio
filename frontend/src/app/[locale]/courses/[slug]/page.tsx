@@ -3,6 +3,7 @@ import { setRequestLocale } from "next-intl/server";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { CourseDetailContent } from "@/components/courses";
+import ActiveCampaignBanner from "@/components/courses/ActiveCampaignBanner";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { getBlocksAtPosition } from "@/lib/strapi/block-utils";
 import { getCourseDetailPage, getSiteSettings, getNavbarLinks, getFooterLinks, getStrapiMediaUrl } from "@/lib/strapi";
@@ -151,6 +152,8 @@ export default async function CourseDetailPage({
     <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
       {courseLdJson && <JsonLd id="ld-course" data={courseLdJson} />}
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} footerLinks={footerLinks} />
+
+      <ActiveCampaignBanner />
 
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
 

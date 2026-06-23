@@ -315,8 +315,14 @@ export class RefundService {
         })
         .where(eq(refunds.id, refundId));
 
-      // For mock gateway, complete immediately (no async webhook)
-      if (payment.gateway === 'mock') {
+      // Auto-complete for gateways with no async settlement webhook. Mock has
+      // no real provider; bank_transfer is an offline wire — finance has
+      // already committed to executing it by approving the refund, so the
+      // downstream cascade (drop enrollment, revoke certificate, reverse
+      // discount, cancel future webinar regs) must run NOW rather than
+      // wait for a webhook that never arrives. The actual wire is recorded
+      // outside the system.
+      if (payment.gateway === 'mock' || payment.gateway === 'bank_transfer') {
         await this.completeRefund(refundId);
       }
     } catch (err) {

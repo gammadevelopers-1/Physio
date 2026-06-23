@@ -184,8 +184,37 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
     const chargeId = body.id || body.payment?.id;
     const status = (body.status || '').toUpperCase();
 
-    // Successful outcomes
-    if (status === 'AUTHORIZED' || status === 'CLOSED') {
+    // Successful outcomes. Tabby's lifecycle splits AUTHORIZED (buyer agreed,
+    // funds held) from CLOSED (merchant captured, funds settled). Refunds
+    // require CLOSED — AUTHORIZED-only payments fail with "can not refund
+    // payment that has no captures and not closed". Capture inline on the
+    // AUTHORIZED event so the payment graduates to CLOSED before we ever
+    // need to refund it. Already-captured / idempotency replays are swallowed
+    // by captureOrder.
+    if (status === 'AUTHORIZED') {
+      const amount = Number(body.amount ?? body.payment?.amount);
+      const currency = body.currency || body.payment?.currency || 'SAR';
+      if (chargeId && !Number.isNaN(amount)) {
+        try {
+          await this.captureOrder(chargeId, amount, currency);
+          this.logger.log(`Tabby payment ${chargeId} captured for ${amount} ${currency}`);
+        } catch (err) {
+          this.logger.error(
+            `Tabby capture failed for ${chargeId}: ${(err as Error).message} — payment stays pending for retry`,
+          );
+          // Stay 'pending' so the webhook controller doesn't run the success
+          // flow. Tabby's webhook retries will re-enter this branch.
+          return {
+            chargeId,
+            status: 'pending',
+            errorCode: 'capture_failed',
+            rawData: body,
+          };
+        }
+      }
+      return { chargeId, status: 'paid', rawData: body };
+    }
+    if (status === 'CLOSED') {
       return { chargeId, status: 'paid', rawData: body };
     }
 
@@ -236,7 +265,68 @@ export class TabbyGateway extends BaseGateway implements BnplPaymentGateway {
     };
   }
 
+  /**
+   * Tabby's CAPTURE step — promotes an AUTHORIZED payment to CLOSED. Refunds
+   * are only valid against CLOSED payments. The API is idempotent for
+   * already-captured payments (returns 409); we treat that as success.
+   *
+   * Tabby docs: POST /payments/{id}/captures
+   */
+  async captureOrder(
+    paymentId: string,
+    amount: number,
+    _currency: string,
+  ): Promise<void> {
+    const response = await this.fetchWithRetry(
+      `${this.apiUrl}/payments/${paymentId}/captures`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.secretKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount: amount.toFixed(2) }),
+      },
+    );
+
+    // 409 = already captured; treat as success (idempotent capture). Some
+    // older sandbox responses return 400 with "already captured" in the
+    // body — match on the message too.
+    if (response.status === 409) {
+      this.logger.log(`Tabby payment ${paymentId} was already captured (409)`);
+      return;
+    }
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      const msg = String(data.error || data.message || '').toLowerCase();
+      if (msg.includes('already captured') || msg.includes('already closed')) {
+        this.logger.log(`Tabby payment ${paymentId} already captured (per error body)`);
+        return;
+      }
+      throw new PaymentGatewayError(
+        'tabby',
+        data.error || data.message || `Capture failed with HTTP ${response.status}`,
+        this.normalizeErrorCode(data.error || data.message),
+        data,
+      );
+    }
+  }
+
   async refund(params: RefundParams): Promise<RefundResult> {
+    // Tabby rejects refunds on AUTHORIZED-only payments ("can not refund
+    // payment that has no captures and not closed"). Always run capture first
+    // — idempotent for payments already CLOSED, fixes the legacy ones that
+    // were marked paid before we added inline capture on the webhook.
+    try {
+      await this.captureOrder(params.gatewayChargeId, params.amount, 'SAR');
+    } catch (err) {
+      this.logger.error(
+        `Tabby pre-refund capture failed for ${params.gatewayChargeId}: ${(err as Error).message}`,
+      );
+      throw err;
+    }
+
     const body = {
       amount: params.amount.toFixed(2),
     };

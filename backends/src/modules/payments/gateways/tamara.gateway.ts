@@ -381,16 +381,21 @@ export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
   }
 
   async refund(params: RefundParams): Promise<RefundResult> {
+    // Tamara's current documented refund endpoint is
+    // `POST /payments/simplified-refund/{order_id}`. The body takes
+    // `total_amount` only — `comment` is rejected as an unknown field by
+    // newer API versions. The order must already be in CAPTURED state, which
+    // our webhook handler ensures by running authorise+capture inline on
+    // order_approved.
     const body = {
       total_amount: {
         amount: params.amount,
         currency: 'SAR',
       },
-      comment: params.reason || 'Refund requested',
     };
 
     const response = await this.fetchWithRetry(
-      `${this.apiUrl}/orders/${params.gatewayChargeId}/refund`,
+      `${this.apiUrl}/payments/simplified-refund/${params.gatewayChargeId}`,
       {
         method: 'POST',
         headers: {

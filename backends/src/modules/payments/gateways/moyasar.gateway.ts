@@ -125,10 +125,43 @@ export class MoyasarGateway extends BaseGateway implements PaymentGateway {
   }
 
   async refund(params: RefundParams): Promise<RefundResult> {
-    const amountInHalalah = Math.round(params.amount * 100);
+    // `gatewayChargeId` is a Moyasar INVOICE id (we use POST /invoices, not
+    // /payments). Refunds, however, must target the underlying PAYMENT id —
+    // the previous version hit /payments/{invoiceId}/refund and got back
+    // "Payment record not found". Fetch the invoice, pick the successful
+    // payment from invoice.payments[], then refund that.
+    const invoiceResp = await this.fetchWithTimeout(
+      `${this.apiUrl}/invoices/${params.gatewayChargeId}`,
+      { headers: { Authorization: this.getAuthHeader() } },
+    );
+    const invoiceData = await invoiceResp.json();
+    if (!invoiceResp.ok) {
+      this.logger.error(
+        `Moyasar invoice lookup failed for refund: ${JSON.stringify(invoiceData)}`,
+      );
+      throw new PaymentGatewayError(
+        'moyasar',
+        invoiceData.message || `Invoice ${params.gatewayChargeId} not found`,
+        this.normalizeErrorCode(invoiceData.type || invoiceData.message),
+        invoiceData,
+      );
+    }
+    const paidPayment = (invoiceData.payments || []).find(
+      (p: { id: string; status: string }) =>
+        p.status === 'paid' || p.status === 'captured',
+    );
+    if (!paidPayment?.id) {
+      throw new PaymentGatewayError(
+        'moyasar',
+        `No paid payment found under invoice ${params.gatewayChargeId}`,
+        'unknown',
+        invoiceData,
+      );
+    }
 
+    const amountInHalalah = Math.round(params.amount * 100);
     const response = await this.fetchWithRetry(
-      `${this.apiUrl}/payments/${params.gatewayChargeId}/refund`,
+      `${this.apiUrl}/payments/${paidPayment.id}/refund`,
       {
         method: 'POST',
         headers: {
@@ -153,7 +186,7 @@ export class MoyasarGateway extends BaseGateway implements PaymentGateway {
     }
 
     return {
-      refundId: data.id || params.gatewayChargeId,
+      refundId: data.id || paidPayment.id,
       status: data.status || 'processing',
       rawResponse: data,
     };

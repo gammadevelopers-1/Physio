@@ -7129,6 +7129,55 @@ export const financeBankTransferApi = {
       `/payments/bank-transfer/queue/receipts/${receiptId}/reject`,
       body,
     ),
+
+  getSummary: (opts?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (opts?.startDate) sp.set('startDate', opts.startDate);
+    if (opts?.endDate) sp.set('endDate', opts.endDate);
+    const qs = sp.toString();
+    return api.get<{
+      live: {
+        pendingCount: number;
+        pendingAmount: number;
+        scanPendingCount: number;
+        oldestPendingHours: number;
+        infectedCount: number;
+      };
+      window: {
+        approvedCount: number;
+        approvedAmount: number;
+        rejectedCount: number;
+        avgReviewHours: number;
+      };
+    }>(`/payments/bank-transfer/queue/summary${qs ? `?${qs}` : ''}`);
+  },
+
+  getReceiptAudit: (receiptId: string) =>
+    api.get<Array<{
+      id: string;
+      action: string;
+      entityType: string;
+      entityId: string;
+      performedBy: string | null;
+      metadata: Record<string, unknown> | null;
+      createdAt: string;
+      actorName: string | null;
+      actorEmail: string | null;
+    }>>(`/payments/bank-transfer/queue/receipts/${receiptId}/audit`),
+
+  getReplacementChain: (receiptId: string) =>
+    api.get<Array<{
+      id: string;
+      uploadedAt: string;
+      fileName: string;
+      scanStatus: 'pending' | 'clean' | 'infected' | 'error';
+      reviewStatus: 'pending' | 'approved' | 'rejected';
+      reviewedAt: string | null;
+      reviewerNote: string | null;
+      replacedById: string | null;
+      isCurrent: boolean;
+      isThis: boolean;
+    }>>(`/payments/bank-transfer/queue/receipts/${receiptId}/replacement-chain`),
 };
 
 // ===========================================

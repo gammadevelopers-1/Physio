@@ -229,13 +229,49 @@ export class BankTransferController {
   }
 
   /**
-   * Full receipt context for the review modal — refund info snapshot,
+   * Aggregate KPI counts + amounts for the queue page header. "live"
+   * metrics ignore date range (always now-snapshot); "window" metrics
+   * honour the date range (defaults caller-side to 30d).
+   */
+  @Get('queue/summary')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getQueueSummary(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.bankTransferService.getQueueSummary({ startDate, endDate });
+  }
+
+  /**
+   * Full receipt context for the review drawer — refund info snapshot,
    * fresh signed download URL, student + course context.
    */
   @Get('queue/receipts/:receiptId')
   @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async getReceiptDetail(@Param('receiptId') receiptId: string) {
     return this.bankTransferService.getReceiptForReview(receiptId);
+  }
+
+  /**
+   * Full upload history for the receipt's payment — every receipt ever
+   * uploaded (including superseded ones), in chronological order. Used
+   * by the drawer's "Replacement History" tab to show why earlier
+   * uploads were rejected and what changed in re-uploads.
+   */
+  @Get('queue/receipts/:receiptId/replacement-chain')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getReplacementChain(@Param('receiptId') receiptId: string) {
+    return this.bankTransferService.getReplacementChain(receiptId);
+  }
+
+  /**
+   * Audit timeline: UNION across receipt-level events + parent payment
+   * events + child invoice events + any refunds.
+   */
+  @Get('queue/receipts/:receiptId/audit')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getReceiptAudit(@Param('receiptId') receiptId: string) {
+    return this.bankTransferService.getReceiptAudit(receiptId);
   }
 
   /**

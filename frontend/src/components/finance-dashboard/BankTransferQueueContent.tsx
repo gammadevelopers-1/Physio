@@ -1,134 +1,312 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import {
   Loader2,
   Search,
   ChevronLeft,
   ChevronRight,
-  Eye,
-  Check,
-  X,
+  ArrowRight,
+  ArrowLeft,
   Clock,
-  AlertTriangle,
   ShieldCheck,
-  FileText,
-  Image as ImageIcon,
-  Copy,
-  AlertCircle,
-  Building2,
-  RefreshCw,
+  ShieldQuestion,
+  ShieldX,
+  ShieldAlert,
+  CheckCircle,
+  AlertOctagon,
+  Hourglass,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
-import { toast } from "sonner";
 import FinanceSidebar from "./FinanceSidebar";
 import FinanceMobileSidebar from "./FinanceMobileSidebar";
 import FinanceNavbar from "./FinanceNavbar";
+import DateRangeFilter from "./DateRangeFilter";
+import BankTransferDetailDrawer from "./BankTransferDetailDrawer";
+import Money from "./shared/Money";
+import { KPICardSkeleton, TableRowSkeleton } from "./shared/Skeleton";
+import { FINANCE_COLORS } from "./shared/financeColors";
+import Select from "@/components/admin-dashboard/Select";
 import {
   financeBankTransferApi,
+  financeApi,
   type BankTransferQueueItem,
-  type BankTransferReceiptDetail,
-  ApiError,
 } from "@/lib/api";
 import { useFinanceProfile } from "@/hooks/useFinanceProfile";
 
-type TabKey = "pending" | "approved" | "rejected" | "all";
+const PAGE_SIZE = 25;
 
-const TABS: { key: TabKey }[] = [
-  { key: "pending" },
-  { key: "approved" },
-  { key: "rejected" },
-  { key: "all" },
-];
+type TabKey = "pending" | "approved" | "rejected" | "all";
+type ScanFilter = "all" | "clean" | "pending" | "infected" | "error";
+
+function getDefaultDateRange() {
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const start = new Date(today);
+  start.setDate(start.getDate() - 29);
+  return {
+    startDate: start.toISOString().slice(0, 10),
+    endDate: todayStr,
+    label: "30d",
+  };
+}
+
+const REVIEW_PILL: Record<string, { bg: string; text: string }> = {
+  pending: { bg: "bg-[#FEF3C7]", text: "text-[#92400E]" },
+  approved: { bg: "bg-[#DCFCE7]", text: "text-[#15803D]" },
+  rejected: { bg: "bg-[#FEE2E2]", text: "text-[#B91C1C]" },
+};
+
+const SCAN_PILL: Record<string, { bg: string; text: string; Icon: typeof ShieldCheck }> = {
+  clean: { bg: "bg-[#DCFCE7]", text: "text-[#15803D]", Icon: ShieldCheck },
+  pending: { bg: "bg-[#FEF3C7]", text: "text-[#92400E]", Icon: ShieldQuestion },
+  infected: { bg: "bg-[#FEE2E2]", text: "text-[#B91C1C]", Icon: ShieldX },
+  error: { bg: "bg-[#FEE2E2]", text: "text-[#B91C1C]", Icon: ShieldAlert },
+};
+
+function formatDateTime(iso: string, locale: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const lng = locale === "ar" ? "ar-SA-u-nu-latn" : "en-GB";
+  return d.toLocaleString(lng, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
+function formatAge(iso: string, locale: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const minutes = Math.floor((Date.now() - d.getTime()) / 60000);
+  if (minutes < 1) return locale === "ar" ? "الآن" : "Just now";
+  if (minutes < 60) return locale === "ar" ? `قبل ${minutes} د` : `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return locale === "ar" ? `قبل ${hours} س` : `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return locale === "ar" ? `قبل ${days} يوم` : `${days}d ago`;
+}
+
+function ageColor(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "text-[var(--color-text-secondary)]";
+  const hours = (Date.now() - d.getTime()) / 3_600_000;
+  if (hours >= 48) return "text-[#B91C1C] font-medium";
+  if (hours >= 24) return "text-[#D97706] font-medium";
+  if (hours >= 6) return "text-[#1D4ED8]";
+  return "text-[#15803D]";
+}
 
 export default function BankTransferQueueContent() {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const ArrowGlyph = isRTL ? ArrowLeft : ArrowRight;
   const profile = useFinanceProfile();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
+  const [dateRange, setDateRange] = useState<{
+    startDate?: string;
+    endDate?: string;
+    label: string;
+  }>(getDefaultDateRange);
   const [tab, setTab] = useState<TabKey>("pending");
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [scanFilter, setScanFilter] = useState<ScanFilter>("all");
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState<BankTransferQueueItem[]>([]);
   const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+
+  const [rows, setRows] = useState<BankTransferQueueItem[]>([]);
+  const [rowsLoading, setRowsLoading] = useState(true);
   const [tabCounts, setTabCounts] = useState<Record<TabKey, number>>({
     pending: 0,
     approved: 0,
     rejected: 0,
     all: 0,
   });
-  const [openReceiptId, setOpenReceiptId] = useState<string | null>(null);
 
-  // Debounce search input
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [summary, setSummary] = useState<
+    Awaited<ReturnType<typeof financeBankTransferApi.getSummary>> | null
+  >(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+
+  const [aging, setAging] = useState<
+    Awaited<ReturnType<typeof financeApi.getBankTransferReviewAging>> | null
+  >(null);
+  const [agingLoading, setAgingLoading] = useState(true);
+
+  const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
+
+  // Deep-link: ?receiptId= opens the drawer; ?scan= / ?status= pre-apply
+  // filters (used by the Invoices page aging buckets that land here).
   useEffect(() => {
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => {
-      setDebouncedSearch(search.trim());
+    const rid = searchParams.get("receiptId");
+    if (rid && rid !== selectedReceiptId) {
+      setSelectedReceiptId(rid);
+    }
+    const scan = searchParams.get("scan");
+    if (scan === "pending" || scan === "clean" || scan === "infected" || scan === "error") {
+      setScanFilter(scan as ScanFilter);
+    }
+    const status = searchParams.get("status");
+    if (status === "pending" || status === "approved" || status === "rejected" || status === "all") {
+      setTab(status as TabKey);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const openDrawer = (id: string | null) => {
+    setSelectedReceiptId(id);
+    const sp = new URLSearchParams(searchParams.toString());
+    if (id) sp.set("receiptId", id);
+    else sp.delete("receiptId");
+    const qs = sp.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
+
+  // Debounced search
+  useEffect(() => {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => {
+      setSearchQuery(searchInput);
       setPage(1);
     }, 350);
     return () => {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     };
-  }, [search]);
+  }, [searchInput]);
 
-  const fetchQueue = useCallback(async () => {
-    setLoading(true);
+  useEffect(() => {
+    setPage(1);
+  }, [tab, scanFilter, dateRange]);
+
+  const fetchRows = useCallback(async () => {
+    setRowsLoading(true);
     try {
       const res = await financeBankTransferApi.listQueue({
         status: tab,
-        search: debouncedSearch || undefined,
+        search: searchQuery || undefined,
         page,
-        limit: 10,
+        limit: PAGE_SIZE,
       });
-      setItems(res.data);
-      setTotalPages(res.pagination.totalPages);
-      setTotal(res.pagination.total);
-    } catch (err) {
-      console.error("Failed to load bank transfer queue", err);
-      setItems([]);
+      let data = res.data || [];
+      // Client-side scan filter (backend doesn't expose it on listQueue;
+      // dataset per page is small so this is fine).
+      if (scanFilter !== "all") {
+        data = data.filter((r) => r.scanStatus === scanFilter);
+      }
+      setRows(data);
+      setTotalPages(res.pagination?.totalPages || 1);
+      setTotalCount(res.pagination?.total || 0);
+    } catch {
+      setRows([]);
     } finally {
-      setLoading(false);
+      setRowsLoading(false);
     }
-  }, [tab, debouncedSearch, page]);
+  }, [tab, scanFilter, searchQuery, page]);
 
   const fetchTabCounts = useCallback(async () => {
     try {
-      const [p, a, r, all] = await Promise.all([
-        financeBankTransferApi.listQueue({ status: "pending", page: 1, limit: 1 }),
-        financeBankTransferApi.listQueue({ status: "approved", page: 1, limit: 1 }),
-        financeBankTransferApi.listQueue({ status: "rejected", page: 1, limit: 1 }),
-        financeBankTransferApi.listQueue({ status: "all", page: 1, limit: 1 }),
+      const [pending, approved, rejected, all] = await Promise.all([
+        financeBankTransferApi.listQueue({ status: "pending", limit: 1 }),
+        financeBankTransferApi.listQueue({ status: "approved", limit: 1 }),
+        financeBankTransferApi.listQueue({ status: "rejected", limit: 1 }),
+        financeBankTransferApi.listQueue({ status: "all", limit: 1 }),
       ]);
       setTabCounts({
-        pending: p.pagination.total,
-        approved: a.pagination.total,
-        rejected: r.pagination.total,
-        all: all.pagination.total,
+        pending: pending.pagination?.total || 0,
+        approved: approved.pagination?.total || 0,
+        rejected: rejected.pagination?.total || 0,
+        all: all.pagination?.total || 0,
       });
     } catch {
-      /* non-fatal */
+      /* silent */
+    }
+  }, []);
+
+  const fetchSummary = useCallback(async () => {
+    setSummaryLoading(true);
+    try {
+      const res = await financeBankTransferApi.getSummary({
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
+      });
+      setSummary(res);
+    } catch {
+      setSummary(null);
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, [dateRange.startDate, dateRange.endDate]);
+
+  const fetchAging = useCallback(async () => {
+    setAgingLoading(true);
+    try {
+      const res = await financeApi.getBankTransferReviewAging();
+      setAging(res);
+    } catch {
+      setAging(null);
+    } finally {
+      setAgingLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchQueue();
-  }, [fetchQueue]);
-
+    fetchRows();
+  }, [fetchRows]);
   useEffect(() => {
     fetchTabCounts();
   }, [fetchTabCounts]);
+  useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
+  useEffect(() => {
+    fetchAging();
+  }, [fetchAging]);
 
-  // After approve/reject, the modal closes and we refresh the list + counts
-  const handleActioned = useCallback(() => {
-    setOpenReceiptId(null);
-    fetchQueue();
+  const refreshAll = () => {
+    fetchRows();
     fetchTabCounts();
-  }, [fetchQueue, fetchTabCounts]);
+    fetchSummary();
+    fetchAging();
+  };
+
+  const scanOptions = [
+    { value: "all", label: t("bankTransferQueue.filters.allScanStatuses") },
+    { value: "clean", label: t("bankTransferQueue.scan.clean") },
+    { value: "pending", label: t("bankTransferQueue.scan.pending") },
+    { value: "infected", label: t("bankTransferQueue.scan.infected") },
+    { value: "error", label: t("bankTransferQueue.scan.error") },
+  ];
+
+  const formatHours = (h: number) => {
+    if (h <= 0) return t("bankTransferQueue.kpi.noneYet");
+    if (h < 48) return `${h.toFixed(1)}${t("bankTransferQueue.kpi.hoursSuffix")}`;
+    return `${(h / 24).toFixed(1)}${t("bankTransferQueue.kpi.daysSuffix")}`;
+  };
+
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: "pending", label: t("bankTransferQueue.tabs.pending") },
+    { key: "approved", label: t("bankTransferQueue.tabs.approved") },
+    { key: "rejected", label: t("bankTransferQueue.tabs.rejected") },
+    { key: "all", label: t("bankTransferQueue.tabs.all") },
+  ];
+
+  const from = totalCount === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const to = Math.min(page * PAGE_SIZE, totalCount);
 
   return (
     <>
@@ -138,244 +316,327 @@ export default function BankTransferQueueContent() {
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
-              <FinanceSidebar
-                profile={profile}
-                pendingBankTransferCount={tabCounts.pending}
-              />
+              <FinanceSidebar profile={profile} />
             </div>
-            <FinanceMobileSidebar
-              profile={profile}
-              pendingBankTransferCount={tabCounts.pending}
-            />
+            <FinanceMobileSidebar profile={profile} />
 
             <div className="flex-1 min-w-0">
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
+              {/* Page Header */}
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-6 gap-4">
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-bold text-[var(--on-surface-default)] flex items-center gap-2">
-                    <Building2 className="w-6 h-6 text-[#4338CA]" />
+                  <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
                     {t("bankTransferQueue.title")}
                   </h1>
-                  <p className="text-sm text-[var(--on-surface-variant)] mt-1">
+                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">
                     {t("bankTransferQueue.subtitle")}
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    fetchQueue();
-                    fetchTabCounts();
-                  }}
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
-                >
-                  <RefreshCw className="w-4 h-4" aria-hidden="true" />
-                  {t("bankTransferQueue.refresh")}
-                </button>
+                <DateRangeFilter onChange={setDateRange} defaultPreset="30d" />
               </div>
 
-              {/* Tabs */}
-              <div className="flex flex-wrap gap-2 mb-4" role="tablist">
-                {TABS.map(({ key }) => {
-                  const active = tab === key;
-                  const count = tabCounts[key];
-                  return (
-                    <button
-                      key={key}
-                      role="tab"
-                      aria-selected={active}
-                      onClick={() => {
-                        setTab(key);
-                        setPage(1);
-                      }}
-                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        active
-                          ? "bg-[#005bd3] text-white"
-                          : "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
-                      }`}
-                    >
-                      {t(`bankTransferQueue.tabs.${key}`)}
-                      <span
-                        className={`ms-2 inline-flex items-center justify-center min-w-[20px] px-1.5 h-5 rounded-full text-xs ${
-                          active
-                            ? "bg-white/20 text-white"
-                            : "bg-[var(--color-border-subtle)] text-[var(--color-text-secondary)]"
+              {/* KPI Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {summaryLoading ? (
+                  <>
+                    <KPICardSkeleton />
+                    <KPICardSkeleton />
+                    <KPICardSkeleton />
+                    <KPICardSkeleton />
+                    <KPICardSkeleton />
+                    <KPICardSkeleton />
+                  </>
+                ) : (
+                  <>
+                    <StatCard
+                      label={t("bankTransferQueue.kpi.pendingTitle")}
+                      value={(summary?.live.pendingCount ?? 0).toLocaleString("en-US")}
+                      sublabel={
+                        <Money
+                          amount={summary?.live.pendingAmount || 0}
+                          decimals={0}
+                          iconSize={11}
+                          className="text-xs text-[var(--color-text-secondary)]"
+                        />
+                      }
+                      icon={Hourglass}
+                      iconBg={FINANCE_COLORS.warning.bg}
+                      iconColor={FINANCE_COLORS.warning.text}
+                    />
+                    <StatCard
+                      label={t("bankTransferQueue.kpi.oldestPendingTitle")}
+                      value={formatHours(summary?.live.oldestPendingHours ?? 0)}
+                      sublabel={t("bankTransferQueue.kpi.oldestPendingSubtitle")}
+                      icon={Clock}
+                      iconBg={(summary?.live.oldestPendingHours ?? 0) > 24 ? FINANCE_COLORS.error.bg : FINANCE_COLORS.info.bg}
+                      iconColor={(summary?.live.oldestPendingHours ?? 0) > 24 ? FINANCE_COLORS.error.text : FINANCE_COLORS.info.text}
+                    />
+                    <StatCard
+                      label={t("bankTransferQueue.kpi.approvedTitle")}
+                      value={(summary?.window.approvedCount ?? 0).toLocaleString("en-US")}
+                      sublabel={
+                        <Money
+                          amount={summary?.window.approvedAmount || 0}
+                          decimals={0}
+                          iconSize={11}
+                          className="text-xs text-[var(--color-text-secondary)]"
+                        />
+                      }
+                      icon={CheckCircle}
+                      iconBg={FINANCE_COLORS.success.bg}
+                      iconColor={FINANCE_COLORS.success.text}
+                    />
+                    <StatCard
+                      label={t("bankTransferQueue.kpi.rejectedTitle")}
+                      value={(summary?.window.rejectedCount ?? 0).toLocaleString("en-US")}
+                      sublabel={t("bankTransferQueue.kpi.rejectedSubtitle")}
+                      icon={XCircle}
+                      iconBg={FINANCE_COLORS.error.bg}
+                      iconColor={FINANCE_COLORS.error.text}
+                    />
+                    <StatCard
+                      label={t("bankTransferQueue.kpi.scanPendingTitle")}
+                      value={(summary?.live.scanPendingCount ?? 0).toLocaleString("en-US")}
+                      sublabel={t("bankTransferQueue.kpi.scanPendingSubtitle")}
+                      icon={ShieldQuestion}
+                      iconBg={FINANCE_COLORS.violet.bg}
+                      iconColor={FINANCE_COLORS.violet.text}
+                    />
+                    <StatCard
+                      label={t("bankTransferQueue.kpi.avgReviewTitle")}
+                      value={formatHours(summary?.window.avgReviewHours ?? 0)}
+                      sublabel={t("bankTransferQueue.kpi.avgReviewSubtitle")}
+                      icon={CheckCircle2}
+                      iconBg={FINANCE_COLORS.info.bgSoft}
+                      iconColor={FINANCE_COLORS.info.text}
+                    />
+                  </>
+                )}
+              </div>
+
+              {/* Aging strip */}
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-4 mb-6">
+                <div className={`flex items-center justify-between gap-2 mb-1 ${isRTL ? "flex-row-reverse" : ""}`}>
+                  <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                    <Clock className="w-4 h-4 text-[#EA580C]" />
+                    <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      {t("bankTransferQueue.agingStrip.title")}
+                    </h3>
+                  </div>
+                  {aging && (
+                    <span className="text-[10px] uppercase tracking-wider text-[var(--color-text-secondary)]">
+                      {t("bankTransferQueue.agingStrip.asOf", {
+                        when: new Date(aging.asOf).toLocaleTimeString(
+                          locale === "ar" ? "ar-SA-u-nu-latn" : "en-US",
+                          { hour: "2-digit", minute: "2-digit", hour12: false },
+                        ),
+                      })}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-[var(--color-text-secondary)] mb-3">
+                  {t("bankTransferQueue.agingStrip.subtitle")}
+                </p>
+                {agingLoading || !aging ? (
+                  <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <KPICardSkeleton key={i} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                    <AgeBucket
+                      label={t("bankTransferQueue.agingStrip.buckets.underSix")}
+                      count={aging.underSix.count}
+                      amount={aging.underSix.amount}
+                      color="bg-[#16A34A]"
+                      t={t}
+                    />
+                    <AgeBucket
+                      label={t("bankTransferQueue.agingStrip.buckets.sixToDay")}
+                      count={aging.sixToDay.count}
+                      amount={aging.sixToDay.amount}
+                      color="bg-[#3B82F6]"
+                      t={t}
+                    />
+                    <AgeBucket
+                      label={t("bankTransferQueue.agingStrip.buckets.dayToTwo")}
+                      count={aging.dayToTwo.count}
+                      amount={aging.dayToTwo.amount}
+                      color="bg-[#D97706]"
+                      t={t}
+                    />
+                    <AgeBucket
+                      label={t("bankTransferQueue.agingStrip.buckets.beyondTwo")}
+                      count={aging.beyondTwo.count}
+                      amount={aging.beyondTwo.amount}
+                      color="bg-[#DC2626]"
+                      urgent={aging.beyondTwo.count > 0}
+                      t={t}
+                    />
+                    <AgeBucket
+                      label={t("bankTransferQueue.agingStrip.buckets.scanQueue")}
+                      count={aging.scanQueue.count}
+                      amount={aging.scanQueue.amount}
+                      color="bg-[#7C3AED]"
+                      t={t}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Filter bar */}
+              <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-3 mb-4">
+                <div className={`flex flex-wrap items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                  <div className="flex gap-1 bg-[var(--color-surface-page)] rounded-lg p-0.5 w-fit">
+                    {tabs.map((tb) => (
+                      <button
+                        key={tb.key}
+                        type="button"
+                        onClick={() => setTab(tb.key)}
+                        className={`px-3 py-1.5 text-[12px] font-medium rounded-md transition-colors flex items-center gap-1.5 ${
+                          tab === tb.key
+                            ? "bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm"
+                            : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                         }`}
                       >
-                        {count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Search */}
-              <div className="mb-4">
-                <div className="relative max-w-md">
-                  <Search
-                    className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${
-                      isRTL ? "right-3" : "left-3"
-                    }`}
-                    aria-hidden="true"
-                  />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder={t("bankTransferQueue.searchPlaceholder")}
-                    className={`w-full h-10 ${
-                      isRTL ? "pr-9 pl-3" : "pl-9 pr-3"
-                    } bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#005bd3]`}
-                  />
+                        {tb.label}
+                        <span
+                          className={`text-[10px] px-1 rounded-full ${
+                            tab === tb.key
+                              ? "bg-[var(--color-primary)] text-white"
+                              : "bg-[var(--color-border)] text-[var(--color-text-secondary)]"
+                          }`}
+                        >
+                          {tabCounts[tb.key]}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex-1 min-w-[200px] relative">
+                    <Search
+                      className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-secondary)] ${
+                        isRTL ? "right-3" : "left-3"
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      placeholder={t("bankTransferQueue.searchPlaceholder")}
+                      className={`w-full h-9 ${
+                        isRTL ? "pr-9 pl-3" : "pl-9 pr-3"
+                      } text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:border-[var(--color-primary)] bg-[var(--color-surface-page)] text-[var(--color-text-primary)]`}
+                    />
+                  </div>
+                  <div className="w-[160px]">
+                    <Select
+                      value={scanFilter}
+                      onChange={(v) => setScanFilter(v as ScanFilter)}
+                      options={scanOptions}
+                      size="sm"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={refreshAll}
+                    className="inline-flex items-center gap-1.5 h-9 px-3 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
+                  >
+                    <Loader2
+                      className={`w-3.5 h-3.5 ${rowsLoading || summaryLoading || agingLoading ? "animate-spin" : ""}`}
+                    />
+                    {t("bankTransferQueue.refresh")}
+                  </button>
                 </div>
               </div>
 
-              {/* Table / list */}
-              <div className="bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl overflow-hidden">
-                {loading ? (
-                  <div className="flex items-center justify-center py-16">
-                    <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />
-                  </div>
-                ) : items.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center px-4">
-                    <Building2 className="w-12 h-12 text-[var(--color-text-secondary)] opacity-40 mb-3" />
-                    <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                      {t("bankTransferQueue.empty.title")}
-                    </p>
-                    <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-                      {t("bankTransferQueue.empty.body")}
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    {/* Desktop table */}
-                    <div className="hidden md:block overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
-                            <Th>{t("bankTransferQueue.col.student")}</Th>
-                            <Th>{t("bankTransferQueue.col.course")}</Th>
-                            <Th>{t("bankTransferQueue.col.amount")}</Th>
-                            <Th>{t("bankTransferQueue.col.uploaded")}</Th>
-                            <Th>{t("bankTransferQueue.col.scan")}</Th>
-                            <Th>{t("bankTransferQueue.col.status")}</Th>
-                            <Th>{t("bankTransferQueue.col.actions")}</Th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {items.map((it) => (
-                            <tr
-                              key={it.receiptId}
-                              className="border-b border-[var(--color-border)] last:border-b-0 hover:bg-[var(--color-surface-page)]"
-                            >
-                              <td className="px-4 py-3">
-                                <div className="font-medium text-[var(--color-text-primary)] truncate max-w-[200px]">
-                                  {it.student.name}
-                                </div>
-                                <div className="text-xs text-[var(--color-text-secondary)] truncate max-w-[200px]">
-                                  {it.student.email}
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 text-[var(--color-text-primary)] max-w-[220px] truncate">
-                                {it.course.title}
-                              </td>
-                              <td className="px-4 py-3 font-medium text-[var(--color-text-primary)]">
-                                {it.payment.currency} {Number(it.payment.amount).toFixed(2)}
-                              </td>
-                              <td className="px-4 py-3 text-[var(--color-text-secondary)] text-xs">
-                                {formatDate(it.uploadedAt, locale)}
-                              </td>
-                              <td className="px-4 py-3">
-                                <ScanBadge status={it.scanStatus} t={t} />
-                              </td>
-                              <td className="px-4 py-3">
-                                <ReviewBadge status={it.reviewStatus} t={t} />
-                              </td>
-                              <td className="px-4 py-3">
-                                <button
-                                  onClick={() => setOpenReceiptId(it.receiptId)}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#005bd3] hover:bg-[#EFF6FF] rounded-lg transition-colors"
-                                >
-                                  <Eye className="w-4 h-4" aria-hidden="true" />
-                                  {t("bankTransferQueue.review")}
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+              {/* Table */}
+              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden mb-6">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-[var(--color-border)]">
+                        <Th isRTL={isRTL}>{t("bankTransferQueue.col.student")}</Th>
+                        <Th isRTL={isRTL} hideOnMobile>
+                          {t("bankTransferQueue.col.course")}
+                        </Th>
+                        <Th isRTL={isRTL}>{t("bankTransferQueue.col.amount")}</Th>
+                        <Th isRTL={isRTL}>{t("bankTransferQueue.col.uploaded")}</Th>
+                        <Th isRTL={isRTL} hideOnMobile>
+                          {t("bankTransferQueue.list.ageColumn")}
+                        </Th>
+                        <Th isRTL={isRTL}>{t("bankTransferQueue.col.scan")}</Th>
+                        <Th isRTL={isRTL}>{t("bankTransferQueue.col.status")}</Th>
+                        <th className="py-3 px-4 w-8"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rowsLoading ? (
+                        Array.from({ length: 6 }).map((_, i) => (
+                          <TableRowSkeleton key={i} cols={8} />
+                        ))
+                      ) : rows.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={8}
+                            className="text-center text-sm text-[var(--color-text-secondary)] py-12"
+                          >
+                            {t("bankTransferQueue.list.empty")}
+                          </td>
+                        </tr>
+                      ) : (
+                        rows.map((r) => (
+                          <ReceiptRow
+                            key={r.receiptId}
+                            r={r}
+                            isRTL={isRTL}
+                            locale={locale}
+                            t={t}
+                            ArrowGlyph={ArrowGlyph}
+                            onClick={() => openDrawer(r.receiptId)}
+                          />
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
 
-                    {/* Mobile cards */}
-                    <div className="md:hidden divide-y divide-[var(--color-border)]">
-                      {items.map((it) => (
-                        <div key={it.receiptId} className="p-4">
-                          <div className="flex justify-between items-start gap-3 mb-2">
-                            <div className="min-w-0 flex-1">
-                              <p className="font-medium text-[var(--color-text-primary)] truncate">
-                                {it.student.name}
-                              </p>
-                              <p className="text-xs text-[var(--color-text-secondary)] truncate">
-                                {it.student.email}
-                              </p>
-                            </div>
-                            <div className="text-right flex-shrink-0">
-                              <p className="font-semibold text-[var(--color-text-primary)]">
-                                {it.payment.currency} {Number(it.payment.amount).toFixed(2)}
-                              </p>
-                            </div>
-                          </div>
-                          <p className="text-sm text-[var(--color-text-primary)] truncate mb-2">
-                            {it.course.title}
-                          </p>
-                          <div className="flex flex-wrap items-center gap-2 mb-3">
-                            <ScanBadge status={it.scanStatus} t={t} />
-                            <ReviewBadge status={it.reviewStatus} t={t} />
-                            <span className="text-xs text-[var(--color-text-secondary)]">
-                              {formatDate(it.uploadedAt, locale)}
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => setOpenReceiptId(it.receiptId)}
-                            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-[#005bd3] bg-[#EFF6FF] rounded-lg"
-                          >
-                            <Eye className="w-4 h-4" aria-hidden="true" />
-                            {t("bankTransferQueue.review")}
-                          </button>
-                        </div>
-                      ))}
+                {!rowsLoading && totalCount > 0 && (
+                  <div
+                    className={`flex items-center justify-between px-4 py-3 border-t border-[var(--color-border-subtle)] ${
+                      isRTL ? "flex-row-reverse" : ""
+                    }`}
+                  >
+                    <p className="text-xs text-[var(--color-text-secondary)]">
+                      {t("bankTransferQueue.showing", { from, to, total: totalCount })}
+                    </p>
+                    <div className={`flex items-center gap-1 ${isRTL ? "flex-row-reverse" : ""}`}>
+                      <button
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page <= 1}
+                        className="w-8 h-8 inline-flex items-center justify-center rounded-md border border-[var(--color-border)] disabled:opacity-40 hover:bg-[var(--color-surface-page)]"
+                      >
+                        {isRTL ? (
+                          <ChevronRight className="w-4 h-4" />
+                        ) : (
+                          <ChevronLeft className="w-4 h-4" />
+                        )}
+                      </button>
+                      <span className="text-xs px-2 text-[var(--color-text-secondary)]">
+                        {page} / {totalPages}
+                      </span>
+                      <button
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={page >= totalPages}
+                        className="w-8 h-8 inline-flex items-center justify-center rounded-md border border-[var(--color-border)] disabled:opacity-40 hover:bg-[var(--color-surface-page)]"
+                      >
+                        {isRTL ? (
+                          <ChevronLeft className="w-4 h-4" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4" />
+                        )}
+                      </button>
                     </div>
-
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                      <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--color-border)]">
-                        <span className="text-sm text-[var(--color-text-secondary)]">
-                          {t("bankTransferQueue.showing", {
-                            from: (page - 1) * 10 + 1,
-                            to: Math.min(page * 10, total),
-                            total,
-                          })}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => setPage((p) => Math.max(1, p - 1))}
-                            disabled={page === 1}
-                            className="p-2 rounded hover:bg-[var(--color-surface-page)] disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-                          </button>
-                          <span className="px-3 text-sm">
-                            {page} / {totalPages}
-                          </span>
-                          <button
-                            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                            disabled={page === totalPages}
-                            className="p-2 rounded hover:bg-[var(--color-surface-page)] disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </>
+                  </div>
                 )}
               </div>
             </div>
@@ -383,539 +644,177 @@ export default function BankTransferQueueContent() {
         </div>
       </div>
 
-      {openReceiptId && (
-        <ReviewReceiptModal
-          receiptId={openReceiptId}
-          onClose={() => setOpenReceiptId(null)}
-          onActioned={handleActioned}
-          t={t}
-          locale={locale}
-        />
-      )}
+      <BankTransferDetailDrawer
+        receiptId={selectedReceiptId}
+        onClose={() => openDrawer(null)}
+        onChanged={refreshAll}
+      />
     </>
   );
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────
-
-type TFn = ReturnType<typeof useTranslations<"financeDashboard">>;
-
-function Th({ children }: { children: React.ReactNode }) {
+function StatCard({
+  label,
+  value,
+  sublabel,
+  icon: Icon,
+  iconBg,
+  iconColor,
+}: {
+  label: string;
+  value: string | React.ReactNode;
+  sublabel: React.ReactNode;
+  icon: React.ComponentType<{ className?: string }>;
+  iconBg: string;
+  iconColor: string;
+}) {
   return (
-    <th className="text-start px-4 py-3 text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">
+    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3">
+      <div
+        className={`w-10 h-10 ${iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}
+      >
+        <Icon className={`w-5 h-5 ${iconColor}`} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs text-[var(--color-text-secondary)] font-medium">{label}</p>
+        <div className="text-xl font-bold text-[var(--color-text-primary)] mt-0.5">{value}</div>
+        <div className="text-xs text-[var(--color-text-secondary)] mt-0.5">{sublabel}</div>
+      </div>
+    </div>
+  );
+}
+
+function AgeBucket({
+  label,
+  count,
+  amount,
+  color,
+  urgent,
+  t,
+}: {
+  label: string;
+  count: number;
+  amount: number;
+  color: string;
+  urgent?: boolean;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  const isEmpty = count === 0;
+  return (
+    <div
+      className={`bg-[var(--color-surface-card)] rounded-xl border ${
+        urgent ? "border-[#DC2626]" : "border-[var(--color-border)]"
+      } p-3`}
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <span className={`w-2 h-2 rounded-full ${color}`} />
+        <p className="text-[11px] text-[var(--color-text-secondary)] font-medium">{label}</p>
+      </div>
+      <p className="text-lg font-bold text-[var(--color-text-primary)]">
+        {isEmpty ? t("bankTransferQueue.agingStrip.clear") : count.toLocaleString("en-US")}
+      </p>
+      {!isEmpty && (
+        <Money
+          amount={amount}
+          decimals={0}
+          iconSize={10}
+          className="text-[11px] text-[var(--color-text-secondary)]"
+        />
+      )}
+    </div>
+  );
+}
+
+function Th({
+  children,
+  isRTL,
+  hideOnMobile,
+}: {
+  children: React.ReactNode;
+  isRTL: boolean;
+  hideOnMobile?: boolean;
+}) {
+  return (
+    <th
+      scope="col"
+      className={`py-3 px-4 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${
+        isRTL ? "text-right" : "text-left"
+      } ${hideOnMobile ? "hidden md:table-cell" : ""}`}
+    >
       {children}
     </th>
   );
 }
 
-function ScanBadge({
-  status,
-  t,
-}: {
-  status: BankTransferQueueItem["scanStatus"];
-  t: TFn;
-}) {
-  const map: Record<typeof status, { tone: string; Icon: React.ElementType; label: string }> = {
-    pending: {
-      tone: "bg-amber-100 text-amber-800",
-      Icon: Clock,
-      label: t("bankTransferQueue.scan.pending"),
-    },
-    clean: {
-      tone: "bg-emerald-100 text-emerald-800",
-      Icon: ShieldCheck,
-      label: t("bankTransferQueue.scan.clean"),
-    },
-    infected: {
-      tone: "bg-red-100 text-red-800",
-      Icon: AlertTriangle,
-      label: t("bankTransferQueue.scan.infected"),
-    },
-    error: {
-      tone: "bg-gray-100 text-gray-800",
-      Icon: AlertCircle,
-      label: t("bankTransferQueue.scan.error"),
-    },
-  };
-  const { tone, Icon, label } = map[status];
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${tone}`}>
-      <Icon className="w-3.5 h-3.5" aria-hidden="true" />
-      {label}
-    </span>
-  );
-}
-
-function ReviewBadge({
-  status,
-  t,
-}: {
-  status: BankTransferQueueItem["reviewStatus"];
-  t: TFn;
-}) {
-  const map: Record<typeof status, { tone: string; label: string }> = {
-    pending: {
-      tone: "bg-blue-100 text-blue-800",
-      label: t("bankTransferQueue.reviewStatus.pending"),
-    },
-    approved: {
-      tone: "bg-green-100 text-green-800",
-      label: t("bankTransferQueue.reviewStatus.approved"),
-    },
-    rejected: {
-      tone: "bg-red-100 text-red-800",
-      label: t("bankTransferQueue.reviewStatus.rejected"),
-    },
-  };
-  const { tone, label } = map[status];
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${tone}`}>
-      {label}
-    </span>
-  );
-}
-
-function ReviewReceiptModal({
-  receiptId,
-  onClose,
-  onActioned,
-  t,
+function ReceiptRow({
+  r,
+  isRTL,
   locale,
-}: {
-  receiptId: string;
-  onClose: () => void;
-  onActioned: () => void;
-  t: TFn;
-  locale: string;
-}) {
-  const isRTL = locale === "ar";
-  const [loading, setLoading] = useState(true);
-  const [detail, setDetail] = useState<BankTransferReceiptDetail | null>(null);
-  const [acting, setActing] = useState(false);
-  const [mode, setMode] = useState<"view" | "reject">("view");
-  const [reviewerNote, setReviewerNote] = useState("");
-  const [internalNote, setInternalNote] = useState("");
-  const [copied, setCopied] = useState<string | null>(null);
-
-  useEffect(() => {
-    setLoading(true);
-    financeBankTransferApi
-      .getReceipt(receiptId)
-      .then(setDetail)
-      .catch((err) => {
-        const msg = err instanceof ApiError ? err.message : "Failed to load receipt";
-        toast.error(msg);
-        onClose();
-      })
-      .finally(() => setLoading(false));
-  }, [receiptId, onClose]);
-
-  // Close on ESC
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [onClose]);
-
-  const handleApprove = async () => {
-    if (!detail) return;
-    setActing(true);
-    try {
-      await financeBankTransferApi.approve(receiptId, {
-        internalNote: internalNote.trim() || undefined,
-      });
-      toast.success(t("bankTransferQueue.actions.approveSuccess"));
-      onActioned();
-    } catch (err) {
-      const msg = err instanceof ApiError ? err.message : t("bankTransferQueue.actions.approveFailed");
-      toast.error(msg);
-    } finally {
-      setActing(false);
-    }
-  };
-
-  const handleReject = async () => {
-    if (!detail) return;
-    if (reviewerNote.trim().length < 5) {
-      toast.error(t("bankTransferQueue.actions.noteRequired"));
-      return;
-    }
-    setActing(true);
-    try {
-      await financeBankTransferApi.reject(receiptId, {
-        reviewerNote: reviewerNote.trim(),
-        internalNote: internalNote.trim() || undefined,
-      });
-      toast.success(t("bankTransferQueue.actions.rejectSuccess"));
-      onActioned();
-    } catch (err) {
-      const msg = err instanceof ApiError ? err.message : t("bankTransferQueue.actions.rejectFailed");
-      toast.error(msg);
-    } finally {
-      setActing(false);
-    }
-  };
-
-  const copyText = async (text: string, key: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(key);
-      setTimeout(() => setCopied(null), 1500);
-    } catch {
-      /* ignore */
-    }
-  };
-
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4 overflow-y-auto"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !acting) onClose();
-      }}
-      dir={isRTL ? "rtl" : "ltr"}
-    >
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[92vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
-          <h2 className="text-lg font-semibold text-[#1F2937]">
-            {t("bankTransferQueue.modal.title")}
-          </h2>
-          <button
-            onClick={onClose}
-            disabled={acting}
-            className="p-1.5 rounded-lg hover:bg-[#F3F4F6] disabled:opacity-50"
-            aria-label={t("bankTransferQueue.modal.close")}
-          >
-            <X className="w-5 h-5 text-[#6B7280]" aria-hidden="true" />
-          </button>
-        </div>
-
-        {loading || !detail ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />
-          </div>
-        ) : (
-          <>
-            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-              {/* Scan warning */}
-              {detail.receipt.scanStatus === "infected" && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
-                  <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-800">
-                    {t("bankTransferQueue.modal.infectedWarning")}
-                  </p>
-                </div>
-              )}
-              {detail.receipt.scanStatus === "pending" && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
-                  <Clock className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-amber-800">
-                    {t("bankTransferQueue.modal.scanPending")}
-                  </p>
-                </div>
-              )}
-
-              {/* Receipt preview */}
-              <ReceiptPreview detail={detail} t={t} />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Payment context */}
-                <Section title={t("bankTransferQueue.modal.payment")}>
-                  <KV label={t("bankTransferQueue.modal.student")} value={`${detail.student.name} (${detail.student.email})`} />
-                  <KV label={t("bankTransferQueue.modal.course")} value={detail.course.title} />
-                  <KV
-                    label={t("bankTransferQueue.modal.amount")}
-                    value={`${detail.payment.currency} ${Number(detail.payment.amount).toFixed(2)}`}
-                  />
-                  <KV label={t("bankTransferQueue.modal.uploadedAt")} value={formatDate(detail.receipt.uploadedAt, locale)} />
-                  <KV
-                    label={t("bankTransferQueue.modal.paymentId")}
-                    value={detail.payment.id}
-                    mono
-                    copyable={(v) => copyText(v, "paymentId")}
-                    copied={copied === "paymentId"}
-                  />
-                </Section>
-
-                {/* Refund info snapshot */}
-                <Section title={t("bankTransferQueue.modal.refundInfo")}>
-                  <KV label={t("bankTransferQueue.modal.accountHolder")} value={detail.receipt.refundInfo.accountHolder} />
-                  <KV
-                    label={t("bankTransferQueue.modal.iban")}
-                    value={detail.receipt.refundInfo.iban}
-                    mono
-                    copyable={(v) => copyText(v, "iban")}
-                    copied={copied === "iban"}
-                  />
-                  <KV label={t("bankTransferQueue.modal.bank")} value={detail.receipt.refundInfo.bankName} />
-                  {detail.receipt.refundInfo.nationalId && (
-                    <KV label={t("bankTransferQueue.modal.nationalId")} value={detail.receipt.refundInfo.nationalId} mono />
-                  )}
-                </Section>
-              </div>
-
-              {/* Already-actioned summary (if approved/rejected) */}
-              {detail.receipt.reviewStatus !== "pending" && (
-                <div
-                  className={`border rounded-lg p-4 ${
-                    detail.receipt.reviewStatus === "approved"
-                      ? "bg-green-50 border-green-200"
-                      : "bg-red-50 border-red-200"
-                  }`}
-                >
-                  <p className={`text-sm font-semibold ${detail.receipt.reviewStatus === "approved" ? "text-green-900" : "text-red-900"}`}>
-                    {t(`bankTransferQueue.modal.${detail.receipt.reviewStatus}Notice`)}
-                  </p>
-                  {detail.receipt.reviewerNote && (
-                    <p className="text-sm mt-2 text-gray-700">
-                      <strong>{t("bankTransferQueue.modal.reviewerNote")}:</strong>{" "}
-                      {detail.receipt.reviewerNote}
-                    </p>
-                  )}
-                  {detail.receipt.reviewedAt && (
-                    <p className="text-xs mt-1 text-gray-600">
-                      {formatDate(detail.receipt.reviewedAt, locale)}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Action panel (only when pending) */}
-              {detail.receipt.reviewStatus === "pending" && mode === "view" && (
-                <Section title={t("bankTransferQueue.modal.internalNote")}>
-                  <textarea
-                    value={internalNote}
-                    onChange={(e) => setInternalNote(e.target.value)}
-                    rows={2}
-                    placeholder={t("bankTransferQueue.modal.internalNotePlaceholder")}
-                    className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#005bd3]"
-                  />
-                  <p className="text-xs text-[#6B7280] mt-1">
-                    {t("bankTransferQueue.modal.internalNoteHint")}
-                  </p>
-                </Section>
-              )}
-
-              {detail.receipt.reviewStatus === "pending" && mode === "reject" && (
-                <Section title={t("bankTransferQueue.modal.rejectTitle")}>
-                  <textarea
-                    value={reviewerNote}
-                    onChange={(e) => setReviewerNote(e.target.value)}
-                    rows={3}
-                    placeholder={t("bankTransferQueue.modal.rejectNotePlaceholder")}
-                    className="w-full px-3 py-2 border border-red-300 rounded-lg text-sm focus:outline-none focus:border-red-500"
-                  />
-                  <p className="text-xs text-red-600 mt-1">
-                    {t("bankTransferQueue.modal.rejectNoteHint")}
-                  </p>
-                  <textarea
-                    value={internalNote}
-                    onChange={(e) => setInternalNote(e.target.value)}
-                    rows={2}
-                    placeholder={t("bankTransferQueue.modal.internalNotePlaceholder")}
-                    className="w-full mt-3 px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#005bd3]"
-                  />
-                  <p className="text-xs text-[#6B7280] mt-1">
-                    {t("bankTransferQueue.modal.internalNoteHint")}
-                  </p>
-                </Section>
-              )}
-            </div>
-
-            {/* Footer actions */}
-            {detail.receipt.reviewStatus === "pending" && (
-              <div className="border-t border-[#E5E7EB] px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-                {mode === "view" ? (
-                  <>
-                    <button
-                      onClick={onClose}
-                      disabled={acting}
-                      className="px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50"
-                    >
-                      {t("bankTransferQueue.modal.cancel")}
-                    </button>
-                    <button
-                      onClick={() => setMode("reject")}
-                      disabled={acting}
-                      className="px-4 py-2 text-sm font-medium text-red-700 border border-red-300 rounded-lg hover:bg-red-50 disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      <X className="w-4 h-4" aria-hidden="true" />
-                      {t("bankTransferQueue.modal.reject")}
-                    </button>
-                    <button
-                      onClick={handleApprove}
-                      disabled={
-                        acting ||
-                        detail.receipt.scanStatus === "infected" ||
-                        detail.receipt.scanStatus === "pending"
-                      }
-                      className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      {acting ? (
-                        <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                      ) : (
-                        <Check className="w-4 h-4" aria-hidden="true" />
-                      )}
-                      {t("bankTransferQueue.modal.approve")}
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => {
-                        setMode("view");
-                        setReviewerNote("");
-                      }}
-                      disabled={acting}
-                      className="px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50"
-                    >
-                      {t("bankTransferQueue.modal.back")}
-                    </button>
-                    <button
-                      onClick={handleReject}
-                      disabled={acting || reviewerNote.trim().length < 5}
-                      className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      {acting ? (
-                        <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                      ) : (
-                        <X className="w-4 h-4" aria-hidden="true" />
-                      )}
-                      {t("bankTransferQueue.modal.confirmReject")}
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ReceiptPreview({
-  detail,
   t,
+  ArrowGlyph,
+  onClick,
 }: {
-  detail: BankTransferReceiptDetail;
-  t: TFn;
+  r: BankTransferQueueItem;
+  isRTL: boolean;
+  locale: string;
+  t: ReturnType<typeof useTranslations>;
+  ArrowGlyph: typeof ArrowRight;
+  onClick: () => void;
 }) {
-  const isImage = detail.receipt.mimeType.startsWith("image/");
-  const isPdf = detail.receipt.mimeType === "application/pdf";
+  const reviewPill = REVIEW_PILL[r.reviewStatus] || REVIEW_PILL.pending;
+  const scanPill = SCAN_PILL[r.scanStatus] || SCAN_PILL.pending;
+  const ScanIcon = scanPill.Icon;
 
   return (
-    <section>
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold text-[#374151]">
-          {t("bankTransferQueue.modal.receipt")}
-        </h3>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-[#6B7280]">
-            {detail.receipt.fileName} ·{" "}
-            {(detail.receipt.fileSizeBytes / 1024 / 1024).toFixed(2)} MB
-          </span>
-          <a
-            href={detail.receipt.downloadUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-[#005bd3] hover:underline"
-          >
-            {t("bankTransferQueue.modal.openInNewTab")}
-          </a>
-        </div>
-      </div>
-      <div className="rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] overflow-hidden">
-        {isImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={detail.receipt.downloadUrl}
-            alt={detail.receipt.fileName}
-            className="w-full max-h-[420px] object-contain bg-white"
-          />
-        ) : isPdf ? (
-          <iframe
-            src={detail.receipt.downloadUrl}
-            title={detail.receipt.fileName}
-            className="w-full h-[420px] bg-white"
-          />
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-[#6B7280]">
-            <FileText className="w-10 h-10 mb-2" />
-            <p className="text-sm">{t("bankTransferQueue.modal.previewUnavailable")}</p>
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section>
-      <h3 className="text-sm font-semibold text-[#374151] mb-2">{title}</h3>
-      <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg p-3 space-y-2">
-        {children}
-      </div>
-    </section>
-  );
-}
-
-function KV({
-  label,
-  value,
-  mono,
-  copyable,
-  copied,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-  copyable?: (v: string) => void;
-  copied?: boolean;
-}) {
-  return (
-    <div className="flex justify-between items-start gap-3">
-      <span className="text-xs text-[#6B7280] flex-shrink-0">{label}</span>
-      <span className="flex items-center gap-1 min-w-0">
-        <span
-          className={`text-sm text-[#1F2937] text-end break-all ${mono ? "font-mono" : ""}`}
-        >
-          {value}
+    <tr
+      onClick={onClick}
+      className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)] cursor-pointer transition-colors"
+    >
+      <td className="py-3 px-4">
+        <p className="text-[13px] font-medium text-[var(--color-text-primary)] truncate max-w-[180px]">
+          {r.student.name}
+        </p>
+        <p className="text-[11px] text-[var(--color-text-secondary)] truncate max-w-[180px]">
+          {r.student.email}
+        </p>
+      </td>
+      <td className="py-3 px-4 hidden md:table-cell">
+        <span className="text-[13px] text-[var(--color-text-secondary)] truncate inline-block max-w-[180px] align-middle">
+          {r.course.title}
         </span>
-        {copyable && (
-          <button
-            onClick={() => copyable(value)}
-            className="flex-shrink-0 p-1 text-[#6B7280] hover:text-[#005bd3]"
-            aria-label={copied ? "Copied" : "Copy"}
-          >
-            {copied ? (
-              <Check className="w-3.5 h-3.5 text-emerald-600" />
-            ) : (
-              <Copy className="w-3.5 h-3.5" />
-            )}
-          </button>
-        )}
-      </span>
-    </div>
+      </td>
+      <td className="py-3 px-4">
+        <Money
+          amount={Number(r.payment.amount || 0)}
+          decimals={2}
+          iconSize={12}
+          className="font-semibold text-[var(--color-text-primary)]"
+        />
+      </td>
+      <td className="py-3 px-4 text-[12px] text-[var(--color-text-secondary)] whitespace-nowrap">
+        {formatDateTime(r.uploadedAt, locale)}
+      </td>
+      <td className={`py-3 px-4 text-[12px] whitespace-nowrap hidden md:table-cell ${ageColor(r.uploadedAt)}`}>
+        {formatAge(r.uploadedAt, locale)}
+      </td>
+      <td className="py-3 px-4">
+        <span
+          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${scanPill.bg} ${scanPill.text}`}
+        >
+          <ScanIcon className="w-3 h-3" />
+          {t(`bankTransferQueue.scan.${r.scanStatus}` as any)}
+        </span>
+      </td>
+      <td className="py-3 px-4">
+        <span
+          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${reviewPill.bg} ${reviewPill.text}`}
+        >
+          {t(`bankTransferQueue.reviewStatus.${r.reviewStatus}` as any)}
+        </span>
+      </td>
+      <td className="py-3 px-4 text-[var(--color-text-secondary)]">
+        <ArrowGlyph className="w-4 h-4" />
+      </td>
+    </tr>
   );
-}
-
-function formatDate(iso: string | null, locale: string): string {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
 }

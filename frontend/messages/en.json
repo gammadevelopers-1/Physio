@@ -7987,6 +7987,107 @@
         "rejectedNotice": "This receipt has been rejected.",
         "infectedWarning": "This file was flagged by the malware scanner. Approval is blocked. Ask the student to re-upload from a clean source.",
         "scanPending": "The malware scan hasn't completed yet. Approval is temporarily disabled — refresh in a moment."
+      },
+      "kpi": {
+        "pendingTitle": "Pending Review",
+        "pendingSubtitle": "Receipts waiting on finance approval",
+        "oldestPendingTitle": "Oldest Pending",
+        "oldestPendingSubtitle": "Time since the longest-waiting upload",
+        "approvedTitle": "Approved",
+        "approvedSubtitle": "In selected period",
+        "rejectedTitle": "Rejected",
+        "rejectedSubtitle": "In selected period",
+        "avgReviewTitle": "Avg. Review Time",
+        "avgReviewSubtitle": "From upload to decision",
+        "scanPendingTitle": "Scan Pending",
+        "scanPendingSubtitle": "Awaiting malware scan",
+        "hoursSuffix": "h",
+        "daysSuffix": "d",
+        "noneYet": "—"
+      },
+      "agingStrip": {
+        "title": "Pending Aging",
+        "subtitle": "Live snapshot of clean-scanned receipts awaiting finance review",
+        "asOf": "Live · {when}",
+        "buckets": {
+          "underSix": "Under 6h",
+          "sixToDay": "6h – 24h",
+          "dayToTwo": "1 – 2 days",
+          "beyondTwo": "Over 2 days",
+          "scanQueue": "Scan pending"
+        },
+        "clear": "Clear"
+      },
+      "filters": {
+        "scanStatus": "Scan",
+        "allScanStatuses": "All scans",
+        "period": "Period"
+      },
+      "list": {
+        "empty": "No bank transfer receipts match the current filters.",
+        "ageColumn": "Age",
+        "age": "{value} ago",
+        "newer": "Just now"
+      },
+      "drawer": {
+        "title": "Receipt Review",
+        "tabs": {
+          "overview": "Overview",
+          "history": "Upload History",
+          "audit": "Audit"
+        },
+        "overview": {
+          "receiptFile": "Receipt file",
+          "openInNewTab": "Open in new tab",
+          "download": "Download",
+          "previewUnavailable": "Preview not available for this file type — open in a new tab.",
+          "amount": "Amount",
+          "student": "Student",
+          "course": "Course",
+          "uploadedAt": "Uploaded",
+          "paymentId": "Payment ID",
+          "scanStatus": "Scan",
+          "reviewStatus": "Review",
+          "reviewerNote": "Note to student",
+          "internalNote": "Internal finance note",
+          "refundInfoTitle": "Student's refund bank details",
+          "accountHolder": "Account holder",
+          "iban": "IBAN",
+          "bank": "Bank",
+          "nationalId": "National ID / Iqama",
+          "openPayment": "Open Payment",
+          "openInvoice": "Open Invoice"
+        },
+        "history": {
+          "title": "All uploads for this payment",
+          "current": "Current",
+          "replaced": "Replaced",
+          "this": "This receipt",
+          "rejectedNote": "Rejection note",
+          "empty": "No prior uploads."
+        },
+        "audit": {
+          "empty": "No audit entries yet.",
+          "by": "by",
+          "viewMeta": "View metadata",
+          "hideMeta": "Hide metadata"
+        },
+        "approve": {
+          "title": "Approve receipt",
+          "confirm": "Approve & activate enrollment",
+          "note": "Internal note (optional, finance-only)",
+          "notePlaceholder": "Anything finance should know about this approval (not shown to student)..."
+        },
+        "reject": {
+          "title": "Reject receipt",
+          "confirm": "Reject receipt",
+          "note": "Note to student (mandatory, ≥ 5 chars)",
+          "notePlaceholder": "Explain why — the student sees this verbatim in email + on their page (e.g. 'Receipt is for a different amount').",
+          "internalNote": "Internal note (optional, finance-only)",
+          "required": "Note to student is required (≥ 5 characters)"
+        },
+        "blockedByScan": "Cannot approve — malware scan {status}. Wait or escalate.",
+        "blockedAlreadyActioned": "Receipt was already actioned. Refresh to see latest state."
       }
     },
     "kpi": {

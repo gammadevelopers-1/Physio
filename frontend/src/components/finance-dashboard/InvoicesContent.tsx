@@ -488,7 +488,7 @@ const InvoicesContent = () => {
                       count={reviewAging.scanQueue.count}
                       amount={reviewAging.scanQueue.amount}
                       color="bg-[#7C3AED]"
-                      href={`/${locale}/dashboard/finance/bank-transfers?scan=pending`}
+                      href={`/${locale}/dashboard/finance/bank-transfers?status=all&scan=pending`}
                       t={t}
                     />
                   </div>

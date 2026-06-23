@@ -825,6 +825,171 @@ export class BankTransferService {
   }
 
   /**
+   * KPIs for the bank-transfer queue page header. Splits into:
+   *   - "live" metrics that reflect current state (always now-snapshot,
+   *     ignore date range) — what finance cares about RIGHT NOW
+   *   - "window" metrics in the date range (defaults caller-side to 30d)
+   *
+   * Single round-trip; mirrors getRefundSummary / getInvoiceSummary shape.
+   */
+  async getQueueSummary(opts: { startDate?: string; endDate?: string }) {
+    const startDate = opts.startDate ? new Date(opts.startDate) : null;
+    const endDateRaw = opts.endDate ? new Date(opts.endDate) : null;
+    if (endDateRaw) endDateRaw.setHours(23, 59, 59, 999);
+
+    // ─── Live metrics (current state, ignore date range) ────────────
+    const [liveRow] = await db
+      .select({
+        pendingCount: sql<number>`COUNT(CASE WHEN ${paymentReceipts.reviewStatus} = 'pending' AND ${paymentReceipts.scanStatus} = 'clean' THEN 1 END)::int`,
+        pendingAmount: sql<string>`COALESCE(SUM(CASE WHEN ${paymentReceipts.reviewStatus} = 'pending' AND ${paymentReceipts.scanStatus} = 'clean' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+        scanPendingCount: sql<number>`COUNT(CASE WHEN ${paymentReceipts.scanStatus} = 'pending' THEN 1 END)::int`,
+        oldestPendingHours: sql<string>`COALESCE(MAX(CASE WHEN ${paymentReceipts.reviewStatus} = 'pending' AND ${paymentReceipts.scanStatus} = 'clean' THEN EXTRACT(EPOCH FROM (NOW() - ${paymentReceipts.createdAt})) / 3600.0 END), 0)`,
+        infectedCount: sql<number>`COUNT(CASE WHEN ${paymentReceipts.scanStatus} = 'infected' THEN 1 END)::int`,
+      })
+      .from(paymentReceipts)
+      .innerJoin(payments, eq(payments.id, paymentReceipts.paymentId))
+      .where(isNull(paymentReceipts.replacedById));
+
+    // ─── In-window metrics ───────────────────────────────────────────
+    const windowConditions: any[] = [];
+    if (startDate)
+      windowConditions.push(sql`${paymentReceipts.reviewedAt} >= ${startDate}`);
+    if (endDateRaw)
+      windowConditions.push(sql`${paymentReceipts.reviewedAt} <= ${endDateRaw}`);
+    const windowWhere =
+      windowConditions.length > 0 ? and(...windowConditions) : undefined;
+
+    const [windowRow] = await db
+      .select({
+        approvedCount: sql<number>`COUNT(CASE WHEN ${paymentReceipts.reviewStatus} = 'approved' THEN 1 END)::int`,
+        approvedAmount: sql<string>`COALESCE(SUM(CASE WHEN ${paymentReceipts.reviewStatus} = 'approved' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+        rejectedCount: sql<number>`COUNT(CASE WHEN ${paymentReceipts.reviewStatus} = 'rejected' THEN 1 END)::int`,
+        avgReviewHours: sql<string>`COALESCE(AVG(CASE WHEN ${paymentReceipts.reviewedAt} IS NOT NULL THEN EXTRACT(EPOCH FROM (${paymentReceipts.reviewedAt} - ${paymentReceipts.createdAt})) / 3600.0 END), 0)`,
+      })
+      .from(paymentReceipts)
+      .innerJoin(payments, eq(payments.id, paymentReceipts.paymentId))
+      .where(
+        and(
+          isNull(paymentReceipts.replacedById),
+          sql`${paymentReceipts.reviewedAt} IS NOT NULL`,
+          windowWhere,
+        ),
+      );
+
+    return {
+      live: {
+        pendingCount: liveRow?.pendingCount ?? 0,
+        pendingAmount: Number(liveRow?.pendingAmount ?? 0),
+        scanPendingCount: liveRow?.scanPendingCount ?? 0,
+        oldestPendingHours: Number(
+          Number(liveRow?.oldestPendingHours ?? 0).toFixed(1),
+        ),
+        infectedCount: liveRow?.infectedCount ?? 0,
+      },
+      window: {
+        approvedCount: windowRow?.approvedCount ?? 0,
+        approvedAmount: Number(windowRow?.approvedAmount ?? 0),
+        rejectedCount: windowRow?.rejectedCount ?? 0,
+        avgReviewHours: Number(
+          Number(windowRow?.avgReviewHours ?? 0).toFixed(1),
+        ),
+      },
+    };
+  }
+
+  /**
+   * Replacement chain for a payment — ALL receipts uploaded for it,
+   * including superseded ones, in chronological order. Lets finance see
+   * the full upload history (re-uploads after rejection).
+   */
+  async getReplacementChain(receiptId: string) {
+    const [pivot] = await db
+      .select({ paymentId: paymentReceipts.paymentId })
+      .from(paymentReceipts)
+      .where(eq(paymentReceipts.id, receiptId))
+      .limit(1);
+    if (!pivot) return [];
+
+    const rows = await db
+      .select({
+        id: paymentReceipts.id,
+        uploadedAt: paymentReceipts.createdAt,
+        fileName: paymentReceipts.fileName,
+        scanStatus: paymentReceipts.scanStatus,
+        reviewStatus: paymentReceipts.reviewStatus,
+        reviewedAt: paymentReceipts.reviewedAt,
+        reviewerNote: paymentReceipts.reviewerNote,
+        replacedById: paymentReceipts.replacedById,
+      })
+      .from(paymentReceipts)
+      .where(eq(paymentReceipts.paymentId, pivot.paymentId))
+      .orderBy(desc(paymentReceipts.createdAt));
+
+    return rows.map((r) => ({
+      ...r,
+      isCurrent: r.replacedById === null && r.id !== receiptId ? false : !r.replacedById,
+      isThis: r.id === receiptId,
+    }));
+  }
+
+  /**
+   * Audit timeline for a receipt: UNION across receipt-level events
+   * (`payment_receipt`) + parent payment events + child invoice events
+   * + any refund spawned from that payment. Same pattern as
+   * InvoiceService.getInvoiceAudit and RefundService.getRefundAudit.
+   */
+  async getReceiptAudit(receiptId: string, limit: number = 100) {
+    const [pivot] = await db
+      .select({ paymentId: paymentReceipts.paymentId })
+      .from(paymentReceipts)
+      .where(eq(paymentReceipts.id, receiptId))
+      .limit(1);
+    if (!pivot) return [];
+
+    const cap = Math.min(limit, 200);
+    const result = await db.execute(sql`
+      SELECT a.id,
+             a.action,
+             a.entity_type AS "entityType",
+             a.entity_id AS "entityId",
+             a.performed_by AS "performedBy",
+             a.metadata,
+             a.created_at AS "createdAt",
+             CASE
+               WHEN u.id IS NULL THEN NULL
+               ELSE CONCAT(u.first_name, ' ', u.last_name)
+             END AS "actorName",
+             u.email AS "actorEmail"
+      FROM audit_logs a
+      LEFT JOIN users u ON a.performed_by = u.id
+      WHERE
+        (a.entity_type = 'payment_receipt' AND a.entity_id IN (
+          SELECT id FROM payment_receipts WHERE payment_id = ${pivot.paymentId}
+        ))
+        OR (a.entity_type = 'payment' AND a.entity_id = ${pivot.paymentId})
+        OR (a.entity_type = 'invoice' AND a.entity_id IN (
+          SELECT id FROM invoices WHERE payment_id = ${pivot.paymentId}
+        ))
+        OR (a.entity_type = 'refund' AND a.entity_id IN (
+          SELECT id FROM refunds WHERE payment_id = ${pivot.paymentId}
+        ))
+      ORDER BY a.created_at DESC
+      LIMIT ${cap}
+    `);
+    return result.rows as Array<{
+      id: string;
+      action: string;
+      entityType: string;
+      entityId: string;
+      performedBy: string | null;
+      metadata: Record<string, unknown> | null;
+      createdAt: string;
+      actorName: string | null;
+      actorEmail: string | null;
+    }>;
+  }
+
+  /**
    * Finance approves a receipt: flip review_status → approved, flip payment
    * to PAID + activate enrollment in one transaction (matches the same
    * post-payment dance other gateways trigger via webhook), then generate

@@ -37,6 +37,51 @@ import { classifyCourse, getNelcMaxEnrollment } from '../courses/nelc-config';
 import { getEffectivePrice } from '../courses/pricing.util';
 import { PaymentGatewayError } from './gateways/payment-gateway.error';
 
+/**
+ * Validate and normalize a Saudi phone number to E.164 format (+9665XXXXXXXX).
+ *
+ * Saudi mobile numbers are exactly 9 digits after the country code and always
+ * start with 5. We accept the four common input shapes:
+ *   05XXXXXXXX, 5XXXXXXXX, +9665XXXXXXXX, 9665XXXXXXXX
+ *
+ * Returns `null` when the input doesn't conform (e.g. Pakistan numbers like
+ * 03045570099) so callers can throw a clean user-facing error rather than
+ * forwarding garbage to the BNPL gateway. The gateways themselves return
+ * PII-tokenized "Invalid v1:...==" messages that are useless in the UI.
+ */
+function normalizeSaudiPhone(raw: string): string | null {
+  const digits = raw.replace(/\D/g, '');
+  if (/^9665\d{8}$/.test(digits)) return `+${digits}`;
+  if (/^05\d{8}$/.test(digits)) return `+966${digits.slice(1)}`;
+  if (/^5\d{8}$/.test(digits)) return `+966${digits}`;
+  return null;
+}
+
+/**
+ * BNPL gateways (Tamara especially) redact PII fields in their error responses
+ * with format-preserving tokens like `v1:89IdJtlO7yceugQS:lV+...==`. Surfaced
+ * verbatim, these read as gibberish ("Payment failed: Invalid v1:...= number
+ * v1:...=") and give the buyer no actionable signal. Strip the tokens and, if
+ * the remaining text mentions phone / address / consumer, fall back to a
+ * targeted, human-readable message.
+ */
+function sanitizeGatewayErrorMessage(raw: string, gateway: string): string {
+  if (!raw) return 'The payment provider rejected the request.';
+  const tokenized = /v1:[A-Za-z0-9+/=:]{20,}/.test(raw);
+  const stripped = raw.replace(/v1:[A-Za-z0-9+/=:]{20,}/g, '').replace(/\s+/g, ' ').trim();
+  const lower = stripped.toLowerCase();
+  if (tokenized && /phone|number/.test(lower)) {
+    return `${gateway === 'tamara' ? 'Tamara' : gateway === 'tabby' ? 'Tabby' : 'The provider'} rejected the phone number on your profile. Please update it to a Saudi mobile (05XXXXXXXX or +9665XXXXXXXX) and try again.`;
+  }
+  if (tokenized && /address|city|country/.test(lower)) {
+    return `${gateway === 'tamara' ? 'Tamara' : 'The provider'} rejected the shipping address on this order. Please contact support.`;
+  }
+  if (tokenized) {
+    return `${gateway === 'tamara' ? 'Tamara' : 'The payment provider'} rejected the request. Please verify your profile details (phone, address) or try a different payment method.`;
+  }
+  return stripped || 'The payment provider rejected the request.';
+}
+
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
@@ -634,13 +679,25 @@ export class PaymentsService {
         : `${lines.length} courses: ${lines[0].course.title}` +
           (lines.length > 1 ? ` (+${lines.length - 1} more)` : '');
 
-    // Tabby's Pre-Scoring step requires a phone number on the buyer; without
-    // one their checkout silently auto-declines. Surface a clear error up
-    // front instead of letting the buyer fail at the gateway page.
-    if (dto.gateway === 'tabby' && !userData?.phone) {
-      throw new BadRequestException(
-        'Tabby requires a phone number on your profile. Please add one in account settings, or use a different payment method.',
-      );
+    // Both BNPL gateways (Tabby, Tamara) require a Saudi phone number on the
+    // buyer. Tabby silently auto-declines its Pre-Scoring without one; Tamara
+    // returns a PII-tokenized error ("Invalid v1:...==") that's unreadable
+    // when surfaced to the user. Validate + normalize up front so callers get
+    // a clear, actionable error instead of a gateway-side failure.
+    let normalizedPhone: string | undefined = userData?.phone || undefined;
+    if (dto.gateway === 'tabby' || dto.gateway === 'tamara') {
+      if (!userData?.phone) {
+        throw new BadRequestException(
+          `${dto.gateway === 'tabby' ? 'Tabby' : 'Tamara'} requires a Saudi phone number on your profile. Please add one in account settings, or use a different payment method.`,
+        );
+      }
+      const candidate = normalizeSaudiPhone(userData.phone);
+      if (!candidate) {
+        throw new BadRequestException(
+          `${dto.gateway === 'tabby' ? 'Tabby' : 'Tamara'} only accepts Saudi Arabian phone numbers (e.g. 05XXXXXXXX or +9665XXXXXXXX). Please update your profile or pick a different payment method.`,
+        );
+      }
+      normalizedPhone = candidate;
     }
 
     let chargeResult: Awaited<ReturnType<typeof gateway.createCharge>>;
@@ -651,7 +708,7 @@ export class PaymentsService {
         description,
         customerName: `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim(),
         customerEmail: userData?.email || user.email,
-        customerPhone: userData?.phone || undefined,
+        customerPhone: normalizedPhone,
         customerRegisteredSince: userData?.createdAt
           ? new Date(userData.createdAt).toISOString()
           : undefined,
@@ -678,7 +735,9 @@ export class PaymentsService {
           err.originalMessage,
           err.normalizedCode,
         );
-        throw new BadRequestException(`Payment failed: ${err.originalMessage}`);
+        throw new BadRequestException(
+          `Payment failed: ${sanitizeGatewayErrorMessage(err.originalMessage, err.gateway)}`,
+        );
       }
       throw err;
     }

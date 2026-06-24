@@ -1,138 +1,107 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import FinanceSidebar from "./FinanceSidebar";
 import FinanceMobileSidebar from "./FinanceMobileSidebar";
 import FinanceNavbar from "./FinanceNavbar";
+import Select from "@/components/admin-dashboard/Select";
+import DatePicker from "@/components/ui/DatePicker";
 import {
   BarChart3,
   Download,
   FileSpreadsheet,
-  Filter,
-  BookOpen,
-  Users,
-  Monitor,
-  Clock,
-  AlertTriangle,
-  Loader2,
+  FileText,
   TrendingUp,
-  TrendingDown,
-  ArrowUpRight,
-  ArrowDownRight,
+  Receipt,
+  CreditCard,
+  BookOpen,
+  Video,
+  UserCheck,
+  ShieldAlert,
+  Calculator,
+  Loader2,
+  Filter,
+  RefreshCw,
 } from "lucide-react";
 import { financeApi } from "@/lib/api";
 import { useFinanceProfile } from "@/hooks/useFinanceProfile";
 import { toast } from "sonner";
 
-type ReportType =
-  | "profitByCourse"
-  | "profitByInstructor"
-  | "profitByDelivery"
-  | "invoiceAging"
-  | "chargeback";
+/**
+ * Finance Reports page.
+ *
+ * Eight report types matching the milestone-10 spec. Each card shares the
+ * same shell — header + filters + preview table — but the filter panel and
+ * preview table adapt per report. The export tray always offers CSV / XLSX /
+ * PDF via the unified `/finance/export` endpoint.
+ *
+ * The five legacy analytics reports (profit-by-course / instructor / delivery,
+ * invoice-aging, chargeback) still live on the Overview page; they were
+ * intentionally removed from here to focus this page on the spec's eight.
+ */
 
-type PeriodKey =
-  | "thisMonth"
-  | "lastMonth"
-  | "thisQuarter"
-  | "thisYear"
-  | "custom";
+type ReportKey =
+  | "revenue"
+  | "refunds"
+  | "payments"
+  | "courseSales"
+  | "webinarSales"
+  | "studentPurchases"
+  | "financeActivity"
+  | "vat";
 
-interface CourseProfitRow {
-  courseId: string;
-  title: string;
-  titleAr: string | null;
-  revenue: number;
-  refundAmount: number;
-  netRevenue: number;
-  marginPercent: number;
-  enrollmentCount: number;
+type PeriodKey = "thisMonth" | "lastMonth" | "thisQuarter" | "thisYear" | "custom";
+
+interface ReportConfig {
+  key: ReportKey;
+  icon: typeof BookOpen;
+  iconBg: string;
+  iconColor: string;
 }
 
-interface InstructorProfitRow {
-  instructorId: string | null;
-  instructorName: string;
-  courseCount: number;
-  revenue: number;
-  refundAmount: number;
-  netRevenue: number;
-  platformFee: number;
-  netPayout: number;
-  enrollmentCount: number;
-}
+const REPORTS: ReportConfig[] = [
+  { key: "revenue",          icon: TrendingUp,   iconBg: "bg-[#DCFCE7]", iconColor: "text-[#16A34A]" },
+  { key: "refunds",          icon: RefreshCw,    iconBg: "bg-[#FEE2E2]", iconColor: "text-[#DC2626]" },
+  { key: "payments",         icon: CreditCard,   iconBg: "bg-[#EFF6FF]", iconColor: "text-[#2563EB]" },
+  { key: "courseSales",      icon: BookOpen,     iconBg: "bg-[#FEF3C7]", iconColor: "text-[#D97706]" },
+  { key: "webinarSales",     icon: Video,        iconBg: "bg-[#EDE9FE]", iconColor: "text-[#7C3AED]" },
+  { key: "studentPurchases", icon: UserCheck,    iconBg: "bg-[#CFFAFE]", iconColor: "text-[#0891B2]" },
+  { key: "financeActivity",  icon: ShieldAlert,  iconBg: "bg-[#FFEDD5]", iconColor: "text-[#EA580C]" },
+  { key: "vat",              icon: Calculator,   iconBg: "bg-[#F3E8FF]", iconColor: "text-[#9333EA]" },
+];
 
-interface DeliveryTypeRow {
-  deliveryType: string;
-  revenue: number;
-  refundAmount: number;
-  netRevenue: number;
-  enrollmentCount: number;
-  courseCount: number;
-}
-
-interface AgingBucket {
-  count: number;
-  amount: number;
-}
-
-interface InvoiceAgingData {
-  current: AgingBucket;
-  thirtyDay: AgingBucket;
-  sixtyDay: AgingBucket;
-  ninetyPlus: AgingBucket;
-  paid: AgingBucket;
-}
-
-interface ChargebackData {
-  chargebackCount: number;
-  chargebackAmount: number;
-  totalTransactions: number;
-  chargebackRate: string;
-  breakdown: Array<{
-    courseId: string;
-    courseTitle: string;
-    gateway: string;
-    chargebackCount: number;
-    chargebackAmount: number;
-  }>;
-}
+// ─── Helpers ──────────────────────────────────────────────────────
 
 function getDateRange(period: PeriodKey, customStart?: string, customEnd?: string) {
   const now = new Date();
   let startDate: string | undefined;
   let endDate: string | undefined;
-
   switch (period) {
     case "thisMonth": {
-      const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      startDate = start.toISOString().slice(0, 10);
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
       endDate = now.toISOString().slice(0, 10);
       break;
     }
     case "lastMonth": {
-      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const end = new Date(now.getFullYear(), now.getMonth(), 0);
-      startDate = start.toISOString().slice(0, 10);
-      endDate = end.toISOString().slice(0, 10);
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 10);
+      endDate = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 10);
       break;
     }
     case "thisQuarter": {
       const qStart = Math.floor(now.getMonth() / 3) * 3;
-      const start = new Date(now.getFullYear(), qStart, 1);
-      startDate = start.toISOString().slice(0, 10);
+      startDate = new Date(now.getFullYear(), qStart, 1).toISOString().slice(0, 10);
       endDate = now.toISOString().slice(0, 10);
       break;
     }
     case "thisYear": {
-      const start = new Date(now.getFullYear(), 0, 1);
-      startDate = start.toISOString().slice(0, 10);
+      startDate = new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10);
       endDate = now.toISOString().slice(0, 10);
       break;
     }
     case "custom": {
-      startDate = customStart;
-      endDate = customEnd;
+      startDate = customStart || undefined;
+      endDate = customEnd || undefined;
       break;
     }
   }
@@ -140,8 +109,42 @@ function getDateRange(period: PeriodKey, customStart?: string, customEnd?: strin
 }
 
 function formatSAR(amount: number) {
-  return `SAR ${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  // Latin digits always — Arabic-Indic numerals are intentionally not used
+  // in the platform's amount display.
+  return `SAR ${(amount || 0).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 }
+
+function formatInt(n: number) {
+  return (n || 0).toLocaleString("en-US");
+}
+
+function formatDateTime(iso: string | null | undefined) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleString("en-US", {
+      year: "numeric", month: "short", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: false,
+    });
+  } catch {
+    return "—";
+  }
+}
+
+function formatDate(iso: string | null | undefined) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString("en-US", {
+      year: "numeric", month: "short", day: "2-digit",
+    });
+  } catch {
+    return "—";
+  }
+}
+
+// ─── Component ────────────────────────────────────────────────────
 
 const FinanceReportsContent = () => {
   const t = useTranslations("financeDashboard");
@@ -149,587 +152,713 @@ const FinanceReportsContent = () => {
   const isRTL = locale === "ar";
   const profile = useFinanceProfile();
 
-  const [selectedReport, setSelectedReport] = useState<ReportType>("profitByCourse");
+  const [selectedReport, setSelectedReport] = useState<ReportKey>("revenue");
   const [period, setPeriod] = useState<PeriodKey>("thisMonth");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
+
+  // Per-report filter state
+  const [gateway, setGateway] = useState("all");
+  const [status, setStatus] = useState("all");
+  const [method, setMethod] = useState("all");
+  const [reason, setReason] = useState("all");
+  const [deliveryType, setDeliveryType] = useState("all");
+  const [entityType, setEntityType] = useState("all");
+  const [search, setSearch] = useState("");
+
+  // Data state
+  type RevenueData = Awaited<ReturnType<typeof financeApi.getReportRevenue>>;
+  type RefundsData = Awaited<ReturnType<typeof financeApi.getReportRefunds>>;
+  type PaymentsData = Awaited<ReturnType<typeof financeApi.getReportPayments>>;
+  type CourseSalesData = Awaited<ReturnType<typeof financeApi.getReportCourseSales>>;
+  type WebinarSalesData = Awaited<ReturnType<typeof financeApi.getReportWebinarSales>>;
+  type StudentPurchasesData = Awaited<ReturnType<typeof financeApi.getReportStudentPurchases>>;
+  type FinanceActivityData = Awaited<ReturnType<typeof financeApi.getReportFinanceActivity>>;
+  type VatData = Awaited<ReturnType<typeof financeApi.getReportVat>>;
+
+  const [revenueData, setRevenueData] = useState<RevenueData | null>(null);
+  const [refundsData, setRefundsData] = useState<RefundsData | null>(null);
+  const [paymentsData, setPaymentsData] = useState<PaymentsData | null>(null);
+  const [courseSalesData, setCourseSalesData] = useState<CourseSalesData | null>(null);
+  const [webinarSalesData, setWebinarSalesData] = useState<WebinarSalesData | null>(null);
+  const [studentPurchasesData, setStudentPurchasesData] = useState<StudentPurchasesData | null>(null);
+  const [financeActivityData, setFinanceActivityData] = useState<FinanceActivityData | null>(null);
+  const [vatData, setVatData] = useState<VatData | null>(null);
+
   const [loading, setLoading] = useState(false);
-  const [generated, setGenerated] = useState(false);
+  const [downloading, setDownloading] = useState<"csv" | "xlsx" | "pdf" | null>(null);
+  const [lastGeneratedAt, setLastGeneratedAt] = useState<Date | null>(null);
 
-  // Report data states
-  const [courseData, setCourseData] = useState<CourseProfitRow[]>([]);
-  const [instructorData, setInstructorData] = useState<InstructorProfitRow[]>([]);
-  const [deliveryData, setDeliveryData] = useState<DeliveryTypeRow[]>([]);
-  const [agingData, setAgingData] = useState<InvoiceAgingData | null>(null);
-  const [chargebackData, setChargebackData] = useState<ChargebackData | null>(null);
+  // Reset per-report filters when switching reports — keeps the UI honest
+  // and avoids stale filter state from one report's preview applying to
+  // another's.
+  useEffect(() => {
+    setGateway("all"); setStatus("all"); setMethod("all"); setReason("all");
+    setDeliveryType("all"); setEntityType("all"); setSearch("");
+  }, [selectedReport]);
 
-  const reportTypes: {
-    key: ReportType;
-    titleKey: string;
-    descKey: string;
-    icon: typeof BookOpen;
-    iconBg: string;
-    iconColor: string;
-  }[] = [
-    {
-      key: "profitByCourse",
-      titleKey: "reportsPage.reportTypes.profitByCourse",
-      descKey: "reportsPage.reportTypes.profitByCourseDesc",
-      icon: BookOpen,
-      iconBg: "bg-[#DCFCE7]",
-      iconColor: "text-[#16A34A]",
-    },
-    {
-      key: "profitByInstructor",
-      titleKey: "reportsPage.reportTypes.profitByInstructor",
-      descKey: "reportsPage.reportTypes.profitByInstructorDesc",
-      icon: Users,
-      iconBg: "bg-[#EFF6FF]",
-      iconColor: "text-[#3B82F6]",
-    },
-    {
-      key: "profitByDelivery",
-      titleKey: "reportsPage.reportTypes.profitByDelivery",
-      descKey: "reportsPage.reportTypes.profitByDeliveryDesc",
-      icon: Monitor,
-      iconBg: "bg-[#EDE9FE]",
-      iconColor: "text-[#8B5CF6]",
-    },
-    {
-      key: "invoiceAging",
-      titleKey: "reportsPage.reportTypes.invoiceAging",
-      descKey: "reportsPage.reportTypes.invoiceAgingDesc",
-      icon: Clock,
-      iconBg: "bg-[#FFEDD5]",
-      iconColor: "text-[#EA580C]",
-    },
-    {
-      key: "chargeback",
-      titleKey: "reportsPage.reportTypes.chargeback",
-      descKey: "reportsPage.reportTypes.chargebackDesc",
-      icon: AlertTriangle,
-      iconBg: "bg-[#FEE2E2]",
-      iconColor: "text-[#DC2626]",
-    },
-  ];
-
-  const generateReport = useCallback(async () => {
-    setLoading(true);
-    setGenerated(false);
+  const currentFilters = useMemo<Record<string, string>>(() => {
     const { startDate, endDate } = getDateRange(period, customStart, customEnd);
-    const params = { startDate, endDate };
+    const base: Record<string, string> = {};
+    if (startDate) base.startDate = startDate;
+    if (endDate) base.endDate = endDate;
+    switch (selectedReport) {
+      case "revenue": base.gateway = gateway; break;
+      case "refunds": base.status = status; base.gateway = gateway; base.reason = reason; break;
+      case "payments": base.gateway = gateway; base.status = status; base.method = method; break;
+      case "courseSales": base.deliveryType = deliveryType; break;
+      case "webinarSales": break;
+      case "studentPurchases": if (search) base.search = search; break;
+      case "financeActivity": base.entityType = entityType; break;
+      case "vat": break;
+    }
+    return base;
+  }, [selectedReport, period, customStart, customEnd, gateway, status, method, reason, deliveryType, entityType, search]);
 
+  const fetchPreview = useCallback(async () => {
+    setLoading(true);
+    const { startDate, endDate } = getDateRange(period, customStart, customEnd);
     try {
       switch (selectedReport) {
-        case "profitByCourse": {
-          const data = await financeApi.getRevenueByCourse(params);
-          setCourseData(data || []);
+        case "revenue":
+          setRevenueData(await financeApi.getReportRevenue({ startDate, endDate, gateway: gateway === "all" ? undefined : gateway }));
           break;
-        }
-        case "profitByInstructor": {
-          const data = await financeApi.getRevenueByInstructor(params);
-          setInstructorData(data || []);
+        case "refunds":
+          setRefundsData(await financeApi.getReportRefunds({
+            startDate, endDate,
+            status: status === "all" ? undefined : status,
+            gateway: gateway === "all" ? undefined : gateway,
+            reason: reason === "all" ? undefined : reason,
+          }));
           break;
-        }
-        case "profitByDelivery": {
-          const data = await financeApi.getRevenueByDeliveryType(params);
-          setDeliveryData(data || []);
+        case "payments":
+          setPaymentsData(await financeApi.getReportPayments({
+            startDate, endDate,
+            gateway: gateway === "all" ? undefined : gateway,
+            status: status === "all" ? undefined : status,
+            method: method === "all" ? undefined : method,
+          }));
           break;
-        }
-        case "invoiceAging": {
-          const data = await financeApi.getInvoiceAging(params);
-          setAgingData(data || null);
+        case "courseSales":
+          setCourseSalesData(await financeApi.getReportCourseSales({
+            startDate, endDate,
+            deliveryType: deliveryType === "all" ? undefined : deliveryType,
+          }));
           break;
-        }
-        case "chargeback": {
-          const data = await financeApi.getChargebackRate(params);
-          setChargebackData(data || null);
+        case "webinarSales":
+          setWebinarSalesData(await financeApi.getReportWebinarSales({ startDate, endDate }));
           break;
-        }
+        case "studentPurchases":
+          setStudentPurchasesData(await financeApi.getReportStudentPurchases({
+            startDate, endDate, search: search || undefined, top: 100,
+          }));
+          break;
+        case "financeActivity":
+          setFinanceActivityData(await financeApi.getReportFinanceActivity({
+            startDate, endDate,
+            entityType: entityType === "all" ? undefined : entityType,
+          }));
+          break;
+        case "vat":
+          setVatData(await financeApi.getReportVat({ startDate, endDate }));
+          break;
       }
-      setGenerated(true);
+      setLastGeneratedAt(new Date());
     } catch {
       toast.error(t("reportsPage.exportError"));
     } finally {
       setLoading(false);
     }
-  }, [selectedReport, period, customStart, customEnd, t]);
+  }, [selectedReport, period, customStart, customEnd, gateway, status, method, reason, deliveryType, entityType, search, t]);
 
-  // Auto-generate on mount
+  // Auto-fetch on mount + on report switch — saves the operator a click and
+  // matches the rest of the finance dashboard's behaviour.
   useEffect(() => {
-    generateReport();
-  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+    fetchPreview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedReport]);
 
-  const reportTypeMap: Record<ReportType, string> = {
-    profitByCourse: "profitByCourse",
-    profitByInstructor: "profitByInstructor",
-    profitByDelivery: "profitByDelivery",
-    invoiceAging: "invoiceAging",
-    chargeback: "chargeback",
-  };
-
-  const handleExportExcel = async () => {
+  const handleDownload = async (format: "csv" | "xlsx" | "pdf") => {
+    setDownloading(format);
     try {
-      const { startDate, endDate } = getDateRange(period, customStart, customEnd);
-      await financeApi.exportExcel({ startDate, endDate, reportType: reportTypeMap[selectedReport], locale });
+      await financeApi.downloadReport(selectedReport, format, currentFilters);
       toast.success(t("reportsPage.exportSuccess"));
     } catch {
       toast.error(t("reportsPage.exportError"));
+    } finally {
+      setDownloading(null);
     }
   };
 
-  const handleExportPdf = async () => {
-    try {
-      const { startDate, endDate } = getDateRange(period, customStart, customEnd);
-      await financeApi.exportPdf({ startDate, endDate, reportType: reportTypeMap[selectedReport], locale });
-      toast.success(t("reportsPage.exportSuccess"));
-    } catch {
-      toast.error(t("reportsPage.exportError"));
-    }
-  };
+  // ─── Filter options ────────────────────────────────────────────
 
-  const deliveryLabel = (type: string) => {
-    const map: Record<string, string> = {
-      zoom: t("reportsPage.delivery.zoom"),
-      onsite: t("reportsPage.delivery.onsite"),
-      blended: t("reportsPage.delivery.blended"),
-    };
-    return map[type] || t("reportsPage.delivery.unknown");
-  };
+  const periodOptions = [
+    { value: "thisMonth", label: t("reportsPage.filters.thisMonth") },
+    { value: "lastMonth", label: t("reportsPage.filters.lastMonth") },
+    { value: "thisQuarter", label: t("reportsPage.filters.thisQuarter") },
+    { value: "thisYear", label: t("reportsPage.filters.thisYear") },
+    { value: "custom", label: t("reportsPage.filters.custom") },
+  ];
 
-  // Summary stats for course/instructor/delivery reports
-  const getSummaryStats = () => {
-    if (selectedReport === "profitByCourse" && courseData.length > 0) {
-      const totalRev = courseData.reduce((s, r) => s + r.revenue, 0);
-      const totalRef = courseData.reduce((s, r) => s + r.refundAmount, 0);
-      const netRev = totalRev - totalRef;
-      const avgMargin = courseData.length > 0
-        ? courseData.reduce((s, r) => s + r.marginPercent, 0) / courseData.length
-        : 0;
-      return { totalRev, totalRef, netRev, avgMargin };
+  const gatewayOptions = [
+    { value: "all", label: t("reportsPage.gateway.all") },
+    { value: "moyasar", label: "Moyasar" },
+    { value: "tabby", label: "Tabby" },
+    { value: "tamara", label: "Tamara" },
+    { value: "bank_transfer", label: t("reportsPage.gateway.bankTransfer") },
+  ];
+
+  const paymentStatusOptions = [
+    { value: "all", label: t("reportsPage.status.all") },
+    { value: "paid", label: t("reportsPage.status.paid") },
+    { value: "pending", label: t("reportsPage.status.pending") },
+    { value: "failed", label: t("reportsPage.status.failed") },
+    { value: "refunded", label: t("reportsPage.status.refunded") },
+    { value: "partially_refunded", label: t("reportsPage.status.partiallyRefunded") },
+    { value: "awaiting_approval", label: t("reportsPage.status.awaitingApproval") },
+    { value: "chargeback", label: t("reportsPage.status.chargeback") },
+  ];
+
+  const refundStatusOptions = [
+    { value: "all", label: t("reportsPage.status.all") },
+    { value: "pending", label: t("reportsPage.refundStatus.pending") },
+    { value: "approved", label: t("reportsPage.refundStatus.approved") },
+    { value: "processing", label: t("reportsPage.refundStatus.processing") },
+    { value: "completed", label: t("reportsPage.refundStatus.completed") },
+    { value: "rejected", label: t("reportsPage.refundStatus.rejected") },
+    { value: "failed", label: t("reportsPage.refundStatus.failed") },
+  ];
+
+  const methodOptions = [
+    { value: "all", label: t("reportsPage.method.all") },
+    { value: "card", label: t("reportsPage.method.card") },
+    { value: "mada", label: t("reportsPage.method.mada") },
+    { value: "apple_pay", label: t("reportsPage.method.applePay") },
+    { value: "bnpl", label: t("reportsPage.method.bnpl") },
+    { value: "bank_transfer", label: t("reportsPage.method.bankTransfer") },
+  ];
+
+  const reasonOptions = [
+    { value: "all", label: t("reportsPage.refundReason.all") },
+    { value: "duplicate_payment", label: t("reportsPage.refundReason.duplicate") },
+    { value: "course_quality", label: t("reportsPage.refundReason.quality") },
+    { value: "technical_issue", label: t("reportsPage.refundReason.technical") },
+    { value: "schedule_conflict", label: t("reportsPage.refundReason.schedule") },
+    { value: "policy_request", label: t("reportsPage.refundReason.policy") },
+    { value: "other", label: t("reportsPage.refundReason.other") },
+  ];
+
+  const deliveryOptions = [
+    { value: "all", label: t("reportsPage.delivery.all") },
+    { value: "zoom", label: t("reportsPage.delivery.zoom") },
+    { value: "onsite", label: t("reportsPage.delivery.onsite") },
+    { value: "blended", label: t("reportsPage.delivery.blended") },
+  ];
+
+  const entityTypeOptions = [
+    { value: "all", label: t("reportsPage.entity.all") },
+    { value: "payment", label: t("reportsPage.entity.payment") },
+    { value: "refund", label: t("reportsPage.entity.refund") },
+    { value: "invoice", label: t("reportsPage.entity.invoice") },
+    { value: "bank_transfer", label: t("reportsPage.entity.bankTransfer") },
+    { value: "discount", label: t("reportsPage.entity.discount") },
+    { value: "coupon_campaign", label: t("reportsPage.entity.campaign") },
+    { value: "reconciliation", label: t("reportsPage.entity.reconciliation") },
+  ];
+
+  // ─── Render helpers ────────────────────────────────────────────
+
+  const renderFilters = () => (
+    <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 mb-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Filter className="w-4 h-4 text-[var(--color-text-secondary)]" />
+        <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+          {t("reportsPage.filters.title")}
+        </h3>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Period */}
+        <div>
+          <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">
+            {t("reportsPage.filters.period")}
+          </label>
+          <Select
+            options={periodOptions}
+            value={period}
+            onChange={(v) => setPeriod(v as PeriodKey)}
+            size="default"
+          />
+        </div>
+        {period === "custom" && (
+          <>
+            <div>
+              <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">
+                {t("reportsPage.filters.startDate")}
+              </label>
+              <DatePicker value={customStart} onChange={setCustomStart} />
+            </div>
+            <div>
+              <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">
+                {t("reportsPage.filters.endDate")}
+              </label>
+              <DatePicker value={customEnd} onChange={setCustomEnd} />
+            </div>
+          </>
+        )}
+
+        {/* Per-report filters */}
+        {(selectedReport === "revenue" || selectedReport === "refunds" || selectedReport === "payments") && (
+          <div>
+            <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">
+              {t("reportsPage.filters.gateway")}
+            </label>
+            <Select options={gatewayOptions} value={gateway} onChange={setGateway} />
+          </div>
+        )}
+        {selectedReport === "refunds" && (
+          <>
+            <div>
+              <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">
+                {t("reportsPage.filters.status")}
+              </label>
+              <Select options={refundStatusOptions} value={status} onChange={setStatus} />
+            </div>
+            <div>
+              <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">
+                {t("reportsPage.filters.reason")}
+              </label>
+              <Select options={reasonOptions} value={reason} onChange={setReason} />
+            </div>
+          </>
+        )}
+        {selectedReport === "payments" && (
+          <>
+            <div>
+              <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">
+                {t("reportsPage.filters.status")}
+              </label>
+              <Select options={paymentStatusOptions} value={status} onChange={setStatus} />
+            </div>
+            <div>
+              <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">
+                {t("reportsPage.filters.method")}
+              </label>
+              <Select options={methodOptions} value={method} onChange={setMethod} />
+            </div>
+          </>
+        )}
+        {selectedReport === "courseSales" && (
+          <div>
+            <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">
+              {t("reportsPage.filters.delivery")}
+            </label>
+            <Select options={deliveryOptions} value={deliveryType} onChange={setDeliveryType} />
+          </div>
+        )}
+        {selectedReport === "studentPurchases" && (
+          <div className="sm:col-span-2 lg:col-span-2">
+            <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">
+              {t("reportsPage.filters.search")}
+            </label>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t("reportsPage.filters.searchPlaceholder")}
+              className="w-full px-3 py-2 h-10 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)]"
+            />
+          </div>
+        )}
+        {selectedReport === "financeActivity" && (
+          <div>
+            <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">
+              {t("reportsPage.filters.entity")}
+            </label>
+            <Select options={entityTypeOptions} value={entityType} onChange={setEntityType} />
+          </div>
+        )}
+
+        {/* Generate button */}
+        <div className="flex items-end">
+          <button
+            onClick={fetchPreview}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-4 py-2 h-10 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 w-full sm:w-auto justify-center"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <BarChart3 className="w-4 h-4" />}
+            {t("reportsPage.generate")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderSummary = () => {
+    if (loading || !lastGeneratedAt) return null;
+    if (selectedReport === "revenue" && revenueData) {
+      return (
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+          <StatCard label={t("reportsPage.summary.gross")} value={formatSAR(revenueData.totals.gross)} accent="#16A34A" />
+          <StatCard label={t("reportsPage.summary.refunds")} value={formatSAR(revenueData.totals.refunds)} accent="#DC2626" />
+          <StatCard label={t("reportsPage.summary.net")} value={formatSAR(revenueData.totals.net)} accent="var(--color-text-primary)" />
+          <StatCard label={t("reportsPage.summary.vat")} value={formatSAR(revenueData.totals.vat)} accent="#9333EA" />
+          <StatCard label={t("reportsPage.summary.payments")} value={formatInt(revenueData.totals.count)} accent="#2563EB" />
+        </div>
+      );
     }
-    if (selectedReport === "profitByInstructor" && instructorData.length > 0) {
-      const totalRev = instructorData.reduce((s, r) => s + r.revenue, 0);
-      const totalRef = instructorData.reduce((s, r) => s + r.refundAmount, 0);
-      const netRev = totalRev - totalRef;
-      const avgMargin = totalRev > 0 ? ((netRev / totalRev) * 100) : 0;
-      return { totalRev, totalRef, netRev, avgMargin };
+    if (selectedReport === "vat" && vatData) {
+      return (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <StatCard label={t("reportsPage.summary.invoices")} value={formatInt(vatData.totals.invoiceCount)} accent="#2563EB" />
+          <StatCard label={t("reportsPage.summary.taxableBase")} value={formatSAR(vatData.totals.taxableBase)} accent="var(--color-text-primary)" />
+          <StatCard label={t("reportsPage.summary.vat")} value={formatSAR(vatData.totals.vatAmount)} accent="#9333EA" />
+          <StatCard label={t("reportsPage.summary.totalInvoiced")} value={formatSAR(vatData.totals.total)} accent="#16A34A" />
+        </div>
+      );
     }
-    if (selectedReport === "profitByDelivery" && deliveryData.length > 0) {
-      const totalRev = deliveryData.reduce((s, r) => s + r.revenue, 0);
-      const totalRef = deliveryData.reduce((s, r) => s + r.refundAmount, 0);
-      const netRev = totalRev - totalRef;
-      const avgMargin = totalRev > 0 ? ((netRev / totalRev) * 100) : 0;
-      return { totalRev, totalRef, netRev, avgMargin };
+    if (selectedReport === "refunds" && refundsData) {
+      const total = refundsData.reduce((s, r) => s + r.refundAmount, 0);
+      const completed = refundsData.filter((r) => r.status === "completed").length;
+      const pending = refundsData.filter((r) => ["pending", "approved", "processing"].includes(r.status)).length;
+      return (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <StatCard label={t("reportsPage.summary.refundsCount")} value={formatInt(refundsData.length)} accent="#DC2626" />
+          <StatCard label={t("reportsPage.summary.completed")} value={formatInt(completed)} accent="#16A34A" />
+          <StatCard label={t("reportsPage.summary.inProgress")} value={formatInt(pending)} accent="#EA580C" />
+          <StatCard label={t("reportsPage.summary.totalAmount")} value={formatSAR(total)} accent="var(--color-text-primary)" />
+        </div>
+      );
+    }
+    if (selectedReport === "payments" && paymentsData) {
+      const total = paymentsData.reduce((s, r) => s + (r.status === "paid" ? r.amount : 0), 0);
+      const paid = paymentsData.filter((r) => r.status === "paid").length;
+      return (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <StatCard label={t("reportsPage.summary.transactions")} value={formatInt(paymentsData.length)} accent="#2563EB" />
+          <StatCard label={t("reportsPage.summary.paid")} value={formatInt(paid)} accent="#16A34A" />
+          <StatCard label={t("reportsPage.summary.paidAmount")} value={formatSAR(total)} accent="var(--color-text-primary)" />
+          <StatCard label={t("reportsPage.summary.failed")} value={formatInt(paymentsData.filter((r) => r.status === "failed").length)} accent="#DC2626" />
+        </div>
+      );
+    }
+    if (selectedReport === "courseSales" && courseSalesData) {
+      const units = courseSalesData.reduce((s, r) => s + r.units, 0);
+      const gross = courseSalesData.reduce((s, r) => s + r.gross, 0);
+      const net = courseSalesData.reduce((s, r) => s + r.net, 0);
+      return (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <StatCard label={t("reportsPage.summary.courses")} value={formatInt(courseSalesData.length)} accent="#2563EB" />
+          <StatCard label={t("reportsPage.summary.unitsSold")} value={formatInt(units)} accent="#D97706" />
+          <StatCard label={t("reportsPage.summary.grossRevenue")} value={formatSAR(gross)} accent="#16A34A" />
+          <StatCard label={t("reportsPage.summary.netRevenue")} value={formatSAR(net)} accent="var(--color-text-primary)" />
+        </div>
+      );
+    }
+    if (selectedReport === "webinarSales" && webinarSalesData) {
+      const paid = webinarSalesData.reduce((s, r) => s + r.paidRegistrations, 0);
+      const total = webinarSalesData.reduce((s, r) => s + r.totalRegistrations, 0);
+      const rev = webinarSalesData.reduce((s, r) => s + r.revenue, 0);
+      return (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <StatCard label={t("reportsPage.summary.sessions")} value={formatInt(webinarSalesData.length)} accent="#7C3AED" />
+          <StatCard label={t("reportsPage.summary.registrations")} value={formatInt(total)} accent="#2563EB" />
+          <StatCard label={t("reportsPage.summary.paidSeats")} value={formatInt(paid)} accent="#16A34A" />
+          <StatCard label={t("reportsPage.summary.revenue")} value={formatSAR(rev)} accent="var(--color-text-primary)" />
+        </div>
+      );
+    }
+    if (selectedReport === "studentPurchases" && studentPurchasesData) {
+      const total = studentPurchasesData.reduce((s, r) => s + r.netSpend, 0);
+      return (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+          <StatCard label={t("reportsPage.summary.students")} value={formatInt(studentPurchasesData.length)} accent="#0891B2" />
+          <StatCard label={t("reportsPage.summary.netSpend")} value={formatSAR(total)} accent="var(--color-text-primary)" />
+          <StatCard label={t("reportsPage.summary.avgPerStudent")} value={formatSAR(studentPurchasesData.length ? total / studentPurchasesData.length : 0)} accent="#16A34A" />
+        </div>
+      );
+    }
+    if (selectedReport === "financeActivity" && financeActivityData) {
+      const uniqueActors = new Set(financeActivityData.map((r) => r.actorEmail).filter(Boolean)).size;
+      return (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+          <StatCard label={t("reportsPage.summary.events")} value={formatInt(financeActivityData.length)} accent="#EA580C" />
+          <StatCard label={t("reportsPage.summary.actors")} value={formatInt(uniqueActors)} accent="#2563EB" />
+          <StatCard label={t("reportsPage.summary.entities")} value={formatInt(new Set(financeActivityData.map((r) => r.entityType)).size)} accent="var(--color-text-primary)" />
+        </div>
+      );
     }
     return null;
   };
 
-  const summaryStats = getSummaryStats();
-
-  const renderReportContent = () => {
-    if (loading) {
-      return (
-        <div className="flex flex-col items-center justify-center py-16">
-          <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin mb-3" />
-          <p className="text-sm text-[var(--color-text-secondary)]">{t("reportsPage.loading")}</p>
-        </div>
-      );
-    }
-
-    if (!generated) {
-      return (
-        <div className="flex flex-col items-center justify-center py-16 px-5">
-          <BarChart3 className="w-12 h-12 text-[var(--color-text-secondary)] mb-4" />
-          <p className="text-sm text-[var(--color-text-secondary)] text-center">{t("reportsPage.noData")}</p>
-          <p className="text-xs text-[var(--color-text-secondary)] text-center mt-1">{t("reportsPage.exportHint")}</p>
-        </div>
-      );
-    }
+  const renderTable = () => {
+    if (loading) return <TableSkeleton />;
 
     switch (selectedReport) {
-      case "profitByCourse":
-        return renderCourseReport();
-      case "profitByInstructor":
-        return renderInstructorReport();
-      case "profitByDelivery":
-        return renderDeliveryReport();
-      case "invoiceAging":
-        return renderAgingReport();
-      case "chargeback":
-        return renderChargebackReport();
-    }
-  };
-
-  const renderCourseReport = () => {
-    if (courseData.length === 0) {
-      return <EmptyState />;
-    }
-    return (
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm" aria-label="Course profit report">
-          <thead>
-            <tr className="border-b border-[var(--color-border-subtle)]">
-              <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[var(--color-text-primary)]`}>
-                {t("reportsPage.columns.course")}
-              </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
-                {t("reportsPage.columns.revenue")}
-              </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
-                {t("reportsPage.columns.refunds")}
-              </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
-                {t("reportsPage.columns.netProfit")}
-              </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
-                {t("reportsPage.columns.margin")}
-              </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
-                {t("reportsPage.columns.enrollments")}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {courseData.map((row) => (
-              <tr key={row.courseId} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)] transition-colors">
-                <td className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-medium text-[var(--color-text-primary)]`}>
-                  {isRTL && row.titleAr ? row.titleAr : row.title}
-                </td>
-                <td className="px-4 py-3 text-right text-[var(--color-text-primary)]">{formatSAR(row.revenue)}</td>
-                <td className="px-4 py-3 text-right text-[#DC2626]">
-                  {row.refundAmount > 0 ? `-${formatSAR(row.refundAmount)}` : formatSAR(0)}
-                </td>
-                <td className="px-4 py-3 text-right font-medium text-[var(--color-text-primary)]">{formatSAR(row.netRevenue)}</td>
-                <td className="px-4 py-3 text-right">
-                  <MarginBadge value={row.marginPercent} />
-                </td>
-                <td className="px-4 py-3 text-right text-[var(--color-text-secondary)]">{row.enrollmentCount}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
-
-  const renderInstructorReport = () => {
-    if (instructorData.length === 0) {
-      return <EmptyState />;
-    }
-    return (
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm" aria-label="Instructor profit report">
-          <thead>
-            <tr className="border-b border-[var(--color-border-subtle)]">
-              <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[var(--color-text-primary)]`}>
-                {t("reportsPage.columns.instructor")}
-              </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
-                {t("reportsPage.columns.courses")}
-              </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
-                {t("reportsPage.columns.revenue")}
-              </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
-                {t("reportsPage.columns.refunds")}
-              </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
-                {t("reportsPage.columns.netProfit")}
-              </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
-                {t("reportsPage.columns.platformFee")}
-              </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
-                {t("reportsPage.columns.netPayout")}
-              </th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
-                {t("reportsPage.columns.enrollments")}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {instructorData.map((row, idx) => {
-              const margin = row.revenue > 0 ? ((row.netRevenue / row.revenue) * 100) : 0;
-              return (
-                <tr key={row.instructorId || idx} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)] transition-colors">
-                  <td className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-medium text-[var(--color-text-primary)]`}>
-                    {row.instructorName || "—"}
-                  </td>
-                  <td className="px-4 py-3 text-right text-[var(--color-text-secondary)]">{row.courseCount}</td>
-                  <td className="px-4 py-3 text-right text-[var(--color-text-primary)]">{formatSAR(row.revenue)}</td>
-                  <td className="px-4 py-3 text-right text-[#DC2626]">
-                    {row.refundAmount > 0 ? `-${formatSAR(row.refundAmount)}` : formatSAR(0)}
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium text-[var(--color-text-primary)]">{formatSAR(row.netRevenue)}</td>
-                  <td className="px-4 py-3 text-right text-[#EA580C]">{formatSAR(row.platformFee)}</td>
-                  <td className="px-4 py-3 text-right font-medium text-[#16A34A]">{formatSAR(row.netPayout)}</td>
-                  <td className="px-4 py-3 text-right text-[var(--color-text-secondary)]">{row.enrollmentCount}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    );
-  };
-
-  const renderDeliveryReport = () => {
-    if (deliveryData.length === 0) {
-      return <EmptyState />;
-    }
-
-    const totalRevenue = deliveryData.reduce((s, r) => s + r.revenue, 0);
-
-    return (
-      <div className="space-y-6">
-        {/* Visual bars */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-5 pt-2">
-          {deliveryData.map((row) => {
-            const pct = totalRevenue > 0 ? (row.revenue / totalRevenue) * 100 : 0;
-            const margin = row.revenue > 0 ? ((row.netRevenue / row.revenue) * 100) : 0;
-            return (
-              <div key={row.deliveryType} className="bg-[var(--color-surface-page)] rounded-xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold text-[var(--color-text-primary)]">{deliveryLabel(row.deliveryType)}</span>
-                  <span className="text-xs text-[var(--color-text-secondary)]">{pct.toFixed(1)}%</span>
-                </div>
-                <div className="w-full bg-[var(--color-border)] rounded-full h-2 mb-3">
-                  <div
-                    className="bg-[var(--color-primary)] h-2 rounded-full transition-all"
-                    style={{ width: `${Math.min(pct, 100)}%` }}
-                  />
-                </div>
-                <div className="space-y-1 text-xs text-[var(--color-text-secondary)]">
-                  <div className="flex justify-between">
-                    <span>{t("reportsPage.columns.revenue")}</span>
-                    <span className="font-medium text-[var(--color-text-primary)]">{formatSAR(row.revenue)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{t("reportsPage.columns.netProfit")}</span>
-                    <span className="font-medium text-[var(--color-text-primary)]">{formatSAR(row.netRevenue)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{t("reportsPage.columns.margin")}</span>
-                    <MarginBadge value={margin} />
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{t("reportsPage.columns.courses")}</span>
-                    <span>{row.courseCount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{t("reportsPage.columns.enrollments")}</span>
-                    <span>{row.enrollmentCount}</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm" aria-label="Delivery type report">
+      case "revenue": {
+        if (!revenueData) return <EmptyState />;
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-5">
+            <BreakdownTable
+              title={t("reportsPage.tables.byGateway")}
+              labelHeader={t("reportsPage.columns.gateway")}
+              rows={revenueData.byGateway.map((r) => ({ label: r.gateway, count: r.count, amount: r.gross }))}
+            />
+            <BreakdownTable
+              title={t("reportsPage.tables.byMethod")}
+              labelHeader={t("reportsPage.columns.method")}
+              rows={revenueData.byMethod.map((r) => ({ label: r.method, count: r.count, amount: r.gross }))}
+            />
+          </div>
+        );
+      }
+      case "refunds": {
+        if (!refundsData) return <EmptyState />;
+        if (refundsData.length === 0) return <EmptyState />;
+        return (
+          <ScrollTable>
             <thead>
               <tr className="border-b border-[var(--color-border-subtle)]">
-                <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[var(--color-text-primary)]`}>
-                  {t("reportsPage.columns.deliveryType")}
-                </th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">{t("reportsPage.columns.revenue")}</th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">{t("reportsPage.columns.refunds")}</th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">{t("reportsPage.columns.netProfit")}</th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">{t("reportsPage.columns.courses")}</th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">{t("reportsPage.columns.enrollments")}</th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.requester")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.course")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.gateway")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.reason")}</Th>
+                <Th align="right">{t("reportsPage.columns.amount")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.status")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.agent")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.created")}</Th>
               </tr>
             </thead>
             <tbody>
-              {deliveryData.map((row) => (
-                <tr key={row.deliveryType} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)] transition-colors">
-                  <td className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-medium text-[var(--color-text-primary)]`}>
-                    {deliveryLabel(row.deliveryType)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-[var(--color-text-primary)]">{formatSAR(row.revenue)}</td>
-                  <td className="px-4 py-3 text-right text-[#DC2626]">
-                    {row.refundAmount > 0 ? `-${formatSAR(row.refundAmount)}` : formatSAR(0)}
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium text-[var(--color-text-primary)]">{formatSAR(row.netRevenue)}</td>
-                  <td className="px-4 py-3 text-right text-[var(--color-text-secondary)]">{row.courseCount}</td>
-                  <td className="px-4 py-3 text-right text-[var(--color-text-secondary)]">{row.enrollmentCount}</td>
+              {refundsData.map((r) => (
+                <tr key={r.id} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)]">
+                  <Td>
+                    <div className="font-medium">{r.requesterName || "—"}</div>
+                    <div className="text-xs text-[var(--color-text-secondary)]">{r.requesterEmail || ""}</div>
+                  </Td>
+                  <Td>{r.courseTitle || "—"}</Td>
+                  <Td className="capitalize">{r.gateway || "—"}</Td>
+                  <Td className="capitalize">{(r.reason || "").replace(/_/g, " ")}</Td>
+                  <Td align="right" className="font-medium">{formatSAR(r.refundAmount)}</Td>
+                  <Td><StatusBadge status={r.status} /></Td>
+                  <Td>{r.processedByName || "—"}</Td>
+                  <Td className="whitespace-nowrap text-[var(--color-text-secondary)]">{formatDate(r.createdAt)}</Td>
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  };
-
-  const renderAgingReport = () => {
-    if (!agingData) {
-      return <EmptyState />;
-    }
-
-    const totalOutstandingCount = agingData.current.count + agingData.thirtyDay.count + agingData.sixtyDay.count + agingData.ninetyPlus.count;
-    const totalOutstandingAmount = agingData.current.amount + agingData.thirtyDay.amount + agingData.sixtyDay.amount + agingData.ninetyPlus.amount;
-
-    const buckets = [
-      { key: "current", label: t("reportsPage.aging.current"), count: agingData.current.count, amount: agingData.current.amount, color: "#16A34A", bg: "#DCFCE7" },
-      { key: "thirtyDay", label: t("reportsPage.aging.thirtyDay"), count: agingData.thirtyDay.count, amount: agingData.thirtyDay.amount, color: "#CA8A04", bg: "#FEF9C3" },
-      { key: "sixtyDay", label: t("reportsPage.aging.sixtyDay"), count: agingData.sixtyDay.count, amount: agingData.sixtyDay.amount, color: "#EA580C", bg: "#FFEDD5" },
-      { key: "ninetyPlus", label: t("reportsPage.aging.ninetyPlus"), count: agingData.ninetyPlus.count, amount: agingData.ninetyPlus.amount, color: "#DC2626", bg: "#FEE2E2" },
-    ];
-
-    return (
-      <div className="space-y-6">
-        {/* Summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 px-5 pt-2">
-          {buckets.map((b) => {
-            const pct = totalOutstandingCount > 0 ? ((b.count / totalOutstandingCount) * 100).toFixed(1) : "0.0";
-            return (
-              <div key={b.key} className="rounded-xl p-4" style={{ backgroundColor: b.bg }}>
-                <p className="text-xs font-medium" style={{ color: b.color }}>{b.label}</p>
-                <p className="text-2xl font-bold mt-1" style={{ color: b.color }}>{b.count}</p>
-                <p className="text-xs mt-0.5" style={{ color: b.color }}>{formatSAR(b.amount)}</p>
-                <p className="text-[10px] mt-0.5" style={{ color: b.color }}>{pct}% {t("reportsPage.aging.invoices")}</p>
-              </div>
-            );
-          })}
-          <div className="rounded-xl p-4 bg-[#EFF6FF]">
-            <p className="text-xs font-medium text-[#3B82F6]">{t("reportsPage.aging.paid")}</p>
-            <p className="text-2xl font-bold mt-1 text-[#3B82F6]">{agingData.paid.count}</p>
-            <p className="text-xs mt-0.5 text-[#3B82F6]">{formatSAR(agingData.paid.amount)}</p>
-            <p className="text-[10px] mt-0.5 text-[#3B82F6]">{t("reportsPage.aging.invoices")}</p>
-          </div>
-        </div>
-
-        {/* Visual bar */}
-        {totalOutstandingCount > 0 && (
-          <div className="px-5">
-            <p className="text-xs text-[var(--color-text-secondary)] mb-2">
-              {t("reportsPage.aging.total")}: {totalOutstandingCount} {t("reportsPage.aging.invoices")} — {formatSAR(totalOutstandingAmount)}
-            </p>
-            <div className="flex h-4 rounded-full overflow-hidden">
-              {buckets.map((b) => {
-                const pct = totalOutstandingCount > 0 ? (b.count / totalOutstandingCount) * 100 : 0;
-                return pct > 0 ? (
-                  <div
-                    key={b.key}
-                    className="transition-all"
-                    style={{ width: `${pct}%`, backgroundColor: b.color }}
-                    title={`${b.label}: ${b.count} (${formatSAR(b.amount)})`}
-                  />
-                ) : null;
-              })}
-            </div>
-            <div className="flex gap-4 mt-2">
-              {buckets.map((b) => (
-                <div key={b.key} className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: b.color }} />
-                  {b.label}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderChargebackReport = () => {
-    if (!chargebackData) {
-      return <EmptyState />;
-    }
-
-    return (
-      <div className="space-y-6">
-        {/* Summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 px-5 pt-2">
-          <StatCard
-            label={t("reportsPage.chargeback.totalTransactions")}
-            value={chargebackData.totalTransactions.toLocaleString()}
-            color="#374151"
-          />
-          <StatCard
-            label={t("reportsPage.chargeback.chargebackCount")}
-            value={chargebackData.chargebackCount.toLocaleString()}
-            color="#DC2626"
-          />
-          <StatCard
-            label={t("reportsPage.chargeback.chargebackAmount")}
-            value={formatSAR(chargebackData.chargebackAmount)}
-            color="#DC2626"
-          />
-          <StatCard
-            label={t("reportsPage.chargeback.chargebackRate")}
-            value={`${chargebackData.chargebackRate}%`}
-            color={Number(chargebackData.chargebackRate) > 1 ? "#DC2626" : "#16A34A"}
-          />
-        </div>
-
-        {/* Breakdown table */}
-        <div className="px-5">
-          <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
-            {t("reportsPage.chargeback.breakdown")}
-          </h4>
-        </div>
-        {chargebackData.breakdown.length === 0 ? (
-          <p className="px-5 pb-4 text-sm text-[var(--color-text-secondary)]">{t("reportsPage.chargeback.noCases")}</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm" aria-label="Chargeback report">
-              <thead>
-                <tr className="border-b border-[var(--color-border-subtle)]">
-                  <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[var(--color-text-primary)]`}>
-                    {t("reportsPage.columns.course")}
-                  </th>
-                  <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[var(--color-text-primary)]`}>
-                    {t("reportsPage.columns.gateway")}
-                  </th>
-                  <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
-                    {t("reportsPage.columns.count")}
-                  </th>
-                  <th scope="col" className="px-4 py-3 text-right font-semibold text-[var(--color-text-primary)]">
-                    {t("reportsPage.columns.amount")}
-                  </th>
+          </ScrollTable>
+        );
+      }
+      case "payments": {
+        if (!paymentsData) return <EmptyState />;
+        if (paymentsData.length === 0) return <EmptyState />;
+        return (
+          <ScrollTable>
+            <thead>
+              <tr className="border-b border-[var(--color-border-subtle)]">
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.buyer")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.course")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.gateway")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.method")}</Th>
+                <Th align="right">{t("reportsPage.columns.amount")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.status")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.paid")}</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {paymentsData.map((r) => (
+                <tr key={r.id} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)]">
+                  <Td>
+                    <div className="font-medium">{r.userName || "—"}</div>
+                    <div className="text-xs text-[var(--color-text-secondary)]">{r.userEmail || ""}</div>
+                  </Td>
+                  <Td>{r.courseTitle || "—"}</Td>
+                  <Td className="capitalize">{r.gateway}</Td>
+                  <Td className="capitalize">{r.paymentMethod}</Td>
+                  <Td align="right" className="font-medium">{formatSAR(r.amount)}</Td>
+                  <Td><StatusBadge status={r.status} /></Td>
+                  <Td className="whitespace-nowrap text-[var(--color-text-secondary)]">{formatDate(r.paidAt)}</Td>
                 </tr>
-              </thead>
-              <tbody>
-                {chargebackData.breakdown.map((row, idx) => (
-                  <tr key={idx} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)] transition-colors">
-                    <td className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-medium text-[var(--color-text-primary)]`}>
-                      {row.courseTitle}
-                    </td>
-                    <td className={`px-4 py-3 text-${isRTL ? "right" : "left"} text-[var(--color-text-secondary)] capitalize`}>
-                      {row.gateway}
-                    </td>
-                    <td className="px-4 py-3 text-right text-[#DC2626] font-medium">{row.chargebackCount}</td>
-                    <td className="px-4 py-3 text-right text-[#DC2626]">{formatSAR(row.chargebackAmount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    );
+              ))}
+            </tbody>
+          </ScrollTable>
+        );
+      }
+      case "courseSales": {
+        if (!courseSalesData) return <EmptyState />;
+        if (courseSalesData.length === 0) return <EmptyState />;
+        return (
+          <ScrollTable>
+            <thead>
+              <tr className="border-b border-[var(--color-border-subtle)]">
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.course")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.delivery")}</Th>
+                <Th align="right">{t("reportsPage.columns.units")}</Th>
+                <Th align="right">{t("reportsPage.columns.gross")}</Th>
+                <Th align="right">{t("reportsPage.columns.refunds")}</Th>
+                <Th align="right">{t("reportsPage.columns.net")}</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {courseSalesData.map((r) => (
+                <tr key={r.courseId} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)]">
+                  <Td className="font-medium">{isRTL && r.courseTitleAr ? r.courseTitleAr : r.courseTitle}</Td>
+                  <Td className="capitalize">{r.deliveryType}</Td>
+                  <Td align="right">{formatInt(r.units)}</Td>
+                  <Td align="right">{formatSAR(r.gross)}</Td>
+                  <Td align="right" className="text-[#DC2626]">{r.refunds > 0 ? `-${formatSAR(r.refunds)}` : formatSAR(0)}</Td>
+                  <Td align="right" className="font-medium">{formatSAR(r.net)}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </ScrollTable>
+        );
+      }
+      case "webinarSales": {
+        if (!webinarSalesData) return <EmptyState />;
+        if (webinarSalesData.length === 0) return <EmptyState />;
+        return (
+          <ScrollTable>
+            <thead>
+              <tr className="border-b border-[var(--color-border-subtle)]">
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.course")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.session")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.scheduled")}</Th>
+                <Th align="right">{t("reportsPage.columns.totalReg")}</Th>
+                <Th align="right">{t("reportsPage.columns.paidReg")}</Th>
+                <Th align="right">{t("reportsPage.columns.revenue")}</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {webinarSalesData.map((r) => (
+                <tr key={r.sessionId} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)]">
+                  <Td>{r.courseTitle}</Td>
+                  <Td className="font-medium">{r.sessionTitle || "—"}</Td>
+                  <Td className="whitespace-nowrap text-[var(--color-text-secondary)]">{formatDateTime(r.scheduledAt)}</Td>
+                  <Td align="right">{formatInt(r.totalRegistrations)}</Td>
+                  <Td align="right" className="text-[#16A34A]">{formatInt(r.paidRegistrations)}</Td>
+                  <Td align="right" className="font-medium">{formatSAR(r.revenue)}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </ScrollTable>
+        );
+      }
+      case "studentPurchases": {
+        if (!studentPurchasesData) return <EmptyState />;
+        if (studentPurchasesData.length === 0) return <EmptyState />;
+        return (
+          <ScrollTable>
+            <thead>
+              <tr className="border-b border-[var(--color-border-subtle)]">
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.student")}</Th>
+                <Th align="right">{t("reportsPage.columns.payments")}</Th>
+                <Th align="right">{t("reportsPage.columns.coursesCount")}</Th>
+                <Th align="right">{t("reportsPage.columns.totalPaid")}</Th>
+                <Th align="right">{t("reportsPage.columns.refunded")}</Th>
+                <Th align="right">{t("reportsPage.columns.net")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.lastPurchase")}</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {studentPurchasesData.map((r) => (
+                <tr key={r.userId} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)]">
+                  <Td>
+                    <div className="font-medium">{r.userName}</div>
+                    <div className="text-xs text-[var(--color-text-secondary)]">{r.userEmail}</div>
+                  </Td>
+                  <Td align="right">{formatInt(r.paymentCount)}</Td>
+                  <Td align="right">{formatInt(r.courseCount)}</Td>
+                  <Td align="right">{formatSAR(r.totalPaid)}</Td>
+                  <Td align="right" className="text-[#DC2626]">{r.totalRefunded > 0 ? `-${formatSAR(r.totalRefunded)}` : formatSAR(0)}</Td>
+                  <Td align="right" className="font-medium">{formatSAR(r.netSpend)}</Td>
+                  <Td className="whitespace-nowrap text-[var(--color-text-secondary)]">{formatDate(r.lastPurchaseAt)}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </ScrollTable>
+        );
+      }
+      case "financeActivity": {
+        if (!financeActivityData) return <EmptyState />;
+        if (financeActivityData.length === 0) return <EmptyState />;
+        return (
+          <ScrollTable>
+            <thead>
+              <tr className="border-b border-[var(--color-border-subtle)]">
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.when")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.actor")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.action")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.entityCol")}</Th>
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.ip")}</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {financeActivityData.map((r) => (
+                <tr key={r.id} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)]">
+                  <Td className="whitespace-nowrap text-[var(--color-text-secondary)]">{formatDateTime(r.createdAt)}</Td>
+                  <Td>
+                    <div className="font-medium">{r.actorName || "—"}</div>
+                    <div className="text-xs text-[var(--color-text-secondary)]">{r.actorEmail || ""}</div>
+                  </Td>
+                  <Td className="text-[var(--color-text-primary)]">{r.action}</Td>
+                  <Td>
+                    <div className="capitalize">{r.entityType.replace(/_/g, " ")}</div>
+                    <div className="text-[10px] text-[var(--color-text-secondary)] font-mono">{r.entityId.slice(0, 8)}</div>
+                  </Td>
+                  <Td className="text-[var(--color-text-secondary)] font-mono text-xs">{r.ipAddress || "—"}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </ScrollTable>
+        );
+      }
+      case "vat": {
+        if (!vatData) return <EmptyState />;
+        if (vatData.byMonth.length === 0) return <EmptyState />;
+        return (
+          <ScrollTable>
+            <thead>
+              <tr className="border-b border-[var(--color-border-subtle)]">
+                <Th align={isRTL ? "right" : "left"}>{t("reportsPage.columns.month")}</Th>
+                <Th align="right">{t("reportsPage.columns.invoices")}</Th>
+                <Th align="right">{t("reportsPage.columns.taxableBase")}</Th>
+                <Th align="right">{t("reportsPage.columns.vat")}</Th>
+                <Th align="right">{t("reportsPage.columns.totalInvoiced")}</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {vatData.byMonth.map((m) => (
+                <tr key={m.month} className="border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-surface-page)]">
+                  <Td className="font-mono font-medium">{m.month}</Td>
+                  <Td align="right">{formatInt(m.invoiceCount)}</Td>
+                  <Td align="right">{formatSAR(m.taxableBase)}</Td>
+                  <Td align="right" className="text-[#9333EA] font-medium">{formatSAR(m.vatAmount)}</Td>
+                  <Td align="right" className="font-medium">{formatSAR(m.total)}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </ScrollTable>
+        );
+      }
+    }
   };
+
+  // ─── Layout ────────────────────────────────────────────────────
 
   return (
     <>
       <FinanceNavbar profile={profile} />
-
       <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
               <FinanceSidebar profile={profile} />
             </div>
-
             <FinanceMobileSidebar profile={profile} />
 
             <div className="flex-1 min-w-0">
-              {/* Page Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+              {/* Page header + export tray */}
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-6 gap-4">
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-[var(--on-surface-default)]">
                     {t("reportsPage.title")}
@@ -737,152 +866,79 @@ const FinanceReportsContent = () => {
                   <p className="text-sm text-[var(--on-surface-variant)] mt-1">
                     {t("reportsPage.subtitle")}
                   </p>
+                  {lastGeneratedAt && (
+                    <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                      {t("reportsPage.lastGenerated", { when: formatDateTime(lastGeneratedAt.toISOString()) })}
+                    </p>
+                  )}
                 </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={handleExportExcel}
-                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
-                  >
-                    <FileSpreadsheet className="w-4 h-4" />
-                    {t("reportsPage.exportExcel")}
-                  </button>
-                  <button
-                    onClick={handleExportPdf}
-                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
-                  >
-                    <Download className="w-4 h-4" />
-                    {t("reportsPage.exportPdf")}
-                  </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <ExportButton
+                    icon={FileSpreadsheet}
+                    label={t("reportsPage.exportExcel")}
+                    busy={downloading === "xlsx"}
+                    onClick={() => handleDownload("xlsx")}
+                  />
+                  <ExportButton
+                    icon={FileText}
+                    label={t("reportsPage.exportCsv")}
+                    busy={downloading === "csv"}
+                    onClick={() => handleDownload("csv")}
+                  />
+                  <ExportButton
+                    icon={Download}
+                    label={t("reportsPage.exportPdf")}
+                    busy={downloading === "pdf"}
+                    onClick={() => handleDownload("pdf")}
+                  />
                 </div>
               </div>
 
-              {/* Report Type Selection — 5 cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-                {reportTypes.map((report) => {
-                  const Icon = report.icon;
-                  const isSelected = selectedReport === report.key;
+              {/* 8 report cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
+                {REPORTS.map((r) => {
+                  const Icon = r.icon;
+                  const isSel = selectedReport === r.key;
                   return (
                     <button
-                      key={report.key}
-                      onClick={() => {
-                        setSelectedReport(report.key);
-                        setGenerated(false);
-                      }}
+                      key={r.key}
+                      onClick={() => setSelectedReport(r.key)}
                       className={`p-4 rounded-xl border text-${isRTL ? "right" : "left"} transition-all ${
-                        isSelected
+                        isSel
                           ? "bg-[var(--color-surface-page)] border-[var(--color-primary)] ring-1 ring-[var(--color-primary)]"
-                          : "bg-[var(--color-surface-card)] border-[var(--color-border)] hover:border-[var(--color-border)]"
+                          : "bg-[var(--color-surface-card)] border-[var(--color-border)] hover:border-[var(--color-primary)]"
                       }`}
                     >
-                      <div className={`w-9 h-9 ${report.iconBg} rounded-lg flex items-center justify-center mb-2.5`}>
-                        <Icon className={`w-4.5 h-4.5 ${report.iconColor}`} />
+                      <div className={`w-9 h-9 ${r.iconBg} rounded-lg flex items-center justify-center mb-2.5`}>
+                        <Icon className={`w-4 h-4 ${r.iconColor}`} />
                       </div>
-                      <p className={`text-[13px] font-semibold leading-tight ${isSelected ? "text-[var(--color-primary)]" : "text-[var(--color-text-primary)]"}`}>
-                        {t(report.titleKey)}
+                      <p className={`text-[13px] font-semibold leading-tight ${isSel ? "text-[var(--color-primary)]" : "text-[var(--color-text-primary)]"}`}>
+                        {t(`reportsPage.cards.${r.key}.title`)}
                       </p>
-                      <p className="text-[11px] text-[var(--color-text-secondary)] mt-0.5 leading-tight">{t(report.descKey)}</p>
+                      <p className="text-[11px] text-[var(--color-text-secondary)] mt-0.5 leading-tight line-clamp-2">
+                        {t(`reportsPage.cards.${r.key}.desc`)}
+                      </p>
                     </button>
                   );
                 })}
               </div>
 
-              {/* Filters */}
-              <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-5 mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Filter className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                  <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{t("reportsPage.filters.period")}</h3>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
-                  <div>
-                    <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">{t("reportsPage.filters.period")}</label>
-                    <select
-                      value={period}
-                      onChange={(e) => setPeriod(e.target.value as PeriodKey)}
-                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)]"
-                    >
-                      <option value="thisMonth">{t("reportsPage.filters.thisMonth")}</option>
-                      <option value="lastMonth">{t("reportsPage.filters.lastMonth")}</option>
-                      <option value="thisQuarter">{t("reportsPage.filters.thisQuarter")}</option>
-                      <option value="thisYear">{t("reportsPage.filters.thisYear")}</option>
-                      <option value="custom">{t("reportsPage.filters.custom")}</option>
-                    </select>
-                  </div>
-                  {period === "custom" && (
-                    <>
-                      <div>
-                        <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">{t("reportsPage.filters.startDate")}</label>
-                        <input
-                          type="date"
-                          value={customStart}
-                          onChange={(e) => setCustomStart(e.target.value)}
-                          className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)]"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[12px] text-[var(--color-text-secondary)] mb-1">{t("reportsPage.filters.endDate")}</label>
-                        <input
-                          type="date"
-                          value={customEnd}
-                          onChange={(e) => setCustomEnd(e.target.value)}
-                          className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[var(--color-text-primary)] bg-[var(--color-surface-card)] focus:outline-none focus:border-[var(--color-primary)]"
-                        />
-                      </div>
-                    </>
-                  )}
-                  <div className="sm:ml-auto flex items-end">
-                    <button
-                      onClick={generateReport}
-                      disabled={loading}
-                      className="flex items-center gap-1.5 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      {loading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <BarChart3 className="w-4 h-4" />
-                      )}
-                      {t("reportsPage.generateReport")}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              {renderFilters()}
+              {renderSummary()}
 
-              {/* Summary Stats (for profitability reports) */}
-              {generated && summaryStats && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
-                    <p className="text-xs text-[var(--color-text-secondary)]">{t("reportsPage.summary.totalRevenue")}</p>
-                    <p className="text-lg font-bold text-[var(--color-text-primary)] mt-1">{formatSAR(summaryStats.totalRev)}</p>
-                  </div>
-                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
-                    <p className="text-xs text-[var(--color-text-secondary)]">{t("reportsPage.summary.totalRefunds")}</p>
-                    <p className="text-lg font-bold text-[#DC2626] mt-1">{formatSAR(summaryStats.totalRef)}</p>
-                  </div>
-                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
-                    <p className="text-xs text-[var(--color-text-secondary)]">{t("reportsPage.summary.netRevenue")}</p>
-                    <p className="text-lg font-bold text-[#16A34A] mt-1">{formatSAR(summaryStats.netRev)}</p>
-                  </div>
-                  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
-                    <p className="text-xs text-[var(--color-text-secondary)]">{t("reportsPage.summary.avgMargin")}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <p className="text-lg font-bold text-[var(--color-text-primary)]">{summaryStats.avgMargin.toFixed(1)}%</p>
-                      {summaryStats.avgMargin >= 70 ? (
-                        <TrendingUp className="w-4 h-4 text-[#16A34A]" />
-                      ) : (
-                        <TrendingDown className="w-4 h-4 text-[#DC2626]" />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Report Results */}
+              {/* Preview */}
               <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
-                <div className="px-5 py-4 border-b border-[var(--color-border-subtle)]">
+                <div className="px-5 py-4 border-b border-[var(--color-border-subtle)] flex items-center justify-between">
                   <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
-                    {t(reportTypes.find((r) => r.key === selectedReport)?.titleKey || "")}
+                    {t(`reportsPage.cards.${selectedReport}.title`)}
                   </h3>
+                  {!loading && lastGeneratedAt && (
+                    <span className="text-xs text-[var(--color-text-secondary)]">
+                      {t("reportsPage.previewNote")}
+                    </span>
+                  )}
                 </div>
-                {renderReportContent()}
+                {renderTable()}
               </div>
             </div>
           </div>
@@ -892,34 +948,134 @@ const FinanceReportsContent = () => {
   );
 };
 
-function MarginBadge({ value }: { value: number }) {
-  const color = value >= 80 ? "#16A34A" : value >= 50 ? "#CA8A04" : "#DC2626";
-  const bg = value >= 80 ? "#DCFCE7" : value >= 50 ? "#FEF9C3" : "#FEE2E2";
+// ─── Sub-components ──────────────────────────────────────────────
+
+const ExportButton = ({
+  icon: Icon, label, busy, onClick,
+}: { icon: typeof Download; label: string; busy: boolean; onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    disabled={busy}
+    className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-50"
+  >
+    {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Icon className="w-4 h-4" />}
+    {label}
+  </button>
+);
+
+const StatCard = ({ label, value, accent }: { label: string; value: string; accent: string }) => (
+  <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border)] p-4">
+    <p className="text-xs text-[var(--color-text-secondary)]">{label}</p>
+    <p className="text-lg font-bold mt-1" style={{ color: accent }}>{value}</p>
+  </div>
+);
+
+const StatusBadge = ({ status }: { status: string }) => {
+  const colorMap: Record<string, { bg: string; fg: string }> = {
+    paid: { bg: "#DCFCE7", fg: "#16A34A" },
+    completed: { bg: "#DCFCE7", fg: "#16A34A" },
+    pending: { bg: "#FEF3C7", fg: "#D97706" },
+    approved: { bg: "#DBEAFE", fg: "#2563EB" },
+    processing: { bg: "#DBEAFE", fg: "#2563EB" },
+    awaiting_approval: { bg: "#FEF3C7", fg: "#D97706" },
+    rejected: { bg: "#FEE2E2", fg: "#DC2626" },
+    failed: { bg: "#FEE2E2", fg: "#DC2626" },
+    refunded: { bg: "#FEE2E2", fg: "#DC2626" },
+    partially_refunded: { bg: "#FFEDD5", fg: "#EA580C" },
+    chargeback: { bg: "#FEE2E2", fg: "#991B1B" },
+  };
+  const c = colorMap[status] || { bg: "#E5E7EB", fg: "#374151" };
   return (
     <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-      style={{ color, backgroundColor: bg }}
+      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize whitespace-nowrap"
+      style={{ backgroundColor: c.bg, color: c.fg }}
     >
-      {value >= 50 ? (
-        <ArrowUpRight className="w-3 h-3" />
-      ) : (
-        <ArrowDownRight className="w-3 h-3" />
-      )}
-      {value.toFixed(1)}%
+      {status.replace(/_/g, " ")}
     </span>
   );
-}
+};
 
-function StatCard({ label, value, color }: { label: string; value: string; color: string }) {
+const ScrollTable = ({ children }: { children: React.ReactNode }) => (
+  <div className="overflow-x-auto">
+    <table className="w-full text-sm">{children}</table>
+  </div>
+);
+
+const Th = ({ children, align = "left" }: { children: React.ReactNode; align?: "left" | "right" }) => (
+  <th
+    scope="col"
+    className={`px-4 py-3 text-${align} font-semibold text-[var(--color-text-primary)] whitespace-nowrap`}
+  >
+    {children}
+  </th>
+);
+
+const Td = ({
+  children, align = "left", className = "",
+}: { children: React.ReactNode; align?: "left" | "right"; className?: string }) => (
+  <td className={`px-4 py-3 text-${align} text-[var(--color-text-primary)] ${className}`}>
+    {children}
+  </td>
+);
+
+const BreakdownTable = ({
+  title, labelHeader, rows,
+}: { title: string; labelHeader: string; rows: { label: string; count: number; amount: number }[] }) => {
+  const t = useTranslations("financeDashboard");
+  const totalAmount = rows.reduce((s, r) => s + r.amount, 0);
+  if (rows.length === 0) {
+    return (
+      <div className="bg-[var(--color-surface-page)] rounded-xl p-5">
+        <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">{title}</h4>
+        <p className="text-sm text-[var(--color-text-secondary)] text-center py-6">
+          {t("reportsPage.noResults")}
+        </p>
+      </div>
+    );
+  }
   return (
-    <div className="bg-[var(--color-surface-page)] rounded-xl p-4">
-      <p className="text-xs text-[var(--color-text-secondary)]">{label}</p>
-      <p className="text-xl font-bold mt-1" style={{ color }}>{value}</p>
+    <div className="bg-[var(--color-surface-page)] rounded-xl p-5">
+      <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">{title}</h4>
+      <div className="space-y-2">
+        {rows.map((r) => {
+          const pct = totalAmount > 0 ? (r.amount / totalAmount) * 100 : 0;
+          return (
+            <div key={r.label}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-[var(--color-text-primary)] capitalize">
+                  {(r.label || "—").replace(/_/g, " ")}
+                </span>
+                <span className="text-xs text-[var(--color-text-secondary)]">
+                  {formatSAR(r.amount)} · {formatInt(r.count)} {t("reportsPage.columns.payments").toLowerCase()}
+                </span>
+              </div>
+              <div className="w-full bg-[var(--color-border)] rounded-full h-1.5">
+                <div
+                  className="bg-[var(--color-primary)] h-1.5 rounded-full transition-all"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+        <div className="pt-3 mt-3 border-t border-[var(--color-border-subtle)] flex items-center justify-between text-sm">
+          <span className="font-semibold text-[var(--color-text-primary)]">{labelHeader}</span>
+          <span className="font-semibold text-[var(--color-text-primary)]">{formatSAR(totalAmount)}</span>
+        </div>
+      </div>
     </div>
   );
-}
+};
 
-function EmptyState() {
+const TableSkeleton = () => (
+  <div className="p-5 space-y-3">
+    {Array.from({ length: 6 }).map((_, i) => (
+      <div key={i} className="h-9 bg-[var(--color-surface-page)] rounded-md animate-pulse" />
+    ))}
+  </div>
+);
+
+const EmptyState = () => {
   const t = useTranslations("financeDashboard");
   return (
     <div className="flex flex-col items-center justify-center py-12">
@@ -927,6 +1083,6 @@ function EmptyState() {
       <p className="text-sm text-[var(--color-text-secondary)]">{t("reportsPage.noResults")}</p>
     </div>
   );
-}
+};
 
 export default FinanceReportsContent;

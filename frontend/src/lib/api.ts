@@ -8205,6 +8205,185 @@ export const financeApi = {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   },
+
+  // ─── Reports page: 8 spec-defined report previews + unified export ─────
+
+  getReportRevenue: (params: { startDate?: string; endDate?: string; gateway?: string }) => {
+    const sp = new URLSearchParams();
+    if (params.startDate) sp.set('startDate', params.startDate);
+    if (params.endDate) sp.set('endDate', params.endDate);
+    if (params.gateway) sp.set('gateway', params.gateway);
+    return api.get<{
+      totals: { gross: number; refunds: number; net: number; vat: number; count: number };
+      byGateway: Array<{ gateway: string; count: number; gross: number }>;
+      byMethod: Array<{ method: string; count: number; gross: number }>;
+    }>(`/finance/reports/revenue?${sp.toString()}`);
+  },
+
+  getReportRefunds: (params: { startDate?: string; endDate?: string; status?: string; gateway?: string; reason?: string }) => {
+    const sp = new URLSearchParams();
+    if (params.startDate) sp.set('startDate', params.startDate);
+    if (params.endDate) sp.set('endDate', params.endDate);
+    if (params.status) sp.set('status', params.status);
+    if (params.gateway) sp.set('gateway', params.gateway);
+    if (params.reason) sp.set('reason', params.reason);
+    return api.get<Array<{
+      id: string;
+      requesterName: string | null;
+      requesterEmail: string | null;
+      processedByName: string | null;
+      courseTitle: string | null;
+      gateway: string | null;
+      reason: string | null;
+      reasonNote: string | null;
+      originalAmount: number;
+      refundAmount: number;
+      deductionAmount: number;
+      status: string;
+      createdAt: string;
+      approvedAt: string | null;
+      completedAt: string | null;
+    }>>(`/finance/reports/refunds?${sp.toString()}`);
+  },
+
+  getReportPayments: (params: { startDate?: string; endDate?: string; gateway?: string; status?: string; method?: string }) => {
+    const sp = new URLSearchParams();
+    if (params.startDate) sp.set('startDate', params.startDate);
+    if (params.endDate) sp.set('endDate', params.endDate);
+    if (params.gateway) sp.set('gateway', params.gateway);
+    if (params.status) sp.set('status', params.status);
+    if (params.method) sp.set('method', params.method);
+    return api.get<Array<{
+      id: string;
+      userName: string | null;
+      userEmail: string | null;
+      courseTitle: string | null;
+      gateway: string;
+      paymentMethod: string;
+      amount: number;
+      currency: string;
+      status: string;
+      gatewayChargeId: string | null;
+      createdAt: string;
+      paidAt: string | null;
+    }>>(`/finance/reports/payments?${sp.toString()}`);
+  },
+
+  getReportCourseSales: (params: { startDate?: string; endDate?: string; courseId?: string; deliveryType?: string }) => {
+    const sp = new URLSearchParams();
+    if (params.startDate) sp.set('startDate', params.startDate);
+    if (params.endDate) sp.set('endDate', params.endDate);
+    if (params.courseId) sp.set('courseId', params.courseId);
+    if (params.deliveryType) sp.set('deliveryType', params.deliveryType);
+    return api.get<Array<{
+      courseId: string;
+      courseTitle: string;
+      courseTitleAr: string | null;
+      deliveryType: string;
+      units: number;
+      gross: number;
+      refunds: number;
+      net: number;
+    }>>(`/finance/reports/course-sales?${sp.toString()}`);
+  },
+
+  getReportWebinarSales: (params: { startDate?: string; endDate?: string; courseId?: string; sessionId?: string }) => {
+    const sp = new URLSearchParams();
+    if (params.startDate) sp.set('startDate', params.startDate);
+    if (params.endDate) sp.set('endDate', params.endDate);
+    if (params.courseId) sp.set('courseId', params.courseId);
+    if (params.sessionId) sp.set('sessionId', params.sessionId);
+    return api.get<Array<{
+      sessionId: string;
+      sessionTitle: string | null;
+      scheduledAt: string;
+      courseId: string;
+      courseTitle: string;
+      totalRegistrations: number;
+      paidRegistrations: number;
+      revenue: number;
+    }>>(`/finance/reports/webinar-sales?${sp.toString()}`);
+  },
+
+  getReportStudentPurchases: (params: { startDate?: string; endDate?: string; search?: string; top?: number }) => {
+    const sp = new URLSearchParams();
+    if (params.startDate) sp.set('startDate', params.startDate);
+    if (params.endDate) sp.set('endDate', params.endDate);
+    if (params.search) sp.set('search', params.search);
+    if (params.top) sp.set('top', String(params.top));
+    return api.get<Array<{
+      userId: string;
+      userName: string;
+      userEmail: string;
+      paymentCount: number;
+      courseCount: number;
+      totalPaid: number;
+      totalRefunded: number;
+      netSpend: number;
+      lastPurchaseAt: string;
+    }>>(`/finance/reports/student-purchases?${sp.toString()}`);
+  },
+
+  getReportFinanceActivity: (params: { startDate?: string; endDate?: string; actorId?: string; entityType?: string; action?: string }) => {
+    const sp = new URLSearchParams();
+    if (params.startDate) sp.set('startDate', params.startDate);
+    if (params.endDate) sp.set('endDate', params.endDate);
+    if (params.actorId) sp.set('actorId', params.actorId);
+    if (params.entityType) sp.set('entityType', params.entityType);
+    if (params.action) sp.set('action', params.action);
+    return api.get<Array<{
+      id: string;
+      action: string;
+      entityType: string;
+      entityId: string;
+      actorName: string | null;
+      actorEmail: string | null;
+      createdAt: string;
+      ipAddress: string | null;
+      metadata: Record<string, unknown> | null;
+    }>>(`/finance/reports/finance-activity?${sp.toString()}`);
+  },
+
+  getReportVat: (params: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params.startDate) sp.set('startDate', params.startDate);
+    if (params.endDate) sp.set('endDate', params.endDate);
+    return api.get<{
+      totals: { invoiceCount: number; taxableBase: number; vatAmount: number; total: number };
+      byMonth: Array<{ month: string; invoiceCount: number; taxableBase: number; vatAmount: number; total: number }>;
+    }>(`/finance/reports/vat?${sp.toString()}`);
+  },
+
+  /**
+   * Unified downloader. Supports CSV / XLSX / PDF for every Reports-page
+   * report. Forwards all per-report filters as query params; the backend
+   * /export endpoint ignores any it doesn't recognise.
+   */
+  downloadReport: async (
+    reportType: string,
+    format: 'csv' | 'xlsx' | 'pdf',
+    filters: Record<string, string | undefined> = {},
+  ) => {
+    const token = getAccessToken();
+    const sp = new URLSearchParams({ reportType, format });
+    for (const [k, v] of Object.entries(filters)) {
+      if (v !== undefined && v !== null && v !== '' && v !== 'all') sp.set(k, String(v));
+    }
+    const res = await fetch(`${API_URL}/finance/export?${sp.toString()}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error('Export failed');
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const ext = format === 'xlsx' ? 'xlsx' : format === 'pdf' ? 'pdf' : 'csv';
+    a.download = `${reportType}-${new Date().toISOString().slice(0, 10)}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
 };
 
 // ===========================================

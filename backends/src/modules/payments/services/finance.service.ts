@@ -1,5 +1,5 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { sql, and, gte, lte, eq, desc } from 'drizzle-orm';
+import { sql, and, gte, lte, eq, desc, or, ilike, inArray, asc, isNotNull } from 'drizzle-orm';
 import * as PDFDocument from 'pdfkit';
 import * as ExcelJS from 'exceljs';
 import { db } from '../../../database';
@@ -9,6 +9,10 @@ import {
   users,
   courses,
   paymentReceipts,
+  refunds,
+  sessions,
+  webinarRegistrations,
+  auditLogs,
 } from '../../../database/schema';
 import { isNull } from 'drizzle-orm';
 
@@ -155,6 +159,455 @@ export class FinanceService {
       revenueTrend,
       avgOrderTrend,
       refundRateTrend,
+    };
+  }
+
+  // ============================================================
+  //  REPORTS (Reports page) — 8 typed datasets used by both the
+  //  preview JSON endpoints and the CSV/XLSX/PDF export pipeline.
+  //  These are deliberately additive to the older analytics methods
+  //  (getRevenueByCourse, getRevenueByInstructor, …) which keep
+  //  feeding the Overview page KPI widgets.
+  // ============================================================
+
+  /** 1. Revenue — totals + gateway split + daily trend in one payload. */
+  async getReportRevenue(opts: { startDate?: string; endDate?: string; gateway?: string }) {
+    const { startDate, endDate, gateway } = opts;
+    const paidConds: any[] = [
+      eq(payments.status, 'paid' as any),
+      ...this.buildPaidAtConditions(startDate, endDate),
+    ];
+    if (gateway && gateway !== 'all') paidConds.push(eq(payments.gateway, gateway));
+
+    const refundedConds: any[] = [
+      sql`${payments.status} IN ('refunded','partially_refunded')`,
+      ...this.buildPaidAtConditions(startDate, endDate),
+    ];
+    if (gateway && gateway !== 'all') refundedConds.push(eq(payments.gateway, gateway));
+
+    const [byGateway, byMethod, totalsRow, refundsRow, vatRow] = await Promise.all([
+      db
+        .select({
+          gateway: payments.gateway,
+          count: sql<number>`COUNT(*)::int`,
+          gross: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
+        })
+        .from(payments)
+        .where(and(...paidConds))
+        .groupBy(payments.gateway)
+        .orderBy(sql`SUM(${payments.amount}::numeric) DESC`),
+      db
+        .select({
+          method: payments.paymentMethod,
+          count: sql<number>`COUNT(*)::int`,
+          gross: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
+        })
+        .from(payments)
+        .where(and(...paidConds))
+        .groupBy(payments.paymentMethod)
+        .orderBy(sql`SUM(${payments.amount}::numeric) DESC`),
+      db
+        .select({
+          gross: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
+          count: sql<number>`COUNT(*)::int`,
+        })
+        .from(payments)
+        .where(and(...paidConds)),
+      db
+        .select({
+          refunds: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
+        })
+        .from(payments)
+        .where(and(...refundedConds)),
+      db
+        .select({
+          vat: sql<string>`COALESCE(SUM(${invoices.taxAmount}::numeric), 0)`,
+        })
+        .from(invoices)
+        .leftJoin(payments, eq(invoices.paymentId, payments.id))
+        .where(and(...paidConds)),
+    ]);
+
+    const gross = Number(totalsRow[0]?.gross || 0);
+    const refundsAmt = Number(refundsRow[0]?.refunds || 0);
+    const vat = Number(vatRow[0]?.vat || 0);
+
+    return {
+      totals: {
+        gross,
+        refunds: refundsAmt,
+        net: gross - refundsAmt,
+        vat,
+        count: Number(totalsRow[0]?.count || 0),
+      },
+      byGateway: byGateway.map((r) => ({
+        gateway: r.gateway,
+        count: Number(r.count),
+        gross: Number(r.gross),
+      })),
+      byMethod: byMethod.map((r) => ({
+        method: r.method,
+        count: Number(r.count),
+        gross: Number(r.gross),
+      })),
+    };
+  }
+
+  /** 2. Refunds — transactional list grouped by status/reason/agent. */
+  async getReportRefunds(opts: {
+    startDate?: string;
+    endDate?: string;
+    status?: string;
+    gateway?: string;
+    reason?: string;
+  }) {
+    const { startDate, endDate, status, gateway, reason } = opts;
+    const conds: any[] = [];
+    if (startDate) conds.push(gte(refunds.createdAt, new Date(startDate)));
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      conds.push(lte(refunds.createdAt, end));
+    }
+    if (status && status !== 'all') conds.push(eq(refunds.status, status));
+    if (reason && reason !== 'all') conds.push(eq(refunds.reason, reason));
+    if (gateway && gateway !== 'all') conds.push(eq(payments.gateway, gateway));
+
+    const rows = await db
+      .select({
+        id: refunds.id,
+        requesterName: sql<string>`CONCAT(requester.first_name, ' ', requester.last_name)`,
+        requesterEmail: sql<string>`requester.email`,
+        processedByName: sql<string>`CASE WHEN processor.id IS NULL THEN NULL ELSE CONCAT(processor.first_name, ' ', processor.last_name) END`,
+        courseTitle: courses.title,
+        gateway: payments.gateway,
+        reason: refunds.reason,
+        reasonNote: refunds.reasonNote,
+        originalAmount: refunds.originalAmount,
+        refundAmount: refunds.refundAmount,
+        deductionAmount: refunds.deductionAmount,
+        status: refunds.status,
+        createdAt: refunds.createdAt,
+        approvedAt: refunds.approvedAt,
+        completedAt: refunds.completedAt,
+      })
+      .from(refunds)
+      .leftJoin(sql`${users} AS requester`, eq(refunds.requestedBy, sql`requester.id`))
+      .leftJoin(sql`${users} AS processor`, eq(refunds.processedBy, sql`processor.id`))
+      .leftJoin(payments, eq(refunds.paymentId, payments.id))
+      .leftJoin(courses, eq(payments.courseId, courses.id))
+      .where(conds.length ? and(...conds) : undefined)
+      .orderBy(desc(refunds.createdAt));
+
+    return rows.map((r) => ({
+      ...r,
+      originalAmount: Number(r.originalAmount),
+      refundAmount: Number(r.refundAmount),
+      deductionAmount: Number(r.deductionAmount),
+    }));
+  }
+
+  /** 3. Payments — full transactional ledger with rich filters. */
+  async getReportPayments(opts: {
+    startDate?: string;
+    endDate?: string;
+    gateway?: string;
+    status?: string;
+    method?: string;
+  }) {
+    const { startDate, endDate, gateway, status, method } = opts;
+    const conds: any[] = [];
+    if (startDate) conds.push(gte(payments.createdAt, new Date(startDate)));
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      conds.push(lte(payments.createdAt, end));
+    }
+    if (gateway && gateway !== 'all') conds.push(eq(payments.gateway, gateway));
+    if (status && status !== 'all') conds.push(eq(payments.status, status));
+    if (method && method !== 'all') conds.push(eq(payments.paymentMethod, method));
+
+    const rows = await db
+      .select({
+        id: payments.id,
+        userName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+        userEmail: users.email,
+        courseTitle: courses.title,
+        gateway: payments.gateway,
+        paymentMethod: payments.paymentMethod,
+        amount: payments.amount,
+        currency: payments.currency,
+        status: payments.status,
+        gatewayChargeId: payments.gatewayChargeId,
+        createdAt: payments.createdAt,
+        paidAt: payments.paidAt,
+      })
+      .from(payments)
+      .leftJoin(users, eq(payments.userId, users.id))
+      .leftJoin(courses, eq(payments.courseId, courses.id))
+      .where(conds.length ? and(...conds) : undefined)
+      .orderBy(desc(payments.createdAt))
+      .limit(1000);
+
+    return rows.map((r) => ({ ...r, amount: Number(r.amount) }));
+  }
+
+  /** 4. Course Sales — units × gross × refunds × net per course. */
+  async getReportCourseSales(opts: {
+    startDate?: string;
+    endDate?: string;
+    courseId?: string;
+    deliveryType?: string;
+  }) {
+    const { startDate, endDate, courseId, deliveryType } = opts;
+    const paidConds: any[] = [
+      eq(payments.status, 'paid' as any),
+      ...this.buildPaidAtConditions(startDate, endDate),
+    ];
+    if (courseId) paidConds.push(eq(payments.courseId, courseId));
+    if (deliveryType && deliveryType !== 'all') {
+      paidConds.push(eq(courses.deliveryType, deliveryType));
+    }
+
+    const rows = await db
+      .select({
+        courseId: courses.id,
+        courseTitle: courses.title,
+        courseTitleAr: courses.titleAr,
+        deliveryType: courses.deliveryType,
+        units: sql<number>`COUNT(*)::int`,
+        gross: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
+        refunds: sql<string>`COALESCE((SELECT SUM(refund_amount::numeric) FROM refunds WHERE payment_id IN (SELECT id FROM payments WHERE course_id = ${courses.id} AND status IN ('refunded','partially_refunded'))), 0)`,
+      })
+      .from(payments)
+      .innerJoin(courses, eq(payments.courseId, courses.id))
+      .where(and(...paidConds))
+      .groupBy(courses.id, courses.title, courses.titleAr, courses.deliveryType)
+      .orderBy(sql`SUM(${payments.amount}::numeric) DESC`);
+
+    return rows.map((r) => {
+      const gross = Number(r.gross);
+      const refundsAmt = Number(r.refunds);
+      return {
+        courseId: r.courseId,
+        courseTitle: r.courseTitle,
+        courseTitleAr: r.courseTitleAr,
+        deliveryType: r.deliveryType || 'unknown',
+        units: Number(r.units),
+        gross,
+        refunds: refundsAmt,
+        net: gross - refundsAmt,
+      };
+    });
+  }
+
+  /** 5. Webinar Sales — per-session paid registrations + revenue. */
+  async getReportWebinarSales(opts: {
+    startDate?: string;
+    endDate?: string;
+    courseId?: string;
+    sessionId?: string;
+  }) {
+    const { startDate, endDate, courseId, sessionId } = opts;
+    const conds: any[] = [];
+    if (startDate) conds.push(gte(sessions.scheduledAt, new Date(startDate)));
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      conds.push(lte(sessions.scheduledAt, end));
+    }
+    if (courseId) conds.push(eq(sessions.courseId, courseId));
+    if (sessionId) conds.push(eq(sessions.id, sessionId));
+
+    const rows = await db
+      .select({
+        sessionId: sessions.id,
+        sessionTitle: sessions.title,
+        scheduledAt: sessions.scheduledAt,
+        courseId: courses.id,
+        courseTitle: courses.title,
+        totalRegistrations: sql<number>`(SELECT COUNT(*) FROM webinar_registrations WHERE session_id = ${sessions.id})::int`,
+        paidRegistrations: sql<number>`(SELECT COUNT(*) FROM webinar_registrations wr LEFT JOIN payments p ON p.user_id = wr.user_id AND p.course_id = ${courses.id} AND p.status = 'paid' WHERE wr.session_id = ${sessions.id} AND p.id IS NOT NULL)::int`,
+        revenue: sql<string>`COALESCE((SELECT SUM(p.amount::numeric) FROM webinar_registrations wr INNER JOIN payments p ON p.user_id = wr.user_id AND p.course_id = ${courses.id} AND p.status = 'paid' WHERE wr.session_id = ${sessions.id}), 0)`,
+      })
+      .from(sessions)
+      .innerJoin(courses, eq(sessions.courseId, courses.id))
+      .where(conds.length ? and(...conds) : undefined)
+      .orderBy(desc(sessions.scheduledAt))
+      .limit(500);
+
+    return rows.map((r) => ({
+      ...r,
+      totalRegistrations: Number(r.totalRegistrations),
+      paidRegistrations: Number(r.paidRegistrations),
+      revenue: Number(r.revenue),
+    }));
+  }
+
+  /** 6. Student Purchases — lifetime spend leaderboard. */
+  async getReportStudentPurchases(opts: {
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+    top?: number;
+  }) {
+    const { startDate, endDate, search, top = 100 } = opts;
+    const conds: any[] = [eq(payments.status, 'paid' as any)];
+    if (startDate) conds.push(gte(payments.paidAt, new Date(startDate)));
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      conds.push(lte(payments.paidAt, end));
+    }
+    if (search) {
+      const q = `%${search}%`;
+      conds.push(
+        or(
+          ilike(users.email, q),
+          ilike(users.firstName, q),
+          ilike(users.lastName, q),
+        ),
+      );
+    }
+
+    const rows = await db
+      .select({
+        userId: users.id,
+        userName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+        userEmail: users.email,
+        paymentCount: sql<number>`COUNT(*)::int`,
+        totalPaid: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
+        totalRefunded: sql<string>`COALESCE((SELECT SUM(refund_amount::numeric) FROM refunds WHERE requested_by = ${users.id} AND status = 'completed'), 0)`,
+        courseCount: sql<number>`COUNT(DISTINCT ${payments.courseId})::int`,
+        lastPurchaseAt: sql<Date>`MAX(${payments.paidAt})`,
+      })
+      .from(payments)
+      .innerJoin(users, eq(payments.userId, users.id))
+      .where(and(...conds))
+      .groupBy(users.id, users.firstName, users.lastName, users.email)
+      .orderBy(sql`SUM(${payments.amount}::numeric) DESC`)
+      .limit(Math.min(top, 500));
+
+    return rows.map((r) => {
+      const totalPaid = Number(r.totalPaid);
+      const totalRefunded = Number(r.totalRefunded);
+      return {
+        userId: r.userId,
+        userName: r.userName,
+        userEmail: r.userEmail,
+        paymentCount: Number(r.paymentCount),
+        courseCount: Number(r.courseCount),
+        totalPaid,
+        totalRefunded,
+        netSpend: totalPaid - totalRefunded,
+        lastPurchaseAt: r.lastPurchaseAt,
+      };
+    });
+  }
+
+  /** 7. Finance Activity — audit log filtered to finance-side entities. */
+  async getReportFinanceActivity(opts: {
+    startDate?: string;
+    endDate?: string;
+    actorId?: string;
+    entityType?: string;
+    action?: string;
+  }) {
+    const { startDate, endDate, actorId, entityType, action } = opts;
+    // Finance-relevant entity types only — keeps the report focused even
+    // though the underlying table holds platform-wide audit events.
+    const FINANCE_ENTITIES = [
+      'payment', 'refund', 'invoice', 'discount', 'coupon_campaign',
+      'bank_transfer', 'reconciliation', 'discount_code', 'discount_batch',
+    ];
+    const conds: any[] = [
+      entityType && entityType !== 'all'
+        ? eq(auditLogs.entityType, entityType)
+        : inArray(auditLogs.entityType, FINANCE_ENTITIES),
+    ];
+    if (startDate) conds.push(gte(auditLogs.createdAt, new Date(startDate)));
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      conds.push(lte(auditLogs.createdAt, end));
+    }
+    if (actorId) conds.push(eq(auditLogs.performedBy, actorId));
+    if (action && action !== 'all') conds.push(eq(auditLogs.action, action));
+
+    const rows = await db
+      .select({
+        id: auditLogs.id,
+        action: auditLogs.action,
+        entityType: auditLogs.entityType,
+        entityId: auditLogs.entityId,
+        actorName: sql<string>`CASE WHEN ${users.id} IS NULL THEN NULL ELSE CONCAT(${users.firstName}, ' ', ${users.lastName}) END`,
+        actorEmail: users.email,
+        createdAt: auditLogs.createdAt,
+        ipAddress: auditLogs.ipAddress,
+        metadata: auditLogs.metadata,
+      })
+      .from(auditLogs)
+      .leftJoin(users, eq(auditLogs.performedBy, users.id))
+      .where(and(...conds))
+      .orderBy(desc(auditLogs.createdAt))
+      .limit(1000);
+
+    return rows;
+  }
+
+  /** 8. VAT/Tax — ZATCA-style summary: monthly totals over the period. */
+  async getReportVat(opts: { startDate?: string; endDate?: string }) {
+    const { startDate, endDate } = opts;
+    const conds: any[] = [
+      // Only count issued invoices that map to PAID payments — drafts and
+      // failed-payment invoices aren't reportable to ZATCA.
+      sql`${invoices.status} IN ('issued','paid','partially_refunded','refunded')`,
+    ];
+    if (startDate) conds.push(gte(invoices.issuedAt, new Date(startDate)));
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      conds.push(lte(invoices.issuedAt, end));
+    }
+
+    const [byMonth, totalsRow] = await Promise.all([
+      db
+        .select({
+          month: sql<string>`TO_CHAR(${invoices.issuedAt}, 'YYYY-MM')`,
+          invoiceCount: sql<number>`COUNT(*)::int`,
+          taxableBase: sql<string>`COALESCE(SUM(${invoices.subtotal}::numeric), 0)`,
+          vatAmount: sql<string>`COALESCE(SUM(${invoices.taxAmount}::numeric), 0)`,
+          total: sql<string>`COALESCE(SUM(${invoices.totalAmount}::numeric), 0)`,
+        })
+        .from(invoices)
+        .where(and(...conds))
+        .groupBy(sql`TO_CHAR(${invoices.issuedAt}, 'YYYY-MM')`)
+        .orderBy(asc(sql`TO_CHAR(${invoices.issuedAt}, 'YYYY-MM')`)),
+      db
+        .select({
+          invoiceCount: sql<number>`COUNT(*)::int`,
+          taxableBase: sql<string>`COALESCE(SUM(${invoices.subtotal}::numeric), 0)`,
+          vatAmount: sql<string>`COALESCE(SUM(${invoices.taxAmount}::numeric), 0)`,
+          total: sql<string>`COALESCE(SUM(${invoices.totalAmount}::numeric), 0)`,
+        })
+        .from(invoices)
+        .where(and(...conds)),
+    ]);
+
+    return {
+      totals: {
+        invoiceCount: Number(totalsRow[0]?.invoiceCount || 0),
+        taxableBase: Number(totalsRow[0]?.taxableBase || 0),
+        vatAmount: Number(totalsRow[0]?.vatAmount || 0),
+        total: Number(totalsRow[0]?.total || 0),
+      },
+      byMonth: byMonth.map((r) => ({
+        month: r.month,
+        invoiceCount: Number(r.invoiceCount),
+        taxableBase: Number(r.taxableBase),
+        vatAmount: Number(r.vatAmount),
+        total: Number(r.total),
+      })),
     };
   }
 
@@ -831,9 +1284,15 @@ export class FinanceService {
     startDate?: string,
     endDate?: string,
     userId?: string,
+    filters: Record<string, string | undefined> = {},
   ): Promise<Buffer | string> {
     // Fetch data based on report type
-    const { title, headers, rows } = await this.getReportData(reportType, startDate, endDate);
+    const { title, headers, rows } = await this.getReportData(
+      reportType,
+      startDate,
+      endDate,
+      filters,
+    );
 
     switch (format) {
       case 'xlsx':
@@ -849,8 +1308,170 @@ export class FinanceService {
     reportType: string,
     startDate?: string,
     endDate?: string,
-  ): Promise<{ title: string; headers: string[]; rows: (string | number)[][] }> {
+    filters: Record<string, string | undefined> = {},
+  ): Promise<{ title: string; headers: string[]; rows: (string | number | null)[][] }> {
     switch (reportType) {
+      // ── 8 spec-defined reports ────────────────────────────────
+      case 'revenue': {
+        const data = await this.getReportRevenue({ startDate, endDate, gateway: filters.gateway });
+        const rows: (string | number | null)[][] = [
+          ['— TOTALS —', '', '', '', ''],
+          ['Gross', data.totals.count, data.totals.gross, '', ''],
+          ['Refunds', '', data.totals.refunds, '', ''],
+          ['Net', '', data.totals.net, '', ''],
+          ['VAT collected', '', data.totals.vat, '', ''],
+          ['', '', '', '', ''],
+          ['— BY GATEWAY —', '', '', '', ''],
+          ...data.byGateway.map((r) => ['Gateway', r.gateway, r.count, r.gross, '']),
+          ['', '', '', '', ''],
+          ['— BY METHOD —', '', '', '', ''],
+          ...data.byMethod.map((r) => ['Method', r.method, r.count, r.gross, '']),
+        ];
+        return {
+          title: 'Revenue Report',
+          headers: ['Type', 'Bucket', 'Count', 'Amount (SAR)', ''],
+          rows,
+        };
+      }
+      case 'refunds': {
+        const data = await this.getReportRefunds({
+          startDate, endDate,
+          status: filters.status, gateway: filters.gateway, reason: filters.reason,
+        });
+        return {
+          title: 'Refund Report',
+          headers: ['RefundID', 'Requester', 'Email', 'Course', 'Gateway', 'Reason', 'Amount (SAR)', 'Fee Borne', 'Status', 'Agent', 'Created', 'Completed'],
+          rows: data.map((r) => [
+            r.id,
+            r.requesterName || '',
+            r.requesterEmail || '',
+            r.courseTitle || '',
+            r.gateway || '',
+            r.reason || '',
+            r.refundAmount,
+            r.deductionAmount,
+            r.status,
+            r.processedByName || '',
+            r.createdAt ? new Date(r.createdAt).toISOString() : '',
+            r.completedAt ? new Date(r.completedAt).toISOString() : '',
+          ]),
+        };
+      }
+      case 'payments': {
+        const data = await this.getReportPayments({
+          startDate, endDate,
+          gateway: filters.gateway, status: filters.status, method: filters.method,
+        });
+        return {
+          title: 'Payment Report',
+          headers: ['PaymentID', 'Buyer', 'Email', 'Course', 'Gateway', 'Method', 'Amount (SAR)', 'Status', 'Gateway Ref', 'Created', 'Paid'],
+          rows: data.map((r) => [
+            r.id,
+            r.userName || '',
+            r.userEmail || '',
+            r.courseTitle || '',
+            r.gateway,
+            r.paymentMethod,
+            r.amount,
+            r.status,
+            r.gatewayChargeId || '',
+            r.createdAt ? new Date(r.createdAt).toISOString() : '',
+            r.paidAt ? new Date(r.paidAt).toISOString() : '',
+          ]),
+        };
+      }
+      case 'courseSales': {
+        const data = await this.getReportCourseSales({
+          startDate, endDate,
+          courseId: filters.courseId, deliveryType: filters.deliveryType,
+        });
+        return {
+          title: 'Course Sales Report',
+          headers: ['Course', 'Delivery', 'Units Sold', 'Gross (SAR)', 'Refunds (SAR)', 'Net (SAR)'],
+          rows: data.map((r) => [
+            r.courseTitle,
+            r.deliveryType,
+            r.units,
+            r.gross,
+            r.refunds,
+            r.net,
+          ]),
+        };
+      }
+      case 'webinarSales': {
+        const data = await this.getReportWebinarSales({
+          startDate, endDate,
+          courseId: filters.courseId, sessionId: filters.sessionId,
+        });
+        return {
+          title: 'Webinar Sales Report',
+          headers: ['Course', 'Session', 'Scheduled', 'Total Registrants', 'Paid Registrants', 'Revenue (SAR)'],
+          rows: data.map((r) => [
+            r.courseTitle || '',
+            r.sessionTitle || '',
+            r.scheduledAt ? new Date(r.scheduledAt).toISOString() : '',
+            r.totalRegistrations,
+            r.paidRegistrations,
+            r.revenue,
+          ]),
+        };
+      }
+      case 'studentPurchases': {
+        const data = await this.getReportStudentPurchases({
+          startDate, endDate,
+          search: filters.search, top: filters.top ? Number(filters.top) : undefined,
+        });
+        return {
+          title: 'Student Purchase Report',
+          headers: ['Student', 'Email', 'Payments', 'Courses', 'Total Paid (SAR)', 'Refunded (SAR)', 'Net (SAR)', 'Last Purchase'],
+          rows: data.map((r) => [
+            r.userName,
+            r.userEmail,
+            r.paymentCount,
+            r.courseCount,
+            r.totalPaid,
+            r.totalRefunded,
+            r.netSpend,
+            r.lastPurchaseAt ? new Date(r.lastPurchaseAt).toISOString() : '',
+          ]),
+        };
+      }
+      case 'financeActivity': {
+        const data = await this.getReportFinanceActivity({
+          startDate, endDate,
+          actorId: filters.actorId, entityType: filters.entityType, action: filters.action,
+        });
+        return {
+          title: 'Finance Activity Report',
+          headers: ['When', 'Actor', 'Email', 'Action', 'Entity', 'Entity ID', 'IP'],
+          rows: data.map((r) => [
+            r.createdAt ? new Date(r.createdAt).toISOString() : '',
+            r.actorName || '',
+            r.actorEmail || '',
+            r.action,
+            r.entityType,
+            r.entityId,
+            r.ipAddress || '',
+          ]),
+        };
+      }
+      case 'vat': {
+        const data = await this.getReportVat({ startDate, endDate });
+        const rows: (string | number | null)[][] = [
+          ['— TOTALS —', '', '', '', ''],
+          ['All months', data.totals.invoiceCount, data.totals.taxableBase, data.totals.vatAmount, data.totals.total],
+          ['', '', '', '', ''],
+          ['— BY MONTH —', '', '', '', ''],
+          ...data.byMonth.map((m) => [m.month, m.invoiceCount, m.taxableBase, m.vatAmount, m.total]),
+        ];
+        return {
+          title: 'VAT / Tax Report (ZATCA summary)',
+          headers: ['Period', 'Invoices', 'Taxable Base (SAR)', 'VAT 15% (SAR)', 'Total (SAR)'],
+          rows,
+        };
+      }
+
+      // ── Legacy analytics reports (kept for Overview widgets) ──
       case 'profitByCourse': {
         const data = await this.getRevenueByCourse(startDate, endDate);
         return {
@@ -905,7 +1526,7 @@ export class FinanceService {
   private async buildExcelExport(
     title: string,
     headers: string[],
-    rows: (string | number)[][],
+    rows: (string | number | null)[][],
     reportType: string,
     startDate?: string,
     endDate?: string,
@@ -967,7 +1588,7 @@ export class FinanceService {
   private buildCsvExport(
     title: string,
     headers: string[],
-    rows: (string | number)[][],
+    rows: (string | number | null)[][],
     reportType: string,
     startDate?: string,
     endDate?: string,
@@ -1004,7 +1625,7 @@ export class FinanceService {
   private buildPdfExport(
     title: string,
     headers: string[],
-    rows: (string | number)[][],
+    rows: (string | number | null)[][],
     reportType: string,
     startDate?: string,
     endDate?: string,

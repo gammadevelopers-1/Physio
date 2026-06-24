@@ -163,13 +163,25 @@ export class FinanceController {
     @Query('format') format?: string,
     @Query('reportType') reportType?: string,
     @Query('locale') locale?: string,
+    // Extra filters forwarded into the new 8 Reports-page exports. All optional.
+    @Query('gateway') gateway?: string,
+    @Query('method') method?: string,
+    @Query('reason') reason?: string,
+    @Query('courseId') courseId?: string,
+    @Query('sessionId') sessionId?: string,
+    @Query('deliveryType') deliveryType?: string,
+    @Query('search') search?: string,
+    @Query('top') top?: string,
+    @Query('actorId') actorId?: string,
+    @Query('entityType') entityType?: string,
+    @Query('action') action?: string,
   ) {
     const dateStr = new Date().toISOString().split('T')[0];
     const safeReport = reportType || 'payments';
     const safeFormat = ['csv', 'xlsx', 'pdf'].includes(format || '') ? format! : 'csv';
 
     // Legacy payments-only export (backward compatible)
-    if (safeReport === 'payments') {
+    if (safeReport === 'payments-legacy') {
       if (safeFormat === 'pdf') {
         const buf = await this.financeService.exportPaymentsPdf(startDate, endDate, status, user.id, locale);
         res.setHeader('Content-Type', 'application/pdf');
@@ -182,9 +194,17 @@ export class FinanceController {
       return res.send(csv);
     }
 
-    // Report-specific export
+    // Report-specific export (8 spec reports + legacy analytics)
     const result = await this.financeService.exportReport(
-      safeReport, safeFormat, startDate, endDate, user.id,
+      safeReport,
+      safeFormat,
+      startDate,
+      endDate,
+      user.id,
+      {
+        gateway, method, status, reason, courseId, sessionId,
+        deliveryType, search, top, actorId, entityType, action,
+      },
     );
 
     if (safeFormat === 'xlsx') {
@@ -198,5 +218,102 @@ export class FinanceController {
       res.setHeader('Content-Disposition', `attachment; filename="${safeReport}-${dateStr}.csv"`);
     }
     res.send(result);
+  }
+
+  // ── 8 preview JSON endpoints for the Reports page ─────────────
+  // Each returns the typed dataset the frontend renders inline before
+  // offering CSV / XLSX / PDF downloads via /finance/export.
+
+  @Get('reports/revenue')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async previewRevenue(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('gateway') gateway?: string,
+  ) {
+    return this.financeService.getReportRevenue({ startDate, endDate, gateway });
+  }
+
+  @Get('reports/refunds')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async previewRefunds(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('status') status?: string,
+    @Query('gateway') gateway?: string,
+    @Query('reason') reason?: string,
+  ) {
+    return this.financeService.getReportRefunds({ startDate, endDate, status, gateway, reason });
+  }
+
+  @Get('reports/payments')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async previewPayments(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('gateway') gateway?: string,
+    @Query('status') status?: string,
+    @Query('method') method?: string,
+  ) {
+    return this.financeService.getReportPayments({ startDate, endDate, gateway, status, method });
+  }
+
+  @Get('reports/course-sales')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async previewCourseSales(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('courseId') courseId?: string,
+    @Query('deliveryType') deliveryType?: string,
+  ) {
+    return this.financeService.getReportCourseSales({ startDate, endDate, courseId, deliveryType });
+  }
+
+  @Get('reports/webinar-sales')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async previewWebinarSales(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('courseId') courseId?: string,
+    @Query('sessionId') sessionId?: string,
+  ) {
+    return this.financeService.getReportWebinarSales({ startDate, endDate, courseId, sessionId });
+  }
+
+  @Get('reports/student-purchases')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async previewStudentPurchases(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('search') search?: string,
+    @Query('top') top?: string,
+  ) {
+    return this.financeService.getReportStudentPurchases({
+      startDate, endDate, search,
+      top: top ? Number(top) : undefined,
+    });
+  }
+
+  @Get('reports/finance-activity')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async previewFinanceActivity(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('actorId') actorId?: string,
+    @Query('entityType') entityType?: string,
+    @Query('action') action?: string,
+  ) {
+    return this.financeService.getReportFinanceActivity({
+      startDate, endDate, actorId, entityType, action,
+    });
+  }
+
+  @Get('reports/vat')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async previewVat(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.financeService.getReportVat({ startDate, endDate });
   }
 }

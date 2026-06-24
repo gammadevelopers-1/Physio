@@ -1195,7 +1195,7 @@
     "orderSummary": "Order summary",
     "subtotalLabel": "Subtotal ({count, plural, =1 {1 item} other {# items}})",
     "saleDiscountLabel": "Sale discount",
-    "vatLabel": "VAT (15%)",
+    "vatLabel": "VAT ({rate}%)",
     "totalLabel": "Total",
     "vatDisclaimer": "Final amount including VAT is calculated at checkout. Discount codes can be applied on the next step.",
     "secureNote": "Secure & encrypted checkout",
@@ -1260,7 +1260,7 @@
     "buyerName": "Name",
     "buyerEmail": "Email",
     "buyerPhone": "Phone",
-    "vatLabel": "VAT (15%)",
+    "vatLabel": "VAT ({rate}%)",
     "profile": {
       "title": "Complete profile",
       "alert": "Fill all required profile information",
@@ -9513,76 +9513,184 @@
     },
     "settingsPage": {
       "title": "Finance Settings",
-      "subtitle": "Configure payment gateways, currency, tax, and refund policies",
-      "personalSecurity": "Personal Security Settings",
+      "subtitle": "Manage your profile, security, and finance configuration",
       "tabs": {
         "profile": "Profile",
+        "security": "Security",
+        "notifications": "Notifications",
         "gateways": "Payment Gateways",
-        "currency": "Currency",
         "tax": "Tax Configuration",
         "refundPolicy": "Refund Policy"
-      },
-      "profile": {
-        "personalInfo": "Personal Information",
-        "firstName": "First Name",
-        "lastName": "Last Name",
-        "email": "Email",
-        "phone": "Phone",
-        "uploadPhoto": "Upload Photo",
-        "removePhoto": "Remove Photo",
-        "saveChanges": "Save Changes",
-        "saved": "Profile updated successfully",
-        "avatarError": "Failed to update profile picture",
-        "changePassword": "Change Password",
-        "currentPassword": "Current Password",
-        "newPassword": "New Password",
-        "passwordHint": "Minimum 6 characters. You will be logged out after changing.",
-        "updatePassword": "Update Password",
-        "passwordChanged": "Password changed successfully. Please log in again.",
-        "passwordRequired": "Both password fields are required",
-        "passwordMinLength": "New password must be at least 6 characters"
       },
       "gateways": {
         "title": "Payment Gateway Configuration",
         "moyasar": "Moyasar",
-        "tamara": "Tamara (BNPL)",
-        "tabby": "Tabby (BNPL)",
+        "tamara": "Tamara",
+        "tabby": "Tabby",
         "bankTransfer": "Bank Transfer",
-        "apiKey": "API Key",
-        "secretKey": "Secret Key",
-        "merchantId": "Merchant ID",
+        "readOnlyNotice": "Gateway credentials are managed by Admin Settings. Contact a platform administrator to change them.",
+        "loadError": "Could not load gateway configuration",
+        "loadErrorHint": "Try again, or contact a platform administrator if the issue persists.",
+        "activeGateway": "Active Gateway",
+        "gatewaysHeader": "Gateways",
+        "bankDetailsHeader": "Bank Transfer Details",
+        "active": "Active",
+        "configured": "Configured",
+        "notConfigured": "Not configured",
+        "notSet": "Not set",
+        "modeLive": "Live",
+        "modeTest": "Test",
+        "publishableKey": "Publishable Key",
+        "publicKey": "Public Key",
+        "merchantToken": "Merchant Token",
+        "secretKey": "Secret",
+        "bankName": "Bank Name",
+        "beneficiary": "Beneficiary",
+        "accountNumber": "Account Number",
+        "iban": "IBAN",
+        "swiftCode": "SWIFT Code",
+        "instructions": "Instructions",
+        "webhook": "Webhook URL",
+        "secretConfigured": "Secret configured",
+        "secretMissing": "Secret missing",
+        "autoSendReceipt": "Auto-send Receipt",
         "enabled": "Enabled",
         "disabled": "Disabled",
-        "testMode": "Test Mode",
-        "liveMode": "Live Mode",
-        "save": "Save Configuration"
-      },
-      "currency": {
-        "title": "Currency Settings",
-        "primaryCurrency": "Primary Currency",
-        "sar": "Saudi Riyal (SAR)",
-        "displayFormat": "Display Format",
-        "decimalPlaces": "Decimal Places"
+        "invoiceFooter": "Invoice Footer",
+        "copy": "Copy",
+        "unknown": "Unknown",
+        "lastUpdatedBy": "Last updated by {who} on {when}"
       },
       "tax": {
-        "title": "Tax Configuration",
+        "notice": "Changes apply to NEW checkouts immediately. Past invoices keep their original rate.",
+        "globalHeader": "Global Tax Settings",
+        "previewHeader": "Live Preview",
+        "previewSubtitle": "On a SAR 100 course with {treatment} treatment:",
+        "previewSubtotal": "Subtotal",
+        "previewVat": "VAT",
+        "previewTotal": "Total",
+        "perProductHeader": "Per-Product VAT Treatment",
+        "perProductHelp": "Mark individual courses as exempt or zero-rated (e.g. accredited CME under ZATCA).",
+        "perProductCta": "Manage product VAT treatments",
         "vatEnabled": "VAT Enabled",
-        "vatRate": "VAT Rate (%)",
-        "taxInclusive": "Prices Include Tax",
-        "taxNumber": "Tax Registration Number"
+        "vatEnabledHelp": "When OFF, all checkouts charge 0% VAT regardless of per-product treatment.",
+        "vatRate": "VAT Rate",
+        "taxNumber": "Tax Registration Number",
+        "companyNameEn": "Company Name (English)",
+        "companyNameAr": "Company Name (Arabic)",
+        "defaultTreatment": "Default VAT Treatment for New Courses",
+        "defaultTreatmentHelp": "Treatment auto-assigned when a new course is created. Existing courses keep their treatment.",
+        "treatments": {
+          "standard": "Standard",
+          "exempt": "Exempt",
+          "zero_rated": "Zero-rated"
+        },
+        "save": "Save Settings",
+        "lastUpdatedBy": "Last updated by {who} on {when}",
+        "neverSaved": "Defaults — never saved",
+        "unknown": "Unknown",
+        "loadError": "Could not load tax settings",
+        "loadErrorHint": "Try again, or contact a platform administrator if the issue persists.",
+        "toastSaved": "Tax settings saved",
+        "toastSaveFailed": "Failed to save tax settings"
       },
       "refundPolicy": {
-        "title": "Refund Policy Rules",
-        "fullRefundDays": "Full Refund Period (days)",
-        "partialRefundDays": "Partial Refund Period (days)",
-        "partialRefundPercent": "Partial Refund Percentage (%)",
-        "bnplDeduction": "BNPL Processing Deduction (%)",
-        "adminFee": "Admin Processing Fee (SAR)",
-        "autoApproveBelow": "Auto-approve Refunds Below (SAR)",
-        "save": "Save Policy"
+        "notice": "Policy applies to new refund requests. Existing refunds are unaffected. Changes are audit-logged.",
+        "rulesHeader": "Eligibility Rules",
+        "autoApproveHeader": "Auto-approval",
+        "gatewaysHeader": "Gateway Deductions",
+        "gatewaysHelp": "Per-gateway BNPL processing fees. Customers always receive the full refund amount; these fees are settled with the gateway.",
+        "summaryHeader": "Live Policy Summary",
+        "summaryDeniedHeader": "A refund will be DENIED when any of these is true:",
+        "summaryReceiveHeader": "When approved, customer receives:",
+        "summaryOfPayment": "of payment",
+        "summaryGatewayFee": "gateway fee",
+        "rules": {
+          "blockAfterCourseStart": {
+            "label": "Block refund after course start date",
+            "description": "Refund denied once a course's start date has passed. Self-paced courses are excluded since they have no start date."
+          },
+          "blockAfterAttendance": {
+            "label": "Block refund after attendance recorded",
+            "description": "Refund denied once any attendance is marked for the student (live sessions or webinar attended-flag)."
+          },
+          "blockAfterCertificate": {
+            "label": "Block refund after certificate issuance",
+            "description": "Refund denied once a certificate has been approved for the student."
+          },
+          "blockAfterCmeGranted": {
+            "label": "Block refund after CME / CPD hours granted",
+            "description": "Refund denied once CME / CPD hours have been awarded to the student.",
+            "note": "Shares the same database check as certificate issuance — CME hours are awarded together with the certificate."
+          }
+        },
+        "autoApprove": {
+          "label": "Auto-approve eligible refund requests",
+          "description": "When ON, requests that pass eligibility are processed immediately. When OFF, all requests go to your review queue."
+        },
+        "summary": {
+          "courseStart": "Course has started (live, cohort, blended, onsite, or webinar)",
+          "attendance": "Student has attended any session",
+          "certificate": "Certificate has been approved (CME / CPD hours granted)",
+          "noRules": "No eligibility rules are enabled — all refund requests are allowed."
+        },
+        "moyasar": "Moyasar",
+        "tamara": "Tamara",
+        "tabby": "Tabby",
+        "bankTransfer": "Bank Transfer",
+        "deductionPercent": "Deduction %",
+        "allowPartial": "Allow partial refund",
+        "save": "Save Policy",
+        "lastUpdatedBy": "Last updated by {who} on {when}",
+        "neverSaved": "Defaults — never saved",
+        "unknown": "Unknown",
+        "loadError": "Could not load refund policy",
+        "loadErrorHint": "Try again, or contact a platform administrator if the issue persists.",
+        "toastSaved": "Refund policy saved",
+        "toastSaveFailed": "Failed to save refund policy"
       },
       "saved": "Settings saved successfully",
       "saveError": "Failed to save settings"
+    },
+    "vatTreatments": {
+      "title": "Per-Product VAT Treatment",
+      "subtitle": "Mark courses as standard-rated, exempt, or zero-rated. Changes apply to NEW checkouts only.",
+      "backToSettings": "Back to Finance Settings",
+      "notice": "Changes are audit-logged and apply to new checkouts immediately. Past invoices remain unchanged.",
+      "filters": {
+        "searchLabel": "Search",
+        "searchPlaceholder": "Search by course title (English or Arabic)…",
+        "treatmentLabel": "Treatment",
+        "all": "All treatments"
+      },
+      "treatments": {
+        "standard": "Standard",
+        "exempt": "Exempt",
+        "zero_rated": "Zero-rated"
+      },
+      "col": {
+        "course": "Course",
+        "deliveryType": "Delivery",
+        "price": "Price",
+        "sales90d": "Sales (90d)",
+        "treatment": "VAT Treatment"
+      },
+      "bulk": {
+        "selected": "{n} selected",
+        "setAs": "Set as {treatment}",
+        "clear": "Clear"
+      },
+      "pagination": {
+        "showing": "Showing {from}–{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "loadError": "Could not load VAT treatments",
+      "retry": "Retry",
+      "noResults": "No courses match these filters",
+      "toastSaved": "VAT treatment updated",
+      "toastBulkSaved": "{n} courses updated",
+      "toastSaveFailed": "Failed to update VAT treatment"
     },
     "courses": {
       "aclsTraining": "ACLS Training",

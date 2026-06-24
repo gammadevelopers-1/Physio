@@ -13,6 +13,7 @@ import {
 } from '../../../database/schema';
 import { StorageService } from '../../storage/storage.service';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
+import { TaxComputationService } from './tax-computation.service';
 import {
   SiteSettingsService,
   SiteBranding,
@@ -40,6 +41,7 @@ export class InvoiceService {
     private readonly storageService: StorageService,
     private readonly auditLogService: AuditLogService,
     private readonly siteSettings: SiteSettingsService,
+    private readonly taxComputationService: TaxComputationService,
   ) {}
 
   async generateInvoice(paymentId: string) {
@@ -266,6 +268,18 @@ export class InvoiceService {
     }> | undefined,
     branding: SiteBranding,
   ): Promise<Buffer> {
+    // Pull current tax settings for tax number + company name on the PDF.
+    // The VAT rate label uses the snapshot stored on the invoice/payment
+    // metadata so historical invoices keep their original rate.
+    const taxSettings = await this.taxComputationService.getSettings();
+    const paymentMeta = (payment?.metadata ?? {}) as {
+      taxRate?: number;
+      vatTreatment?: string;
+    };
+    const invoiceVatRate = typeof paymentMeta.taxRate === 'number'
+      ? paymentMeta.taxRate
+      : taxSettings.vatRate;
+    const invoiceVatTreatment = paymentMeta.vatTreatment ?? 'standard';
     return new Promise(async (resolve, reject) => {
       try {
         // bufferPages keeps page generation lazy so we can verify the doc
@@ -350,6 +364,16 @@ export class InvoiceService {
           .fontSize(9)
           .fillColor('#CBD5E1')
           .text('nelc@physioguidance.org · physioguidance.org', 40, 76);
+        if (taxSettings.taxNumber) {
+          // ZATCA-compliant header line: shows the seller's tax
+          // registration number so buyers can verify the invoice is a
+          // valid tax invoice.
+          doc
+            .font('Helvetica')
+            .fontSize(9)
+            .fillColor('#CBD5E1')
+            .text(`VAT No: ${taxSettings.taxNumber}`, 40, 90);
+        }
 
         doc
           .fillColor('#FFFFFF')
@@ -589,9 +613,12 @@ export class InvoiceService {
         }
         if (Number(invoice.taxAmount) > 0) {
           totalsRow(
-            'VAT (15%)',
+            `VAT (${invoiceVatRate}%)`,
             `SAR ${Number(invoice.taxAmount).toFixed(2)}`,
           );
+        } else if (invoiceVatTreatment === 'zero_rated') {
+          // ZATCA reporting line — show the row even though value is 0.
+          totalsRow('Zero-rated (0%)', 'SAR 0.00');
         }
         doc
           .moveTo(totalsLeft, tY + 2)
@@ -858,7 +885,7 @@ export class InvoiceService {
     return h.toString(36).toUpperCase().padStart(8, '0').slice(0, 8);
   }
 
-  private renderProformaPdf(args: {
+  private async renderProformaPdf(args: {
     proformaNumber: string;
     issuedAt: Date;
     buyer: { name: string; email: string; nationalId: string | null };
@@ -875,6 +902,9 @@ export class InvoiceService {
     totalAmount: number;
     branding: SiteBranding;
   }): Promise<Buffer> {
+    // Proforma uses current global settings — it's a pre-payment preview,
+    // not a tax record. Once paid, the final invoice locks in its own rate.
+    const taxSettings = await this.taxComputationService.getSettings();
     return new Promise(async (resolve, reject) => {
       try {
         const doc = new PDFDocument({ size: 'A4', margin: 50 });
@@ -1088,7 +1118,7 @@ export class InvoiceService {
         }
 
         if (args.taxAmount > 0) {
-          doc.font('Helvetica').fontSize(10).text('VAT (15%)', labelX, y);
+          doc.font('Helvetica').fontSize(10).text(`VAT (${taxSettings.vatRate}%)`, labelX, y);
           doc
             .font('NotoArabic')
             .text(arRtl('ضريبة القيمة المضافة'), arX, y, {

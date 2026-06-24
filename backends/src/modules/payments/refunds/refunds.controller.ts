@@ -53,7 +53,12 @@ export class RefundsController {
   @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async adminInitiate(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CreateRefundDto & { justification?: string },
+    @Body()
+    dto: CreateRefundDto & {
+      justification?: string;
+      refundAmount?: number;
+      bypassPolicy?: boolean;
+    },
     @Req() req: Request,
   ) {
     const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';

@@ -554,6 +554,13 @@
       "when": 1783324800000,
       "tag": "0093_coupon_campaign_bulk_batch_link",
       "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1783411200000,
+      "tag": "0094_courses_vat_treatment",
+      "breakpoints": true
     }
   ]
 }

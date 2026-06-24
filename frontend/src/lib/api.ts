@@ -7910,7 +7910,155 @@ export const refundApi = {
 // Finance API
 // ===========================================
 
+export interface GatewaySettingsView {
+  activeGateway: 'moyasar' | 'tamara' | 'tabby' | 'bank_transfer' | null;
+  testMode: boolean;
+  currency: string;
+  moyasar: { publishableKey: string | null; hasSecret: boolean };
+  tamara: { merchantTokenMasked: string | null; hasSecret: boolean };
+  tabby: { publicKey: string | null; hasSecret: boolean };
+  bankTransfer: {
+    bankNameEn: string;
+    bankNameAr: string;
+    beneficiaryEn: string;
+    beneficiaryAr: string;
+    accountNumber: string;
+    iban: string;
+    swiftCode: string;
+    instructionsEn: string;
+    instructionsAr: string;
+  };
+  hasWebhookSecret: boolean;
+  invoiceFooterEn: string;
+  invoiceFooterAr: string;
+  autoSendReceipt: boolean;
+  updatedAt: string | null;
+  updatedBy: { id: string; name: string; email: string | null } | null;
+}
+
+export type RefundGatewayKey = 'moyasar' | 'tamara' | 'tabby' | 'bank_transfer' | 'mock';
+
+export interface RefundPolicy {
+  rules: {
+    blockAfterCourseStart: boolean;
+    blockAfterAttendance: boolean;
+    blockAfterCertificate: boolean;
+    blockAfterCmeGranted: boolean;
+  };
+  autoApproveEligible: boolean;
+  perGateway: Record<
+    RefundGatewayKey,
+    { deductionPercent: number; partialRefundCapable: boolean }
+  >;
+}
+
+export interface RefundPolicyResponse {
+  policy: RefundPolicy;
+  updatedAt: string | null;
+  updatedBy: { id: string; name: string; email: string | null } | null;
+}
+
+export type VatTreatmentValue = 'standard' | 'exempt' | 'zero_rated';
+
+export interface TaxSettings {
+  vatEnabled: boolean;
+  vatRate: number;
+  taxNumber: string;
+  companyNameEn: string;
+  companyNameAr: string;
+  defaultVatTreatment: VatTreatmentValue;
+}
+
+export interface TaxSettingsResponse {
+  settings: TaxSettings;
+  updatedAt: string | null;
+  updatedBy: { id: string; name: string; email: string | null } | null;
+}
+
+export interface VatTreatmentRow {
+  id: string;
+  title: string;
+  titleAr: string | null;
+  deliveryType: string | null;
+  price: string;
+  vatTreatment: VatTreatmentValue;
+  salesCount: number;
+}
+
+export interface VatTreatmentListResponse {
+  data: VatTreatmentRow[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+export interface PublicTaxDisplay {
+  vatEnabled: boolean;
+  vatRate: number;
+  defaultVatTreatment: VatTreatmentValue;
+}
+
+/** Unauthenticated tax display fields — used by the public cart/checkout. */
+export const publicTaxApi = {
+  getDisplay: () => api.get<PublicTaxDisplay>('/public/tax/display'),
+};
+
 export const financeApi = {
+  /** Finance-side read-only view of payment-gateway configuration. */
+  getGatewaySettings: () =>
+    api.get<GatewaySettingsView>('/finance/settings/gateways'),
+
+  /** Read the current refund policy + last-updated metadata. */
+  getRefundPolicy: () =>
+    api.get<RefundPolicyResponse>('/finance/settings/refund-policy'),
+
+  /** Write the full refund policy. Audit-logged on the server. */
+  updateRefundPolicy: (policy: RefundPolicy) =>
+    api.put<{ policy: RefundPolicy }>(
+      '/finance/settings/refund-policy',
+      policy,
+    ),
+
+  // ─── Tax Settings ────────────────────────────────────────────────
+  getTaxSettings: () =>
+    api.get<TaxSettingsResponse>('/finance/settings/tax'),
+
+  updateTaxSettings: (payload: TaxSettings) =>
+    api.put<{ settings: TaxSettings }>('/finance/settings/tax', payload),
+
+  listVatTreatments: (params: {
+    search?: string;
+    treatment?: VatTreatmentValue | 'all';
+    page?: number;
+    pageSize?: number;
+  }) => {
+    const sp = new URLSearchParams();
+    if (params.search) sp.set('search', params.search);
+    if (params.treatment && params.treatment !== 'all')
+      sp.set('treatment', params.treatment);
+    if (params.page) sp.set('page', String(params.page));
+    if (params.pageSize) sp.set('pageSize', String(params.pageSize));
+    const qs = sp.toString();
+    return api.get<VatTreatmentListResponse>(
+      `/finance/settings/vat-treatments${qs ? `?${qs}` : ''}`,
+    );
+  },
+
+  updateVatTreatment: (courseId: string, treatment: VatTreatmentValue) =>
+    api.put<{ courseId: string; treatment: VatTreatmentValue }>(
+      `/finance/settings/vat-treatments/${courseId}`,
+      { treatment },
+    ),
+
+  bulkUpdateVatTreatments: (
+    courseIds: string[],
+    treatment: VatTreatmentValue,
+  ) =>
+    api.post<{ count: number }>(`/finance/settings/vat-treatments/bulk`, {
+      courseIds,
+      treatment,
+    }),
+
   getSummary: (params?: { startDate?: string; endDate?: string }) => {
     const sp = new URLSearchParams();
     if (params?.startDate) sp.set('startDate', params.startDate);

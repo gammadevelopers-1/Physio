@@ -48,6 +48,14 @@ export const courses = pgTable(
     maxDiscountPct: numeric('max_discount_pct', { precision: 5, scale: 2 })
       .notNull()
       .default('100'),
+    // Per-course VAT treatment override. 'standard' uses the global rate
+    // from system_settings.tax; 'exempt' charges no VAT and prints no VAT
+    // line on the invoice; 'zero_rated' charges 0% VAT but still prints a
+    // "Zero-rated (0%)" line for ZATCA reporting. Default 'standard' keeps
+    // existing behavior for all current rows.
+    vatTreatment: varchar('vat_treatment', { length: 20 })
+      .notNull()
+      .default('standard'),
     cmeHours: integer('cme_hours').default(0),
     enrollmentDeadline: timestamp('enrollment_deadline'),
     isCmeAccredited: boolean('is_cme_accredited').default(false),
@@ -138,6 +146,10 @@ export const courses = pgTable(
       'courses_status_check',
       sql`${table.status} IN ('draft', 'pending_review', 'changes_requested', 'active', 'completed', 'archived')`,
     ),
+    check(
+      'courses_vat_treatment_check',
+      sql`${table.vatTreatment} IN ('standard', 'exempt', 'zero_rated')`,
+    ),
   ],
 );
 
@@ -179,3 +191,11 @@ export const DELIVERY_TYPE = {
 
 export type DeliveryType =
   (typeof DELIVERY_TYPE)[keyof typeof DELIVERY_TYPE];
+
+export const VAT_TREATMENT = {
+  STANDARD: 'standard',
+  EXEMPT: 'exempt',
+  ZERO_RATED: 'zero_rated',
+} as const;
+
+export type VatTreatment = (typeof VAT_TREATMENT)[keyof typeof VAT_TREATMENT];

@@ -8,6 +8,8 @@ import { InvoicesController } from './invoices/invoices.controller';
 import { RefundsController } from './refunds/refunds.controller';
 import { DiscountsController } from './discounts/discounts.controller';
 import { FinanceController } from './finance/finance.controller';
+import { FinanceSettingsController } from './finance/finance-settings.controller';
+import { PublicTaxController } from './finance/public-tax.controller';
 import { BankTransferController } from './bank-transfer/bank-transfer.controller';
 import { ReconciliationController } from './reconciliation/reconciliation.controller';
 import { EscalationsController } from './reconciliation/escalations.controller';
@@ -17,6 +19,8 @@ import { ReconciliationCronController } from './reconciliation/reconciliation-cr
 import { PaymentsService } from './payments.service';
 import { InvoiceService } from './services/invoice.service';
 import { RefundService } from './services/refund.service';
+import { RefundPolicyService } from './services/refund-policy.service';
+import { TaxComputationService } from './services/tax-computation.service';
 import { DiscountService } from './services/discount.service';
 import { FinanceService } from './services/finance.service';
 import { PaymentCleanupService } from './services/payment-cleanup.service';
@@ -66,6 +70,8 @@ import { ZoomModule } from '../zoom/zoom.module';
     RefundsController,
     DiscountsController,
     FinanceController,
+    FinanceSettingsController,
+    PublicTaxController,
     BankTransferController,
     ReconciliationController,
     EscalationsController,
@@ -75,6 +81,8 @@ import { ZoomModule } from '../zoom/zoom.module';
     PaymentsService,
     InvoiceService,
     RefundService,
+    RefundPolicyService,
+    TaxComputationService,
     DiscountService,
     FinanceService,
     BankTransferService,

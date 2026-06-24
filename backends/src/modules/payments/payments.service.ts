@@ -30,6 +30,7 @@ import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { GatewayFactory } from './gateways/gateway.factory';
 import { DiscountService } from './services/discount.service';
 import { InvoiceService } from './services/invoice.service';
+import { TaxComputationService } from './services/tax-computation.service';
 import { EmailService } from '../email/email.service';
 import { StorageService } from '../storage/storage.service';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
@@ -94,6 +95,7 @@ export class PaymentsService {
     private readonly invoiceService: InvoiceService,
     private readonly emailService: EmailService,
     private readonly storageService: StorageService,
+    private readonly taxComputationService: TaxComputationService,
   ) {}
 
   /**
@@ -230,9 +232,16 @@ export class PaymentsService {
       discountId = result.discountId;
     }
 
-    const VAT_RATE = 0.15;
+    // VAT now comes from the finance-managed tax settings + the primary
+    // course's `vat_treatment` (exempt/zero-rated/standard). For mixed
+    // carts the primary course's treatment applies cart-wide — this
+    // matches the single taxAmount we store per payment.
     const taxableAmount = Math.max(0, subtotal - discountAmount);
-    const taxAmount = Math.round(taxableAmount * VAT_RATE * 100) / 100;
+    const taxCalc = await this.taxComputationService.computeForCourse(
+      lines[0].course.id,
+      taxableAmount,
+    );
+    const taxAmount = taxCalc.vatAmount;
     const totalAmount = Math.max(0, taxableAmount + taxAmount);
 
     if (totalAmount <= 0) {
@@ -265,6 +274,8 @@ export class PaymentsService {
         discountCode: dto.discountCode || null,
         discountId,
         taxAmount,
+        taxRate: taxCalc.vatRate,
+        vatTreatment: taxCalc.treatment,
         totalAmount,
         currency: 'SAR',
       },
@@ -454,10 +465,14 @@ export class PaymentsService {
       discountId = discountResult.discountId;
     }
 
-    // 6. Calculate totals (Saudi Arabia VAT = 15%)
-    const VAT_RATE = 0.15;
+    // 6. Calculate totals — VAT comes from finance-managed tax settings
+    // + the primary course's vat_treatment override (see TaxComputationService).
     const taxableAmount = Math.max(0, subtotal - discountAmount);
-    const taxAmount = Math.round(taxableAmount * VAT_RATE * 100) / 100;
+    const taxCalc = await this.taxComputationService.computeForCourse(
+      lines[0].course.id,
+      taxableAmount,
+    );
+    const taxAmount = taxCalc.vatAmount;
     const totalAmount = Math.max(0, taxableAmount + taxAmount);
 
     if (totalAmount <= 0) {
@@ -617,6 +632,11 @@ export class PaymentsService {
             discountId,
             discountCode: dto.discountCode || null,
             taxAmount,
+            // VAT snapshot captured at payment time so the invoice PDF
+            // renders the rate that applied THEN (ZATCA-compliant — past
+            // invoices don't shift if the global rate changes later).
+            taxRate: taxCalc.vatRate,
+            vatTreatment: taxCalc.treatment,
             // Multi-course cart marker — downstream code (invoice generation,
             // refund splits, finance dashboards) checks this to know whether
             // to render line items or fall back to payments.course_id.

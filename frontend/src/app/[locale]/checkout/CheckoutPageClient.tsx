@@ -21,7 +21,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
-import { paymentApi, discountApi, studentApi } from "@/lib/api";
+import { paymentApi, discountApi, studentApi, publicTaxApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart, CartItem } from "@/contexts/CartContext";
 import NonStudentEnrollmentNotice from "@/components/courses/NonStudentEnrollmentNotice";
@@ -46,7 +46,10 @@ interface CheckoutItem {
   thumbnail: string | null;
 }
 
-const VAT_RATE = 0.15;
+// VAT shown on checkout is informational — server recomputes from
+// system_settings.tax + per-course vat_treatment. Default used until
+// the public tax-display fetch resolves.
+const DEFAULT_VAT_RATE = 15;
 
 function cartItemToCheckoutItem(item: CartItem): CheckoutItem {
   const effective = item.effectivePrice ?? item.price;
@@ -254,13 +257,34 @@ export default function CheckoutPageClient({
    * we can surface "Part of <campaign>" in the breakdown. */
   const [autoAppliedCampaign, setAutoAppliedCampaign] = useState<string | null>(null);
 
+  // VAT rate from public tax-display endpoint (finance-manager controlled).
+  const [vatRate, setVatRate] = useState<number>(DEFAULT_VAT_RATE);
+  const [vatEnabled, setVatEnabled] = useState<boolean>(true);
+  useEffect(() => {
+    let cancelled = false;
+    publicTaxApi
+      .getDisplay()
+      .then((d) => {
+        if (cancelled) return;
+        setVatRate(d.vatRate);
+        setVatEnabled(d.vatEnabled);
+      })
+      .catch(() => {
+        /* fall back to default; backend recomputes authoritative total */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Totals
   const originalSubtotal = items.reduce((s, it) => s + it.price, 0);
   const subtotal = items.reduce((s, it) => s + it.effectivePrice, 0);
   const saleDiscount = Math.max(0, originalSubtotal - subtotal);
   const couponDiscount = discountResult?.valid ? discountResult.discountAmount : 0;
   const taxableAmount = Math.max(0, subtotal - couponDiscount);
-  const vat = Math.round(taxableAmount * VAT_RATE * 100) / 100;
+  const effectiveVatRate = vatEnabled ? vatRate / 100 : 0;
+  const vat = Math.round(taxableAmount * effectiveVatRate * 100) / 100;
   const total = Math.round((taxableAmount + vat) * 100) / 100;
 
   const handleValidateDiscount = async () => {
@@ -1009,7 +1033,7 @@ export default function CheckoutPageClient({
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-sm text-[var(--on-surface-variant)]">{t("vatLabel")}</span>
+                    <span className="text-sm text-[var(--on-surface-variant)]">{t("vatLabel", { rate: vatRate })}</span>
                     <span className="text-sm font-medium">SAR {vat.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t border-[#e5e5e5]">

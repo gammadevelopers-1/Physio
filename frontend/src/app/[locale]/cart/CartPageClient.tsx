@@ -10,7 +10,7 @@ import { useCart, CartItem } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import NonStudentEnrollmentNotice from "@/components/courses/NonStudentEnrollmentNotice";
 import BnplPromoWidgets from "@/components/courses/BnplPromoWidgets";
-import { studentApi } from "@/lib/api";
+import { studentApi, publicTaxApi } from "@/lib/api";
 import {
   ShoppingCart,
   Trash2,
@@ -26,9 +26,10 @@ import {
 import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
 
 // VAT shown on the cart page is informational only — final tax + gateway
-// rounding happen on the checkout/payment server. Keep this in sync with
-// PaymentsService VAT_RATE on the backend.
-const VAT_RATE = 0.15;
+// rounding happen on the checkout/payment server. Rate is fetched from
+// the public tax-display endpoint so finance-manager changes propagate
+// immediately without redeploying.
+const DEFAULT_VAT_RATE = 15;
 
 const lineFor = (item: CartItem) =>
   item.effectivePrice != null ? item.effectivePrice : item.price;
@@ -76,6 +77,27 @@ export default function CartPageClient({
   // course id; unknown ids default to "not enrolled" so the regular
   // line item renders as-is.
   const [enrolledMap, setEnrolledMap] = useState<Record<string, boolean>>({});
+  // VAT rate fetched from the public tax-display endpoint. Default value
+  // is only used until the fetch resolves (or as a fallback if it fails)
+  // so the buyer never sees a flicker of 0% VAT.
+  const [vatRate, setVatRate] = useState<number>(DEFAULT_VAT_RATE);
+  const [vatEnabled, setVatEnabled] = useState<boolean>(true);
+  useEffect(() => {
+    let cancelled = false;
+    publicTaxApi
+      .getDisplay()
+      .then((d) => {
+        if (cancelled) return;
+        setVatRate(d.vatRate);
+        setVatEnabled(d.vatEnabled);
+      })
+      .catch(() => {
+        /* keep defaults; checkout still recomputes server-side */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   // Course ids in the cart that the buyer has ALREADY initiated a bank
   // transfer for (status pending or awaiting_approval). The value is the
   // payment id so the badge can deep-link back to the existing payment.
@@ -147,15 +169,17 @@ export default function CartPageClient({
     const subtotal = items.reduce((sum, it) => sum + lineFor(it), 0);
     const originalSubtotal = items.reduce((sum, it) => sum + it.price, 0);
     const saleDiscount = Math.max(0, originalSubtotal - subtotal);
-    const vat = subtotal * VAT_RATE;
+    const effectiveRate = vatEnabled ? vatRate / 100 : 0;
+    const vat = subtotal * effectiveRate;
     const total = subtotal + vat;
     return {
       subtotal: Math.round(subtotal * 100) / 100,
       saleDiscount: Math.round(saleDiscount * 100) / 100,
       vat: Math.round(vat * 100) / 100,
       total: Math.round(total * 100) / 100,
+      vatRate,
     };
-  }, [items]);
+  }, [items, vatEnabled, vatRate]);
 
   const handleProceedToCheckout = () => {
     if (!isAuthenticated) {
@@ -470,7 +494,7 @@ export default function CartPageClient({
                       </div>
                     )}
                     <div className="flex items-center justify-between">
-                      <span className="text-[#6B7280]">{t("vatLabel")}</span>
+                      <span className="text-[#6B7280]">{t("vatLabel", { rate: totals.vatRate })}</span>
                       <span className="font-medium text-[#1F2937]">
                         SAR {totals.vat.toFixed(2)}
                       </span>

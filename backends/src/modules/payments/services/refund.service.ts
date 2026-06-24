@@ -41,37 +41,18 @@ import { EmailService } from '../../email/email.service';
 import { CreateRefundDto } from '../dto/create-refund.dto';
 import { RejectRefundDto } from '../dto/reject-refund.dto';
 import { DiscountService } from './discount.service';
+import { RefundPolicyService } from './refund-policy.service';
 import { ZOOM_SERVICE, IZoomService } from '../../zoom/zoom.interface';
 
 @Injectable()
 export class RefundService {
   private readonly logger = new Logger(RefundService.name);
 
-  /**
-   * Merchant fee rates by gateway — this is the COST WE BEAR on a refund,
-   * reconciled by Tamara/Tabby on our next settlement. It is NOT deducted
-   * from the customer's refund. We record it on the refund row (in the
-   * `deductionAmount` column, semantics now = "merchant fee borne") so
-   * finance can reconcile against gateway settlement reports.
-   *
-   * Confirmed via:
-   *   - Tamara docs: "the refunded amount will be deducted from your next
-   *     settlement" (https://docs.tamara.co/docs/direct-online-checkout)
-   *   - Tabby API: refund `amount` field = amount customer receives, fees
-   *     reported in settlement payout report
-   *   - Direct confirmation from Tamara support (relayed by Amna)
-   *
-   * Customers ALWAYS receive the full refund amount we send to the gateway.
-   */
-  private readonly merchantFeeRates: Record<string, number>;
-
-  /**
-   * Gateways that support a partial-amount refund (refund less than the
-   * original payment). Per Amna's Q1 decision: enabled on Moyasar and
-   * Bank Transfer only. BNPL gateways do not reliably handle partial
-   * refunds without desyncing the installment schedule.
-   */
-  private readonly partialRefundCapable = new Set(['moyasar', 'bank_transfer', 'mock']);
+  // Merchant fee rates and partial-refund capability now come from the
+  // finance-managed `system_settings.refund_policy` row via
+  // [[RefundPolicyService]]. The customer always receives the full refund
+  // amount we send to the gateway; the merchant fee is the cost WE bear,
+  // reconciled by the gateway on our next settlement.
 
   constructor(
     private readonly configService: ConfigService,
@@ -79,17 +60,13 @@ export class RefundService {
     private readonly auditLogService: AuditLogService,
     private readonly emailService: EmailService,
     private readonly discountService: DiscountService,
+    private readonly refundPolicyService: RefundPolicyService,
     @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
   ) {
-    const tabbyRate =
-      this.configService.get<number>('payments.tabbyRefundDeductionRate') ?? 0.1;
-    this.merchantFeeRates = {
-      moyasar: 0,
-      tamara: 0.1,
-      tabby: tabbyRate,
-      bank_transfer: 0,
-      mock: 0,
-    };
+    // ConfigService kept on the signature for backward compatibility
+    // with any callers that may still rely on prior wiring. The tabby
+    // override is now configured via the policy row.
+    void this.configService;
   }
 
   /**
@@ -97,19 +74,24 @@ export class RefundService {
    * amount. Single source of truth for both `requestRefund` (student),
    * `adminInitiateRefund` (finance), and `getRefundPreview` (UI).
    *
+   * Reads per-gateway deduction + partial-refund capability from
+   * [[RefundPolicyService]] so finance can adjust without redeploy.
+   *
    * Throws BadRequestException when the requested amount violates the
    * gateway's partial-refund capability.
    */
-  private computeRefundMath(
+  private async computeRefundMath(
     gateway: string,
     originalAmount: number,
     requestedAmount?: number,
-  ): {
+  ): Promise<{
     refundAmount: number;
     merchantFeeAmount: number;
+    merchantFeeRate: number;
     merchantFeeReason: string | null;
     isPartial: boolean;
-  } {
+    partialRefundCapable: boolean;
+  }> {
     const safeOriginal = Number(originalAmount.toFixed(2));
     const requested =
       requestedAmount === undefined || requestedAmount === null
@@ -125,14 +107,18 @@ export class RefundService {
       );
     }
 
+    const policy = await this.refundPolicyService.getPolicy();
+    const { deductionPercent, partialRefundCapable } =
+      this.refundPolicyService.resolveForGateway(policy, gateway);
+
     const isPartial = requested < safeOriginal;
-    if (isPartial && !this.partialRefundCapable.has(gateway)) {
+    if (isPartial && !partialRefundCapable) {
       throw new BadRequestException(
         `Partial refunds are not supported for ${gateway}. Send the full amount or change gateway.`,
       );
     }
 
-    const merchantFeeRate = this.merchantFeeRates[gateway] || 0;
+    const merchantFeeRate = deductionPercent / 100;
     // Merchant fee is calculated on the REFUNDED amount, not the original
     // — Tamara/Tabby retain a proportional fee on what was refunded.
     const merchantFeeAmount = Number((requested * merchantFeeRate).toFixed(2));
@@ -143,14 +129,16 @@ export class RefundService {
     };
     const merchantFeeReason =
       merchantFeeAmount > 0
-        ? `${gatewayLabels[gateway] || gateway} ${Math.round(merchantFeeRate * 100)}% merchant fee (reconciled on settlement, NOT deducted from customer)`
+        ? `${gatewayLabels[gateway] || gateway} ${deductionPercent}% merchant fee (reconciled on settlement, NOT deducted from customer)`
         : null;
 
     return {
       refundAmount: requested,
       merchantFeeAmount,
+      merchantFeeRate,
       merchantFeeReason,
       isPartial,
+      partialRefundCapable,
     };
   }
 
@@ -191,11 +179,26 @@ export class RefundService {
       );
     }
 
+    // Policy eligibility check — student requests must clear the
+    // finance-managed lifecycle gates (course not started, no attendance,
+    // no certificate). Bypassing is not allowed for student-initiated
+    // requests; admin can override via adminInitiateRefund.
+    if (payment.enrollmentId) {
+      const eligibility = await this.refundPolicyService.checkEligibility(
+        payment.enrollmentId,
+      );
+      if (!eligibility.eligible) {
+        throw new BadRequestException(
+          eligibility.reason ?? 'Refund is not allowed at this stage of the enrollment.',
+        );
+      }
+    }
+
     // Student-initiated requests are always FULL refunds. Partial is an
     // admin-only action (see adminInitiateRefund).
     const originalAmount = Number(payment.amount);
     const { refundAmount, merchantFeeAmount, merchantFeeReason } =
-      this.computeRefundMath(payment.gateway, originalAmount);
+      await this.computeRefundMath(payment.gateway, originalAmount);
 
     const [invoice] = await db
       .select()
@@ -243,6 +246,27 @@ export class RefundService {
         isPartial: false,
       },
     });
+
+    // Auto-approve gating — when the finance manager has enabled
+    // auto-approval, run the approval immediately. If the gateway call
+    // fails we leave the refund in whatever state approveRefund left it
+    // (typically APPROVED, pending retry) and don't fail the student's
+    // request — they get a created refund row either way.
+    const policy = await this.refundPolicyService.getPolicy();
+    if (policy.autoApproveEligible) {
+      try {
+        await this.approveRefund(
+          refund.id,
+          userId,
+          ipAddress,
+          'Auto-approved per refund policy',
+        );
+      } catch (err) {
+        this.logger.warn(
+          `Auto-approve failed for refund ${refund.id}: ${err.message}. Left for manual review.`,
+        );
+      }
+    }
 
     return refund;
   }
@@ -1061,6 +1085,9 @@ export class RefundService {
       /** Optional partial refund amount. Defaults to full payment. Only
        * honored for Moyasar / Bank Transfer; BNPL forces full. */
       refundAmount?: number;
+      /** When true, the policy eligibility gate is bypassed. The bypass
+       * (with the gate's reason) is recorded in the audit log. */
+      bypassPolicy?: boolean;
     },
     ipAddress?: string,
   ) {
@@ -1095,9 +1122,27 @@ export class RefundService {
       );
     }
 
+    // Policy eligibility — admin can bypass with `bypassPolicy: true`.
+    // The bypass + the underlying reason are captured in the audit log
+    // so finance can see WHO overrode WHAT for compliance reviews.
+    let bypassedBlockReason: string | null = null;
+    if (payment.enrollmentId) {
+      const eligibility = await this.refundPolicyService.checkEligibility(
+        payment.enrollmentId,
+      );
+      if (!eligibility.eligible) {
+        if (!dto.bypassPolicy) {
+          throw new BadRequestException(
+            eligibility.reason ?? 'Refund is not allowed at this stage of the enrollment.',
+          );
+        }
+        bypassedBlockReason = eligibility.reason ?? eligibility.blockedBy;
+      }
+    }
+
     const originalAmount = Number(payment.amount);
     const { refundAmount, merchantFeeAmount, merchantFeeReason, isPartial } =
-      this.computeRefundMath(
+      await this.computeRefundMath(
         payment.gateway,
         originalAmount,
         dto.refundAmount,
@@ -1137,7 +1182,9 @@ export class RefundService {
     await this.auditLogService.log({
       entityType: 'refund',
       entityId: refund.id,
-      action: 'refund_admin_initiated',
+      action: bypassedBlockReason
+        ? 'refund_admin_initiated_policy_bypass'
+        : 'refund_admin_initiated',
       performedBy: adminId,
       ipAddress,
       metadata: {
@@ -1149,6 +1196,9 @@ export class RefundService {
         merchantFeeAmount,
         isPartial,
         justification: dto.justification || null,
+        ...(bypassedBlockReason
+          ? { bypassedBlockReason }
+          : {}),
       },
     });
 
@@ -1303,13 +1353,24 @@ export class RefundService {
     }
 
     const originalAmount = Number(payment.amount);
-    const { refundAmount, merchantFeeAmount, merchantFeeReason, isPartial } =
-      this.computeRefundMath(
-        payment.gateway,
-        originalAmount,
-        requestedAmount,
-      );
-    const merchantFeeRate = this.merchantFeeRates[payment.gateway] || 0;
+    const {
+      refundAmount,
+      merchantFeeAmount,
+      merchantFeeRate,
+      merchantFeeReason,
+      isPartial,
+      partialRefundCapable,
+    } = await this.computeRefundMath(
+      payment.gateway,
+      originalAmount,
+      requestedAmount,
+    );
+
+    // Policy eligibility status for the UI — preview shows this so the
+    // operator can see what's blocking BEFORE attempting the refund.
+    const eligibility = payment.enrollmentId
+      ? await this.refundPolicyService.checkEligibility(payment.enrollmentId)
+      : { eligible: true, blockedBy: null, reason: null };
 
     const gatewayLabels: Record<string, string> = {
       tamara: 'Tamara BNPL',
@@ -1342,8 +1403,6 @@ export class RefundService {
       };
     })();
 
-    const supportsPartial = this.partialRefundCapable.has(payment.gateway);
-
     return {
       payment: {
         id: payment.id,
@@ -1357,10 +1416,11 @@ export class RefundService {
       course,
       invoice,
       enrollment,
+      eligibility,
       capabilities: {
-        supportsPartial,
+        supportsPartial: partialRefundCapable,
         maxRefundAmount: originalAmount,
-        minRefundAmount: supportsPartial ? 1 : originalAmount,
+        minRefundAmount: partialRefundCapable ? 1 : originalAmount,
       },
       breakdown: {
         originalAmount,

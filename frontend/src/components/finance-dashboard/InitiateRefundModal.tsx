@@ -22,6 +22,8 @@ import { toast } from "sonner";
 import { refundApi } from "@/lib/api";
 import Money from "./shared/Money";
 import Select from "@/components/admin-dashboard/Select";
+import { useActorRole, type ActorRole } from "./shared/ActorRoleContext";
+import { financePath } from "./shared/financeRoutes";
 
 interface InitiateRefundModalProps {
   open: boolean;
@@ -70,6 +72,7 @@ const InitiateRefundModal = ({
 }: InitiateRefundModalProps) => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
+  const actorRole = useActorRole();
   const isRTL = locale === "ar";
   const NextIcon = isRTL ? ArrowLeft : ArrowRight;
   const PrevIcon = isRTL ? ArrowRight : ArrowLeft;
@@ -277,6 +280,7 @@ const InitiateRefundModal = ({
               loading={previewLoading}
               error={previewError}
               locale={locale}
+              actorRole={actorRole}
               t={t}
               customAmount={customAmount}
               customAmountError={customAmountError}
@@ -484,6 +488,7 @@ function PreviewStep({
   loading,
   error,
   locale,
+  actorRole,
   t,
   customAmount,
   customAmountError,
@@ -493,6 +498,7 @@ function PreviewStep({
   loading: boolean;
   error: string | null;
   locale: string;
+  actorRole: ActorRole;
   t: ReturnType<typeof useTranslations>;
   customAmount: string;
   customAmountError: string | null;
@@ -528,7 +534,7 @@ function PreviewStep({
           value={
             preview.invoice ? (
               <Link
-                href={`/${locale}/dashboard/finance/invoices?invoiceId=${preview.invoice.id}`}
+                href={financePath(actorRole, locale, "invoices", { invoiceId: preview.invoice.id })}
                 target="_blank"
                 className="inline-flex items-center gap-1 text-sm font-medium text-[var(--color-primary)] hover:underline"
               >

@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import Drawer from "./shared/Drawer";
 import Money from "./shared/Money";
+import { useActorRole } from "./shared/ActorRoleContext";
+import { financePath } from "./shared/financeRoutes";
 import { FINANCE_COLORS } from "./shared/financeColors";
 import { discountApi } from "@/lib/api";
 
@@ -54,6 +56,7 @@ const DiscountDetailDrawer = ({
 }: Props) => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
+  const actorRole = useActorRole();
   const isRTL = locale === "ar";
   const ArrowIcon = isRTL ? ChevronLeft : ChevronRight;
 
@@ -332,7 +335,7 @@ const DiscountDetailDrawer = ({
                           iconSize={12}
                         />
                         <Link
-                          href={`/${locale}/dashboard/finance/payments?paymentId=${u.paymentId}`}
+                          href={financePath(actorRole, locale, "payments", { paymentId: u.paymentId })}
                           className="inline-flex items-center gap-1 text-[11px] text-[var(--color-primary)] hover:underline mt-0.5"
                         >
                           {t("discountsPage.drawer.usage.openPayment")}

@@ -26,7 +26,8 @@ import {
 import Drawer from "./shared/Drawer";
 import Money from "./shared/Money";
 import AdminOverridePanel, { AdminOverrideAction } from "./shared/AdminOverridePanel";
-import { useIsAdminActor } from "./shared/ActorRoleContext";
+import { useActorRole, useIsAdminActor } from "./shared/ActorRoleContext";
+import { financePath } from "./shared/financeRoutes";
 import { FINANCE_COLORS } from "./shared/financeColors";
 import { invoiceApi, adminFinanceApi } from "@/lib/api";
 
@@ -55,6 +56,7 @@ const InvoiceDetailDrawer = ({
   const t = useTranslations("financeDashboard");
   const tAdmin = useTranslations("financeDashboard.adminOverride");
   const isAdmin = useIsAdminActor();
+  const actorRole = useActorRole();
   const locale = useLocale();
   const isRTL = locale === "ar";
   const ArrowIcon = isRTL ? ChevronLeft : ChevronRight;
@@ -444,7 +446,7 @@ const InvoiceDetailDrawer = ({
                   <Row label={t("invoiceDetail.method")} value={data.payment.paymentMethod?.replace(/_/g, " ") || "—"} isRTL={isRTL} />
                   <Row label={t("invoiceDetail.chargeId")} value={data.payment.gatewayChargeId || "—"} mono isRTL={isRTL} />
                   <Link
-                    href={`/${locale}/dashboard/finance/payments?paymentId=${data.payment.id}`}
+                    href={financePath(actorRole, locale, "payments", { paymentId: data.payment.id })}
                     className={`inline-flex items-center gap-1 mt-1 text-xs font-medium text-[var(--color-primary)] hover:underline ${isRTL ? "flex-row-reverse" : ""}`}
                   >
                     {t("invoiceDetail.openPayment")}
@@ -485,7 +487,7 @@ const InvoiceDetailDrawer = ({
                       ))}
                     </ul>
                     <Link
-                      href={`/${locale}/dashboard/finance/refunds`}
+                      href={financePath(actorRole, locale, "refunds")}
                       className={`inline-flex items-center gap-1 mt-2 text-xs font-medium text-[var(--color-primary)] hover:underline ${isRTL ? "flex-row-reverse" : ""}`}
                     >
                       {t("invoiceDetail.openRefunds")}

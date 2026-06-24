@@ -10,6 +10,8 @@ import Money from "./shared/Money";
 import { KPICardSkeleton, TableRowSkeleton } from "./shared/Skeleton";
 import { FINANCE_COLORS, gatewayColor } from "./shared/financeColors";
 import FinancePageShell from "./shared/FinancePageShell";
+import { useActorRole } from "./shared/ActorRoleContext";
+import { financePath } from "./shared/financeRoutes";
 import Select from "@/components/admin-dashboard/Select";
 import {
   FileText,
@@ -45,6 +47,7 @@ export interface InvoicesContentProps {
 const InvoicesContent = ({ embedded = false }: InvoicesContentProps) => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
+  const actorRole = useActorRole();
   const isRTL = locale === "ar";
   const ArrowGlyph = isRTL ? ArrowLeft : ArrowRight;
   const searchParams = useSearchParams();
@@ -446,7 +449,7 @@ const InvoicesContent = ({ embedded = false }: InvoicesContentProps) => {
                       count={reviewAging.underSix.count}
                       amount={reviewAging.underSix.amount}
                       color="bg-[#16A34A]"
-                      href={`/${locale}/dashboard/finance/bank-transfers?review=pending`}
+                      href={financePath(actorRole, locale, "bank-transfers", { review: "pending" })}
                       t={t}
                     />
                     <ReviewBucket
@@ -454,7 +457,7 @@ const InvoicesContent = ({ embedded = false }: InvoicesContentProps) => {
                       count={reviewAging.sixToDay.count}
                       amount={reviewAging.sixToDay.amount}
                       color="bg-[#3B82F6]"
-                      href={`/${locale}/dashboard/finance/bank-transfers?review=pending`}
+                      href={financePath(actorRole, locale, "bank-transfers", { review: "pending" })}
                       t={t}
                     />
                     <ReviewBucket
@@ -462,7 +465,7 @@ const InvoicesContent = ({ embedded = false }: InvoicesContentProps) => {
                       count={reviewAging.dayToTwo.count}
                       amount={reviewAging.dayToTwo.amount}
                       color="bg-[#D97706]"
-                      href={`/${locale}/dashboard/finance/bank-transfers?review=pending`}
+                      href={financePath(actorRole, locale, "bank-transfers", { review: "pending" })}
                       t={t}
                     />
                     <ReviewBucket
@@ -470,7 +473,7 @@ const InvoicesContent = ({ embedded = false }: InvoicesContentProps) => {
                       count={reviewAging.beyondTwo.count}
                       amount={reviewAging.beyondTwo.amount}
                       color="bg-[#DC2626]"
-                      href={`/${locale}/dashboard/finance/bank-transfers?review=pending`}
+                      href={financePath(actorRole, locale, "bank-transfers", { review: "pending" })}
                       urgent={reviewAging.beyondTwo.count > 0}
                       t={t}
                     />
@@ -479,7 +482,7 @@ const InvoicesContent = ({ embedded = false }: InvoicesContentProps) => {
                       count={reviewAging.scanQueue.count}
                       amount={reviewAging.scanQueue.amount}
                       color="bg-[#7C3AED]"
-                      href={`/${locale}/dashboard/finance/bank-transfers?status=all&scan=pending`}
+                      href={financePath(actorRole, locale, "bank-transfers", { status: "all", scan: "pending" })}
                       t={t}
                     />
                   </div>

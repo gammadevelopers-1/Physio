@@ -13,6 +13,8 @@ import {
   MasterNotificationToggles,
 } from "@/components/settings";
 import ScrollableTabBar from "./shared/ScrollableTabBar";
+import { useActorRole } from "./shared/ActorRoleContext";
+import { financePath } from "./shared/financeRoutes";
 import {
   financeApi,
   type GatewaySettingsView,
@@ -996,6 +998,7 @@ export const TaxView = () => {
   const t = useTranslations("financeDashboard.settingsPage.tax");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const actorRole = useActorRole();
 
   const [original, setOriginal] = useState<TaxSettings | null>(null);
   const [draft, setDraft] = useState<TaxSettings | null>(null);
@@ -1237,7 +1240,7 @@ export const TaxView = () => {
           <p className="text-[12px] text-[var(--color-text-secondary)] mt-0.5">{t("perProductHelp")}</p>
         </div>
         <Link
-          href={`/${locale}/dashboard/finance/settings/tax-treatments`}
+          href={financePath(actorRole, locale, "settings/tax-treatments")}
           className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-[var(--color-primary)] bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 rounded-lg transition-colors whitespace-nowrap"
         >
           <ExternalLink className="w-3.5 h-3.5" />

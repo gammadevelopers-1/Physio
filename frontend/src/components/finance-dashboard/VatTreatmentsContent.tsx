@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import Select from "@/components/admin-dashboard/Select";
 import FinancePageShell from "./shared/FinancePageShell";
+import { useActorRole } from "./shared/ActorRoleContext";
+import { financePath } from "./shared/financeRoutes";
 import {
   financeApi,
   type VatTreatmentRow,
@@ -42,6 +44,7 @@ const VatTreatmentsContent = ({ embedded = false }: VatTreatmentsContentProps) =
   const t = useTranslations("financeDashboard.vatTreatments");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const actorRole = useActorRole();
 
   const [search, setSearch] = useState("");
   const [treatmentFilter, setTreatmentFilter] = useState<VatTreatmentValue | "all">("all");
@@ -156,7 +159,7 @@ const VatTreatmentsContent = ({ embedded = false }: VatTreatmentsContentProps) =
   const inner = (
     <>
       <Link
-                href={`/${locale}/dashboard/finance/settings`}
+                href={financePath(actorRole, locale, "settings")}
                 className="inline-flex items-center gap-1 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] mb-3"
               >
                 {isRTL ? <ChevronRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}

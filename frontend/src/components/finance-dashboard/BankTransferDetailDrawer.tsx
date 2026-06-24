@@ -28,6 +28,8 @@ import {
 import { toast } from "sonner";
 import Drawer from "./shared/Drawer";
 import Money from "./shared/Money";
+import { useActorRole } from "./shared/ActorRoleContext";
+import { financePath } from "./shared/financeRoutes";
 import { FINANCE_COLORS } from "./shared/financeColors";
 import { financeBankTransferApi } from "@/lib/api";
 
@@ -73,6 +75,7 @@ function formatDateTime(iso: string | null | undefined, locale: string): string 
 const BankTransferDetailDrawer = ({ receiptId, onClose, onChanged }: Props) => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
+  const actorRole = useActorRole();
   const isRTL = locale === "ar";
   const ArrowIcon = isRTL ? ChevronLeft : ChevronRight;
 
@@ -495,7 +498,7 @@ const BankTransferDetailDrawer = ({ receiptId, onClose, onChanged }: Props) => {
               {/* Cross-links */}
               <div className="space-y-2">
                 <Link
-                  href={`/${locale}/dashboard/finance/payments?paymentId=${data.payment.id}`}
+                  href={financePath(actorRole, locale, "payments", { paymentId: data.payment.id })}
                   className="flex items-center justify-between gap-2 p-3 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl hover:border-[var(--color-primary)] transition-colors group"
                 >
                   <span className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)]">

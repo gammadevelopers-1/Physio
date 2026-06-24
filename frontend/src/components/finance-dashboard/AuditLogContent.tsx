@@ -7,6 +7,8 @@ import Select from "@/components/admin-dashboard/Select";
 import DatePicker from "@/components/ui/DatePicker";
 import ExportDropdown from "./shared/ExportDropdown";
 import FinancePageShell from "./shared/FinancePageShell";
+import { useActorRole } from "./shared/ActorRoleContext";
+import { financePath } from "./shared/financeRoutes";
 import {
   Shield,
   ShieldCheck,
@@ -76,18 +78,24 @@ const ENTITY_PILL: Record<string, { bg: string; fg: string }> = {
 
 // Entity type → finance dashboard URL where the entityId can be viewed.
 // Returns null if there's no useful destination (e.g. webhook events, exports).
-function entityDeepLink(entityType: string, entityId: string, locale: string): string | null {
-  const base = `/${locale}/dashboard/finance`;
+// Routes via `financePath` so admin actors stay inside the admin finance
+// shell (?tab=...) instead of being kicked out to the finance role's pages.
+function entityDeepLink(
+  entityType: string,
+  entityId: string,
+  locale: string,
+  role: import("./shared/ActorRoleContext").ActorRole,
+): string | null {
   switch (entityType) {
-    case "payment":                 return `${base}/payments?paymentId=${entityId}`;
-    case "refund":                  return `${base}/refunds?refundId=${entityId}`;
-    case "invoice":                 return `${base}/invoices?invoiceId=${entityId}`;
+    case "payment":                 return financePath(role, locale, "payments",       { paymentId: entityId });
+    case "refund":                  return financePath(role, locale, "refunds",        { refundId: entityId });
+    case "invoice":                 return financePath(role, locale, "invoices",       { invoiceId: entityId });
     case "discount_code":
     case "discount":
-    case "coupon_campaign":         return `${base}/discounts`;
-    case "reconciliation_finding":  return `${base}/reconciliation?findingId=${entityId}`;
+    case "coupon_campaign":         return financePath(role, locale, "discounts");
+    case "reconciliation_finding":  return financePath(role, locale, "reconciliation", { findingId: entityId });
     case "reconciliation_escalation":
-    case "reconciliation_scan":     return `${base}/reconciliation`;
+    case "reconciliation_scan":     return financePath(role, locale, "reconciliation");
     default:                        return null;
   }
 }
@@ -126,6 +134,7 @@ const AuditLogContent = ({ embedded = false }: AuditLogContentProps) => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const actorRole = useActorRole();
 
   // ─── Filter state ──────────────────────────────────────────────
   const [entityType, setEntityType] = useState("all");
@@ -527,7 +536,7 @@ const AuditLogContent = ({ embedded = false }: AuditLogContentProps) => {
                             const entityStyle =
                               ENTITY_PILL[entry.entityType] || { bg: "#E2E8F0", fg: "#475569" };
                             const actionStyle = CATEGORY_STYLES[actionCategory(entry.action)];
-                            const deepLink = entityDeepLink(entry.entityType, entry.entityId, locale);
+                            const deepLink = entityDeepLink(entry.entityType, entry.entityId, locale, actorRole);
                             const performerName = entry.performerFirstName
                               ? `${entry.performerFirstName} ${entry.performerLastName || ""}`.trim()
                               : null;

@@ -28,7 +28,8 @@ import { toast } from "sonner";
 import Drawer from "./shared/Drawer";
 import Money from "./shared/Money";
 import AdminOverridePanel, { AdminOverrideAction } from "./shared/AdminOverridePanel";
-import { useIsAdminActor } from "./shared/ActorRoleContext";
+import { useActorRole, useIsAdminActor } from "./shared/ActorRoleContext";
+import { financePath } from "./shared/financeRoutes";
 import { FINANCE_COLORS } from "./shared/financeColors";
 import { refundApi, adminFinanceApi } from "@/lib/api";
 
@@ -72,6 +73,7 @@ const RefundDetailDrawer = ({
   const t = useTranslations("financeDashboard");
   const tAdmin = useTranslations("financeDashboard.adminOverride");
   const isAdmin = useIsAdminActor();
+  const actorRole = useActorRole();
   const locale = useLocale();
   const isRTL = locale === "ar";
   const ArrowIcon = isRTL ? ChevronLeft : ChevronRight;
@@ -423,7 +425,7 @@ const RefundDetailDrawer = ({
                   value={
                     data.invoiceNumber && data.invoiceId ? (
                       <Link
-                        href={`/${locale}/dashboard/finance/invoices?invoiceId=${data.invoiceId}`}
+                        href={financePath(actorRole, locale, "invoices", { invoiceId: data.invoiceId })}
                         className="inline-flex items-center gap-1 text-sm text-[var(--color-primary)] hover:underline"
                       >
                         {data.invoiceNumber}
@@ -579,7 +581,7 @@ const RefundDetailDrawer = ({
               </div>
 
               <Link
-                href={`/${locale}/dashboard/finance/payments?paymentId=${data.paymentId}`}
+                href={financePath(actorRole, locale, "payments", { paymentId: data.paymentId })}
                 className="flex items-center justify-between gap-2 p-3 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl hover:border-[var(--color-primary)] transition-colors group"
               >
                 <span className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)]">
@@ -591,7 +593,7 @@ const RefundDetailDrawer = ({
 
               {data.invoiceId && (
                 <Link
-                  href={`/${locale}/dashboard/finance/invoices?invoiceId=${data.invoiceId}`}
+                  href={financePath(actorRole, locale, "invoices", { invoiceId: data.invoiceId })}
                   className="flex items-center justify-between gap-2 p-3 bg-[var(--color-surface-card)] border border-[var(--color-border)] rounded-xl hover:border-[var(--color-primary)] transition-colors group"
                 >
                   <span className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)]">

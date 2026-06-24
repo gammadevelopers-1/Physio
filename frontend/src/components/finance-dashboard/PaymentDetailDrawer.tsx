@@ -27,7 +27,8 @@ import Drawer from "./shared/Drawer";
 import Money from "./shared/Money";
 import GatewayResponseViewer from "./GatewayResponseViewer";
 import AdminOverridePanel, { AdminOverrideAction } from "./shared/AdminOverridePanel";
-import { useIsAdminActor } from "./shared/ActorRoleContext";
+import { useActorRole, useIsAdminActor } from "./shared/ActorRoleContext";
+import { financePath } from "./shared/financeRoutes";
 import { FINANCE_COLORS, gatewayColor } from "./shared/financeColors";
 import { paymentApi, adminFinanceApi } from "@/lib/api";
 
@@ -55,6 +56,7 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
   const t = useTranslations("financeDashboard");
   const tAdmin = useTranslations("financeDashboard.adminOverride");
   const isAdmin = useIsAdminActor();
+  const actorRole = useActorRole();
   const locale = useLocale();
   const isRTL = locale === "ar";
   const ArrowIcon = isRTL ? ChevronLeft : ChevronRight;
@@ -273,7 +275,7 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
                 <Card title={t("paymentDetail.invoice")} icon={<FileText className="w-4 h-4" />} isRTL={isRTL}>
                   {data.payment.invoiceId ? (
                     <Link
-                      href={`/${locale}/dashboard/finance/invoices?invoiceId=${data.payment.invoiceId}`}
+                      href={financePath(actorRole, locale, "invoices", { invoiceId: data.payment.invoiceId })}
                       className={`flex items-center justify-between gap-2 text-sm group ${isRTL ? "flex-row-reverse" : ""}`}
                     >
                       <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
@@ -328,7 +330,7 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
                       ))}
                     </ul>
                     <Link
-                      href={`/${locale}/dashboard/finance/refunds`}
+                      href={financePath(actorRole, locale, "refunds")}
                       className={`inline-flex items-center gap-1 mt-2 text-xs font-medium text-[var(--color-primary)] hover:underline ${isRTL ? "flex-row-reverse" : ""}`}
                     >
                       {t("paymentDetail.viewRefunds")}
@@ -365,7 +367,7 @@ const PaymentDetailDrawer = ({ paymentId, onClose }: PaymentDetailDrawerProps) =
                       </Row>
                     )}
                     <Link
-                      href={`/${locale}/dashboard/finance/reconciliation`}
+                      href={financePath(actorRole, locale, "reconciliation")}
                       className={`inline-flex items-center gap-1 mt-1 text-xs font-medium text-[var(--color-primary)] hover:underline ${isRTL ? "flex-row-reverse" : ""}`}
                     >
                       {t("paymentDetail.viewReconciliation")}

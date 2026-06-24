@@ -16,7 +16,6 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
-import Select from "../Select";
 import { TabShell } from "./TabShell";
 import { useSettingsCategory } from "./useSettingsCategory";
 import {
@@ -30,7 +29,9 @@ type Gateway = "moyasar" | "tamara" | "tabby" | "bank_transfer";
 interface PaymentsSettings extends Record<string, unknown> {
   gateway: Gateway;
   testMode: boolean;
-  currency: "SAR" | "USD" | "AED";
+  // SAR is the only supported currency platform-wide. Kept on the type so
+  // existing JSONB rows that have `currency: "SAR"` deserialize cleanly.
+  currency: "SAR";
   moyasar: { publishableKey: string; secretKeyRef: string | null };
   tamara: { merchantToken: string; secretKeyRef: string | null };
   tabby: { publicKey: string; secretKeyRef: string | null };
@@ -111,12 +112,16 @@ export default function PaymentsTab() {
     try {
       const result = await adminFinanceApi.testGatewayConnection(gateway);
       setTestResults((prev) => ({ ...prev, [gateway]: result }));
+      // Include the actual error code in toasts for degraded/down so admin
+      // doesn't have to open DevTools to see "HTTP 401". The pill below
+      // the button keeps the same info visible.
+      const errSuffix = result.error ? ` — ${result.error}` : "";
       if (result.status === "healthy") {
         toast.success(t("payments.testSuccess"));
       } else if (result.status === "degraded") {
-        toast.warning(t("payments.testDegraded"));
+        toast.warning(`${t("payments.testDegraded")}${errSuffix}`);
       } else {
-        toast.error(result.error || t("payments.testFailed"));
+        toast.error(`${t("payments.testFailed")}${errSuffix}`);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : t("payments.testFailed");
@@ -221,51 +226,30 @@ export default function PaymentsTab() {
         </div>
       </div>
 
-      {/* Test mode + currency */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex items-center justify-between border border-[var(--color-border)] rounded-lg p-4">
-          <div>
-            <p className="text-sm font-medium text-[var(--color-text-primary)]">
-              {t("payments.testMode")}
-            </p>
-            <p className="text-xs text-[var(--color-text-secondary)]">
-              {t("payments.testModeDesc")}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setDraft((d) => ({ ...d, testMode: !d.testMode }))}
-            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${
-              draft.testMode ? "bg-[#F59E0B]" : "bg-[#D1D5DB]"
-            }`}
-          >
-            <div
-              className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${
-                draft.testMode ? "ms-auto" : ""
-              }`}
-            />
-          </button>
-        </div>
-
+      {/* Test mode — currency intentionally removed: SAR is the only
+          supported currency end-to-end (ZATCA, gateways, invoices). */}
+      <div className="flex items-center justify-between border border-[var(--color-border)] rounded-lg p-4">
         <div>
-          <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
-            {t("payments.currency")}
-          </label>
-          <Select
-            value={draft.currency}
-            onChange={(v) =>
-              setDraft((d) => ({
-                ...d,
-                currency: v as PaymentsSettings["currency"],
-              }))
-            }
-            options={[
-              { value: "SAR", label: "SAR — Saudi Riyal" },
-              { value: "AED", label: "AED — UAE Dirham" },
-              { value: "USD", label: "USD — US Dollar" },
-            ]}
-          />
+          <p className="text-sm font-medium text-[var(--color-text-primary)]">
+            {t("payments.testMode")}
+          </p>
+          <p className="text-xs text-[var(--color-text-secondary)]">
+            {t("payments.testModeDesc")}
+          </p>
         </div>
+        <button
+          type="button"
+          onClick={() => setDraft((d) => ({ ...d, testMode: !d.testMode }))}
+          className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${
+            draft.testMode ? "bg-[#F59E0B]" : "bg-[#D1D5DB]"
+          }`}
+        >
+          <div
+            className={`w-5 h-5 bg-white rounded-full shadow-md transition-all ${
+              draft.testMode ? "ms-auto" : ""
+            }`}
+          />
+        </button>
       </div>
 
       {/* Gateway-specific credentials */}
@@ -296,6 +280,10 @@ export default function PaymentsTab() {
                 sourceEnv: t("payments.sourceEnv"),
                 sourceMixed: t("payments.sourceMixed"),
                 saveFirst: t("payments.saveFirstHint"),
+                hint401: t("payments.hint401"),
+                hint403: t("payments.hint403"),
+                hint429: t("payments.hint429"),
+                hint5xx: t("payments.hint5xx"),
               }}
             />
           </div>
@@ -680,6 +668,36 @@ function CredField({
   );
 }
 
+// Decode common gateway HTTP error codes into actionable hints.
+// "HTTP 401" → token rejected; "HTTP 429" → rate limited; etc. Falls
+// through to a generic line for codes we don't recognize.
+function decodeGatewayError(error: string | undefined, labels: GatewayTestLabels): string | null {
+  if (!error) return null;
+  const m = error.match(/HTTP\s+(\d{3})/i);
+  const code = m ? parseInt(m[1], 10) : null;
+  if (code === 401) return labels.hint401;
+  if (code === 403) return labels.hint403;
+  if (code === 429) return labels.hint429;
+  if (code && code >= 500) return labels.hint5xx;
+  return error; // unknown error — show it verbatim so the operator has a clue
+}
+
+interface GatewayTestLabels {
+  test: string;
+  testing: string;
+  healthy: string;
+  degraded: string;
+  down: string;
+  sourceDb: string;
+  sourceEnv: string;
+  sourceMixed: string;
+  saveFirst: string;
+  hint401: string;
+  hint403: string;
+  hint429: string;
+  hint5xx: string;
+}
+
 function GatewayTestControl({
   gateway,
   testing,
@@ -693,17 +711,7 @@ function GatewayTestControl({
   dirty: boolean;
   result: AdminGatewayTestResult | undefined;
   onTest: () => void;
-  labels: {
-    test: string;
-    testing: string;
-    healthy: string;
-    degraded: string;
-    down: string;
-    sourceDb: string;
-    sourceEnv: string;
-    sourceMixed: string;
-    saveFirst: string;
-  };
+  labels: GatewayTestLabels;
 }) {
   const StatusIcon =
     result?.status === "healthy" ? ShieldCheck
@@ -725,9 +733,10 @@ function GatewayTestControl({
     : result?.source === "env" ? labels.sourceEnv
     : result?.source === "mixed" ? labels.sourceMixed
     : null;
+  const errorHint = result && result.status !== "healthy" ? decodeGatewayError(result.error, labels) : null;
 
   return (
-    <div className="flex flex-col items-end gap-2">
+    <div className="flex flex-col items-end gap-2 max-w-[260px]">
       <button
         type="button"
         onClick={onTest}
@@ -742,17 +751,24 @@ function GatewayTestControl({
         <div className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-md border ${statusBg}`}>
           <StatusIcon className="w-3 h-3" />
           <span>{statusLabel}</span>
+          {result.error && (
+            <span className="font-mono opacity-80">· {result.error}</span>
+          )}
           {sourceLabel && (
-            <span className="opacity-70">·  {sourceLabel}</span>
+            <span className="opacity-70">· {sourceLabel}</span>
           )}
         </div>
       )}
+      {errorHint && (
+        <p className="text-[11px] text-[#B45309] text-right leading-relaxed">
+          {errorHint}
+        </p>
+      )}
       {dirty && (
-        <p className="text-[11px] text-[var(--color-text-secondary)] text-right max-w-[180px]">
+        <p className="text-[11px] text-[var(--color-text-secondary)] text-right">
           {labels.saveFirst}
         </p>
       )}
-      {/* gateway value is part of the audit metadata; pin to avoid TS warning */}
       <span className="sr-only">{gateway}</span>
     </div>
   );

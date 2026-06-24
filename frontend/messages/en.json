@@ -6951,6 +6951,10 @@
         "sourceEnv": "Source: environment",
         "sourceMixed": "Source: mixed",
         "saveFirstHint": "Save your changes before testing.",
+        "hint401": "Token rejected by the gateway. Check the value matches your gateway dashboard (and that sandbox/live mode matches the API URL).",
+        "hint403": "Gateway refused the request. Account may not be activated, or the token lacks permission for this region.",
+        "hint429": "Rate-limited — wait a few seconds and try again. If this is the first test, check for an aggressive WAF rule.",
+        "hint5xx": "Gateway is having problems on their side. Try again in a minute; if it persists, check the gateway's status page.",
         "activeGateway": "Active Gateway",
         "activeGatewayHelp": "The gateway selected here is what new checkout sessions use. Existing sessions continue with whatever they started with.",
         "gateway": {
